@@ -1,0 +1,176 @@
+import { useEffect, useState } from 'react';
+import { Card, Table, Button, Modal, Form, Input, DatePicker, Space, Tag, message, Drawer, Descriptions } from 'antd';
+import { PlusOutlined, ReloadOutlined, CheckOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import dayjs from 'dayjs';
+import api from '../api';
+
+interface Run {
+  id: string; name: string; period_start?: string; period_end?: string; status?: string;
+  employee_count?: number; total_gross?: number; total_net?: number;
+}
+interface Payslip {
+  id: string; employee_name?: string; basic?: number; allowances?: number; deductions?: number;
+  gross?: number; net?: number; status?: string; currency?: string;
+  lines?: { code?: string; name?: string; type?: string; amount: number }[];
+}
+
+export default function PayrollRuns() {
+  const { t } = useTranslation();
+  const [list, setList] = useState<Run[]>([]);
+  const [open, setOpen] = useState(false);
+  const [form] = Form.useForm();
+  const [drawer, setDrawer] = useState<{ run: Run; payslips: Payslip[] } | null>(null);
+  const [active, setActive] = useState<Payslip | null>(null);
+
+  const load = async () => {
+    const r = await api.get('/api/payroll/runs');
+    setList(r.data.items || []);
+  };
+  useEffect(() => { load(); }, []);
+
+  const submit = async () => {
+    const v = await form.validateFields();
+    v.period_start = v.range[0].format('YYYY-MM-DD');
+    v.period_end = v.range[1].format('YYYY-MM-DD');
+    delete v.range;
+    try {
+      await api.post('/api/payroll/runs', v);
+      message.success(t('saved'));
+      setOpen(false); form.resetFields();
+      load();
+    } catch { message.error(t('error')); }
+  };
+
+  const showRun = async (id: string) => {
+    const r = await api.get(`/api/payroll/runs/${id}`);
+    setDrawer({ run: r.data, payslips: r.data.payslips || [] });
+  };
+
+  const confirmRun = async (id: string) => {
+    try { await api.post(`/api/payroll/runs/${id}/confirm`); message.success(t('confirmed')); load(); setDrawer(null); }
+    catch { message.error(t('error')); }
+  };
+  const removeRun = async (id: string) => {
+    try { await api.delete(`/api/payroll/runs/${id}`); load(); }
+    catch { message.error(t('error')); }
+  };
+  const markPaid = async (id: string) => {
+    try { await api.post(`/api/payroll/payslips/${id}/mark-paid`); if (drawer) showRun(drawer.run.id); }
+    catch { message.error(t('error')); }
+  };
+
+  const cols = [
+    { title: t('name'), dataIndex: 'name' },
+    { title: t('period'), key: 'period',
+      render: (_: unknown, r: Run) => `${r.period_start || ''} → ${r.period_end || ''}` },
+    { title: t('employees'), dataIndex: 'employee_count' },
+    { title: t('total_gross'), dataIndex: 'total_gross', align: 'right' as const,
+      render: (n?: number) => (n || 0).toLocaleString() },
+    { title: t('total_net'), dataIndex: 'total_net', align: 'right' as const,
+      render: (n?: number) => (n || 0).toLocaleString() },
+    { title: t('status'), dataIndex: 'status',
+      render: (s?: string) => <Tag color={s === 'confirmed' ? 'green' : 'orange'}>{s}</Tag> },
+    {
+      title: t('actions'),
+      render: (_: unknown, r: Run) => (
+        <Space>
+          <Button size="small" onClick={() => showRun(r.id)}>{t('view')}</Button>
+          {r.status !== 'confirmed' && (
+            <Button size="small" type="primary" icon={<DeleteOutlined />} danger onClick={() => removeRun(r.id)} />
+          )}
+        </Space>
+      ),
+    },
+  ];
+
+  const slipCols = [
+    { title: t('employee'), dataIndex: 'employee_name' },
+    { title: t('basic'), dataIndex: 'basic', align: 'right' as const, render: (n?: number) => (n || 0).toLocaleString() },
+    { title: t('allowances'), dataIndex: 'allowances', align: 'right' as const, render: (n?: number) => (n || 0).toLocaleString() },
+    { title: t('deductions'), dataIndex: 'deductions', align: 'right' as const, render: (n?: number) => (n || 0).toLocaleString() },
+    { title: t('net'), dataIndex: 'net', align: 'right' as const, render: (n?: number) => <strong>{(n || 0).toLocaleString()}</strong> },
+    { title: t('status'), dataIndex: 'status', render: (s?: string) => <Tag color={s === 'paid' ? 'green' : s === 'confirmed' ? 'blue' : 'orange'}>{s}</Tag> },
+    {
+      title: t('actions'),
+      render: (_: unknown, r: Payslip) => (
+        <Space>
+          <Button size="small" onClick={() => setActive(r)}>{t('view')}</Button>
+          {r.status !== 'paid' && (
+            <Button size="small" type="primary" onClick={() => markPaid(r.id)}>{t('mark_paid')}</Button>
+          )}
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <div style={{ padding: 16 }}>
+      <Space style={{ marginBottom: 12 }}>
+        <h2 style={{ margin: 0 }}>{t('payroll_runs')}</h2>
+        <Button icon={<ReloadOutlined />} onClick={load}>{t('refresh')}</Button>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => setOpen(true)}>{t('new_run')}</Button>
+      </Space>
+      <Card><Table rowKey="id" dataSource={list} columns={cols} pagination={{ pageSize: 20 }} /></Card>
+
+      <Modal open={open} onOk={submit} onCancel={() => setOpen(false)} title={t('new_run')} destroyOnHidden>
+        <Form form={form} layout="vertical">
+          <Form.Item name="name" label={t('name')} rules={[{ required: true }]}
+            initialValue={`Payroll ${dayjs().format('YYYY-MM')}`}><Input /></Form.Item>
+          <Form.Item name="range" label={t('period')} rules={[{ required: true }]}
+            initialValue={[dayjs().startOf('month'), dayjs().endOf('month')]}>
+            <DatePicker.RangePicker style={{ width: '100%' }} />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Drawer
+        open={!!drawer}
+        onClose={() => setDrawer(null)}
+        size={900}
+        title={drawer?.run.name}
+        extra={drawer && drawer.run.status !== 'confirmed' ? (
+          <Button type="primary" icon={<CheckOutlined />} onClick={() => confirmRun(drawer.run.id)}>
+            {t('confirm_run')}
+          </Button>
+        ) : null}
+      >
+        {drawer && (
+          <>
+            <Descriptions size="small" column={2} bordered style={{ marginBottom: 12 }}>
+              <Descriptions.Item label={t('period')}>{drawer.run.period_start} → {drawer.run.period_end}</Descriptions.Item>
+              <Descriptions.Item label={t('status')}>{drawer.run.status}</Descriptions.Item>
+              <Descriptions.Item label={t('employees')}>{drawer.run.employee_count}</Descriptions.Item>
+              <Descriptions.Item label={t('total_net')}>{(drawer.run.total_net || 0).toLocaleString()}</Descriptions.Item>
+            </Descriptions>
+            <Table rowKey="id" dataSource={drawer.payslips} columns={slipCols} pagination={false} size="small" />
+          </>
+        )}
+      </Drawer>
+
+      <Modal open={!!active} onCancel={() => setActive(null)} footer={null} title={active?.employee_name} width={520} destroyOnHidden>
+        {active && (
+          <Table
+            rowKey={(r, i) => `${i}`}
+            size="small"
+            pagination={false}
+            dataSource={active.lines || []}
+            columns={[
+              { title: t('code'), dataIndex: 'code' },
+              { title: t('name'), dataIndex: 'name' },
+              { title: t('type'), dataIndex: 'type' },
+              { title: t('amount'), dataIndex: 'amount', align: 'right' as const,
+                render: (n: number) => <span style={{ color: n < 0 ? '#dc2626' : undefined }}>{n.toLocaleString()}</span> },
+            ]}
+            summary={() => (
+              <Table.Summary.Row>
+                <Table.Summary.Cell index={0} colSpan={3}><strong>{t('net')}</strong></Table.Summary.Cell>
+                <Table.Summary.Cell index={3} align="right"><strong>{(active.net || 0).toLocaleString()}</strong></Table.Summary.Cell>
+              </Table.Summary.Row>
+            )}
+          />
+        )}
+      </Modal>
+    </div>
+  );
+}

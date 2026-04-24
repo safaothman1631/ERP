@@ -1,0 +1,349 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { Table, Button, Tag, Space, Select, Modal, Form, InputNumber, Input, Empty, Typography } from 'antd';
+import { message } from '../utils/message';
+import { PlusOutlined, SendOutlined, WalletOutlined, DollarOutlined, InboxOutlined, FilePdfOutlined, MailOutlined, BellOutlined, QrcodeOutlined, CloudUploadOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import api from '../api';
+import ExportButton from '../components/ExportButton';
+import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { downloadCsv } from '../utils/exportCsv';
+import { palette, space } from '../theme/tokens';
+import { useAuthStore } from '../store';
+
+const { Text } = Typography;
+
+const statusColors: Record<string, string> = {
+  draft: 'default', sent: 'blue', paid: 'green', overdue: 'red', partially_paid: 'orange', void: 'grey', retainer: 'purple',
+};
+
+const Invoices: React.FC = () => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [retainerModal, setRetainerModal] = useState(false);
+  const [retainerForm] = Form.useForm();
+  const [retainerSaving, setRetainerSaving] = useState(false);
+  const [applyRetainerModal, setApplyRetainerModal] = useState<string | null>(null);
+  const [applyRetainerForm] = Form.useForm();
+  const [retainerInvoices, setRetainerInvoices] = useState<any[]>([]);
+  const [applyingSaving, setApplyingSaving] = useState(false);
+  const [emailModal, setEmailModal] = useState<string | null>(null);
+  const [emailForm] = Form.useForm();
+  const [emailSending, setEmailSending] = useState(false);
+  const [einvoiceLoadingKey, setEInvoiceLoadingKey] = useState<string | null>(null);
+  const [einvoiceModal, setEInvoiceModal] = useState<{ title: string; data: Record<string, unknown> | null }>({ title: '', data: null });
+  const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('invoices.hiddenCols') || '[]'); } catch { return []; }
+  });
+  const isDark = useAuthStore((s) => s.theme === 'dark');
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/api/invoices', { params: { page, status: statusFilter, page_size: 20 } });
+      setData(res.data.items); setTotal(res.data.total);
+    } catch { message.error(t('error')); } finally { setLoading(false); }
+  };
+
+  useEffect(() => { fetchData(); }, [page, statusFilter]);
+
+  const handleSend = async (id: string) => {
+    try {
+      const res = await api.post(`/api/invoices/${id}/send`);
+      if (res.data?.einvoice?.status) {
+        message.success(`${t('success')} - ${t('einvoice_submitted')}`);
+      } else {
+        message.success(t('success'));
+      }
+      fetchData();
+    } catch { message.error(t('error')); }
+  };
+
+  const handleEInvoiceAction = async (id: string, action: 'submit' | 'status' | 'qr') => {
+    const loadingKey = `${action}:${id}`;
+    setEInvoiceLoadingKey(loadingKey);
+    try {
+      const res = action === 'submit'
+        ? await api.post(`/api/einvoice/submit/${id}`)
+        : action === 'status'
+          ? await api.get(`/api/einvoice/status/${id}`)
+          : await api.get(`/api/einvoice/qr/${id}`);
+
+      setEInvoiceModal({
+        title: action === 'qr' ? t('qr_code') : action === 'status' ? t('einvoice_status') : t('einvoice_submit'),
+        data: res.data as Record<string, unknown>,
+      });
+      if (action !== 'qr') {
+        fetchData();
+      }
+    } catch {
+      message.error(t('error'));
+    } finally {
+      setEInvoiceLoadingKey(null);
+    }
+  };
+
+  const handleCreateRetainer = async (values: any) => {
+    setRetainerSaving(true);
+    try {
+      await api.post('/api/invoices/retainer', values);
+      message.success(t('success'));
+      setRetainerModal(false);
+      fetchData();
+    } catch { message.error(t('error')); } finally { setRetainerSaving(false); }
+  };
+
+  const openApplyRetainer = async (invoiceId: string) => {
+    try {
+      const r = await api.get('/api/invoices', { params: { status: 'retainer', page_size: 100 } });
+      setRetainerInvoices(r.data.items || []);
+      setApplyRetainerModal(invoiceId);
+      applyRetainerForm.resetFields();
+    } catch { message.error(t('error')); }
+  };
+
+  const handleApplyRetainer = async (values: any) => {
+    if (!applyRetainerModal) return;
+    setApplyingSaving(true);
+    try {
+      await api.post(`/api/invoices/${applyRetainerModal}/apply-retainer`, {
+        retainer_invoice_id: values.retainer_invoice_id,
+        amount: values.amount,
+      });
+      message.success(t('success'));
+      setApplyRetainerModal(null);
+      fetchData();
+    } catch { message.error(t('error')); } finally { setApplyingSaving(false); }
+  };
+
+  const handleDownloadPdf = async (id: string) => {
+    try {
+      const res = await api.get(`/api/invoices/${id}/pdf`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `invoice-${id}.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch { message.error(t('error')); }
+  };
+
+  const openEmailModal = (id: string) => {
+    emailForm.resetFields();
+    setEmailModal(id);
+  };
+
+  const handleSendEmail = async (values: { to_email: string; subject: string; message: string }) => {
+    if (!emailModal) return;
+    setEmailSending(true);
+    try {
+      await api.post(`/api/invoices/${emailModal}/send`, values);
+      message.success(t('email_sent') || '?????? ??????');
+      setEmailModal(null);
+    } catch { message.error(t('error')); } finally { setEmailSending(false); }
+  };
+
+  const handleSendReminder = async (id: string) => {
+    try {
+      await api.post(`/api/invoices/${id}/send-reminder`);
+      message.success(t('reminder_sent') || '??????????? ??????');
+      fetchData();
+    } catch { message.error(t('error')); }
+  };
+
+  const columns = [
+    { title: '#', dataIndex: 'invoice_number', key: 'invoice_number', render: (v: string) => <Text strong style={{ color: '#1677ff' }}>{v}</Text> },
+    { title: t('date'), dataIndex: 'date', key: 'date', render: (d: string) => d?.substring(0, 10) },
+    { title: t('due_date'), dataIndex: 'due_date', key: 'due_date', render: (d: string) => d?.substring(0, 10) },
+    { title: t('total'), dataIndex: 'total', key: 'total', render: (v: number) => <Text strong>{v?.toLocaleString()} ?.?</Text> },
+    { title: t('balance_due'), dataIndex: 'balance_due', key: 'balance_due', render: (v: number) => <Text strong style={{ color: v > 0 ? palette.danger : palette.success }}>{v?.toLocaleString()} ?.?</Text> },    {
+      title: t('status'), dataIndex: 'status', key: 'status',
+      render: (s: string, r: any) => (
+        <Space>
+          <StatusTag status={s} label={t(s)} />
+          {r.is_retainer && <Tag color="purple" style={{ borderRadius: 6 }}>{t('retainerInvoice')}</Tag>}
+          {r.is_progress && <Tag color="cyan" style={{ borderRadius: 6 }}>{t('progressInvoice')}</Tag>}
+        </Space>
+      ),
+    },
+    {
+      title: t('actions'), key: 'actions',
+      render: (_: any, r: any) => (
+        <Space>
+          {r.status === 'draft' && <Button icon={<SendOutlined />} size="small" onClick={() => handleSend(r.id)}>{t('send_invoice')}</Button>}
+          {!r.is_retainer && r.status !== 'paid' && r.status !== 'void' && (
+            <Button icon={<WalletOutlined />} size="small" onClick={() => openApplyRetainer(r.id)}>{t('retainerInvoice')}</Button>
+          )}
+          {r.status !== 'void' && (
+            <Button icon={<CloudUploadOutlined />} size="small" loading={einvoiceLoadingKey === `submit:${r.id}`} onClick={() => handleEInvoiceAction(r.id, 'submit')}>
+              {t('einvoice_submit')}
+            </Button>
+          )}
+          {r.status !== 'void' && (
+            <Button icon={<InfoCircleOutlined />} size="small" loading={einvoiceLoadingKey === `status:${r.id}`} onClick={() => handleEInvoiceAction(r.id, 'status')}>
+              {t('einvoice_status')}
+            </Button>
+          )}
+          {r.status !== 'void' && (
+            <Button icon={<QrcodeOutlined />} size="small" loading={einvoiceLoadingKey === `qr:${r.id}`} onClick={() => handleEInvoiceAction(r.id, 'qr')}>
+              {t('qr_code')}
+            </Button>
+          )}
+          <Button icon={<FilePdfOutlined />} size="small" onClick={() => handleDownloadPdf(r.id)}>PDF</Button>
+          <Button icon={<MailOutlined />} size="small" onClick={() => openEmailModal(r.id)}>{t('send_email')}</Button>
+          {r.status === 'overdue' && <Button icon={<BellOutlined />} size="small" danger onClick={() => handleSendReminder(r.id)}>{t('send_reminder')}</Button>}
+        </Space>
+      ),
+    },
+  ];
+  const visibleColumns = useMemo(() => columns.filter((c) => !hiddenCols.includes(c.key as string)), [hiddenCols, columns]);
+  const columnsMeta: ColumnVisibilityItem[] = columns.map((c) => ({
+    key: c.key as string,
+    label: typeof c.title === 'string' ? c.title : (c.key as string),
+    pinned: c.key === 'invoice_number' || c.key === 'actions',
+  }));
+  const persistHidden = (next: string[]) => {
+    setHiddenCols(next);
+    try { localStorage.setItem('invoices.hiddenCols', JSON.stringify(next)); } catch {}
+  };
+
+  return (
+    <div>
+      <PageHeader
+        title={t('invoices')}
+        subtitle={t('invoices_subtitle', '??????????? ????? ??????')}
+        helpKey="invoices"
+        extra={
+          <Space size={space.sm}>
+            <ExportButton endpoint="/api/export/invoices" filename="invoices" params={{ status: statusFilter || undefined }} />
+            <Button icon={<DollarOutlined />} onClick={() => { retainerForm.resetFields(); setRetainerModal(true); }}>
+              {t('retainerInvoice')}
+            </Button>
+            <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => navigate('/invoices/new')}>
+              {t('new_invoice')}
+            </Button>
+          </Space>
+        }
+      />
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: space.md, alignItems: 'center', gap: space.md, flexWrap: 'wrap' }}>
+        <Select
+          placeholder={t('status')}
+          value={statusFilter || undefined}
+          onChange={(v) => { setStatusFilter(v || ''); setPage(1); }}
+          allowClear
+          style={{ width: 200 }}
+        >
+          <Select.Option value="draft">{t('draft')}</Select.Option>
+          <Select.Option value="sent">{t('sent')}</Select.Option>
+          <Select.Option value="paid">{t('paid')}</Select.Option>
+          <Select.Option value="overdue">{t('overdue')}</Select.Option>
+        </Select>
+        <Space>
+          <ExportMenu
+            formats={['csv']}
+            onExport={(f: ExportFormat) => {
+              if (f === 'csv') {
+                const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+                downloadCsv('invoices', data, cols);
+              }
+            }}
+          />
+          <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
+        </Space>
+      </div>
+
+      <Table
+        dataSource={data}
+        columns={visibleColumns}
+        rowKey="id"
+        loading={loading}
+        pagination={{ current: page, total, pageSize: 20, onChange: setPage }}
+        locale={{
+          emptyText: (
+            <Empty
+              image={<InboxOutlined style={{ fontSize: 48, color: '#d1d5db' }} />}
+              description={
+                <Space orientation="vertical" size={4}>
+                  <Text strong>??? ?????? ????</Text>
+                  <Text type="secondary">???????? ????? ???? ????? ?????</Text>
+                </Space>
+              }
+            >
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/invoices/new')}>????? ???</Button>
+            </Empty>
+          ),
+        }}
+      />
+
+      <Modal open={retainerModal} onCancel={() => setRetainerModal(false)} title={t('retainerInvoice')} footer={null} destroyOnHidden>
+        <Form form={retainerForm} layout="vertical" onFinish={handleCreateRetainer}>
+          <Form.Item label={t('amount')} name="amount" rules={[{ required: true, message: t('required_amount') }]}>
+            <InputNumber min={0} style={{ width: '100%' }} placeholder={t('placeholder_amount')} />
+          </Form.Item>
+          <Form.Item label={t('customer')} name="contact_id" rules={[{ required: true, message: t('required_contact') }]}>
+            <Select placeholder={t('placeholder_customer')} />
+          </Form.Item>
+          <Space>
+            <Button type="primary" htmlType="submit" loading={retainerSaving}>{t('save')}</Button>
+            <Button onClick={() => setRetainerModal(false)}>{t('cancel')}</Button>
+          </Space>
+        </Form>
+      </Modal>
+
+      <Modal open={!!applyRetainerModal} onCancel={() => setApplyRetainerModal(null)} title={t('retainerInvoice')} footer={null} destroyOnHidden>
+        <Form form={applyRetainerForm} layout="vertical" onFinish={handleApplyRetainer}>
+          <Form.Item label={t('retainerInvoice')} name="retainer_invoice_id" rules={[{ required: true, message: t('required_field') }]}>
+            <Select placeholder={t('placeholder_select')} options={retainerInvoices.map((ri: any) => ({ label: `${ri.invoice_number} — ${ri.balance_due?.toLocaleString()} ?.?`, value: ri.id }))} />
+          </Form.Item>
+          <Form.Item label={t('amount')} name="amount" rules={[{ required: true, message: t('required_amount') }]}>
+            <InputNumber min={0} style={{ width: '100%' }} placeholder={t('placeholder_amount')} />
+          </Form.Item>
+          <Space>
+            <Button type="primary" htmlType="submit" loading={applyingSaving}>{t('confirm')}</Button>
+            <Button onClick={() => setApplyRetainerModal(null)}>{t('cancel')}</Button>
+          </Space>
+        </Form>
+      </Modal>
+
+      <Modal open={!!emailModal} onCancel={() => setEmailModal(null)} title="?????? ??????" footer={null} destroyOnHidden>
+        <Form form={emailForm} layout="vertical" onFinish={handleSendEmail}>
+          <Form.Item label="??????" name="to_email" rules={[{ required: true, message: t('required_email') }, { type: 'email', message: t('invalid_email') }]}><Input placeholder={t('placeholder_email')} /></Form.Item>
+          <Form.Item label="?????" name="subject"><Input placeholder={t('placeholder_subject')} /></Form.Item>
+          <Form.Item label="?????" name="message"><Input.TextArea rows={3} placeholder={t('placeholder_message')} /></Form.Item>
+          <Space>
+            <Button type="primary" htmlType="submit" loading={emailSending} icon={<MailOutlined />}>?????</Button>
+            <Button onClick={() => setEmailModal(null)}>?????????????</Button>
+          </Space>
+        </Form>
+      </Modal>
+
+      <Modal
+        open={!!einvoiceModal.data}
+        onCancel={() => setEInvoiceModal({ title: '', data: null })}
+        title={einvoiceModal.title}
+        footer={null}
+        destroyOnHidden
+      >
+        <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
+          {typeof einvoiceModal.data?.qr_data_url === 'string' && (
+            <div style={{ textAlign: 'center' }}>
+              <img src={einvoiceModal.data.qr_data_url as string} alt="QR" style={{ maxWidth: 220, width: '100%' }} />
+            </div>
+          )}
+          <Text><strong>{t('fiscal_id')}:</strong> {String(einvoiceModal.data?.fiscal_id || '-')}</Text>
+          <Text><strong>{t('status')}:</strong> {String(einvoiceModal.data?.status || '-')}</Text>
+          <Text><strong>{t('provider_uuid')}:</strong> {String(einvoiceModal.data?.provider_uuid || '-')}</Text>
+          <Text><strong>{t('error')}:</strong> {String(einvoiceModal.data?.error_message || '-')}</Text>
+          <Text><strong>{t('einvoice_payload')}:</strong> {String(einvoiceModal.data?.qr_payload || '-')}</Text>
+        </Space>
+      </Modal>
+    </div>
+  );
+};
+
+export default Invoices;

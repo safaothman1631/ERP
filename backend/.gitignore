@@ -1,0 +1,15 @@
+.env
+*.db
+*.db-shm
+*.db-wal
+__pycache__/
+venv/
+.venv/
+uploads/
+backups/
+*.pyc
+*.pyo
+dist/
+*.egg-info/
+.pytest_cache/
+serviceAccountKey.json

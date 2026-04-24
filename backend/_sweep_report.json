@@ -1,0 +1,1238 @@
+{
+  "summary": {
+    "total": 143,
+    "ok": 143,
+    "client_error": 0,
+    "server_error": 0,
+    "network_error": 0
+  },
+  "slowest": [
+    {
+      "method": "GET",
+      "path": "/api/dashboard",
+      "status": 200,
+      "duration_ms": 4528,
+      "category": "ok",
+      "detail": "{\"total_receivable\":0.0,\"total_payable\":0.0,\"income_this_month\":0.0,\"expenses_this_month\":0.0,\"total_contacts\":4,\"overdue_invoices\":0,\"recent_invoices\":[{\"id\":\"e920feff-7600-4fdf-8d6f-4c738398a6d5\",\"i"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hr/dashboard",
+      "status": 200,
+      "duration_ms": 1046,
+      "category": "ok",
+      "detail": "{\"employees_total\":0,\"employees_active\":0,\"active_contracts\":0,\"pending_time_off\":0,\"checked_in_today\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reports/budget-vs-actual",
+      "status": 200,
+      "duration_ms": 1026,
+      "category": "ok",
+      "detail": "{\"items\":[]}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/companies/consolidated/pl",
+      "status": 200,
+      "duration_ms": 817,
+      "category": "ok",
+      "detail": "{\"rows\":[{\"company_id\":\"8b7d091f-ebe5-4ec7-be3b-55352c77cd74\",\"company_name\":\"Test Sub\",\"revenue\":0,\"expenses\":0,\"profit\":0}],\"totals\":{\"revenue\":0.0,\"expenses\":0.0,\"profit\":0.0},\"date_from\":null,\"dat"
+    },
+    {
+      "method": "GET",
+      "path": "/api/manufacturing/dashboard",
+      "status": 200,
+      "duration_ms": 787,
+      "category": "ok",
+      "detail": "{\"bom_count\":0,\"mo_total\":0,\"mo_draft\":0,\"mo_confirmed\":0,\"mo_done\":0,\"wo_pending\":0,\"wo_in_progress\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reports/project-profitability",
+      "status": 200,
+      "duration_ms": 723,
+      "category": "ok",
+      "detail": "{\"items\":[{\"project_id\":\"00ca49b1-e837-4103-ae7a-6f20cd3e98e1\",\"project_name\":\"TestPrj\",\"revenue\":0,\"costs\":0,\"profit\":0,\"margin_pct\":0}]}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/inventory",
+      "status": 200,
+      "duration_ms": 665,
+      "category": "ok",
+      "detail": "PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000O��\\F�MH�\u0000\u0000\u0000�\u0000\u0000\u0000\u0010\u0000\u0000\u0000docProps/app.xmlM�M\u000b�0\f\u0006�Rv���\u001e�\u000eD=����.u��)m����\u0004?nyy�\u001b�.�\"&��E�.�m32�\r@�#�>�ʡ���{�1݁��\u001a\u000f�\u001f\u001e\u0003âm׀�1\f8�ⷰ��.FguϖBw�:Q&��X4:�'\u001f��\u001c\n\u0010�z%>�\u0013K9�+\u0005��S�\u0015S���o�d\u0005�\u0007�\u0017PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000O��"
+    },
+    {
+      "method": "GET",
+      "path": "/api/rbac/users",
+      "status": 200,
+      "duration_ms": 640,
+      "category": "ok",
+      "detail": "[{\"id\":\"2d474688-697a-4483-982c-2253444d425f\",\"email\":\"admin@test.com\",\"full_name\":\"Admin\",\"legacy_role\":\"admin\",\"is_active\":1,\"assigned_roles\":[]}]"
+    },
+    {
+      "method": "GET",
+      "path": "/api/payroll/runs",
+      "status": 200,
+      "duration_ms": 637,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/branches/comparison",
+      "status": 200,
+      "duration_ms": 627,
+      "category": "ok",
+      "detail": "{\"rows\":[{\"branch_id\":\"ab1b38a4-22c4-4030-9a75-589381ce299c\",\"branch_name\":\"Test Branch\",\"revenue\":0,\"expenses\":0,\"profit\":0}],\"date_from\":null,\"date_to\":null}"
+    }
+  ],
+  "issues": [],
+  "results": [
+    {
+      "method": "GET",
+      "path": "/api/auth/status",
+      "status": 200,
+      "duration_ms": 126,
+      "category": "ok",
+      "detail": "{\"is_setup\":true}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "status": 200,
+      "duration_ms": 444,
+      "category": "ok",
+      "detail": "{\"id\":\"2d474688-697a-4483-982c-2253444d425f\",\"name\":\"Admin\",\"email\":\"admin@test.com\",\"role\":\"admin\",\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\"org_name\":\"Test Company\",\"auth_provider\":\"email\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/contacts",
+      "status": 200,
+      "duration_ms": 404,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"14938dcc-1ace-41fd-b17c-689ba8764ed7\",\"contact_type\":\"customer\",\"created_at\":\"2026-04-14T17:08:25.036230+00:00\",\"currency_code\":\"IQD\",\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\""
+    },
+    {
+      "method": "GET",
+      "path": "/api/items",
+      "status": 200,
+      "duration_ms": 246,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"09bda403-7668-4a97-a2e6-a4404f7614c7\",\"cost_price\":0,\"created_at\":\"2026-04-21T22:35:15.167633+00:00\",\"sales_account_id\":null,\"purchase_account_id\":null,\"org_id\":\"cb160278-d674-46ed-91"
+    },
+    {
+      "method": "GET",
+      "path": "/api/invoices",
+      "status": 200,
+      "duration_ms": 252,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"e920feff-7600-4fdf-8d6f-4c738398a6d5\",\"total\":100000.0,\"created_at\":\"2026-04-14T20:02:27.034168+00:00\",\"contact_id\":\"14938dcc-1ace-41fd-b17c-689ba8764ed7\",\"exchange_rate\":1.0,\"org_id\""
+    },
+    {
+      "method": "GET",
+      "path": "/api/payments-received",
+      "status": 200,
+      "duration_ms": 334,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20,\"total_pages\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/expenses",
+      "status": 200,
+      "duration_ms": 466,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20,\"total_pages\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bills",
+      "status": 200,
+      "duration_ms": 454,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20,\"total_pages\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/payments-made",
+      "status": 200,
+      "duration_ms": 451,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20,\"total_pages\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/accounts",
+      "status": 200,
+      "duration_ms": 572,
+      "category": "ok",
+      "detail": "[{\"id\":\"07c6b65b-944f-4964-9123-92ba4cbace8e\",\"code\":\"1000\",\"name_ku\":\"سامان\",\"updated_at\":\"2026-04-03 14:59:42.931421\",\"is_active\":1,\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\"created_at\":\"2026"
+    },
+    {
+      "method": "GET",
+      "path": "/api/journals",
+      "status": 200,
+      "duration_ms": 237,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"2b9e20e9-1f4a-40ed-a6f0-d2e06268a770\",\"exchange_rate\":1.05,\"created_at\":\"2026-04-14T17:04:43.484176+00:00\",\"updated_at\":\"2026-04-14T17:04:43.484176+00:00\",\"is_active\":true,\"org_id\":\"c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/banking/accounts",
+      "status": 200,
+      "duration_ms": 233,
+      "category": "ok",
+      "detail": "[{\"id\":\"35f55132-855e-44a2-b867-0cff0af50f3c\",\"bank_name\":\"Test Bank\",\"created_at\":\"2026-04-22T17:05:51.834108+00:00\",\"updated_at\":\"2026-04-22T17:05:51.834108+00:00\",\"account_number\":\"12345\",\"org_id\":"
+    },
+    {
+      "method": "GET",
+      "path": "/api/banking/transactions",
+      "status": 200,
+      "duration_ms": 251,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"56704f38-97e2-41bb-92ac-9fad23a79158\",\"created_at\":\"2026-04-22T17:05:52.676112+00:00\",\"is_active\":true,\"transaction_type\":\"credit\",\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\"cre"
+    },
+    {
+      "method": "GET",
+      "path": "/api/banking/rules",
+      "status": 200,
+      "duration_ms": 245,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "status": 200,
+      "duration_ms": 246,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"00ca49b1-e837-4103-ae7a-6f20cd3e98e1\",\"created_at\":\"2026-04-14T17:04:42.552743+00:00\",\"updated_at\":\"2026-04-14T17:04:42.552743+00:00\",\"is_active\":true,\"org_id\":\"cb160278-d674-46ed-912"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dashboard",
+      "status": 200,
+      "duration_ms": 4528,
+      "category": "ok",
+      "detail": "{\"total_receivable\":0.0,\"total_payable\":0.0,\"income_this_month\":0.0,\"expenses_this_month\":0.0,\"total_contacts\":4,\"overdue_invoices\":0,\"recent_invoices\":[{\"id\":\"e920feff-7600-4fdf-8d6f-4c738398a6d5\",\"i"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reports/receivable-aging",
+      "status": 200,
+      "duration_ms": 430,
+      "category": "ok",
+      "detail": "{\"buckets\":{\"current\":0,\"1_30\":0,\"31_60\":0,\"61_90\":0,\"over_90\":0},\"total\":0,\"details\":[]}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reports/payable-aging",
+      "status": 200,
+      "duration_ms": 414,
+      "category": "ok",
+      "detail": "{\"buckets\":{\"current\":0,\"1_30\":0,\"31_60\":0,\"61_90\":0,\"over_90\":0},\"total\":0,\"details\":[]}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reports/budget-vs-actual",
+      "status": 200,
+      "duration_ms": 1026,
+      "category": "ok",
+      "detail": "{\"items\":[]}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reports/project-profitability",
+      "status": 200,
+      "duration_ms": 723,
+      "category": "ok",
+      "detail": "{\"items\":[{\"project_id\":\"00ca49b1-e837-4103-ae7a-6f20cd3e98e1\",\"project_name\":\"TestPrj\",\"revenue\":0,\"costs\":0,\"profit\":0,\"margin_pct\":0}]}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/quotes",
+      "status": 200,
+      "duration_ms": 243,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sales-orders",
+      "status": 200,
+      "duration_ms": 412,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20,\"total_pages\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/purchase-orders",
+      "status": 200,
+      "duration_ms": 307,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20,\"total_pages\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/credit-notes",
+      "status": 200,
+      "duration_ms": 418,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20,\"total_pages\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/vendor-credits",
+      "status": 200,
+      "duration_ms": 242,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20,\"total_pages\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/recurring-invoices",
+      "status": 200,
+      "duration_ms": 416,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20,\"total_pages\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/valuation",
+      "status": 200,
+      "duration_ms": 376,
+      "category": "ok",
+      "detail": "{\"items\":[{\"item_id\":\"09bda403-7668-4a97-a2e6-a4404f7614c7\",\"name\":\"QA Burger\",\"sku\":\"QA-001\",\"stock_on_hand\":0.0,\"reorder_point\":0.0,\"cost_price\":0.0,\"total_value\":0.0,\"value\":0.0},{\"item_id\":\"97202f"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/low-stock",
+      "status": 200,
+      "duration_ms": 305,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"09bda403-7668-4a97-a2e6-a4404f7614c7\",\"cost_price\":0,\"created_at\":\"2026-04-21T22:35:15.167633+00:00\",\"sales_account_id\":null,\"purchase_account_id\":null,\"org_id\":\"cb160278-d674-46ed-91"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/adjustments",
+      "status": 200,
+      "duration_ms": 227,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"2115bffc-6633-4a1c-80dc-47444b8c8507\",\"created_at\":\"2026-04-22T17:06:54.947430+00:00\",\"updated_at\":\"2026-04-22T17:06:54.947430+00:00\",\"is_active\":true,\"org_id\":\"cb160278-d674-46ed-912"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/groups",
+      "status": 200,
+      "duration_ms": 373,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"07dab1f0-4c8e-470a-b9e9-9bd732a23da4\",\"description\":\"Electronic items\",\"created_at\":\"2026-04-03 15:01:40.098574\",\"is_active\":true,\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\"name"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/warehouses",
+      "status": 200,
+      "duration_ms": 233,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/movements",
+      "status": 200,
+      "duration_ms": 230,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/serials",
+      "status": 200,
+      "duration_ms": 251,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/transfers",
+      "status": 200,
+      "duration_ms": 238,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/price-lists",
+      "status": 200,
+      "duration_ms": 239,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/batches",
+      "status": 200,
+      "duration_ms": 238,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/landed-costs",
+      "status": 200,
+      "duration_ms": 224,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/assets",
+      "status": 200,
+      "duration_ms": 428,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mileage",
+      "status": 200,
+      "duration_ms": 486,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"06b77311-cea5-4011-9b4e-8b81f3f36541\",\"created_at\":\"2026-04-14T17:04:42.059343+00:00\",\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\"date\":\"2026-04-14\",\"to_location\":\"B\",\"purpose\":\""
+    },
+    {
+      "method": "GET",
+      "path": "/api/taxes/rates",
+      "status": 200,
+      "duration_ms": 282,
+      "category": "ok",
+      "detail": "[{\"id\":\"16938535-5bb9-4a14-a6c2-c5430cc4d89e\",\"name_ku\":\"بێ باج\",\"is_active\":1,\"created_at\":\"2026-04-03 14:59:42.995970\",\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\"tax_type\":\"vat\",\"is_compound\":"
+    },
+    {
+      "method": "GET",
+      "path": "/api/taxes/groups",
+      "status": 200,
+      "duration_ms": 469,
+      "category": "ok",
+      "detail": "[{\"id\":\"b975a7ab-1576-4298-a0c6-4b0731e0e22c\",\"combined_rate\":0,\"tax_ids\":\"[]\",\"is_active\":1,\"created_at\":\"2026-04-03 15:01:54.419450\",\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\"name\":\"Combined "
+    },
+    {
+      "method": "GET",
+      "path": "/api/taxes/returns",
+      "status": 200,
+      "duration_ms": 279,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20,\"total_pages\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/taxes/withholding",
+      "status": 200,
+      "duration_ms": 227,
+      "category": "ok",
+      "detail": "[{\"id\":\"4dc3c16b-1602-4e6a-8389-e0627ec959fe\",\"name_ku\":\"\",\"is_active\":true,\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\"created_at\":\"2026-04-14T15:41:55.895731+00:00\",\"rate\":5.0,\"account_id\":null"
+    },
+    {
+      "method": "GET",
+      "path": "/api/fiscal/years",
+      "status": 200,
+      "duration_ms": 99,
+      "category": "ok",
+      "detail": "[{\"id\":\"2026\",\"name\":\"2026\",\"start_date\":\"2026-01-01\",\"end_date\":\"2026-12-31\",\"is_current\":true}]"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/profile",
+      "status": 200,
+      "duration_ms": 137,
+      "category": "ok",
+      "detail": "{\"id\":\"2d474688-697a-4483-982c-2253444d425f\",\"email\":\"admin@test.com\",\"display_name\":\"\",\"phone\":\"\",\"role\":\"admin\",\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/organization",
+      "status": 200,
+      "duration_ms": 394,
+      "category": "ok",
+      "detail": "{\"name\":\"\",\"phone\":\"\",\"email\":\"\",\"tax_number\":\"\",\"registration_number\":\"\",\"address_line1\":\"\",\"address_line2\":\"\",\"city\":\"\",\"country\":\"\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/notification-preferences",
+      "status": 200,
+      "duration_ms": 226,
+      "category": "ok",
+      "detail": "{\"invoice_overdue\":true,\"payment_received\":true,\"quote_accepted\":true,\"expense_approved\":true}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/settings",
+      "status": 200,
+      "duration_ms": 415,
+      "category": "ok",
+      "detail": "[{\"id\":\"5aa72193-63ef-4307-b4b0-4a3544d16a85\",\"key\":\"org_name\",\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\"value\":\"Test Company\",\"category\":\"general\"},{\"id\":\"d2d82df7-ed4b-4190-9ef1-8f1e1e64cb3f\""
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/reminder-settings",
+      "status": 200,
+      "duration_ms": 407,
+      "category": "ok",
+      "detail": "{\"id\":\"c44beb87-1049-44fb-8ade-0b9ac16f332f\",\"after_due_days\":\"1,3\",\"is_active\":true,\"email_subject_template\":\"Test\",\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\"updated_at\":\"2026-04-22T17:09:34.7"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/currencies",
+      "status": 200,
+      "duration_ms": 233,
+      "category": "ok",
+      "detail": "[]"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/exchange-rates",
+      "status": 200,
+      "duration_ms": 271,
+      "category": "ok",
+      "detail": "[{\"id\":\"d65e3c56-7404-4497-aa41-a5cc0b3c9471\",\"from_currency\":\"USD\",\"date\":\"2026-04-01 00:00:00.000000\",\"created_at\":\"2026-04-03 15:02:45.345626\",\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\"to_cu"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/invoice-templates",
+      "status": 200,
+      "duration_ms": 234,
+      "category": "ok",
+      "detail": "[]"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/backup/list",
+      "status": 200,
+      "duration_ms": 327,
+      "category": "ok",
+      "detail": "[]"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/backup/download",
+      "status": 200,
+      "duration_ms": 95,
+      "category": "ok",
+      "detail": "{\"org_id\": \"cb160278-d674-46ed-912a-822b0023f7ae\", \"exported_at\": \"2026-04-22T17:10:15.055032\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/activity-log",
+      "status": 200,
+      "duration_ms": 224,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/shipments",
+      "status": 200,
+      "duration_ms": 229,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/challans",
+      "status": 200,
+      "duration_ms": 243,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/returns/sales",
+      "status": 200,
+      "duration_ms": 296,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/returns/purchases",
+      "status": 200,
+      "duration_ms": 406,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/custom-fields",
+      "status": 200,
+      "duration_ms": 241,
+      "category": "ok",
+      "detail": "[{\"id\":\"de4ebe71-f123-46ea-8d4f-76d2d127ab5d\",\"sort_order\":0,\"created_at\":\"2026-04-14T14:07:22.940805+00:00\",\"is_required\":false,\"entity_type\":\"invoice\",\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\""
+    },
+    {
+      "method": "GET",
+      "path": "/api/approvals/workflows",
+      "status": 200,
+      "duration_ms": 430,
+      "category": "ok",
+      "detail": "[]"
+    },
+    {
+      "method": "GET",
+      "path": "/api/approvals/requests",
+      "status": 200,
+      "duration_ms": 418,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/branches",
+      "status": 200,
+      "duration_ms": 238,
+      "category": "ok",
+      "detail": "[{\"id\":\"ab1b38a4-22c4-4030-9a75-589381ce299c\",\"created_at\":\"2026-04-14T14:07:22.265348+00:00\",\"is_active\":false,\"updated_at\":\"2026-04-14T14:07:22.569900+00:00\",\"org_id\":\"cb160278-d674-46ed-912a-822b00"
+    },
+    {
+      "method": "GET",
+      "path": "/api/branches/comparison",
+      "status": 200,
+      "duration_ms": 627,
+      "category": "ok",
+      "detail": "{\"rows\":[{\"branch_id\":\"ab1b38a4-22c4-4030-9a75-589381ce299c\",\"branch_name\":\"Test Branch\",\"revenue\":0,\"expenses\":0,\"profit\":0}],\"date_from\":null,\"date_to\":null}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/expense-claims",
+      "status": 200,
+      "duration_ms": 419,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/payment-links",
+      "status": 200,
+      "duration_ms": 225,
+      "category": "ok",
+      "detail": "[]"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audit",
+      "status": 200,
+      "duration_ms": 256,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"10a77da1-a190-4cf1-897a-366440af589c\",\"path\":\"/api/inventory/warehouses/d415b360-d4f7-43e5-b603-bb7b8c089507\",\"created_at\":\"2026-04-22T17:09:36.527005+00:00\",\"entity_id\":\"warehouses\","
+    },
+    {
+      "method": "GET",
+      "path": "/api/audit/stats",
+      "status": 200,
+      "duration_ms": 239,
+      "category": "ok",
+      "detail": "{\"total_last_30_days\":78,\"total_all_time\":78,\"by_action\":[{\"action\":\"create\",\"count\":59},{\"action\":\"update\",\"count\":11},{\"action\":\"delete\",\"count\":8}],\"by_entity\":[{\"entity_type\":\"pos\",\"count\":59},{\"e"
+    },
+    {
+      "method": "GET",
+      "path": "/api/recurring-bills",
+      "status": 200,
+      "duration_ms": 229,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"02ac3a1f-9c5f-40c7-8665-bed8689acec7\",\"created_at\":\"2026-04-14T17:04:42.310782+00:00\",\"updated_at\":\"2026-04-14T17:04:42.310782+00:00\",\"is_active\":true,\"org_id\":\"cb160278-d674-46ed-912"
+    },
+    {
+      "method": "GET",
+      "path": "/api/transaction-locking",
+      "status": 200,
+      "duration_ms": 360,
+      "category": "ok",
+      "detail": "{\"id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\"locked_by_name\":\"admin@test.com\",\"locked_by\":\"2d474688-697a-4483-982c-2253444d425f\",\"reason\":\"Test\",\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\"lock_"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reporting-tags",
+      "status": 200,
+      "duration_ms": 234,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"32a50f81-5ae1-4eff-b9f1-b795c19e6e6e\",\"name_ku\":\"\",\"updated_at\":\"2026-04-14T17:04:41.800860+00:00\",\"options\":[\"A\",\"B\"],\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\"is_active\":true"
+    },
+    {
+      "method": "GET",
+      "path": "/api/l10n/iq/tax-categories",
+      "status": 200,
+      "duration_ms": 91,
+      "category": "ok",
+      "detail": "[{\"code\":\"vat\",\"name\":\"VAT\",\"name_ku\":\"باجی بەرزکراوە\",\"default_rate\":0.0},{\"code\":\"withholding\",\"name\":\"Withholding Tax\",\"name_ku\":\"باجی گرتنەوە\",\"default_rate\":3.0},{\"code\":\"service\",\"name\":\"Service"
+    },
+    {
+      "method": "GET",
+      "path": "/api/l10n/iq/withholding-rules",
+      "status": 200,
+      "duration_ms": 138,
+      "category": "ok",
+      "detail": "[{\"rate\":3.0,\"applies_to\":\"goods\",\"description\":\"Goods — default\"},{\"rate\":5.0,\"applies_to\":\"services\",\"description\":\"Services — default\"},{\"rate\":7.0,\"applies_to\":\"contracts\",\"description\":\"Construct"
+    },
+    {
+      "method": "GET",
+      "path": "/api/l10n/iq/chart-of-accounts-template",
+      "status": 200,
+      "duration_ms": 220,
+      "category": "ok",
+      "detail": "[{\"code\":\"1000\",\"name\":\"Assets\",\"name_ku\":\"سامان\",\"account_type\":\"asset\",\"children\":[{\"code\":\"1100\",\"name\":\"Current Assets\",\"name_ku\":\"سامانی ئێستا\",\"account_type\":\"asset\",\"children\":[{\"code\":\"1110\",\""
+    },
+    {
+      "method": "GET",
+      "path": "/api/l10n/iq/currency-info",
+      "status": 200,
+      "duration_ms": 88,
+      "category": "ok",
+      "detail": "{\"base\":\"IQD\",\"symbol\":\"د.ع\",\"format\":\"{amount} د.ع\",\"decimals\":0,\"thousand_separator\":\",\",\"numerals\":\"arabic-indic-optional\",\"supported\":[\"IQD\",\"USD\",\"EUR\",\"TRY\"]}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/rbac/permissions",
+      "status": 200,
+      "duration_ms": 137,
+      "category": "ok",
+      "detail": "{\"permissions\":[\"invoices.create\",\"invoices.read\",\"invoices.update\",\"invoices.delete\",\"quotes.create\",\"quotes.read\",\"quotes.update\",\"quotes.delete\",\"sales_orders.create\",\"sales_orders.read\",\"sales_ord"
+    },
+    {
+      "method": "GET",
+      "path": "/api/rbac/roles",
+      "status": 200,
+      "duration_ms": 320,
+      "category": "ok",
+      "detail": "[{\"id\":\"default:admin\",\"code\":\"admin\",\"name\":\"Administrator\",\"name_ku\":\"بەڕێوەبەر\",\"permissions\":[\"*\"],\"is_default\":true,\"is_system\":true},{\"id\":\"default:accountant\",\"code\":\"accountant\",\"name\":\"Accoun"
+    },
+    {
+      "method": "GET",
+      "path": "/api/rbac/users",
+      "status": 200,
+      "duration_ms": 640,
+      "category": "ok",
+      "detail": "[{\"id\":\"2d474688-697a-4483-982c-2253444d425f\",\"email\":\"admin@test.com\",\"full_name\":\"Admin\",\"legacy_role\":\"admin\",\"is_active\":1,\"assigned_roles\":[]}]"
+    },
+    {
+      "method": "GET",
+      "path": "/api/rbac/me/permissions",
+      "status": 200,
+      "duration_ms": 220,
+      "category": "ok",
+      "detail": "{\"user_id\":\"2d474688-697a-4483-982c-2253444d425f\",\"permissions\":[\"*\"],\"role\":\"admin\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/einvoice/config",
+      "status": 200,
+      "duration_ms": 417,
+      "category": "ok",
+      "detail": "{\"enabled\":false,\"preview_mode\":true,\"environment\":\"sandbox\",\"portal_url\":\"\",\"status_url_template\":\"\",\"cancel_url\":\"\",\"seller_tax_id\":\"\",\"branch_code\":\"\",\"auto_submit_on_send\":false,\"has_private_key\":"
+    },
+    {
+      "method": "GET",
+      "path": "/api/einvoice/report/monthly",
+      "status": 200,
+      "duration_ms": 233,
+      "category": "ok",
+      "detail": "{\"period_from\":\"2026-04-01\",\"period_to\":\"2026-04-30\",\"summary\":{\"generated\":0,\"signed\":0,\"submitted\":0,\"accepted\":0,\"rejected\":0,\"cancelled\":0},\"items\":[]}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/einvoice/report/errors",
+      "status": 200,
+      "duration_ms": 230,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/configs",
+      "status": 200,
+      "duration_ms": 226,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"933a84a8-eb7f-4488-898f-8eff1ddef4cb\",\"receipt_footer\":null,\"created_at\":\"2026-04-22T04:57:57.695985+00:00\",\"closing_cash_required\":true,\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/sessions",
+      "status": 200,
+      "duration_ms": 409,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"a9bcc8fb-608b-4336-8a6c-fe9d9f9b260a\",\"opened_at\":\"2026-04-22T04:58:01.076715\",\"created_at\":\"2026-04-22T04:58:01.076755+00:00\",\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\"user_id"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/orders",
+      "status": 200,
+      "duration_ms": 479,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":25,\"total_pages\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/orders/search",
+      "status": 200,
+      "duration_ms": 238,
+      "category": "ok",
+      "detail": "{\"items\":[]}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/orders/quotations",
+      "status": 200,
+      "duration_ms": 415,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":25,\"total_pages\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/payment-methods",
+      "status": 200,
+      "duration_ms": 233,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"a6d1dd8c-27f2-46c4-8b55-c9f060b4f85e\",\"type\":\"cash\",\"name_ku\":null,\"updated_at\":\"2026-04-21T22:35:16.505003+00:00\",\"is_active\":true,\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\"jo"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/categories",
+      "status": 200,
+      "duration_ms": 231,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"97fcab03-11f1-416b-88c3-abfa25300484\",\"name_ku\":null,\"updated_at\":\"2026-04-21T22:35:29.279611+00:00\",\"is_active\":true,\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\"color\":null,\"ima"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/products",
+      "status": 200,
+      "duration_ms": 238,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":50}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/combos",
+      "status": 200,
+      "duration_ms": 233,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":50}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/pricelists",
+      "status": 200,
+      "duration_ms": 225,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"37fed2a9-54f8-43e2-a154-bbef11a31b24\",\"name_ku\":null,\"updated_at\":\"2026-04-21T22:35:31.931131+00:00\",\"is_active\":true,\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\"currency\":\"IQD\","
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/presets",
+      "status": 200,
+      "duration_ms": 226,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":50}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/products/lookup",
+      "status": 200,
+      "duration_ms": 226,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"09bda403-7668-4a97-a2e6-a4404f7614c7\",\"name\":\"QA Burger\",\"name_ku\":\"\",\"sku\":\"QA-001\",\"barcode\":\"\",\"price\":0,\"tax_rate\":0,\"image_url\":\"\",\"qty_available\":0,\"category_id\":\"\"},{\"id\":\"baf0"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/floors",
+      "status": 200,
+      "duration_ms": 225,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"742d42b8-0241-444f-a0d6-edb8735b81d5\",\"updated_by\":\"2d474688-697a-4483-982c-2253444d425f\",\"updated_at\":\"2026-04-21T22:35:32.707989+00:00\",\"name_ku\":null,\"org_id\":\"cb160278-d674-46ed-9"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/preparation/displays",
+      "status": 200,
+      "duration_ms": 364,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"9f829504-e9af-4567-b94a-15da42349b52\",\"stages\":[{\"key\":\"received\",\"color\":\"#ff4d4f\",\"name\":\"Received\"},{\"key\":\"preparing\",\"color\":\"#faad14\",\"name\":\"Preparing\"},{\"key\":\"ready\",\"color\":"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/employees",
+      "status": 200,
+      "duration_ms": 363,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"6504d273-5cfa-45af-ad60-92fad34e840b\",\"barcode\":null,\"name_ku\":null,\"updated_at\":\"2026-04-21T22:35:19.436944+00:00\",\"is_active\":true,\"org_id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\"u"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/loyalty/programs",
+      "status": 200,
+      "duration_ms": 224,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"430167e7-bc6d-4480-8829-1c3347b8bf09\",\"name\":\"QA Loy\",\"name_ku\":null,\"updated_at\":\"2026-04-21T22:35:34.471221+00:00\",\"program_type\":\"loyalty\",\"org_id\":\"cb160278-d674-46ed-912a-822b002"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/loyalty/cards",
+      "status": 200,
+      "duration_ms": 414,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/gift-cards",
+      "status": 200,
+      "duration_ms": 428,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/invoices",
+      "status": 200,
+      "duration_ms": 433,
+      "category": "ok",
+      "detail": "PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000N��\\F�MH�\u0000\u0000\u0000�\u0000\u0000\u0000\u0010\u0000\u0000\u0000docProps/app.xmlM�M\u000b�0\f\u0006�Rv���\u001e�\u000eD=����.u��)m����\u0004?nyy�\u001b�.�\"&��E�.�m32�\r@�#�>�ʡ���{�1݁��\u001a\u000f�\u001f\u001e\u0003âm׀�1\f8�ⷰ��.FguϖBw�:Q&��X4:�'\u001f��\u001c\n\u0010�z%>�\u0013K9�+\u0005��S�\u0015S���o�d\u0005�\u0007�\u0017PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000N��"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/bills",
+      "status": 200,
+      "duration_ms": 391,
+      "category": "ok",
+      "detail": "PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000N��\\F�MH�\u0000\u0000\u0000�\u0000\u0000\u0000\u0010\u0000\u0000\u0000docProps/app.xmlM�M\u000b�0\f\u0006�Rv���\u001e�\u000eD=����.u��)m����\u0004?nyy�\u001b�.�\"&��E�.�m32�\r@�#�>�ʡ���{�1݁��\u001a\u000f�\u001f\u001e\u0003âm׀�1\f8�ⷰ��.FguϖBw�:Q&��X4:�'\u001f��\u001c\n\u0010�z%>�\u0013K9�+\u0005��S�\u0015S���o�d\u0005�\u0007�\u0017PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000N��"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/journal-entries",
+      "status": 200,
+      "duration_ms": 531,
+      "category": "ok",
+      "detail": "PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000N��\\F�MH�\u0000\u0000\u0000�\u0000\u0000\u0000\u0010\u0000\u0000\u0000docProps/app.xmlM�M\u000b�0\f\u0006�Rv���\u001e�\u000eD=����.u��)m����\u0004?nyy�\u001b�.�\"&��E�.�m32�\r@�#�>�ʡ���{�1݁��\u001a\u000f�\u001f\u001e\u0003âm׀�1\f8�ⷰ��.FguϖBw�:Q&��X4:�'\u001f��\u001c\n\u0010�z%>�\u0013K9�+\u0005��S�\u0015S���o�d\u0005�\u0007�\u0017PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000N��"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/customers",
+      "status": 200,
+      "duration_ms": 386,
+      "category": "ok",
+      "detail": "PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000O��\\F�MH�\u0000\u0000\u0000�\u0000\u0000\u0000\u0010\u0000\u0000\u0000docProps/app.xmlM�M\u000b�0\f\u0006�Rv���\u001e�\u000eD=����.u��)m����\u0004?nyy�\u001b�.�\"&��E�.�m32�\r@�#�>�ʡ���{�1݁��\u001a\u000f�\u001f\u001e\u0003âm׀�1\f8�ⷰ��.FguϖBw�:Q&��X4:�'\u001f��\u001c\n\u0010�z%>�\u0013K9�+\u0005��S�\u0015S���o�d\u0005�\u0007�\u0017PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000O��"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/products",
+      "status": 200,
+      "duration_ms": 235,
+      "category": "ok",
+      "detail": "PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000O��\\F�MH�\u0000\u0000\u0000�\u0000\u0000\u0000\u0010\u0000\u0000\u0000docProps/app.xmlM�M\u000b�0\f\u0006�Rv���\u001e�\u000eD=����.u��)m����\u0004?nyy�\u001b�.�\"&��E�.�m32�\r@�#�>�ʡ���{�1݁��\u001a\u000f�\u001f\u001e\u0003âm׀�1\f8�ⷰ��.FguϖBw�:Q&��X4:�'\u001f��\u001c\n\u0010�z%>�\u0013K9�+\u0005��S�\u0015S���o�d\u0005�\u0007�\u0017PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000O��"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/pos-sales",
+      "status": 200,
+      "duration_ms": 237,
+      "category": "ok",
+      "detail": "PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000O��\\F�MH�\u0000\u0000\u0000�\u0000\u0000\u0000\u0010\u0000\u0000\u0000docProps/app.xmlM�M\u000b�0\f\u0006�Rv���\u001e�\u000eD=����.u��)m����\u0004?nyy�\u001b�.�\"&��E�.�m32�\r@�#�>�ʡ���{�1݁��\u001a\u000f�\u001f\u001e\u0003âm׀�1\f8�ⷰ��.FguϖBw�:Q&��X4:�'\u001f��\u001c\n\u0010�z%>�\u0013K9�+\u0005��S�\u0015S���o�d\u0005�\u0007�\u0017PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000O��"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/inventory",
+      "status": 200,
+      "duration_ms": 665,
+      "category": "ok",
+      "detail": "PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000O��\\F�MH�\u0000\u0000\u0000�\u0000\u0000\u0000\u0010\u0000\u0000\u0000docProps/app.xmlM�M\u000b�0\f\u0006�Rv���\u001e�\u000eD=����.u��)m����\u0004?nyy�\u001b�.�\"&��E�.�m32�\r@�#�>�ʡ���{�1݁��\u001a\u000f�\u001f\u001e\u0003âm׀�1\f8�ⷰ��.FguϖBw�:Q&��X4:�'\u001f��\u001c\n\u0010�z%>�\u0013K9�+\u0005��S�\u0015S���o�d\u0005�\u0007�\u0017PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000O��"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/aging-receivables",
+      "status": 200,
+      "duration_ms": 276,
+      "category": "ok",
+      "detail": "PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000O��\\F�MH�\u0000\u0000\u0000�\u0000\u0000\u0000\u0010\u0000\u0000\u0000docProps/app.xmlM�M\u000b�0\f\u0006�Rv���\u001e�\u000eD=����.u��)m����\u0004?nyy�\u001b�.�\"&��E�.�m32�\r@�#�>�ʡ���{�1݁��\u001a\u000f�\u001f\u001e\u0003âm׀�1\f8�ⷰ��.FguϖBw�:Q&��X4:�'\u001f��\u001c\n\u0010�z%>�\u0013K9�+\u0005��S�\u0015S���o�d\u0005�\u0007�\u0017PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000O��"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/aging-payables",
+      "status": 200,
+      "duration_ms": 231,
+      "category": "ok",
+      "detail": "PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000O��\\F�MH�\u0000\u0000\u0000�\u0000\u0000\u0000\u0010\u0000\u0000\u0000docProps/app.xmlM�M\u000b�0\f\u0006�Rv���\u001e�\u000eD=����.u��)m����\u0004?nyy�\u001b�.�\"&��E�.�m32�\r@�#�>�ʡ���{�1݁��\u001a\u000f�\u001f\u001e\u0003âm׀�1\f8�ⷰ��.FguϖBw�:Q&��X4:�'\u001f��\u001c\n\u0010�z%>�\u0013K9�+\u0005��S�\u0015S���o�d\u0005�\u0007�\u0017PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000O��"
+    },
+    {
+      "method": "GET",
+      "path": "/api/crm/stages",
+      "status": 200,
+      "duration_ms": 232,
+      "category": "ok",
+      "detail": "{\"items\":[{\"id\":\"df39eff4-7da1-40e1-96b7-af97c9645e61\",\"is_lost\":false,\"created_at\":\"2026-04-22T16:56:41.901747+00:00\",\"updated_at\":\"2026-04-22T16:56:41.901747+00:00\",\"is_active\":true,\"org_id\":\"cb1602"
+    },
+    {
+      "method": "GET",
+      "path": "/api/crm/leads",
+      "status": 200,
+      "duration_ms": 422,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20,\"total_pages\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/crm/opportunities",
+      "status": 200,
+      "duration_ms": 299,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":20,\"total_pages\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/crm/activities",
+      "status": 200,
+      "duration_ms": 228,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/crm/forecast",
+      "status": 200,
+      "duration_ms": 225,
+      "category": "ok",
+      "detail": "{\"months\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/crm/reports/pipeline",
+      "status": 200,
+      "duration_ms": 429,
+      "category": "ok",
+      "detail": "{\"stages\":[{\"stage_id\":\"df39eff4-7da1-40e1-96b7-af97c9645e61\",\"stage_name\":\"New\",\"color\":\"#1890ff\",\"sequence\":1,\"count\":0,\"value\":0.0},{\"stage_id\":\"d86bc02d-885e-4275-9633-fa19e91d9f65\",\"stage_name\":\""
+    },
+    {
+      "method": "GET",
+      "path": "/api/crm/reports/won-lost",
+      "status": 200,
+      "duration_ms": 441,
+      "category": "ok",
+      "detail": "{\"won_count\":0,\"lost_count\":0,\"won_value\":0,\"lost_value\":0,\"win_rate\":0,\"average_deal_size\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/crm/reports/leaderboard",
+      "status": 200,
+      "duration_ms": 467,
+      "category": "ok",
+      "detail": "{\"items\":[]}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/whatsapp/config",
+      "status": 200,
+      "duration_ms": 470,
+      "category": "ok",
+      "detail": "{\"enabled\":false,\"preview_mode\":true,\"api_base\":\"https://graph.facebook.com/v20.0\",\"phone_number_id\":\"\",\"api_token\":\"\",\"business_account_id\":\"\",\"default_country_code\":\"964\",\"auto_send_invoice\":false,\""
+    },
+    {
+      "method": "GET",
+      "path": "/api/whatsapp/templates",
+      "status": 200,
+      "duration_ms": 252,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/whatsapp/messages",
+      "status": 200,
+      "duration_ms": 228,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0,\"page\":1,\"page_size\":50,\"total_pages\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/whatsapp/messages/stats",
+      "status": 200,
+      "duration_ms": 415,
+      "category": "ok",
+      "detail": "{\"queued\":0,\"sending\":0,\"sent\":0,\"delivered\":0,\"read\":0,\"failed\":0,\"skipped\":0,\"previewed\":0,\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ocr/scans",
+      "status": 200,
+      "duration_ms": 227,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hr/departments",
+      "status": 200,
+      "duration_ms": 238,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hr/positions",
+      "status": 200,
+      "duration_ms": 241,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hr/employees",
+      "status": 200,
+      "duration_ms": 244,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hr/contracts",
+      "status": 200,
+      "duration_ms": 301,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hr/attendance",
+      "status": 200,
+      "duration_ms": 242,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hr/attendance/summary",
+      "status": 200,
+      "duration_ms": 225,
+      "category": "ok",
+      "detail": "{\"month\":\"2026-04\",\"summary\":[]}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hr/leave-types",
+      "status": 200,
+      "duration_ms": 411,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hr/time-off",
+      "status": 200,
+      "duration_ms": 428,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hr/dashboard",
+      "status": 200,
+      "duration_ms": 1046,
+      "category": "ok",
+      "detail": "{\"employees_total\":0,\"employees_active\":0,\"active_contracts\":0,\"pending_time_off\":0,\"checked_in_today\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/payroll/rules",
+      "status": 200,
+      "duration_ms": 226,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/payroll/runs",
+      "status": 200,
+      "duration_ms": 637,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/payroll/payslips",
+      "status": 200,
+      "duration_ms": 241,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/manufacturing/boms",
+      "status": 200,
+      "duration_ms": 229,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/manufacturing/work-centers",
+      "status": 200,
+      "duration_ms": 226,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/manufacturing/orders",
+      "status": 200,
+      "duration_ms": 234,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/manufacturing/work-orders",
+      "status": 200,
+      "duration_ms": 394,
+      "category": "ok",
+      "detail": "{\"items\":[],\"total\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/manufacturing/dashboard",
+      "status": 200,
+      "duration_ms": 787,
+      "category": "ok",
+      "detail": "{\"bom_count\":0,\"mo_total\":0,\"mo_draft\":0,\"mo_confirmed\":0,\"mo_done\":0,\"wo_pending\":0,\"wo_in_progress\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/companies",
+      "status": 200,
+      "duration_ms": 437,
+      "category": "ok",
+      "detail": "[{\"id\":\"cb160278-d674-46ed-912a-822b0023f7ae\",\"name\":\"Head Company\",\"code\":\"HQ\",\"is_primary\":true,\"is_active\":true,\"currency\":\"IQD\"},{\"id\":\"8b7d091f-ebe5-4ec7-be3b-55352c77cd74\",\"created_at\":\"2026-04-"
+    },
+    {
+      "method": "GET",
+      "path": "/api/companies/consolidated/pl",
+      "status": 200,
+      "duration_ms": 817,
+      "category": "ok",
+      "detail": "{\"rows\":[{\"company_id\":\"8b7d091f-ebe5-4ec7-be3b-55352c77cd74\",\"company_name\":\"Test Sub\",\"revenue\":0,\"expenses\":0,\"profit\":0}],\"totals\":{\"revenue\":0.0,\"expenses\":0.0,\"profit\":0.0},\"date_from\":null,\"dat"
+    },
+    {
+      "method": "GET",
+      "path": "/api/companies/consolidated/bs",
+      "status": 200,
+      "duration_ms": 585,
+      "category": "ok",
+      "detail": "{\"rows\":[{\"company_id\":\"8b7d091f-ebe5-4ec7-be3b-55352c77cd74\",\"company_name\":\"Test Sub\",\"assets\":0,\"liabilities\":0,\"equity\":0}],\"totals\":{\"assets\":0,\"liabilities\":0,\"equity\":0}}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/companies/intercompany",
+      "status": 200,
+      "duration_ms": 223,
+      "category": "ok",
+      "detail": "[]"
+    }
+  ]
+}

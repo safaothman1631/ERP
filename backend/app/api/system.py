@@ -1,0 +1,359 @@
+import uuid
+import io
+import json
+import datetime
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+from typing import Optional, List
+from app.firestore.system import SettingsRepository, CurrencyRepository, ExchangeRateRepository, ReminderSettingsRepository
+from app.firestore.base import BaseRepository
+from app.services.auth import get_current_user, hash_password, verify_password
+from app.firebase_client import get_db
+
+router = APIRouter(prefix="/api/system", tags=["System"])
+
+
+# --- Repositories ---
+class OrganizationRepository(BaseRepository):
+    collection_name = "organizations"
+
+
+class NotificationPreferenceRepository(BaseRepository):
+    collection_name = "notification_preferences"
+
+
+# --- Pydantic Models ---
+class ProfileUpdate(BaseModel):
+    display_name: Optional[str] = None
+    phone: Optional[str] = None
+
+
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str
+
+
+class OrganizationUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    tax_number: Optional[str] = None
+    registration_number: Optional[str] = None
+    address_line1: Optional[str] = None
+    address_line2: Optional[str] = None
+    city: Optional[str] = None
+    country: Optional[str] = None
+
+
+class NotificationPreferencesUpdate(BaseModel):
+    invoice_overdue: bool = True
+    payment_received: bool = True
+    quote_accepted: bool = True
+    expense_approved: bool = True
+
+
+# --- Profile ---
+@router.get("/profile")
+def get_profile(user: dict = Depends(get_current_user)):
+    return {
+        "id": user["id"],
+        "email": user.get("email", ""),
+        "display_name": user.get("display_name", ""),
+        "phone": user.get("phone", ""),
+        "role": user.get("role", ""),
+        "org_id": user.get("org_id", ""),
+    }
+
+
+@router.put("/profile")
+def update_profile(data: ProfileUpdate, user: dict = Depends(get_current_user)):
+    db = get_db()
+    update_data: dict = {}
+    if data.display_name is not None:
+        update_data["display_name"] = data.display_name
+    if data.phone is not None:
+        update_data["phone"] = data.phone
+    if not update_data:
+        raise HTTPException(status_code=400, detail="هیچ داتایەک نەنێردرا")
+    update_data["updated_at"] = datetime.datetime.utcnow()
+    db.collection("users").document(user["id"]).update(update_data)
+    return {"ok": True}
+
+
+@router.put("/profile/password")
+def change_password(data: PasswordChange, user: dict = Depends(get_current_user)):
+    if len(data.new_password) < 6:
+        raise HTTPException(status_code=400, detail="وشەی نهێنی نوێ پێویستە لانی کەم ٦ پیت بێت")
+    stored_hash = user.get("password", "")
+    if not verify_password(data.current_password, stored_hash):
+        raise HTTPException(status_code=400, detail="وشەی نهێنی ئێستا هەڵەیە")
+    db = get_db()
+    db.collection("users").document(user["id"]).update({
+        "password": hash_password(data.new_password),
+        "updated_at": datetime.datetime.utcnow(),
+    })
+    return {"ok": True}
+
+
+# --- Organization ---
+@router.get("/organization")
+def get_organization(user: dict = Depends(get_current_user)):
+    repo = OrganizationRepository(user["org_id"])
+    items, _ = repo.list(limit=1)
+    if items:
+        return items[0]
+    return {"name": "", "phone": "", "email": "", "tax_number": "", "registration_number": "",
+            "address_line1": "", "address_line2": "", "city": "", "country": ""}
+
+
+@router.get("/organizations")
+def list_my_organizations(user: dict = Depends(get_current_user)):
+    """List organizations the current user can access. Currently single-org per user."""
+    db = get_db()
+    org_id = user.get("org_id")
+    if not org_id:
+        return {"current": None, "organizations": []}
+    org_doc = db.collection("organizations").document(org_id).get()
+    org_data: dict = org_doc.to_dict() if org_doc.exists else {}
+    item = {
+        "id": org_id,
+        "name": org_data.get("name") or org_data.get("display_name") or "Organization",
+        "is_current": True,
+        "role": user.get("role", "member"),
+        "logo_url": org_data.get("logo_url"),
+    }
+    return {"current": org_id, "organizations": [item]}
+
+
+
+@router.put("/organization")
+def update_organization(data: OrganizationUpdate, user: dict = Depends(get_current_user)):
+    repo = OrganizationRepository(user["org_id"])
+    items, _ = repo.list(limit=1)
+    payload = {k: v for k, v in data.model_dump().items() if v is not None}
+    if not payload:
+        raise HTTPException(status_code=400, detail="هیچ داتایەک نەنێردرا")
+    if items:
+        return repo.update(items[0]["id"], payload)
+    return repo.create(payload)
+
+
+# --- Notification Preferences ---
+@router.get("/notification-preferences")
+def get_notification_preferences(user: dict = Depends(get_current_user)):
+    repo = NotificationPreferenceRepository(user["org_id"])
+    filters = [{"field": "user_id", "op": "==", "value": user["id"]}]
+    items, _ = repo.list(filters=filters, limit=1)
+    if items:
+        return items[0]
+    return {"invoice_overdue": True, "payment_received": True, "quote_accepted": True, "expense_approved": True}
+
+
+@router.put("/notification-preferences")
+def update_notification_preferences(data: NotificationPreferencesUpdate, user: dict = Depends(get_current_user)):
+    repo = NotificationPreferenceRepository(user["org_id"])
+    filters = [{"field": "user_id", "op": "==", "value": user["id"]}]
+    items, _ = repo.list(filters=filters, limit=1)
+    payload = data.model_dump()
+    payload["user_id"] = user["id"]
+    if items:
+        return repo.update(items[0]["id"], payload)
+    return repo.create(payload)
+
+
+# --- Settings ---
+@router.get("/settings")
+def get_settings(user: dict = Depends(get_current_user)):
+    repo = SettingsRepository(user["org_id"])
+    items, _ = repo.list(limit=100)
+    return items
+
+
+@router.post("/settings")
+def upsert_setting(data: dict, user: dict = Depends(get_current_user)):
+    key = data.get("key")
+    if not key:
+        raise HTTPException(status_code=400, detail="key required")
+
+    category = data.get("category", "general")
+    repo = SettingsRepository(user["org_id"])
+    items, _ = repo.list(
+        filters=[
+            {"field": "key", "op": "==", "value": key},
+            {"field": "category", "op": "==", "value": category},
+        ],
+        limit=1,
+    )
+    payload = {
+        "key": key,
+        "value": data.get("value", ""),
+        "category": category,
+    }
+    if items:
+        return repo.update(items[0]["id"], payload)
+    return repo.create(payload)
+
+
+@router.get("/reminder-settings")
+def get_reminder_settings(user: dict = Depends(get_current_user)):
+    repo = ReminderSettingsRepository(user["org_id"])
+    items, _ = repo.list(limit=1)
+    if items:
+        return items[0]
+    return {
+        "before_due_days": "3,7,14",
+        "after_due_days": "1,3,7",
+        "email_subject_template": "Invoice reminder",
+        "email_body_template": "Your invoice is due soon.",
+        "is_active": True,
+    }
+
+
+@router.put("/reminder-settings")
+def update_reminder_settings(data: dict, user: dict = Depends(get_current_user)):
+    repo = ReminderSettingsRepository(user["org_id"])
+    items, _ = repo.list(limit=1)
+    payload = {
+        "before_due_days": data.get("before_due_days", "3,7,14"),
+        "after_due_days": data.get("after_due_days", "1,3,7"),
+        "email_subject_template": data.get("email_subject_template", "Invoice reminder"),
+        "email_body_template": data.get("email_body_template", "Your invoice is due soon."),
+        "is_active": bool(data.get("is_active", True)),
+    }
+    if items:
+        return repo.update(items[0]["id"], payload)
+    return repo.create(payload)
+
+
+@router.get("/currencies")
+def list_currencies():
+    repo = CurrencyRepository("system")
+    items, _ = repo.list(limit=200)
+    return items
+
+
+# --- Exchange Rates ---
+class ExchangeRateIn(BaseModel):
+    from_currency: str
+    to_currency: str
+    rate: float
+    date: str
+
+
+@router.get("/exchange-rates")
+def list_exchange_rates(user: dict = Depends(get_current_user)):
+    repo = ExchangeRateRepository(user["org_id"])
+    items, _ = repo.list(limit=500)
+    return items
+
+
+@router.post("/exchange-rates", status_code=201)
+def create_exchange_rate(data: ExchangeRateIn, user: dict = Depends(get_current_user)):
+    repo = ExchangeRateRepository(user["org_id"])
+    return repo.create(data.model_dump())
+
+
+# --- Invoice Templates ---
+class InvoiceTemplateIn(BaseModel):
+    name: str
+    layout: str = "classic"
+    colors: Optional[str] = None
+    show_logo: bool = True
+    footer_text: Optional[str] = None
+
+
+class InvoiceTemplateRepo(BaseRepository):
+    collection_name = "invoice_templates"
+
+
+@router.get("/invoice-templates")
+def list_invoice_templates(user: dict = Depends(get_current_user)):
+    repo = InvoiceTemplateRepo(user["org_id"])
+    items, _ = repo.list(limit=100)
+    return items
+
+
+@router.post("/invoice-templates", status_code=201)
+def create_invoice_template(data: InvoiceTemplateIn, user: dict = Depends(get_current_user)):
+    repo = InvoiceTemplateRepo(user["org_id"])
+    payload = data.model_dump()
+    # first template is default
+    existing, _ = repo.list(limit=1)
+    payload["is_default"] = len(existing) == 0
+    return repo.create(payload)
+
+
+@router.post("/invoice-templates/{template_id}/set-default")
+def set_default_template(template_id: str, user: dict = Depends(get_current_user)):
+    repo = InvoiceTemplateRepo(user["org_id"])
+    # unset all defaults
+    items, _ = repo.list(limit=100)
+    for item in items:
+        repo.update(item["id"], {"is_default": item["id"] == template_id})
+    return {"ok": True}
+
+
+# --- Backup ---
+class BackupRepo(BaseRepository):
+    collection_name = "backups"
+
+
+@router.get("/backup/list")
+def list_backups(user: dict = Depends(get_current_user)):
+    repo = BackupRepo(user["org_id"])
+    items, _ = repo.list(limit=50)
+    return items
+
+
+@router.post("/backup", status_code=201)
+def create_backup(user: dict = Depends(get_current_user)):
+    repo = BackupRepo(user["org_id"])
+    now = datetime.datetime.utcnow()
+    filename = f"backup_{now.strftime('%Y%m%d_%H%M%S')}.json"
+    entry = repo.create({"filename": filename, "created": now.isoformat(), "size": 0})
+    return entry
+
+
+@router.get("/backup/download")
+def download_backup(user: dict = Depends(get_current_user)):
+    data = json.dumps({"org_id": user["org_id"], "exported_at": datetime.datetime.utcnow().isoformat()})
+    return StreamingResponse(
+        io.BytesIO(data.encode()),
+        media_type="application/json",
+        headers={"Content-Disposition": "attachment; filename=backup.json"}
+    )
+
+
+# --- Activity Log ---
+class ActivityLogRepo(BaseRepository):
+    collection_name = "activity_log"
+
+
+@router.get("/activity-log")
+def list_activity_log(
+    page: int = 1,
+    page_size: int = 20,
+    action: Optional[str] = Query(None),
+    entity: Optional[str] = Query(None),
+    from_date: Optional[str] = Query(None),
+    to_date: Optional[str] = Query(None),
+    user: dict = Depends(get_current_user),
+):
+    repo = ActivityLogRepo(user["org_id"])
+    filters: List[dict] = []
+    if action:
+        filters.append({"field": "action", "op": "==", "value": action})
+    if entity:
+        filters.append({"field": "entity_type", "op": "==", "value": entity})
+    if from_date:
+        filters.append({"field": "created_at", "op": ">=", "value": datetime.datetime.fromisoformat(from_date)})
+    if to_date:
+        filters.append({"field": "created_at", "op": "<=", "value": datetime.datetime.fromisoformat(to_date + "T23:59:59")})
+    items, total = repo.list(
+        filters=filters if filters else None,
+        limit=page_size,
+        offset=(page - 1) * page_size,
+        order_by="created_at",
+    )
+    return {"items": items, "total": total}

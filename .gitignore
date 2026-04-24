@@ -1,0 +1,91 @@
+# ============================================================
+# Secrets — NEVER commit these
+# ============================================================
+**/serviceAccountKey*.json
+**/firebase-adminsdk*.json
+**/.env
+**/.env.local
+**/.env.*.local
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Keep examples
+!**/.env.example
+
+# ============================================================
+# Python
+# ============================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+
+# ============================================================
+# Node / Frontend
+# ============================================================
+node_modules/
+dist/
+build/
+.vite/
+*.tsbuildinfo
+.eslintcache
+
+# Playwright / Lighthouse
+playwright-report/
+test-results/
+.lighthouseci/
+
+# ============================================================
+# IDE / OS
+# ============================================================
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ============================================================
+# Logs / temp / backups
+# ============================================================
+*.log
+logs/
+backend/backups/
+backend/_qa_*
+backend/_pos_qa.py
+backend/_*.py
+backend/_*.txt
+*.tmp
+*.bak
+.cache/
+
+# ============================================================
+# Memory (local agent notes)
+# ============================================================
+/memories/
+
+# ============================================================
+# Vendored / fetched external docs (huge, regenerable)
+# ============================================================
+odoo-docs-19/
+zoho_books.db
+*.sqlite
+*.sqlite3

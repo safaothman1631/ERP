@@ -1,0 +1,310 @@
+import React, { useEffect, useState } from 'react';
+import { Table, Button, Tag, Card, Row, Col, Statistic, Select, Space, Checkbox, Empty, Typography } from 'antd';
+import { message } from '../utils/message';
+import { SyncOutlined, CheckCircleOutlined, LinkOutlined, BankOutlined, DollarOutlined, WarningOutlined, InboxOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import api from '../api';
+import { PageHeader } from '../design-system';
+
+const { Text, Title } = Typography;
+
+interface Transaction {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  type: string;
+  matched?: boolean;
+}
+
+interface ReconciliationSummary {
+  opening_balance: number;
+  closing_balance: number;
+  system_balance: number;
+  difference: number;
+}
+
+const BankReconciliation: React.FC = () => {
+  const { t } = useTranslation();
+  const [accounts, setAccounts] = useState<{ id: string; account_name: string }[]>([]);
+  const [selectedAccount, setSelectedAccount] = useState<string>('');
+  const [bankTransactions, setBankTransactions] = useState<Transaction[]>([]);
+  const [systemTransactions, setSystemTransactions] = useState<Transaction[]>([]);
+  const [summary, setSummary] = useState<ReconciliationSummary>({ opening_balance: 0, closing_balance: 0, system_balance: 0, difference: 0 });
+  const [loading, setLoading] = useState(false);
+  const [selectedBank, setSelectedBank] = useState<string[]>([]);
+  const [selectedSystem, setSelectedSystem] = useState<string[]>([]);
+  const [matching, setMatching] = useState(false);
+  const [completing, setCompleting] = useState(false);
+
+  useEffect(() => {
+    api.get('/api/banking/accounts').then(r => setAccounts(r.data)).catch(() => {});
+  }, []);
+
+  const fetchReconciliation = async (accountId: string) => {
+    if (!accountId) return;
+    setLoading(true);
+    try {
+      const [bank, system, sum] = await Promise.all([
+        api.get(`/api/banking/accounts/${accountId}/statements`, { params: { status: 'unreconciled' } }),
+        api.get(`/api/banking/accounts/${accountId}/transactions`, { params: { status: 'unreconciled' } }),
+        api.get(`/api/banking/accounts/${accountId}/reconciliation-summary`),
+      ]);
+      setBankTransactions(bank.data.items || bank.data);
+      setSystemTransactions(system.data.items || system.data);
+      setSummary(sum.data);
+    } catch {
+      message.error(t('error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAccountChange = (value: string) => {
+    setSelectedAccount(value);
+    setSelectedBank([]);
+    setSelectedSystem([]);
+    fetchReconciliation(value);
+  };
+
+  const handleAutoMatch = async () => {
+    if (!selectedAccount) return;
+    setMatching(true);
+    try {
+      await api.post(`/api/banking/accounts/${selectedAccount}/auto-match`);
+      message.success(t('success'));
+      fetchReconciliation(selectedAccount);
+    } catch {
+      message.error(t('error'));
+    } finally {
+      setMatching(false);
+    }
+  };
+
+  const handleManualMatch = async () => {
+    if (!selectedAccount || selectedBank.length === 0 || selectedSystem.length === 0) return;
+    setMatching(true);
+    try {
+      await api.post(`/api/banking/accounts/${selectedAccount}/match`, {
+        bank_transaction_ids: selectedBank,
+        system_transaction_ids: selectedSystem,
+      });
+      message.success(t('success'));
+      setSelectedBank([]);
+      setSelectedSystem([]);
+      fetchReconciliation(selectedAccount);
+    } catch {
+      message.error(t('error'));
+    } finally {
+      setMatching(false);
+    }
+  };
+
+
+  const handleComplete = async () => {
+    if (!selectedAccount) return;
+    setCompleting(true);
+    try {
+      await api.post(`/api/banking/accounts/${selectedAccount}/complete-reconciliation`);
+      message.success(t('completeReconciliation') + ' — ' + t('success'));
+      fetchReconciliation(selectedAccount);
+    } catch {
+      message.error(t('error'));
+    } finally {
+      setCompleting(false);
+    }
+  };
+
+  const fmtIQD = (v: number) => `${new Intl.NumberFormat('en-US').format(v || 0)} د.ع`;
+
+  const bankColumns = [
+    {
+      title: '',
+      key: 'select',
+      width: 40,
+      render: (_: unknown, r: Transaction) => (
+        <Checkbox
+          checked={selectedBank.includes(r.id)}
+          onChange={e => {
+            setSelectedBank(e.target.checked ? [...selectedBank, r.id] : selectedBank.filter(x => x !== r.id));
+          }}
+        />
+      ),
+    },
+    { title: t('date'), dataIndex: 'date', key: 'date', render: (d: string) => d?.substring(0, 10) },
+    { title: t('description'), dataIndex: 'description', key: 'description' },
+    {
+      title: t('amount'), dataIndex: 'amount', key: 'amount',
+      render: (v: number) => <span style={{ color: v >= 0 ? '#52c41a' : '#f5222d' }}>{fmtIQD(v)}</span>,
+    },
+  ];
+
+  const systemColumns = [
+    {
+      title: '',
+      key: 'select',
+      width: 40,
+      render: (_: unknown, r: Transaction) => (
+        <Checkbox
+          checked={selectedSystem.includes(r.id)}
+          onChange={e => {
+            setSelectedSystem(e.target.checked ? [...selectedSystem, r.id] : selectedSystem.filter(x => x !== r.id));
+          }}
+        />
+      ),
+    },
+    { title: t('date'), dataIndex: 'date', key: 'date', render: (d: string) => d?.substring(0, 10) },
+    { title: t('description'), dataIndex: 'description', key: 'description' },
+    {
+      title: t('amount'), dataIndex: 'amount', key: 'amount',
+      render: (v: number) => <span style={{ color: v >= 0 ? '#52c41a' : '#f5222d' }}>{fmtIQD(v)}</span>,
+    },
+    { title: t('type'), dataIndex: 'type', key: 'type', render: (v: string) => <Tag>{v}</Tag> },
+  ];
+
+  return (
+    <div>
+      <PageHeader title={t('reconciliation')} subtitle={t('reconciliation_subtitle', 'پاکییەکردنی حیسابە بانکییەکان')} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+        <Select
+          placeholder={t('account')}
+          value={selectedAccount || undefined}
+          onChange={handleAccountChange}
+          style={{ width: 300 }}
+          options={accounts.map(a => ({ label: a.account_name, value: a.id }))}
+        />
+        <Space>
+          <Button icon={<SyncOutlined />} loading={matching} onClick={handleAutoMatch} disabled={!selectedAccount}>
+            {t('autoMatch')}
+          </Button>
+          <Button
+            icon={<LinkOutlined />}
+            onClick={handleManualMatch}
+            disabled={selectedBank.length === 0 || selectedSystem.length === 0}
+            loading={matching}
+          >
+            {t('match')}
+          </Button>
+          <Button
+            type="primary"
+            icon={<CheckCircleOutlined />}
+            onClick={handleComplete}
+            disabled={!selectedAccount}
+            loading={completing}
+          >
+            {t('completeReconciliation')}
+          </Button>
+        </Space>
+      </div>
+
+      <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={8}>
+          <Card className="stat-card gradient-card-blue" style={{ borderRadius: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Statistic
+                title={<Text style={{ color: '#6b7280', fontSize: 13 }}>{t('closing_balance')}</Text>}
+                value={summary.closing_balance}
+                suffix="د.ع"
+                styles={{ content: { color: '#2563eb', fontWeight: 700 } }}
+              />
+              <div style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#2563eb14' }}>
+                <BankOutlined style={{ fontSize: 24, color: '#2563eb' }} />
+              </div>
+            </div>
+          </Card>
+        </Col>
+        <Col xs={24} sm={8}>
+          <Card className="stat-card gradient-card-green" style={{ borderRadius: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Statistic
+                title={<Text style={{ color: '#6b7280', fontSize: 13 }}>{t('system_balance')}</Text>}
+                value={summary.system_balance}
+                suffix="د.ع"
+                styles={{ content: { color: '#16a34a', fontWeight: 700 } }}
+              />
+              <div style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#16a34a14' }}>
+                <DollarOutlined style={{ fontSize: 24, color: '#16a34a' }} />
+              </div>
+            </div>
+          </Card>
+        </Col>
+        <Col xs={24} sm={8}>
+          <Card
+            className={`stat-card ${summary.difference === 0 ? 'gradient-card-green' : 'gradient-card-red'}`}
+            style={{ borderRadius: 12 }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Statistic
+                title={<Text style={{ color: '#6b7280', fontSize: 13 }}>{t('difference')}</Text>}
+                value={summary.difference}
+                suffix="د.ع"
+                styles={{ content: { color: summary.difference === 0 ? '#16a34a' : '#dc2626', fontWeight: 700 } }}
+              />
+              <div style={{
+                width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: summary.difference === 0 ? '#16a34a14' : '#dc262614',
+              }}>
+                {summary.difference === 0
+                  ? <CheckCircleOutlined style={{ fontSize: 24, color: '#16a34a' }} />
+                  : <WarningOutlined style={{ fontSize: 24, color: '#dc2626' }} />}
+              </div>
+            </div>
+          </Card>
+        </Col>
+      </Row>
+
+      <Row gutter={16}>
+        <Col xs={24} lg={12}>
+          <Card
+            title={<Title level={5} style={{ margin: 0, color: '#2563eb' }}><BankOutlined /> {t('bank_statement')}</Title>}
+            size="small"
+            style={{ borderRadius: 12, borderTop: '3px solid #2563eb' }}
+          >
+            <Table
+              dataSource={bankTransactions}
+              columns={bankColumns}
+              rowKey="id"
+              loading={loading}
+              pagination={false}
+              size="small"
+              locale={{
+                emptyText: (
+                  <Empty
+                    image={<InboxOutlined style={{ fontSize: 36, color: '#d1d5db' }} />}
+                    description={<Text type="secondary">هیچ مامەڵەیەکی بانکی نییە</Text>}
+                  />
+                ),
+              }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} lg={12}>
+          <Card
+            title={<Title level={5} style={{ margin: 0, color: '#16a34a' }}><DollarOutlined /> {t('system_transactions')}</Title>}
+            size="small"
+            style={{ borderRadius: 12, borderTop: '3px solid #16a34a' }}
+          >
+            <Table
+              dataSource={systemTransactions}
+              columns={systemColumns}
+              rowKey="id"
+              loading={loading}
+              pagination={false}
+              size="small"
+              locale={{
+                emptyText: (
+                  <Empty
+                    image={<InboxOutlined style={{ fontSize: 36, color: '#d1d5db' }} />}
+                    description={<Text type="secondary">هیچ مامەڵەیەکی سیستەمی نییە</Text>}
+                  />
+                ),
+              }}
+            />
+          </Card>
+        </Col>
+      </Row>
+    </div>
+  );
+};
+
+export default BankReconciliation;

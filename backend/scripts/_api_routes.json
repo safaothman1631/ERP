@@ -1,0 +1,4202 @@
+[
+  {
+    "path": "/",
+    "methods": [
+      "GET"
+    ],
+    "name": "root"
+  },
+  {
+    "path": "/api/accounts",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_accounts"
+  },
+  {
+    "path": "/api/accounts",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_account"
+  },
+  {
+    "path": "/api/accounts/currency-adjustment",
+    "methods": [
+      "POST"
+    ],
+    "name": "record_currency_adjustment"
+  },
+  {
+    "path": "/api/accounts/{account_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_account"
+  },
+  {
+    "path": "/api/accounts/{account_id}/sub-accounts",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_sub_accounts"
+  },
+  {
+    "path": "/api/accounts/{account_id}/sub-accounts",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_sub_account"
+  },
+  {
+    "path": "/api/approvals/requests",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_requests"
+  },
+  {
+    "path": "/api/approvals/requests",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_request"
+  },
+  {
+    "path": "/api/approvals/requests/{req_id}/approve",
+    "methods": [
+      "POST"
+    ],
+    "name": "approve_request"
+  },
+  {
+    "path": "/api/approvals/requests/{req_id}/reject",
+    "methods": [
+      "POST"
+    ],
+    "name": "reject_request"
+  },
+  {
+    "path": "/api/approvals/workflows",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_workflows"
+  },
+  {
+    "path": "/api/approvals/workflows",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_workflow"
+  },
+  {
+    "path": "/api/approvals/workflows/{wf_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_workflow"
+  },
+  {
+    "path": "/api/approvals/workflows/{wf_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_workflow"
+  },
+  {
+    "path": "/api/assets",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_assets"
+  },
+  {
+    "path": "/api/assets",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_asset"
+  },
+  {
+    "path": "/api/assets/depreciate-all",
+    "methods": [
+      "POST"
+    ],
+    "name": "depreciate_all_assets"
+  },
+  {
+    "path": "/api/assets/{asset_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_asset"
+  },
+  {
+    "path": "/api/assets/{asset_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_asset"
+  },
+  {
+    "path": "/api/assets/{asset_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_asset"
+  },
+  {
+    "path": "/api/assets/{asset_id}/depreciate",
+    "methods": [
+      "POST"
+    ],
+    "name": "depreciate_asset"
+  },
+  {
+    "path": "/api/assets/{asset_id}/depreciation-schedule",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_depreciation_schedule"
+  },
+  {
+    "path": "/api/assets/{asset_id}/dispose",
+    "methods": [
+      "POST"
+    ],
+    "name": "dispose_asset"
+  },
+  {
+    "path": "/api/attachments/{attachment_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_attachment"
+  },
+  {
+    "path": "/api/attachments/{entity_type}/{entity_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_attachments"
+  },
+  {
+    "path": "/api/attachments/{entity_type}/{entity_id}",
+    "methods": [
+      "POST"
+    ],
+    "name": "upload_attachment"
+  },
+  {
+    "path": "/api/audit",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_audit_logs"
+  },
+  {
+    "path": "/api/audit/stats",
+    "methods": [
+      "GET"
+    ],
+    "name": "audit_stats"
+  },
+  {
+    "path": "/api/audit/{entity_type}/{entity_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "entity_audit_log"
+  },
+  {
+    "path": "/api/auth/2fa/disable",
+    "methods": [
+      "POST"
+    ],
+    "name": "disable_2fa"
+  },
+  {
+    "path": "/api/auth/2fa/setup",
+    "methods": [
+      "POST"
+    ],
+    "name": "setup_2fa"
+  },
+  {
+    "path": "/api/auth/2fa/verify",
+    "methods": [
+      "POST"
+    ],
+    "name": "verify_2fa"
+  },
+  {
+    "path": "/api/auth/firebase-login",
+    "methods": [
+      "POST"
+    ],
+    "name": "firebase_login"
+  },
+  {
+    "path": "/api/auth/firebase-register",
+    "methods": [
+      "POST"
+    ],
+    "name": "firebase_register"
+  },
+  {
+    "path": "/api/auth/forgot-password",
+    "methods": [
+      "POST"
+    ],
+    "name": "forgot_password"
+  },
+  {
+    "path": "/api/auth/login",
+    "methods": [
+      "POST"
+    ],
+    "name": "login"
+  },
+  {
+    "path": "/api/auth/me",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_me"
+  },
+  {
+    "path": "/api/auth/register",
+    "methods": [
+      "POST"
+    ],
+    "name": "register"
+  },
+  {
+    "path": "/api/auth/reset-password",
+    "methods": [
+      "POST"
+    ],
+    "name": "reset_password"
+  },
+  {
+    "path": "/api/auth/setup",
+    "methods": [
+      "POST"
+    ],
+    "name": "initial_setup"
+  },
+  {
+    "path": "/api/auth/status",
+    "methods": [
+      "GET"
+    ],
+    "name": "check_setup"
+  },
+  {
+    "path": "/api/banking/accounts",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_bank_accounts"
+  },
+  {
+    "path": "/api/banking/accounts",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_bank_account"
+  },
+  {
+    "path": "/api/banking/accounts/{account_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_bank_account"
+  },
+  {
+    "path": "/api/banking/accounts/{account_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_bank_account"
+  },
+  {
+    "path": "/api/banking/accounts/{account_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_bank_account"
+  },
+  {
+    "path": "/api/banking/accounts/{account_id}/auto-match",
+    "methods": [
+      "POST"
+    ],
+    "name": "auto_match_transactions"
+  },
+  {
+    "path": "/api/banking/accounts/{account_id}/complete-reconciliation",
+    "methods": [
+      "POST"
+    ],
+    "name": "compatibility_complete_reconciliation"
+  },
+  {
+    "path": "/api/banking/accounts/{account_id}/import",
+    "methods": [
+      "POST"
+    ],
+    "name": "compatibility_import_transactions"
+  },
+  {
+    "path": "/api/banking/accounts/{account_id}/import/csv",
+    "methods": [
+      "POST"
+    ],
+    "name": "import_csv_transactions"
+  },
+  {
+    "path": "/api/banking/accounts/{account_id}/import/template",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_csv_import_template"
+  },
+  {
+    "path": "/api/banking/accounts/{account_id}/match",
+    "methods": [
+      "POST"
+    ],
+    "name": "compatibility_match_transactions"
+  },
+  {
+    "path": "/api/banking/accounts/{account_id}/reconcile",
+    "methods": [
+      "POST"
+    ],
+    "name": "start_reconciliation"
+  },
+  {
+    "path": "/api/banking/accounts/{account_id}/reconcile/complete",
+    "methods": [
+      "POST"
+    ],
+    "name": "complete_reconciliation"
+  },
+  {
+    "path": "/api/banking/accounts/{account_id}/reconciliation-status",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_reconciliation_status"
+  },
+  {
+    "path": "/api/banking/accounts/{account_id}/reconciliation-summary",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_reconciliation_summary"
+  },
+  {
+    "path": "/api/banking/accounts/{account_id}/statements",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_account_statements"
+  },
+  {
+    "path": "/api/banking/accounts/{account_id}/transactions",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_account_transactions"
+  },
+  {
+    "path": "/api/banking/accounts/{account_id}/unreconciled",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_unreconciled_transactions"
+  },
+  {
+    "path": "/api/banking/rules",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_bank_rules"
+  },
+  {
+    "path": "/api/banking/rules",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_bank_rule"
+  },
+  {
+    "path": "/api/banking/rules/apply",
+    "methods": [
+      "POST"
+    ],
+    "name": "apply_bank_rules"
+  },
+  {
+    "path": "/api/banking/rules/{rule_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_bank_rule"
+  },
+  {
+    "path": "/api/banking/rules/{rule_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_bank_rule"
+  },
+  {
+    "path": "/api/banking/transactions",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_transactions"
+  },
+  {
+    "path": "/api/banking/transactions",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_transaction"
+  },
+  {
+    "path": "/api/banking/transactions/{transaction_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_transaction"
+  },
+  {
+    "path": "/api/banking/transactions/{transaction_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_transaction"
+  },
+  {
+    "path": "/api/banking/transactions/{transaction_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_transaction"
+  },
+  {
+    "path": "/api/banking/transactions/{transaction_id}/match",
+    "methods": [
+      "POST"
+    ],
+    "name": "match_transaction"
+  },
+  {
+    "path": "/api/banking/transactions/{transaction_id}/unmatch",
+    "methods": [
+      "POST"
+    ],
+    "name": "unmatch_transaction"
+  },
+  {
+    "path": "/api/bills",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_bills"
+  },
+  {
+    "path": "/api/bills",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_bill"
+  },
+  {
+    "path": "/api/bills/{bill_id}/approve",
+    "methods": [
+      "POST"
+    ],
+    "name": "approve_bill"
+  },
+  {
+    "path": "/api/branches",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_branches"
+  },
+  {
+    "path": "/api/branches",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_branch"
+  },
+  {
+    "path": "/api/branches/comparison",
+    "methods": [
+      "GET"
+    ],
+    "name": "branches_comparison"
+  },
+  {
+    "path": "/api/branches/pos-terminals/{terminal_id}/branch",
+    "methods": [
+      "PUT"
+    ],
+    "name": "assign_pos_terminal_to_branch"
+  },
+  {
+    "path": "/api/branches/users/{user_id}/branch",
+    "methods": [
+      "PUT"
+    ],
+    "name": "assign_user_to_branch"
+  },
+  {
+    "path": "/api/branches/{branch_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_branch"
+  },
+  {
+    "path": "/api/branches/{branch_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_branch"
+  },
+  {
+    "path": "/api/branches/{branch_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "archive_branch"
+  },
+  {
+    "path": "/api/challans",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_challans"
+  },
+  {
+    "path": "/api/challans",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_challan"
+  },
+  {
+    "path": "/api/challans/{challan_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_challan"
+  },
+  {
+    "path": "/api/challans/{challan_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_challan"
+  },
+  {
+    "path": "/api/challans/{challan_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_challan"
+  },
+  {
+    "path": "/api/comments/{comment_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_comment"
+  },
+  {
+    "path": "/api/comments/{comment_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_comment"
+  },
+  {
+    "path": "/api/comments/{entity_type}/{entity_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_comments"
+  },
+  {
+    "path": "/api/comments/{entity_type}/{entity_id}",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_comment"
+  },
+  {
+    "path": "/api/companies",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_companies"
+  },
+  {
+    "path": "/api/companies",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_company"
+  },
+  {
+    "path": "/api/companies/consolidated/bs",
+    "methods": [
+      "GET"
+    ],
+    "name": "consolidated_bs"
+  },
+  {
+    "path": "/api/companies/consolidated/pl",
+    "methods": [
+      "GET"
+    ],
+    "name": "consolidated_pl"
+  },
+  {
+    "path": "/api/companies/intercompany",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_intercompany_journal"
+  },
+  {
+    "path": "/api/companies/intercompany",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_intercompany"
+  },
+  {
+    "path": "/api/companies/{company_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_company"
+  },
+  {
+    "path": "/api/companies/{company_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_company"
+  },
+  {
+    "path": "/api/companies/{company_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "archive_company"
+  },
+  {
+    "path": "/api/companies/{company_id}/switch",
+    "methods": [
+      "POST"
+    ],
+    "name": "switch_company"
+  },
+  {
+    "path": "/api/contacts",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_contacts"
+  },
+  {
+    "path": "/api/contacts",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_contact"
+  },
+  {
+    "path": "/api/contacts/{contact_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_contact"
+  },
+  {
+    "path": "/api/contacts/{contact_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_contact"
+  },
+  {
+    "path": "/api/contacts/{contact_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_contact"
+  },
+  {
+    "path": "/api/contacts/{contact_id}/statement",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_statement"
+  },
+  {
+    "path": "/api/credit-notes",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_credit_notes"
+  },
+  {
+    "path": "/api/credit-notes",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_credit_note"
+  },
+  {
+    "path": "/api/credit-notes/applications/{application_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "remove_credit_application"
+  },
+  {
+    "path": "/api/credit-notes/contacts/{contact_id}/credit-balance",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_contact_credit_balance"
+  },
+  {
+    "path": "/api/credit-notes/{credit_note_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_credit_note"
+  },
+  {
+    "path": "/api/credit-notes/{credit_note_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_credit_note"
+  },
+  {
+    "path": "/api/credit-notes/{credit_note_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_credit_note"
+  },
+  {
+    "path": "/api/credit-notes/{credit_note_id}/apply",
+    "methods": [
+      "POST"
+    ],
+    "name": "apply_credit_note"
+  },
+  {
+    "path": "/api/credit-notes/{credit_note_id}/available-invoices",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_available_invoices"
+  },
+  {
+    "path": "/api/crm/activities",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_activities"
+  },
+  {
+    "path": "/api/crm/activities",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_activity"
+  },
+  {
+    "path": "/api/crm/activities/{activity_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "cancel_activity"
+  },
+  {
+    "path": "/api/crm/activities/{activity_id}/done",
+    "methods": [
+      "PUT"
+    ],
+    "name": "complete_activity"
+  },
+  {
+    "path": "/api/crm/forecast",
+    "methods": [
+      "GET"
+    ],
+    "name": "forecast"
+  },
+  {
+    "path": "/api/crm/leads",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_leads"
+  },
+  {
+    "path": "/api/crm/leads",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_lead"
+  },
+  {
+    "path": "/api/crm/leads/{lead_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_lead"
+  },
+  {
+    "path": "/api/crm/leads/{lead_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_lead"
+  },
+  {
+    "path": "/api/crm/leads/{lead_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_lead"
+  },
+  {
+    "path": "/api/crm/leads/{lead_id}/convert",
+    "methods": [
+      "POST"
+    ],
+    "name": "convert_lead"
+  },
+  {
+    "path": "/api/crm/opportunities",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_opportunities"
+  },
+  {
+    "path": "/api/crm/opportunities",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_opportunity"
+  },
+  {
+    "path": "/api/crm/opportunities/{opp_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_opportunity"
+  },
+  {
+    "path": "/api/crm/opportunities/{opp_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_opportunity"
+  },
+  {
+    "path": "/api/crm/opportunities/{opp_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_opportunity"
+  },
+  {
+    "path": "/api/crm/reports/leaderboard",
+    "methods": [
+      "GET"
+    ],
+    "name": "leaderboard"
+  },
+  {
+    "path": "/api/crm/reports/pipeline",
+    "methods": [
+      "GET"
+    ],
+    "name": "pipeline_report"
+  },
+  {
+    "path": "/api/crm/reports/won-lost",
+    "methods": [
+      "GET"
+    ],
+    "name": "won_lost_report"
+  },
+  {
+    "path": "/api/crm/stages",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_stages"
+  },
+  {
+    "path": "/api/crm/stages",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_stage"
+  },
+  {
+    "path": "/api/crm/stages/{stage_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_stage"
+  },
+  {
+    "path": "/api/crm/stages/{stage_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_stage"
+  },
+  {
+    "path": "/api/custom-fields",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_definitions"
+  },
+  {
+    "path": "/api/custom-fields",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_definition"
+  },
+  {
+    "path": "/api/custom-fields/values/{entity_type}/{entity_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_custom_field_values"
+  },
+  {
+    "path": "/api/custom-fields/values/{entity_type}/{entity_id}",
+    "methods": [
+      "POST"
+    ],
+    "name": "set_custom_field_values"
+  },
+  {
+    "path": "/api/custom-fields/{field_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_definition"
+  },
+  {
+    "path": "/api/custom-fields/{field_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_definition"
+  },
+  {
+    "path": "/api/dashboard",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_dashboard"
+  },
+  {
+    "path": "/api/einvoice/auto-submit/toggle",
+    "methods": [
+      "POST"
+    ],
+    "name": "toggle_auto_submit"
+  },
+  {
+    "path": "/api/einvoice/cancel/{invoice_id}",
+    "methods": [
+      "POST"
+    ],
+    "name": "cancel_invoice_submission"
+  },
+  {
+    "path": "/api/einvoice/config",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_einvoice_config"
+  },
+  {
+    "path": "/api/einvoice/config",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_einvoice_config"
+  },
+  {
+    "path": "/api/einvoice/qr/{invoice_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_invoice_qr"
+  },
+  {
+    "path": "/api/einvoice/report/errors",
+    "methods": [
+      "GET"
+    ],
+    "name": "submission_errors"
+  },
+  {
+    "path": "/api/einvoice/report/monthly",
+    "methods": [
+      "GET"
+    ],
+    "name": "monthly_submission_report"
+  },
+  {
+    "path": "/api/einvoice/retry/{invoice_id}",
+    "methods": [
+      "POST"
+    ],
+    "name": "retry_submission"
+  },
+  {
+    "path": "/api/einvoice/sign/{invoice_id}",
+    "methods": [
+      "POST"
+    ],
+    "name": "sign_invoice_xml"
+  },
+  {
+    "path": "/api/einvoice/status/{invoice_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_submission_status"
+  },
+  {
+    "path": "/api/einvoice/submit/{invoice_id}",
+    "methods": [
+      "POST"
+    ],
+    "name": "submit_invoice"
+  },
+  {
+    "path": "/api/einvoice/webhook",
+    "methods": [
+      "POST"
+    ],
+    "name": "einvoice_webhook"
+  },
+  {
+    "path": "/api/einvoice/xml/{invoice_id}",
+    "methods": [
+      "POST"
+    ],
+    "name": "build_invoice_xml"
+  },
+  {
+    "path": "/api/expense-claims",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_claims"
+  },
+  {
+    "path": "/api/expense-claims",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_claim"
+  },
+  {
+    "path": "/api/expense-claims/{claim_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_claim"
+  },
+  {
+    "path": "/api/expense-claims/{claim_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_claim"
+  },
+  {
+    "path": "/api/expense-claims/{claim_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_claim"
+  },
+  {
+    "path": "/api/expense-claims/{claim_id}/approve",
+    "methods": [
+      "POST"
+    ],
+    "name": "approve_claim"
+  },
+  {
+    "path": "/api/expense-claims/{claim_id}/reject",
+    "methods": [
+      "POST"
+    ],
+    "name": "reject_claim"
+  },
+  {
+    "path": "/api/expense-claims/{claim_id}/submit",
+    "methods": [
+      "POST"
+    ],
+    "name": "submit_claim"
+  },
+  {
+    "path": "/api/expenses",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_expenses"
+  },
+  {
+    "path": "/api/expenses",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_expense"
+  },
+  {
+    "path": "/api/expenses/{expense_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "void_expense"
+  },
+  {
+    "path": "/api/export/aging-payables",
+    "methods": [
+      "GET"
+    ],
+    "name": "export_aging_payables"
+  },
+  {
+    "path": "/api/export/aging-receivables",
+    "methods": [
+      "GET"
+    ],
+    "name": "export_aging_receivables"
+  },
+  {
+    "path": "/api/export/balance-sheet",
+    "methods": [
+      "GET"
+    ],
+    "name": "export_balance_sheet"
+  },
+  {
+    "path": "/api/export/bills",
+    "methods": [
+      "GET"
+    ],
+    "name": "export_bills"
+  },
+  {
+    "path": "/api/export/cash-flow",
+    "methods": [
+      "GET"
+    ],
+    "name": "export_cash_flow"
+  },
+  {
+    "path": "/api/export/customers",
+    "methods": [
+      "GET"
+    ],
+    "name": "export_customers"
+  },
+  {
+    "path": "/api/export/inventory",
+    "methods": [
+      "GET"
+    ],
+    "name": "export_inventory"
+  },
+  {
+    "path": "/api/export/invoices",
+    "methods": [
+      "GET"
+    ],
+    "name": "export_invoices"
+  },
+  {
+    "path": "/api/export/journal-entries",
+    "methods": [
+      "GET"
+    ],
+    "name": "export_journal_entries"
+  },
+  {
+    "path": "/api/export/pos-sales",
+    "methods": [
+      "GET"
+    ],
+    "name": "export_pos_sales"
+  },
+  {
+    "path": "/api/export/products",
+    "methods": [
+      "GET"
+    ],
+    "name": "export_products"
+  },
+  {
+    "path": "/api/export/profit-loss",
+    "methods": [
+      "GET"
+    ],
+    "name": "export_profit_loss"
+  },
+  {
+    "path": "/api/export/sales-by-customer",
+    "methods": [
+      "GET"
+    ],
+    "name": "export_sales_by_customer"
+  },
+  {
+    "path": "/api/export/sales-by-item",
+    "methods": [
+      "GET"
+    ],
+    "name": "export_sales_by_item"
+  },
+  {
+    "path": "/api/export/tax-summary",
+    "methods": [
+      "GET"
+    ],
+    "name": "export_tax_summary"
+  },
+  {
+    "path": "/api/export/trial-balance",
+    "methods": [
+      "GET"
+    ],
+    "name": "export_trial_balance"
+  },
+  {
+    "path": "/api/fiscal/years",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_fiscal_years"
+  },
+  {
+    "path": "/api/health",
+    "methods": [
+      "GET"
+    ],
+    "name": "health"
+  },
+  {
+    "path": "/api/hr/attendance",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_attendance"
+  },
+  {
+    "path": "/api/hr/attendance/check-in",
+    "methods": [
+      "POST"
+    ],
+    "name": "check_in"
+  },
+  {
+    "path": "/api/hr/attendance/check-out",
+    "methods": [
+      "POST"
+    ],
+    "name": "check_out"
+  },
+  {
+    "path": "/api/hr/attendance/summary",
+    "methods": [
+      "GET"
+    ],
+    "name": "attendance_summary"
+  },
+  {
+    "path": "/api/hr/contracts",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_contracts"
+  },
+  {
+    "path": "/api/hr/contracts",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_contract"
+  },
+  {
+    "path": "/api/hr/contracts/{cid}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_contract"
+  },
+  {
+    "path": "/api/hr/contracts/{cid}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_contract"
+  },
+  {
+    "path": "/api/hr/dashboard",
+    "methods": [
+      "GET"
+    ],
+    "name": "hr_dashboard"
+  },
+  {
+    "path": "/api/hr/departments",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_departments"
+  },
+  {
+    "path": "/api/hr/departments",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_department"
+  },
+  {
+    "path": "/api/hr/departments/{dept_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_department"
+  },
+  {
+    "path": "/api/hr/departments/{dept_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_department"
+  },
+  {
+    "path": "/api/hr/employees",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_employees"
+  },
+  {
+    "path": "/api/hr/employees",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_employee"
+  },
+  {
+    "path": "/api/hr/employees/{emp_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_employee"
+  },
+  {
+    "path": "/api/hr/employees/{emp_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_employee"
+  },
+  {
+    "path": "/api/hr/employees/{emp_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_employee"
+  },
+  {
+    "path": "/api/hr/employees/{emp_id}/org-chart",
+    "methods": [
+      "GET"
+    ],
+    "name": "org_chart"
+  },
+  {
+    "path": "/api/hr/leave-types",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_leave_types"
+  },
+  {
+    "path": "/api/hr/leave-types",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_leave_type"
+  },
+  {
+    "path": "/api/hr/leave-types/{lt_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_leave_type"
+  },
+  {
+    "path": "/api/hr/positions",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_positions"
+  },
+  {
+    "path": "/api/hr/positions",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_position"
+  },
+  {
+    "path": "/api/hr/positions/{pid}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_position"
+  },
+  {
+    "path": "/api/hr/positions/{pid}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_position"
+  },
+  {
+    "path": "/api/hr/time-off",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_time_off"
+  },
+  {
+    "path": "/api/hr/time-off",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_time_off"
+  },
+  {
+    "path": "/api/hr/time-off/{to_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_time_off"
+  },
+  {
+    "path": "/api/hr/time-off/{to_id}/approve",
+    "methods": [
+      "POST"
+    ],
+    "name": "approve_time_off"
+  },
+  {
+    "path": "/api/hr/time-off/{to_id}/reject",
+    "methods": [
+      "POST"
+    ],
+    "name": "reject_time_off"
+  },
+  {
+    "path": "/api/import/preview",
+    "methods": [
+      "POST"
+    ],
+    "name": "preview_import"
+  },
+  {
+    "path": "/api/import/{entity_type}",
+    "methods": [
+      "POST"
+    ],
+    "name": "import_data"
+  },
+  {
+    "path": "/api/inventory/adjustments",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_inventory_adjustments"
+  },
+  {
+    "path": "/api/inventory/adjustments",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_inventory_adjustment"
+  },
+  {
+    "path": "/api/inventory/batches",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_batches"
+  },
+  {
+    "path": "/api/inventory/batches",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_batch"
+  },
+  {
+    "path": "/api/inventory/batches/{batch_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_batch"
+  },
+  {
+    "path": "/api/inventory/batches/{batch_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_batch"
+  },
+  {
+    "path": "/api/inventory/batches/{batch_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_batch"
+  },
+  {
+    "path": "/api/inventory/composites/{item_id}/components",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_components"
+  },
+  {
+    "path": "/api/inventory/composites/{item_id}/components",
+    "methods": [
+      "POST"
+    ],
+    "name": "add_component"
+  },
+  {
+    "path": "/api/inventory/composites/{item_id}/components/{component_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "remove_component"
+  },
+  {
+    "path": "/api/inventory/groups",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_item_groups"
+  },
+  {
+    "path": "/api/inventory/groups",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_item_group"
+  },
+  {
+    "path": "/api/inventory/landed-costs",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_landed_costs"
+  },
+  {
+    "path": "/api/inventory/landed-costs",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_landed_cost"
+  },
+  {
+    "path": "/api/inventory/landed-costs/{cost_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_landed_cost"
+  },
+  {
+    "path": "/api/inventory/landed-costs/{cost_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_landed_cost"
+  },
+  {
+    "path": "/api/inventory/landed-costs/{cost_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_landed_cost"
+  },
+  {
+    "path": "/api/inventory/low-stock",
+    "methods": [
+      "GET"
+    ],
+    "name": "inventory_low_stock"
+  },
+  {
+    "path": "/api/inventory/movements",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_stock_movements"
+  },
+  {
+    "path": "/api/inventory/price-lists",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_price_lists"
+  },
+  {
+    "path": "/api/inventory/price-lists",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_price_list"
+  },
+  {
+    "path": "/api/inventory/price-lists/{price_list_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_price_list"
+  },
+  {
+    "path": "/api/inventory/price-lists/{price_list_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_price_list"
+  },
+  {
+    "path": "/api/inventory/price-lists/{price_list_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_price_list"
+  },
+  {
+    "path": "/api/inventory/price-lists/{price_list_id}/items",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_price_list_items"
+  },
+  {
+    "path": "/api/inventory/price-lists/{price_list_id}/items",
+    "methods": [
+      "POST"
+    ],
+    "name": "add_price_list_item"
+  },
+  {
+    "path": "/api/inventory/price-lists/{price_list_id}/items/{item_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_price_list_item"
+  },
+  {
+    "path": "/api/inventory/price-lists/{price_list_id}/items/{item_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "remove_price_list_item"
+  },
+  {
+    "path": "/api/inventory/serials",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_serials"
+  },
+  {
+    "path": "/api/inventory/serials",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_serial"
+  },
+  {
+    "path": "/api/inventory/serials/{serial_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_serial"
+  },
+  {
+    "path": "/api/inventory/transfers",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_transfers"
+  },
+  {
+    "path": "/api/inventory/transfers",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_transfer"
+  },
+  {
+    "path": "/api/inventory/transfers/{transfer_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_transfer"
+  },
+  {
+    "path": "/api/inventory/transfers/{transfer_id}/complete",
+    "methods": [
+      "POST"
+    ],
+    "name": "complete_transfer"
+  },
+  {
+    "path": "/api/inventory/valuation",
+    "methods": [
+      "GET"
+    ],
+    "name": "inventory_valuation"
+  },
+  {
+    "path": "/api/inventory/warehouses",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_warehouses"
+  },
+  {
+    "path": "/api/inventory/warehouses",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_warehouse"
+  },
+  {
+    "path": "/api/inventory/warehouses/{warehouse_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_warehouse"
+  },
+  {
+    "path": "/api/inventory/warehouses/{warehouse_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_warehouse"
+  },
+  {
+    "path": "/api/invoices",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_invoices"
+  },
+  {
+    "path": "/api/invoices",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_invoice"
+  },
+  {
+    "path": "/api/invoices/contacts/{contact_id}/retainer-credits",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_contact_retainer_credits"
+  },
+  {
+    "path": "/api/invoices/from-quote/{quote_id}/progress",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_quote_progress"
+  },
+  {
+    "path": "/api/invoices/from-quote/{quote_id}/progress",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_progress_invoice"
+  },
+  {
+    "path": "/api/invoices/retainer",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_retainer_invoice"
+  },
+  {
+    "path": "/api/invoices/retainer/{retainer_id}/apply",
+    "methods": [
+      "POST"
+    ],
+    "name": "apply_retainer"
+  },
+  {
+    "path": "/api/invoices/{invoice_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_invoice"
+  },
+  {
+    "path": "/api/invoices/{invoice_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_invoice"
+  },
+  {
+    "path": "/api/invoices/{invoice_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "void_invoice"
+  },
+  {
+    "path": "/api/invoices/{invoice_id}/discount-amount",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_early_payment_discount"
+  },
+  {
+    "path": "/api/invoices/{invoice_id}/pdf",
+    "methods": [
+      "GET"
+    ],
+    "name": "download_invoice_pdf"
+  },
+  {
+    "path": "/api/invoices/{invoice_id}/send",
+    "methods": [
+      "POST"
+    ],
+    "name": "send_invoice"
+  },
+  {
+    "path": "/api/invoices/{invoice_id}/send-reminder",
+    "methods": [
+      "POST"
+    ],
+    "name": "send_payment_reminder"
+  },
+  {
+    "path": "/api/items",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_items"
+  },
+  {
+    "path": "/api/items",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_item"
+  },
+  {
+    "path": "/api/items/barcode/{barcode}",
+    "methods": [
+      "GET"
+    ],
+    "name": "lookup_item_by_barcode"
+  },
+  {
+    "path": "/api/items/{item_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_item"
+  },
+  {
+    "path": "/api/items/{item_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_item"
+  },
+  {
+    "path": "/api/items/{item_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_item"
+  },
+  {
+    "path": "/api/items/{item_id}/barcode",
+    "methods": [
+      "POST"
+    ],
+    "name": "generate_barcode_image"
+  },
+  {
+    "path": "/api/journals",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_journals"
+  },
+  {
+    "path": "/api/journals",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_manual_journal"
+  },
+  {
+    "path": "/api/l10n/iq/chart-of-accounts-template",
+    "methods": [
+      "GET"
+    ],
+    "name": "coa_template"
+  },
+  {
+    "path": "/api/l10n/iq/currency-info",
+    "methods": [
+      "GET"
+    ],
+    "name": "currency_info"
+  },
+  {
+    "path": "/api/l10n/iq/setup",
+    "methods": [
+      "POST"
+    ],
+    "name": "apply_iraq_setup"
+  },
+  {
+    "path": "/api/l10n/iq/tax-categories",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_tax_categories"
+  },
+  {
+    "path": "/api/l10n/iq/vat-return",
+    "methods": [
+      "GET"
+    ],
+    "name": "vat_return"
+  },
+  {
+    "path": "/api/l10n/iq/withholding-rules",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_withholding_rules"
+  },
+  {
+    "path": "/api/l10n/iq/withholding-summary",
+    "methods": [
+      "GET"
+    ],
+    "name": "withholding_summary"
+  },
+  {
+    "path": "/api/manufacturing/boms",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_boms"
+  },
+  {
+    "path": "/api/manufacturing/boms",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_bom"
+  },
+  {
+    "path": "/api/manufacturing/boms/{bid}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_bom"
+  },
+  {
+    "path": "/api/manufacturing/boms/{bid}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_bom"
+  },
+  {
+    "path": "/api/manufacturing/boms/{bid}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_bom"
+  },
+  {
+    "path": "/api/manufacturing/dashboard",
+    "methods": [
+      "GET"
+    ],
+    "name": "mfg_dashboard"
+  },
+  {
+    "path": "/api/manufacturing/orders",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_orders"
+  },
+  {
+    "path": "/api/manufacturing/orders",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_order"
+  },
+  {
+    "path": "/api/manufacturing/orders/{mo_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_order"
+  },
+  {
+    "path": "/api/manufacturing/orders/{mo_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_order"
+  },
+  {
+    "path": "/api/manufacturing/orders/{mo_id}/confirm",
+    "methods": [
+      "POST"
+    ],
+    "name": "confirm_order"
+  },
+  {
+    "path": "/api/manufacturing/orders/{mo_id}/done",
+    "methods": [
+      "POST"
+    ],
+    "name": "done_order"
+  },
+  {
+    "path": "/api/manufacturing/work-centers",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_wc"
+  },
+  {
+    "path": "/api/manufacturing/work-centers",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_wc"
+  },
+  {
+    "path": "/api/manufacturing/work-centers/{wcid}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_wc"
+  },
+  {
+    "path": "/api/manufacturing/work-centers/{wcid}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_wc"
+  },
+  {
+    "path": "/api/manufacturing/work-orders",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_work_orders"
+  },
+  {
+    "path": "/api/manufacturing/work-orders/{wo_id}/finish",
+    "methods": [
+      "POST"
+    ],
+    "name": "finish_wo"
+  },
+  {
+    "path": "/api/manufacturing/work-orders/{wo_id}/start",
+    "methods": [
+      "POST"
+    ],
+    "name": "start_wo"
+  },
+  {
+    "path": "/api/mileage",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_mileage_logs"
+  },
+  {
+    "path": "/api/mileage",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_mileage_log"
+  },
+  {
+    "path": "/api/mileage/{log_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_mileage_log"
+  },
+  {
+    "path": "/api/mileage/{log_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_mileage_log"
+  },
+  {
+    "path": "/api/mileage/{log_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_mileage_log"
+  },
+  {
+    "path": "/api/mileage/{log_id}/submit",
+    "methods": [
+      "POST"
+    ],
+    "name": "submit_mileage_log"
+  },
+  {
+    "path": "/api/ocr/confirm",
+    "methods": [
+      "POST"
+    ],
+    "name": "confirm_scan"
+  },
+  {
+    "path": "/api/ocr/scan",
+    "methods": [
+      "POST"
+    ],
+    "name": "scan_receipt"
+  },
+  {
+    "path": "/api/ocr/scan-text",
+    "methods": [
+      "POST"
+    ],
+    "name": "scan_text"
+  },
+  {
+    "path": "/api/ocr/scans",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_scans"
+  },
+  {
+    "path": "/api/ocr/scans/{scan_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_scan"
+  },
+  {
+    "path": "/api/ocr/scans/{scan_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_scan"
+  },
+  {
+    "path": "/api/payment-links",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_links"
+  },
+  {
+    "path": "/api/payment-links",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_link"
+  },
+  {
+    "path": "/api/payment-links/pay/{token}",
+    "methods": [
+      "POST"
+    ],
+    "name": "process_payment"
+  },
+  {
+    "path": "/api/payment-links/verify/{token}",
+    "methods": [
+      "GET"
+    ],
+    "name": "verify_link"
+  },
+  {
+    "path": "/api/payment-links/{link_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_link"
+  },
+  {
+    "path": "/api/payments-made",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_payments_made"
+  },
+  {
+    "path": "/api/payments-received",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_payments_received"
+  },
+  {
+    "path": "/api/payments-received",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_payment_received"
+  },
+  {
+    "path": "/api/payroll/payslips",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_payslips"
+  },
+  {
+    "path": "/api/payroll/payslips/{ps_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_payslip"
+  },
+  {
+    "path": "/api/payroll/payslips/{ps_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_payslip"
+  },
+  {
+    "path": "/api/payroll/payslips/{ps_id}/mark-paid",
+    "methods": [
+      "POST"
+    ],
+    "name": "mark_paid"
+  },
+  {
+    "path": "/api/payroll/rules",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_rules"
+  },
+  {
+    "path": "/api/payroll/rules",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_rule"
+  },
+  {
+    "path": "/api/payroll/rules/{rid}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_rule"
+  },
+  {
+    "path": "/api/payroll/rules/{rid}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_rule"
+  },
+  {
+    "path": "/api/payroll/runs",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_runs"
+  },
+  {
+    "path": "/api/payroll/runs",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_run"
+  },
+  {
+    "path": "/api/payroll/runs/{run_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_run"
+  },
+  {
+    "path": "/api/payroll/runs/{run_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_run"
+  },
+  {
+    "path": "/api/payroll/runs/{run_id}/confirm",
+    "methods": [
+      "POST"
+    ],
+    "name": "confirm_run"
+  },
+  {
+    "path": "/api/portals/customer/{token}",
+    "methods": [
+      "GET"
+    ],
+    "name": "customer_portal"
+  },
+  {
+    "path": "/api/portals/generate-link",
+    "methods": [
+      "POST"
+    ],
+    "name": "generate_portal_link"
+  },
+  {
+    "path": "/api/portals/portals/{token}/deactivate",
+    "methods": [
+      "POST"
+    ],
+    "name": "deactivate_portal"
+  },
+  {
+    "path": "/api/portals/vendor/{token}",
+    "methods": [
+      "GET"
+    ],
+    "name": "vendor_portal"
+  },
+  {
+    "path": "/api/pos/categories",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_categories"
+  },
+  {
+    "path": "/api/pos/categories",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_category"
+  },
+  {
+    "path": "/api/pos/categories/{category_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_category"
+  },
+  {
+    "path": "/api/pos/categories/{category_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_category"
+  },
+  {
+    "path": "/api/pos/combos",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_combos"
+  },
+  {
+    "path": "/api/pos/combos",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_combo"
+  },
+  {
+    "path": "/api/pos/configs",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_configs"
+  },
+  {
+    "path": "/api/pos/configs",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_config"
+  },
+  {
+    "path": "/api/pos/configs/{config_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_config"
+  },
+  {
+    "path": "/api/pos/configs/{config_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_config"
+  },
+  {
+    "path": "/api/pos/configs/{config_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_config"
+  },
+  {
+    "path": "/api/pos/configs/{config_id}/activate",
+    "methods": [
+      "POST"
+    ],
+    "name": "activate_config"
+  },
+  {
+    "path": "/api/pos/configs/{config_id}/available",
+    "methods": [
+      "GET"
+    ],
+    "name": "check_config_available"
+  },
+  {
+    "path": "/api/pos/configs/{config_id}/clone",
+    "methods": [
+      "POST"
+    ],
+    "name": "clone_config"
+  },
+  {
+    "path": "/api/pos/configs/{config_id}/deactivate",
+    "methods": [
+      "POST"
+    ],
+    "name": "deactivate_config"
+  },
+  {
+    "path": "/api/pos/customers/quick-create",
+    "methods": [
+      "POST"
+    ],
+    "name": "quick_create_customer"
+  },
+  {
+    "path": "/api/pos/employees",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_employees"
+  },
+  {
+    "path": "/api/pos/employees",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_employee"
+  },
+  {
+    "path": "/api/pos/employees/login",
+    "methods": [
+      "POST"
+    ],
+    "name": "employee_pin_login"
+  },
+  {
+    "path": "/api/pos/employees/logout",
+    "methods": [
+      "POST"
+    ],
+    "name": "employee_logout"
+  },
+  {
+    "path": "/api/pos/employees/{employee_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_employee"
+  },
+  {
+    "path": "/api/pos/floors",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_floors"
+  },
+  {
+    "path": "/api/pos/floors",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_floor"
+  },
+  {
+    "path": "/api/pos/floors/{floor_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_floor"
+  },
+  {
+    "path": "/api/pos/floors/{floor_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_floor"
+  },
+  {
+    "path": "/api/pos/floors/{floor_id}/tables",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_floor_tables"
+  },
+  {
+    "path": "/api/pos/gift-cards",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_gift_cards"
+  },
+  {
+    "path": "/api/pos/gift-cards",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_gift_cards"
+  },
+  {
+    "path": "/api/pos/gift-cards/{code}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_gift_card"
+  },
+  {
+    "path": "/api/pos/gift-cards/{code}/activate",
+    "methods": [
+      "POST"
+    ],
+    "name": "activate_gift_card"
+  },
+  {
+    "path": "/api/pos/gift-cards/{code}/charge",
+    "methods": [
+      "POST"
+    ],
+    "name": "charge_gift_card"
+  },
+  {
+    "path": "/api/pos/hardware/customer-display/{config_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_customer_display"
+  },
+  {
+    "path": "/api/pos/hardware/customer-display/{config_id}/update",
+    "methods": [
+      "POST"
+    ],
+    "name": "update_customer_display"
+  },
+  {
+    "path": "/api/pos/hardware/iot/status",
+    "methods": [
+      "POST"
+    ],
+    "name": "iot_device_status"
+  },
+  {
+    "path": "/api/pos/hardware/open-cash-drawer",
+    "methods": [
+      "POST"
+    ],
+    "name": "open_cash_drawer"
+  },
+  {
+    "path": "/api/pos/hardware/print-receipt",
+    "methods": [
+      "POST"
+    ],
+    "name": "print_receipt"
+  },
+  {
+    "path": "/api/pos/hardware/scale-read",
+    "methods": [
+      "POST"
+    ],
+    "name": "read_scale"
+  },
+  {
+    "path": "/api/pos/hooks/accounting/post-session",
+    "methods": [
+      "POST"
+    ],
+    "name": "post_session_accounting"
+  },
+  {
+    "path": "/api/pos/hooks/inventory/pick-order",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_inventory_picking"
+  },
+  {
+    "path": "/api/pos/hooks/iraq/einvoice",
+    "methods": [
+      "POST"
+    ],
+    "name": "generate_iraq_einvoice"
+  },
+  {
+    "path": "/api/pos/loyalty/cards",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_loyalty_cards"
+  },
+  {
+    "path": "/api/pos/loyalty/cards",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_loyalty_card"
+  },
+  {
+    "path": "/api/pos/loyalty/cards/{code}/redeem",
+    "methods": [
+      "POST"
+    ],
+    "name": "redeem_loyalty_points"
+  },
+  {
+    "path": "/api/pos/loyalty/earn",
+    "methods": [
+      "POST"
+    ],
+    "name": "earn_loyalty_points"
+  },
+  {
+    "path": "/api/pos/loyalty/programs",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_loyalty_programs"
+  },
+  {
+    "path": "/api/pos/loyalty/programs",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_loyalty_program"
+  },
+  {
+    "path": "/api/pos/loyalty/programs/{program_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_loyalty_program"
+  },
+  {
+    "path": "/api/pos/loyalty/programs/{program_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_loyalty_program"
+  },
+  {
+    "path": "/api/pos/orders",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_orders"
+  },
+  {
+    "path": "/api/pos/orders",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_order"
+  },
+  {
+    "path": "/api/pos/orders/quotations",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_quotations"
+  },
+  {
+    "path": "/api/pos/orders/search",
+    "methods": [
+      "GET"
+    ],
+    "name": "search_orders"
+  },
+  {
+    "path": "/api/pos/orders/sync",
+    "methods": [
+      "POST"
+    ],
+    "name": "sync_orders"
+  },
+  {
+    "path": "/api/pos/orders/{order_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_order"
+  },
+  {
+    "path": "/api/pos/orders/{order_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_order"
+  },
+  {
+    "path": "/api/pos/orders/{order_id}/add-course",
+    "methods": [
+      "POST"
+    ],
+    "name": "add_course_to_lines"
+  },
+  {
+    "path": "/api/pos/orders/{order_id}/cancel",
+    "methods": [
+      "POST"
+    ],
+    "name": "cancel_order"
+  },
+  {
+    "path": "/api/pos/orders/{order_id}/draft",
+    "methods": [
+      "POST"
+    ],
+    "name": "save_order_as_draft"
+  },
+  {
+    "path": "/api/pos/orders/{order_id}/invoice",
+    "methods": [
+      "POST"
+    ],
+    "name": "invoice_order"
+  },
+  {
+    "path": "/api/pos/orders/{order_id}/pay",
+    "methods": [
+      "POST"
+    ],
+    "name": "pay_order"
+  },
+  {
+    "path": "/api/pos/orders/{order_id}/refund",
+    "methods": [
+      "POST"
+    ],
+    "name": "refund_order"
+  },
+  {
+    "path": "/api/pos/orders/{order_id}/send-receipt",
+    "methods": [
+      "POST"
+    ],
+    "name": "send_receipt"
+  },
+  {
+    "path": "/api/pos/orders/{order_id}/ship-later",
+    "methods": [
+      "POST"
+    ],
+    "name": "ship_order_later"
+  },
+  {
+    "path": "/api/pos/orders/{order_id}/split",
+    "methods": [
+      "POST"
+    ],
+    "name": "split_order"
+  },
+  {
+    "path": "/api/pos/orders/{order_id}/transfer-table",
+    "methods": [
+      "POST"
+    ],
+    "name": "transfer_order_to_table"
+  },
+  {
+    "path": "/api/pos/payment-methods",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_payment_methods"
+  },
+  {
+    "path": "/api/pos/payment-methods",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_payment_method"
+  },
+  {
+    "path": "/api/pos/payment-methods/{method_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_payment_method"
+  },
+  {
+    "path": "/api/pos/payment-methods/{method_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_payment_method"
+  },
+  {
+    "path": "/api/pos/payment-methods/{method_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_payment_method"
+  },
+  {
+    "path": "/api/pos/preparation/displays",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_preparation_displays"
+  },
+  {
+    "path": "/api/pos/preparation/displays",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_preparation_display"
+  },
+  {
+    "path": "/api/pos/preparation/displays/{display_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_preparation_display"
+  },
+  {
+    "path": "/api/pos/preparation/displays/{display_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_preparation_display"
+  },
+  {
+    "path": "/api/pos/preparation/displays/{display_id}/orders",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_preparation_orders"
+  },
+  {
+    "path": "/api/pos/preparation/orders/{prep_order_id}/complete",
+    "methods": [
+      "POST"
+    ],
+    "name": "complete_preparation_order"
+  },
+  {
+    "path": "/api/pos/preparation/orders/{prep_order_id}/stage",
+    "methods": [
+      "POST"
+    ],
+    "name": "update_preparation_order_stage"
+  },
+  {
+    "path": "/api/pos/presets",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_presets"
+  },
+  {
+    "path": "/api/pos/presets",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_preset"
+  },
+  {
+    "path": "/api/pos/presets/{preset_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_preset"
+  },
+  {
+    "path": "/api/pos/presets/{preset_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_preset"
+  },
+  {
+    "path": "/api/pos/pricelists",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_pricelists"
+  },
+  {
+    "path": "/api/pos/pricelists",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_pricelist"
+  },
+  {
+    "path": "/api/pos/pricelists/{pricelist_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_pricelist"
+  },
+  {
+    "path": "/api/pos/pricelists/{pricelist_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_pricelist"
+  },
+  {
+    "path": "/api/pos/products",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_pos_products"
+  },
+  {
+    "path": "/api/pos/products/barcode/{barcode}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_product_by_barcode"
+  },
+  {
+    "path": "/api/pos/products/lookup",
+    "methods": [
+      "GET"
+    ],
+    "name": "lookup_products"
+  },
+  {
+    "path": "/api/pos/reports/dashboard",
+    "methods": [
+      "GET"
+    ],
+    "name": "reports_dashboard"
+  },
+  {
+    "path": "/api/pos/reports/hourly-heatmap",
+    "methods": [
+      "GET"
+    ],
+    "name": "hourly_heatmap_report"
+  },
+  {
+    "path": "/api/pos/reports/sales-by-cashier",
+    "methods": [
+      "GET"
+    ],
+    "name": "sales_by_cashier_report"
+  },
+  {
+    "path": "/api/pos/reports/sales-by-category",
+    "methods": [
+      "GET"
+    ],
+    "name": "sales_by_category_report"
+  },
+  {
+    "path": "/api/pos/reports/sales-by-product",
+    "methods": [
+      "GET"
+    ],
+    "name": "sales_by_product_report"
+  },
+  {
+    "path": "/api/pos/reports/sessions-summary",
+    "methods": [
+      "GET"
+    ],
+    "name": "sessions_summary_report"
+  },
+  {
+    "path": "/api/pos/self-order/menu",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_self_order_menu"
+  },
+  {
+    "path": "/api/pos/self-order/start",
+    "methods": [
+      "POST"
+    ],
+    "name": "start_self_order"
+  },
+  {
+    "path": "/api/pos/self-order/{self_order_id}/items",
+    "methods": [
+      "POST"
+    ],
+    "name": "update_self_order_items"
+  },
+  {
+    "path": "/api/pos/self-order/{self_order_id}/pay",
+    "methods": [
+      "POST"
+    ],
+    "name": "pay_self_order"
+  },
+  {
+    "path": "/api/pos/self-order/{self_order_id}/submit",
+    "methods": [
+      "POST"
+    ],
+    "name": "submit_self_order"
+  },
+  {
+    "path": "/api/pos/sessions",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_sessions"
+  },
+  {
+    "path": "/api/pos/sessions/open",
+    "methods": [
+      "POST"
+    ],
+    "name": "open_session"
+  },
+  {
+    "path": "/api/pos/sessions/{session_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_session"
+  },
+  {
+    "path": "/api/pos/sessions/{session_id}/cash-in",
+    "methods": [
+      "POST"
+    ],
+    "name": "cash_in"
+  },
+  {
+    "path": "/api/pos/sessions/{session_id}/cash-out",
+    "methods": [
+      "POST"
+    ],
+    "name": "cash_out"
+  },
+  {
+    "path": "/api/pos/sessions/{session_id}/close",
+    "methods": [
+      "POST"
+    ],
+    "name": "close_session"
+  },
+  {
+    "path": "/api/pos/sessions/{session_id}/force-close",
+    "methods": [
+      "POST"
+    ],
+    "name": "force_close_session"
+  },
+  {
+    "path": "/api/pos/sessions/{session_id}/orders",
+    "methods": [
+      "GET"
+    ],
+    "name": "session_orders"
+  },
+  {
+    "path": "/api/pos/sessions/{session_id}/payments",
+    "methods": [
+      "GET"
+    ],
+    "name": "session_payments"
+  },
+  {
+    "path": "/api/pos/sessions/{session_id}/summary",
+    "methods": [
+      "GET"
+    ],
+    "name": "session_summary"
+  },
+  {
+    "path": "/api/pos/tables",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_table"
+  },
+  {
+    "path": "/api/pos/tables/{table_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_table"
+  },
+  {
+    "path": "/api/pos/tables/{table_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_table"
+  },
+  {
+    "path": "/api/pos/tables/{table_id}/free",
+    "methods": [
+      "POST"
+    ],
+    "name": "free_table"
+  },
+  {
+    "path": "/api/pos/tables/{table_id}/occupy",
+    "methods": [
+      "POST"
+    ],
+    "name": "occupy_table"
+  },
+  {
+    "path": "/api/projects",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_projects"
+  },
+  {
+    "path": "/api/projects",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_project"
+  },
+  {
+    "path": "/api/projects/{project_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_project"
+  },
+  {
+    "path": "/api/projects/{project_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_project"
+  },
+  {
+    "path": "/api/projects/{project_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_project"
+  },
+  {
+    "path": "/api/projects/{project_id}/budget",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_project_budget"
+  },
+  {
+    "path": "/api/projects/{project_id}/budget",
+    "methods": [
+      "POST"
+    ],
+    "name": "set_project_budget"
+  },
+  {
+    "path": "/api/projects/{project_id}/tasks",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_tasks"
+  },
+  {
+    "path": "/api/projects/{project_id}/tasks",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_task"
+  },
+  {
+    "path": "/api/projects/{project_id}/tasks/{task_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_task"
+  },
+  {
+    "path": "/api/projects/{project_id}/tasks/{task_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_task"
+  },
+  {
+    "path": "/api/projects/{project_id}/time-entries",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_time_entries"
+  },
+  {
+    "path": "/api/projects/{project_id}/time-entries",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_time_entry"
+  },
+  {
+    "path": "/api/projects/{project_id}/time-entries/{entry_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_time_entry"
+  },
+  {
+    "path": "/api/projects/{project_id}/time-entries/{entry_id}/approve",
+    "methods": [
+      "POST"
+    ],
+    "name": "approve_time_entry"
+  },
+  {
+    "path": "/api/purchase-orders",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_purchase_orders"
+  },
+  {
+    "path": "/api/purchase-orders",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_purchase_order"
+  },
+  {
+    "path": "/api/purchase-orders/{purchase_order_id}/pdf",
+    "methods": [
+      "GET"
+    ],
+    "name": "download_purchase_order_pdf"
+  },
+  {
+    "path": "/api/purchase-orders/{{purchase_order_id}}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_purchase_order"
+  },
+  {
+    "path": "/api/quotes",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_quotes"
+  },
+  {
+    "path": "/api/quotes",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_quote"
+  },
+  {
+    "path": "/api/quotes/{quote_id}/pdf",
+    "methods": [
+      "GET"
+    ],
+    "name": "download_quote_pdf"
+  },
+  {
+    "path": "/api/rbac/me/permissions",
+    "methods": [
+      "GET"
+    ],
+    "name": "my_permissions"
+  },
+  {
+    "path": "/api/rbac/permissions",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_permissions"
+  },
+  {
+    "path": "/api/rbac/roles",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_roles"
+  },
+  {
+    "path": "/api/rbac/roles",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_role"
+  },
+  {
+    "path": "/api/rbac/roles/{role_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_role"
+  },
+  {
+    "path": "/api/rbac/roles/{role_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_role"
+  },
+  {
+    "path": "/api/rbac/users",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_org_users"
+  },
+  {
+    "path": "/api/rbac/users/{user_id}/roles",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_user_roles"
+  },
+  {
+    "path": "/api/rbac/users/{user_id}/roles",
+    "methods": [
+      "PUT"
+    ],
+    "name": "set_user_roles"
+  },
+  {
+    "path": "/api/recurring-bills",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_recurring_bills"
+  },
+  {
+    "path": "/api/recurring-bills",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_recurring_bill"
+  },
+  {
+    "path": "/api/recurring-bills/{bill_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_recurring_bill"
+  },
+  {
+    "path": "/api/recurring-bills/{bill_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_recurring_bill"
+  },
+  {
+    "path": "/api/recurring-bills/{bill_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_recurring_bill"
+  },
+  {
+    "path": "/api/recurring-bills/{bill_id}/activate",
+    "methods": [
+      "POST"
+    ],
+    "name": "activate_recurring_bill"
+  },
+  {
+    "path": "/api/recurring-bills/{bill_id}/deactivate",
+    "methods": [
+      "POST"
+    ],
+    "name": "deactivate_recurring_bill"
+  },
+  {
+    "path": "/api/recurring-invoices",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_recurring_invoices"
+  },
+  {
+    "path": "/api/recurring-invoices",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_recurring_invoice"
+  },
+  {
+    "path": "/api/recurring-invoices/{{recurring_invoice_id}}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_recurring_invoice"
+  },
+  {
+    "path": "/api/reporting-tags",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_tags"
+  },
+  {
+    "path": "/api/reporting-tags",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_tag"
+  },
+  {
+    "path": "/api/reporting-tags/{tag_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_tag"
+  },
+  {
+    "path": "/api/reporting-tags/{tag_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_tag"
+  },
+  {
+    "path": "/api/reporting-tags/{tag_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_tag"
+  },
+  {
+    "path": "/api/reports/account-transactions",
+    "methods": [
+      "GET"
+    ],
+    "name": "account_transactions"
+  },
+  {
+    "path": "/api/reports/balance-sheet",
+    "methods": [
+      "GET"
+    ],
+    "name": "balance_sheet"
+  },
+  {
+    "path": "/api/reports/budget-vs-actual",
+    "methods": [
+      "GET"
+    ],
+    "name": "budget_vs_actual_report"
+  },
+  {
+    "path": "/api/reports/cash-flow",
+    "methods": [
+      "GET"
+    ],
+    "name": "cash_flow_report"
+  },
+  {
+    "path": "/api/reports/expense-by-category",
+    "methods": [
+      "GET"
+    ],
+    "name": "expense_by_category"
+  },
+  {
+    "path": "/api/reports/general-ledger",
+    "methods": [
+      "GET"
+    ],
+    "name": "general_ledger"
+  },
+  {
+    "path": "/api/reports/payable-aging",
+    "methods": [
+      "GET"
+    ],
+    "name": "payable_aging"
+  },
+  {
+    "path": "/api/reports/profit-loss",
+    "methods": [
+      "GET"
+    ],
+    "name": "profit_loss"
+  },
+  {
+    "path": "/api/reports/project-profitability",
+    "methods": [
+      "GET"
+    ],
+    "name": "project_profitability_report"
+  },
+  {
+    "path": "/api/reports/receivable-aging",
+    "methods": [
+      "GET"
+    ],
+    "name": "receivable_aging"
+  },
+  {
+    "path": "/api/reports/sales-by-customer",
+    "methods": [
+      "GET"
+    ],
+    "name": "sales_by_customer"
+  },
+  {
+    "path": "/api/reports/sales-by-item",
+    "methods": [
+      "GET"
+    ],
+    "name": "sales_by_item"
+  },
+  {
+    "path": "/api/reports/tax-summary",
+    "methods": [
+      "GET"
+    ],
+    "name": "tax_summary"
+  },
+  {
+    "path": "/api/reports/trial-balance",
+    "methods": [
+      "GET"
+    ],
+    "name": "trial_balance"
+  },
+  {
+    "path": "/api/returns/purchases",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_purchase_returns"
+  },
+  {
+    "path": "/api/returns/purchases",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_purchase_return"
+  },
+  {
+    "path": "/api/returns/purchases/{return_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_purchase_return"
+  },
+  {
+    "path": "/api/returns/purchases/{return_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_purchase_return"
+  },
+  {
+    "path": "/api/returns/purchases/{return_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_purchase_return"
+  },
+  {
+    "path": "/api/returns/sales",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_sales_returns"
+  },
+  {
+    "path": "/api/returns/sales",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_sales_return"
+  },
+  {
+    "path": "/api/returns/sales/{return_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_sales_return"
+  },
+  {
+    "path": "/api/returns/sales/{return_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_sales_return"
+  },
+  {
+    "path": "/api/returns/sales/{return_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_sales_return"
+  },
+  {
+    "path": "/api/sales-orders",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_sales_orders"
+  },
+  {
+    "path": "/api/sales-orders",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_sales_order"
+  },
+  {
+    "path": "/api/sales-orders/{{sales_order_id}}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_sales_order"
+  },
+  {
+    "path": "/api/shipments",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_shipments"
+  },
+  {
+    "path": "/api/shipments",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_shipment"
+  },
+  {
+    "path": "/api/shipments/{shipment_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_shipment"
+  },
+  {
+    "path": "/api/shipments/{shipment_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_shipment"
+  },
+  {
+    "path": "/api/shipments/{shipment_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_shipment"
+  },
+  {
+    "path": "/api/shipments/{shipment_id}/deliver",
+    "methods": [
+      "POST"
+    ],
+    "name": "mark_delivered"
+  },
+  {
+    "path": "/api/system/activity-log",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_activity_log"
+  },
+  {
+    "path": "/api/system/backup",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_backup"
+  },
+  {
+    "path": "/api/system/backup/download",
+    "methods": [
+      "GET"
+    ],
+    "name": "download_backup"
+  },
+  {
+    "path": "/api/system/backup/list",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_backups"
+  },
+  {
+    "path": "/api/system/currencies",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_currencies"
+  },
+  {
+    "path": "/api/system/exchange-rates",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_exchange_rates"
+  },
+  {
+    "path": "/api/system/exchange-rates",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_exchange_rate"
+  },
+  {
+    "path": "/api/system/invoice-templates",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_invoice_templates"
+  },
+  {
+    "path": "/api/system/invoice-templates",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_invoice_template"
+  },
+  {
+    "path": "/api/system/invoice-templates/{template_id}/set-default",
+    "methods": [
+      "POST"
+    ],
+    "name": "set_default_template"
+  },
+  {
+    "path": "/api/system/notification-preferences",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_notification_preferences"
+  },
+  {
+    "path": "/api/system/notification-preferences",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_notification_preferences"
+  },
+  {
+    "path": "/api/system/organization",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_organization"
+  },
+  {
+    "path": "/api/system/organization",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_organization"
+  },
+  {
+    "path": "/api/system/profile",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_profile"
+  },
+  {
+    "path": "/api/system/profile",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_profile"
+  },
+  {
+    "path": "/api/system/profile/password",
+    "methods": [
+      "PUT"
+    ],
+    "name": "change_password"
+  },
+  {
+    "path": "/api/system/reminder-settings",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_reminder_settings"
+  },
+  {
+    "path": "/api/system/reminder-settings",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_reminder_settings"
+  },
+  {
+    "path": "/api/system/settings",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_settings"
+  },
+  {
+    "path": "/api/system/settings",
+    "methods": [
+      "POST"
+    ],
+    "name": "upsert_setting"
+  },
+  {
+    "path": "/api/taxes/groups",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_tax_groups"
+  },
+  {
+    "path": "/api/taxes/groups",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_tax_group"
+  },
+  {
+    "path": "/api/taxes/rates",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_tax_rates"
+  },
+  {
+    "path": "/api/taxes/rates",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_tax_rate"
+  },
+  {
+    "path": "/api/taxes/rates/{rate_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_tax_rate"
+  },
+  {
+    "path": "/api/taxes/rates/{rate_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_tax_rate"
+  },
+  {
+    "path": "/api/taxes/returns",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_tax_returns"
+  },
+  {
+    "path": "/api/taxes/returns",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_tax_return"
+  },
+  {
+    "path": "/api/taxes/returns/{return_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_tax_return"
+  },
+  {
+    "path": "/api/taxes/returns/{return_id}/file",
+    "methods": [
+      "POST"
+    ],
+    "name": "file_tax_return"
+  },
+  {
+    "path": "/api/taxes/withholding",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_withholding_taxes"
+  },
+  {
+    "path": "/api/taxes/withholding",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_withholding_tax"
+  },
+  {
+    "path": "/api/taxes/withholding/{tax_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_withholding_tax"
+  },
+  {
+    "path": "/api/taxes/withholding/{tax_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_withholding_tax"
+  },
+  {
+    "path": "/api/taxes/withholding/{tax_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_withholding_tax"
+  },
+  {
+    "path": "/api/transaction-locking",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_lock_settings"
+  },
+  {
+    "path": "/api/transaction-locking",
+    "methods": [
+      "POST"
+    ],
+    "name": "set_lock_date"
+  },
+  {
+    "path": "/api/transaction-locking",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "remove_lock"
+  },
+  {
+    "path": "/api/transaction-locking/check/{transaction_date}",
+    "methods": [
+      "GET"
+    ],
+    "name": "check_if_locked"
+  },
+  {
+    "path": "/api/trash",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_trash"
+  },
+  {
+    "path": "/api/trash/permanent/{collection}/{doc_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "permanent_delete"
+  },
+  {
+    "path": "/api/trash/purge-expired",
+    "methods": [
+      "POST"
+    ],
+    "name": "purge_expired"
+  },
+  {
+    "path": "/api/trash/restore/{collection}/{doc_id}",
+    "methods": [
+      "POST"
+    ],
+    "name": "restore"
+  },
+  {
+    "path": "/api/trash/stats",
+    "methods": [
+      "GET"
+    ],
+    "name": "trash_stats"
+  },
+  {
+    "path": "/api/vendor-credits",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_vendor_credits"
+  },
+  {
+    "path": "/api/vendor-credits",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_vendor_credit"
+  },
+  {
+    "path": "/api/vendor-credits/{{vendor_credit_id}}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_vendor_credit"
+  },
+  {
+    "path": "/api/whatsapp/config",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_config"
+  },
+  {
+    "path": "/api/whatsapp/config",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_config"
+  },
+  {
+    "path": "/api/whatsapp/messages",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_messages"
+  },
+  {
+    "path": "/api/whatsapp/messages/stats",
+    "methods": [
+      "GET"
+    ],
+    "name": "message_stats"
+  },
+  {
+    "path": "/api/whatsapp/send",
+    "methods": [
+      "POST"
+    ],
+    "name": "send_message"
+  },
+  {
+    "path": "/api/whatsapp/templates",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_templates"
+  },
+  {
+    "path": "/api/whatsapp/templates",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_template"
+  },
+  {
+    "path": "/api/whatsapp/templates/{template_id}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_template"
+  },
+  {
+    "path": "/api/whatsapp/templates/{template_id}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_template"
+  },
+  {
+    "path": "/api/whatsapp/webhook",
+    "methods": [
+      "POST"
+    ],
+    "name": "webhook"
+  },
+  {
+    "path": "/{full_path:path}",
+    "methods": [
+      "GET"
+    ],
+    "name": "serve_spa"
+  }
+]

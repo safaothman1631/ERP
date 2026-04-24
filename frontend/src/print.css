@@ -1,0 +1,63 @@
+/* Print stylesheet — Sprint 10 — A4 RTL friendly */
+@media print {
+  /* Hide all chrome */
+  .ant-layout-sider,
+  .ant-layout-header,
+  .ant-drawer,
+  .ant-modal-mask,
+  .ant-back-top,
+  .ant-float-btn,
+  [data-print-hide],
+  nav,
+  aside,
+  header,
+  footer.app-footer,
+  .topbar,
+  .sidebar,
+  .skip-to-content,
+  .ant-message,
+  .ant-notification {
+    display: none !important;
+  }
+
+  /* Reset layout for print */
+  body, html, #root, .ant-layout, .ant-layout-content {
+    background: #fff !important;
+    color: #000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: auto !important;
+    min-height: 0 !important;
+  }
+
+  /* Page setup A4 */
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+
+  /* Remove shadows/borders that look bad on print */
+  .ant-card, .ant-table, .ant-descriptions {
+    box-shadow: none !important;
+    border-color: #ccc !important;
+  }
+
+  /* Avoid breaking inside cards/tables */
+  .ant-card, .ant-table-row, tr, .avoid-break {
+    page-break-inside: avoid;
+  }
+
+  /* Force black text */
+  * {
+    color: #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Show URLs after links */
+  a[href]:not([href^="#"]):not([href^="javascript:"]):after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    color: #666 !important;
+  }
+}

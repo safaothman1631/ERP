@@ -1,0 +1,1264 @@
+{
+  "frontend_call_count": 355,
+  "backend_route_count": 594,
+  "missing_in_backend": [
+    {
+      "method": "DELETE",
+      "path": "/api/credit-notes/{}/applications/{}",
+      "locations": [
+        "frontend\\src\\pages\\CreditNotes.tsx:111"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/delivery-challans/{}",
+      "locations": [
+        "frontend\\src\\pages\\DeliveryChallans.tsx:81"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/fiscal/budgets/{}",
+      "locations": [
+        "frontend\\src\\pages\\Settings.tsx:552"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/payment-links/{}",
+      "locations": [
+        "frontend\\src\\pages\\PaymentLinks.tsx:51"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/recurring-invoices/{}",
+      "locations": [
+        "frontend\\src\\pages\\RecurringInvoices.tsx:57"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/returns/purchase/{}",
+      "locations": [
+        "frontend\\src\\pages\\PurchaseReturns.tsx:84"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/credit-notes/{}/applications",
+      "locations": [
+        "frontend\\src\\pages\\CreditNotes.tsx:78",
+        "frontend\\src\\pages\\CreditNotes.tsx:99",
+        "frontend\\src\\pages\\CreditNotes.tsx:115"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery-challans",
+      "locations": [
+        "frontend\\src\\pages\\DeliveryChallans.tsx:25"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/fiscal/budgets",
+      "locations": [
+        "frontend\\src\\pages\\Settings.tsx:533"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/gift-cards/PLACEHOLDER",
+      "locations": [
+        "frontend\\src\\pages\\pos\\POSGiftCards.tsx:42"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/reports/{}/{}",
+      "locations": [
+        "frontend\\src\\pages\\Reports.tsx:79"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/returns/purchase",
+      "locations": [
+        "frontend\\src\\pages\\PurchaseReturns.tsx:28"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/credit-notes/{}/{}",
+      "locations": [
+        "frontend\\src\\pages\\CreditNotes.tsx:49"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/delivery-challans",
+      "locations": [
+        "frontend\\src\\pages\\DeliveryChallans.tsx:64"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/fiscal/budgets",
+      "locations": [
+        "frontend\\src\\pages\\Settings.tsx:546"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/fiscal/years",
+      "locations": [
+        "frontend\\src\\pages\\Settings.tsx:484"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/fiscal/years/{}/close",
+      "locations": [
+        "frontend\\src\\pages\\Settings.tsx:492"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/invoices/{}/apply-retainer",
+      "locations": [
+        "frontend\\src\\pages\\Invoices.tsx:108"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/purchase-orders/{}/{}",
+      "locations": [
+        "frontend\\src\\pages\\PurchaseOrders.tsx:43"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/quotes/{}/{}",
+      "locations": [
+        "frontend\\src\\pages\\Quotes.tsx:36"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/recurring-invoices/{}/{}",
+      "locations": [
+        "frontend\\src\\pages\\RecurringInvoices.tsx:53"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/returns/purchase",
+      "locations": [
+        "frontend\\src\\pages\\PurchaseReturns.tsx:67"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sales-orders/{}/{}",
+      "locations": [
+        "frontend\\src\\pages\\SalesOrders.tsx:43"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/vendor-credits/{}/{}",
+      "locations": [
+        "frontend\\src\\pages\\VendorCredits.tsx:43"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/api/approvals/requests/{}",
+      "locations": [
+        "frontend\\src\\pages\\Approvals.tsx:61",
+        "frontend\\src\\pages\\Approvals.tsx:71"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/api/delivery-challans/{}",
+      "locations": [
+        "frontend\\src\\pages\\DeliveryChallans.tsx:61"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/api/returns/purchase/{}",
+      "locations": [
+        "frontend\\src\\pages\\PurchaseReturns.tsx:64"
+      ]
+    }
+  ],
+  "unused_backend": [
+    {
+      "method": "DELETE",
+      "path": "/api/approvals/workflows/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/attachments/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/banking/accounts/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/banking/transactions/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/challans/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/comments/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/credit-notes/applications/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/credit-notes/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/crm/opportunities/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/crm/stages/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/expenses/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/hr/departments/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/hr/leave-types/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/hr/positions/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/hr/time-off/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/inventory/batches/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/inventory/composites/{}/components/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/inventory/landed-costs/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/inventory/price-lists/{}/items/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/invoices/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/mileage/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/pos/payment-methods/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/pos/preparation/displays/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/pos/presets/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/projects/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/projects/{}/tasks/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/recurring-bills/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/reporting-tags/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/returns/purchases/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/taxes/withholding/{}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/transaction-locking"
+    },
+    {
+      "method": "GET",
+      "path": "/"
+    },
+    {
+      "method": "GET",
+      "path": "/api/accounts/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/accounts/{}/sub-accounts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/assets/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/assets/{}/depreciation-schedule"
+    },
+    {
+      "method": "GET",
+      "path": "/api/attachments/{}/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audit/{}/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me"
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/banking/accounts/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/banking/accounts/{}/import/template"
+    },
+    {
+      "method": "GET",
+      "path": "/api/banking/accounts/{}/reconciliation-status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/banking/accounts/{}/unreconciled"
+    },
+    {
+      "method": "GET",
+      "path": "/api/banking/transactions"
+    },
+    {
+      "method": "GET",
+      "path": "/api/banking/transactions/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/branches/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/challans"
+    },
+    {
+      "method": "GET",
+      "path": "/api/challans/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/comments/{}/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/companies/intercompany"
+    },
+    {
+      "method": "GET",
+      "path": "/api/companies/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/contacts/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/contacts/{}/statement"
+    },
+    {
+      "method": "GET",
+      "path": "/api/credit-notes/contacts/{}/credit-balance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/credit-notes/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/crm/leads/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/crm/opportunities/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/custom-fields/values/{}/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/expense-claims/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/aging-payables"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/aging-receivables"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/balance-sheet"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/bills"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/cash-flow"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/customers"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/inventory"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/invoices"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/journal-entries"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/pos-sales"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/products"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/profit-loss"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/sales-by-customer"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/sales-by-item"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/tax-summary"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/trial-balance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/health"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hr/attendance/summary"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hr/employees/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hr/employees/{}/org-chart"
+    },
+    {
+      "method": "GET",
+      "path": "/api/hr/positions"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/batches"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/batches/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/composites/{}/components"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/landed-costs"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/landed-costs/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/movements"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/price-lists/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/price-lists/{}/items"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/serials"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/transfers/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/invoices/contacts/{}/retainer-credits"
+    },
+    {
+      "method": "GET",
+      "path": "/api/invoices/from-quote/{}/progress"
+    },
+    {
+      "method": "GET",
+      "path": "/api/invoices/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/invoices/{}/discount-amount"
+    },
+    {
+      "method": "GET",
+      "path": "/api/items/barcode/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/items/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/l10n/iq/chart-of-accounts-template"
+    },
+    {
+      "method": "GET",
+      "path": "/api/manufacturing/boms/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/manufacturing/dashboard"
+    },
+    {
+      "method": "GET",
+      "path": "/api/manufacturing/work-orders"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mileage"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mileage/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/payment-links/verify/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/payments-made"
+    },
+    {
+      "method": "GET",
+      "path": "/api/payments-received"
+    },
+    {
+      "method": "GET",
+      "path": "/api/payroll/payslips"
+    },
+    {
+      "method": "GET",
+      "path": "/api/payroll/payslips/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/portals/customer/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/portals/vendor/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/combos"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/orders/search"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/payment-methods/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/presets"
+    },
+    {
+      "method": "GET",
+      "path": "/api/pos/products/barcode/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{}/budget"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{}/tasks"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{}/time-entries"
+    },
+    {
+      "method": "GET",
+      "path": "/api/purchase-orders/{}/pdf"
+    },
+    {
+      "method": "GET",
+      "path": "/api/purchase-orders/{}}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/quotes/{}/pdf"
+    },
+    {
+      "method": "GET",
+      "path": "/api/rbac/users/{}/roles"
+    },
+    {
+      "method": "GET",
+      "path": "/api/recurring-bills"
+    },
+    {
+      "method": "GET",
+      "path": "/api/recurring-bills/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/recurring-invoices/{}}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reporting-tags"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reporting-tags/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reports/budget-vs-actual"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reports/cash-flow"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reports/expense-by-category"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reports/general-ledger"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reports/payable-aging"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reports/project-profitability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reports/receivable-aging"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reports/sales-by-customer"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reports/sales-by-item"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reports/tax-summary"
+    },
+    {
+      "method": "GET",
+      "path": "/api/returns/purchases"
+    },
+    {
+      "method": "GET",
+      "path": "/api/returns/purchases/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/returns/sales/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sales-orders/{}}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/shipments/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/taxes/returns/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/taxes/withholding"
+    },
+    {
+      "method": "GET",
+      "path": "/api/taxes/withholding/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/transaction-locking"
+    },
+    {
+      "method": "GET",
+      "path": "/api/transaction-locking/check/{}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/vendor-credits/{}}"
+    },
+    {
+      "method": "GET",
+      "path": "/{}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/accounts/currency-adjustment"
+    },
+    {
+      "method": "POST",
+      "path": "/api/accounts/{}/sub-accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/approvals/requests"
+    },
+    {
+      "method": "POST",
+      "path": "/api/approvals/requests/{}/approve"
+    },
+    {
+      "method": "POST",
+      "path": "/api/approvals/requests/{}/reject"
+    },
+    {
+      "method": "POST",
+      "path": "/api/assets/{}/depreciate"
+    },
+    {
+      "method": "POST",
+      "path": "/api/attachments/{}/{}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/2fa/disable"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/2fa/setup"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/2fa/verify"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/setup"
+    },
+    {
+      "method": "POST",
+      "path": "/api/banking/accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/banking/accounts/{}/import/csv"
+    },
+    {
+      "method": "POST",
+      "path": "/api/banking/accounts/{}/reconcile"
+    },
+    {
+      "method": "POST",
+      "path": "/api/banking/accounts/{}/reconcile/complete"
+    },
+    {
+      "method": "POST",
+      "path": "/api/banking/transactions"
+    },
+    {
+      "method": "POST",
+      "path": "/api/banking/transactions/{}/match"
+    },
+    {
+      "method": "POST",
+      "path": "/api/banking/transactions/{}/unmatch"
+    },
+    {
+      "method": "POST",
+      "path": "/api/challans"
+    },
+    {
+      "method": "POST",
+      "path": "/api/comments/{}/{}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/companies/intercompany"
+    },
+    {
+      "method": "POST",
+      "path": "/api/crm/stages"
+    },
+    {
+      "method": "POST",
+      "path": "/api/custom-fields/values/{}/{}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/einvoice/auto-submit/toggle"
+    },
+    {
+      "method": "POST",
+      "path": "/api/einvoice/sign/{}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/einvoice/webhook"
+    },
+    {
+      "method": "POST",
+      "path": "/api/einvoice/xml/{}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/expense-claims/{}/approve"
+    },
+    {
+      "method": "POST",
+      "path": "/api/expense-claims/{}/reject"
+    },
+    {
+      "method": "POST",
+      "path": "/api/expense-claims/{}/submit"
+    },
+    {
+      "method": "POST",
+      "path": "/api/hr/departments"
+    },
+    {
+      "method": "POST",
+      "path": "/api/hr/positions"
+    },
+    {
+      "method": "POST",
+      "path": "/api/import/preview"
+    },
+    {
+      "method": "POST",
+      "path": "/api/import/{}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/inventory/batches"
+    },
+    {
+      "method": "POST",
+      "path": "/api/inventory/composites/{}/components"
+    },
+    {
+      "method": "POST",
+      "path": "/api/inventory/landed-costs"
+    },
+    {
+      "method": "POST",
+      "path": "/api/inventory/price-lists/{}/items"
+    },
+    {
+      "method": "POST",
+      "path": "/api/inventory/serials"
+    },
+    {
+      "method": "POST",
+      "path": "/api/inventory/transfers/{}/complete"
+    },
+    {
+      "method": "POST",
+      "path": "/api/invoices/from-quote/{}/progress"
+    },
+    {
+      "method": "POST",
+      "path": "/api/invoices/retainer/{}/apply"
+    },
+    {
+      "method": "POST",
+      "path": "/api/items/{}/barcode"
+    },
+    {
+      "method": "POST",
+      "path": "/api/journals"
+    },
+    {
+      "method": "POST",
+      "path": "/api/mileage"
+    },
+    {
+      "method": "POST",
+      "path": "/api/mileage/{}/submit"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ocr/scan-text"
+    },
+    {
+      "method": "POST",
+      "path": "/api/payment-links/pay/{}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/payments-received"
+    },
+    {
+      "method": "POST",
+      "path": "/api/portals/generate-link"
+    },
+    {
+      "method": "POST",
+      "path": "/api/portals/portals/{}/deactivate"
+    },
+    {
+      "method": "POST",
+      "path": "/api/pos/combos"
+    },
+    {
+      "method": "POST",
+      "path": "/api/pos/configs/{}/deactivate"
+    },
+    {
+      "method": "POST",
+      "path": "/api/pos/employees/logout"
+    },
+    {
+      "method": "POST",
+      "path": "/api/pos/loyalty/cards"
+    },
+    {
+      "method": "POST",
+      "path": "/api/pos/loyalty/cards/{}/redeem"
+    },
+    {
+      "method": "POST",
+      "path": "/api/pos/loyalty/earn"
+    },
+    {
+      "method": "POST",
+      "path": "/api/pos/orders/sync"
+    },
+    {
+      "method": "POST",
+      "path": "/api/pos/orders/{}/add-course"
+    },
+    {
+      "method": "POST",
+      "path": "/api/pos/orders/{}/cancel"
+    },
+    {
+      "method": "POST",
+      "path": "/api/pos/orders/{}/invoice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/pos/orders/{}/refund"
+    },
+    {
+      "method": "POST",
+      "path": "/api/pos/orders/{}/send-receipt"
+    },
+    {
+      "method": "POST",
+      "path": "/api/pos/orders/{}/split"
+    },
+    {
+      "method": "POST",
+      "path": "/api/pos/orders/{}/transfer-table"
+    },
+    {
+      "method": "POST",
+      "path": "/api/pos/payment-methods"
+    },
+    {
+      "method": "POST",
+      "path": "/api/pos/preparation/displays"
+    },
+    {
+      "method": "POST",
+      "path": "/api/pos/presets"
+    },
+    {
+      "method": "POST",
+      "path": "/api/pos/self-order/{}/pay"
+    },
+    {
+      "method": "POST",
+      "path": "/api/pos/sessions/{}/force-close"
+    },
+    {
+      "method": "POST",
+      "path": "/api/pos/tables/{}/occupy"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{}/budget"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{}/tasks"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{}/time-entries"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{}/time-entries/{}/approve"
+    },
+    {
+      "method": "POST",
+      "path": "/api/recurring-bills"
+    },
+    {
+      "method": "POST",
+      "path": "/api/recurring-bills/{}/activate"
+    },
+    {
+      "method": "POST",
+      "path": "/api/recurring-bills/{}/deactivate"
+    },
+    {
+      "method": "POST",
+      "path": "/api/reporting-tags"
+    },
+    {
+      "method": "POST",
+      "path": "/api/returns/purchases"
+    },
+    {
+      "method": "POST",
+      "path": "/api/shipments/{}/deliver"
+    },
+    {
+      "method": "POST",
+      "path": "/api/taxes/withholding"
+    },
+    {
+      "method": "POST",
+      "path": "/api/transaction-locking"
+    },
+    {
+      "method": "POST",
+      "path": "/api/whatsapp/webhook"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/approvals/workflows/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/banking/accounts/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/banking/transactions/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/branches/pos-terminals/{}/branch"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/branches/users/{}/branch"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/challans/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/comments/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/credit-notes/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/crm/leads/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/crm/stages/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/hr/contracts/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/hr/departments/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/hr/positions/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/inventory/batches/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/inventory/landed-costs/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/inventory/price-lists/{}/items/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/inventory/serials/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/invoices/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/mileage/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/payroll/payslips/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/pos/payment-methods/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/pos/preparation/displays/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/pos/presets/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/projects/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/projects/{}/tasks/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/projects/{}/time-entries/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/recurring-bills/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/reporting-tags/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/returns/purchases/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/taxes/rates/{}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/taxes/withholding/{}"
+    }
+  ]
+}

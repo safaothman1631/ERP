@@ -1,0 +1,5768 @@
+{
+  "AccountCreate": {
+    "fields": [
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "name_ku",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "account_type",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "parent_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      }
+    ]
+  },
+  "AccountResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "name_ku",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "account_type",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "parent_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "balance",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "is_system",
+        "type": "bool",
+        "required": false,
+        "default": "False"
+      },
+      {
+        "name": "is_active",
+        "type": "bool",
+        "required": false,
+        "default": "True"
+      }
+    ]
+  },
+  "ActivityLogResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "user_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "entity_type",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "entity_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "action",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "AssetDisposeRequest": {
+    "fields": [
+      {
+        "name": "disposal_date",
+        "type": "date",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "disposal_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "deposit_to_account_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "BankReconciliationCreate": {
+    "fields": [
+      {
+        "name": "bank_account_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "statement_date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "statement_balance",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "BankReconciliationResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "bank_account_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "statement_date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "statement_balance",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "book_balance",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "difference",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "status",
+        "type": "str",
+        "required": false,
+        "default": "'draft'"
+      },
+      {
+        "name": "created_at",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "BankRuleCreate": {
+    "fields": [
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "rule_type",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "apply_to",
+        "type": "str",
+        "required": false,
+        "default": "'description'"
+      },
+      {
+        "name": "condition_type",
+        "type": "str",
+        "required": false,
+        "default": "'contains'"
+      },
+      {
+        "name": "condition_value",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "target_account_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "target_contact_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "target_tax_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "BankRuleResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "rule_type",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "apply_to",
+        "type": "str",
+        "required": false,
+        "default": "'description'"
+      },
+      {
+        "name": "condition_type",
+        "type": "str",
+        "required": false,
+        "default": "'contains'"
+      },
+      {
+        "name": "condition_value",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "target_account_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "target_contact_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "target_tax_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "is_active",
+        "type": "bool",
+        "required": false,
+        "default": "True"
+      },
+      {
+        "name": "created_at",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "BillCreate": {
+    "fields": [
+      {
+        "name": "contact_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "due_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "vendor_bill_number",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "reference",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      },
+      {
+        "name": "exchange_rate",
+        "type": "float",
+        "required": false,
+        "default": "1.0"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "BillLineCreate": {
+    "fields": [
+      {
+        "name": "item_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "account_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "quantity",
+        "type": "float",
+        "required": false,
+        "default": "1"
+      },
+      {
+        "name": "unit_price",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "discount_percent",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "BillResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "contact_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "bill_number",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "vendor_bill_number",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "due_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "subtotal",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "discount_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "total",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "balance_due",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "BudgetCreate": {
+    "fields": [
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "fiscal_year_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "budget_type",
+        "type": "str",
+        "required": false,
+        "default": "'expense'"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": false,
+        "default": "[]"
+      }
+    ]
+  },
+  "BudgetLineCreate": {
+    "fields": [
+      {
+        "name": "account_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "month_1",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "month_2",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "month_3",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "month_4",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "month_5",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "month_6",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "month_7",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "month_8",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "month_9",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "month_10",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "month_11",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "month_12",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      }
+    ]
+  },
+  "BudgetResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "fiscal_year_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "budget_type",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "CSVImportConfirm": {
+    "fields": [
+      {
+        "name": "rows",
+        "type": "list",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "date_column",
+        "type": "str",
+        "required": false,
+        "default": "'date'"
+      },
+      {
+        "name": "amount_column",
+        "type": "str",
+        "required": false,
+        "default": "'amount'"
+      },
+      {
+        "name": "description_column",
+        "type": "str",
+        "required": false,
+        "default": "'description'"
+      },
+      {
+        "name": "reference_column",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "CSVImportPreview": {
+    "fields": [
+      {
+        "name": "rows",
+        "type": "list",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "total_rows",
+        "type": "int",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "columns",
+        "type": "list",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "sample_rows",
+        "type": "list",
+        "required": false,
+        "default": "[]"
+      }
+    ]
+  },
+  "ContactBase": {
+    "fields": [
+      {
+        "name": "contact_type",
+        "type": "str",
+        "required": false,
+        "default": "'customer'"
+      },
+      {
+        "name": "display_name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "company_name",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "first_name",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "last_name",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "email",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "phone",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "mobile",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      },
+      {
+        "name": "payment_terms",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "tax_number",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "ContactCreate": {
+    "fields": [
+      {
+        "name": "contact_type",
+        "type": "str",
+        "required": false,
+        "default": "'customer'"
+      },
+      {
+        "name": "display_name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "company_name",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "first_name",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "last_name",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "email",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "phone",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "mobile",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      },
+      {
+        "name": "payment_terms",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "tax_number",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "ContactResponse": {
+    "fields": [
+      {
+        "name": "contact_type",
+        "type": "str",
+        "required": false,
+        "default": "'customer'"
+      },
+      {
+        "name": "display_name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "company_name",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "first_name",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "last_name",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "email",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "phone",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "mobile",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      },
+      {
+        "name": "payment_terms",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "tax_number",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "is_active",
+        "type": "bool",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "opening_balance",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "ContactUpdate": {
+    "fields": [
+      {
+        "name": "contact_type",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "display_name",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "company_name",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "first_name",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "last_name",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "email",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "phone",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "mobile",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      },
+      {
+        "name": "payment_terms",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "tax_number",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "CreditNoteApplicationCreate": {
+    "fields": [
+      {
+        "name": "invoice_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "amount_applied",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "CreditNoteApplicationResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "credit_note_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "invoice_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "amount_applied",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "date",
+        "type": "date",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "CreditNoteCreate": {
+    "fields": [
+      {
+        "name": "contact_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "invoice_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "CreditNoteLineCreate": {
+    "fields": [
+      {
+        "name": "item_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "quantity",
+        "type": "float",
+        "required": false,
+        "default": "1"
+      },
+      {
+        "name": "unit_price",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "CreditNoteLineResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "item_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "quantity",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "unit_price",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "tax_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "tax_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "line_total",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "CreditNoteResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "contact_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "credit_note_number",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "invoice_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "status",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "subtotal",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "tax_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "total",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "balance",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "CurrencyResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "code",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "name_ku",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "symbol",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "decimal_places",
+        "type": "int",
+        "required": false,
+        "default": "2"
+      },
+      {
+        "name": "is_active",
+        "type": "bool",
+        "required": false,
+        "default": "True"
+      }
+    ]
+  },
+  "DashboardResponse": {
+    "fields": [
+      {
+        "name": "total_receivable",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "total_payable",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "income_this_month",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "expenses_this_month",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "total_contacts",
+        "type": "int",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "overdue_invoices",
+        "type": "int",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "recent_invoices",
+        "type": "list",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "recent_expenses",
+        "type": "list",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "income_expense_chart",
+        "type": "list",
+        "required": false,
+        "default": "[]"
+      }
+    ]
+  },
+  "DepreciationScheduleItem": {
+    "fields": [
+      {
+        "name": "period",
+        "type": "int",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "date",
+        "type": "date",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "opening_value",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "depreciation_amount",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "accumulated_depreciation",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "closing_value",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "EmailSendRequest": {
+    "fields": [
+      {
+        "name": "to_email",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "subject",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "message",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "ExchangeRateCreate": {
+    "fields": [
+      {
+        "name": "from_currency",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "to_currency",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "rate",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "ExchangeRateResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "from_currency",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "to_currency",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "rate",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "ExpenseCreate": {
+    "fields": [
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "account_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "amount",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "tax_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "paid_through_account_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "contact_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "reference",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "is_billable",
+        "type": "bool",
+        "required": false,
+        "default": "False"
+      },
+      {
+        "name": "project_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      },
+      {
+        "name": "exchange_rate",
+        "type": "float",
+        "required": false,
+        "default": "1.0"
+      }
+    ]
+  },
+  "ExpenseResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "expense_number",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "account_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "amount",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "tax_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "total",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "paid_through_account_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "contact_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "reference",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "is_billable",
+        "type": "bool",
+        "required": false,
+        "default": "False"
+      },
+      {
+        "name": "project_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "FirebaseRegisterRequest": {
+    "fields": [
+      {
+        "name": "id_token",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "FiscalYearCreate": {
+    "fields": [
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "start_date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "end_date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "FiscalYearResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "start_date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "end_date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "is_closed",
+        "type": "bool",
+        "required": false,
+        "default": "False"
+      },
+      {
+        "name": "is_current",
+        "type": "bool",
+        "required": false,
+        "default": "True"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "FixedAssetCreate": {
+    "fields": [
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "asset_account_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "depreciation_account_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "accumulated_depreciation_account_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "purchase_date",
+        "type": "date",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "purchase_price",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "salvage_value",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "useful_life_months",
+        "type": "int",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "depreciation_method",
+        "type": "str",
+        "required": false,
+        "default": "'straight_line'"
+      },
+      {
+        "name": "paid_through_account_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "FixedAssetResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "asset_number",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "asset_account_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "depreciation_account_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "accumulated_depreciation_account_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "purchase_date",
+        "type": "date",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "purchase_price",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "salvage_value",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "useful_life_months",
+        "type": "int",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "depreciation_method",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "current_value",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "disposed_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "disposal_amount",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "ForgotPasswordRequest": {
+    "fields": [
+      {
+        "name": "email",
+        "type": "EmailStr",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "InventoryAdjustmentCreate": {
+    "fields": [
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "reason",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "adjustment_type",
+        "type": "str",
+        "required": false,
+        "default": "'quantity'"
+      },
+      {
+        "name": "account_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "InventoryAdjustmentLineCreate": {
+    "fields": [
+      {
+        "name": "item_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "quantity_adjusted",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "value_adjusted",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      }
+    ]
+  },
+  "InventoryAdjustmentResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "adjustment_number",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "reason",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "adjustment_type",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "InvoiceCreate": {
+    "fields": [
+      {
+        "name": "contact_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "due_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "reference",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      },
+      {
+        "name": "exchange_rate",
+        "type": "float",
+        "required": false,
+        "default": "1.0"
+      },
+      {
+        "name": "discount_type",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "discount_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "shipping_charge",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "adjustment",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "terms",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "InvoiceLineCreate": {
+    "fields": [
+      {
+        "name": "item_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "quantity",
+        "type": "float",
+        "required": false,
+        "default": "1"
+      },
+      {
+        "name": "unit_price",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "discount_percent",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "account_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "InvoiceLineResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "item_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "quantity",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "unit_price",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "discount_percent",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "discount_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "tax_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "account_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "line_total",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "InvoiceResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "contact_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "invoice_number",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "reference",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "due_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "subtotal",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "discount_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "shipping_charge",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "adjustment",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "total",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "balance_due",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "exchange_rate",
+        "type": "float",
+        "required": false,
+        "default": "1.0"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "terms",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "InvoiceTemplateCreate": {
+    "fields": [
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "layout",
+        "type": "str",
+        "required": false,
+        "default": "'classic'"
+      },
+      {
+        "name": "colors",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "show_logo",
+        "type": "bool",
+        "required": false,
+        "default": "True"
+      },
+      {
+        "name": "footer_text",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "InvoiceTemplateResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "layout",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "colors",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "show_logo",
+        "type": "bool",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "footer_text",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "is_default",
+        "type": "bool",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "InvoiceUpdate": {
+    "fields": [
+      {
+        "name": "contact_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "due_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "reference",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "terms",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "lines",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "ItemBase": {
+    "fields": [
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "sku",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "item_type",
+        "type": "str",
+        "required": false,
+        "default": "'goods'"
+      },
+      {
+        "name": "unit",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "selling_price",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "cost_price",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "sales_account_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "purchase_account_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "is_trackable",
+        "type": "bool",
+        "required": false,
+        "default": "True"
+      },
+      {
+        "name": "reorder_point",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "group_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "ItemCreate": {
+    "fields": [
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "sku",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "item_type",
+        "type": "str",
+        "required": false,
+        "default": "'goods'"
+      },
+      {
+        "name": "unit",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "selling_price",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "cost_price",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "sales_account_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "purchase_account_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "is_trackable",
+        "type": "bool",
+        "required": false,
+        "default": "True"
+      },
+      {
+        "name": "reorder_point",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "group_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "ItemResponse": {
+    "fields": [
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "sku",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "item_type",
+        "type": "str",
+        "required": false,
+        "default": "'goods'"
+      },
+      {
+        "name": "unit",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "selling_price",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "cost_price",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "sales_account_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "purchase_account_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "is_trackable",
+        "type": "bool",
+        "required": false,
+        "default": "True"
+      },
+      {
+        "name": "reorder_point",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "group_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "stock_on_hand",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "is_active",
+        "type": "bool",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "ItemUpdate": {
+    "fields": [
+      {
+        "name": "name",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "sku",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "item_type",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "unit",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "selling_price",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "cost_price",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "tax_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "is_trackable",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "reorder_point",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "JournalEntryCreate": {
+    "fields": [
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "reference",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      },
+      {
+        "name": "exchange_rate",
+        "type": "float",
+        "required": false,
+        "default": "1.0"
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "JournalEntryResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "entry_number",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "reference",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "source_type",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "total_debit",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "total_credit",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "status",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "is_auto",
+        "type": "bool",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "JournalLineCreate": {
+    "fields": [
+      {
+        "name": "account_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "debit",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "credit",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "contact_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "JournalLineResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "account_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "debit",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "credit",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "contact_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "LoginRequest": {
+    "fields": [
+      {
+        "name": "email",
+        "type": "EmailStr",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "password",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "MessageResponse": {
+    "fields": [
+      {
+        "name": "message",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "success",
+        "type": "bool",
+        "required": false,
+        "default": "True"
+      }
+    ]
+  },
+  "PaginatedResponse": {
+    "fields": [
+      {
+        "name": "items",
+        "type": "list",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "total",
+        "type": "int",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "page",
+        "type": "int",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "page_size",
+        "type": "int",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "total_pages",
+        "type": "int",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "PaymentAllocation": {
+    "fields": [
+      {
+        "name": "invoice_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "amount",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "PaymentReceivedCreate": {
+    "fields": [
+      {
+        "name": "contact_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "amount",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "payment_mode",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "reference",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "deposit_to_account_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      },
+      {
+        "name": "exchange_rate",
+        "type": "float",
+        "required": false,
+        "default": "1.0"
+      },
+      {
+        "name": "allocations",
+        "type": "list",
+        "required": false,
+        "default": "[]"
+      }
+    ]
+  },
+  "PaymentReceivedResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "contact_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "payment_number",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "amount",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "unused_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "payment_mode",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "reference",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "PriceListCreate": {
+    "fields": [
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "price_type",
+        "type": "str",
+        "required": false,
+        "default": "'sales'"
+      },
+      {
+        "name": "round_off_to",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "items",
+        "type": "list",
+        "required": false,
+        "default": "[]"
+      }
+    ]
+  },
+  "PriceListItemCreate": {
+    "fields": [
+      {
+        "name": "item_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "custom_price",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "discount_percent",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "markup_percent",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      }
+    ]
+  },
+  "PriceListItemResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "item_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "custom_price",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "discount_percent",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "markup_percent",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      }
+    ]
+  },
+  "PriceListResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "price_type",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "round_off_to",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "is_active",
+        "type": "bool",
+        "required": false,
+        "default": "True"
+      },
+      {
+        "name": "items",
+        "type": "list",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "ProgressInvoiceCreate": {
+    "fields": [
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "due_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "reference",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      },
+      {
+        "name": "exchange_rate",
+        "type": "float",
+        "required": false,
+        "default": "1.0"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "ProgressInvoiceLineCreate": {
+    "fields": [
+      {
+        "name": "quote_line_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "progress_percent",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "ProjectCreate": {
+    "fields": [
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "contact_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "billing_type",
+        "type": "str",
+        "required": false,
+        "default": "'fixed'"
+      },
+      {
+        "name": "budget_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "hourly_rate",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "fixed_cost",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "start_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "end_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      }
+    ]
+  },
+  "ProjectResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "contact_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "billing_type",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "budget_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "total_hours",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "total_cost",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "total_billed",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "PurchaseOrderCreate": {
+    "fields": [
+      {
+        "name": "contact_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "delivery_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "reference",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      },
+      {
+        "name": "exchange_rate",
+        "type": "float",
+        "required": false,
+        "default": "1.0"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "terms",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "PurchaseOrderLineCreate": {
+    "fields": [
+      {
+        "name": "item_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "quantity",
+        "type": "float",
+        "required": false,
+        "default": "1"
+      },
+      {
+        "name": "unit_price",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "discount_percent",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "PurchaseOrderLineResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "item_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "quantity",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "unit_price",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "discount_percent",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "tax_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "line_total",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "PurchaseOrderResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "contact_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "order_number",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "reference",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "delivery_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "subtotal",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "discount_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "total",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "QuoteCreate": {
+    "fields": [
+      {
+        "name": "contact_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "expiry_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "reference",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      },
+      {
+        "name": "exchange_rate",
+        "type": "float",
+        "required": false,
+        "default": "1.0"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "terms",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "QuoteLineCreate": {
+    "fields": [
+      {
+        "name": "item_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "quantity",
+        "type": "float",
+        "required": false,
+        "default": "1"
+      },
+      {
+        "name": "unit_price",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "discount_percent",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "QuoteLineResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "item_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "quantity",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "unit_price",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "discount_percent",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "tax_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "line_total",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "QuoteResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "contact_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "quote_number",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "reference",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "expiry_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "subtotal",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "discount_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "total",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "terms",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "QuoteUpdate": {
+    "fields": [
+      {
+        "name": "contact_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "expiry_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "reference",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "terms",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "lines",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "RecurringInvoiceCreate": {
+    "fields": [
+      {
+        "name": "contact_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "profile_name",
+        "type": "str",
+        "required": false,
+        "default": "'Default'"
+      },
+      {
+        "name": "frequency",
+        "type": "str",
+        "required": false,
+        "default": "'monthly'"
+      },
+      {
+        "name": "start_date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "end_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "payment_terms",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": false,
+        "default": "[]"
+      }
+    ]
+  },
+  "RecurringInvoiceResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "contact_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "profile_name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "frequency",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "start_date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "end_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "next_invoice_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "payment_terms",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "subtotal",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "total",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "status",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "RegisterRequest": {
+    "fields": [
+      {
+        "name": "org_name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "user_name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "email",
+        "type": "EmailStr",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "password",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      },
+      {
+        "name": "language",
+        "type": "str",
+        "required": false,
+        "default": "'ku'"
+      }
+    ]
+  },
+  "ReminderSettingResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "before_due_days",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "after_due_days",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "email_subject_template",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "email_body_template",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "is_active",
+        "type": "bool",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "ReminderSettingUpdate": {
+    "fields": [
+      {
+        "name": "before_due_days",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "after_due_days",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "email_subject_template",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "email_body_template",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "is_active",
+        "type": "bool",
+        "required": false,
+        "default": "True"
+      }
+    ]
+  },
+  "ResetPasswordRequest": {
+    "fields": [
+      {
+        "name": "token",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "new_password",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "RetainerApplyRequest": {
+    "fields": [
+      {
+        "name": "invoice_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "amount_applied",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "RetainerCreate": {
+    "fields": [
+      {
+        "name": "contact_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "due_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "amount",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "reference",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      },
+      {
+        "name": "exchange_rate",
+        "type": "float",
+        "required": false,
+        "default": "1.0"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "deposit_to_account_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "SalesOrderCreate": {
+    "fields": [
+      {
+        "name": "contact_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "delivery_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "reference",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      },
+      {
+        "name": "exchange_rate",
+        "type": "float",
+        "required": false,
+        "default": "1.0"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "terms",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "quote_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "SalesOrderLineCreate": {
+    "fields": [
+      {
+        "name": "item_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "quantity",
+        "type": "float",
+        "required": false,
+        "default": "1"
+      },
+      {
+        "name": "unit_price",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "discount_percent",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "SalesOrderLineResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "item_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "quantity",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "unit_price",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "discount_percent",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "tax_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "line_total",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "SalesOrderResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "contact_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "order_number",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "reference",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "delivery_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "subtotal",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "discount_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "total",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "quote_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "SettingResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "key",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "value",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "category",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "SettingUpdate": {
+    "fields": [
+      {
+        "name": "key",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "value",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "category",
+        "type": "str",
+        "required": false,
+        "default": "'general'"
+      }
+    ]
+  },
+  "SetupRequest": {
+    "fields": [
+      {
+        "name": "org_name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "user_name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "email",
+        "type": "EmailStr",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "password",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      },
+      {
+        "name": "language",
+        "type": "str",
+        "required": false,
+        "default": "'ku'"
+      }
+    ]
+  },
+  "StockTransferCreate": {
+    "fields": [
+      {
+        "name": "from_warehouse_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "to_warehouse_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "date",
+        "type": "date",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "StockTransferLineCreate": {
+    "fields": [
+      {
+        "name": "item_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "quantity",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "StockTransferLineResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "item_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "quantity",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "StockTransferResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "transfer_number",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "from_warehouse_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "to_warehouse_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "date",
+        "type": "date",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "TaxRateCreate": {
+    "fields": [
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "name_ku",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "rate",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "tax_type",
+        "type": "str",
+        "required": false,
+        "default": "'vat'"
+      },
+      {
+        "name": "is_compound",
+        "type": "bool",
+        "required": false,
+        "default": "False"
+      }
+    ]
+  },
+  "TaxRateResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "name_ku",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "rate",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "tax_type",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "is_compound",
+        "type": "bool",
+        "required": false,
+        "default": "False"
+      },
+      {
+        "name": "is_default",
+        "type": "bool",
+        "required": false,
+        "default": "False"
+      },
+      {
+        "name": "is_active",
+        "type": "bool",
+        "required": false,
+        "default": "True"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "TaxReturnCreate": {
+    "fields": [
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "period_start",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "period_end",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "TaxReturnResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "period_start",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "period_end",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "tax_collected",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_paid",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "net_tax",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "status",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "filed_date",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "TokenResponse": {
+    "fields": [
+      {
+        "name": "access_token",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "token_type",
+        "type": "str",
+        "required": false,
+        "default": "'bearer'"
+      },
+      {
+        "name": "user_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "user_name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "VendorCreditCreate": {
+    "fields": [
+      {
+        "name": "contact_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "bill_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": false,
+        "default": "'IQD'"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "VendorCreditLineCreate": {
+    "fields": [
+      {
+        "name": "item_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "account_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "quantity",
+        "type": "float",
+        "required": false,
+        "default": "1"
+      },
+      {
+        "name": "unit_price",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "tax_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      }
+    ]
+  },
+  "VendorCreditLineResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "item_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "account_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "quantity",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "unit_price",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "tax_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "tax_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "line_total",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "VendorCreditResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "contact_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "credit_note_number",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "bill_id",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "date",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "status",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "subtotal",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "tax_amount",
+        "type": "float",
+        "required": false,
+        "default": "0"
+      },
+      {
+        "name": "total",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "balance",
+        "type": "float",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "currency_code",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "notes",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "lines",
+        "type": "list",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  },
+  "WarehouseCreate": {
+    "fields": [
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "address",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "is_primary",
+        "type": "bool",
+        "required": false,
+        "default": "False"
+      }
+    ]
+  },
+  "WarehouseResponse": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "org_id",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "name",
+        "type": "str",
+        "required": true,
+        "default": "PydanticUndefined"
+      },
+      {
+        "name": "address",
+        "type": "Optional",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "is_primary",
+        "type": "bool",
+        "required": false,
+        "default": "False"
+      },
+      {
+        "name": "is_active",
+        "type": "bool",
+        "required": false,
+        "default": "True"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "required": true,
+        "default": "PydanticUndefined"
+      }
+    ]
+  }
+}
