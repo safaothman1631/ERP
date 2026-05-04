@@ -8,7 +8,10 @@
 FROM node:20-alpine AS frontend-build
 WORKDIR /web
 COPY frontend/package.json frontend/package-lock.json* ./
-RUN npm ci --no-audit --no-fund
+# Use `npm install` (not `npm ci`) so platform-specific optional deps
+# (e.g. @emnapi/core for linux-musl) resolve correctly inside Alpine,
+# even when the lockfile was generated on Windows.
+RUN npm install --no-audit --no-fund --include=optional
 COPY frontend/ ./
 RUN npm run build
 
