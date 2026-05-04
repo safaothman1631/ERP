@@ -189,7 +189,7 @@ async def add_security_headers(request: Request, call_next):
         "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "img-src 'self' data: https:; "
         "font-src 'self' data: https://fonts.gstatic.com; "
-        "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://fonts.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://stats.g.doubleclick.net; "
+        "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.firebaseinstallations.googleapis.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://fcmregistrations.googleapis.com https://fonts.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://stats.g.doubleclick.net https://www.google.com https://*.google.com; "
         "frame-src 'self' https://accounts.google.com https://*.firebaseapp.com; "
         "frame-ancestors 'none'"
     )
