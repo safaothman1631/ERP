@@ -177,6 +177,8 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    # Allow Firebase Auth signInWithPopup to detect popup window state
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"
     # FIX-45: HSTS - force HTTPS for 1 year + subdomains + preload list eligibility
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
     # FIX-45: Permissions-Policy - disable powerful browser features by default
