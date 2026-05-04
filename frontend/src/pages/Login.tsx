@@ -129,7 +129,22 @@ const Login: React.FC = () => {
         text={t('auth_google_signin')}
         loading={loading}
         onSuccess={handleGoogleLogin}
-        onError={() => setErrorMsg(t('error'))}
+        onError={(err: any) => {
+          const code = err?.code || '';
+          const msg = err?.message || String(err);
+          // Friendly messages for the most common Firebase auth errors
+          if (code === 'auth/unauthorized-domain') {
+            setErrorMsg('Domain ـی ئەم سایتە لە Firebase Authorized Domains زیاد نەکراوە. Firebase Console → Authentication → Settings → Authorized domains ـدا erpiq.systems زیاد بکە.');
+          } else if (code === 'auth/popup-blocked') {
+            setErrorMsg('Browser ـت popup ـی Google ـی بلۆک کرد. تکایە popup blocker لە لاپەڕەکە بکە.');
+          } else if (code === 'auth/network-request-failed') {
+            setErrorMsg('کێشەی ئینتەرنێت — تکایە ئینتەرنێتەکەت چێک بکە.');
+          } else {
+            setErrorMsg(`${t('error')}: ${code || msg}`);
+          }
+          // Also log to console for diagnostics
+          console.error('[GoogleSignIn]', code, msg, err);
+        }}
       />
 
       <div style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: '#666' }}>
