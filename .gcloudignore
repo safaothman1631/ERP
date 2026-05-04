@@ -1,0 +1,46 @@
+# gcloud upload exclusions (mirrors .dockerignore where it matters)
+.git/
+.github/
+.gitignore
+.vscode/
+.idea/
+
+# Python
+**/__pycache__/
+**/*.pyc
+**/venv/
+**/.venv/
+
+# Node
+**/node_modules/
+frontend/dist/
+
+# Secrets (use Cloud Run env vars / Secret Manager instead)
+**/serviceAccountKey.json
+**/.env
+**/.env.*
+
+# Local data / dev junk
+backend/uploads/
+backend/backups/
+backend/_*.py
+backend/_*.txt
+backend/_*.json
+backend/_*.ps1
+backend/test_*.py
+backend/audit_*.py
+
+# Docs / huge irrelevant trees
+audit/
+MASTER_AUDIT_REPORTS/
+odoo-docs-19/
+tools/
+memories/
+*.md
+!README.md
+
+# Compose / local launchers
+docker-compose*.yml
+start*.bat
+start*.ps1
+rtk.config.toml

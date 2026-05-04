@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Table, Button, Tag, Dropdown, Modal, Form, Input, InputNumber, DatePicker, Space, Select, Divider, Tabs } from 'antd';
 import { message } from '../utils/message';
-import { PlusOutlined, MoreOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, MoreOutlined, DeleteOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import dayjs from 'dayjs';
@@ -54,6 +54,18 @@ const CreditNotes: React.FC = () => {
 
   const handleAction = async (id: string, action: string) => {
     try { await api.post(`/api/credit-notes/${id}/${action}`); message.success(t('success')); fetchData(); } catch { message.error(t('error')); }
+  };
+
+  const handleDownloadPdf = async (id: string) => {
+    try {
+      const res = await api.get(`/api/credit-notes/${id}/pdf`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `credit-note-${id}.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch { message.error(t('error')); }
   };
 
   const updateLine = (key: number, field: string, value: any) => {
@@ -140,6 +152,7 @@ const CreditNotes: React.FC = () => {
         if (r.status === 'draft') menuitems.push({ key: 'approve', label: t('approve'), onClick: () => handleAction(r.id, 'approve') });
         if (r.status === 'approved') menuitems.push({ key: 'apply', label: t('applyToInvoice'), onClick: () => openApply(r.id) });
         if (r.status !== 'void') menuitems.push({ key: 'void', label: t('void'), onClick: () => handleAction(r.id, 'void') });
+        menuitems.push({ key: 'pdf', icon: <FilePdfOutlined />, label: 'PDF', onClick: () => handleDownloadPdf(r.id) });
         return <Dropdown menu={{ items: menuitems }} trigger={['click']}><Button icon={<MoreOutlined />} size="small" /></Dropdown>;
       },
     },

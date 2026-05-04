@@ -138,8 +138,12 @@ def login(request: Request, data: LoginRequest):
         raise HTTPException(status_code=401, detail="ئیمەیڵ یان وشەی نهێنی هەڵەیە")
 
     # Success: reset counter + update last_login
+    _now = datetime.utcnow()
+    _client_ip = (request.client.host if request and request.client else None)
     user_repo.update(user_data["id"], {
-        "last_login": datetime.utcnow(),
+        "last_login": _now,
+        "last_login_at": _now,
+        "last_login_ip": _client_ip,
         "failed_login_attempts": 0,
         "locked_until": None,
     })

@@ -7,6 +7,7 @@ from app.firestore.system import SequenceRepository
 from app.firestore.organizations import OrganizationRepository
 from app.services.auth import get_current_user
 from app.services.pdf_generator import generate_purchase_order_pdf
+from app.services import approval_service, settings_service
 from app.schemas.schemas import PurchaseOrderCreate, PurchaseOrderResponse
 
 router = APIRouter(prefix="/api/purchase-orders", tags=["Purchase Orders"])
@@ -25,10 +26,33 @@ def list_purchase_orders(
 
 @router.post("", status_code=201)
 def create_purchase_order(data: PurchaseOrderCreate, user: dict = Depends(get_current_user)):
-    seq_repo = SequenceRepository(user["org_id"])
-    number = seq_repo.get_next("purchase_order")
+    from app.services.numbering_service import get_next_number
+    
+    # Apply purchases config defaults
+    try:
+        cfg = settings_service.get_bag(user["org_id"], "purchases")
+    except Exception:
+        cfg = {}
+    
+    # Get branch_id from request or user default
+    branch_id = getattr(data, 'branch_id', None) or user.get('default_branch_id')
+    
+    # Generate order number if not provided
+    auto_numbered = False
+    if hasattr(data, 'order_number') and data.order_number:
+        number = data.order_number
+    else:
+        number = get_next_number(user["org_id"], branch_id, "purchase_order", "PO")
+        auto_numbered = True
+    
+    # Build payload with config defaults
+    payload = data.model_dump(exclude={"lines"})
+    if not payload.get("payment_terms"):
+        payload["payment_terms"] = cfg.get("default_payment_terms", "Net 30")
+    payload.setdefault("three_way_match_required", cfg.get("three_way_match", False))
+    
     repo = PurchaseOrderRepository(user["org_id"])
-    item = repo.create({"id": str(uuid.uuid4()), "order_number": number, **data.model_dump(exclude={"lines"})} )
+    item = repo.create({"id": str(uuid.uuid4()), "order_number": number, "auto_numbered": auto_numbered, "approval_status": "not_required", **payload} )
     if hasattr(data, "lines") and data.lines:
         repo.set_lines(item["id"], [line.model_dump() for line in data.lines])
     return item
@@ -97,10 +121,38 @@ def send_purchase_order(purchase_order_id: str, user: dict = Depends(get_current
     po = _po_load(repo, purchase_order_id, user["org_id"])
     if po.get("status") not in (None, "", "draft"):
         raise HTTPException(status_code=400, detail=f"تەنیا دۆخی draft دەنێردرێت (دۆخی ئێستا: {po.get('status')})")
+    
+    # Check if approval workflow is satisfied
+    if not approval_service.is_doc_approved(user["org_id"], "purchase_order", purchase_order_id):
+        raise HTTPException(400, "Approval workflow not completed")
+    
     return repo.update(purchase_order_id, {
         "status": "sent",
         "sent_at": datetime.utcnow().isoformat(),
     })
+
+
+@router.post("/{purchase_order_id}/submit-for-approval")
+def submit_purchase_order_for_approval(purchase_order_id: str, user: dict = Depends(get_current_user)):
+    """Submit purchase order for approval workflow"""
+    repo = PurchaseOrderRepository(user["org_id"])
+    po = _po_load(repo, purchase_order_id, user["org_id"])
+    
+    # Create approval request if rule matches
+    approval_request = approval_service.create_approval_request(
+        org_id=user["org_id"],
+        doc_type="purchase_order",
+        doc_id=purchase_order_id,
+        doc=po,
+        requested_by=user["id"]
+    )
+    
+    if approval_request:
+        repo.update(purchase_order_id, {"approval_status": "pending"})
+        return {"approval_request": approval_request, "purchase_order": po}
+    else:
+        repo.update(purchase_order_id, {"approval_status": "not_required"})
+        return {"message": "No approval required", "purchase_order": po}
 
 
 @router.post("/{purchase_order_id}/receive")
@@ -288,3 +340,18 @@ def three_way_match(purchase_order_id: str, user: dict = Depends(get_current_use
         "fully_matched": fully_matched,
         "lines": rows,
     }
+
+
+@router.post("/{purchase_order_id}/issue")
+def issue_purchase_order(purchase_order_id: str, user: dict = Depends(get_current_user)):
+    """Issue a draft PO: status draft -> sent."""
+    repo = PurchaseOrderRepository(user["org_id"])
+    po = _po_load(repo, purchase_order_id, user["org_id"])
+    if po.get("status") not in ("draft", None, ""):
+        raise HTTPException(status_code=400, detail=f"تەنها پسووڵەی draft دەتوانرێت دەربچێت (دۆخی ئێستا: {po.get('status')})")
+    return repo.update(purchase_order_id, {
+        "status": "sent",
+        "issued_at": datetime.utcnow().isoformat(),
+        "issued_by": user.get("id"),
+    })
+

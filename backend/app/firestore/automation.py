@@ -20,3 +20,14 @@ class ServerActionRepository(BaseRepository):
 class AutomationLogRepository(BaseRepository):
     """Audit trail of automation runs."""
     collection_name = "automation_logs"
+
+
+class WorkflowRepository(BaseRepository):
+    """Visual graph-based automation workflows."""
+    collection_name = "automation_workflows"
+
+
+class WorkflowRunRepository(BaseRepository):
+    """Execution history for workflows."""
+    collection_name = "automation_runs"
+

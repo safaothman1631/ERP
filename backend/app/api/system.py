@@ -9,6 +9,7 @@ from typing import Optional, List
 from app.firestore.system import SettingsRepository, CurrencyRepository, ExchangeRateRepository, ReminderSettingsRepository
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user, hash_password, verify_password
+from app.services import settings_service as _settings_service
 from app.firebase_client import get_db
 
 router = APIRouter(prefix="/api/system", tags=["System"])
@@ -109,21 +110,78 @@ def get_organization(user: dict = Depends(get_current_user)):
 
 @router.get("/organizations")
 def list_my_organizations(user: dict = Depends(get_current_user)):
-    """List organizations the current user can access. Currently single-org per user."""
+    """List organizations the current user can access (current org + memberships)."""
     db = get_db()
     org_id = user.get("org_id")
+    user_id = user.get("id") or user.get("uid")
     if not org_id:
         return {"current": None, "organizations": []}
-    org_doc = db.collection("organizations").document(org_id).get()
-    org_data: dict = org_doc.to_dict() if org_doc.exists else {}
-    item = {
-        "id": org_id,
-        "name": org_data.get("name") or org_data.get("display_name") or "Organization",
-        "is_current": True,
+    items: list[dict] = []
+    seen: set[str] = set()
+
+    def _add(oid: str, role: str, is_current: bool):
+        if oid in seen:
+            return
+        seen.add(oid)
+        org_doc = db.collection("organizations").document(oid).get()
+        org_data: dict = org_doc.to_dict() if org_doc.exists else {}
+        items.append({
+            "id": oid,
+            "name": org_data.get("name") or org_data.get("display_name") or "Organization",
+            "is_current": is_current,
+            "role": role,
+            "logo_url": org_data.get("logo_url"),
+        })
+
+    _add(org_id, user.get("role", "member"), True)
+
+    # Optional org_memberships collection: { user_id, org_id, role }
+    if user_id:
+        try:
+            for snap in db.collection("org_memberships").where("user_id", "==", user_id).stream():
+                m = snap.to_dict() or {}
+                target = m.get("org_id")
+                if target:
+                    _add(target, m.get("role", "member"), target == org_id)
+        except Exception:
+            pass
+
+    return {"current": org_id, "organizations": items}
+
+
+@router.post("/switch-organization/{target_org_id}")
+def switch_organization(target_org_id: str, user: dict = Depends(get_current_user)):
+    """Issue a new JWT bound to a different organization.
+
+    Requires either: (a) target == current, or (b) an org_memberships document
+    linking the current user to target_org_id.
+    """
+    from app.services.auth import create_access_token
+    db = get_db()
+    user_id = user.get("id") or user.get("uid")
+    current_org = user.get("org_id")
+    if target_org_id != current_org:
+        # Verify membership
+        allowed = False
+        if user_id:
+            try:
+                q = db.collection("org_memberships") \
+                    .where("user_id", "==", user_id) \
+                    .where("org_id", "==", target_org_id).limit(1).stream()
+                allowed = any(True for _ in q)
+            except Exception:
+                allowed = False
+        if not allowed:
+            raise HTTPException(403, "ئەم بەکارهێنەرە بەشدارییە لەم دامەزراوەیەدا نییە")
+    token = create_access_token({
+        "sub": user.get("email") or user_id,
+        "id": user_id,
+        "uid": user_id,
+        "email": user.get("email"),
+        "org_id": target_org_id,
         "role": user.get("role", "member"),
-        "logo_url": org_data.get("logo_url"),
-    }
-    return {"current": org_id, "organizations": [item]}
+    })
+    return {"access_token": token, "token_type": "bearer", "org_id": target_org_id}
 
 
 
@@ -190,9 +248,12 @@ def upsert_setting(data: dict, user: dict = Depends(get_current_user)):
         "value": data.get("value", ""),
         "category": category,
     }
-    if items:
-        return repo.update(items[0]["id"], payload)
-    return repo.create(payload)
+    result = repo.update(items[0]["id"], payload) if items else repo.create(payload)
+    try:
+        _settings_service.invalidate(user["org_id"], category)
+    except Exception:
+        pass
+    return result
 
 
 @router.get("/reminder-settings")
@@ -357,3 +418,27 @@ def list_activity_log(
         order_by="created_at",
     )
     return {"items": items, "total": total}
+
+
+@router.get("/public-config")
+def get_public_config(user: dict = Depends(get_current_user)):
+    """Bootstrap config consumed by the SPA: formats, branding, payment methods,
+    localization, mobile, working hours, languages, SSO providers."""
+    org_id = user["org_id"]
+    return {
+        "formats": _settings_service.get_formats_settings(org_id),
+        "branding": _settings_service.get_branding_settings(org_id),
+        "payment_methods": _settings_service.get_payment_methods_settings(org_id),
+        "localization": _settings_service.get_localization_settings(org_id),
+        "mobile": _settings_service.get_mobile_settings(org_id),
+        "working_hours": _settings_service.get_working_hours_settings(org_id),
+        "holidays": _settings_service.get_holidays_settings(org_id),
+        "sso": _settings_service.get_sso_settings(org_id),
+        "portals": _settings_service.get_portals_settings(org_id),
+        "languages": _settings_service.get_bag(org_id, "languages", {
+            "active": ["ku", "en", "ar"],
+            "default_lang": "ku",
+            "document_lang": "en",
+            "rtl": True,
+        }),
+    }

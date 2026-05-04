@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Input, Select, Tag, Space} from 'antd';
 import { message } from '../utils/message';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, BarChartOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { PageHeader, StatusTag } from '../design-system';
 import { space } from '../theme/tokens';
@@ -13,6 +14,7 @@ const statusColors: Record<string, string> = {
 
 const Projects: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
@@ -46,6 +48,19 @@ const Projects: React.FC = () => {
     { title: t('name'), dataIndex: 'name', key: 'name' },
     { title: t('status'), dataIndex: 'status', key: 'status', render: (s: string) => <StatusTag status={s} label={t(s)} /> },
     { title: t('description'), dataIndex: 'description', key: 'description' },
+    {
+      title: t('actions'),
+      key: 'actions',
+      render: (_: any, record: any) => (
+        <Button
+          type="link"
+          icon={<BarChartOutlined />}
+          onClick={() => navigate(`/projects/${record.id}/gantt`)}
+        >
+          {t('gantt')}
+        </Button>
+      ),
+    },
   ];
 
   return (

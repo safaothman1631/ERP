@@ -1,28 +1,22 @@
-import React, { useDeferredValue, useEffect, useMemo, useState } from 'react';
-import { Layout, Input, Tooltip, Typography } from 'antd';
+import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { Layout, Input, Tooltip } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
-  AppstoreOutlined,
-  ArrowRightOutlined,
-  CaretDownFilled,
-  ClockCircleOutlined,
-  InfoCircleOutlined,
-  MacCommandOutlined,
+  CaretRightOutlined,
   SearchOutlined,
   StarFilled,
   StarOutlined,
 } from '@ant-design/icons';
-import { palette, radius, space, shadow, motion as motionTk, fontSize } from '../theme/tokens';
+import { palette, radius, space, motion as motionTk } from '../theme/tokens';
 import { buildNavSections, buildNavZones, flattenRoutes, type FlattenedNavLeaf, type NavSection, type NavZone } from './navigation';
 import { getModuleKeyForPath } from './moduleMap';
 import { isModuleEnabled, useOnboardingStore } from '../onboarding/store';
 
 const { Sider } = Layout;
-const { Text } = Typography;
 
-const MAX_RECENTS = 7;
+const MAX_RECENTS = 5;
 
 const readStoredPaths = (storageKey: string): string[] => {
   try {
@@ -34,37 +28,18 @@ const readStoredPaths = (storageKey: string): string[] => {
     return [];
   }
 };
-
 const writeStoredPaths = (storageKey: string, values: string[]) => {
-  try {
-    localStorage.setItem(storageKey, JSON.stringify(values));
-  } catch {
-    // ignore storage errors
-  }
+  try { localStorage.setItem(storageKey, JSON.stringify(values)); } catch { /* ignore */ }
 };
-
 const pathMatchesRoute = (pathname: string, route: FlattenedNavLeaf) =>
   pathname === route.key || (route.key !== '/' && pathname.startsWith(`${route.key}/`));
-
 const findMatchingRoute = (pathname: string, routes: FlattenedNavLeaf[]) =>
-  [...routes]
-    .sort((left, right) => right.key.length - left.key.length)
-    .find((route) => pathMatchesRoute(pathname, route));
-
-const routeMatchesQuery = (route: FlattenedNavLeaf, section: NavSection, zone: NavZone, query: string) => {
-  const normalizedQuery = query.trim().toLowerCase();
-  if (!normalizedQuery) return true;
-  const haystack = [
-    route.label,
-    route.description || '',
-    route.key,
-    ...(route.keywords || []),
-    section.label,
-    section.blurb || '',
-    zone.label,
-    zone.blurb,
-  ].join(' ').toLowerCase();
-  return haystack.includes(normalizedQuery);
+  [...routes].sort((a, b) => b.key.length - a.key.length).find((r) => pathMatchesRoute(pathname, r));
+const routeMatchesQuery = (route: FlattenedNavLeaf, section: NavSection, zone: NavZone, q: string) => {
+  const n = q.trim().toLowerCase();
+  if (!n) return true;
+  return [route.label, route.description || '', route.key, ...(route.keywords || []),
+    section.label, zone.label].join(' ').toLowerCase().includes(n);
 };
 
 interface SideNavProps {
@@ -80,42 +55,39 @@ interface SideNavProps {
 }
 
 /**
- * SideNav — sectioned + collapsible groups + animated indicator + search-friendly.
- * Token-driven (theme/tokens.ts). Hover lift + selected pill.
+ * SideNav v3 — Linear / Vercel / Notion-inspired minimal navigation.
+ * Flat hierarchy, single-line items, no card-in-card, no count badges,
+ * no zone blurbs, no section icon containers. Subtle hover, accent active.
  */
-export const SideNav: React.FC<SideNavProps> = ({ collapsed, width, collapsedWidth, isRTL, isDark, density = 'comfortable', onDensityChange, onOpenPalette, onOpenSectionDocs }) => {
+export const SideNav: React.FC<SideNavProps> = ({
+  collapsed, width, collapsedWidth, isRTL, isDark,
+  density = 'comfortable', onOpenSectionDocs,
+}) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const prefersReducedMotion = useReducedMotion();
+  void onOpenSectionDocs; // not surfaced in v3 (kept for API compat)
 
   const sections = useMemo<NavSection[]>(() => buildNavSections(t), [t]);
   const zones = useMemo<NavZone[]>(() => buildNavZones(t), [t]);
 
-  // ── Onboarding-driven module filter ────────────────────────────────────
-  // When user finished onboarding, hide sidebar items whose ModuleKey isn't enabled.
-  // Sections that become empty are dropped to avoid dangling headers.
-  const enabledModules = useOnboardingStore(s => s.enabledModules);
+  const enabledModules = useOnboardingStore((s) => s.enabledModules);
   const filteredSections = useMemo<NavSection[]>(() => {
-    if (!enabledModules) return sections; // not yet onboarded → show all
+    if (!enabledModules) return sections;
     return sections
-      .map(sec => ({
+      .map((sec) => ({
         ...sec,
-        items: sec.items.filter(it => isModuleEnabled(getModuleKeyForPath(it.key) ?? undefined, enabledModules)),
+        items: sec.items.filter((it) => isModuleEnabled(getModuleKeyForPath(it.key) ?? undefined, enabledModules)),
       }))
-      .filter(sec => sec.items.length > 0);
+      .filter((sec) => sec.items.length > 0);
   }, [sections, enabledModules]);
 
   const flattenedRoutes = useMemo(() => flattenRoutes(filteredSections, zones), [filteredSections, zones]);
 
   const storageScope = useMemo(() => {
-    try {
-      return localStorage.getItem('orgId') || 'global';
-    } catch {
-      return 'global';
-    }
+    try { return localStorage.getItem('orgId') || 'global'; } catch { return 'global'; }
   }, []);
-
   const favoritesKey = `nav.favorites.${storageScope}`;
   const recentsKey = `nav.recents.${storageScope}`;
 
@@ -125,88 +97,55 @@ export const SideNav: React.FC<SideNavProps> = ({ collapsed, width, collapsedWid
   const [flyout, setFlyout] = useState<{ sectionKey: string; top: number } | null>(null);
 
   const delayedQuery = useDeferredValue(query);
-
-  const activeLeaf = useMemo(
-    () => findMatchingRoute(location.pathname, flattenedRoutes),
-    [location.pathname, flattenedRoutes]
-  );
-
-  // ئەو section کە route ئێستای تێدایە، خۆکار بکرێتەوە
+  const activeLeaf = useMemo(() => findMatchingRoute(location.pathname, flattenedRoutes),
+    [location.pathname, flattenedRoutes]);
   const activeSectionKey = activeLeaf?.sectionKey;
+
   const [openKeys, setOpenKeys] = useState<string[]>(() => {
     const defaults = filteredSections.filter((s) => s.defaultOpen).map((s) => s.key);
     return activeSectionKey ? [...new Set([...defaults, activeSectionKey])] : defaults;
   });
 
-  const routeByKey = useMemo(() => new Map(flattenedRoutes.map((route) => [route.key, route])), [flattenedRoutes]);
-  const zoneByKey = useMemo(() => new Map(zones.map((zone) => [zone.key, zone])), [zones]);
+  const routeByKey = useMemo(() => new Map(flattenedRoutes.map((r) => [r.key, r])), [flattenedRoutes]);
+  const zoneByKey = useMemo(() => new Map(zones.map((z) => [z.key, z])), [zones]);
 
   const visibleSections = useMemo(() => {
-    const normalizedQuery = delayedQuery.trim().toLowerCase();
-    if (!normalizedQuery) return filteredSections;
-
+    const n = delayedQuery.trim().toLowerCase();
+    if (!n) return filteredSections;
     return filteredSections.reduce<NavSection[]>((acc, section) => {
       const zone = zoneByKey.get(section.zone);
       if (!zone) return acc;
-
-      const sectionMatches = [section.label, section.blurb || '', zone.label, zone.blurb]
-        .join(' ')
-        .toLowerCase()
-        .includes(normalizedQuery);
-
+      const sectionMatches = [section.label, zone.label].join(' ').toLowerCase().includes(n);
       const visibleItems = flattenedRoutes
-        .filter((route) => route.sectionKey === section.key)
-        .filter((route) => (sectionMatches ? true : routeMatchesQuery(route, section, zone, normalizedQuery)));
-
+        .filter((r) => r.sectionKey === section.key)
+        .filter((r) => (sectionMatches ? true : routeMatchesQuery(r, section, zone, n)));
       if (visibleItems.length === 0) return acc;
-
-      acc.push({
-        ...section,
-        items: visibleItems.map((route) => ({
-          key: route.key,
-          label: route.label,
-          description: route.description,
-          keywords: route.keywords,
-          favoriteEligible: route.favoriteEligible,
-        })),
-      });
+      acc.push({ ...section, items: visibleItems.map((r) => ({
+        key: r.key, label: r.label, description: r.description,
+        keywords: r.keywords, favoriteEligible: r.favoriteEligible,
+      })) });
       return acc;
     }, []);
   }, [delayedQuery, flattenedRoutes, filteredSections, zoneByKey]);
 
   const visibleZones = useMemo(
-    () => zones.map((zone) => ({ ...zone, sections: visibleSections.filter((section) => section.zone === zone.key) })).filter((zone) => zone.sections.length > 0),
+    () => zones.map((z) => ({ ...z, sections: visibleSections.filter((s) => s.zone === z.key) }))
+              .filter((z) => z.sections.length > 0),
     [visibleSections, zones]
   );
 
-  const favoriteRoutes = useMemo(
-    () => favoritePaths.map((path) => routeByKey.get(path)).filter((route): route is FlattenedNavLeaf => Boolean(route)),
-    [favoritePaths, routeByKey]
-  );
-
   const recentRoutes = useMemo(
-    () => recentPaths.map((path) => routeByKey.get(path)).filter((route): route is FlattenedNavLeaf => Boolean(route)),
+    () => recentPaths.map((p) => routeByKey.get(p)).filter((r): r is FlattenedNavLeaf => Boolean(r)),
     [recentPaths, routeByKey]
   );
 
   const isSearching = delayedQuery.trim().length > 0;
-  const animationSeconds = prefersReducedMotion ? 0 : motionTk.durBase / 1000;
+  const animSec = prefersReducedMotion ? 0 : motionTk.durBase / 1000;
   const isCompact = density === 'compact';
-  const sizing = useMemo(() => ({
-    brandPx: isCompact ? 32 : 36,
-    sectionIconPx: isCompact ? 26 : 30,
-    sectionPadY: isCompact ? 8 : 10,
-    sectionPadX: isCompact ? 10 : 12,
-    sectionGap: isCompact ? 8 : 10,
-    leafPadY: isCompact ? 5 : 7,
-    leafPadX: isCompact ? 8 : 10,
-    leafFont: isCompact ? 12.5 : 13.5,
-    sectionTitleFont: isCompact ? 12.5 : 13.5,
-    showLeafDescription: !isCompact,
-    zoneGap: isCompact ? 12 : 16,
-    leafGap: isCompact ? 4 : 6,
-  }), [isCompact]);
+  const itemPadY = isCompact ? 5 : 6;
+  const itemFont = isCompact ? 13 : 13.5;
 
+  // Auto-expand active section
   useEffect(() => {
     if (activeSectionKey && !openKeys.includes(activeSectionKey)) {
       setOpenKeys((prev) => [...prev, activeSectionKey]);
@@ -214,177 +153,176 @@ export const SideNav: React.FC<SideNavProps> = ({ collapsed, width, collapsedWid
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSectionKey]);
 
-  useEffect(() => {
-    writeStoredPaths(favoritesKey, favoritePaths);
-  }, [favoritePaths, favoritesKey]);
-
-  useEffect(() => {
-    writeStoredPaths(recentsKey, recentPaths);
-  }, [recentPaths, recentsKey]);
+  useEffect(() => { writeStoredPaths(favoritesKey, favoritePaths); }, [favoritePaths, favoritesKey]);
+  useEffect(() => { writeStoredPaths(recentsKey, recentPaths); }, [recentPaths, recentsKey]);
 
   useEffect(() => {
     if (!activeLeaf) return;
-    setRecentPaths((prev) => [activeLeaf.key, ...prev.filter((path) => path !== activeLeaf.key)].slice(0, MAX_RECENTS));
+    setRecentPaths((prev) => [activeLeaf.key, ...prev.filter((p) => p !== activeLeaf.key)].slice(0, MAX_RECENTS));
   }, [activeLeaf]);
 
-  useEffect(() => {
-    if (!collapsed) {
-      setFlyout(null);
-    }
-  }, [collapsed]);
-
-  useEffect(() => {
-    setFlyout(null);
-  }, [location.pathname]);
-
+  useEffect(() => { if (!collapsed) setFlyout(null); }, [collapsed]);
+  useEffect(() => { setFlyout(null); }, [location.pathname]);
   useEffect(() => {
     if (!flyout) return;
-    const handlePointerDown = (event: MouseEvent) => {
-      const element = event.target as HTMLElement | null;
-      if (!element) return;
-      if (element.closest('[data-nav-flyout="true"]') || element.closest('[data-nav-section-button="true"]')) {
-        return;
-      }
+    const onDown = (e: MouseEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (!el) return;
+      if (el.closest('[data-nav-flyout="true"]') || el.closest('[data-nav-section-button="true"]')) return;
       setFlyout(null);
     };
-    document.addEventListener('mousedown', handlePointerDown);
-    return () => document.removeEventListener('mousedown', handlePointerDown);
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
   }, [flyout]);
 
-  const sidebarBg = isDark ? palette.darkSurface : palette.surface;
-  const borderCol = isDark ? palette.darkBorder : palette.border;
-  const elevatedSurface = isDark ? palette.darkElevated : '#F5F7FB';
-  const ink = isDark ? palette.darkInk : palette.ink900;
-  const inkMuted = isDark ? palette.darkInkMuted : palette.ink500;
-  const fadeTop = isDark
-    ? 'linear-gradient(180deg, rgba(17,26,46,0.96), rgba(17,26,46,0))'
-    : 'linear-gradient(180deg, rgba(248,250,252,0.94), rgba(248,250,252,0))';
-  const fadeBottom = isDark
-    ? 'linear-gradient(0deg, rgba(17,26,46,0.98), rgba(17,26,46,0))'
-    : 'linear-gradient(0deg, rgba(248,250,252,0.96), rgba(248,250,252,0))';
-  const shellGradient = isDark
-    ? 'radial-gradient(circle at top right, rgba(31,111,235,0.16), transparent 36%), linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))'
-    : 'radial-gradient(circle at top left, rgba(31,111,235,0.12), transparent 38%), linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.92))';
+  // Cleanup any pending hover-open timers on unmount
+  useEffect(() => () => {
+    Object.values(hoverTimers.current).forEach((tid) => clearTimeout(tid));
+    hoverTimers.current = {};
+  }, []);
 
-  const toggleSection = (sectionKey: string) => {
+  // ── Theme tokens ───────────────────────────────────────────────
+  const sidebarBg  = isDark ? '#0B1220' : '#FAFBFC';
+  const borderCol  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)';
+  const ink        = isDark ? '#E5E9F2' : '#0F172A';
+  const inkMuted   = isDark ? '#7B8497' : '#64748B';
+  const inkDim     = isDark ? '#5A6275' : '#94A3B8';
+  const hoverBg    = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.04)';
+  const activeBg   = isDark ? 'rgba(31,111,235,0.16)' : 'rgba(31,111,235,0.08)';
+
+  const toggleSection = (key: string) => {
     if (isSearching) return;
-    setOpenKeys((prev) => (prev.includes(sectionKey) ? prev.filter((key) => key !== sectionKey) : [...prev, sectionKey]));
+    setOpenKeys((prev) => prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]);
+    hoverOpened.current.delete(key); // user click → no longer hover-managed
+  };
+  const openSection = (key: string) => {
+    if (isSearching) return;
+    setOpenKeys((prev) => prev.includes(key) ? prev : [...prev, key]);
+  };
+  const closeSection = (key: string) => {
+    setOpenKeys((prev) => prev.filter((k) => k !== key));
+  };
+
+  // Hover-intent: open after ~700ms; auto-close on leave (only if hover-opened).
+  const HOVER_OPEN_MS = 700;
+  const hoverTimers = useRef<Record<string, number>>({});
+  const hoverOpened = useRef<Set<string>>(new Set());
+
+  const handleSectionHoverEnter = (key: string) => {
+    if (isSearching || collapsed) return;
+    if (openKeys.includes(key)) return;
+    if (hoverTimers.current[key]) return;
+    hoverTimers.current[key] = window.setTimeout(() => {
+      hoverOpened.current.add(key);
+      openSection(key);
+      delete hoverTimers.current[key];
+    }, HOVER_OPEN_MS);
+  };
+  const handleSectionHoverLeave = (key: string) => {
+    const tid = hoverTimers.current[key];
+    if (tid) {
+      clearTimeout(tid);
+      delete hoverTimers.current[key];
+    }
+    // Auto-close only sections we opened via hover, never the active one
+    if (hoverOpened.current.has(key) && key !== activeSectionKey) {
+      hoverOpened.current.delete(key);
+      closeSection(key);
+    }
   };
 
   const toggleFavorite = (path: string) => {
-    setFavoritePaths((prev) => (prev.includes(path) ? prev.filter((item) => item !== path) : [path, ...prev].slice(0, 10)));
+    setFavoritePaths((prev) => prev.includes(path) ? prev.filter((p) => p !== path) : [path, ...prev].slice(0, 10));
+  };
+  const handleSectionFlyout = (key: string, target: HTMLElement) => {
+    const b = target.getBoundingClientRect();
+    const top = Math.max(76, Math.min(b.top - 10, window.innerHeight - 340));
+    setFlyout((prev) => prev?.sectionKey === key ? null : { sectionKey: key, top });
   };
 
-  const handleSectionFlyout = (sectionKey: string, target: HTMLElement) => {
-    const bounds = target.getBoundingClientRect();
-    const nextTop = Math.max(76, Math.min(bounds.top - 10, window.innerHeight - 340));
-    setFlyout((prev) => (prev?.sectionKey === sectionKey ? null : { sectionKey, top: nextTop }));
-  };
-
-  const navigateTo = (path: string) => {
-    navigate(path);
-  };
-
-  const renderLeaf = (route: FlattenedNavLeaf, compact = false) => {
+  // ── Leaf renderer ──────────────────────────────────────────────
+  const renderLeaf = (route: FlattenedNavLeaf) => {
     const isActive = activeLeaf?.key === route.key;
-    const showDescription = !compact && sizing.showLeafDescription && Boolean(route.description);
+    const isFav = favoritePaths.includes(route.key);
     return (
-      <div
+      <button
         key={route.key}
-        role="button"
-        tabIndex={0}
-        onClick={() => navigateTo(route.key)}
-        onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); navigateTo(route.key); } }}
-        className={`premium-nav-focus premium-nav-leaf${isActive ? ' is-active' : ''}`}
-        data-dark={isDark ? 'true' : 'false'}
+        type="button"
+        onClick={() => navigate(route.key)}
+        className={`sn3-leaf${isActive ? ' is-active' : ''}`}
         style={{
           position: 'relative',
           width: '100%',
-          color: ink,
+          background: isActive ? activeBg : 'transparent',
+          color: isActive ? palette.primary600 : ink,
+          border: 'none',
           borderRadius: radius.md,
-          padding: `${sizing.leafPadY}px ${sizing.leafPadX}px`,
+          padding: `${itemPadY}px 10px ${itemPadY}px ${isActive ? 18 : 12}px`,
           display: 'flex',
-          alignItems: showDescription ? 'flex-start' : 'center',
+          alignItems: 'center',
           gap: 8,
-          textAlign: 'start',
           cursor: 'pointer',
-          overflow: 'hidden',
+          textAlign: 'start',
+          fontSize: itemFont,
+          fontWeight: isActive ? 600 : 450,
+          lineHeight: 1.4,
+          transition: 'background 0.12s, color 0.12s',
         }}
       >
         {isActive && (
           <motion.span
-            layoutId="premium-nav-active-rail"
+            layoutId="sn3-active-rail"
             transition={{ type: 'spring', stiffness: 380, damping: 32 }}
             style={{
-              position: 'absolute',
-              top: 6,
-              bottom: 6,
-              [isRTL ? 'right' : 'left']: 4,
-              width: 3,
-              borderRadius: radius.pill,
-              background: `linear-gradient(180deg, ${palette.primary400}, ${palette.primary700})`,
-              boxShadow: shadow.primary,
+              position: 'absolute', top: 6, bottom: 6,
+              [isRTL ? 'right' : 'left']: 6,
+              width: 2.5, borderRadius: 2,
+              background: palette.primary500,
             }}
           />
         )}
-        <div style={{ flex: 1, minWidth: 0, paddingInlineStart: isActive ? 8 : 0 }}>
-          <div style={{ fontSize: sizing.leafFont, fontWeight: isActive ? 700 : 500, lineHeight: 1.25 }}>{route.label}</div>
-          {showDescription && (
-            <div className="premium-nav-leaf__desc" style={{ marginTop: 2, fontSize: 11, lineHeight: 1.3, color: inkMuted }}>{route.description}</div>
-          )}
-        </div>
-        {!compact && route.favoriteEligible && (
+        <span style={{ flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {route.label}
+        </span>
+        {route.favoriteEligible && (
           <span
             role="button"
-            tabIndex={0}
-            aria-label={favoritePaths.includes(route.key) ? t('remove_favorite', 'Remove favorite') : t('add_favorite', 'Add favorite')}
-            onClick={(event) => {
-              event.stopPropagation();
-              toggleFavorite(route.key);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                event.stopPropagation();
-                toggleFavorite(route.key);
-              }
-            }}
-            className="premium-nav-focus premium-nav-fav"
-            data-active={favoritePaths.includes(route.key) ? 'true' : 'false'}
+            tabIndex={-1}
+            aria-label={isFav ? t('remove_favorite', 'Remove favorite') : t('add_favorite', 'Add favorite')}
+            onClick={(e) => { e.stopPropagation(); toggleFavorite(route.key); }}
+            className="sn3-fav"
+            data-active={isFav ? 'true' : 'false'}
             style={{
-              color: favoritePaths.includes(route.key) ? palette.primary500 : inkMuted,
-              cursor: 'pointer',
-              padding: 3,
-              display: 'grid',
-              placeItems: 'center',
-              flexShrink: 0,
-              fontSize: 12,
+              color: isFav ? palette.warning : inkDim,
+              padding: 2, lineHeight: 1, fontSize: 11,
+              opacity: isFav ? 1 : 0,
+              transition: 'opacity 0.12s, color 0.12s',
             }}
           >
-            {favoritePaths.includes(route.key) ? <StarFilled /> : <StarOutlined />}
+            {isFav ? <StarFilled /> : <StarOutlined />}
           </span>
         )}
-      </div>
+      </button>
     );
   };
 
-  const flyoutSection = flyout ? filteredSections.find((section) => section.key === flyout.sectionKey) : null;
+  const flyoutSection = flyout ? filteredSections.find((s) => s.key === flyout.sectionKey) : null;
 
   return (
     <>
+      <style>{sn3Css}</style>
       <Sider
         trigger={null}
         collapsible
         collapsed={collapsed}
         width={width}
         collapsedWidth={collapsedWidth}
-        className="premium-sidenav-shell"
+        className="sn3-sider"
         style={{
           background: sidebarBg,
           borderInlineEnd: `1px solid ${borderCol}`,
           position: 'fixed',
-          top: 0,
-          bottom: 0,
+          top: 0, bottom: 0,
           [isRTL ? 'right' : 'left']: 0,
           zIndex: 100,
           overflow: 'hidden',
@@ -392,438 +330,263 @@ export const SideNav: React.FC<SideNavProps> = ({ collapsed, width, collapsedWid
           flexDirection: 'column',
         }}
       >
-        <div style={{ position: 'relative', padding: collapsed ? `${space.md}px ${space.sm}px ${space.sm}px` : `${space.lg}px ${space.lg}px ${space.md}px` }}>
+        {/* ── Brand row (slim) ────────────────────────────────── */}
+        <div style={{
+          height: 56,
+          padding: collapsed ? '0' : '0 16px',
+          display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start',
+          gap: 10, borderBottom: `1px solid ${borderCol}`,
+          flexShrink: 0,
+        }}>
           <div style={{
-            position: 'absolute',
-            inset: 8,
-            borderRadius: radius.xl,
-            background: shellGradient,
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(148,163,184,0.12)'}`,
-            boxShadow: shadow.sm,
-          }} />
-          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: space.md }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', gap: space.sm }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: space.md, minWidth: 0 }}>
-                <div style={{
-                  width: collapsed ? 40 : 44,
-                  height: collapsed ? 40 : 44,
-                  borderRadius: radius.lg,
-                  background: `linear-gradient(135deg, ${palette.primary500}, ${palette.primary800})`,
-                  display: 'grid',
-                  placeItems: 'center',
-                  color: '#fff',
-                  fontWeight: 800,
-                  fontSize: 16,
-                  boxShadow: shadow.primary,
-                  flexShrink: 0,
-                }}>
-                  Z
-                </div>
-                <AnimatePresence initial={false}>
-                  {!collapsed && (
-                    <motion.div
-                      initial={{ opacity: 0, x: isRTL ? 8 : -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: isRTL ? 8 : -8 }}
-                      transition={{ duration: animationSeconds }}
-                      style={{ minWidth: 0 }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Text strong style={{ fontSize: 15, color: ink, lineHeight: 1.1 }}>{t('app_name')}</Text>
-                        <span style={{ width: 8, height: 8, borderRadius: radius.pill, background: palette.success, boxShadow: `0 0 0 4px ${isDark ? 'rgba(22,163,74,0.14)' : 'rgba(22,163,74,0.16)'}` }} />
-                      </div>
-                      <Text style={{ display: 'block', marginTop: 2, fontSize: 11, color: inkMuted }}>
-                        {t('app_subtitle')} · ERP cockpit
-                      </Text>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-              {!collapsed && (
-                <div style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '4px 8px',
-                  borderRadius: radius.pill,
-                  background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.75)',
-                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(148,163,184,0.14)'}`,
-                  color: inkMuted,
-                  fontSize: 11,
-                }}>
-                  <AppstoreOutlined />
-                  {flattenedRoutes.length}
-                </div>
-              )}
+            width: 28, height: 28, borderRadius: 8,
+            background: `linear-gradient(135deg, ${palette.primary500}, ${palette.primary700})`,
+            display: 'grid', placeItems: 'center', color: '#fff',
+            fontWeight: 700, fontSize: 13,
+            boxShadow: '0 2px 6px rgba(31,111,235,0.32)',
+            flexShrink: 0,
+          }}>Z</div>
+          {!collapsed && (
+            <div style={{ minWidth: 0, fontSize: 13.5, fontWeight: 600, color: ink,
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {t('app_name')}
             </div>
-
-            <AnimatePresence initial={false}>
-              {!collapsed && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: animationSeconds }}
-                  style={{ display: 'grid', gap: space.sm }}
-                >
-                  <Input
-                    allowClear
-                    size="large"
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    prefix={<SearchOutlined style={{ color: inkMuted }} />}
-                    placeholder={t('search_or_jump', 'Search or jump to…')}
-                    className="premium-nav-search"
-                    style={{
-                      borderRadius: radius.lg,
-                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(148,163,184,0.16)'}`,
-                      background: isDark ? 'rgba(11,18,32,0.72)' : 'rgba(255,255,255,0.82)',
-                      boxShadow: 'none',
-                      fontSize: 13.5,
-                    }}
-                    suffix={
-                      <span style={{ fontSize: 11, color: inkMuted }}>
-                        {visibleSections.reduce((sum, section) => sum + section.items.length, 0)}
-                      </span>
-                    }
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          )}
         </div>
 
-        <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>
-          <div className="premium-sidenav-fade premium-sidenav-fade--top" style={{ opacity: collapsed ? 0 : 1, background: fadeTop }} />
-          <div className="premium-sidenav-scroll" data-dark={isDark ? 'true' : 'false'} style={{ height: '100%', overflowY: 'auto', overflowX: 'hidden', padding: `${space.sm}px ${space.sm}px ${space.xl}px` }}>
-            {!collapsed && !isSearching && favoriteRoutes.length > 0 && (
-              <div style={{ marginBottom: space.lg }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: inkMuted, fontSize: 11, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', marginBottom: 10 }}>
-                  <StarFilled style={{ color: palette.primary500 }} />
-                  {t('favorites', 'Favorites')}
-                </div>
-                <div style={{ display: 'grid', gap: 8 }}>
-                  {favoriteRoutes.slice(0, 4).map((route) => renderLeaf(route, true))}
-                </div>
+        {/* ── Search (slim) ───────────────────────────────────── */}
+        {!collapsed && (
+          <div style={{ padding: '12px 12px 8px', flexShrink: 0 }}>
+            <Input
+              allowClear
+              size="middle"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              prefix={<SearchOutlined style={{ color: inkDim, fontSize: 13 }} />}
+              placeholder={t('search_or_jump', 'Search or jump to…')}
+              className="sn3-search"
+              style={{
+                borderRadius: 8,
+                border: `1px solid ${borderCol}`,
+                background: hoverBg,
+                fontSize: 13,
+                height: 34,
+              }}
+            />
+          </div>
+        )}
+
+        {/* ── Body (scrollable) ───────────────────────────────── */}
+        <div className="sn3-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden',
+          padding: collapsed ? '8px 6px 16px' : '4px 8px 16px' }}>
+
+          {/* Recent (only when not searching, not collapsed, has items) */}
+          {!collapsed && !isSearching && recentRoutes.length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              <div className="sn3-zone-label" style={{ color: inkDim }}>
+                {t('recent', 'Recent')}
               </div>
-            )}
-
-            {!collapsed && !isSearching && recentRoutes.length > 0 && (
-              <div style={{ marginBottom: space.lg }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: inkMuted, fontSize: 11, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', marginBottom: 10 }}>
-                  <ClockCircleOutlined style={{ color: palette.info }} />
-                  {t('recent', 'Recent')}
-                </div>
-                <div style={{ display: 'grid', gap: 8 }}>
-                  {recentRoutes.slice(0, 2).map((route) => renderLeaf(route, true))}
-                </div>
+              <div style={{ display: 'grid', gap: 1 }}>
+                {recentRoutes.slice(0, 3).map((r) => renderLeaf(r))}
               </div>
-            )}
+            </div>
+          )}
 
-            {!collapsed && visibleZones.map((zone, zoneIndex) => (
-              <div key={zone.key} style={{ marginBottom: zoneIndex === visibleZones.length - 1 ? 0 : space.lg }}>
-                <div style={{ padding: `0 ${space.sm}px`, marginBottom: 8 }}>
-                  <div style={{ color: inkMuted, fontSize: 11, fontWeight: 700, letterSpacing: 0.35, textTransform: 'uppercase' }}>{zone.label}</div>
-                  <div style={{ marginTop: 4, fontSize: 11, lineHeight: 1.35, color: inkMuted }}>{zone.blurb}</div>
-                </div>
-
-                <div style={{ display: 'grid', gap: sizing.sectionGap }}>
-                  {zone.sections.map((section) => {
-                    const isOpen = isSearching || openKeys.includes(section.key) || section.key === activeSectionKey;
-                    return (
-                      <div key={section.key} className={`premium-nav-section${isOpen ? ' is-open' : ''}`} data-dark={isDark ? 'true' : 'false'} onMouseLeave={() => {
-                        if (isSearching) return;
-                        setOpenKeys((prev) => prev.filter((key) => key !== section.key));
-                      }} style={{
-                        borderRadius: radius.lg,
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'stretch' }}>
-                          <button
-                            type="button"
-                            data-nav-section-button="true"
-                            onClick={() => toggleSection(section.key)}
-                            onMouseEnter={() => {
-                              if (isSearching) return;
-                              if (!openKeys.includes(section.key)) {
-                                setOpenKeys((prev) => [...prev, section.key]);
-                              }
-                            }}
-                            className="premium-nav-focus premium-nav-section__toggle"
-                            style={{
-                              flex: 1,
-                              minWidth: 0,
-                              border: 'none',
-                              background: 'transparent',
-                              color: ink,
-                              padding: `${sizing.sectionPadY}px ${sizing.sectionPadX}px`,
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 10,
-                              cursor: 'pointer',
-                              textAlign: 'start',
-                              borderRadius: radius.lg,
-                            }}
-                          >
-                            <div className="premium-nav-section__icon" style={{
-                              width: sizing.sectionIconPx,
-                              height: sizing.sectionIconPx,
-                              borderRadius: radius.md,
-                              display: 'grid',
-                              placeItems: 'center',
-                              background: isOpen ? `linear-gradient(135deg, ${palette.primary100}, ${palette.primary50})` : elevatedSurface,
-                              color: isOpen ? palette.primary600 : ink,
-                              flexShrink: 0,
-                              fontSize: 14,
-                            }}>
-                              {section.icon}
-                            </div>
-
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: sizing.sectionTitleFont, fontWeight: 700, lineHeight: 1.2 }}>{section.label}</div>
-                              {!isCompact && section.blurb && (
-                                <div style={{ marginTop: 2, fontSize: 10.5, lineHeight: 1.3, color: inkMuted }}>{section.blurb}</div>
-                              )}
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span style={{
-                                minWidth: 20,
-                                height: 18,
-                                borderRadius: radius.pill,
-                                paddingInline: 6,
-                                background: isDark ? 'rgba(255,255,255,0.06)' : '#EEF2FF',
-                                color: isOpen ? palette.primary600 : inkMuted,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: 10,
-                                fontWeight: 700,
-                              }}>
-                                {section.items.length}
-                              </span>
-                              <motion.span
-                                animate={{ rotate: isOpen ? 0 : isRTL ? 90 : -90 }}
-                                transition={{ duration: animationSeconds }}
-                                style={{ color: inkMuted, fontSize: 9 }}
-                              >
-                                <CaretDownFilled />
-                              </motion.span>
-                            </div>
-                          </button>
-                          {onOpenSectionDocs && (
-                            <Tooltip title={t('nav.section_info', 'About this section')}>
-                              <button
-                                type="button"
-                                onClick={() => onOpenSectionDocs(section.key)}
-                                className="premium-nav-focus premium-nav-section__info"
-                                aria-label={t('nav.section_info', 'About this section')}
-                                style={{
-                                  border: 'none',
-                                  background: 'transparent',
-                                  color: inkMuted,
-                                  cursor: 'pointer',
-                                  padding: `0 ${sizing.sectionPadX}px`,
-                                  display: 'grid',
-                                  placeItems: 'center',
-                                  fontSize: 13,
-                                  flexShrink: 0,
-                                }}
-                              >
-                                <InfoCircleOutlined />
-                              </button>
-                            </Tooltip>
-                          )}
-                        </div>
-
-                        <AnimatePresence initial={false}>
-                          {isOpen && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              transition={{ duration: animationSeconds, ease: [0.2, 0, 0, 1] }}
-                              style={{ overflow: 'hidden', padding: `0 6px ${sizing.sectionPadY}px` }}
-                            >
-                              <div style={{ display: 'grid', gap: sizing.leafGap, paddingTop: 2 }}>
-                                {section.items.map((item) => renderLeaf(routeByKey.get(item.key) || {
-                                  key: item.key,
-                                  label: item.label,
-                                  description: item.description,
-                                  keywords: item.keywords,
-                                  favoriteEligible: item.favoriteEligible ?? true,
-                                  icon: section.icon,
-                                  sectionKey: section.key,
-                                  sectionLabel: section.label,
-                                  zone: section.zone,
-                                  zoneLabel: zone.label,
-                                }))}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    );
-                  })}
-                </div>
+          {/* Expanded view: zones → sections → items */}
+          {!collapsed && visibleZones.map((zone) => (
+            <div key={zone.key} style={{ marginBottom: 14 }}>
+              <div className="sn3-zone-label" style={{ color: inkDim }}>
+                {zone.label}
               </div>
-            ))}
-
-            {collapsed && (
-              <div style={{ display: 'grid', gap: 10 }}>
-                {zones.map((zone, zoneIndex) => {
-                  const zoneSections = filteredSections.filter((section) => section.zone === zone.key);
+              <div>
+                {zone.sections.map((section) => {
+                  const isOpen = isSearching || openKeys.includes(section.key) || section.key === activeSectionKey;
                   return (
-                    <div key={zone.key} style={{ display: 'grid', gap: 8 }}>
-                      {zoneIndex > 0 && <div style={{ height: 1, margin: `4px ${space.md}px`, background: borderCol }} />}
-                      {zoneSections.map((section) => {
-                        const isActiveSection = section.key === activeSectionKey;
-                        return (
-                          <Tooltip key={section.key} placement={isRTL ? 'left' : 'right'} title={`${section.label} · ${section.items.length}`}>
-                            <button
-                              type="button"
-                              data-nav-section-button="true"
-                              onClick={(event) => handleSectionFlyout(section.key, event.currentTarget)}
-                              className="premium-nav-focus"
-                              style={{
-                                width: 48,
-                                height: 48,
-                                marginInline: 'auto',
-                                borderRadius: radius.xl,
-                                border: `1px solid ${isActiveSection ? palette.primary200 : 'transparent'}`,
-                                background: isActiveSection ? (isDark ? 'rgba(31,111,235,0.18)' : 'rgba(31,111,235,0.09)') : elevatedSurface,
-                                color: isActiveSection ? palette.primary600 : ink,
-                                display: 'grid',
-                                placeItems: 'center',
-                                cursor: 'pointer',
-                                boxShadow: isActiveSection ? shadow.sm : 'none',
-                              }}
-                            >
-                              {section.icon}
-                            </button>
-                          </Tooltip>
-                        );
-                      })}
+                    <div
+                      key={section.key}
+                      style={{ marginBottom: 2 }}
+                      onMouseEnter={() => handleSectionHoverEnter(section.key)}
+                      onMouseLeave={() => handleSectionHoverLeave(section.key)}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => toggleSection(section.key)}
+                        className="sn3-section-toggle"
+                        style={{
+                          width: '100%', border: 'none', background: 'transparent',
+                          color: ink,
+                          padding: `${itemPadY}px 10px ${itemPadY}px 12px`,
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          cursor: 'pointer', textAlign: 'start',
+                          borderRadius: radius.md,
+                          fontSize: itemFont,
+                          fontWeight: 500,
+                          lineHeight: 1.4,
+                          transition: 'background 0.12s',
+                        }}
+                      >
+                        <span style={{
+                          color: inkMuted, fontSize: 12,
+                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                          width: 16, height: 16, flexShrink: 0,
+                        }}>
+                          {section.icon}
+                        </span>
+                        <span style={{ flex: 1, minWidth: 0, whiteSpace: 'nowrap',
+                          overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {section.label}
+                        </span>
+                        <motion.span
+                          animate={{ rotate: isOpen ? 90 : 0 }}
+                          transition={{ duration: animSec }}
+                          style={{ color: inkDim, fontSize: 9, lineHeight: 1, flexShrink: 0 }}
+                        >
+                          <CaretRightOutlined />
+                        </motion.span>
+                      </button>
+
+                      <AnimatePresence initial={false}>
+                        {isOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: animSec, ease: [0.2, 0, 0, 1] }}
+                            style={{ overflow: 'hidden', paddingInlineStart: 22 }}
+                          >
+                            <div style={{ display: 'grid', gap: 1, paddingTop: 1, paddingBottom: 4 }}>
+                              {section.items.map((item) => renderLeaf(routeByKey.get(item.key) || {
+                                key: item.key, label: item.label,
+                                description: item.description, keywords: item.keywords,
+                                favoriteEligible: item.favoriteEligible ?? true,
+                                icon: section.icon, sectionKey: section.key,
+                                sectionLabel: section.label, zone: section.zone,
+                                zoneLabel: zone.label,
+                              }))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   );
                 })}
               </div>
-            )}
+            </div>
+          ))}
 
-            {!collapsed && visibleZones.length === 0 && (
-              <div style={{ padding: `${space.xxl}px ${space.md}px`, textAlign: 'center', color: inkMuted }}>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>{t('no_results', 'No results')}</div>
-                <div style={{ marginTop: 6, fontSize: 11 }}>{t('nav_search_no_results', 'Try another keyword or open the command palette')}</div>
-              </div>
-            )}
-          </div>
-          <div className="premium-sidenav-fade premium-sidenav-fade--bottom" style={{ opacity: collapsed ? 0 : 1, background: fadeBottom }} />
-        </div>
+          {/* Collapsed view: just icons */}
+          {collapsed && (
+            <div style={{ display: 'grid', gap: 4 }}>
+              {zones.map((zone, zi) => {
+                const zoneSections = filteredSections.filter((s) => s.zone === zone.key);
+                return (
+                  <React.Fragment key={zone.key}>
+                    {zi > 0 && <div style={{ height: 1, margin: '6px 8px', background: borderCol }} />}
+                    {zoneSections.map((section) => {
+                      const isActiveSec = section.key === activeSectionKey;
+                      return (
+                        <Tooltip key={section.key} placement={isRTL ? 'left' : 'right'} title={section.label}>
+                          <button
+                            type="button"
+                            data-nav-section-button="true"
+                            onClick={(e) => handleSectionFlyout(section.key, e.currentTarget)}
+                            className="sn3-collapsed-btn"
+                            style={{
+                              width: 36, height: 36, marginInline: 'auto',
+                              borderRadius: 8, border: 'none',
+                              background: isActiveSec ? activeBg : 'transparent',
+                              color: isActiveSec ? palette.primary600 : inkMuted,
+                              display: 'grid', placeItems: 'center',
+                              cursor: 'pointer', fontSize: 14,
+                              transition: 'background 0.12s, color 0.12s',
+                            }}
+                          >
+                            {section.icon}
+                          </button>
+                        </Tooltip>
+                      );
+                    })}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          )}
 
-        <div style={{
-          padding: collapsed ? `${space.sm}px` : `${space.sm}px ${space.lg}px ${space.md}px`,
-          borderTop: `1px solid ${borderCol}`,
-          background: isDark ? 'rgba(11,18,32,0.76)' : 'rgba(255,255,255,0.88)',
-          backdropFilter: 'blur(18px)',
-        }}>
-          {collapsed ? (
-            <div style={{ display: 'grid', placeItems: 'center', color: inkMuted, fontSize: 11 }}>v1</div>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: space.sm }}>
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: ink }}>v1.1 · ECC</div>
-                <div style={{ fontSize: 10.5, color: inkMuted }}>{t('nav_footer_hint', 'Fast lane for every ERP surface')}</div>
-              </div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                <Tooltip title={t('nav.density_comfortable', 'Comfortable')}>
-                  <button
-                    type="button"
-                    onClick={() => onDensityChange?.('comfortable')}
-                    className="premium-nav-focus"
-                    aria-pressed={density === 'comfortable'}
-                    style={{
-                      border: `1px solid ${density === 'comfortable' ? palette.primary400 : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(148,163,184,0.18)')}`,
-                      background: density === 'comfortable' ? (isDark ? 'rgba(31,111,235,0.22)' : 'rgba(31,111,235,0.1)') : 'transparent',
-                      color: density === 'comfortable' ? palette.primary500 : inkMuted,
-                      borderRadius: radius.md,
-                      padding: '3px 7px',
-                      fontSize: 10,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      letterSpacing: 0.2,
-                    }}
-                  >C</button>
-                </Tooltip>
-                <Tooltip title={t('nav.density_compact', 'Compact')}>
-                  <button
-                    type="button"
-                    onClick={() => onDensityChange?.('compact')}
-                    className="premium-nav-focus"
-                    aria-pressed={density === 'compact'}
-                    style={{
-                      border: `1px solid ${density === 'compact' ? palette.primary400 : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(148,163,184,0.18)')}`,
-                      background: density === 'compact' ? (isDark ? 'rgba(31,111,235,0.22)' : 'rgba(31,111,235,0.1)') : 'transparent',
-                      color: density === 'compact' ? palette.primary500 : inkMuted,
-                      borderRadius: radius.md,
-                      padding: '3px 7px',
-                      fontSize: 10,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      letterSpacing: 0.2,
-                    }}
-                  >S</button>
-                </Tooltip>
+          {!collapsed && visibleZones.length === 0 && (
+            <div style={{ padding: '40px 16px', textAlign: 'center', color: inkMuted }}>
+              <div style={{ fontSize: 13, fontWeight: 500 }}>{t('no_results', 'No results')}</div>
+              <div style={{ marginTop: 4, fontSize: 11, color: inkDim }}>
+                {t('nav_search_no_results', 'Try another keyword or open the command palette')}
               </div>
             </div>
           )}
         </div>
+
+        {/* ── Footer (single line) ────────────────────────────── */}
+        <div style={{
+          height: 36, flexShrink: 0,
+          padding: collapsed ? '0' : '0 14px',
+          display: 'flex', alignItems: 'center',
+          justifyContent: collapsed ? 'center' : 'space-between',
+          borderTop: `1px solid ${borderCol}`,
+          fontSize: 11, color: inkDim,
+        }}>
+          {collapsed ? (
+            <span>v1</span>
+          ) : (
+            <>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <span style={{
+                  width: 6, height: 6, borderRadius: '50%',
+                  background: palette.success,
+                  boxShadow: `0 0 0 2px ${palette.success}33`,
+                }} />
+                <span>v1.4.2</span>
+              </span>
+              <span style={{ fontSize: 10.5, opacity: 0.7 }}>{t('app_subtitle')}</span>
+            </>
+          )}
+        </div>
       </Sider>
 
+      {/* ── Flyout (collapsed mode) ─────────────────────────── */}
       <AnimatePresence>
         {collapsed && flyoutSection && (
           <motion.aside
             key={flyoutSection.key}
             data-nav-flyout="true"
-            initial={{ opacity: 0, x: isRTL ? 14 : -14, scale: 0.98 }}
+            initial={{ opacity: 0, x: isRTL ? 10 : -10, scale: 0.98 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: isRTL ? 14 : -14, scale: 0.98 }}
-            transition={{ duration: animationSeconds }}
+            exit={{ opacity: 0, x: isRTL ? 10 : -10, scale: 0.98 }}
+            transition={{ duration: animSec }}
             style={{
               position: 'fixed',
               top: flyout?.top ?? 76,
-              [isRTL ? 'right' : 'left']: collapsedWidth + 12,
-              width: 272,
+              [isRTL ? 'right' : 'left']: collapsedWidth + 8,
+              width: 240,
               maxHeight: 'calc(100vh - 88px)',
               overflowY: 'auto',
-              background: isDark ? palette.darkSurface : palette.surface,
+              background: isDark ? '#111A2E' : '#FFFFFF',
               border: `1px solid ${borderCol}`,
-              borderRadius: radius.xl,
-              boxShadow: shadow.lg,
+              borderRadius: 12,
+              boxShadow: isDark
+                ? '0 12px 32px rgba(0,0,0,0.45)'
+                : '0 12px 32px rgba(15,23,42,0.16)',
               zIndex: 140,
-              padding: space.md,
-              display: 'grid',
-              gap: 10,
+              padding: '8px 6px',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: space.md }}>
-              <div style={{ width: 38, height: 38, borderRadius: radius.lg, background: elevatedSurface, display: 'grid', placeItems: 'center', color: palette.primary600 }}>
-                {flyoutSection.icon}
-              </div>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: fontSize.md, fontWeight: 700, color: ink }}>{flyoutSection.label}</div>
-                {flyoutSection.blurb && <div style={{ marginTop: 2, fontSize: 11, color: inkMuted }}>{flyoutSection.blurb}</div>}
-              </div>
+            <div style={{ padding: '6px 12px 8px', fontSize: 12, fontWeight: 600,
+              color: inkMuted, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              {flyoutSection.label}
             </div>
-            <div style={{ display: 'grid', gap: 8 }}>
+            <div style={{ display: 'grid', gap: 1 }}>
               {flyoutSection.items.map((item) => renderLeaf(routeByKey.get(item.key) || {
-                key: item.key,
-                label: item.label,
-                description: item.description,
-                keywords: item.keywords,
+                key: item.key, label: item.label,
+                description: item.description, keywords: item.keywords,
                 favoriteEligible: item.favoriteEligible ?? true,
-                icon: flyoutSection.icon,
-                sectionKey: flyoutSection.key,
-                sectionLabel: flyoutSection.label,
-                zone: flyoutSection.zone,
+                icon: flyoutSection.icon, sectionKey: flyoutSection.key,
+                sectionLabel: flyoutSection.label, zone: flyoutSection.zone,
                 zoneLabel: zoneByKey.get(flyoutSection.zone)?.label || '',
               }))}
             </div>
@@ -833,5 +596,58 @@ export const SideNav: React.FC<SideNavProps> = ({ collapsed, width, collapsedWid
     </>
   );
 };
+
+const sn3Css = `
+  .sn3-sider > .ant-layout-sider-children {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+  .sn3-zone-label {
+    padding: 12px 12px 6px;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    line-height: 1;
+  }
+  .sn3-leaf:hover:not(.is-active) { background: rgba(15,23,42,0.04); }
+  [data-theme='dark'] .sn3-leaf:hover:not(.is-active) { background: rgba(255,255,255,0.04); }
+  .sn3-leaf:hover .sn3-fav { opacity: 0.6 !important; }
+  .sn3-leaf .sn3-fav[data-active='true'] { opacity: 1 !important; }
+  .sn3-leaf .sn3-fav:hover { opacity: 1 !important; color: #F59E0B !important; }
+  .sn3-section-toggle:hover { background: rgba(15,23,42,0.04); }
+  [data-theme='dark'] .sn3-section-toggle:hover { background: rgba(255,255,255,0.04); }
+  .sn3-collapsed-btn:hover { background: rgba(15,23,42,0.05); }
+  [data-theme='dark'] .sn3-collapsed-btn:hover { background: rgba(255,255,255,0.05); }
+
+  .sn3-search.ant-input-affix-wrapper {
+    transition: border-color 0.15s, background 0.15s !important;
+  }
+  .sn3-search.ant-input-affix-wrapper:hover,
+  .sn3-search.ant-input-affix-wrapper-focused {
+    border-color: rgba(31,111,235,0.32) !important;
+    background: rgba(255,255,255,0.6) !important;
+    box-shadow: 0 0 0 3px rgba(31,111,235,0.08) !important;
+  }
+  [data-theme='dark'] .sn3-search.ant-input-affix-wrapper:hover,
+  [data-theme='dark'] .sn3-search.ant-input-affix-wrapper-focused {
+    background: rgba(255,255,255,0.06) !important;
+  }
+
+  .sn3-scroll::-webkit-scrollbar { width: 6px; }
+  .sn3-scroll::-webkit-scrollbar-track { background: transparent; }
+  .sn3-scroll::-webkit-scrollbar-thumb {
+    background: rgba(15,23,42,0.10); border-radius: 3px;
+  }
+  .sn3-scroll::-webkit-scrollbar-thumb:hover { background: rgba(15,23,42,0.18); }
+  [data-theme='dark'] .sn3-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); }
+
+  .sn3-sider { font-family: inherit; }
+`;
+
+// suppress unused
+void space;
 
 export default SideNav;

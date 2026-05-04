@@ -1,0 +1,57 @@
+# --- Python ---
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/.pytest_cache/
+**/venv/
+**/.venv/
+**/env/
+
+# --- Node ---
+**/node_modules/
+**/.next/
+**/dist/
+frontend/dist/
+frontend/.vite/
+
+# --- Secrets (NEVER ship) ---
+**/serviceAccountKey.json
+**/*.pem
+**/.env
+**/.env.*
+!**/.env.example
+
+# --- Local data / uploads / backups ---
+backend/uploads/
+backend/backups/
+backend/_*.py
+backend/_*.txt
+backend/_*.json
+backend/_*.ps1
+backend/test_*.py
+backend/audit_*.py
+backend/migrate_*.py
+
+# --- Editor / OS ---
+.vscode/
+.idea/
+.git/
+.github/
+*.log
+.DS_Store
+Thumbs.db
+
+# --- Docs / planning (not needed in image) ---
+*.md
+!README.md
+audit/
+MASTER_AUDIT_REPORTS/
+odoo-docs-19/
+tools/
+memories/
+
+# --- Compose / local-only ---
+docker-compose*.yml
+start*.bat
+start*.ps1
+rtk.config.toml

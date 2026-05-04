@@ -11,6 +11,7 @@ from app.firestore.hr import HRContractRepository, HREmployeeRepository
 from app.firestore.payroll import PayrollRunRepository, PayslipRepository, SalaryRuleRepository
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
+from app.services import settings_service
 
 router = APIRouter(prefix="/api/payroll", tags=["Payroll"])
 
@@ -129,6 +130,12 @@ def list_runs(user: dict = Depends(get_current_user)):
 
 @router.post("/runs", dependencies=[Depends(require_perm("hr.payroll.create"))])
 def create_run(payload: PayrollRunCreate, user: dict = Depends(get_current_user)):
+    # Apply payroll config
+    try:
+        cfg = settings_service.get_bag(user["org_id"], "payroll")
+    except Exception:
+        cfg = {}
+    
     org = user["org_id"]
     employees, _ = HREmployeeRepository(org).list(limit=2000)
     targets = [e for e in employees if e.get("status") == "active"]
@@ -150,6 +157,9 @@ def create_run(payload: PayrollRunCreate, user: dict = Depends(get_current_user)
         "created_at": datetime.utcnow().isoformat(),
         "total_gross": 0,
         "total_net": 0,
+        "tax_brackets": cfg.get("tax_brackets", []),
+        "social_security_rate": cfg.get("social_security_rate", 0.05),
+        "default_allowances": cfg.get("default_allowances", []),
     })
 
     pslip_repo = PayslipRepository(org)

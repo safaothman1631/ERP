@@ -10,6 +10,7 @@ from app.firestore.inventory import (
     InventoryAdjustmentRepository,
 )
 from app.services.auth import get_current_user
+from app.services import settings_service
 
 router = APIRouter(prefix="/api/inventory", tags=["Inventory"])
 
@@ -97,6 +98,12 @@ def generate_reorder_pos(user: dict = Depends(get_current_user)):
     """
     from app.firestore.bills import PurchaseOrderRepository
     from app.firestore.system import SequenceRepository
+    
+    # Apply inventory config defaults
+    try:
+        cfg = settings_service.get_bag(user["org_id"], "inventory")
+    except Exception:
+        cfg = {}
 
     suggestions = reorder_suggestions(user)
     by_vendor = suggestions["by_vendor"]
@@ -107,10 +114,19 @@ def generate_reorder_pos(user: dict = Depends(get_current_user)):
     seq_repo = SequenceRepository(user["org_id"])
     created = []
     today = datetime.utcnow().isoformat()
+    
+    default_reorder_point = cfg.get("default_reorder_point", 10)
+    default_reorder_qty = cfg.get("default_reorder_qty", 50)
 
     for group in by_vendor:
         vendor_id = group["vendor_id"]
         lines = group["lines"]
+        # Apply defaults if item-level rules are missing
+        for line in lines:
+            if line.get("reorder_point", 0) == 0:
+                line["reorder_point"] = default_reorder_point
+            if line.get("quantity", 0) == 0:
+                line["quantity"] = default_reorder_qty
         po_id = str(uuid.uuid4())
         number = seq_repo.get_next("purchase_order")
         po_repo.create({
@@ -157,17 +173,51 @@ def list_inventory_adjustments(
 
 @router.post("/adjustments", status_code=201)
 def create_inventory_adjustment(data: dict, user: dict = Depends(get_current_user)):
-    adjustment = InventoryAdjustmentRepository(user["org_id"]).create({
+    """Create inventory adjustment.
+    
+    Supports two payload shapes:
+      1. Legacy flat: {item_id, quantity_adjusted, reason, date, ...}
+      2. Multi-line:  {date, reason, account_id, lines: [{item_id, quantity_adjusted, value_adjusted}, ...]}
+    """
+    lines = data.get("lines") or []
+    if not lines and not data.get("item_id"):
+        raise HTTPException(status_code=400, detail="item_id یان lines داواکراوە")
+    
+    repo = InventoryAdjustmentRepository(user["org_id"])
+    
+    # Multi-line shape: create one adjustment per line for backward compat with single-item repo
+    if lines:
+        first = None
+        for ln in lines:
+            if not ln.get("item_id"):
+                raise HTTPException(status_code=400, detail="هەر هێڵێک item_id پێویستە")
+            adj = repo.create({
+                "id": str(uuid.uuid4()),
+                "item_id": ln["item_id"],
+                "adjustment_account_id": data.get("account_id") or data.get("adjustment_account_id"),
+                "adjustment_type": data.get("adjustment_type", "quantity"),
+                "quantity_adjusted": ln.get("quantity_adjusted", 0),
+                "value_adjusted": ln.get("value_adjusted", 0),
+                "reason": data.get("reason", ""),
+                "date": data.get("date") or datetime.utcnow().date().isoformat(),
+                "status": data.get("status", "posted"),
+                "created_by_id": user["id"],
+            })
+            if first is None:
+                first = adj
+        return first
+    
+    # Legacy flat shape
+    return repo.create({
         "id": str(uuid.uuid4()),
         "item_id": data["item_id"],
-        "adjustment_account_id": data.get("adjustment_account_id"),
+        "adjustment_account_id": data.get("adjustment_account_id") or data.get("account_id"),
         "quantity_adjusted": data.get("quantity_adjusted", 0),
         "reason": data.get("reason", ""),
         "date": data.get("date") or datetime.utcnow().date().isoformat(),
         "status": data.get("status", "posted"),
         "created_by_id": user["id"],
     })
-    return adjustment
 
 
 @router.get("/groups")

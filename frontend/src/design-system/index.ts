@@ -43,3 +43,7 @@ export { default as DateRangePickerRTL, type DateRangePickerRTLProps } from './D
 export { default as UserSelect, type UserSelectProps, type UserOption } from './UserSelect';
 export { default as SavedViewsPicker, type SavedViewsPickerProps, type SavedView } from './SavedViewsPicker';
 export { default as AdvancedFilterDrawer, type AdvancedFilterDrawerProps } from './AdvancedFilterDrawer';
+
+// Wave 8.C: Premium UX Features
+export { default as PrintView, usePrint, type PrintViewProps } from './PrintView';
+export { default as QuickSearch, type QuickSearchProps } from './QuickSearch';

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Button, Tag, Card, Row, Col, Statistic, Select, Space, Checkbox, Empty, Typography } from 'antd';
 import { message } from '../utils/message';
-import { SyncOutlined, CheckCircleOutlined, LinkOutlined, BankOutlined, DollarOutlined, WarningOutlined, InboxOutlined } from '@ant-design/icons';
+import { SyncOutlined, CheckCircleOutlined, LinkOutlined, BankOutlined, DollarOutlined, WarningOutlined, InboxOutlined, CloudUploadOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { PageHeader } from '../design-system';
 
@@ -26,6 +27,7 @@ interface ReconciliationSummary {
 
 const BankReconciliation: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [accounts, setAccounts] = useState<{ id: string; account_name: string }[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string>('');
   const [bankTransactions, setBankTransactions] = useState<Transaction[]>([]);
@@ -164,7 +166,22 @@ const BankReconciliation: React.FC = () => {
 
   return (
     <div>
-      <PageHeader title={t('reconciliation')} subtitle={t('reconciliation_subtitle', 'پاکییەکردنی حیسابە بانکییەکان')} />
+      <PageHeader 
+        title={t('reconciliation')} 
+        subtitle={t('reconciliation_subtitle', 'پاکییەکردنی حیسابە بانکییەکان')}
+        extra={
+          selectedAccount ? (
+            <Space>
+              <Button icon={<CloudUploadOutlined />} onClick={() => navigate(`/banking/${selectedAccount}/import`)}>
+                {t('import_statement')}
+              </Button>
+              <Button icon={<ThunderboltOutlined />} onClick={() => navigate(`/banking/${selectedAccount}/match`)}>
+                {t('smart_match')}
+              </Button>
+            </Space>
+          ) : undefined
+        }
+      />
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <Select
           placeholder={t('account')}

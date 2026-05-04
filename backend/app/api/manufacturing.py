@@ -15,6 +15,7 @@ from app.firestore.manufacturing import (
 )
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
+from app.services import settings_service
 
 router = APIRouter(prefix="/api/manufacturing", tags=["Manufacturing"])
 
@@ -132,6 +133,12 @@ def list_orders(status: Optional[str] = None, user: dict = Depends(get_current_u
 
 @router.post("/orders", dependencies=[Depends(require_perm("inventory.create"))])
 def create_order(payload: MOCreate, user: dict = Depends(get_current_user)):
+    # Apply MRP config defaults
+    try:
+        cfg = settings_service.get_bag(user["org_id"], "mrp")
+    except Exception:
+        cfg = {}
+    
     org = user["org_id"]
     bom_repo = BOMRepository(org)
     bom = bom_repo.get(payload.bom_id)
@@ -146,6 +153,10 @@ def create_order(payload: MOCreate, user: dict = Depends(get_current_user)):
         c2 = dict(c)
         c2["required_qty"] = round(float(c.get("quantity") or 0) * qty_factor, 3)
         components.append(c2)
+    
+    routing = bom.get("routing") or []
+    if not routing and cfg.get("default_routing"):
+        routing = [cfg.get("default_routing")]
 
     mo = mo_repo.create({
         "number": number,
@@ -154,12 +165,13 @@ def create_order(payload: MOCreate, user: dict = Depends(get_current_user)):
         "product_name": bom.get("product_name"),
         "quantity": payload.quantity,
         "components": components,
-        "routing": bom.get("routing") or [],
+        "routing": routing,
         "status": "draft",
         "scheduled_date": payload.scheduled_date,
         "notes": payload.notes,
         "created_at": datetime.utcnow().isoformat(),
         "produced_qty": 0,
+        "auto_create_work_orders": cfg.get("auto_create_work_orders", True),
     })
 
     # Auto-create work orders from routing

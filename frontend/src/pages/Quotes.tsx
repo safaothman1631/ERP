@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Table, Button, Tag, Select, Dropdown, Space } from 'antd';
 import { message } from '../utils/message';
-import { PlusOutlined, MoreOutlined } from '@ant-design/icons';
+import { PlusOutlined, MoreOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
@@ -45,6 +45,18 @@ const Quotes: React.FC = () => {
     } catch { message.error(t('error')); }
   };
 
+  const handleDownloadPdf = async (id: string) => {
+    try {
+      const res = await api.get(`/api/quotes/${id}/pdf`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `quote-${id}.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch { message.error(t('error')); }
+  };
+
   const columns = [
     { title: '#', dataIndex: 'quote_number', key: 'quote_number' },
     { title: t('date'), dataIndex: 'date', key: 'date', render: (d: string) => d?.substring(0, 10) },
@@ -64,6 +76,7 @@ const Quotes: React.FC = () => {
           items.push({ key: 'to-invoice', label: t('convert_to_invoice'), onClick: () => handleAction(r.id, 'convert-to-invoice') });
           items.push({ key: 'to-so', label: t('convert_to_sales_order'), onClick: () => handleAction(r.id, 'convert-to-sales-order') });
         }
+        items.push({ key: 'pdf', icon: <FilePdfOutlined />, label: 'PDF', onClick: () => handleDownloadPdf(r.id) });
         return <Dropdown menu={{ items }} trigger={['click']}><Button icon={<MoreOutlined />} size="small" /></Dropdown>;
       },
     },

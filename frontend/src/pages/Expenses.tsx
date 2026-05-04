@@ -3,7 +3,6 @@ import { Table, Button, Modal, Form, Input, InputNumber, Select, DatePicker, Spa
 import { message } from '../utils/message';
 import { PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import dayjs from 'dayjs';
 import { PageHeader, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
@@ -13,7 +12,6 @@ import { useAuthStore } from '../store';
 
 const Expenses: React.FC = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
@@ -83,7 +81,7 @@ const Expenses: React.FC = () => {
         helpKey="expenses"
         extra={
           <Space size={space.sm}>
-            <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => navigate('/expenses/new')}>{t('new_expense')}</Button>
+            <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => { form.resetFields(); setModal(true); }}>{t('new_expense')}</Button>
           </Space>
         }
       />

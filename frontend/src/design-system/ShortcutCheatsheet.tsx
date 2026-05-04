@@ -13,15 +13,15 @@ export interface ShortcutCheatsheetProps {
 }
 
 const DEFAULT_SHORTCUTS: Shortcut[] = [
-  { keys: '⌘K / Ctrl+K', description: 'گەڕان', group: 'Navigation' },
-  { keys: '?', description: 'پیشاندانی شۆرتکەتەکان', group: 'Navigation' },
-  { keys: 'g d', description: 'بڕۆ بۆ Dashboard', group: 'Navigation' },
-  { keys: 'g i', description: 'بڕۆ بۆ Invoices', group: 'Navigation' },
-  { keys: 'c i', description: 'دروستکردنی Invoice نوێ', group: 'Create' },
-  { keys: 'c b', description: 'دروستکردنی Bill نوێ', group: 'Create' },
-  { keys: 'c c', description: 'دروستکردنی Contact نوێ', group: 'Create' },
-  { keys: 'Esc', description: 'داخستن / Cancel', group: 'General' },
-  { keys: 'Ctrl+S', description: 'پاشەکەوتکردن لە فۆرم', group: 'General' },
+  { keys: '⌘K / Ctrl+K', description: 'keyboard_shortcuts.search', group: 'keyboard_shortcuts.navigation' },
+  { keys: '?', description: 'keyboard_shortcuts.show_shortcuts', group: 'keyboard_shortcuts.navigation' },
+  { keys: 'g d', description: 'keyboard_shortcuts.go_dashboard', group: 'keyboard_shortcuts.navigation' },
+  { keys: 'g i', description: 'keyboard_shortcuts.go_invoices', group: 'keyboard_shortcuts.navigation' },
+  { keys: 'c i', description: 'keyboard_shortcuts.create_invoice', group: 'keyboard_shortcuts.create' },
+  { keys: 'c b', description: 'keyboard_shortcuts.create_bill', group: 'keyboard_shortcuts.create' },
+  { keys: 'c c', description: 'keyboard_shortcuts.create_contact', group: 'keyboard_shortcuts.create' },
+  { keys: 'Esc', description: 'keyboard_shortcuts.close_cancel', group: 'keyboard_shortcuts.general' },
+  { keys: 'Ctrl+S', description: 'keyboard_shortcuts.save_form', group: 'keyboard_shortcuts.general' },
 ];
 
 /**
@@ -47,7 +47,7 @@ export const ShortcutCheatsheet: React.FC<ShortcutCheatsheetProps> = ({ shortcut
       open={open}
       onCancel={() => setOpen(false)}
       footer={null}
-      title={t('keyboard_shortcuts', 'کورتکراوەی کیبۆرد')}
+      title={t('keyboard_shortcuts.title')}
       width={600}
     >
       <Table
@@ -56,9 +56,9 @@ export const ShortcutCheatsheet: React.FC<ShortcutCheatsheetProps> = ({ shortcut
         rowKey={(r) => r.keys}
         dataSource={shortcuts}
         columns={[
-          { title: t('shortcut', 'کلیل'), dataIndex: 'keys', width: 160, render: (k: string) => <kbd style={{ background: '#F1F5F9', padding: '2px 8px', borderRadius: 4, fontFamily: 'monospace' }}>{k}</kbd> },
-          { title: t('action', 'کردار'), dataIndex: 'description' },
-          { title: t('group', 'گرووپ'), dataIndex: 'group', width: 120 },
+          { title: t('keyboard_shortcuts.shortcut'), dataIndex: 'keys', width: 160, render: (k: string) => <kbd style={{ background: '#F1F5F9', padding: '2px 8px', borderRadius: 4, fontFamily: 'monospace' }}>{k}</kbd> },
+          { title: t('keyboard_shortcuts.action'), dataIndex: 'description', render: (key: string) => t(key) },
+          { title: t('keyboard_shortcuts.group'), dataIndex: 'group', width: 120, render: (key: string) => t(key) },
         ]}
       />
     </Modal>

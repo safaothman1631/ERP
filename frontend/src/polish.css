@@ -1,0 +1,721 @@
+/* ============================================================================
+ * Zoho ERP — Global Polish Layer
+ * Subtle, professional refinements applied to every AntD primitive across
+ * all 249 pages. Light + dark mode aware. Loaded after global.css so these
+ * rules take precedence.
+ * Inspired by Linear, Stripe, Notion, Vercel, Height.
+ * ========================================================================= */
+
+/* ---------- Design tokens (CSS custom properties) ---------- */
+:root {
+  --pl-brand:        #1F6FEB;
+  --pl-brand-50:     #EBF2FF;
+  --pl-brand-100:    #D6E4FF;
+  --pl-ink-900:      #0F172A;
+  --pl-ink-700:      #334155;
+  --pl-ink-500:      #64748B;
+  --pl-ink-300:      #94A3B8;
+  --pl-bg:           #F8FAFC;
+  --pl-surface:      #FFFFFF;
+  --pl-surface-2:    #FBFCFD;
+  --pl-border:       #E5E7EB;
+  --pl-border-soft:  #EEF1F5;
+  --pl-success:      #16A34A;
+  --pl-warning:      #F59E0B;
+  --pl-danger:       #DC2626;
+  --pl-info:         #0EA5E9;
+
+  --pl-radius-xs:    4px;
+  --pl-radius-sm:    6px;
+  --pl-radius-md:    10px;
+  --pl-radius-lg:    14px;
+  --pl-radius-xl:    18px;
+
+  --pl-shadow-xs:   0 1px 0 rgba(15,23,42,0.04);
+  --pl-shadow-sm:   0 1px 2px rgba(15,23,42,0.04), 0 1px 1px rgba(15,23,42,0.02);
+  --pl-shadow-md:   0 4px 12px rgba(15,23,42,0.06), 0 1px 3px rgba(15,23,42,0.04);
+  --pl-shadow-lg:   0 12px 32px rgba(15,23,42,0.10), 0 2px 6px rgba(15,23,42,0.05);
+  --pl-shadow-xl:   0 24px 64px rgba(15,23,42,0.16), 0 4px 12px rgba(15,23,42,0.06);
+  --pl-shadow-focus: 0 0 0 3px rgba(31,111,235,0.18);
+
+  --pl-motion-fast:  140ms cubic-bezier(0.2, 0, 0, 1);
+  --pl-motion-base:  200ms cubic-bezier(0.2, 0, 0, 1);
+  --pl-motion-slow:  320ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+[data-theme="dark"] {
+  --pl-ink-900:      #F1F5F9;
+  --pl-ink-700:      #CBD5E1;
+  --pl-ink-500:      #94A3B8;
+  --pl-ink-300:      #64748B;
+  --pl-bg:           #0B1220;
+  --pl-surface:      #111A2E;
+  --pl-surface-2:    #172238;
+  --pl-border:       rgba(148,163,184,0.16);
+  --pl-border-soft:  rgba(148,163,184,0.08);
+
+  --pl-shadow-xs:   0 1px 0 rgba(0,0,0,0.20);
+  --pl-shadow-sm:   0 1px 2px rgba(0,0,0,0.30);
+  --pl-shadow-md:   0 4px 12px rgba(0,0,0,0.40);
+  --pl-shadow-lg:   0 12px 32px rgba(0,0,0,0.55);
+  --pl-shadow-xl:   0 24px 64px rgba(0,0,0,0.60);
+  --pl-shadow-focus: 0 0 0 3px rgba(96,165,250,0.30);
+}
+
+/* ---------- Body / Layout backgrounds ---------- */
+body, html {
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.ant-layout {
+  background: var(--pl-bg) !important;
+}
+.ant-layout-content {
+  background: var(--pl-bg) !important;
+}
+
+/* ============================================================================
+ * CARD
+ * ========================================================================= */
+.ant-card {
+  border-radius: var(--pl-radius-lg) !important;
+  border: 1px solid var(--pl-border) !important;
+  box-shadow: var(--pl-shadow-sm) !important;
+  background: var(--pl-surface) !important;
+  transition: border-color var(--pl-motion-base), box-shadow var(--pl-motion-base), transform var(--pl-motion-base) !important;
+}
+[data-theme="dark"] .ant-card {
+  background: var(--pl-surface) !important;
+  border-color: var(--pl-border) !important;
+  box-shadow: var(--pl-shadow-xs) !important;
+}
+.ant-card-hoverable:hover {
+  border-color: rgba(31,111,235,0.25) !important;
+  box-shadow: var(--pl-shadow-md) !important;
+  transform: translateY(-1px);
+}
+.ant-card-head {
+  border-bottom: 1px solid var(--pl-border-soft) !important;
+  min-height: 52px !important;
+  padding: 0 20px !important;
+}
+.ant-card-head-title {
+  font-weight: 600 !important;
+  color: var(--pl-ink-900) !important;
+  font-size: 15px !important;
+}
+.ant-card-body {
+  padding: 20px !important;
+}
+.ant-card-small > .ant-card-head {
+  min-height: 44px !important;
+  padding: 0 16px !important;
+}
+.ant-card-small > .ant-card-body {
+  padding: 16px !important;
+}
+
+/* ============================================================================
+ * TABLE
+ * ========================================================================= */
+.ant-table-wrapper .ant-table {
+  background: var(--pl-surface) !important;
+  border-radius: var(--pl-radius-md) !important;
+}
+.ant-table-thead > tr > th {
+  background: var(--pl-surface-2) !important;
+  color: var(--pl-ink-700) !important;
+  font-weight: 600 !important;
+  font-size: 12.5px !important;
+  letter-spacing: 0.2px !important;
+  border-bottom: 1px solid var(--pl-border) !important;
+  padding: 11px 16px !important;
+}
+[data-theme="dark"] .ant-table-thead > tr > th {
+  background: rgba(255,255,255,0.025) !important;
+  color: var(--pl-ink-700) !important;
+}
+.ant-table-tbody > tr > td {
+  border-bottom: 1px solid var(--pl-border-soft) !important;
+  padding: 12px 16px !important;
+  color: var(--pl-ink-900) !important;
+  transition: background var(--pl-motion-fast) !important;
+}
+.ant-table-tbody > tr:last-child > td {
+  border-bottom: none !important;
+}
+.ant-table-tbody > tr:hover > td,
+.ant-table-tbody > tr.ant-table-row-hover > td {
+  background: rgba(31,111,235,0.04) !important;
+}
+[data-theme="dark"] .ant-table-tbody > tr:hover > td {
+  background: rgba(96,165,250,0.06) !important;
+}
+.ant-table-row-selected > td {
+  background: rgba(31,111,235,0.07) !important;
+}
+.ant-table-pagination.ant-pagination {
+  margin: 16px !important;
+}
+
+/* Sticky header by default looks better with shadow */
+.ant-table-sticky-holder {
+  background: var(--pl-surface-2) !important;
+  box-shadow: 0 2px 4px rgba(15,23,42,0.04);
+}
+
+/* ============================================================================
+ * BUTTON
+ * ========================================================================= */
+.ant-btn {
+  border-radius: var(--pl-radius-sm) !important;
+  font-weight: 500 !important;
+  transition: all var(--pl-motion-fast) !important;
+  box-shadow: none !important;
+}
+.ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):not(.ant-btn-link):not(.ant-btn-text) {
+  border-color: var(--pl-border) !important;
+  color: var(--pl-ink-700) !important;
+  background: var(--pl-surface) !important;
+}
+.ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):not(.ant-btn-link):not(.ant-btn-text):hover {
+  border-color: var(--pl-brand) !important;
+  color: var(--pl-brand) !important;
+  background: var(--pl-brand-50) !important;
+}
+[data-theme="dark"] .ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):not(.ant-btn-link):not(.ant-btn-text):hover {
+  background: rgba(31,111,235,0.10) !important;
+}
+.ant-btn-primary {
+  background: var(--pl-brand) !important;
+  border-color: var(--pl-brand) !important;
+  color: #fff !important;
+  box-shadow: 0 1px 2px rgba(31,111,235,0.20) !important;
+}
+.ant-btn-primary:not(:disabled):hover {
+  background: #1858BF !important;
+  border-color: #1858BF !important;
+  box-shadow: 0 4px 12px rgba(31,111,235,0.28) !important;
+  transform: translateY(-1px);
+}
+.ant-btn-primary:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(31,111,235,0.20) !important;
+}
+.ant-btn-dangerous.ant-btn-primary {
+  background: var(--pl-danger) !important;
+  border-color: var(--pl-danger) !important;
+  box-shadow: 0 1px 2px rgba(220,38,38,0.20) !important;
+}
+.ant-btn-dangerous.ant-btn-primary:not(:disabled):hover {
+  background: #B91C1C !important;
+  border-color: #B91C1C !important;
+  box-shadow: 0 4px 12px rgba(220,38,38,0.28) !important;
+}
+.ant-btn-link {
+  color: var(--pl-brand) !important;
+  padding-inline: 4px !important;
+}
+.ant-btn-text {
+  color: var(--pl-ink-700) !important;
+}
+.ant-btn-text:hover {
+  background: rgba(15,23,42,0.04) !important;
+  color: var(--pl-ink-900) !important;
+}
+[data-theme="dark"] .ant-btn-text:hover {
+  background: rgba(255,255,255,0.06) !important;
+}
+.ant-btn:focus-visible {
+  outline: none !important;
+  box-shadow: var(--pl-shadow-focus) !important;
+}
+
+/* ============================================================================
+ * INPUTS / SELECT / DATEPICKER / NUMBER / TEXTAREA
+ * ========================================================================= */
+.ant-input,
+.ant-input-number,
+.ant-input-affix-wrapper,
+.ant-select-selector,
+.ant-picker {
+  border-radius: var(--pl-radius-sm) !important;
+  border-color: var(--pl-border) !important;
+  background: var(--pl-surface) !important;
+  color: var(--pl-ink-900) !important;
+  transition: border-color var(--pl-motion-fast), box-shadow var(--pl-motion-fast) !important;
+}
+.ant-input::placeholder,
+.ant-input-number-input::placeholder,
+textarea.ant-input::placeholder {
+  color: var(--pl-ink-300) !important;
+  opacity: 1;
+}
+.ant-input:hover,
+.ant-input-number:hover,
+.ant-input-affix-wrapper:hover,
+.ant-select:not(.ant-select-disabled):hover .ant-select-selector,
+.ant-picker:hover {
+  border-color: var(--pl-brand) !important;
+}
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-number-focused,
+.ant-input-affix-wrapper-focused,
+.ant-select-focused .ant-select-selector,
+.ant-picker-focused {
+  border-color: var(--pl-brand) !important;
+  box-shadow: var(--pl-shadow-focus) !important;
+}
+.ant-form-item-has-error .ant-input,
+.ant-form-item-has-error .ant-input-number,
+.ant-form-item-has-error .ant-select-selector,
+.ant-form-item-has-error .ant-picker {
+  border-color: var(--pl-danger) !important;
+}
+.ant-form-item-has-error .ant-input:focus,
+.ant-form-item-has-error .ant-select-focused .ant-select-selector {
+  box-shadow: 0 0 0 3px rgba(220,38,38,0.18) !important;
+}
+.ant-form-item-label > label {
+  color: var(--pl-ink-700) !important;
+  font-weight: 500 !important;
+  font-size: 13.5px !important;
+}
+.ant-form-item-extra {
+  font-size: 12.5px !important;
+  color: var(--pl-ink-500) !important;
+  margin-top: 2px;
+}
+
+/* ============================================================================
+ * MODAL / DRAWER
+ * ========================================================================= */
+.ant-modal-mask {
+  backdrop-filter: blur(4px);
+  background: rgba(15,23,42,0.45) !important;
+}
+[data-theme="dark"] .ant-modal-mask {
+  background: rgba(0,0,0,0.65) !important;
+}
+.ant-modal-content {
+  border-radius: var(--pl-radius-lg) !important;
+  box-shadow: var(--pl-shadow-xl) !important;
+  background: var(--pl-surface) !important;
+  overflow: hidden;
+}
+.ant-modal-header {
+  background: var(--pl-surface) !important;
+  border-bottom: 1px solid var(--pl-border-soft) !important;
+  padding: 16px 24px !important;
+  margin-bottom: 0 !important;
+  border-radius: var(--pl-radius-lg) var(--pl-radius-lg) 0 0 !important;
+}
+.ant-modal-title {
+  color: var(--pl-ink-900) !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+}
+.ant-modal-body {
+  padding: 24px !important;
+  color: var(--pl-ink-700) !important;
+}
+.ant-modal-footer {
+  border-top: 1px solid var(--pl-border-soft) !important;
+  padding: 12px 24px !important;
+  background: var(--pl-surface-2) !important;
+  margin-top: 0 !important;
+}
+[data-theme="dark"] .ant-modal-footer {
+  background: rgba(255,255,255,0.02) !important;
+}
+.ant-modal-close {
+  top: 14px !important;
+  inset-inline-end: 14px !important;
+  border-radius: var(--pl-radius-sm) !important;
+  transition: background var(--pl-motion-fast) !important;
+}
+.ant-modal-close:hover {
+  background: rgba(15,23,42,0.06) !important;
+}
+
+.ant-drawer-content {
+  background: var(--pl-surface) !important;
+}
+.ant-drawer-header {
+  border-bottom: 1px solid var(--pl-border-soft) !important;
+  padding: 16px 24px !important;
+  background: var(--pl-surface) !important;
+}
+.ant-drawer-title {
+  color: var(--pl-ink-900) !important;
+  font-weight: 600 !important;
+}
+.ant-drawer-body {
+  padding: 24px !important;
+}
+.ant-drawer-footer {
+  border-top: 1px solid var(--pl-border-soft) !important;
+  background: var(--pl-surface-2) !important;
+  padding: 12px 24px !important;
+}
+
+/* ============================================================================
+ * TAG / BADGE
+ * ========================================================================= */
+.ant-tag {
+  border-radius: var(--pl-radius-sm) !important;
+  padding: 1px 8px !important;
+  font-weight: 500 !important;
+  font-size: 12px !important;
+  line-height: 18px !important;
+  border: 1px solid transparent !important;
+}
+.ant-tag.ant-tag-success {
+  background: rgba(22,163,74,0.10) !important;
+  color: #15803D !important;
+  border-color: rgba(22,163,74,0.20) !important;
+}
+.ant-tag.ant-tag-error {
+  background: rgba(220,38,38,0.10) !important;
+  color: #B91C1C !important;
+  border-color: rgba(220,38,38,0.20) !important;
+}
+.ant-tag.ant-tag-warning {
+  background: rgba(245,158,11,0.12) !important;
+  color: #B45309 !important;
+  border-color: rgba(245,158,11,0.24) !important;
+}
+.ant-tag.ant-tag-processing {
+  background: rgba(31,111,235,0.10) !important;
+  color: var(--pl-brand) !important;
+  border-color: rgba(31,111,235,0.20) !important;
+}
+.ant-tag.ant-tag-default {
+  background: rgba(15,23,42,0.05) !important;
+  color: var(--pl-ink-700) !important;
+  border-color: rgba(15,23,42,0.08) !important;
+}
+[data-theme="dark"] .ant-tag.ant-tag-default {
+  background: rgba(255,255,255,0.06) !important;
+  color: var(--pl-ink-700) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+.ant-badge-status-text {
+  color: var(--pl-ink-700) !important;
+}
+
+/* ============================================================================
+ * TABS
+ * ========================================================================= */
+.ant-tabs > .ant-tabs-nav::before {
+  border-bottom: 1px solid var(--pl-border) !important;
+}
+.ant-tabs-tab {
+  padding: 10px 4px !important;
+  font-weight: 500 !important;
+  color: var(--pl-ink-500) !important;
+  transition: color var(--pl-motion-fast) !important;
+}
+.ant-tabs-tab:hover {
+  color: var(--pl-ink-900) !important;
+}
+.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--pl-brand) !important;
+  font-weight: 600 !important;
+}
+.ant-tabs-ink-bar {
+  background: var(--pl-brand) !important;
+  height: 2.5px !important;
+  border-radius: 2px 2px 0 0 !important;
+}
+
+/* ============================================================================
+ * MENU (Dropdowns, popovers)
+ * ========================================================================= */
+.ant-dropdown .ant-dropdown-menu {
+  border-radius: var(--pl-radius-md) !important;
+  padding: 6px !important;
+  box-shadow: var(--pl-shadow-lg) !important;
+  border: 1px solid var(--pl-border) !important;
+  background: var(--pl-surface) !important;
+}
+.ant-dropdown-menu-item {
+  border-radius: var(--pl-radius-sm) !important;
+  padding: 7px 10px !important;
+  color: var(--pl-ink-700) !important;
+  transition: background var(--pl-motion-fast) !important;
+}
+.ant-dropdown-menu-item:hover {
+  background: rgba(31,111,235,0.08) !important;
+  color: var(--pl-brand) !important;
+}
+.ant-dropdown-menu-item-divider {
+  background: var(--pl-border-soft) !important;
+  margin: 4px 0 !important;
+}
+
+/* ============================================================================
+ * POPOVER / TOOLTIP
+ * ========================================================================= */
+.ant-popover-inner {
+  border-radius: var(--pl-radius-md) !important;
+  box-shadow: var(--pl-shadow-lg) !important;
+  border: 1px solid var(--pl-border) !important;
+  background: var(--pl-surface) !important;
+}
+.ant-popover-title {
+  border-bottom: 1px solid var(--pl-border-soft) !important;
+  font-weight: 600 !important;
+  color: var(--pl-ink-900) !important;
+  padding: 10px 14px !important;
+}
+.ant-popover-inner-content {
+  color: var(--pl-ink-700) !important;
+  padding: 10px 14px !important;
+}
+.ant-tooltip-inner {
+  border-radius: var(--pl-radius-sm) !important;
+  background: rgba(15,23,42,0.92) !important;
+  color: #fff !important;
+  font-size: 12.5px !important;
+  padding: 6px 10px !important;
+  min-height: 28px !important;
+  box-shadow: var(--pl-shadow-md) !important;
+}
+.ant-tooltip-arrow::before {
+  background: rgba(15,23,42,0.92) !important;
+}
+
+/* ============================================================================
+ * DESCRIPTIONS / STATISTIC
+ * ========================================================================= */
+.ant-descriptions-bordered .ant-descriptions-item-label,
+.ant-descriptions-bordered .ant-descriptions-item-content {
+  border-color: var(--pl-border-soft) !important;
+}
+.ant-descriptions-item-label {
+  color: var(--pl-ink-500) !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+}
+.ant-descriptions-item-content {
+  color: var(--pl-ink-900) !important;
+  font-size: 13.5px !important;
+}
+.ant-statistic-title {
+  color: var(--pl-ink-500) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  margin-bottom: 4px !important;
+}
+.ant-statistic-content {
+  color: var(--pl-ink-900) !important;
+  font-weight: 600 !important;
+}
+
+/* ============================================================================
+ * STEPS / PROGRESS
+ * ========================================================================= */
+.ant-steps-item-title {
+  font-weight: 500 !important;
+  color: var(--pl-ink-700) !important;
+}
+.ant-steps-item-process .ant-steps-item-title {
+  color: var(--pl-brand) !important;
+  font-weight: 600 !important;
+}
+.ant-steps-item-finish .ant-steps-item-title {
+  color: var(--pl-ink-900) !important;
+}
+.ant-progress-bg {
+  background: linear-gradient(90deg, var(--pl-brand), #1858BF) !important;
+}
+
+/* ============================================================================
+ * EMPTY STATE
+ * ========================================================================= */
+.ant-empty-description {
+  color: var(--pl-ink-500) !important;
+  font-size: 13.5px !important;
+}
+
+/* ============================================================================
+ * PAGINATION / SEGMENTED / SWITCH / CHECKBOX / RADIO
+ * ========================================================================= */
+.ant-pagination .ant-pagination-item {
+  border-radius: var(--pl-radius-sm) !important;
+  border-color: var(--pl-border) !important;
+  font-weight: 500 !important;
+}
+.ant-pagination .ant-pagination-item-active {
+  border-color: var(--pl-brand) !important;
+  background: var(--pl-brand-50) !important;
+}
+[data-theme="dark"] .ant-pagination .ant-pagination-item-active {
+  background: rgba(31,111,235,0.16) !important;
+}
+.ant-pagination .ant-pagination-item-active a {
+  color: var(--pl-brand) !important;
+  font-weight: 600 !important;
+}
+.ant-segmented {
+  border-radius: var(--pl-radius-sm) !important;
+  background: var(--pl-surface-2) !important;
+  padding: 3px !important;
+}
+.ant-segmented .ant-segmented-item-selected {
+  background: var(--pl-surface) !important;
+  box-shadow: var(--pl-shadow-sm) !important;
+  color: var(--pl-ink-900) !important;
+  font-weight: 600 !important;
+}
+.ant-switch.ant-switch-checked {
+  background: var(--pl-brand) !important;
+}
+.ant-checkbox-checked .ant-checkbox-inner {
+  background-color: var(--pl-brand) !important;
+  border-color: var(--pl-brand) !important;
+}
+.ant-radio-checked .ant-radio-inner {
+  border-color: var(--pl-brand) !important;
+}
+.ant-radio-inner::after {
+  background: var(--pl-brand) !important;
+}
+
+/* ============================================================================
+ * ALERT / MESSAGE / NOTIFICATION
+ * ========================================================================= */
+.ant-alert {
+  border-radius: var(--pl-radius-md) !important;
+  border: 1px solid var(--pl-border) !important;
+  padding: 11px 14px !important;
+}
+.ant-alert-success {
+  background: rgba(22,163,74,0.06) !important;
+  border-color: rgba(22,163,74,0.22) !important;
+}
+.ant-alert-warning {
+  background: rgba(245,158,11,0.07) !important;
+  border-color: rgba(245,158,11,0.26) !important;
+}
+.ant-alert-error {
+  background: rgba(220,38,38,0.06) !important;
+  border-color: rgba(220,38,38,0.22) !important;
+}
+.ant-alert-info {
+  background: rgba(14,165,233,0.06) !important;
+  border-color: rgba(14,165,233,0.22) !important;
+}
+.ant-message-notice-content,
+.ant-notification-notice {
+  border-radius: var(--pl-radius-md) !important;
+  box-shadow: var(--pl-shadow-lg) !important;
+  border: 1px solid var(--pl-border) !important;
+}
+
+/* ============================================================================
+ * DIVIDER / TYPOGRAPHY
+ * ========================================================================= */
+.ant-divider {
+  border-color: var(--pl-border-soft) !important;
+}
+.ant-divider-horizontal.ant-divider-with-text {
+  color: var(--pl-ink-500) !important;
+  font-weight: 500 !important;
+  font-size: 12.5px !important;
+}
+.ant-typography {
+  color: var(--pl-ink-900);
+}
+.ant-typography.ant-typography-secondary {
+  color: var(--pl-ink-500) !important;
+}
+h1.ant-typography, h2.ant-typography, h3.ant-typography,
+h4.ant-typography, h5.ant-typography, h6.ant-typography {
+  color: var(--pl-ink-900) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em;
+}
+
+/* ============================================================================
+ * COLLAPSE / LIST
+ * ========================================================================= */
+.ant-collapse {
+  border-radius: var(--pl-radius-md) !important;
+  border: 1px solid var(--pl-border) !important;
+  background: var(--pl-surface) !important;
+  overflow: hidden;
+}
+.ant-collapse > .ant-collapse-item {
+  border-bottom: 1px solid var(--pl-border-soft) !important;
+}
+.ant-collapse-header {
+  font-weight: 600 !important;
+  color: var(--pl-ink-900) !important;
+  padding: 12px 16px !important;
+}
+.ant-list-item {
+  padding: 14px 16px !important;
+  border-bottom: 1px solid var(--pl-border-soft) !important;
+}
+
+/* ============================================================================
+ * BREADCRUMB
+ * ========================================================================= */
+.ant-breadcrumb {
+  font-size: 13px !important;
+}
+.ant-breadcrumb a {
+  color: var(--pl-ink-500) !important;
+  transition: color var(--pl-motion-fast);
+}
+.ant-breadcrumb a:hover {
+  color: var(--pl-brand) !important;
+}
+.ant-breadcrumb-separator {
+  color: var(--pl-ink-300) !important;
+  margin-inline: 6px !important;
+}
+
+/* ============================================================================
+ * SCROLLBAR (light mode polish — dark already covered in global.css)
+ * ========================================================================= */
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: rgba(15,23,42,0.10);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(15,23,42,0.18);
+  background-clip: content-box;
+}
+
+/* ============================================================================
+ * FOCUS RING (universal)
+ * ========================================================================= */
+:focus-visible {
+  outline: none;
+}
+.ant-input:focus-visible,
+.ant-btn:focus-visible,
+.ant-select-focused,
+.ant-picker-focused {
+  outline: none;
+}
+
+/* ============================================================================
+ * ANIMATION HELPERS
+ * ========================================================================= */
+@keyframes pl-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.pl-fade-in { animation: pl-fade-in 240ms cubic-bezier(0.2,0,0,1); }

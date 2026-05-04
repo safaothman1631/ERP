@@ -916,3 +916,226 @@ async def import_csv_transactions(
         "errors": errors,
         "transactions": imported[:10]  # Return first 10 for preview
     }
+
+
+# ==================== WAVE Q: BANK STATEMENT IMPORT ====================
+
+class ImportStatementPayload(BaseModel):
+    format: Optional[str] = None
+    mapping: Optional[dict] = None
+
+
+@router.post("/accounts/{account_id}/import-preview", dependencies=[Depends(require_perm("bank.view"))])
+async def import_statement_preview(
+    file: UploadFile = File(...),
+    format: Optional[str] = Body(None),
+    mapping_json: Optional[str] = Body(None),
+    account_id: str = None,
+    user: dict = Depends(get_current_user)
+):
+    """Preview bank statement import without saving"""
+    from app.services.bank_import_service import detect_format, parse_csv_statement, parse_ofx_statement, parse_mt940_statement, dedupe_transactions
+    
+    # Verify account
+    account_repo = BankAccountRepository(user["org_id"])
+    account = account_repo.get(account_id)
+    if not account:
+        raise HTTPException(status_code=404, detail="Bank account not found")
+    
+    # Read file
+    contents = await file.read()
+    
+    # Detect format
+    file_format = format or detect_format(file.filename or '', contents)
+    
+    # Parse
+    try:
+        if file_format == 'csv':
+            import json
+            mapping = json.loads(mapping_json) if mapping_json else {}
+            txns = parse_csv_statement(contents, mapping)
+        elif file_format == 'ofx':
+            txns = parse_ofx_statement(contents)
+        elif file_format == 'mt940':
+            txns = parse_mt940_statement(contents)
+        else:
+            raise HTTPException(status_code=400, detail=f"Unsupported format: {file_format}")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Parse error: {str(e)}")
+    
+    # Check for duplicates
+    unique = dedupe_transactions(user["org_id"], account_id, txns)
+    
+    return {
+        "format": file_format,
+        "total_parsed": len(txns),
+        "unique_count": len(unique),
+        "duplicate_count": len(txns) - len(unique),
+        "preview": unique[:20]
+    }
+
+
+@router.post("/accounts/{account_id}/import-statement", dependencies=[Depends(require_perm("bank.create"))])
+async def import_statement(
+    file: UploadFile = File(...),
+    format: Optional[str] = Body(None),
+    mapping_json: Optional[str] = Body(None),
+    account_id: str = None,
+    user: dict = Depends(get_current_user)
+):
+    """Import bank statement and save transactions"""
+    from app.services.bank_import_service import detect_format, parse_csv_statement, parse_ofx_statement, parse_mt940_statement, dedupe_transactions
+    
+    # Verify account
+    account_repo = BankAccountRepository(user["org_id"])
+    account = account_repo.get(account_id)
+    if not account:
+        raise HTTPException(status_code=404, detail="Bank account not found")
+    
+    # Read file
+    contents = await file.read()
+    
+    # Detect format
+    file_format = format or detect_format(file.filename or '', contents)
+    
+    # Parse
+    try:
+        if file_format == 'csv':
+            import json
+            mapping = json.loads(mapping_json) if mapping_json else {}
+            txns = parse_csv_statement(contents, mapping)
+        elif file_format == 'ofx':
+            txns = parse_ofx_statement(contents)
+        elif file_format == 'mt940':
+            txns = parse_mt940_statement(contents)
+        else:
+            raise HTTPException(status_code=400, detail=f"Unsupported format: {file_format}")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Parse error: {str(e)}")
+    
+    # Dedupe
+    unique = dedupe_transactions(user["org_id"], account_id, txns)
+    
+    # Save transactions
+    transaction_repo = BankTransactionRepository(user["org_id"])
+    imported = []
+    errors = []
+    
+    for idx, txn in enumerate(unique):
+        try:
+            tx_id = str(uuid.uuid4())
+            tx_data = {
+                "id": tx_id,
+                "org_id": user["org_id"],
+                "bank_account_id": account_id,
+                "date": txn['date'],
+                "transaction_type": txn['debit_or_credit'],
+                "amount": txn['amount'],
+                "description": txn['description'],
+                "reference": txn.get('reference', ''),
+                "external_id": txn.get('reference', ''),
+                "matched": False,
+                "reconciled": False,
+                "created_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow().isoformat(),
+                "created_by_id": user["id"]
+            }
+            created = transaction_repo.create(tx_data)
+            imported.append(created)
+        except Exception as e:
+            errors.append(f"Row {idx+1}: {str(e)}")
+    
+    return {
+        "imported": len(imported),
+        "skipped": len(txns) - len(unique),
+        "errors": errors,
+        "preview": imported[:5]
+    }
+
+
+@router.get("/transactions/{txn_id}/match-candidates")
+def get_match_candidates(txn_id: str, user: dict = Depends(get_current_user)):
+    """Get match candidates for a bank transaction"""
+    from app.services.bank_matching_service import find_match_candidates
+    
+    repo = BankTransactionRepository(user["org_id"])
+    txn = repo.get(txn_id)
+    if not txn:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    
+    candidates = find_match_candidates(user["org_id"], txn)
+    return {"candidates": candidates}
+
+
+class ApplyMatchPayload(BaseModel):
+    match_type: str
+    target_id: str
+    action: str = 'link'
+    notes: Optional[str] = None
+
+
+@router.post("/transactions/{txn_id}/match", dependencies=[Depends(require_perm("bank.update"))])
+def match_transaction_new(
+    data: ApplyMatchPayload,
+    txn_id: str = None,
+    user: dict = Depends(get_current_user)
+):
+    """Apply a match to a bank transaction"""
+    from app.services.bank_matching_service import apply_match
+    
+    try:
+        result = apply_match(
+            user["org_id"],
+            txn_id,
+            data.match_type,
+            data.target_id,
+            data.action,
+            data.notes
+        )
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class AutoMatchPayload(BaseModel):
+    threshold: int = 90
+    dry_run: bool = False
+
+
+@router.post("/accounts/{account_id}/auto-match-new", dependencies=[Depends(require_perm("bank.update"))])
+def auto_match_transactions_new(
+    data: AutoMatchPayload,
+    account_id: str = None,
+    user: dict = Depends(get_current_user)
+):
+    """Bulk auto-match transactions"""
+    from app.services.bank_matching_service import auto_match
+    
+    account_repo = BankAccountRepository(user["org_id"])
+    account = account_repo.get(account_id)
+    if not account:
+        raise HTTPException(status_code=404, detail="Bank account not found")
+    
+    result = auto_match(user["org_id"], account_id, data.threshold, data.dry_run)
+    return result
+
+
+@router.post("/transactions/{txn_id}/unmatch-new", dependencies=[Depends(require_perm("bank.update"))])
+def unmatch_transaction_new(txn_id: str, user: dict = Depends(get_current_user)):
+    """Remove match from a transaction"""
+    repo = BankTransactionRepository(user["org_id"])
+    txn = repo.get(txn_id)
+    if not txn:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    
+    repo.update(txn_id, {
+        'matched': False,
+        'matched_document_id': None,
+        'matched_document_type': None,
+        'match_notes': None,
+        'updated_at': datetime.utcnow().isoformat()
+    })
+    
+    return {"message": "Transaction unmatched successfully"}

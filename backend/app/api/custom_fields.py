@@ -15,6 +15,10 @@ def list_definitions(entity_type: str = None, user: dict = Depends(get_current_u
 
 @router.post("", status_code=201)
 def create_definition(data: dict, user: dict = Depends(get_current_user)):
+    if not data.get("entity_type"):
+        raise HTTPException(status_code=400, detail="entity_type داواکراوە")
+    if not data.get("field_name"):
+        raise HTTPException(status_code=400, detail="field_name داواکراوە")
     repo = CustomFieldDefinitionRepository(user["org_id"])
     return repo.create({
         "id": str(uuid.uuid4()),

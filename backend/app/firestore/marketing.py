@@ -12,3 +12,11 @@ class MarketingAudienceRepository(BaseRepository):
 
 class MarketingCampaignSendRepository(BaseRepository):
     collection_name = "marketing_campaign_sends"
+
+
+class SmsCampaignRepository(BaseRepository):
+    collection_name = "sms_campaigns"
+
+
+class AutomationFlowRepository(BaseRepository):
+    collection_name = "automation_flows"

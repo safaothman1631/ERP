@@ -6,13 +6,18 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+_CLOUD_RUN_ENV_MARKERS: tuple[str, ...] = (
+    "K_SERVICE",
+    "K_REVISION",
+    "K_CONFIGURATION",
+)
+
 # ─────────────────────────────────────────
 # Required env vars that must be set in prod
 # ─────────────────────────────────────────
 _REQUIRED_PROD_VARS: list[str] = [
     "SECRET_KEY",
     "CORS_ORIGINS",
-    "FIREBASE_CREDENTIALS_PATH",
 ]
 
 _INSECURE_DEFAULTS = {
@@ -70,6 +75,16 @@ def validate_env() -> None:
         else:
             if default and os.environ.get(var, default) == default:
                 logger.warning("⚠  %s is using insecure dev default — set a real value before production", var)
+
+    if is_prod:
+        has_explicit_firebase_credentials = bool(
+            os.environ.get("FIREBASE_CREDENTIALS_PATH") or os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+        )
+        has_cloud_run_identity = any(os.environ.get(marker) for marker in _CLOUD_RUN_ENV_MARKERS)
+        if not has_explicit_firebase_credentials and not has_cloud_run_identity:
+            errors.append(
+                "Missing Firebase credentials: set FIREBASE_CREDENTIALS_PATH, GOOGLE_APPLICATION_CREDENTIALS, or run inside Cloud Run with ADC"
+            )
 
     if errors:
         for e in errors:

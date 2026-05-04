@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services import settings_service
 
 router = APIRouter(prefix="/api/mobile", tags=["Mobile"])
 
@@ -69,6 +70,14 @@ def _quick(prefix, repo_cls, model):
 
     @router.post(prefix, status_code=201)
     def _cr(body: model, user: dict = Depends(get_current_user)):
+        # Check mobile push config (tokens endpoint)
+        if prefix == "/tokens":
+            try:
+                cfg = settings_service.get_bag(user["org_id"], "mobile")
+            except Exception:
+                cfg = {}
+            if not cfg.get("push_enabled", True):
+                raise HTTPException(403, "Push notifications are disabled")
         return repo_cls(user["org_id"]).create(body.model_dump())
 
     @router.get(prefix + "/{rid}")

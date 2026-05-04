@@ -1,0 +1,22 @@
+# Workspace-specific RTK config for Zoho ERP
+# Documentation: https://www.rtk-ai.app/guide/getting-started/configuration
+
+[hooks]
+# Commands to skip rewrite for (interactive / long-running)
+exclude_commands = [
+  "uvicorn",
+  "vite",
+  "code",
+  "vim",
+  "nano",
+  "ssh",
+  "psql",
+  "ipython",
+  "node",
+  "python",
+]
+
+[tee]
+# Save raw output on failure so LLM can re-read without re-executing
+enabled = true
+mode = "failures"   # "failures" | "always" | "never"

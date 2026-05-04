@@ -33,6 +33,7 @@
 
 ## harness/
 - [token-optimization](harness/token-optimization.md) — Reduce token usage
+- [rtk-token-optimization](harness/rtk-token-optimization.md) — RTK terminal-output compression (60-90%)
 - [cost-aware-pipeline](harness/cost-aware-pipeline.md) — Pick cheapest viable model
 
 ## docs/

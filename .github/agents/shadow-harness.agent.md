@@ -76,7 +76,15 @@ argument-hint: "چی optimize بکەم؟ — مثلاً: prompt گەورە، tok
 - Large: 50-150K → consider subagent
 - XL: > 150K → split task
 
+## 🦀 RTK (Terminal-level optimization)
+RTK دامەزراوە لە `%USERPROFILE%\tools\rtk\rtk.exe` (v0.37.2). هەر کات terminal command ڕاندەکەیت کە RTK پشتگیری دەکات و non-interactive ـە، `rtk` ـی پێشوەخت زیاد بکە:
+- `rtk git status`، `rtk npm run build`، `rtk python test_all.py`، `rtk pytest`
+- ❌ NEVER: `rtk uvicorn`، `rtk npm run dev`، `rtk python` (REPL)
+- بۆ measure: `rtk gain` / `rtk discover`
+- مێژووی فێربوون: [/memories/repo/rtk-windows.md](../../memories/repo/rtk-windows.md)
+
 ## Skills پەیوەست
 - [token-optimization](../skills/harness/token-optimization.md)
+- [rtk-token-optimization](../skills/harness/rtk-token-optimization.md)
 - [cost-aware-pipeline](../skills/harness/cost-aware-pipeline.md)
 - [strategic-compact](../skills/meta/strategic-compact.md)

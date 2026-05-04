@@ -1,4 +1,8 @@
-# Skill: Token Optimization
+# Skill: Token Optimization (Conversation-level)
+
+> 🦀 بۆ **terminal output** filtering (git, npm, pytest, ...)، سکیڵی جیا: [rtk-token-optimization.md](./rtk-token-optimization.md)
+>
+> ئەم سکیڵە تایبەتە بە **conversation/tool-call** optimization (file reads, search, ...).
 
 ## ١٠ ڕێگەی ئاسایی بۆ کەمکردنەوەی token
 

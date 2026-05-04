@@ -1,50 +1,115 @@
-import React from 'react';
-import { Button, Dropdown } from 'antd';
-import { ExportOutlined, FileExcelOutlined, FilePdfOutlined, FileTextOutlined, PrinterOutlined } from '@ant-design/icons';
+import React, { useState } from 'react';
+import { Button, Dropdown, message } from 'antd';
+import { DownloadOutlined, FileExcelOutlined, FilePdfOutlined, FileTextOutlined, PrinterOutlined, CopyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
-export type ExportFormat = 'csv' | 'xlsx' | 'pdf' | 'print';
+export type ExportFormat = 'pdf' | 'xlsx' | 'csv' | 'copy';
 
 export interface ExportMenuProps {
-  /** Provide handler per format. Omit to hide that option. */
+  /** Handler for export formats (pdf, xlsx, csv, copy) */
   onExport: (format: ExportFormat) => void | Promise<void>;
-  formats?: ExportFormat[];
-  loading?: boolean;
+  /** Optional separate handler for print */
+  onPrint?: () => void;
+  /** Disable all export options */
+  disabled?: boolean;
+  /** Button size */
   size?: 'small' | 'middle' | 'large';
+  /** Restrict which formats are shown (defaults to all). Backwards-compat with pre-Wave-8 callers. */
+  formats?: ExportFormat[];
 }
 
 /**
- * ExportMenu — Sprint 5 — standardized export dropdown for any list/report.
+ * ExportMenu — Wave 8.C — Reusable dropdown button "Export ▾" with options:
+ * PDF, Excel (.xlsx), CSV, Print, Copy to Clipboard.
  */
 export const ExportMenu: React.FC<ExportMenuProps> = ({
-  onExport, formats = ['csv', 'xlsx', 'pdf', 'print'], loading = false, size = 'middle',
+  onExport,
+  onPrint,
+  disabled = false,
+  size = 'middle',
+  formats,
 }) => {
   const { t } = useTranslation();
+  const [loading, setLoading] = useState(false);
+  const allowed: ExportFormat[] = formats && formats.length ? formats : ['pdf', 'xlsx', 'csv', 'copy'];
 
-  const ICONS: Record<ExportFormat, React.ReactNode> = {
-    csv:   <FileTextOutlined />,
-    xlsx:  <FileExcelOutlined />,
-    pdf:   <FilePdfOutlined />,
+  const ICONS: Record<ExportFormat | 'print', React.ReactNode> = {
+    csv: <FileTextOutlined />,
+    xlsx: <FileExcelOutlined />,
+    pdf: <FilePdfOutlined />,
+    copy: <CopyOutlined />,
     print: <PrinterOutlined />,
   };
-  const LABELS: Record<ExportFormat, string> = {
-    csv:   t('export.csv', 'CSV'),
-    xlsx:  t('export.xlsx', 'Excel'),
-    pdf:   t('export.pdf', 'PDF'),
+
+  const LABELS: Record<ExportFormat | 'print', string> = {
+    csv: t('export.csv', 'CSV'),
+    xlsx: t('export.xlsx', 'Excel'),
+    pdf: t('export.pdf', 'PDF'),
+    copy: t('export.copy', 'Copy to Clipboard'),
     print: t('export.print', 'Print'),
   };
 
-  const items = formats.map((f) => ({
-    key: f,
-    icon: ICONS[f],
-    label: LABELS[f],
-    onClick: () => { void onExport(f); },
-  }));
+  const handleExport = async (format: ExportFormat) => {
+    setLoading(true);
+    try {
+      await onExport(format);
+      if (format === 'copy') {
+        message.success(t('export.copied', 'Copied to clipboard'));
+      }
+    } catch (error) {
+      message.error(t('export.error', 'Export failed'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const items = [
+    {
+      key: 'pdf',
+      icon: ICONS.pdf,
+      label: LABELS.pdf,
+      onClick: () => void handleExport('pdf'),
+    },
+    {
+      key: 'xlsx',
+      icon: ICONS.xlsx,
+      label: LABELS.xlsx,
+      onClick: () => void handleExport('xlsx'),
+    },
+    {
+      key: 'csv',
+      icon: ICONS.csv,
+      label: LABELS.csv,
+      onClick: () => void handleExport('csv'),
+    },
+    {
+      key: 'copy',
+      icon: ICONS.copy,
+      label: LABELS.copy,
+      onClick: () => void handleExport('copy'),
+    },
+    ...(onPrint
+      ? [
+          {
+            key: 'print',
+            icon: ICONS.print,
+            label: LABELS.print,
+            onClick: onPrint,
+          },
+        ]
+      : []),
+  ].filter((it) => it.key === 'print' || allowed.includes(it.key as ExportFormat));
 
   return (
-    <Dropdown menu={{ items }} trigger={['click']}>
-      <Button icon={<ExportOutlined />} loading={loading} size={size} aria-label={t('export.title', 'Export')}>
-        {t('export.title', 'Export')}
+    <Dropdown menu={{ items }} trigger={['click']} disabled={disabled || loading}>
+      <Button
+        icon={<DownloadOutlined />}
+        loading={loading}
+        size={size}
+        disabled={disabled}
+        aria-label={t('export.button', 'Export')}
+      >
+        {t('export.button', 'Export')}
       </Button>
     </Dropdown>
   );

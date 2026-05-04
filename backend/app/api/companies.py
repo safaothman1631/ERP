@@ -209,6 +209,17 @@ def list_intercompany(user: dict = Depends(get_current_user)):
     return items
 
 
+@router.post("/intercompany/{ic_id}/eliminate")
+def eliminate_intercompany(ic_id: str, user: dict = Depends(get_current_user)):
+    """Mark an IC transaction as eliminated (no journal reversal yet)."""
+    repo = IntercompanyJournalRepository(user["org_id"])
+    item = repo.get(ic_id)
+    if not item:
+        raise HTTPException(404, "IC transaction not found")
+    repo.update(ic_id, {"eliminated": True, "eliminated_at": _now_iso()})
+    return {"success": True, "eliminated_at": _now_iso()}
+
+
 # ── Item-scoped routes (must come after literal paths) ──
 
 @router.get("/{company_id}")

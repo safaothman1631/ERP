@@ -98,7 +98,8 @@ venv\Scripts\python.exe test_all.py
 ### Auth (تێست)
 - Email: `admin@test.com`
 - Password: `123456`
-- org_id: `cb160278-d674-46ed-912a-822b0023f7ae`
+- org_id: `0487e3e8-60e9-4824-b288-c0042f48b078`
+- Password (prod): `Admin@12345` (8+ chars required by API)
 
 ---
 
@@ -141,7 +142,49 @@ venv\Scripts\python.exe test_all.py
 
 ---
 
-## 🤖 شادۆ ئەیگێنت‌ـە بەردەستەکان
+## � RTK Token Optimization (v0.37.2 — Windows Native)
+
+**RTK** (Rust Token Killer) دامەزراوە لە `%USERPROFILE%\tools\rtk\rtk.exe` و چالاکە بۆ Copilot لە VS Code.
+لە v0.37.2 ـدا Windows native hook پشتگیریکراوە — بەڵام حتی ئەگەر hook پەیوەند بکات، بۆ پشت‌ڕاستکردنەوە، **هەر کات terminal command دەنووسیت کە RTK پشتگیری دەکات و non-interactive ـە، `rtk` ـی پێشوەخت زیاد بکە**.
+
+### Hook config
+- `.github/hooks/rtk-rewrite.json` (PreToolUse → `rtk hook copilot`)
+- ڕیستارت VS Code پێویستە بۆ چالاککردن
+
+### Rule بۆ Copilot agents
+1. سەرەتا `Get-Command rtk -ErrorAction SilentlyContinue` چێک بکە (یەکجار، cache بکە)
+2. ئەگەر هەبوو → فەرمانەکان بە `rtk` پێشوەخت بنووسە
+3. ئەگەر نەبوو → raw command بە بێ error بەردەوام بە
+
+### نموونە
+```powershell
+# ✅ باش
+rtk git status
+rtk git log --oneline -50
+rtk git diff
+cd c:\Users\SAFA\zoho\frontend; rtk npm run build
+rtk c:\Users\SAFA\zoho\backend\venv\Scripts\python.exe c:\Users\SAFA\zoho\backend\test_all.py
+
+# ❌ مەکە (long-running / interactive)
+rtk uvicorn ...
+rtk npm run dev
+rtk python   # REPL
+```
+
+### PowerShell wrappers (optional)
+بۆ بەکارهێنەر، load بکە: `. c:\Users\SAFA\zoho\.github\scripts\rtk-wrappers.ps1`
+تابعەکان: `rtkgit`, `rtknpm`, `rtktsc`, `rtkbuild`, `rtkpytest`, `rtktestall`, `rtkbackend`, `rtkgain`
+
+### Reporting
+- `rtk gain` — کۆی token savings
+- `rtk gain --history` — مێژووی فەرمانەکان
+
+### سکیڵی تەواو
+بۆ command mapping تەواو + decision tree، بڕوانە: `.github/skills/harness/rtk-token-optimization.md`
+
+---
+
+## �🤖 شادۆ ئەیگێنت‌ـە بەردەستەکان
 
 ### ERP-specific (٢٣ ئێستا)
 ERP Brain, ERP CRM, ERP DevOps, ERP E-commerce, ERP HR, ERP Integration, ERP Inventory, ERP Localization Iraq, ERP Marketing, ERP Migration, ERP Odoo Researcher, ERP POS, ERP Project, ERP Sales, ERP Security, ERP UX, زۆهۆ ئەکاونتینگ، باکئێند، مێشک، داتابەیس، فرۆنتئێند، ریسێرچەر، تێستەر.
@@ -151,6 +194,27 @@ ERP Brain, ERP CRM, ERP DevOps, ERP E-commerce, ERP HR, ERP Integration, ERP Inv
 
 ### ECC-integrated (٩ چالاک)
 شادۆ مێمۆری، کۆچ، ئاژێنت‌شیلد، هارنیس، ئیڤاڵ، ئۆرکێسترەیتەر، دۆکیومێنتەر، دۆکس‌لووکەر، سکیڵ‌میکەر.
+
+### Default Pool — Enterprise + Generic (٤٥ ئەیگێنت + ٤٥ checker — May 2026)
+
+> هاوردە کراون لە `C:\Users\SAFA\OneDrive\Desktop\agents` بۆ `.github/agents/shadow-*.agent.md`.
+> **Default routing rule:** هەر تاسکێکی نوێ → سەرەتا `shadow-brain` (Master Orchestrator) → خۆی planner / executor / specialist ـەکان دەنێرێت.
+
+**Orchestration Pool:** `shadow-brain`, `shadow-planner`, `shadow-executor`, `shadow-researcher`, `shadow-tester`, `shadow-auditor`.
+
+**Enterprise Domain Pool (ERP-critical):** `shadow-erp-architect`, `shadow-accounting-domain`, `shadow-crm-sales-domain`, `shadow-hr-payroll-domain`, `shadow-inventory-warehouse`, `shadow-multitenancy-engineer`, `shadow-rbac-abac-engineer`, `shadow-audit-compliance`, `shadow-notification-engineer`, `shadow-workflow-bpm-engineer`, `shadow-form-builder-engineer`, `shadow-document-pdf-engineer`, `shadow-reporting-bi-engineer`, `shadow-search-engineer`, `shadow-realtime-collab`, `shadow-background-jobs-engineer`, `shadow-integration-middleware`, `shadow-import-export-migration`.
+
+**Development Pool:** `shadow-fullstack-dev`, `shadow-backend-api`, `shadow-frontend-specialist`, `shadow-mobile-dev`.
+
+**Design + UX:** `shadow-ui-designer`, `shadow-ux-researcher`, `shadow-graphic-designer`.
+
+**Security:** `shadow-owasp-auditor`, `shadow-code-security-reviewer`, `shadow-pen-tester`, `shadow-bug-bounty-hunter`.
+
+**Data + DevOps + AI:** `shadow-data-engineer`, `shadow-supabase-expert`, `shadow-data-scientist`, `shadow-ml-engineer`, `shadow-llm-engineer`, `shadow-prompt-engineer`, `shadow-perf-optimizer`, `shadow-ci-cd`, `shadow-deployment`, `shadow-monitoring`, `shadow-i18n-translator`, `shadow-seo-specialist`, `shadow-social-media`.
+
+> هەر یەکێک checker ـی هاوبەشی هەیە (`shadow-<name>-checker.agent.md`) بۆ verification پاش implementation.
+> سکیڵە هاوبەشەکان لە `.github/skills/shadow-shared/` (github-research, kurdish-rtl, owasp-top10, phase-gate).
+> لیستی تەواو + routing لە [.github/agents/_index.md](.github/agents/_index.md) (D.1 - D.7).
 
 ئاگاداربە: کاتێک بەکارهێنەر دەڵێت **"پلانساز"**، شادۆ پلانساز پێویستە **هەموو سکیڵ، رول، ئەیگێنت، و fact ـە verified ـەکانی repo** بزانێت — سەرەتا `.github/agents/_index.md`، `.github/skills/_index.md`، `.github/rules/_index.md` و `/memories/repo/` بخوێنێتەوە.
 
@@ -195,11 +259,14 @@ ERP Brain, ERP CRM, ERP DevOps, ERP E-commerce, ERP HR, ERP Integration, ERP Inv
 - ❌ پشت ببەستیت بە Firestore composite indexes (هەموو filtering لە Python)
 - ❌ ENGLISH-only error messages — کوردی پێویستە
 - ❌ destructive Git command بێ ڕەزامەندی بەکارهێنەر
+- ❌ `rtk` لەگەڵ interactive یان long-running command (uvicorn, vite, npm run dev, REPL)
+- ❌ پشت ببەستیت بە RTK لە script ـدا بێ `Get-Command rtk` چێک
 
 ---
 
 ## 📝 وەرسیۆن
 
+- RTK Integration v1.2 (Apr 2026) — Windows native hook + manual wrappers
 - ECC Integration v1.1 (Apr 2026) — Foundation complete
-- Document version: 1.1
-- آخرین گۆڕانکاری: ECC Integration Sprints 1-7 complete
+- Document version: 1.2
+- آخرین گۆڕانکاری: RTK 0.37.2 integrated

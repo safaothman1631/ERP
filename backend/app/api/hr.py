@@ -19,6 +19,7 @@ from app.firestore.hr import (
 )
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
+from app.services import settings_service
 
 router = APIRouter(prefix="/api/hr", tags=["HR"])
 
@@ -167,7 +168,18 @@ def list_employees(
 
 @router.post("/employees", dependencies=[Depends(require_perm("hr.create"))])
 def create_employee(payload: EmployeeCreate, user: dict = Depends(get_current_user)):
-    return HREmployeeRepository(user["org_id"]).create(payload.model_dump())
+    # Apply HR config defaults
+    try:
+        cfg = settings_service.get_bag(user["org_id"], "hr")
+    except Exception:
+        cfg = {}
+    
+    data = payload.model_dump()
+    data.setdefault("default_leave_balance", cfg.get("default_leave_balance_days", 21))
+    data.setdefault("probation_days", cfg.get("probation_period_days", 90))
+    data.setdefault("contract_template", cfg.get("default_contract_template", "standard"))
+    
+    return HREmployeeRepository(user["org_id"]).create(data)
 
 
 @router.get("/employees/{emp_id}")

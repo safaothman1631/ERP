@@ -1,0 +1,20 @@
+{
+  "hosting": {
+    "site": "erpiq",
+    "public": "frontend/public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "zoho-erp",
+          "region": "me-central1"
+        }
+      }
+    ]
+  }
+}

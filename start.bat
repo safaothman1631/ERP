@@ -1,32 +1,51 @@
 @echo off
 chcp 65001 > NUL
+setlocal
+
+set "ROOT=%~dp0"
+set "BACKEND_DIR=%ROOT%backend"
+set "FRONTEND_DIR=%ROOT%frontend"
+set "BACKEND_PY=%BACKEND_DIR%\venv\Scripts\python.exe"
+
 echo.
 echo  ========================================
-echo    سیستەمی ژمێریاری - یەک سێرڤەر
-echo    Zoho Books - Single Server Mode
+echo    سیستەمی ژمێریاری - Development Mode
+echo    Frontend: http://localhost:5173
+echo    Backend:  http://localhost:8000
 echo  ========================================
 echo.
 
-echo  [1/2] Building frontend...
-cd /d "%~dp0frontend"
-call npm run build
-if errorlevel 1 (
+if not exist "%BACKEND_PY%" (
+    echo  [X] Python venv نەدۆزرایەوە:
+    echo      %BACKEND_PY%
     echo.
-    echo  [X] Frontend build شکستی هێنا!
-    echo      تکایە ئیرۆرەکان بخوێنەوە.
     pause
     exit /b 1
 )
-echo  [OK] Frontend build تەواو بوو.
-echo.
 
-echo  [2/2] Starting server on http://localhost:8000
-echo  ----------------------------------------
-echo   بچۆ: http://localhost:8000
-echo   API:  http://localhost:8000/docs
-echo  ----------------------------------------
+if not exist "%FRONTEND_DIR%\package.json" (
+    echo  [X] Frontend package.json نەدۆزرایەوە:
+    echo      %FRONTEND_DIR%\package.json
+    echo.
+    pause
+    exit /b 1
+)
+
+echo  [1/2] Starting Backend...
+start "Zoho Backend" cmd /k "cd /d ""%BACKEND_DIR%"" && ""%BACKEND_PY%"" -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 --app-dir ""%BACKEND_DIR%"""
+
+timeout /t 3 /nobreak > NUL
+
+echo  [2/2] Starting Frontend Dev Server...
+start "Zoho Frontend" cmd /k "cd /d ""%FRONTEND_DIR%"" && npm run dev"
+
 echo.
-cd /d "%~dp0backend"
-call venv\Scripts\activate
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+echo  [OK] هەر دوو سێرڤەر دەستپێکران.
+echo      Frontend: http://localhost:5173
+echo      Backend:  http://localhost:8000
+echo      API Docs: http://localhost:8000/docs
+echo.
+echo  بۆ داخستن، window ـی Backend و Frontend دابخە.
+echo.
 pause
+endlocal

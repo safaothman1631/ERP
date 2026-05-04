@@ -1,43 +1,6 @@
-import axios from 'axios';
+import axios, { type AxiosRequestConfig } from 'axios';
 import { message } from './utils/message';
 import i18n from './i18n';
-
-const BACKEND_OUTAGE_STATUSES = new Set([502, 503, 504]);
-const BACKEND_OUTAGE_GUARD_MS = 4000;
-const BACKEND_RETRY_HEADER = 'X-Zoho-Retry';
-
-let backendUnavailableUntil = 0;
-let lastBackendUnavailableToastAt = 0;
-
-type BackendAwareError = Error & {
-  isBackendUnavailable?: boolean;
-  response?: {
-    status?: number;
-  };
-};
-
-const markBackendUnavailable = (error: BackendAwareError): BackendAwareError => {
-  error.isBackendUnavailable = true;
-  return error;
-};
-
-const createBackendUnavailableError = (): BackendAwareError =>
-  markBackendUnavailable(new Error('backend-unavailable') as BackendAwareError);
-
-export const isBackendUnavailableError = (error: unknown): boolean => {
-  const candidate = error as BackendAwareError | undefined;
-  return Boolean(
-    candidate?.isBackendUnavailable ||
-    !candidate?.response ||
-    BACKEND_OUTAGE_STATUSES.has(candidate.response.status || 0)
-  );
-};
-
-export const backendRetryConfig = {
-  headers: {
-    [BACKEND_RETRY_HEADER]: '1',
-  },
-} as const;
 
 const api = axios.create({
   baseURL: '',
@@ -45,15 +8,18 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+export const backendRetryConfig: AxiosRequestConfig = {
+  timeout: 60000,
+  headers: { 'X-Zoho-Retry': '1' },
+};
+
+export const isBackendUnavailableError = (error: unknown): boolean => {
+  if (!axios.isAxiosError(error)) return false;
+  return !error.response || error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK';
+};
+
 // Attach JWT token to every request
 api.interceptors.request.use((config) => {
-  const headers = (config.headers || {}) as Record<string, string | undefined>;
-  const bypassGuard = headers[BACKEND_RETRY_HEADER] === '1';
-
-  if (!bypassGuard && Date.now() < backendUnavailableUntil && config.url?.startsWith('/api')) {
-    return Promise.reject(createBackendUnavailableError());
-  }
-
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -72,16 +38,7 @@ api.interceptors.response.use(
     }
     return res;
   },
-  async (error) => {
-    if (!error.response || BACKEND_OUTAGE_STATUSES.has(error.response.status)) {
-      backendUnavailableUntil = Date.now() + BACKEND_OUTAGE_GUARD_MS;
-      if (Date.now() - lastBackendUnavailableToastAt > BACKEND_OUTAGE_GUARD_MS) {
-        message.error(i18n.t('error_backend_unavailable'));
-        lastBackendUnavailableToastAt = Date.now();
-      }
-      return Promise.reject(markBackendUnavailable(error));
-    }
-
+  (error) => {
     if (!error.response) {
       message.error(i18n.t('error_network'));
       return Promise.reject(error);
@@ -90,39 +47,6 @@ api.interceptors.response.use(
     const status = error.response.status;
 
     if (status === 401) {
-      // Try silent refresh ONCE per failing request before forcing logout.
-      // Skip refresh attempt for the auth endpoints themselves to prevent loops.
-      const cfg = error.config || {};
-      const url: string = cfg.url || '';
-      const alreadyRetried = cfg._refreshRetried === true;
-      const isAuthEndpoint =
-        url.includes('/api/auth/login') ||
-        url.includes('/api/auth/refresh') ||
-        url.includes('/api/auth/logout');
-
-      if (!alreadyRetried && !isAuthEndpoint && localStorage.getItem('token')) {
-        cfg._refreshRetried = true;
-        try {
-          const oldToken = localStorage.getItem('token');
-          const refreshRes = await fetch('/api/auth/refresh', {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${oldToken}` },
-          });
-          if (refreshRes.ok) {
-            const data = await refreshRes.json();
-            const newToken = data?.access_token;
-            if (newToken) {
-              localStorage.setItem('token', newToken);
-              cfg.headers = cfg.headers || {};
-              cfg.headers.Authorization = `Bearer ${newToken}`;
-              return api.request(cfg);
-            }
-          }
-        } catch {
-          // Fall through to logout
-        }
-      }
-
       localStorage.removeItem('token');
       localStorage.removeItem('userId');
       localStorage.removeItem('orgId');

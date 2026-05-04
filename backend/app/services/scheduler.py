@@ -1,14 +1,427 @@
-# backend/app/services/scheduler.py
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
+"""Background scheduler service for automated tasks (Wave L + existing).
+
+Runs 5 background jobs:
+1. Subscription renewal - generates invoices for due subscriptions (Wave L)
+2. Scheduled reports - executes scheduled reports (Wave L)
+3. Dunning - sends payment reminders for past-due subscriptions (Wave L)
+4. Recurring invoices - legacy job from Phase 1
+5. Payment reminders - legacy job for overdue invoices
+"""
+from __future__ import annotations
 import logging
+import os
+from datetime import datetime, timedelta
+from typing import Optional
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.cron import CronTrigger
 
 logger = logging.getLogger(__name__)
-scheduler = BackgroundScheduler()
+
+# Module-level scheduler instance
+_scheduler: Optional[AsyncIOScheduler] = None
+
+
+def start_scheduler(app=None):
+    """Initialize and start the background scheduler."""
+    global _scheduler
+
+    # Check if scheduler is disabled via env var
+    if not os.getenv("SCHEDULER_ENABLED", "true").lower() in ("true", "1", "yes"):
+        logger.info("🚫 Scheduler disabled via SCHEDULER_ENABLED env var")
+        return
+
+    if _scheduler is not None:
+        logger.warning("Scheduler already started")
+        return
+
+    logger.info("🕐 Starting background scheduler...")
+
+    _scheduler = AsyncIOScheduler()
+
+    # Wave L jobs
+    _scheduler.add_job(
+        _job_subscription_renewal,
+        trigger=IntervalTrigger(hours=1),
+        id="subscription_renewal",
+        name="Subscription Invoice Generation",
+        replace_existing=True,
+    )
+
+    _scheduler.add_job(
+        _job_scheduled_reports,
+        trigger=IntervalTrigger(minutes=15),
+        id="scheduled_reports",
+        name="Scheduled Reports Execution",
+        replace_existing=True,
+    )
+
+    _scheduler.add_job(
+        _job_dunning,
+        trigger=IntervalTrigger(hours=6),
+        id="dunning",
+        name="Dunning Notice Processing",
+        replace_existing=True,
+    )
+
+    # Legacy jobs
+    _scheduler.add_job(
+        process_recurring_invoices,
+        trigger=CronTrigger(hour=1, minute=0),
+        id="recurring_invoices",
+        name="Recurring Invoice Generation",
+        replace_existing=True,
+    )
+
+    _scheduler.add_job(
+        process_payment_reminders,
+        trigger=CronTrigger(hour=9, minute=0),
+        id="payment_reminders",
+        name="Payment Reminder Emails",
+        replace_existing=True,
+    )
+
+    # Wave N: Monthly depreciation
+    _scheduler.add_job(
+        _job_monthly_depreciation,
+        trigger=CronTrigger(day=1, hour=2, minute=0),
+        id="monthly_depreciation",
+        name="Fixed Assets Monthly Depreciation",
+        replace_existing=True,
+    )
+
+    _scheduler.start()
+    logger.info("✅ Scheduler started with 6 jobs")
+
+
+def shutdown_scheduler():
+    """Gracefully shutdown the scheduler."""
+    global _scheduler
+    if _scheduler is not None:
+        logger.info("🛑 Shutting down scheduler...")
+        _scheduler.shutdown(wait=True)
+        _scheduler = None
+        logger.info("✅ Scheduler stopped")
+
+
+# Legacy alias for backwards compatibility
+stop_scheduler = shutdown_scheduler
+
+
+def get_scheduler() -> Optional[AsyncIOScheduler]:
+    """Get the scheduler instance (for status checks)."""
+    return _scheduler
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Wave L: New job implementations
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _job_subscription_renewal():
+    """Scan all organizations for subscriptions due for renewal."""
+    from app.firestore.job_runs import JobRunRepository
+    from app.firebase_client import get_firestore_client
+    from app.api.subscriptions import _generate_invoice_for_sub
+
+    started_at = datetime.utcnow().isoformat()
+    total_processed = 0
+    total_failed = 0
+    errors = []
+
+    try:
+        logger.info("🔄 Running subscription renewal job...")
+        db = get_firestore_client()
+
+        # Scan all organizations
+        orgs_ref = db.collection("organizations")
+        orgs = list(orgs_ref.stream())
+
+        for org_doc in orgs:
+            org_id = org_doc.id
+            try:
+                # Find subscriptions due for renewal
+                subs_ref = db.collection("subscriptions").where("org_id", "==", org_id)
+                today = datetime.utcnow().isoformat()[:10]
+
+                for sub_doc in subs_ref.stream():
+                    sub = sub_doc.to_dict()
+                    sub_id = sub_doc.id
+                    status = sub.get("status")
+                    next_invoice_date = sub.get("next_invoice_date", "")
+
+                    # Only process active/trial subs that are due
+                    if status in ("active", "trial") and next_invoice_date and next_invoice_date[:10] <= today:
+                        try:
+                            _generate_invoice_for_sub(org_id, sub_id)
+                            total_processed += 1
+                        except Exception as e:
+                            total_failed += 1
+                            errors.append({"item_id": sub_id, "error_msg": str(e)})
+                            logger.error(f"Failed to generate invoice for sub {sub_id}: {e}")
+
+            except Exception as e:
+                logger.error(f"Error processing org {org_id}: {e}")
+
+        finished_at = datetime.utcnow().isoformat()
+        status = "success" if total_failed == 0 else ("partial" if total_processed > 0 else "failed")
+
+        # Record run (no org_id - cross-org job)
+        job_run_repo = JobRunRepository("__system__")
+        job_run_repo.create_run(
+            job_name="subscription_renewal",
+            items_processed=total_processed,
+            items_failed=total_failed,
+            errors=errors,
+            started_at=started_at,
+            finished_at=finished_at,
+            status=status,
+        )
+
+        logger.info(f"✅ Subscription renewal: {total_processed} processed, {total_failed} failed")
+
+    except Exception as e:
+        logger.error(f"❌ Subscription renewal job failed: {e}")
+        # Record failure
+        job_run_repo = JobRunRepository("__system__")
+        job_run_repo.create_run(
+            job_name="subscription_renewal",
+            items_processed=total_processed,
+            items_failed=total_failed,
+            errors=[{"error_msg": str(e)}],
+            started_at=started_at,
+            finished_at=datetime.utcnow().isoformat(),
+            status="failed",
+        )
+
+
+def _job_scheduled_reports():
+    """Execute scheduled reports that are due."""
+    from app.firestore.job_runs import JobRunRepository
+    from app.firebase_client import get_firestore_client
+    from app.api.scheduled_reports import _execute_scheduled_report
+
+    started_at = datetime.utcnow().isoformat()
+    total_processed = 0
+    total_failed = 0
+    errors = []
+
+    try:
+        logger.info("📊 Running scheduled reports job...")
+        db = get_firestore_client()
+
+        # Scan all organizations
+        orgs_ref = db.collection("organizations")
+        orgs = list(orgs_ref.stream())
+
+        for org_doc in orgs:
+            org_id = org_doc.id
+            try:
+                # Find active reports that are due
+                reports_ref = db.collection("scheduled_reports").where("org_id", "==", org_id)
+                now = datetime.utcnow().isoformat()
+
+                for report_doc in reports_ref.stream():
+                    report = report_doc.to_dict()
+                    report_id = report_doc.id
+                    active = report.get("active", True)
+                    next_run_at = report.get("next_run_at")
+
+                    if active and next_run_at and next_run_at <= now:
+                        try:
+                            _execute_scheduled_report(org_id, report_id)
+                            total_processed += 1
+                        except Exception as e:
+                            total_failed += 1
+                            errors.append({"item_id": report_id, "error_msg": str(e)})
+                            logger.error(f"Failed to execute report {report_id}: {e}")
+
+            except Exception as e:
+                logger.error(f"Error processing org {org_id}: {e}")
+
+        finished_at = datetime.utcnow().isoformat()
+        status = "success" if total_failed == 0 else ("partial" if total_processed > 0 else "failed")
+
+        job_run_repo = JobRunRepository("__system__")
+        job_run_repo.create_run(
+            job_name="scheduled_reports",
+            items_processed=total_processed,
+            items_failed=total_failed,
+            errors=errors,
+            started_at=started_at,
+            finished_at=finished_at,
+            status=status,
+        )
+
+        logger.info(f"✅ Scheduled reports: {total_processed} processed, {total_failed} failed")
+
+    except Exception as e:
+        logger.error(f"❌ Scheduled reports job failed: {e}")
+        job_run_repo = JobRunRepository("__system__")
+        job_run_repo.create_run(
+            job_name="scheduled_reports",
+            items_processed=total_processed,
+            items_failed=total_failed,
+            errors=[{"error_msg": str(e)}],
+            started_at=started_at,
+            finished_at=datetime.utcnow().isoformat(),
+            status="failed",
+        )
+
+
+def _job_dunning():
+    """Process past-due subscriptions with dunning workflow."""
+    from app.firestore.job_runs import JobRunRepository
+    from app.firebase_client import get_firestore_client
+    from app.api.subscriptions import _run_dunning_step
+
+    started_at = datetime.utcnow().isoformat()
+    total_processed = 0
+    total_failed = 0
+    errors = []
+
+    try:
+        logger.info("📧 Running dunning job...")
+        db = get_firestore_client()
+
+        # Scan all organizations
+        orgs_ref = db.collection("organizations")
+        orgs = list(orgs_ref.stream())
+
+        for org_doc in orgs:
+            org_id = org_doc.id
+            try:
+                # Find past-due subscriptions
+                subs_ref = db.collection("subscriptions").where("org_id", "==", org_id)
+
+                for sub_doc in subs_ref.stream():
+                    sub = sub_doc.to_dict()
+                    sub_id = sub_doc.id
+                    status = sub.get("status")
+
+                    if status == "past_due":
+                        try:
+                            _run_dunning_step(org_id, sub_id)
+                            total_processed += 1
+                        except Exception as e:
+                            total_failed += 1
+                            errors.append({"item_id": sub_id, "error_msg": str(e)})
+                            logger.error(f"Failed to run dunning for sub {sub_id}: {e}")
+
+            except Exception as e:
+                logger.error(f"Error processing org {org_id}: {e}")
+
+        finished_at = datetime.utcnow().isoformat()
+        status = "success" if total_failed == 0 else ("partial" if total_processed > 0 else "failed")
+
+        job_run_repo = JobRunRepository("__system__")
+        job_run_repo.create_run(
+            job_name="dunning",
+            items_processed=total_processed,
+            items_failed=total_failed,
+            errors=errors,
+            started_at=started_at,
+            finished_at=finished_at,
+            status=status,
+        )
+
+        logger.info(f"✅ Dunning: {total_processed} processed, {total_failed} failed")
+
+    except Exception as e:
+        logger.error(f"❌ Dunning job failed: {e}")
+        job_run_repo = JobRunRepository("__system__")
+        job_run_repo.create_run(
+            job_name="dunning",
+            items_processed=total_processed,
+            items_failed=total_failed,
+            errors=[{"error_msg": str(e)}],
+            started_at=started_at,
+            finished_at=datetime.utcnow().isoformat(),
+            status="failed",
+        )
+
+
+def _job_monthly_depreciation():
+    """Run monthly depreciation for all organizations (Wave N).
+    
+    Runs on 1st of each month at 02:00.
+    Processes previous month's depreciation.
+    """
+    from app.firestore.job_runs import JobRunRepository
+    from app.firebase_client import get_firestore_client
+    from app.services.depreciation_service import run_monthly_depreciation_batch
+
+    started_at = datetime.utcnow().isoformat()
+    total_processed = 0
+    total_failed = 0
+    errors = []
+
+    try:
+        logger.info("🏢 Running monthly depreciation job...")
+        db = get_firestore_client()
+
+        # Calculate previous month period (YYYY-MM)
+        now = datetime.utcnow()
+        if now.month == 1:
+            prev_month = datetime(now.year - 1, 12, 1)
+        else:
+            prev_month = datetime(now.year, now.month - 1, 1)
+        period = prev_month.strftime("%Y-%m")
+
+        # Scan all organizations
+        orgs_ref = db.collection("organizations")
+        orgs = list(orgs_ref.stream())
+
+        for org_doc in orgs:
+            org_id = org_doc.id
+            try:
+                result = run_monthly_depreciation_batch(org_id, period)
+                total_processed += result["processed"]
+                total_failed += result["failed"]
+                if result["errors"]:
+                    errors.extend([{"org_id": org_id, **e} for e in result["errors"]])
+                logger.info(f"Org {org_id}: {result['processed']} assets depreciated, {result['failed']} failed")
+            except Exception as e:
+                total_failed += 1
+                errors.append({"org_id": org_id, "error_msg": str(e)})
+                logger.error(f"Error processing org {org_id}: {e}")
+
+        finished_at = datetime.utcnow().isoformat()
+        status = "success" if total_failed == 0 else ("partial" if total_processed > 0 else "failed")
+
+        job_run_repo = JobRunRepository("__system__")
+        job_run_repo.create_run(
+            job_name="monthly_depreciation",
+            items_processed=total_processed,
+            items_failed=total_failed,
+            errors=errors,
+            started_at=started_at,
+            finished_at=finished_at,
+            status=status,
+            metadata={"period": period},
+        )
+
+        logger.info(f"✅ Monthly depreciation ({period}): {total_processed} processed, {total_failed} failed")
+
+    except Exception as e:
+        logger.error(f"❌ Monthly depreciation job failed: {e}")
+        job_run_repo = JobRunRepository("__system__")
+        job_run_repo.create_run(
+            job_name="monthly_depreciation",
+            items_processed=total_processed,
+            items_failed=total_failed,
+            errors=[{"error_msg": str(e)}],
+            started_at=started_at,
+            finished_at=datetime.utcnow().isoformat(),
+            status="failed",
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Legacy job implementations (preserved from original)
+# ═══════════════════════════════════════════════════════════════════════════
 
 def process_recurring_invoices():
     """Check and generate invoices from recurring templates"""
-    from datetime import datetime, timedelta
     from app.firestore.invoices import RecurringInvoiceRepository, InvoiceRepository
     from app.firestore.system import SequenceRepository
     from app.firebase_client import is_firebase_available
@@ -70,7 +483,6 @@ def process_recurring_invoices():
 
 def process_payment_reminders():
     """Send reminders for overdue invoices"""
-    from datetime import datetime
     from app.firebase_client import is_firebase_available, get_db
     from app.services.email_service import send_email
     from app.firestore.contacts import ContactRepository
@@ -144,17 +556,3 @@ def process_payment_reminders():
                 continue
     except Exception as e:
         logger.error(f"Reminder error: {e}")
-
-
-def start_scheduler():
-    """Start the background scheduler"""
-    scheduler.add_job(process_recurring_invoices, CronTrigger(hour=1, minute=0), id="recurring_invoices", replace_existing=True)
-    scheduler.add_job(process_payment_reminders, CronTrigger(hour=9, minute=0), id="payment_reminders", replace_existing=True)
-    scheduler.start()
-    logger.info("Scheduler started")
-
-
-def stop_scheduler():
-    """Stop the background scheduler"""
-    if scheduler.running:
-        scheduler.shutdown()

@@ -192,3 +192,43 @@ def model_schema(model_name: str, user: dict = Depends(get_current_user)):
         filters=[{"field": "model_name", "op": "==", "value": model_name}], limit=100,
     )
     return {"fields": fields, "views": views}
+
+
+# View Layout persistence (Sprint 7)
+class ViewLayoutSave(BaseModel):
+    fields: list[dict]
+
+
+class ViewLayoutRepo(BaseRepository):
+    collection_name = "studio_view_layouts"
+
+
+@router.get("/view-layouts/{entity}")
+def get_view_layout(entity: str, user: dict = Depends(get_current_user)):
+    """Get persisted form/list/print layout for an entity. Returns {fields: []} if none saved."""
+    repo = ViewLayoutRepo(user["org_id"])
+    items, _ = repo.list(
+        filters=[{"field": "entity", "op": "==", "value": entity}], limit=1,
+    )
+    if items:
+        return items[0]
+    return {"entity": entity, "fields": []}
+
+
+@router.put("/view-layouts/{entity}")
+def save_view_layout(entity: str, data: ViewLayoutSave, user: dict = Depends(get_current_user)):
+    """Persist form/list/print layout for an entity."""
+    repo = ViewLayoutRepo(user["org_id"])
+    items, _ = repo.list(
+        filters=[{"field": "entity", "op": "==", "value": entity}], limit=1,
+    )
+    payload = {
+        "entity": entity,
+        "fields": data.fields,
+        "updated_at": datetime.utcnow().isoformat(),
+        "updated_by": user.get("id") or user.get("uid"),
+    }
+    if items:
+        return repo.update(items[0]["id"], payload)
+    payload["id"] = f"{entity}-layout"
+    return repo.create(payload)

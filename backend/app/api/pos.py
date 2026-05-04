@@ -23,6 +23,7 @@ from app.firestore.system import SequenceRepository
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
 from app.services.pos_pricing import apply_pricelist
+from app.services import settings_service
 from app.firebase_client import get_db
 
 
@@ -415,6 +416,17 @@ def get_session(session_id: str, user: dict = Depends(get_current_user)):
 @router.post("/sessions/open", status_code=201, dependencies=[Depends(require_perm("pos.view"))])
 def open_session(data: SessionOpenRequest, user: dict = Depends(get_current_user)):
     """Open a new POS session"""
+    # Apply POS config
+    try:
+        cfg = settings_service.get_bag(user["org_id"], "pos")
+    except Exception:
+        cfg = {}
+    
+    # Require cashier PIN if configured
+    if cfg.get("require_cashier_pin", False):
+        if not hasattr(data, 'pin') or not data.pin:
+            raise HTTPException(400, "Cashier PIN required")
+    
     config_repo = POSConfigRepository(user["org_id"])
     config = config_repo.get(data.config_id)
     if not config:

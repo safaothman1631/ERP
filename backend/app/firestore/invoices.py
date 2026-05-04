@@ -43,12 +43,13 @@ class InvoiceRepository(BaseRepository):
         return self.update(doc_id, {"status": status})
     
     def record_payment(self, doc_id, amount):
-        """Record payment against invoice"""
+        """Record payment against invoice (defensive: missing balance_due treated as total)"""
         inv = self.get(doc_id)
         if not inv:
             return None
         
-        new_balance = inv["balance_due"] - amount
+        current_balance = float(inv.get("balance_due") or inv.get("total") or 0)
+        new_balance = current_balance - float(amount or 0)
         new_status = "paid" if new_balance <= 0 else "partially_paid"
         
         return self.update(doc_id, {

@@ -112,3 +112,12 @@ COPY --from=build /app/dist /usr/share/nginx/html
 - Preview deploy بۆ هەر PR (Vercel + Fly staging).
 - Notification: Slack/Discord webhook بۆ deploy success/fail.
 - Disaster recovery runbook: `DISASTER_RECOVERY.md` (step-by-step).
+
+## 🦀 RTK Integration (Windows-specific)
+- Install: `.\.github\scripts\rtk-install.ps1`
+- Verify: `.\.github\scripts\rtk-verify.ps1`
+- Wrappers: `. .\.github\scripts\rtk-wrappers.ps1`
+- ✅ v0.37.2 Windows native binary hook پشتگیریکراوە (`.github/hooks/rtk-rewrite.json`)
+- ⚠️ WSL پێشنیار **مەکە** — workspace ـەکە تەنها PowerShell بەکاردەهێنێت
+- ❌ هیچکات `rtk` لە production deploy script ـدا بێ `Get-Command` چێک مەنووسە — RTK ڕەنگە لە CI runner ـدا نەبێت
+- Memory: [/memories/repo/rtk-windows.md](../../memories/repo/rtk-windows.md)

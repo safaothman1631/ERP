@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,11 +15,11 @@ from app.api import (
     banking, projects, dashboard, reports,
     quotes, sales_orders, purchase_orders, credit_notes,
     vendor_credits, recurring_invoices, inventory, taxes,
-    fiscal, system, assets, mileage,
+    fiscal, system, mileage, locations,
     # Phase 7: Advanced Features
     shipments, returns, custom_fields, approvals,
     portals, branches, expense_claims, attachments,
-    payment_links, audit, recurring_bills,
+    payment_links, audit, recurring_bills, numbering,
     # Phase 8: Additional Features
     comments, transaction_locking, reporting_tags,
     # Sprint 15: Universal Chatter
@@ -33,16 +34,22 @@ from app.api import (
     marketing,
     # Sprint 24: E-commerce
     ecommerce,
+    # Wave E: Storefront + Customer Portal
+    storefront,
     # Sprint 28: Iraq Payment Gateways
     iraq_payments,
     # Sprint 29: Migration Wizard
     migration,
     # ERP Sprint 1
     l10n_iq, rbac, einvoice,
+    # Admin User Management (Sprint A-E)
+    users as users_admin,
     # Sprint 6: POS
     pos,
     # Phase 4: Excel/CSV Export
     exports,
+    # Wave O: Multi-Currency Revaluation
+    currency_rates, revaluations,
     # Sprint 1.1: CRM
     crm,
     # Sprint 7.1: WhatsApp
@@ -73,8 +80,17 @@ from app.api import (
     agriculture, ngo, government,
     # Onboarding wizard
     onboarding,
+    # Wave B (Accounting Power Features)
+    analytic, budgets, cashflow_forecast, customer_statements, email_templates,
+    # Wave I: Power-user Features
+    saved_filters, scheduled_reports, custom_reports,
+    # Wave U: Custom Dashboards
+    dashboards,
+    # Wave N: Fixed Assets
+    fixed_assets,
 )
 from app.api import imports as imports_api
+from app.api import jobs as jobs_api
 from app.middleware.audit import audit_middleware
 import os
 
@@ -94,10 +110,36 @@ _APP_STARTED_AT = _datetime.utcnow().isoformat()
 # Sprint 33: in-memory per-route latency stats (process-local; for ops dashboards)
 _ROUTE_STATS: dict = {}
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Lifespan context manager (Wave L)
+# ═══════════════════════════════════════════════════════════════════════════
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifecycle - startup and shutdown."""
+    # Startup
+    try:
+        from app.services.scheduler import start_scheduler
+        start_scheduler(app)
+    except Exception as e:
+        logging.getLogger(__name__).warning(f"Scheduler not started: {e}")
+    
+    yield
+    
+    # Shutdown
+    try:
+        from app.services.scheduler import shutdown_scheduler
+        shutdown_scheduler()
+    except Exception as e:
+        logging.getLogger(__name__).warning(f"Scheduler shutdown error: {e}")
+
+
 app = FastAPI(
     title=settings.APP_NAME,
     version="2.0.0",
     description="سیستەمی ژمێریاری و داراییی کوردی - ئاستی جیهانی",
+    lifespan=lifespan,
 )
 
 app.state.limiter = limiter
@@ -141,11 +183,14 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()"
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline'; "
-        "style-src 'self' 'unsafe-inline'; "
+        "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://apis.google.com https://accounts.google.com; "
+        "script-src-elem 'self' 'unsafe-inline' https://www.googletagmanager.com https://apis.google.com https://accounts.google.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "img-src 'self' data: https:; "
-        "font-src 'self' https://fonts.gstatic.com; "
-        "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com; "
+        "font-src 'self' data: https://fonts.gstatic.com; "
+        "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://fonts.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://stats.g.doubleclick.net; "
+        "frame-src 'self' https://accounts.google.com https://*.firebaseapp.com; "
         "frame-ancestors 'none'"
     )
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
@@ -169,6 +214,14 @@ app.include_router(banking.router)
 app.include_router(projects.router)
 app.include_router(dashboard.router)
 app.include_router(reports.router)
+# Wave I: Power-user Features
+app.include_router(saved_filters.router)
+app.include_router(scheduled_reports.router)
+app.include_router(custom_reports.router)
+# Wave U: Custom Dashboards
+app.include_router(dashboards.router)
+# Wave L: Background jobs monitoring
+app.include_router(jobs_api.router)
 # Phase 1: Sales & Purchase Pipeline
 app.include_router(quotes.router)
 app.include_router(sales_orders.router)
@@ -178,8 +231,9 @@ app.include_router(vendor_credits.router)
 app.include_router(recurring_invoices.router)
 # Phase 2: Inventory Management
 app.include_router(inventory.router)
-# Phase 3: Fixed Assets
-app.include_router(assets.router)
+app.include_router(locations.router)
+# Phase 3: Fixed Assets (Wave N)
+app.include_router(fixed_assets.router)
 # Phase 4: Mileage Tracking
 app.include_router(mileage.router)
 # Phase 5: Tax, Budget, Fiscal Year
@@ -191,6 +245,7 @@ app.include_router(system.router)
 app.include_router(shipments.router)
 app.include_router(shipments.challans_router)
 app.include_router(returns.router)
+app.include_router(numbering.router)
 app.include_router(custom_fields.router)
 app.include_router(approvals.router)
 app.include_router(portals.router)
@@ -213,17 +268,28 @@ app.include_router(privacy.router)
 app.include_router(automation.router)
 app.include_router(mail.router)
 app.include_router(marketing.router)
+# Wave B: Accounting Power Features
+app.include_router(analytic.router)
+app.include_router(budgets.router)
+app.include_router(cashflow_forecast.router)
+app.include_router(customer_statements.router)
+app.include_router(email_templates.router)
 app.include_router(ecommerce.router)
+app.include_router(storefront.router)
 app.include_router(iraq_payments.router)
 app.include_router(migration.router)
 # ERP Sprint 1
 app.include_router(l10n_iq.router)
 app.include_router(rbac.router)
+app.include_router(users_admin.router)
 app.include_router(einvoice.router)
 # Sprint 6: POS
 app.include_router(pos.router)
 # Phase 4: Excel/CSV Export
 app.include_router(exports.router)
+# Wave O: Multi-Currency Revaluation
+app.include_router(currency_rates.router)
+app.include_router(revaluations.router)
 # Sprint 1.1: CRM
 app.include_router(crm.router)
 # Sprint 7.1: WhatsApp
@@ -280,18 +346,12 @@ app.include_router(ngo.router)
 app.include_router(government.router)
 app.include_router(onboarding.router)
 
+# Rate limit middleware (opt-in via settings bag)
+from app.middleware.rate_limit import RateLimitMiddleware
+app.add_middleware(RateLimitMiddleware)
+
 # Audit middleware - auto-logs mutating requests
 app.middleware("http")(audit_middleware)
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Start background jobs on startup"""
-    try:
-        from app.services.scheduler import start_scheduler
-        start_scheduler()
-    except Exception as e:
-        logging.getLogger(__name__).warning(f"Scheduler not started: {e}")
 
 
 @app.get("/")

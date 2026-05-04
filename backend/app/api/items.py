@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.firestore.items import ItemRepository
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
+from app.services import settings_service
 from app.schemas.schemas import ItemCreate, ItemUpdate, ItemResponse
 
 router = APIRouter(prefix="/api/items", tags=["Items"])
@@ -55,8 +56,20 @@ def create_item(
     data: ItemCreate,
     user: dict = Depends(get_current_user),
 ):
+    # Apply inventory config defaults
+    try:
+        cfg = settings_service.get_bag(user["org_id"], "inventory")
+    except Exception:
+        cfg = {}
+    
+    payload = data.model_dump()
+    if not payload.get("uom"):
+        payload["uom"] = cfg.get("default_uom", "Unit")
+    if not payload.get("valuation_method"):
+        payload["valuation_method"] = cfg.get("valuation_method", "FIFO")
+    
     repo = ItemRepository(user["org_id"])
-    item = repo.create({"id": str(uuid.uuid4()), **data.model_dump()})
+    item = repo.create({"id": str(uuid.uuid4()), **payload})
     return item
 
 

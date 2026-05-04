@@ -1,0 +1,369 @@
+import React, { useEffect, useState } from 'react';
+import { Table, Button, Tag, Modal, Form, Input, Select, Space, DatePicker, Popconfirm, Row, Col } from 'antd';
+import { PlusOutlined, DeleteOutlined, PlayCircleOutlined, CheckCircleOutlined, StopOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import api from '../../api';
+import dayjs, { Dayjs } from 'dayjs';
+import { PageHeader } from '../../design-system';
+import { message } from '../../utils/message';
+
+interface MaintRequest {
+  id: string;
+  equipment_id: string;
+  title: string;
+  description?: string;
+  type: string;
+  priority: string;
+  status?: string;
+  requested_by?: string;
+  assigned_to?: string;
+  scheduled_at?: string;
+}
+
+interface Equipment {
+  id: string;
+  name: string;
+}
+
+const statusColors: Record<string, string> = {
+  new: 'default',
+  in_progress: 'blue',
+  done: 'green',
+  cancelled: 'red',
+};
+
+const priorityColors: Record<string, string> = {
+  low: 'default',
+  medium: 'blue',
+  high: 'orange',
+  urgent: 'red',
+};
+
+const MaintenanceRequests: React.FC = () => {
+  const { t } = useTranslation();
+  const [data, setData] = useState<MaintRequest[]>([]);
+  const [equipment, setEquipment] = useState<Equipment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form] = Form.useForm();
+  const [saving, setSaving] = useState(false);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const r = await api.get('/api/maintenance/requests', { params: { limit: 500 } });
+      let items = r.data.items || [];
+      if (statusFilter) items = items.filter((req: MaintRequest) => req.status === statusFilter);
+      if (typeFilter) items = items.filter((req: MaintRequest) => req.type === typeFilter);
+      if (priorityFilter) items = items.filter((req: MaintRequest) => req.priority === priorityFilter);
+      setData(items);
+    } catch {
+      message.error(t('error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchEquipment = async () => {
+    try {
+      const r = await api.get('/api/maintenance/equipment', { params: { limit: 500 } });
+      setEquipment(r.data.items || []);
+    } catch {
+      // Ignore
+    }
+  };
+
+  useEffect(() => {
+    void fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter, typeFilter, priorityFilter]);
+
+  useEffect(() => {
+    void fetchEquipment();
+  }, []);
+
+  const openNew = () => {
+    setEditingId(null);
+    form.resetFields();
+    form.setFieldsValue({ type: 'corrective', priority: 'medium' });
+    setModalOpen(true);
+  };
+
+  const handleSave = async (values: Record<string, unknown>) => {
+    setSaving(true);
+    try {
+      const payload = {
+        ...values,
+        scheduled_at: values.scheduled_at ? (values.scheduled_at as Dayjs).toISOString() : undefined,
+      };
+      if (editingId) {
+        await api.patch(`/api/maintenance/requests/${editingId}`, payload);
+      } else {
+        await api.post('/api/maintenance/requests', payload);
+      }
+      message.success(t('success'));
+      setModalOpen(false);
+      form.resetFields();
+      setEditingId(null);
+      void fetchData();
+    } catch {
+      message.error(t('error'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleStart = async (id: string) => {
+    try {
+      await api.post(`/api/maintenance/requests/${id}/start`);
+      message.success(t('maintenance.request_started'));
+      void fetchData();
+    } catch {
+      message.error(t('error'));
+    }
+  };
+
+  const handleComplete = async (id: string) => {
+    try {
+      await api.post(`/api/maintenance/requests/${id}/complete`, { notes: '' });
+      message.success(t('maintenance.request_completed'));
+      void fetchData();
+    } catch {
+      message.error(t('error'));
+    }
+  };
+
+  const handleCancel = async (id: string) => {
+    try {
+      await api.patch(`/api/maintenance/requests/${id}`, { status: 'cancelled' });
+      message.success(t('maintenance.request_cancelled'));
+      void fetchData();
+    } catch {
+      message.error(t('error'));
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await api.delete(`/api/maintenance/requests/${id}`);
+      message.success(t('success'));
+      void fetchData();
+    } catch {
+      message.error(t('error'));
+    }
+  };
+
+  const columns = [
+    {
+      title: t('maintenance.equipment'),
+      dataIndex: 'equipment_id',
+      key: 'equipment_id',
+      width: 150,
+      render: (eqId: string) => {
+        const eq = equipment.find((e) => e.id === eqId);
+        return eq ? eq.name : '—';
+      },
+    },
+    { title: t('maintenance.title'), dataIndex: 'title', key: 'title', width: 200 },
+    {
+      title: t('maintenance.type'),
+      dataIndex: 'type',
+      key: 'type',
+      width: 120,
+      render: (type: string) => t(`maintenance.type_${type}`, type),
+    },
+    {
+      title: t('maintenance.priority'),
+      dataIndex: 'priority',
+      key: 'priority',
+      width: 100,
+      render: (priority: string) => (
+        <Tag color={priorityColors[priority] || 'default'}>
+          {t(`maintenance.priority_${priority}`, priority)}
+        </Tag>
+      ),
+    },
+    {
+      title: t('maintenance.status'),
+      dataIndex: 'status',
+      key: 'status',
+      width: 120,
+      render: (status: string) => (
+        <Tag color={statusColors[status] || 'default'}>
+          {t(`maintenance.status_${status}`, status)}
+        </Tag>
+      ),
+    },
+    { title: t('maintenance.requested_by'), dataIndex: 'requested_by', key: 'requested_by', width: 130 },
+    { title: t('maintenance.assigned_to'), dataIndex: 'assigned_to', key: 'assigned_to', width: 130 },
+    {
+      title: t('maintenance.scheduled_at'),
+      dataIndex: 'scheduled_at',
+      key: 'scheduled_at',
+      width: 140,
+      render: (date: string) => (date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '—'),
+    },
+    {
+      title: t('actions'),
+      key: 'actions',
+      width: 220,
+      fixed: 'right' as const,
+      render: (_: unknown, record: MaintRequest) => (
+        <Space size="small">
+          {record.status === 'new' && (
+            <Button size="small" type="primary" icon={<PlayCircleOutlined />} onClick={() => handleStart(record.id)}>
+              {t('maintenance.start')}
+            </Button>
+          )}
+          {record.status === 'in_progress' && (
+            <Button size="small" type="primary" icon={<CheckCircleOutlined />} onClick={() => handleComplete(record.id)}>
+              {t('maintenance.complete')}
+            </Button>
+          )}
+          {record.status !== 'done' && record.status !== 'cancelled' && (
+            <Button size="small" danger icon={<StopOutlined />} onClick={() => handleCancel(record.id)}>
+              {t('cancel')}
+            </Button>
+          )}
+          <Popconfirm title={t('are_you_sure')} onConfirm={() => handleDelete(record.id)}>
+            <Button size="small" danger icon={<DeleteOutlined />} />
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <PageHeader
+        title={t('maintenance.requests')}
+        subtitle={t('maintenance.requests_subtitle')}
+        extra={
+          <Button type="primary" icon={<PlusOutlined />} onClick={openNew}>
+            {t('maintenance.new_request')}
+          </Button>
+        }
+      />
+      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+        <Col span={8}>
+          <Select
+            style={{ width: '100%' }}
+            placeholder={t('maintenance.filter_status')}
+            allowClear
+            value={statusFilter || undefined}
+            onChange={(val) => setStatusFilter(val || '')}
+          >
+            <Select.Option value="new">{t('maintenance.status_new')}</Select.Option>
+            <Select.Option value="in_progress">{t('maintenance.status_in_progress')}</Select.Option>
+            <Select.Option value="done">{t('maintenance.status_done')}</Select.Option>
+            <Select.Option value="cancelled">{t('maintenance.status_cancelled')}</Select.Option>
+          </Select>
+        </Col>
+        <Col span={8}>
+          <Select
+            style={{ width: '100%' }}
+            placeholder={t('maintenance.filter_type')}
+            allowClear
+            value={typeFilter || undefined}
+            onChange={(val) => setTypeFilter(val || '')}
+          >
+            <Select.Option value="corrective">{t('maintenance.type_corrective')}</Select.Option>
+            <Select.Option value="preventive">{t('maintenance.type_preventive')}</Select.Option>
+            <Select.Option value="inspection">{t('maintenance.type_inspection')}</Select.Option>
+          </Select>
+        </Col>
+        <Col span={8}>
+          <Select
+            style={{ width: '100%' }}
+            placeholder={t('maintenance.filter_priority')}
+            allowClear
+            value={priorityFilter || undefined}
+            onChange={(val) => setPriorityFilter(val || '')}
+          >
+            <Select.Option value="low">{t('maintenance.priority_low')}</Select.Option>
+            <Select.Option value="medium">{t('maintenance.priority_medium')}</Select.Option>
+            <Select.Option value="high">{t('maintenance.priority_high')}</Select.Option>
+            <Select.Option value="urgent">{t('maintenance.priority_urgent')}</Select.Option>
+          </Select>
+        </Col>
+      </Row>
+      <Table
+        columns={columns}
+        dataSource={data}
+        loading={loading}
+        rowKey="id"
+        pagination={{ pageSize: 50, showSizeChanger: true }}
+        scroll={{ x: 1500 }}
+      />
+      <Modal
+        open={modalOpen}
+        title={editingId ? t('maintenance.edit_request') : t('maintenance.new_request')}
+        onCancel={() => {
+          setModalOpen(false);
+          form.resetFields();
+          setEditingId(null);
+        }}
+        onOk={() => form.submit()}
+        confirmLoading={saving}
+        width={600}
+      >
+        <Form form={form} layout="vertical" onFinish={handleSave}>
+          <Form.Item name="equipment_id" label={t('maintenance.equipment')} rules={[{ required: true }]}>
+            <Select placeholder={t('maintenance.select_equipment')}>
+              {equipment.map((eq) => (
+                <Select.Option key={eq.id} value={eq.id}>
+                  {eq.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item name="title" label={t('maintenance.title')} rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="description" label={t('description')}>
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="type" label={t('maintenance.type')} rules={[{ required: true }]}>
+                <Select>
+                  <Select.Option value="corrective">{t('maintenance.type_corrective')}</Select.Option>
+                  <Select.Option value="preventive">{t('maintenance.type_preventive')}</Select.Option>
+                  <Select.Option value="inspection">{t('maintenance.type_inspection')}</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="priority" label={t('maintenance.priority')} rules={[{ required: true }]}>
+                <Select>
+                  <Select.Option value="low">{t('maintenance.priority_low')}</Select.Option>
+                  <Select.Option value="medium">{t('maintenance.priority_medium')}</Select.Option>
+                  <Select.Option value="high">{t('maintenance.priority_high')}</Select.Option>
+                  <Select.Option value="urgent">{t('maintenance.priority_urgent')}</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="assigned_to" label={t('maintenance.assigned_to')}>
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="scheduled_at" label={t('maintenance.scheduled_at')}>
+                <DatePicker showTime style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Modal>
+    </>
+  );
+};
+
+export default MaintenanceRequests;

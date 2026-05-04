@@ -4,6 +4,7 @@ from app.firestore.projects import ProjectRepository, ProjectTaskRepository as T
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
+from app.services import settings_service
 
 router = APIRouter(prefix="/api/projects", tags=["Projects"])
 
@@ -15,6 +16,15 @@ def list_projects(page: int = Query(1), page_size: int = Query(20, le=500), user
 
 @router.post("", status_code=201, dependencies=[Depends(require_perm("projects.create"))])
 def create_project(data: dict, user: dict = Depends(get_current_user)):
+    # Apply projects config defaults
+    try:
+        cfg = settings_service.get_bag(user["org_id"], "projects")
+    except Exception:
+        cfg = {}
+    
+    data.setdefault("default_billable_rate", cfg.get("default_billable_rate", 0))
+    data.setdefault("timesheet_required", cfg.get("timesheet_required", False))
+    
     repo = ProjectRepository(user["org_id"])
     project = repo.create({"id": str(uuid.uuid4()), **data})
     return project
@@ -356,3 +366,175 @@ def invoice_billable(project_id: str, user: dict = Depends(get_current_user)):
             {"invoiced": True, "invoice_id": inv["id"]}
         )
     return {"invoice_id": inv["id"], "lines": len(lines), "total": total, "entries_invoiced": invoiced_ids}
+
+
+# ===================== DEPENDENCIES (Wave C-1) =====================
+
+@router.post("/{project_id}/dependencies", status_code=201, 
+             dependencies=[Depends(require_perm("projects.update"))])
+def create_dependency(project_id: str, data: dict, user: dict = Depends(get_current_user)):
+    """Create task dependency. Body: {predecessor_task_id, successor_task_id, type='finish_to_start'}"""
+    from app.firestore.task_dependencies import TaskDependencyRepository
+    repo = ProjectRepository(user["org_id"])
+    if not repo.get(project_id):
+        raise HTTPException(404, "Project not found")
+    dep_repo = TaskDependencyRepository(user["org_id"])
+    dep_id = str(uuid.uuid4())
+    dep_data = {
+        "id": dep_id,
+        "project_id": project_id,
+        "predecessor_task_id": data.get("predecessor_task_id"),
+        "successor_task_id": data.get("successor_task_id"),
+        "type": data.get("type", "finish_to_start"),
+    }
+    dep = dep_repo.create(dep_data)
+    return dep
+
+
+@router.get("/{project_id}/dependencies")
+def list_dependencies(project_id: str, user: dict = Depends(get_current_user)):
+    """List all task dependencies for a project"""
+    from app.firestore.task_dependencies import TaskDependencyRepository
+    repo = ProjectRepository(user["org_id"])
+    if not repo.get(project_id):
+        raise HTTPException(404, "Project not found")
+    dep_repo = TaskDependencyRepository(user["org_id"])
+    deps, total = dep_repo.list(
+        filters=[{"field": "project_id", "op": "==", "value": project_id}],
+        limit=500
+    )
+    return {"items": deps, "total": total}
+
+
+@router.delete("/dependencies/{dep_id}", dependencies=[Depends(require_perm("projects.update"))])
+def delete_dependency(dep_id: str, user: dict = Depends(get_current_user)):
+    """Delete a task dependency"""
+    from app.firestore.task_dependencies import TaskDependencyRepository
+    dep_repo = TaskDependencyRepository(user["org_id"])
+    dep = dep_repo.get(dep_id)
+    if not dep:
+        raise HTTPException(404, "Dependency not found")
+    dep_repo.delete(dep_id)
+    return {"message": "Dependency deleted"}
+
+
+# ===================== MILESTONES (Wave C-1) =====================
+
+@router.post("/{project_id}/milestones", status_code=201,
+             dependencies=[Depends(require_perm("projects.update"))])
+def create_milestone(project_id: str, data: dict, user: dict = Depends(get_current_user)):
+    """Create milestone. Body: {name, due_date, task_ids:[]}"""
+    from app.firestore.project_milestones import ProjectMilestoneRepository
+    repo = ProjectRepository(user["org_id"])
+    if not repo.get(project_id):
+        raise HTTPException(404, "Project not found")
+    ms_repo = ProjectMilestoneRepository(user["org_id"])
+    ms_id = str(uuid.uuid4())
+    ms_data = {
+        "id": ms_id,
+        "project_id": project_id,
+        "name": data.get("name"),
+        "due_date": data.get("due_date"),
+        "task_ids": data.get("task_ids", []),
+        "done": False,
+    }
+    ms = ms_repo.create(ms_data)
+    return ms
+
+
+@router.get("/{project_id}/milestones")
+def list_milestones(project_id: str, user: dict = Depends(get_current_user)):
+    """List all milestones for a project"""
+    from app.firestore.project_milestones import ProjectMilestoneRepository
+    repo = ProjectRepository(user["org_id"])
+    if not repo.get(project_id):
+        raise HTTPException(404, "Project not found")
+    ms_repo = ProjectMilestoneRepository(user["org_id"])
+    milestones, total = ms_repo.list(
+        filters=[{"field": "project_id", "op": "==", "value": project_id}],
+        order_by="due_date",
+        limit=500
+    )
+    return {"items": milestones, "total": total}
+
+
+@router.put("/milestones/{milestone_id}/complete",
+            dependencies=[Depends(require_perm("projects.update"))])
+def complete_milestone(milestone_id: str, user: dict = Depends(get_current_user)):
+    """Mark milestone as done"""
+    from app.firestore.project_milestones import ProjectMilestoneRepository
+    from datetime import datetime
+    ms_repo = ProjectMilestoneRepository(user["org_id"])
+    ms = ms_repo.get(milestone_id)
+    if not ms:
+        raise HTTPException(404, "Milestone not found")
+    ms_repo.update(milestone_id, {"done": True, "completed_at": datetime.utcnow()})
+    return {"message": "Milestone marked complete"}
+
+
+# ===================== GANTT DATA (Wave C-1) =====================
+
+@router.get("/{project_id}/gantt")
+def get_gantt_data(project_id: str, user: dict = Depends(get_current_user)):
+    """Get Gantt chart data: tasks + dependencies + milestones"""
+    from app.firestore.task_dependencies import TaskDependencyRepository
+    from app.firestore.project_milestones import ProjectMilestoneRepository
+    from datetime import datetime, timedelta
+    
+    repo = ProjectRepository(user["org_id"])
+    project = repo.get(project_id)
+    if not project:
+        raise HTTPException(404, "Project not found")
+    
+    # Get tasks
+    tasks = repo.get_lines(project_id, "tasks")
+    
+    # Transform tasks for Gantt
+    gantt_tasks = []
+    for t in tasks:
+        start = t.get("start_date") or t.get("created_at")
+        if isinstance(start, str):
+            start = start[:10]
+        end = t.get("end_date") or t.get("due_date")
+        if not end and start:
+            # Default to 3 days duration if no end date
+            try:
+                end_dt = datetime.fromisoformat(str(start)[:10]) + timedelta(days=3)
+                end = end_dt.strftime("%Y-%m-%d")
+            except:
+                end = start
+        if isinstance(end, str):
+            end = end[:10]
+        
+        gantt_tasks.append({
+            "id": t.get("id"),
+            "name": t.get("name") or t.get("title") or "Unnamed Task",
+            "start": start,
+            "end": end,
+            "progress": t.get("progress") or t.get("progress_percent") or 0,
+            "billable": t.get("billable", False),
+            "status": t.get("status", "open"),
+        })
+    
+    # Get dependencies
+    dep_repo = TaskDependencyRepository(user["org_id"])
+    deps, _ = dep_repo.list(
+        filters=[{"field": "project_id", "op": "==", "value": project_id}],
+        limit=500
+    )
+    
+    # Get milestones
+    ms_repo = ProjectMilestoneRepository(user["org_id"])
+    milestones, _ = ms_repo.list(
+        filters=[{"field": "project_id", "op": "==", "value": project_id}],
+        order_by="due_date",
+        limit=500
+    )
+    
+    return {
+        "project_id": project_id,
+        "project_name": project.get("name"),
+        "tasks": gantt_tasks,
+        "dependencies": deps,
+        "milestones": milestones,
+    }

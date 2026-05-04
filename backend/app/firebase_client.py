@@ -10,30 +10,51 @@ _bucket = None
 _firebase_available = False
 
 def init_firebase():
-    """Initialize Firebase app with credentials. Gracefully skips if no credentials found."""
+    """Initialize Firebase app with credentials.
+
+    Resolution order (production-safe):
+      1. Explicit FIREBASE_CREDENTIALS_PATH file (local dev).
+      2. GOOGLE_APPLICATION_CREDENTIALS file (standard GCP env var).
+      3. Application Default Credentials — used automatically on Cloud Run,
+         GKE, Cloud Functions, etc. (no JSON file needed).
+    Falls back to local mode only when nothing works.
+    """
     global _app, _db, _bucket, _firebase_available
-    
+
     try:
         import firebase_admin
         from firebase_admin import credentials, firestore, storage
-        
-        cred_path = os.environ.get("FIREBASE_CREDENTIALS_PATH", 
+
+        cred_path = os.environ.get("FIREBASE_CREDENTIALS_PATH",
             os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "serviceAccountKey.json"))
-        
+        gac_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+        bucket_name = os.environ.get("FIREBASE_STORAGE_BUCKET", "")
+        init_options = {"storageBucket": bucket_name} if bucket_name else None
+
+        cred = None
+        mode = None
         if os.path.exists(cred_path):
             cred = credentials.Certificate(cred_path)
-            bucket_name = os.environ.get("FIREBASE_STORAGE_BUCKET", "")
-            _app = firebase_admin.initialize_app(cred, {
-                "storageBucket": bucket_name
-            } if bucket_name else None)
-            _db = firestore.client()
-            if bucket_name:
-                _bucket = storage.bucket()
-            _firebase_available = True
-            logger.info("Firebase initialized successfully")
+            mode = f"service-account file ({cred_path})"
+        elif gac_path and os.path.exists(gac_path):
+            cred = credentials.Certificate(gac_path)
+            mode = f"GOOGLE_APPLICATION_CREDENTIALS ({gac_path})"
         else:
-            logger.warning(f"Firebase credentials not found at {cred_path}. Running in local mode.")
-            _firebase_available = False
+            # Cloud Run / GKE / Cloud Functions: ADC is auto-provided.
+            try:
+                cred = credentials.ApplicationDefault()
+                mode = "Application Default Credentials"
+            except Exception as adc_err:
+                logger.warning(f"No Firebase credentials found (file or ADC): {adc_err}. Running in local mode.")
+                _firebase_available = False
+                return
+
+        _app = firebase_admin.initialize_app(cred, init_options)
+        _db = firestore.client()
+        if bucket_name:
+            _bucket = storage.bucket()
+        _firebase_available = True
+        logger.info(f"Firebase initialized via {mode}")
     except Exception as e:
         logger.warning(f"Firebase initialization failed: {e}. Running in local mode.")
         _firebase_available = False

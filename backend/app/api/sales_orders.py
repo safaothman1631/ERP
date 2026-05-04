@@ -22,12 +22,31 @@ def list_sales_orders(
 
 @router.post("", status_code=201)
 def create_sales_order(data: SalesOrderCreate, user: dict = Depends(get_current_user)):
-    seq_repo = SequenceRepository(user["org_id"])
-    number = seq_repo.get_next("sales_order")
+    from app.services.numbering_service import get_next_number
+    
+    # Get branch_id from request or user default
+    branch_id = getattr(data, 'branch_id', None) or user.get('default_branch_id')
+    
+    # Generate order number if not provided
+    auto_numbered = False
+    if hasattr(data, 'order_number') and data.order_number:
+        number = data.order_number
+    else:
+        number = get_next_number(user["org_id"], branch_id, "sales_order", "SO")
+        auto_numbered = True
+    
     repo = SalesOrderRepository(user["org_id"])
-    item = repo.create({"id": str(uuid.uuid4()), "order_number": number, "status": "draft", **data.model_dump(exclude={"lines"})} )
+    item = repo.create({"id": str(uuid.uuid4()), "order_number": number, "status": "draft", "auto_numbered": auto_numbered, **data.model_dump(exclude={"lines"})} )
     if hasattr(data, "lines") and data.lines:
         repo.set_lines(item["id"], [line.model_dump() for line in data.lines])
+    
+    # Webhook: sales_order.created
+    try:
+        from app.services.webhook_dispatcher import dispatch_event
+        dispatch_event(user["org_id"], "sales_order.created", {"id": item["id"]})
+    except Exception:
+        pass
+    
     return item
 
 # FIX-91: was @router.get("/{{sales_order_id}}") — double-brace bug made route literal

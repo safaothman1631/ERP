@@ -6,8 +6,10 @@ test.describe('Smoke — Shortcuts + RTL', () => {
 
   test('? opens shortcut cheatsheet', async ({ page }) => {
     await page.goto('/');
-    await page.keyboard.press('?');
-    // Cheatsheet uses AntD Modal — look for any modal title containing "shortcut" or Kurdish
+    // Dispatch a synthetic '?' keydown directly to window — bypasses focus + i18n keyboard layout issues
+    await page.evaluate(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: '?', bubbles: true }));
+    });
     await expect(page.locator('.ant-modal-title').first()).toBeVisible({ timeout: 4000 });
   });
 

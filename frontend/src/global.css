@@ -605,3 +605,7 @@ html {
 html[data-high-contrast="true"] { filter: contrast(1.25); }
 html[data-high-contrast="true"] *:focus-visible { outline: 3px solid #000 !important; outline-offset: 2px !important; }
 html[data-high-contrast="true"][data-theme="dark"] *:focus-visible { outline-color: #fff !important; }
+
+/* WCAG AA contrast fix for placeholder text (4.5:1 minimum) */
+.ant-input::placeholder, .ant-input-password input::placeholder, input.ant-input::placeholder { color: #595959 !important; opacity: 1; }
+

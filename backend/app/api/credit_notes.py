@@ -1,9 +1,12 @@
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from app.firestore.invoices import CreditNoteRepository, InvoiceRepository
 from app.firestore.system import SequenceRepository
+from app.firestore.organizations import OrganizationRepository
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services.pdf_generator import generate_credit_note_pdf
 from app.schemas.schemas import CreditNoteCreate, CreditNoteResponse
 
 router = APIRouter(prefix="/api/credit-notes", tags=["Credit Notes"])
@@ -25,10 +28,21 @@ def list_credit_notes(
 
 @router.post("", status_code=201)
 def create_credit_note(data: CreditNoteCreate, user: dict = Depends(get_current_user)):
-    seq_repo = SequenceRepository(user["org_id"])
-    number = seq_repo.get_next("credit_note")
+    from app.services.numbering_service import get_next_number
+    
+    # Get branch_id from request or user default
+    branch_id = getattr(data, 'branch_id', None) or user.get('default_branch_id')
+    
+    # Generate credit note number if not provided
+    auto_numbered = False
+    if hasattr(data, 'credit_note_number') and data.credit_note_number:
+        number = data.credit_note_number
+    else:
+        number = get_next_number(user["org_id"], branch_id, "credit_note", "CN")
+        auto_numbered = True
+    
     repo = CreditNoteRepository(user["org_id"])
-    item = repo.create({"id": str(uuid.uuid4()), "credit_note_number": number, **data.model_dump(exclude={"lines"})} )
+    item = repo.create({"id": str(uuid.uuid4()), "credit_note_number": number, "auto_numbered": auto_numbered, **data.model_dump(exclude={"lines"})} )
     if hasattr(data, "lines") and data.lines:
         repo.set_lines(item["id"], [line.model_dump() for line in data.lines])
     return item
@@ -158,6 +172,42 @@ def remove_credit_application(application_id: str, user: dict = Depends(get_curr
     app_repo.delete(application_id)
     return {"message": "جێبەجێکردن سڕایەوە"}
 
+@router.get("/{credit_note_id}/pdf")
+def download_credit_note_pdf(
+    credit_note_id: str,
+    lang: str = Query("en", pattern="^(en|ku)$"),
+    user: dict = Depends(get_current_user)
+):
+    """Generate and download credit note as PDF
+    
+    Query Parameters:
+        - lang: Language code ('en' or 'ku'). Default: 'en'
+    """
+    repo = CreditNoteRepository(user["org_id"])
+    credit_note = repo.get(credit_note_id)
+    if not credit_note or credit_note.get("org_id") != user["org_id"]:
+        raise HTTPException(status_code=404, detail="تێبینی قەرز نەدۆزرایەوە")
+    
+    # Get organization data
+    org_repo = OrganizationRepository()
+    org = org_repo.get(user["org_id"])
+    if not org:
+        raise HTTPException(status_code=500, detail="زانیاری ڕێکخراو نەدۆزرایەوە")
+    
+    # Generate PDF
+    try:
+        pdf_buffer = generate_credit_note_pdf(user["org_id"], credit_note_id, org, lang=lang)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"هەڵە لە دروستکردنی PDF: {str(e)}")
+    
+    # Return as downloadable file
+    filename = f"credit_note_{credit_note.get('credit_note_number', credit_note_id)}.pdf"
+    return StreamingResponse(
+        pdf_buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+
 @router.get("/contacts/{contact_id}/credit-balance")
 def get_contact_credit_balance(contact_id: str, user: dict = Depends(get_current_user)):
     repo = CreditNoteRepository(user["org_id"])
@@ -169,3 +219,21 @@ def get_contact_credit_balance(contact_id: str, user: dict = Depends(get_current
     
     total_credit = sum(float(cn.get("balance_remaining", 0)) for cn in credit_notes)
     return {"contact_id": contact_id, "total_credit": total_credit, "credit_notes_count": total}
+
+
+@router.post("/{credit_note_id}/approve")
+def approve_credit_note(credit_note_id: str, user: dict = Depends(get_current_user)):
+    """Approve a draft credit note: status draft -> open."""
+    from datetime import datetime as _dt
+    repo = CreditNoteRepository(user["org_id"])
+    cn = repo.get(credit_note_id)
+    if not cn or cn.get("org_id") != user["org_id"]:
+        raise HTTPException(status_code=404, detail="تێبینی قەرز نەدۆزرایەوە")
+    if cn.get("status") not in ("draft", None, ""):
+        raise HTTPException(status_code=400, detail=f"تەنها draft دەستوور دەدرێت (دۆخی ئێستا: {cn.get('status')})")
+    return repo.update(credit_note_id, {
+        "status": "open",
+        "approved_at": _dt.utcnow().isoformat(),
+        "approved_by": user.get("id"),
+    })
+

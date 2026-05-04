@@ -18,6 +18,7 @@ from app.firestore.crm import (
 )
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
+from app.services import settings_service
 
 router = APIRouter(prefix="/api/crm", tags=["CRM"])
 
@@ -207,9 +208,31 @@ def list_leads(
 
 @router.post("/leads", status_code=201, dependencies=[Depends(require_perm("crm.leads.create"))])
 def create_lead(data: LeadCreate, user: dict = Depends(get_current_user)):
+    # Apply CRM config defaults
+    try:
+        cfg = settings_service.get_bag(user["org_id"], "crm")
+    except Exception:
+        cfg = {}
+    
     repo = CRMLeadRepository(user["org_id"])
     payload = data.model_dump()
     payload.setdefault("status", "open")
+    
+    # Apply pipeline default
+    if not payload.get("pipeline"):
+        payload["pipeline"] = cfg.get("default_pipeline", "default")
+    
+    # Require lead source if configured
+    if cfg.get("require_lead_source", False) and not payload.get("source"):
+        raise HTTPException(400, "Lead source required")
+    
+    # Apply round-robin owner assignment if no owner specified
+    if not payload.get("owner_id"):
+        rr_users = cfg.get("round_robin_users", [])
+        if rr_users:
+            import random
+            payload["owner_id"] = random.choice(rr_users)
+    
     return repo.create(payload)
 
 

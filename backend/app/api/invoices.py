@@ -12,6 +12,7 @@ from app.firestore.organizations import OrganizationRepository
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
 from app.services.pdf_generator import generate_invoice_pdf
+from app.services import settings_service
 from app.schemas.schemas import InvoiceCreate, InvoiceUpdate, InvoiceResponse, PaymentReceivedCreate
 
 router = APIRouter(prefix="/api/invoices", tags=["Invoices"])
@@ -92,24 +93,57 @@ def list_invoices(
 
 @router.post("", status_code=201, dependencies=[Depends(require_perm("invoices.create"))])
 def create_invoice(data: InvoiceCreate, user: dict = Depends(get_current_user)):
-    seq_repo = SequenceRepository(user["org_id"])
-    invoice_number = seq_repo.get_next("invoice")
+    from app.services.numbering_service import get_next_number
+    from decimal import Decimal, ROUND_HALF_UP, ROUND_HALF_EVEN
+    
+    # Apply sales config + format settings
+    try:
+        cfg = settings_service.get_sales_settings(user["org_id"])
+    except Exception:
+        cfg = {}
+    try:
+        fmt = settings_service.get_bag(user["org_id"], "formats")
+    except Exception:
+        fmt = {}
+    
+    # Get branch_id from request or user default
+    branch_id = getattr(data, 'branch_id', None) or user.get('default_branch_id')
+    
+    # Generate invoice number if not provided
+    auto_numbered = False
+    if hasattr(data, 'invoice_number') and data.invoice_number:
+        invoice_number = data.invoice_number
+    else:
+        invoice_number = get_next_number(user["org_id"], branch_id, "invoice", "INV")
+        auto_numbered = True
     
     tax_repo = TaxRateRepository(user["org_id"])
     lines = [line.model_dump() for line in data.lines]
     subtotal, total_tax = _calculate_invoice_totals(lines, tax_repo)
     
-    total = subtotal + total_tax + float(data.shipping_charge or 0) + float(data.adjustment or 0) - float(data.discount_amount or 0)
+    # Apply payment terms default
+    payment_terms = data.payment_terms if hasattr(data, 'payment_terms') and data.payment_terms else None
+    if not payment_terms:
+        payment_terms = cfg.get("default_payment_terms", "Net 30")
+    
+    # Apply rounding policy
+    rounding_mode = fmt.get("rounding_mode", "half_up")
+    decimal_places = fmt.get("decimal_places", 2)
+    round_func = ROUND_HALF_UP if rounding_mode == "half_up" else ROUND_HALF_EVEN
+    total_raw = subtotal + total_tax + float(data.shipping_charge or 0) + float(data.adjustment or 0) - float(data.discount_amount or 0)
+    total = float(Decimal(str(total_raw)).quantize(Decimal(10) ** -decimal_places, rounding=round_func))
     
     repo = InvoiceRepository(user["org_id"])
     invoice = repo.create({
         "id": str(uuid.uuid4()),
         "contact_id": data.contact_id,
         "invoice_number": invoice_number,
+        "auto_numbered": auto_numbered,
         "date": data.date,
         "due_date": data.due_date,
         "reference": data.reference,
         "currency_code": data.currency_code,
+        "payment_terms": payment_terms,
         "exchange_rate": data.exchange_rate,
         "discount_type": data.discount_type,
         "discount_amount": data.discount_amount,
@@ -125,6 +159,14 @@ def create_invoice(data: InvoiceCreate, user: dict = Depends(get_current_user)):
     })
     
     repo.set_lines(invoice["id"], lines)
+    
+    # Webhook: invoice.created
+    try:
+        from app.services.webhook_dispatcher import dispatch_event
+        dispatch_event(user["org_id"], "invoice.created", {"id": invoice["id"]})
+    except Exception:
+        pass
+    
     return invoice
 
 
@@ -383,20 +425,60 @@ def list_payments_received(
 
 @payments_router.post("", status_code=201)
 def create_payment_received(data: PaymentReceivedCreate, user: dict = Depends(get_current_user)):
-    seq_repo = SequenceRepository(user["org_id"])
-    payment_number = seq_repo.get_next("payment_received")
+    from app.services.numbering_service import get_next_number
+    
+    # Get branch_id from request or user default
+    branch_id = getattr(data, 'branch_id', None) or user.get('default_branch_id')
+    
+    # Generate payment number if not provided
+    auto_numbered = False
+    if hasattr(data, 'payment_number') and data.payment_number:
+        payment_number = data.payment_number
+    else:
+        payment_number = get_next_number(user["org_id"], branch_id, "payment_received", "RCP")
+        auto_numbered = True
+    
+    # Pull raw payload to support both legacy (invoice_id/account_id) and new (allocations) shapes
+    raw = data.model_dump()
+    legacy_invoice_id = raw.get('invoice_id')
+    legacy_account_id = raw.get('account_id') or raw.get('deposit_to_account_id')
     
     repo = PaymentReceivedRepository(user["org_id"])
-    payment = repo.create({
-        "id": str(uuid.uuid4()),
-        "payment_number": payment_number,
-        **data.model_dump(),
-    })
+    payload = {**raw}
+    payload["id"] = str(uuid.uuid4())
+    payload["payment_number"] = payment_number
+    payload["auto_numbered"] = auto_numbered
+    if legacy_account_id and not payload.get("deposit_to_account_id"):
+        payload["deposit_to_account_id"] = legacy_account_id
+    payment = repo.create(payload)
     
-    # Update invoice balance
-    if data.invoice_id:
-        inv_repo = InvoiceRepository(user["org_id"])
-        inv_repo.record_payment(data.invoice_id, data.amount)
+    # Update invoice balance (legacy single invoice or via allocations)
+    inv_repo = InvoiceRepository(user["org_id"])
+    if legacy_invoice_id:
+        try:
+            result = inv_repo.record_payment(legacy_invoice_id, float(data.amount))
+            if result and result.get("status") == "paid":
+                try:
+                    from app.services.webhook_dispatcher import dispatch_event
+                    dispatch_event(user["org_id"], "invoice.paid", {"id": legacy_invoice_id})
+                except Exception:
+                    pass
+        except Exception:
+            pass  # Invoice may not exist or balance_due missing — payment still recorded
+    for alloc in (raw.get('allocations') or []):
+        inv_id = alloc.get('invoice_id') if isinstance(alloc, dict) else getattr(alloc, 'invoice_id', None)
+        amt = alloc.get('amount') if isinstance(alloc, dict) else getattr(alloc, 'amount', 0)
+        if inv_id and amt:
+            try:
+                result = inv_repo.record_payment(inv_id, float(amt))
+                if result and result.get("status") == "paid":
+                    try:
+                        from app.services.webhook_dispatcher import dispatch_event
+                        dispatch_event(user["org_id"], "invoice.paid", {"id": inv_id})
+                    except Exception:
+                        pass
+            except Exception:
+                pass
     
     return payment
 

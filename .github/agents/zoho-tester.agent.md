@@ -18,10 +18,15 @@ backend/
 ```
 
 **بەکارهێنانی ئامادە:**
-```bash
+```powershell
 cd backend
+# RTK-optimized (پێشنیار، 60-90% کەمتر token):
+rtk venv\Scripts\python.exe test_all.py
+# Raw fallback ئەگەر RTK لە PATH نەبوو:
 venv\Scripts\python.exe test_all.py
 ```
+
+> 🦀 **RTK Tip:** هەر کات لە terminal تێست ڕاندەکەیت، سەرەتا چێک بکە `Get-Command rtk -ErrorAction SilentlyContinue`. ئەگەر بوونی هەیە، `rtk` ـی پێشوەخت زیاد بکە. سکیڵی تەواو: [rtk-token-optimization](../skills/harness/rtk-token-optimization.md). ❌ هیچکات `rtk uvicorn` مەکە (long-running server).
 
 ## پرۆسەی کار
 

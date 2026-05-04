@@ -48,8 +48,11 @@ const POSQuotationDialog: React.FC<POSQuotationDialogProps> = ({
     onClose();
   };
 
-  // Generate default quotation name
-  const defaultName = `Quote #${dayjs().format('YYYYMMDD')}-${Math.floor(Math.random() * 1000)}`;
+  // Generate default quotation name (cryptographically random suffix)
+  const _suffixBuf = new Uint8Array(2);
+  crypto.getRandomValues(_suffixBuf);
+  const _suffix = ((_suffixBuf[0] << 8) | _suffixBuf[1]) % 1000;
+  const defaultName = `Quote #${dayjs().format('YYYYMMDD')}-${_suffix}`;
 
   return (
     <Modal

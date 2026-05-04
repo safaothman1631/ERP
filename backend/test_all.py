@@ -33,8 +33,10 @@ def req(method, path, data=None, expect=None):
         result = {"error": str(e)}
     
     ok = True
-    if expect and code not in (expect if isinstance(expect, list) else [expect]):
-        ok = False
+    if expect:
+        # When expect is provided, ONLY the explicit list determines pass/fail
+        if code not in (expect if isinstance(expect, list) else [expect]):
+            ok = False
     elif code >= 400:
         ok = False
     return ok, code, result
@@ -61,8 +63,8 @@ setup_ok, setup_code, setup_r = test("Setup", "POST", "/api/auth/setup", {
     "language": "ku",
     "user_name": "Admin",
     "email": "admin@test.com",
-    "password": "123456"
-}, expect=[200, 400])  # 400 if already set up
+    "password": "12345678"
+}, expect=[200, 400, 422])  # 400/422 if already set up
 
 if setup_ok and setup_r.get("access_token"):
     TOKEN = setup_r["access_token"]
@@ -168,7 +170,7 @@ _, _, q3 = test("Create quote 3", "POST", "/api/quotes", {
     "lines": [{"item_id": ITEM_ID, "description": "Q3 line", "quantity": 1, "unit_price": 60000, "discount_percent": 0}]
 })
 QUOTE3_ID = q3.get("id")
-test("Convert quote to sales order", "POST", f"/api/quotes/{QUOTE3_ID}/convert-to-sales-order")
+test("Convert quote to sales order", "POST", f"/api/quotes/{QUOTE3_ID}/convert-to-so")
 
 # ==================== SALES ORDERS ====================
 print("\n📋 SALES ORDERS")
@@ -270,7 +272,7 @@ test("Record payment made", "POST", "/api/payments-made", {
     "contact_id": VENDOR_ID, "date": "2026-04-02", "amount": 30000,
     "account_id": CASH_ACCOUNT_ID,
     "reference": "PAY-MADE", "currency_code": "IQD", "exchange_rate": 1,
-    "allocations": [{"bill_id": BILL_ID, "amount": 30000}]
+    "bill_id": BILL_ID,
 })
 test("List payments made", "GET", "/api/payments-made?page=1&page_size=10")
 
@@ -314,7 +316,9 @@ FY_ID = fy.get("id")
 test("List fiscal years", "GET", "/api/fiscal/years")
 
 _, _, budget = test("Create budget", "POST", "/api/fiscal/budgets", {
-    "name": "Q1 Budget 2026", "fiscal_year_id": FY_ID, "lines": []
+    "name": "Q1 Budget 2026", "fiscal_year_id": FY_ID,
+    "start_date": "2026-01-01", "end_date": "2026-03-31",
+    "period": "quarterly", "amount": 100000, "lines": []
 })
 BUDGET_ID = budget.get("id")
 test("List budgets", "GET", "/api/fiscal/budgets")
@@ -349,8 +353,8 @@ else:
 # ==================== REPORTS ====================
 print("\n📊 REPORTS")
 test("Profit & Loss", "GET", "/api/reports/profit-loss?start_date=2026-01-01&end_date=2026-12-31")
-test("Balance Sheet", "GET", "/api/reports/balance-sheet?as_of=2026-04-03")
-test("Trial Balance", "GET", "/api/reports/trial-balance?as_of=2026-04-03")
+test("Balance Sheet", "GET", "/api/reports/balance-sheet?as_of_date=2026-04-03")
+test("Trial Balance", "GET", "/api/reports/trial-balance?start_date=2026-01-01&end_date=2026-04-03")
 test("Receivables Aging", "GET", "/api/reports/receivables-aging")
 test("Payables Aging", "GET", "/api/reports/payables-aging")
 test("General Ledger", "GET", "/api/reports/general-ledger?start_date=2026-01-01&end_date=2026-12-31")

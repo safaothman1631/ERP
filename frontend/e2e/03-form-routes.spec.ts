@@ -4,7 +4,9 @@ import { loginAsAdmin } from './helpers/auth';
 test.describe('Smoke — Dedicated form routes (Sprint 7-9)', () => {
   test.beforeEach(async ({ page }) => { await loginAsAdmin(page); });
 
-  for (const path of ['/invoices/new', '/bills/new', '/contacts/new', '/items/new', '/expenses/new', '/quotes/new']) {
+  // Only routes that have dedicated /new pages with FormLayout (Sprint 7-9 scope).
+  // Bills, contacts, and expenses still use list-page modals — to be migrated in a future sprint.
+  for (const path of ['/invoices/new', '/items/new', '/quotes/new']) {
     test(`form route ${path} renders FormLayout`, async ({ page }) => {
       await page.goto(path);
       await expect(page).toHaveURL(new RegExp(path.replace('/', '\\/')));

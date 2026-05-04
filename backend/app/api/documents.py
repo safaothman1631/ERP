@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services import settings_service
 
 router = APIRouter(prefix="/api/documents", tags=["Documents"])
 
@@ -145,9 +146,23 @@ def list_files(
 
 @router.post("/files", status_code=201)
 def create_file_doc(body: FileCreate, user: dict = Depends(get_current_user)):
+    # Apply documents config
+    try:
+        cfg = settings_service.get_bag(user["org_id"], "documents")
+    except Exception:
+        cfg = {}
+    
+    # Validate file size if present
+    max_size_mb = cfg.get("max_file_size_mb", 25)
+    if hasattr(body, 'size') and body.size:
+        max_bytes = max_size_mb * 1024 * 1024
+        if body.size > max_bytes:
+            raise HTTPException(413, f"File exceeds {max_size_mb} MB limit")
+    
     data = body.model_dump()
     data["uploaded_by"] = user.get("id") or user.get("email")
     data["version"] = 1
+    data.setdefault("storage_backend", cfg.get("storage_backend", "firestore"))
     return DocFileRepo(user["org_id"]).create(data)
 
 

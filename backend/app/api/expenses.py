@@ -124,8 +124,18 @@ def list_bills(
 
 @bills_router.post("", status_code=201, dependencies=[Depends(require_perm("bills.create"))])
 def create_bill(data: BillCreate, user: dict = Depends(get_current_user)):
-    seq_repo = SequenceRepository(user["org_id"])
-    bill_number = seq_repo.get_next("bill")
+    from app.services.numbering_service import get_next_number
+    
+    # Get branch_id from request or user default
+    branch_id = getattr(data, 'branch_id', None) or user.get('default_branch_id')
+    
+    # Generate bill number if not provided
+    auto_numbered = False
+    if hasattr(data, 'bill_number') and data.bill_number:
+        bill_number = data.bill_number
+    else:
+        bill_number = get_next_number(user["org_id"], branch_id, "bill", "BILL")
+        auto_numbered = True
     
     tax_repo = TaxRateRepository(user["org_id"])
     lines = [line.model_dump() for line in data.lines]
@@ -136,6 +146,7 @@ def create_bill(data: BillCreate, user: dict = Depends(get_current_user)):
         "id": str(uuid.uuid4()),
         "contact_id": data.contact_id,
         "bill_number": bill_number,
+        "auto_numbered": auto_numbered,
         "date": data.date,
         "due_date": data.due_date,
         "reference": data.reference,

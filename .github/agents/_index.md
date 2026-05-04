@@ -98,3 +98,97 @@
 | Documentation | شادۆ دۆکیومێنتەر | شادۆ دۆکس‌لووکەر | — |
 | Learning | شادۆ کۆچ | شادۆ مێمۆری | — |
 | Multi-agent loop | شادۆ ئۆرکێسترەیتەر | (multiple) | شادۆ ئیڤاڵ |
+
+---
+
+## D. Enterprise + Generic Imported Agents (Default Pool — May 2026)
+
+> ٤٥ ئەیگێنتی نوێ + ٤٥ checker لە `C:\Users\SAFA\OneDrive\Desktop\agents` هاوردە کراون.
+> ئەمانە **default + main** ـن بۆ هەموو سپرینتی ئەم پرۆژەیە.
+> هەر یەکیان لە فۆڕمی `shadow-<name>.agent.md` و checker ـی هاوبەشی `shadow-<name>-checker.agent.md`.
+
+### D.1 Orchestration Pool (Master)
+
+| ئەیگێنت | کاتێک بەکار دێت |
+|---|---|
+| `shadow-brain` | **هەرە یەکەم** بۆ هەر تاسکێکی نوێ — route، delegate، supervise (هەرگیز کۆد نانووسێت) |
+| `shadow-planner` | پلانی قووڵی architectural پێش implementation |
+| `shadow-executor` | بەڕێوەبردنی plan ـی planner لە هەنگاوی هەنگاو |
+| `shadow-researcher` | ریسێرچی قووڵ — github_repo + fetch_webpage + ADRs |
+| `shadow-tester` | تاقیکردنەوە، QA، regression |
+| `shadow-auditor` | پشکنینی final پێش deploy |
+
+### D.2 Enterprise Domain Pool (ERP-critical)
+
+| ئەیگێنت | شارەزایی |
+|---|---|
+| `shadow-erp-architect` | ERP-wide architecture، module boundaries، event bus |
+| `shadow-accounting-domain` | Double-entry، COA، journal، fiscal year |
+| `shadow-crm-sales-domain` | Lead → quote → order pipeline |
+| `shadow-hr-payroll-domain` | Employees، contracts، payroll runs |
+| `shadow-inventory-warehouse` | Stock، lots، putaway، WMS |
+| `shadow-multitenancy-engineer` | tenant_id، RLS، tenant context |
+| `shadow-rbac-abac-engineer` | Roles، permissions، record rules |
+| `shadow-audit-compliance` | Tamper-evident logs، SOC2، GDPR |
+| `shadow-notification-engineer` | Email/SMS/push/in-app/webhook، Resend، Twilio، Novu |
+| `shadow-workflow-bpm-engineer` | No-code workflows، triggers، actions |
+| `shadow-form-builder-engineer` | Custom fields، dynamic forms |
+| `shadow-document-pdf-engineer` | PDF generation، invoice templates، ESC/POS |
+| `shadow-reporting-bi-engineer` | Reports، dashboards، OLAP، materialized views |
+| `shadow-search-engineer` | Full-text search، Meilisearch/Typesense |
+| `shadow-realtime-collab` | WebSocket، CRDT، presence، Yjs |
+| `shadow-background-jobs-engineer` | Queues، schedulers، retries، DLQ |
+| `shadow-integration-middleware` | iPaaS، webhooks، adapters |
+| `shadow-import-export-migration` | CSV/Excel، Odoo/Zoho/SAP migration |
+
+### D.3 Development Pool
+
+| ئەیگێنت | شارەزایی |
+|---|---|
+| `shadow-fullstack-dev` | End-to-end feature build |
+| `shadow-backend-api` | REST/GraphQL، FastAPI، Django |
+| `shadow-frontend-specialist` | React 19، Next.js، Vite |
+| `shadow-mobile-dev` | React Native، Expo |
+
+### D.4 Design + UX Pool
+
+| ئەیگێنت | شارەزایی |
+|---|---|
+| `shadow-ui-designer` | Design system، component design |
+| `shadow-ux-researcher` | User research، journey maps |
+| `shadow-graphic-designer` | Logos، branding، print |
+
+### D.5 Security Pool
+
+| ئەیگێنت | شارەزایی |
+|---|---|
+| `shadow-owasp-auditor` | OWASP Top 10 audit |
+| `shadow-code-security-reviewer` | Static analysis، secret scan |
+| `shadow-pen-tester` | Penetration testing |
+| `shadow-bug-bounty-hunter` | Live bug-bounty workflow |
+
+### D.6 Data + DevOps + AI Pool
+
+| ئەیگێنت | شارەزایی |
+|---|---|
+| `shadow-data-engineer` | ETL، warehousing، dbt |
+| `shadow-supabase-expert` | Supabase، Postgres، RLS |
+| `shadow-data-scientist` | EDA، notebooks، analysis |
+| `shadow-ml-engineer` | Model training، MLOps |
+| `shadow-llm-engineer` | RAG، fine-tuning، evals |
+| `shadow-prompt-engineer` | Prompt design، optimization |
+| `shadow-perf-optimizer` | Web performance، Lighthouse |
+| `shadow-ci-cd` | GitHub Actions، pipelines |
+| `shadow-deployment` | Production deployment، Docker |
+| `shadow-monitoring` | Observability، Sentry، logs |
+| `shadow-i18n-translator` | Multi-language translation |
+| `shadow-seo-specialist` | SEO، structured data |
+| `shadow-social-media` | Social media content |
+
+### D.7 Default Routing Rule (NEW)
+
+> **هەر تاسکێکی نوێ → یەکەم جار `shadow-brain` بانگ بکە.**
+> brain خۆی planner / executor / specialist ـەکان دەنێرێت.
+> هەر کۆد-ـیش پێش deploy → `shadow-auditor` + پاسپۆرتی `shadow-<domain>-checker`.
+> سکیڵە هاوبەشەکانی `_shared-skills` لە `.github/skills/shadow-shared/` ـدا بەردەستن.
+

@@ -16,6 +16,7 @@ import Footer from './Footer';
 import NotificationsDrawer from './NotificationsDrawer';
 import QuickCreateMenu, { useQuickCreateKeyboard } from './QuickCreateMenu';
 import ShortcutCheatsheet from './ShortcutCheatsheet';
+import { QuickSearch } from '../design-system';
 import { useUiStore } from '../stores/uiStore';
 import { useToastBridge } from '../design-system/Toast';
 import {
@@ -25,9 +26,9 @@ import {
 } from './LayoutChrome';
 import { palette, space, radius, motion, shadow } from '../theme/tokens';
 
-const SIDER_WIDTH_COMFORTABLE = 320;
-const SIDER_WIDTH_COMPACT = 272;
-const SIDER_COLLAPSED = 72;
+const SIDER_WIDTH_COMFORTABLE = 248;
+const SIDER_WIDTH_COMPACT = 224;
+const SIDER_COLLAPSED = 56;
 
 /**
  * AppShell — modern shell: SideNav + TopBar + Content + CommandPalette ⌘K.
@@ -222,6 +223,7 @@ export const AppShell: React.FC = () => {
       <NotificationsDrawer isDark={isDark} isRTL={isRTL} />
       <QuickCreateMenu isDark={isDark} />
       <ShortcutCheatsheet isDark={isDark} />
+      <QuickSearch />
       {toastHolder}
     </Layout>
   );

@@ -3,7 +3,6 @@ import { Table, Button, Space, Input, Tag, Modal, Form, Select} from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined, WarningOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import api, { backendRetryConfig, isBackendUnavailableError } from '../api';
 import ExportButton from '../components/ExportButton';
 import { EmptyState, PageHeader, BulkActionBar, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
@@ -15,7 +14,6 @@ const { Option } = Select;
 
 const Contacts: React.FC = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
@@ -140,7 +138,7 @@ const Contacts: React.FC = () => {
         extra={
           <Space size={space.sm}>
             <ExportButton endpoint="/api/export/customers" filename="customers" />
-            <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => navigate('/contacts/new')}>
+            <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => { setEditing(null); form.resetFields(); setModal(true); }}>
               {t('new_contact')}
             </Button>
           </Space>

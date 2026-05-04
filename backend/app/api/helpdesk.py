@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services import settings_service
 
 router = APIRouter(prefix="/api/helpdesk", tags=["Helpdesk"])
 
@@ -255,10 +256,24 @@ def list_tickets(
 
 @router.post("/tickets", status_code=201)
 def create_ticket(body: TicketCreate, user: dict = Depends(get_current_user)):
+    # Apply helpdesk config defaults
+    try:
+        cfg = settings_service.get_bag(user["org_id"], "helpdesk")
+    except Exception:
+        cfg = {}
+    
     repo = HelpdeskTicketRepo(user["org_id"])
     data = body.model_dump()
     data["status"] = "new"
     data["created_by"] = user.get("id") or user.get("email")
+    
+    # Apply config defaults
+    data.setdefault("priority", cfg.get("default_priority", "medium"))
+    if cfg.get("auto_assign") and not data.get("assigned_to"):
+        # Simple round-robin or first-available team member
+        # (In real system, fetch team members and rotate)
+        data["assigned_to"] = cfg.get("auto_assign_user_id", "")
+    
     # SLA deadlines
     if data.get("sla_policy_id"):
         sla = HelpdeskSLAPolicyRepo(user["org_id"]).get(data["sla_policy_id"])
@@ -266,6 +281,12 @@ def create_ticket(body: TicketCreate, user: dict = Depends(get_current_user)):
             now = datetime.utcnow()
             data["sla_response_due"] = (now + timedelta(minutes=sla["response_minutes"])).isoformat()
             data["sla_resolution_due"] = (now + timedelta(minutes=sla["resolution_minutes"])).isoformat()
+    elif cfg.get("default_sla_hours"):
+        # Apply default SLA from config if no policy specified
+        now = datetime.utcnow()
+        sla_hours = cfg.get("default_sla_hours", 24)
+        data["sla_resolution_due"] = (now + timedelta(hours=sla_hours)).isoformat()
+    
     return repo.create(data)
 
 

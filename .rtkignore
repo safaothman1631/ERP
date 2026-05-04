@@ -1,0 +1,12 @@
+# Files/paths RTK should not parse from output
+# (used for filtering noise in stack traces and logs)
+node_modules/
+venv/
+__pycache__/
+.git/
+backups/
+audit/
+MASTER_AUDIT_REPORTS/
+*.log
+*.lock
+serviceAccountKey.json

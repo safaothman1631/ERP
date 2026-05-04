@@ -11,6 +11,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { useNavigate } from 'react-router-dom';
 import api, { backendRetryConfig, isBackendUnavailableError } from '../api';
 import { PageHeader, KpiCard, StatusTag, EmptyState } from '../design-system';
+import DashboardHero from '../components/DashboardHero';
 import { palette, space, radius } from '../theme/tokens';
 
 const { Text, Title } = Typography;
@@ -106,6 +107,9 @@ const Dashboard: React.FC = () => {
   return (
     <div>
       {pageHeader}
+
+      {/* Premium greeting hero */}
+      <DashboardHero onCreateInvoice={() => navigate('/invoices/new')} />
 
       {/* KPI cards */}
       <Row gutter={[space.md, space.md]}>

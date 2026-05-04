@@ -44,10 +44,27 @@ export const OrgSwitcher: React.FC<OrgSwitcherProps> = ({ isRTL }) => {
     }
   }, [orgs, loading]);
 
-  const switchTo = (target: OrgItem) => {
+  const switchTo = async (target: OrgItem) => {
     if (target.is_current) return;
-    // Multi-org switching not implemented in backend yet; signal future support.
-    message.info(t('org_switcher.switch_unavailable', 'Multi-org switching coming soon'));
+    setLoading(true);
+    try {
+      const res = await api.post(`/api/system/switch-organization/${target.id}`);
+      const newToken: string | undefined = res.data?.access_token;
+      if (newToken) {
+        localStorage.setItem('token', newToken);
+        localStorage.setItem('orgId', target.id);
+        message.success(t('org_switcher.switched', 'دامەزراوە گۆڕدرا'));
+        // Reload so all data is re-fetched under the new org context.
+        setTimeout(() => window.location.reload(), 400);
+      } else {
+        message.error(t('error'));
+      }
+    } catch (e: any) {
+      const detail = e?.response?.data?.detail;
+      message.error(detail || t('org_switcher.switch_failed', 'گۆڕینی دامەزراوە سەرکەوتوو نەبوو'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const items = React.useMemo(() => {

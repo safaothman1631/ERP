@@ -4,6 +4,7 @@ from app.firestore.system import AuditLogRepository
 from app.firestore.users import UserRepository
 from app.services.auth import get_current_user
 from app.services.permissions import user_has_perm
+from app.services import settings_service
 
 router = APIRouter(prefix="/api/audit", tags=["Audit"])
 
@@ -64,6 +65,16 @@ def list_audit_logs(
         limit=page_size,
         offset=(page - 1) * page_size,
     )
+
+    # Apply retention policy filter
+    try:
+        cfg = settings_service.get_bag(user["org_id"], "audit")
+    except Exception:
+        cfg = {}
+    retention_days = cfg.get("retention_days", 365)
+    from datetime import datetime as dt, timedelta
+    cutoff = (dt.utcnow() - timedelta(days=retention_days)).isoformat()
+    items = [i for i in items if i.get("created_at", "") >= cutoff]
 
     # Date range filter in Python
     if date_from or date_to:

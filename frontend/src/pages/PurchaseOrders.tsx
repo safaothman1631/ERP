@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Table, Button, Tag, Dropdown, Modal, Form, Input, InputNumber, DatePicker, Space, Select, Divider } from 'antd';
 import { message } from '../utils/message';
-import { PlusOutlined, MoreOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, MoreOutlined, DeleteOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import dayjs from 'dayjs';
@@ -50,6 +50,18 @@ const PurchaseOrders: React.FC = () => {
     try { await api.post(`/api/purchase-orders/${id}/${action}`); message.success(t('success')); fetchData(); } catch { message.error(t('error')); }
   };
 
+  const handleDownloadPdf = async (id: string) => {
+    try {
+      const res = await api.get(`/api/purchase-orders/${id}/pdf`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `purchase-order-${id}.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch { message.error(t('error')); }
+  };
+
   const updateLine = (key: number, field: string, value: any) => {
     setLines(lines.map(l => {
       if (l.key !== key) return l;
@@ -84,6 +96,7 @@ const PurchaseOrders: React.FC = () => {
         if (r.status === 'draft') menuitems.push({ key: 'issue', label: t('issue'), onClick: () => handleAction(r.id, 'issue') });
         if (['draft', 'issued'].includes(r.status)) menuitems.push({ key: 'to-bill', label: t('convert_to_bill'), onClick: () => handleAction(r.id, 'convert-to-bill') });
         if (!['cancelled', 'billed'].includes(r.status)) menuitems.push({ key: 'cancel', label: t('cancel'), onClick: () => handleAction(r.id, 'cancel') });
+        menuitems.push({ key: 'pdf', icon: <FilePdfOutlined />, label: 'PDF', onClick: () => handleDownloadPdf(r.id) });
         return <Dropdown menu={{ items: menuitems }} trigger={['click']}><Button icon={<MoreOutlined />} size="small" /></Dropdown>;
       },
     },

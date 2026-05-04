@@ -3,6 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.firestore.expenses import ExpenseClaimRepository
 from app.services.auth import get_current_user
+from app.services import approval_service
 
 router = APIRouter(prefix="/api/expense-claims", tags=["Expense Claims"])
 
@@ -26,6 +27,7 @@ def create_claim(data: dict, user: dict = Depends(get_current_user)):
         "date": data.get("date", datetime.utcnow().isoformat()),
         "total": data.get("total", 0),
         "status": "draft",
+        "approval_status": "not_required",
         "notes": data.get("notes", ""),
     })
     if data.get("items"):
@@ -54,13 +56,45 @@ def submit_claim(claim_id: str, user: dict = Depends(get_current_user)):
     if not claim or claim.get("status") != "draft": raise HTTPException(400, "Cannot submit")
     return repo.update(claim_id, {"status": "submitted", "submitted_at": datetime.utcnow()})
 
-@router.post("/{claim_id}/approve")
-def approve_claim(claim_id: str, user: dict = Depends(get_current_user)):
+@router.post("/{claim_id}/submit-for-approval")
+def submit_claim_for_approval(claim_id: str, user: dict = Depends(get_current_user)):
+    """Submit expense claim for approval workflow"""
     repo = ExpenseClaimRepository(user["org_id"])
     claim = repo.get(claim_id)
-    if not claim or claim.get("status") != "submitted": raise HTTPException(400, "Cannot approve")
+    if not claim:
+        raise HTTPException(404, "Expense claim not found")
+    
+    # Create approval request if rule matches
+    approval_request = approval_service.create_approval_request(
+        org_id=user["org_id"],
+        doc_type="expense_claim",
+        doc_id=claim_id,
+        doc=claim,
+        requested_by=user["id"]
+    )
+    
+    if approval_request:
+        repo.update(claim_id, {"approval_status": "pending"})
+        return {"approval_request": approval_request, "claim": claim}
+    else:
+        repo.update(claim_id, {"approval_status": "not_required"})
+        return {"message": "No approval required", "claim": claim}
+
+@router.post("/{claim_id}/approve")
+def approve_claim(claim_id: str, user: dict = Depends(get_current_user)):
+    """Approve expense claim (checks approval workflow first)"""
+    repo = ExpenseClaimRepository(user["org_id"])
+    claim = repo.get(claim_id)
+    if not claim or claim.get("status") != "submitted":
+        raise HTTPException(400, "Cannot approve")
+    
+    # Check if approval workflow is satisfied
+    if not approval_service.is_doc_approved(user["org_id"], "expense_claim", claim_id):
+        raise HTTPException(400, "Approval workflow not completed")
+    
     return repo.update(claim_id, {
         "status": "approved",
+        "approval_status": "approved",
         "approved_by": user["id"],
         "approved_at": datetime.utcnow(),
     })

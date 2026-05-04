@@ -718,3 +718,237 @@ def generate_report_pdf(title: str, columns: list[str], rows: list[list], org_da
     doc.build(elements)
     buffer.seek(0)
     return buffer
+
+
+def generate_credit_note_pdf(org_id: str, credit_note_id: str, org_data: dict, lang: str = "en") -> io.BytesIO:
+    """Generate PDF for a credit note
+    
+    Args:
+        org_id: Organization ID
+        credit_note_id: Credit Note ID
+        org_data: Organization data dictionary
+        lang: Language code ('en' or 'ku'). Default 'en'
+    """
+    from app.firestore.invoices import CreditNoteRepository
+    
+    cn_repo = CreditNoteRepository(org_id)
+    credit_note = cn_repo.get(credit_note_id)
+    if not credit_note:
+        raise ValueError("تێبینی قەرز نەدۆزرایەوە")
+
+    # Get lines
+    lines = cn_repo.get_lines(credit_note_id)
+    
+    # Get contact
+    contact = None
+    if credit_note.get("contact_id"):
+        contact_repo = ContactRepository(org_id)
+        contact = contact_repo.get(credit_note["contact_id"])
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=15 * mm, rightMargin=15 * mm, topMargin=15 * mm, bottomMargin=15 * mm)
+    styles = _get_styles(lang)
+    elements = []
+
+    # Header
+    elements.extend(_build_org_header(org_data, styles, lang))
+
+    # Document info
+    date_str = str(credit_note.get("date", ""))[:10]
+    refund_date_str = str(credit_note.get("refund_date", ""))[:10] if credit_note.get("refund_date") else ""
+    title = _reshape_text("تێبینی قەرز / Credit Note", lang) if lang == "ku" else "Credit Note"
+    elements.extend(_build_document_info(title, credit_note.get("credit_note_number", ""), date_str, refund_date_str, styles, lang))
+
+    # Status
+    status_map = {
+        "draft": "ڕەشنووس", "open": "کراوە", "applied": "جێبەجێکراو",
+        "refunded": "گەڕاوەتەوە", "void": "هەڵوەشێنراوە"
+    }
+    status_key = credit_note.get("status", "")
+    if lang == "ku":
+        status_text = _reshape_text(f"بار / Status: {status_map.get(status_key, status_key)}", lang)
+    else:
+        status_text = f"Status: {status_key.replace('_', ' ').title()}"
+    elements.append(Paragraph(status_text, styles["SubTitle"]))
+    elements.append(Spacer(1, 3 * mm))
+
+    # Reference invoice
+    if credit_note.get("reference_invoice_number"):
+        ref_label = _reshape_text(f"ژمارەی وەسڵ: {credit_note['reference_invoice_number']}", lang) if lang == "ku" else f"Invoice Reference: {credit_note['reference_invoice_number']}"
+        elements.append(Paragraph(ref_label, styles["SubTitle"]))
+        elements.append(Spacer(1, 3 * mm))
+
+    # Contact
+    if contact:
+        elements.extend(_build_contact_info(contact, styles, lang))
+
+    # Lines table
+    if lines:
+        elements.append(_build_lines_table(lines, credit_note.get("currency_code", "IQD"), lang))
+        elements.append(Spacer(1, 4 * mm))
+
+    # Totals - right aligned
+    totals = _build_totals(
+        float(credit_note.get("subtotal", 0)), float(credit_note.get("tax_amount", 0)),
+        float(credit_note.get("discount_amount", 0)), 0, 0,
+        float(credit_note.get("total", 0)),
+        float(credit_note.get("balance_remaining", credit_note.get("total", 0))), lang
+    )
+    if lang == "ku":
+        wrapper = Table([[totals, None]], colWidths=[90 * mm, 95 * mm])
+    else:
+        wrapper = Table([[None, totals]], colWidths=[95 * mm, 90 * mm])
+    wrapper.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
+    elements.append(wrapper)
+
+    # Reason and Notes
+    if credit_note.get("reason"):
+        elements.append(Spacer(1, 4 * mm))
+        label = _reshape_text("هۆکار / Reason:", lang) if lang == "ku" else "Reason:"
+        elements.append(Paragraph(label, styles["SubTitle"]))
+        reason_text = _reshape_text(credit_note["reason"], lang)
+        elements.append(Paragraph(reason_text, styles["SmallText"]))
+    
+    elements.extend(_build_notes_terms(credit_note.get("notes"), None, styles, lang))
+
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer
+
+
+def generate_customer_statement_pdf(org_id: str, contact_id: str, statement_data: dict, org_data: dict, lang: str = "en") -> io.BytesIO:
+    """Generate PDF for a customer statement
+    
+    Args:
+        org_id: Organization ID
+        contact_id: Contact ID
+        statement_data: Statement data (contact, opening_balance, transactions, closing_balance)
+        org_data: Organization data dictionary
+        lang: Language code ('en' or 'ku'). Default 'en'
+    """
+    contact = statement_data.get("contact", {})
+    opening = float(statement_data.get("opening_balance", 0))
+    closing = float(statement_data.get("closing_balance", 0))
+    transactions = statement_data.get("transactions", [])
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=15 * mm, rightMargin=15 * mm, topMargin=15 * mm, bottomMargin=15 * mm)
+    styles = _get_styles(lang)
+    elements = []
+
+    # Header
+    elements.extend(_build_org_header(org_data, styles, lang))
+
+    # Title
+    title = _reshape_text("ڕاپۆرتی کڕیار / Customer Statement", lang) if lang == "ku" else "Customer Statement"
+    elements.append(Paragraph(title, styles["TitleCustom"]))
+    elements.append(Spacer(1, 6 * mm))
+
+    # Contact
+    display_name = _reshape_text(contact.get("display_name", ""), lang)
+    elements.append(Paragraph(display_name, styles["DocBody"]))
+    if contact.get("email"):
+        elements.append(Paragraph(contact["email"], styles["SmallText"]))
+    elements.append(Spacer(1, 6 * mm))
+
+    # Opening balance
+    opening_label = _reshape_text("باڵانسی کردنەوە / Opening Balance:", lang) if lang == "ku" else "Opening Balance:"
+    opening_value = _format_iqd(opening, lang)
+    opening_table = Table([[opening_label, opening_value]], colWidths=[100 * mm, 50 * mm] if lang == "en" else [50 * mm, 100 * mm])
+    opening_table.setStyle(TableStyle([
+        ("FONTNAME", (0, 0), (-1, 0), "NotoArabic-Bold" if lang == "ku" and _fonts_registered else "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, 0), 10),
+        ("ALIGN", (0, 0), (0, 0), "LEFT" if lang == "en" else "RIGHT"),
+        ("ALIGN", (1, 0), (1, 0), "RIGHT" if lang == "en" else "LEFT"),
+        ("BACKGROUND", (0, 0), (-1, 0), LIGHT_BG),
+        ("TOPPADDING", (0, 0), (-1, 0), 4),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 4),
+    ]))
+    elements.append(opening_table)
+    elements.append(Spacer(1, 4 * mm))
+
+    # Transactions table
+    if transactions:
+        if lang == "ku":
+            header = [
+                _reshape_text("باڵانس / Balance", lang),
+                _reshape_text("قەرز / Credit", lang),
+                _reshape_text("بەدەهی / Debit", lang),
+                _reshape_text("جۆر / Type", lang),
+                _reshape_text("بەروار / Date", lang),
+            ]
+        else:
+            header = ["Date", "Type", "Debit", "Credit", "Balance"]
+
+        data = [header]
+        running_balance = opening
+
+        for tx in transactions:
+            tx_date = str(tx.get("date", ""))[:10]
+            tx_type = _reshape_text(tx.get("type", ""), lang)
+            debit = float(tx.get("debit", 0))
+            credit = float(tx.get("credit", 0))
+            running_balance += (debit - credit)
+
+            if lang == "ku":
+                data.append([
+                    _format_iqd(running_balance, lang),
+                    _format_iqd(credit, lang),
+                    _format_iqd(debit, lang),
+                    tx_type,
+                    tx_date,
+                ])
+            else:
+                data.append([
+                    tx_date,
+                    tx_type,
+                    _format_iqd(debit, lang),
+                    _format_iqd(credit, lang),
+                    _format_iqd(running_balance, lang),
+                ])
+
+        col_widths = [35 * mm, 30 * mm, 35 * mm, 35 * mm, 50 * mm] if lang == "ku" else [35 * mm, 50 * mm, 35 * mm, 35 * mm, 30 * mm]
+        tx_table = Table(data, colWidths=col_widths, repeatRows=1)
+        tx_table.setStyle(TableStyle([
+            # Header
+            ("BACKGROUND", (0, 0), (-1, 0), HEADER_COLOR),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("FONTNAME", (0, 0), (-1, 0), "NotoArabic-Bold" if lang == "ku" and _fonts_registered else "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, 0), 9),
+            ("ALIGN", (0, 0), (-1, 0), "CENTER"),
+            # Body
+            ("FONTNAME", (0, 1), (-1, -1), "NotoArabic" if lang == "ku" and _fonts_registered else "Helvetica"),
+            ("FONTSIZE", (0, 1), (-1, -1), 8),
+            ("TEXTCOLOR", (0, 1), (-1, -1), TEXT_COLOR),
+            ("ALIGN", (0, 1), (-1, -1), "RIGHT" if lang == "ku" else "LEFT"),
+            # Grid
+            ("GRID", (0, 0), (-1, -1), 0.5, BORDER_COLOR),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, LIGHT_BG]),
+            # Padding
+            ("TOPPADDING", (0, 0), (-1, -1), 3),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+            ("LEFTPADDING", (0, 0), (-1, -1), 2),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+        ]))
+        elements.append(tx_table)
+        elements.append(Spacer(1, 4 * mm))
+
+    # Closing balance
+    closing_label = _reshape_text("باڵانسی داخستن / Closing Balance:", lang) if lang == "ku" else "Closing Balance:"
+    closing_value = _format_iqd(closing, lang)
+    closing_table = Table([[closing_label, closing_value]], colWidths=[100 * mm, 50 * mm] if lang == "en" else [50 * mm, 100 * mm])
+    closing_table.setStyle(TableStyle([
+        ("FONTNAME", (0, 0), (-1, 0), "NotoArabic-Bold" if lang == "ku" and _fonts_registered else "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, 0), 12),
+        ("ALIGN", (0, 0), (0, 0), "LEFT" if lang == "en" else "RIGHT"),
+        ("ALIGN", (1, 0), (1, 0), "RIGHT" if lang == "en" else "LEFT"),
+        ("BACKGROUND", (0, 0), (-1, 0), LIGHT_BG),
+        ("LINEABOVE", (0, 0), (-1, 0), 2, HEADER_COLOR),
+        ("TOPPADDING", (0, 0), (-1, 0), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
+    ]))
+    elements.append(closing_table)
+
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer

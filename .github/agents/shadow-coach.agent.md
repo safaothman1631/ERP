@@ -72,6 +72,14 @@ argument-hint: "چی فێر بووین؟ — مثلاً: لە کێشەی POS-ـ�
 **Source:** POS Sprint 2 — corrupted imports نەدۆزرابوونەوە
 **Confidence:** ★★★★★
 
+### Instinct 4: RTK on Windows (Apr 2026)
+**Trigger:** هەر کات terminal command لە PowerShell ڕاندەکەیت
+**Action:** سەرەتا `Get-Command rtk -ErrorAction SilentlyContinue` چێک بکە، ئەگەر بوونی هەیە `rtk` پێشوەخت بکە — تەنها بۆ non-interactive، non-server commands
+**Anti-action:** هیچکات `rtk` بەکار مەهێنە لەگەڵ uvicorn, npm run dev, vite, REPL، یان بێ PATH check
+**Source:** RTK 0.37.2 integration — `rtk init -g --copilot` تەواوی `copilot-instructions.md` overwrite کرد، پێویستی بە git restore بوو
+**Memory:** [/memories/repo/rtk-windows.md](../../../memories/repo/rtk-windows.md)
+**Confidence:** ★★★★★
+
 ## ❌ Anti-pattern: Over-extraction
 
 - ئەگەر pattern تەنها یەک جار ڕووی دایە، **instinct نا** — لە session memory بنووسە

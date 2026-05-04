@@ -8,6 +8,7 @@ from app.firestore.system import SequenceRepository
 from app.firestore.organizations import OrganizationRepository
 from app.services.auth import get_current_user
 from app.services.pdf_generator import generate_quote_pdf
+from app.services import settings_service
 
 router = APIRouter(prefix="/api/quotes", tags=["Quotes"])
 
@@ -21,12 +22,38 @@ def list_quotes(page: int = Query(1), page_size: int = Query(20, le=500), status
 
 @router.post("", status_code=201)
 def create_quote(data: dict, user: dict = Depends(get_current_user)):
+    # Apply sales config defaults
+    try:
+        cfg = settings_service.get_sales_settings(user["org_id"])
+    except Exception:
+        cfg = {}
+    
+    # Set expiry/payment terms from config if not provided
+    if not data.get("expiry_days") and not data.get("valid_until"):
+        data.setdefault("expiry_days", cfg.get("quote_expiry_days", 30))
+    if not data.get("payment_terms"):
+        data["payment_terms"] = cfg.get("default_payment_terms", "Net 30")
+    
+    # Mark for approval if discount exceeds threshold
+    discount_pct = data.get("discount_percent", 0)
+    threshold = cfg.get("discount_approval_threshold", 100)
+    if discount_pct > threshold:
+        data["requires_approval"] = True
+    
     seq_repo = SequenceRepository(user["org_id"])
     quote_number = seq_repo.get_next("quote")
     repo = QuoteRepository(user["org_id"])
     lines = data.pop("lines", [])
     quote = repo.create({"id": str(uuid.uuid4()), "quote_number": quote_number, **data})
     if lines: repo.set_lines(quote["id"], lines)
+    
+    # Webhook: quote.created
+    try:
+        from app.services.webhook_dispatcher import dispatch_event
+        dispatch_event(user["org_id"], "quote.created", {"id": quote["id"]})
+    except Exception:
+        pass
+    
     return quote
 
 

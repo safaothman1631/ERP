@@ -18,6 +18,7 @@ from app.firestore.items import ItemRepository
 from app.firestore.invoices import SalesOrderRepository
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
+from app.services import settings_service
 
 router = APIRouter(prefix="/api/ecommerce", tags=["E-commerce"])
 
@@ -76,6 +77,15 @@ def list_ecom_products(category: Optional[str] = None,
 @router.post("/products", status_code=201,
              dependencies=[Depends(require_perm("settings.update"))])
 def create_ecom_product(data: EcomProductCreate, user: dict = Depends(get_current_user)):
+    # Check if storefront is enabled
+    try:
+        cfg = settings_service.get_bag(user["org_id"], "ecommerce")
+    except Exception:
+        cfg = {}
+    
+    if not cfg.get("storefront_enabled", True):
+        raise HTTPException(403, "E-commerce storefront is disabled")
+    
     repo = EcomItemRepository(user["org_id"])
     # Validate underlying product exists
     base = ItemRepository(user["org_id"]).get(data.product_id)
