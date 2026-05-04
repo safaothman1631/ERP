@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from 'antd';
 import { GoogleOutlined } from '@ant-design/icons';
-import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
+import { signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
 
 interface GoogleSignInButtonProps {
@@ -19,17 +19,23 @@ const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
 }) => {
   const [internalLoading, setInternalLoading] = React.useState(false);
 
-  // Handle redirect-based sign-in result on mount (fallback path)
+  // After Google redirects back to our page, finish the sign-in
   React.useEffect(() => {
     let cancelled = false;
+    setInternalLoading(true);
     getRedirectResult(auth)
       .then(async (result) => {
-        if (cancelled || !result) return;
+        if (cancelled) return;
+        if (!result) {
+          setInternalLoading(false);
+          return;
+        }
         const idToken = await result.user.getIdToken();
         onSuccess(idToken);
       })
       .catch((err: any) => {
         if (cancelled) return;
+        setInternalLoading(false);
         if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
           onError?.(err);
         }
@@ -39,33 +45,14 @@ const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
   }, []);
 
   const handleClick = async () => {
-    // IMPORTANT: do NOT call setState before signInWithPopup, otherwise the
-    // browser drops the user-gesture context and blocks the popup.
+    setInternalLoading(true);
     try {
-      const popupPromise = signInWithPopup(auth, googleProvider);
-      setInternalLoading(true);
-      const result = await popupPromise;
-      const idToken = await result.user.getIdToken();
-      onSuccess(idToken);
+      // Use redirect flow exclusively — avoids popup blockers and COOP warnings.
+      await signInWithRedirect(auth, googleProvider);
+      // Page will navigate away; no further code runs here.
     } catch (err: any) {
-      const code = err?.code;
-      // user closed the popup — silent
-      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
-        return;
-      }
-      // Browser blocked the popup → automatically fall back to redirect flow
-      if (code === 'auth/popup-blocked') {
-        try {
-          await signInWithRedirect(auth, googleProvider);
-          return; // page will navigate away
-        } catch (redirectErr: any) {
-          onError?.(redirectErr);
-          return;
-        }
-      }
-      onError?.(err);
-    } finally {
       setInternalLoading(false);
+      onError?.(err);
     }
   };
 
