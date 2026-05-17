@@ -249,6 +249,7 @@ def validate_env() -> None:
         or db_url.startswith("postgresql")
         or db_url.startswith("mysql")
         or db_url.startswith("postgres")
+        or db_url.startswith("firestore")
     ):
         msg = f"DATABASE_URL has an unrecognised scheme — verify the connection string"
         if is_prod:
