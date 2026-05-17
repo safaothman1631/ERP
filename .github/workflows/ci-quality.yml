@@ -21,6 +21,72 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+  # Required quality gate — Navigation 404 regression guard (Requirements 2.7, 3.6).
+  # Runs the two-layer audit from `frontend/scripts/nav-audit.mjs`:
+  #   - Layer 1: legacy structural side-nav check (preserves Requirement 3.6
+  #     — the original `node scripts/nav-audit.mjs` invocation must keep exiting 0).
+  #   - Layer 2: router-semantic match using `matchRoutes` from `react-router`
+  #     against `navDestinations` × the route tree extracted from `App.routes.tsx`.
+  # Failure of EITHER layer fails the build before merge.
+  nav-audit:
+    name: Nav audit (static + router-semantic)
+    runs-on: ubuntu-latest
+    needs: build
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # Node 24+ is required for native TypeScript stripping when the
+          # audit dynamically imports `src/layouts/navDestinations.ts`.
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Run nav:audit
+        # `npm run nav:audit` invokes `node ./scripts/nav-audit.mjs`, which
+        # runs Layer 1 (legacy) and Layer 2 (router-semantic) in one pass.
+        # The legacy `node scripts/nav-audit.mjs` invocation is therefore
+        # executed independently and continues to exit 0 (Requirement 3.6).
+        run: npm run nav:audit
+
+  # Required quality gate — runtime navigation sweep (Requirements 2.1–2.5, 2.7).
+  # Builds the frontend, serves it via `vite preview`, signs in via the
+  # existing Playwright auth fixture, walks every surface in `navDestinations`,
+  # and asserts no destination renders the NotFound page.
+  nav-sweep:
+    name: Nav sweep (Playwright runtime)
+    runs-on: ubuntu-latest
+    needs: build
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run e2e:install
+      - name: Build app
+        run: npm run build
+      - name: Start preview server
+        run: |
+          npm run preview -- --port 5173 &
+          npx wait-on http://localhost:5173
+      - name: Run nav:sweep
+        run: npm run nav:sweep
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nav-sweep-report
+          path: frontend/playwright-report
+          retention-days: 7
+
   e2e-and-a11y:
     runs-on: ubuntu-latest
     needs: build

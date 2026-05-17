@@ -10,6 +10,7 @@ const NotFound: React.FC = () => {
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
       <Result
+        data-testid="page-not-found"
         status="404"
         title="404"
         subTitle={t('page_not_found')}

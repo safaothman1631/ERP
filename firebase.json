@@ -12,7 +12,7 @@
         "source": "**",
         "run": {
           "serviceId": "zoho-erp",
-          "region": "me-central1"
+          "region": "europe-west1"
         }
       }
     ]

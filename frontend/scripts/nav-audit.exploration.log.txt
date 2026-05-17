@@ -1,0 +1,8 @@
+# nav-audit.exploration.mjs — Property 1 (Bug Condition) report
+# Generated: 2026-05-16T17:06:04.587Z
+# Routes (matchable): 251
+# Enumerated destinations: 24
+# Unmatched (counterexamples): 0
+
+Result: PASS — every enumerated destination matches a registered route.
+Property 1 (Bug Condition) is no longer reproducible against the current route tree.

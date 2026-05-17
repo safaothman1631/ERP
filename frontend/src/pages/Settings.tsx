@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Table, Button, Tag, Form, Input, InputNumber, DatePicker, Space,
   Row, Col, Popconfirm, Switch, Select, Tabs, TimePicker, Alert, Tooltip,
-  Divider, Segmented,
+  Divider, Segmented, Result,
 } from 'antd';
 import { message } from '../utils/message';
 import {
@@ -24,7 +24,8 @@ import {
   PartitionOutlined, BulbOutlined, ExperimentOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+import { buildEffectiveOptions, handleAddOptionChange } from '../utils/buildAddOption';
 import api from '../api';
 import dayjs from 'dayjs';
 import { useOnboardingStore } from '../onboarding/store';
@@ -32,6 +33,7 @@ import { INDUSTRIES, MODULES } from '../onboarding/industries';
 import { useAuthStore } from '../store';
 import SectionCard from '../components/ui/SectionCard';
 import SettingsRow from '../components/ui/SettingsRow';
+import SectionHelpPopover from '../components/ui/SectionHelpPopover';
 import PremiumModal from '../components/ui/PremiumModal';
 import PremiumPageHeader from '../components/ui/PremiumPageHeader';
 import { palette, radius, space, fontSize } from '../theme/tokens';
@@ -249,6 +251,10 @@ const Settings: React.FC = () => {
           />
 
           <div className="st-content">
+            {activeDef.badge === 'soon' ? (
+              <Result status="info" title={t('coming_soon')} />
+            ) : (
+              <>
             {active === 'profile'         && <ProfileSettings />}
             {active === 'organization'    && <OrganizationSettings />}
             {active === 'security'        && <SecuritySettings />}
@@ -302,6 +308,8 @@ const Settings: React.FC = () => {
             {active === 'gdpr'            && <GdprSettings />}
             {active === 'mobile'          && <MobileSettings />}
             {active === 'system'          && <SystemInfo />}
+              </>
+            )}
           </div>
         </main>
       </div>
@@ -418,6 +426,17 @@ const ProfileSettings: React.FC = () => {
         title={t('profile_settings')}
         description={t('settings_sub_profile', 'Manage your personal account, name, and password.')}
         loading={loading}
+        actions={
+          <SectionHelpPopover
+            what={t('settings.help.profile.what')}
+            why={t('settings.help.profile.why')}
+            steps={[
+              t('settings.help.profile.step_1'),
+              t('settings.help.profile.step_2'),
+              t('settings.help.profile.step_3'),
+            ]}
+          />
+        }
       >
         <Form form={form} layout="vertical">
           <Row gutter={24}>
@@ -502,6 +521,17 @@ const OrganizationSettings: React.FC = () => {
         title={t('org_identity', 'Identity')}
         description={t('settings_sub_org_id', 'Public-facing name and contact details.')}
         loading={loading}
+        actions={
+          <SectionHelpPopover
+            what={t('settings.help.company.what')}
+            why={t('settings.help.company.why')}
+            steps={[
+              t('settings.help.company.step_1'),
+              t('settings.help.company.step_2'),
+              t('settings.help.company.step_3'),
+            ]}
+          />
+        }
       >
         <Form form={form} layout="vertical">
           <Row gutter={24}>
@@ -610,9 +640,22 @@ const SecuritySettings: React.FC = () => {
         title={t('two_factor_auth')}
         description={t('settings_sub_2fa', 'Add an extra verification step at sign-in.')}
         accent={enabled ? 'success' : 'warning'}
-        actions={enabled
-          ? <Tag color="success" icon={<CheckCircleOutlined />}>{t('enabled', 'Enabled')}</Tag>
-          : <Tag>{t('disabled', 'Disabled')}</Tag>}
+        actions={
+          <Space>
+            <SectionHelpPopover
+              what={t('settings.help.security.what')}
+              why={t('settings.help.security.why')}
+              steps={[
+                t('settings.help.security.step_1'),
+                t('settings.help.security.step_2'),
+                t('settings.help.security.step_3'),
+              ]}
+            />
+            {enabled
+              ? <Tag color="success" icon={<CheckCircleOutlined />}>{t('enabled', 'Enabled')}</Tag>
+              : <Tag>{t('disabled', 'Disabled')}</Tag>}
+          </Space>
+        }
       >
         <SettingsRow
           label={t('enable_2fa')}
@@ -961,6 +1004,15 @@ const NotificationSettings: React.FC = () => {
         loading={loading}
         actions={
           <Space>
+            <SectionHelpPopover
+              what={t('settings.help.notifications.what')}
+              why={t('settings.help.notifications.why')}
+              steps={[
+                t('settings.help.notifications.step_1'),
+                t('settings.help.notifications.step_2'),
+                t('settings.help.notifications.step_3'),
+              ]}
+            />
             <Button type="primary" onClick={handleSave} loading={saving}>{t('save', 'Save')}</Button>
           </Space>
         }
@@ -1286,6 +1338,15 @@ const ModulesSettings: React.FC = () => {
         description={t('settings_sub_modules', 'Enable or disable modules and re-run onboarding.')}
         actions={
           <Space>
+            <SectionHelpPopover
+              what={t('settings.help.modules.what')}
+              why={t('settings.help.modules.why')}
+              steps={[
+                t('settings.help.modules.step_1'),
+                t('settings.help.modules.step_2'),
+                t('settings.help.modules.step_3'),
+              ]}
+            />
             <Button icon={<RocketOutlined />} type="primary" onClick={reopen}>
               {t('reopen_onboarding', 'Re-run onboarding')}
             </Button>
@@ -1386,10 +1447,21 @@ const FiscalYears: React.FC = () => {
       title={t('fiscal_years')}
       description={t('settings_sub_fiscal', 'Configure your fiscal years and closing periods.')}
       actions={
-        <Button type="primary" icon={<PlusOutlined />}
-          onClick={() => { form.resetFields(); setModalOpen(true); }}>
-          {t('new_fiscal_year')}
-        </Button>
+        <Space>
+          <SectionHelpPopover
+            what={t('settings.help.fiscal.what')}
+            why={t('settings.help.fiscal.why')}
+            steps={[
+              t('settings.help.fiscal.step_1'),
+              t('settings.help.fiscal.step_2'),
+              t('settings.help.fiscal.step_3'),
+            ]}
+          />
+          <Button type="primary" icon={<PlusOutlined />}
+            onClick={() => { form.resetFields(); setModalOpen(true); }}>
+            {t('new_fiscal_year')}
+          </Button>
+        </Space>
       }
       noPadding
     >
@@ -1437,6 +1509,7 @@ const FiscalYears: React.FC = () => {
 // ─────────────────────── Budgets ───────────────────────
 const Budgets: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -1480,7 +1553,20 @@ const Budgets: React.FC = () => {
       icon={<FundOutlined />}
       title={t('budgets')}
       description={t('settings_sub_budgets', 'Plan, track, and analyze budgets per fiscal year.')}
-      actions={<Button type="primary" icon={<PlusOutlined />} onClick={openNew}>{t('new_budget')}</Button>}
+      actions={
+        <Space>
+          <SectionHelpPopover
+            what={t('settings.help.budgets.what')}
+            why={t('settings.help.budgets.why')}
+            steps={[
+              t('settings.help.budgets.step_1'),
+              t('settings.help.budgets.step_2'),
+              t('settings.help.budgets.step_3'),
+            ]}
+          />
+          <Button type="primary" icon={<PlusOutlined />} onClick={openNew}>{t('new_budget')}</Button>
+        </Space>
+      }
       noPadding
     >
       <Table
@@ -1512,7 +1598,15 @@ const Budgets: React.FC = () => {
           <Form.Item label={t('fiscal_year')} name="fiscal_year_id" rules={[{ required: true }]}>
             <Select
               placeholder={t('select')}
-              options={fiscalYears.map(fy => ({ label: fy.name, value: fy.id }))}
+              options={buildEffectiveOptions(
+                fiscalYears.map(fy => ({ label: fy.name, value: fy.id })),
+                t('fiscal_year', 'Fiscal Year'),
+                '/settings?s=fiscal',
+                navigate,
+              )}
+              onChange={(value) => {
+                if (handleAddOptionChange(value, '/settings?s=fiscal', navigate)) return;
+              }}
             />
           </Form.Item>
         </Form>
@@ -1524,6 +1618,7 @@ const Budgets: React.FC = () => {
 // ─────────────────────── Currencies ───────────────────────
 const Currencies: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [currencies, setCurrencies] = useState<any[]>([]);
   const [rates, setRates] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -1557,7 +1652,19 @@ const Currencies: React.FC = () => {
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
-      <SectionCard icon={<DollarOutlined />} title={t('currencies')} noPadding>
+      <SectionCard icon={<DollarOutlined />} title={t('currencies')} noPadding
+        actions={
+          <SectionHelpPopover
+            what={t('settings.help.currencies.what')}
+            why={t('settings.help.currencies.why')}
+            steps={[
+              t('settings.help.currencies.step_1'),
+              t('settings.help.currencies.step_2'),
+              t('settings.help.currencies.step_3'),
+            ]}
+          />
+        }
+      >
         <Table
           dataSource={currencies}
           columns={[
@@ -1612,12 +1719,34 @@ const Currencies: React.FC = () => {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item label={t('from')} name="from_currency" rules={[{ required: true }]}>
-                <Input placeholder="USD" />
+                <Select
+                  placeholder="USD"
+                  options={buildEffectiveOptions(
+                    currencies.map(c => ({ label: `${c.code} — ${c.name}`, value: c.code })),
+                    t('currencies', 'Currencies'),
+                    '/settings?s=currencies',
+                    navigate,
+                  )}
+                  onChange={(value) => {
+                    if (handleAddOptionChange(value, '/settings?s=currencies', navigate)) return;
+                  }}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item label={t('to')} name="to_currency" rules={[{ required: true }]}>
-                <Input placeholder="IQD" />
+                <Select
+                  placeholder="IQD"
+                  options={buildEffectiveOptions(
+                    currencies.map(c => ({ label: `${c.code} — ${c.name}`, value: c.code })),
+                    t('currencies', 'Currencies'),
+                    '/settings?s=currencies',
+                    navigate,
+                  )}
+                  onChange={(value) => {
+                    if (handleAddOptionChange(value, '/settings?s=currencies', navigate)) return;
+                  }}
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -1673,10 +1802,21 @@ const InvoiceTemplates: React.FC = () => {
       title={t('invoice_templates')}
       description={t('settings_sub_tmpl', 'Customize invoice layouts and branding.')}
       actions={
-        <Button type="primary" icon={<PlusOutlined />}
-          onClick={() => { form.resetFields(); setModalOpen(true); }}>
-          {t('create')}
-        </Button>
+        <Space>
+          <SectionHelpPopover
+            what={t('settings.help.templates.what')}
+            why={t('settings.help.templates.why')}
+            steps={[
+              t('settings.help.templates.step_1'),
+              t('settings.help.templates.step_2'),
+              t('settings.help.templates.step_3'),
+            ]}
+          />
+          <Button type="primary" icon={<PlusOutlined />}
+            onClick={() => { form.resetFields(); setModalOpen(true); }}>
+            {t('create')}
+          </Button>
+        </Space>
       }
       noPadding
     >
@@ -1756,6 +1896,17 @@ const ReminderSettings: React.FC = () => {
       title={t('reminder_settings')}
       description={t('settings_sub_rem', 'Automated reminders for due and overdue invoices.')}
       loading={loading}
+      actions={
+        <SectionHelpPopover
+          what={t('settings.help.reminders.what')}
+          why={t('settings.help.reminders.why')}
+          steps={[
+            t('settings.help.reminders.step_1'),
+            t('settings.help.reminders.step_2'),
+            t('settings.help.reminders.step_3'),
+          ]}
+        />
+      }
       footer={
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button type="primary" onClick={handleSave} loading={saving}>{t('save')}</Button>
@@ -1854,10 +2005,21 @@ const EInvoiceSettings: React.FC = () => {
         description={t('settings_sub_einv', 'Iraq electronic invoicing portal configuration.')}
         loading={loading}
         actions={
-          <Button icon={<CloudOutlined />}
-            onClick={() => { void fetchConfig(); void fetchReports(); }}>
-            {t('refresh')}
-          </Button>
+          <Space>
+            <SectionHelpPopover
+              what={t('settings.help.einvoice.what')}
+              why={t('settings.help.einvoice.why')}
+              steps={[
+                t('settings.help.einvoice.step_1'),
+                t('settings.help.einvoice.step_2'),
+                t('settings.help.einvoice.step_3'),
+              ]}
+            />
+            <Button icon={<CloudOutlined />}
+              onClick={() => { void fetchConfig(); void fetchReports(); }}>
+              {t('refresh')}
+            </Button>
+          </Space>
         }
         footer={
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -1986,6 +2148,17 @@ const EmailSettings: React.FC = () => {
       title={t('email_settings')}
       description={t('settings_sub_email', 'SMTP credentials for outbound mail.')}
       loading={loading}
+      actions={
+        <SectionHelpPopover
+          what={t('settings.help.email.what')}
+          why={t('settings.help.email.why')}
+          steps={[
+            t('settings.help.email.step_1'),
+            t('settings.help.email.step_2'),
+            t('settings.help.email.step_3'),
+          ]}
+        />
+      }
       footer={
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button type="primary" onClick={handleSave} loading={saving}>{t('save')}</Button>
@@ -2043,6 +2216,15 @@ const BackupRestore: React.FC = () => {
       description={t('settings_sub_backup', 'Create and download full system backups.')}
       actions={
         <Space>
+          <SectionHelpPopover
+            what={t('settings.help.backup.what')}
+            why={t('settings.help.backup.why')}
+            steps={[
+              t('settings.help.backup.step_1'),
+              t('settings.help.backup.step_2'),
+              t('settings.help.backup.step_3'),
+            ]}
+          />
           <Button type="primary" icon={<CloudOutlined />} onClick={createBackup} loading={creating}>
             {t('create_backup')}
           </Button>
@@ -2457,6 +2639,17 @@ const PreferencesSettings: React.FC = () => {
         icon={<BgColorsOutlined />}
         title={t('preferences_personal', 'Personal preferences')}
         description={t('preferences_desc', 'Theme, density, default landing page, and accessibility tweaks.')}
+        actions={
+          <SectionHelpPopover
+            what={t('settings.help.appearance.what')}
+            why={t('settings.help.appearance.why')}
+            steps={[
+              t('settings.help.appearance.step_1'),
+              t('settings.help.appearance.step_2'),
+              t('settings.help.appearance.step_3'),
+            ]}
+          />
+        }
       >
         <SettingsRow label={t('pref_theme', 'Theme')}>
           <Select
@@ -2574,7 +2767,20 @@ const BranchesSettings: React.FC = () => {
         icon={<ApartmentOutlined />}
         title={t('branches_title', 'Branches & locations')}
         description={t('branches_desc', 'Multiple branches, warehouses, and legal entities under one workspace.')}
-        actions={<Button type="primary" icon={<PlusOutlined />} onClick={() => open()}>{t('new_branch', 'New branch')}</Button>}
+        actions={
+          <Space>
+            <SectionHelpPopover
+              what={t('settings.help.branches.what')}
+              why={t('settings.help.branches.why')}
+              steps={[
+                t('settings.help.branches.step_1'),
+                t('settings.help.branches.step_2'),
+                t('settings.help.branches.step_3'),
+              ]}
+            />
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => open()}>{t('new_branch', 'New branch')}</Button>
+          </Space>
+        }
       >
         <Table<BranchRow>
           rowKey="id"
@@ -2736,7 +2942,20 @@ const UsersSettings: React.FC = () => {
         icon={<TeamOutlined />}
         title={t('users_title', 'Users & licenses')}
         description={t('users_desc', 'Invite teammates, assign roles, manage licenses and deactivation.')}
-        actions={<Button type="primary" icon={<PlusOutlined />} onClick={() => setInviting(true)}>{t('invite_user', 'Invite user')}</Button>}
+        actions={
+          <Space>
+            <SectionHelpPopover
+              what={t('settings.help.users.what')}
+              why={t('settings.help.users.why')}
+              steps={[
+                t('settings.help.users.step_1'),
+                t('settings.help.users.step_2'),
+                t('settings.help.users.step_3'),
+              ]}
+            />
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => setInviting(true)}>{t('invite_user', 'Invite user')}</Button>
+          </Space>
+        }
       >
         <Table<UserRow>
           rowKey="id"
@@ -2802,7 +3021,20 @@ const RolesSettings: React.FC = () => {
         icon={<IdcardOutlined />}
         title={t('roles_title', 'Roles')}
         description={t('roles_desc', 'Pre-built and custom roles for fast permission assignment.')}
-        actions={<Button type="primary" icon={<PlusOutlined />} onClick={() => open()}>{t('new_role', 'New role')}</Button>}
+        actions={
+          <Space>
+            <SectionHelpPopover
+              what={t('settings.help.roles.what')}
+              why={t('settings.help.roles.why')}
+              steps={[
+                t('settings.help.roles.step_1'),
+                t('settings.help.roles.step_2'),
+                t('settings.help.roles.step_3'),
+              ]}
+            />
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => open()}>{t('new_role', 'New role')}</Button>
+          </Space>
+        }
       >
         <Table<RoleRow>
           rowKey="id"
@@ -2985,7 +3217,19 @@ const LocalizationSettings: React.FC = () => {
   });
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
-      <SectionCard icon={<GlobalOutlined />} title={t('l10n_title', 'Localization package')} description={t('l10n_desc', 'Country pack with chart of accounts, taxes, and document templates.')}>
+      <SectionCard icon={<GlobalOutlined />} title={t('l10n_title', 'Localization package')} description={t('l10n_desc', 'Country pack with chart of accounts, taxes, and document templates.')}
+        actions={
+          <SectionHelpPopover
+            what={t('settings.help.localization.what')}
+            why={t('settings.help.localization.why')}
+            steps={[
+              t('settings.help.localization.step_1'),
+              t('settings.help.localization.step_2'),
+              t('settings.help.localization.step_3'),
+            ]}
+          />
+        }
+      >
         <SettingsRow label={t('l_country', 'Country pack')}><Select value={values.country_pack} onChange={(v) => setValue('country_pack', v)} disabled={loading} style={{ width: 280 }} options={[{ value: 'IQ', label: 'Iraq' }, { value: 'KRG', label: 'Kurdistan Region' }, { value: 'AE', label: 'UAE' }, { value: 'SA', label: 'Saudi Arabia' }, { value: 'TR', label: 'Türkiye' }, { value: 'GENERIC', label: 'Generic' }]} /></SettingsRow>
         <SettingsRow label={t('l_coa', 'Chart of accounts template')}><Select value={values.coa_template} onChange={(v) => setValue('coa_template', v)} disabled={loading} style={{ width: 280 }} options={[{ value: 'iraq_standard', label: t('coa_iraq', 'Iraq standard') }, { value: 'gcc_standard', label: t('coa_gcc', 'GCC standard') }, { value: 'ifrs', label: 'IFRS' }, { value: 'custom', label: t('coa_custom', 'Custom') }]} /></SettingsRow>
         <SettingsRow label={t('l_address', 'Address format')}><Input.TextArea value={values.address_format} onChange={(e) => setValue('address_format', e.target.value)} disabled={loading} rows={3} /></SettingsRow>
@@ -3071,7 +3315,20 @@ const TaxesSettings: React.FC = () => {
         icon={<PercentageOutlined />}
         title={t('tax_title', 'Taxes')}
         description={t('tax_desc', 'VAT, withholding, sales tax, exemptions, and tax groups.')}
-        actions={<Button type="primary" icon={<PlusOutlined />} onClick={() => open()}>{t('new_tax', 'New tax')}</Button>}
+        actions={
+          <Space>
+            <SectionHelpPopover
+              what={t('settings.help.taxes.what')}
+              why={t('settings.help.taxes.why')}
+              steps={[
+                t('settings.help.taxes.step_1'),
+                t('settings.help.taxes.step_2'),
+                t('settings.help.taxes.step_3'),
+              ]}
+            />
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => open()}>{t('new_tax', 'New tax')}</Button>
+          </Space>
+        }
       >
         <Table<TaxRow>
           rowKey="id"
@@ -3112,13 +3369,22 @@ const TaxesSettings: React.FC = () => {
 interface BankRow { id: string; name: string; account_number?: string; iban?: string; swift?: string; currency?: string; bank_name?: string; opening_balance?: number; is_active?: boolean }
 const BankingSettings: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [rows, setRows] = useState<BankRow[]>([]);
+  const [currencies, setCurrencies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<BankRow | null>(null);
   const [form] = Form.useForm<BankRow>();
   const load = async () => {
     setLoading(true);
-    try { const r = await api.get('/api/banking/accounts'); setRows(r.data || []); }
+    try {
+      const [bankRes, currRes] = await Promise.all([
+        api.get('/api/banking/accounts'),
+        api.get('/api/system/currencies'),
+      ]);
+      setRows(bankRes.data || []);
+      setCurrencies(Array.isArray(currRes.data) ? currRes.data : (currRes.data.items || currRes.data || []));
+    }
     catch { setRows([]); } finally { setLoading(false); }
   };
   useEffect(() => { load(); }, []);
@@ -3138,7 +3404,20 @@ const BankingSettings: React.FC = () => {
         icon={<BankOutlined />}
         title={t('bank_title', 'Banking')}
         description={t('bank_desc', 'Bank accounts, statement feeds, and reconciliation rules.')}
-        actions={<Button type="primary" icon={<PlusOutlined />} onClick={() => open()}>{t('new_bank_account', 'New bank account')}</Button>}
+        actions={
+          <Space>
+            <SectionHelpPopover
+              what={t('settings.help.banking.what')}
+              why={t('settings.help.banking.why')}
+              steps={[
+                t('settings.help.banking.step_1'),
+                t('settings.help.banking.step_2'),
+                t('settings.help.banking.step_3'),
+              ]}
+            />
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => open()}>{t('new_bank_account', 'New bank account')}</Button>
+          </Space>
+        }
       >
         <Table<BankRow>
           rowKey="id"
@@ -3167,7 +3446,17 @@ const BankingSettings: React.FC = () => {
           <Form.Item name="name" label={t('name', 'Account name')} rules={[{ required: true }]}><Input /></Form.Item>
           <Row gutter={12}>
             <Col span={12}><Form.Item name="bank_name" label={t('bank_name', 'Bank')}><Input /></Form.Item></Col>
-            <Col span={12}><Form.Item name="currency" label={t('currency', 'Currency')}><Select options={[{ value: 'IQD', label: 'IQD' }, { value: 'USD', label: 'USD' }, { value: 'EUR', label: 'EUR' }, { value: 'AED', label: 'AED' }, { value: 'SAR', label: 'SAR' }]} /></Form.Item></Col>
+            <Col span={12}><Form.Item name="currency" label={t('currency', 'Currency')}><Select
+              options={buildEffectiveOptions(
+                currencies.map(c => ({ label: c.code, value: c.code })),
+                t('currencies', 'Currencies'),
+                '/settings?s=currencies',
+                navigate,
+              )}
+              onChange={(value) => {
+                if (handleAddOptionChange(value, '/settings?s=currencies', navigate)) return;
+              }}
+            /></Form.Item></Col>
           </Row>
           <Row gutter={12}>
             <Col span={12}><Form.Item name="account_number" label={t('account_number', 'Account number')}><Input /></Form.Item></Col>
@@ -3193,7 +3482,19 @@ const PaymentMethodsSettings: React.FC = () => {
   );
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
-      <SectionCard icon={<CreditCardOutlined />} title={t('pm_title', 'Payment methods')} description={t('pm_desc', 'Online and offline payment methods accepted by your business.')}>
+      <SectionCard icon={<CreditCardOutlined />} title={t('pm_title', 'Payment methods')} description={t('pm_desc', 'Online and offline payment methods accepted by your business.')}
+        actions={
+          <SectionHelpPopover
+            what={t('settings.help.payment_methods.what')}
+            why={t('settings.help.payment_methods.why')}
+            steps={[
+              t('settings.help.payment_methods.step_1'),
+              t('settings.help.payment_methods.step_2'),
+              t('settings.help.payment_methods.step_3'),
+            ]}
+          />
+        }
+      >
         <Divider titlePlacement="start">{t('pm_offline', 'Offline')}</Divider>
         <Row2 k="cash" label={t('pm_cash', 'Cash')} />
         <Row2 k="bank_transfer" label={t('pm_bank', 'Bank transfer')} />
@@ -3600,7 +3901,19 @@ const IntegrationsSettings: React.FC = () => {
   });
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
-      <SectionCard icon={<ClusterOutlined />} title={t('int_title', 'Integrations')} description={t('int_desc', 'Marketplace apps and 3rd-party connections.')}>
+      <SectionCard icon={<ClusterOutlined />} title={t('int_title', 'Integrations')} description={t('int_desc', 'Marketplace apps and 3rd-party connections.')}
+        actions={
+          <SectionHelpPopover
+            what={t('settings.help.integrations.what')}
+            why={t('settings.help.integrations.why')}
+            steps={[
+              t('settings.help.integrations.step_1'),
+              t('settings.help.integrations.step_2'),
+              t('settings.help.integrations.step_3'),
+            ]}
+          />
+        }
+      >
         <SettingsRow label={t('i_whatsapp', 'WhatsApp Business API')}><Switch checked={values.whatsapp_enabled} onChange={(v) => setValue('whatsapp_enabled', v)} disabled={loading} /></SettingsRow>
         {values.whatsapp_enabled && <SettingsRow label={t('i_wa_phone', 'WhatsApp Phone Number ID')}><Input value={values.whatsapp_phone_id} onChange={(e) => setValue('whatsapp_phone_id', e.target.value)} disabled={loading} /></SettingsRow>}
         <SettingsRow label={t('i_google', 'Google Calendar sync')}><Switch checked={values.google_calendar} onChange={(v) => setValue('google_calendar', v)} disabled={loading} /></SettingsRow>
@@ -3696,7 +4009,19 @@ const SmsWhatsappSettings: React.FC = () => {
   });
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
-      <SectionCard icon={<MessageOutlined />} title={t('sms_title', 'SMS & WhatsApp')} description={t('sms_desc', 'SMS gateway and WhatsApp Business API for transactional messages.')}>
+      <SectionCard icon={<MessageOutlined />} title={t('sms_title', 'SMS & WhatsApp')} description={t('sms_desc', 'SMS gateway and WhatsApp Business API for transactional messages.')}
+        actions={
+          <SectionHelpPopover
+            what={t('settings.help.sms.what')}
+            why={t('settings.help.sms.why')}
+            steps={[
+              t('settings.help.sms.step_1'),
+              t('settings.help.sms.step_2'),
+              t('settings.help.sms.step_3'),
+            ]}
+          />
+        }
+      >
         <SettingsRow label={t('sm_provider', 'Provider')}><Segmented value={values.provider} onChange={(v) => setValue('provider', v as SmsWaBag['provider'])} options={[{ value: 'local', label: t('local_provider', 'Local') }, { value: 'twilio', label: 'Twilio' }, { value: 'vonage', label: 'Vonage' }, { value: 'meta_wa', label: 'Meta WhatsApp' }]} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('sm_sender', 'Sender ID')}><Input value={values.sender_id} onChange={(e) => setValue('sender_id', e.target.value)} disabled={loading} style={{ width: 240 }} /></SettingsRow>
         <SettingsRow label={t('sm_sid', 'Account SID / API key')}><Input value={values.account_sid} onChange={(e) => setValue('account_sid', e.target.value)} disabled={loading} /></SettingsRow>
@@ -3719,7 +4044,22 @@ const AuditSettings: React.FC = () => {
   });
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
-      <SectionCard icon={<AuditOutlined />} title={t('audit_title', 'Audit & compliance')} description={t('audit_desc', 'Compliance reports, retention policies, and tamper-evident logs.')} accent="warning" actions={<Button onClick={() => window.location.assign('/audit')}>{t('open_audit', 'Open audit log')}</Button>}>
+      <SectionCard icon={<AuditOutlined />} title={t('audit_title', 'Audit & compliance')} description={t('audit_desc', 'Compliance reports, retention policies, and tamper-evident logs.')} accent="warning"
+        actions={
+          <Space>
+            <SectionHelpPopover
+              what={t('settings.help.audit.what')}
+              why={t('settings.help.audit.why')}
+              steps={[
+                t('settings.help.audit.step_1'),
+                t('settings.help.audit.step_2'),
+                t('settings.help.audit.step_3'),
+              ]}
+            />
+            <Button onClick={() => window.location.assign('/audit')}>{t('open_audit', 'Open audit log')}</Button>
+          </Space>
+        }
+      >
         <SettingsRow label={t('au_retain', 'Retention period (days)')}><InputNumber min={30} max={3650} value={values.retention_days} onChange={(v) => setValue('retention_days', Number(v) || 365)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
         <SettingsRow label={t('au_export', 'Compliance export format')}><Segmented value={values.export_format} onChange={(v) => setValue('export_format', v as AuditBag['export_format'])} options={[{ value: 'csv', label: 'CSV' }, { value: 'json', label: 'JSON' }, { value: 'both', label: t('both', 'Both') }]} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('au_anom', 'Anomaly alerts')}><Switch checked={values.anomaly_alerts} onChange={(v) => setValue('anomaly_alerts', v)} disabled={loading} /></SettingsRow>

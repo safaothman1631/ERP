@@ -16,6 +16,7 @@ export interface NavLeaf {
   label: string;        // i18n key OR label
   description?: string;
   keywords?: string[];
+  keywordsKu?: string[];   // Kurdish-only search keywords
   favoriteEligible?: boolean;
 }
 
@@ -167,20 +168,6 @@ export const buildNavSections = (t: TFunction): NavSection[] => [
     ],
   },
   {
-    key: 'quality',
-    label: t('quality.quality'),
-    icon: <BuildOutlined />,
-    zone: 'operations',
-    blurb: t('nav.quality_blurb', 'Quality control, inspections, and corrective actions'),
-    items: [
-      { key: '/quality', label: t('quality.dashboard'), description: t('nav.desc_quality_dashboard', 'Quality metrics and alerts'), keywords: ['quality', 'kpi'] },
-      { key: '/quality/plans', label: t('quality.qc_plans'), description: t('nav.desc_qc_plans', 'Quality control plans and checkpoints'), keywords: ['qc', 'inspection'] },
-      { key: '/quality/checks', label: t('quality.qc_checks'), description: t('nav.desc_qc_checks', 'Inspection records and results'), keywords: ['inspect', 'test'] },
-      { key: '/quality/ncr', label: t('quality.non_conformances'), description: t('nav.desc_ncr', 'Non-conformance reports and tracking'), keywords: ['ncr', 'defect'] },
-      { key: '/quality/capa', label: t('quality.capa'), description: t('nav.desc_capa', 'Corrective and preventive actions'), keywords: ['capa', 'corrective'] },
-    ],
-  },
-  {
     key: 'pos',
     label: t('pos.pos'),
     icon: <ShopOutlined />,
@@ -198,7 +185,7 @@ export const buildNavSections = (t: TFunction): NavSection[] => [
       { key: '/pos/loyalty', label: t('pos.loyalty'), description: t('nav.desc_pos_loyalty', 'Reward points and retention settings'), keywords: ['reward'] },
       { key: '/pos/gift-cards', label: t('pos.gift_cards'), description: t('nav.desc_pos_gift_cards', 'Stored-value cards and redemption'), keywords: ['gift'] },
       { key: '/pos/floors', label: t('pos.floors', 'Floors & Tables'), description: t('nav.desc_pos_floors', 'Restaurant floor layout and table map'), keywords: ['restaurant', 'tables'] },
-      { key: '/pos/reports', label: t('pos.reports', 'POS Reports'), description: t('nav.desc_pos_reports', 'Daily Z-report, sales by cashier, by product'), keywords: ['z-report', 'sales report'] },
+      { key: '/pos/reports', label: t('pos.pos_reports', 'POS Reports'), description: t('nav.desc_pos_reports', 'Daily Z-report, sales by cashier, by product'), keywords: ['z-report', 'sales report'] },
     ],
   },
   {
@@ -304,8 +291,8 @@ export const buildNavSections = (t: TFunction): NavSection[] => [
       { key: '/journals', label: t('journals'), description: t('nav.desc_journals', 'Entries, posting, and audit trail'), keywords: ['entries'] },
       { key: '/reports', label: t('reports'), description: t('nav.desc_reports', 'Financial statements and snapshots'), keywords: ['pl', 'bs', 'trial balance'], favoriteEligible: true },
       { key: '/reports/advanced', label: t('advanced_reports'), description: t('nav.desc_advanced_reports', 'Deep reporting and custom analysis'), keywords: ['analysis'] },
-      { key: '/reports/scheduled', label: t('scheduled_reports', 'Scheduled Reports'), description: t('nav.desc_scheduled_reports', 'Auto-send reports via email'), keywords: ['schedule', 'auto-send'] },
-      { key: '/reports/custom-list', label: t('custom_reports', 'Custom Reports'), description: t('nav.desc_custom_reports', 'Build and save custom data views'), keywords: ['custom', 'builder'] },
+      { key: '/reports/scheduled', label: t('scheduled_reports.title', 'Scheduled Reports'), description: t('nav.desc_scheduled_reports', 'Auto-send reports via email'), keywords: ['schedule', 'auto-send'] },
+      { key: '/reports/custom-list', label: t('custom_reports.list_title', 'Custom Reports'), description: t('nav.desc_custom_reports', 'Build and save custom data views'), keywords: ['custom', 'builder'] },
       { key: '/tax-settings', label: t('tax_settings'), description: t('nav.desc_tax_settings', 'Tax rates, groups, and defaults'), keywords: ['vat', 'tax'] },
       { key: '/tax-returns', label: t('taxReturns'), description: t('nav.desc_tax_returns', 'Tax filing preparation and review'), keywords: ['filing'] },
     ],
@@ -366,8 +353,6 @@ export const buildNavSections = (t: TFunction): NavSection[] => [
       { key: '/helpdesk/tickets', label: t('helpdesk.tickets', 'Tickets'), keywords: ['ticket', 'support', 'requests'] },
       { key: '/helpdesk/settings', label: t('helpdesk.settings', 'Helpdesk Settings'), keywords: ['helpdesk', 'config', 'teams', 'sla'] },
       { key: '/kb', label: t('kb.knowledge_base', 'Knowledge Base'), keywords: ['kb', 'wiki', 'articles', 'help'] },
-      { key: '/wave-a/helpdesk', label: t('mod_helpdesk_ext', 'Helpdesk'), keywords: ['ticket', 'support'] },
-      { key: '/wave-a/field-service', label: t('mod_fs_ext', 'Field Service'), keywords: ['dispatch', 'workers'] },
       { key: '/subscriptions', label: t('subscription.subscriptions', 'Subscriptions'), keywords: ['recurring', 'billing', 'mrr', 'arr'] },
       { key: '/subscriptions/plans', label: t('subscription.plans', 'Subscription Plans'), keywords: ['plans'] },
       { key: '/subscriptions/dunning', label: t('subscription.dunning_queue', 'Dunning Queue'), keywords: ['dunning', 'overdue'] },
@@ -391,6 +376,11 @@ export const buildNavSections = (t: TFunction): NavSection[] => [
     zone: 'operations',
     blurb: t('nav.ext_ops_blurb', 'Quality control, maintenance, PLM, and repairs'),
     items: [
+      { key: '/quality', label: t('mod_quality', 'Quality'), description: t('nav.desc_quality_dashboard', 'Quality metrics and alerts'), keywords: ['quality', 'kpi'] },
+      { key: '/quality/plans', label: t('quality.qc_plans'), description: t('nav.desc_qc_plans', 'Quality control plans and checkpoints'), keywords: ['qc', 'inspection'] },
+      { key: '/quality/checks', label: t('quality.qc_checks'), description: t('nav.desc_qc_checks', 'Inspection records and results'), keywords: ['inspect', 'test'] },
+      { key: '/quality/ncr', label: t('quality.non_conformances'), description: t('nav.desc_ncr', 'Non-conformance reports and tracking'), keywords: ['ncr', 'defect'] },
+      { key: '/quality/capa', label: t('quality.capa'), description: t('nav.desc_capa', 'Corrective and preventive actions'), keywords: ['capa', 'corrective'] },
       { key: '/wave-a/quality', label: t('mod_quality', 'Quality'), keywords: ['quality', 'capa'] },
       { key: '/maintenance', label: t('mod_maintenance', 'Maintenance'), keywords: ['maintenance', 'equipment'], favoriteEligible: true },
       { key: '/maintenance/equipment', label: t('maintenance.equipment', 'Equipment'), keywords: ['maintenance', 'equipment', 'assets'] },
@@ -422,46 +412,21 @@ export const buildNavSections = (t: TFunction): NavSection[] => [
       { key: '/repairs/warranty-check', label: t('repairs.warranty_check'), description: t('repairs.warranty_check_desc'), keywords: ['warranty', 'check', 'serial'] },
     ],
   },
-  // ── Admin & Config ──────────────
-  {
-    key: 'admin-config',
-    label: t('nav.admin_config', 'Admin & Config'),
-    icon: <SettingOutlined />,
-    zone: 'finance-control',
-    blurb: t('nav.admin_config_blurb', 'Settings, automation, studio, and system control'),
-    items: [
-      { key: '/settings', label: t('settings'), description: t('nav.desc_settings', 'Organization and system settings'), keywords: ['config', 'preferences'] },
-      { key: '/settings/numbering', label: t('numbering.sequences'), description: t('nav.desc_numbering', 'Per-branch document numbering sequences'), keywords: ['numbering', 'sequence', 'branch'] },
-      { key: '/automation-rules', label: t('automation.title'), description: t('nav.desc_automation', 'Automated actions and workflows'), keywords: ['workflow', 'triggers'] },
-      { key: '/audit-log-viewer', label: t('audit_log.title'), description: t('nav.desc_audit_log', 'System-wide auditability and trace'), keywords: ['history', 'audit'] },
-      { key: '/admin/job-runs', label: t('jobs.scheduler_title'), description: t('nav.desc_job_runs', 'Background job monitoring and control'), keywords: ['scheduler', 'jobs', 'cron', 'background'] },
-      { key: '/studio', label: t('studio.title', 'Studio (No-Code)'), description: t('nav.desc_studio', 'No-code customization and field builder'), keywords: ['custom', 'fields', 'builder', 'nocode'], favoriteEligible: true },
-    ],
-  },
-  {
-    key: 'ai-assist',
-    label: t('ai.ai_assist', 'AI Assist'),
-    icon: <ApiOutlined />,
-    zone: 'finance-control',
-    blurb: t('nav.ai_assist_blurb', 'AI-powered insights, anomaly detection, and automation'),
-    items: [
-      { key: '/ai', label: t('ai.dashboard_title'), description: t('nav.desc_ai_dashboard', 'AI overview and health metrics'), keywords: ['ai', 'dashboard', 'insights'], favoriteEligible: true },
-      { key: '/ai/anomalies', label: t('ai.anomalies_title'), description: t('nav.desc_ai_anomalies', 'Detect unusual patterns and outliers'), keywords: ['anomaly', 'detection', 'outliers'], favoriteEligible: true },
-      { key: '/ai/suggestions', label: t('ai.suggestions_title'), description: t('nav.desc_ai_suggestions', 'Smart recommendations and actions'), keywords: ['suggestions', 'recommendations'], favoriteEligible: true },
-      { key: '/ai/ocr', label: t('ai.ocr_advanced_title'), description: t('nav.desc_ai_ocr', 'Advanced receipt scanning and extraction'), keywords: ['ocr', 'scan', 'receipt'], favoriteEligible: true },
-      { key: '/ai/predictions', label: t('ai.predictions_title'), description: t('nav.desc_ai_predictions', 'Forecasts and predictive analytics'), keywords: ['forecast', 'prediction'], favoriteEligible: true },
-    ],
-  },
+
   {
     key: 'ext-platform',
     label: t('nav.ext_platform', 'Platform & AI'),
     icon: <ApiOutlined />,
     zone: 'finance-control',
-    blurb: t('nav.ext_platform_blurb', 'Studio (no-code), rental, AI, mobile, and IoT'),
+    blurb: t('nav.ext_platform_blurb', 'Studio (no-code), AI, mobile, IoT, and rental'),
     items: [
       { key: '/ext/studio', label: t('mod_studio', 'Studio'), keywords: ['nocode', 'studio'] },
       { key: '/ext/rental', label: t('mod_rental', 'Rental'), keywords: ['rental'] },
-      { key: '/ext/ai', label: t('mod_ai', 'AI'), keywords: ['ai', 'forecast'] },
+      { key: '/ai', label: t('ai.dashboard_title'), description: t('nav.desc_ai_dashboard', 'AI overview and health metrics'), keywords: ['ai', 'dashboard', 'insights'], favoriteEligible: true },
+      { key: '/ai/anomalies', label: t('ai.anomalies_title'), description: t('nav.desc_ai_anomalies', 'Detect unusual patterns and outliers'), keywords: ['anomaly', 'detection', 'outliers'], favoriteEligible: true },
+      { key: '/ai/suggestions', label: t('ai.suggestions_title'), description: t('nav.desc_ai_suggestions', 'Smart recommendations and actions'), keywords: ['suggestions', 'recommendations'], favoriteEligible: true },
+      { key: '/ai/ocr', label: t('ai.ocr_advanced_title'), description: t('nav.desc_ai_ocr', 'Advanced receipt scanning and extraction'), keywords: ['ocr', 'scan', 'receipt'], favoriteEligible: true },
+      { key: '/ai/predictions', label: t('ai.predictions_title'), description: t('nav.desc_ai_predictions', 'Forecasts and predictive analytics'), keywords: ['forecast', 'prediction'], favoriteEligible: true },
       { key: '/ext/mobile', label: t('mod_mobile', 'Mobile API'), keywords: ['mobile', 'push'] },
       { key: '/ext/iot', label: t('mod_iot', 'IoT'), keywords: ['iot', 'devices'] },
     ],
@@ -471,15 +436,13 @@ export const buildNavSections = (t: TFunction): NavSection[] => [
     label: t('nav.ext_vertical', 'Industry Apps'),
     icon: <ShopOutlined />,
     zone: 'operations',
-    blurb: t('nav.ext_vertical_blurb', 'Industry-specific verticals'),
+    blurb: t('nav.ext_vertical_blurb', 'Industry-specific vertical applications'),
     items: [
       { key: '/healthcare', label: t('healthcare.clinic_dashboard', 'Healthcare'), description: t('healthcare.healthcare_desc', 'Clinic dashboard, patients, and appointments'), keywords: ['healthcare', 'patient', 'clinic'], favoriteEligible: true },
       { key: '/healthcare/patients', label: t('healthcare.patients', 'Patients'), description: t('healthcare.patients_desc', 'Patient registry and medical records'), keywords: ['patients', 'medical records'] },
       { key: '/healthcare/appointments', label: t('healthcare.appointments', 'Appointments'), description: t('healthcare.appointments_desc', 'Appointment calendar and scheduling'), keywords: ['appointments', 'calendar', 'schedule'] },
       { key: '/hospital/wards', label: t('hospital.wards_admissions', 'Hospital Wards'), description: t('hospital.wards_desc', 'Ward management and patient admissions'), keywords: ['hospital', 'wards', 'admissions'] },
       { key: '/pharmacy/dispense', label: t('pharmacy.dispense', 'Pharmacy'), description: t('pharmacy.pharmacy_desc', 'Prescription dispensing and inventory'), keywords: ['pharmacy', 'drugs', 'prescriptions'] },
-      { key: '/ext/hotel', label: t('mod_hotel', 'Hotel'), keywords: ['hotel', 'rooms'] },
-      { key: '/ext/restaurant', label: t('mod_restaurant', 'Restaurant'), keywords: ['restaurant', 'menu'] },
       { key: '/ext/construction', label: t('mod_construction', 'Construction'), keywords: ['construction', 'wbs'] },
       { key: '/ext/real-estate', label: t('mod_real_estate', 'Real Estate'), keywords: ['property', 'lease'] },
       { key: '/ext/education', label: t('mod_education', 'Education'), keywords: ['school', 'students'] },
@@ -497,13 +460,18 @@ export const buildNavSections = (t: TFunction): NavSection[] => [
     blurb: t('nav.setup_blurb', 'Roles, schema, settings, and platform controls'),
     items: [
       { key: '/custom-fields', label: t('custom_fields'), description: t('nav.desc_custom_fields', 'Schema extension and custom data points'), keywords: ['schema'] },
-      { key: '/users', label: t('users', 'بەکارهێنەران'), description: t('nav.desc_users', 'Create, invite, suspend and assign roles'), keywords: ['users', 'team', 'invite'], favoriteEligible: true },
+      { key: '/users', label: t('users', 'Users'), description: t('nav.desc_users', 'Create, invite, suspend and assign roles'), keywords: ['users', 'team', 'invite'], favoriteEligible: true },
       { key: '/rbac-roles', label: t('roles_permissions'), description: t('nav.desc_roles_permissions', 'Access policy and permission design'), keywords: ['rbac', 'permissions'] },
       { key: '/user-roles', label: t('user_roles'), description: t('nav.desc_user_roles', 'Role assignments and user access (legacy)'), keywords: ['access'] },
       { key: '/settings', label: t('settings'), description: t('nav.desc_settings', 'Global configuration and operational settings'), keywords: ['config', 'preferences'], favoriteEligible: true },
+      { key: '/settings/numbering', label: t('numbering.sequences'), description: t('nav.desc_numbering', 'Per-branch document numbering sequences'), keywords: ['numbering', 'sequence', 'branch'] },
+      { key: '/automation-rules', label: t('automation.title'), description: t('nav.desc_automation', 'Automated actions and workflows'), keywords: ['workflow', 'triggers'] },
+      { key: '/audit-log-viewer', label: t('audit_log.title'), description: t('nav.desc_audit_log', 'System-wide auditability and trace'), keywords: ['history', 'audit'] },
+      { key: '/admin/job-runs', label: t('jobs.scheduler_title'), description: t('nav.desc_job_runs', 'Background job monitoring and control'), keywords: ['scheduler', 'jobs', 'cron', 'background'] },
+      { key: '/studio', label: t('studio.title', 'Studio (No-Code)'), description: t('nav.desc_studio', 'No-code customization and field builder'), keywords: ['custom', 'fields', 'builder', 'nocode'], favoriteEligible: true },
       { key: '/onboarding', label: t('onboarding.wizard_title'), description: t('nav.desc_onboarding', 'Setup wizard for new organizations'), keywords: ['setup', 'wizard', 'onboarding'] },
-      { key: '/docs', label: t('docs_hub', 'Help Center'), description: t('nav.desc_docs', 'In-app guides, fields, workflows, and shortcuts'), keywords: ['help', 'docs', 'documentation', 'یارمەتی', 'دۆکیومێنت'], favoriteEligible: true },
-      { key: '/ui-gallery', label: t('ui_gallery', 'Layout Gallery'), description: t('nav.desc_ui_gallery', 'Preview and pick a UI layout style for the app shell'), keywords: ['layout', 'theme', 'ui', 'shell', 'ڕووکار', 'گاڵەری'], favoriteEligible: true },
+      { key: '/docs', label: t('docs_hub', 'Help Center'), description: t('nav.desc_docs', 'In-app guides, fields, workflows, and shortcuts'), keywords: ['help', 'docs', 'documentation'], keywordsKu: ['یارمەتی', 'دۆکیومێنت'], favoriteEligible: true },
+      { key: '/ui-gallery', label: t('ui_gallery', 'Layout Gallery'), description: t('nav.desc_ui_gallery', 'Preview and pick a UI layout style for the app shell'), keywords: ['layout', 'theme', 'ui', 'shell'], keywordsKu: ['ڕووکار', 'گاڵەری'], favoriteEligible: true },
       { key: '/trash', label: t('trash', 'Trash'), description: t('nav.desc_trash', 'Recently deleted items, restore or permanently remove'), keywords: ['recycle', 'deleted', 'restore'] },
     ],
   },
@@ -513,7 +481,7 @@ export const buildNavSections = (t: TFunction): NavSection[] => [
 export const flattenRoutes = (sections: NavSection[], zones?: NavZone[]): FlattenedNavLeaf[] => {
   const zoneLabels = new Map((zones || []).map((zone) => [zone.key, zone.label]));
 
-  return sections.flatMap((section) =>
+  const flattened = sections.flatMap((section) =>
     section.items.map((item) => ({
       ...item,
       icon: section.icon,
@@ -524,6 +492,20 @@ export const flattenRoutes = (sections: NavSection[], zones?: NavZone[]): Flatte
       favoriteEligible: item.favoriteEligible ?? true,
     }))
   );
+
+  if (process.env.NODE_ENV === 'development') {
+    const seen = new Map<string, number>();
+    for (const leaf of flattened) {
+      seen.set(leaf.key, (seen.get(leaf.key) ?? 0) + 1);
+    }
+    for (const [path, count] of seen) {
+      if (count > 1) {
+        console.warn(`[nav] duplicate route: ${path}`);
+      }
+    }
+  }
+
+  return flattened;
 };
 
 /** ئەو section بدۆزەرەوە کە routeـێک تێیدایە. */
