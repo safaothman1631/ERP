@@ -1,6 +1,8 @@
 import React, { Suspense, useEffect } from 'react';
-import { BrowserRouter, useRoutes } from 'react-router-dom';
+import { BrowserRouter, useRoutes, useLocation } from 'react-router-dom';
 import { App as AntApp, ConfigProvider, Spin, theme as antTheme } from 'antd';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from './store';
 import { useSettingsStore } from './store/settingsStore';
@@ -9,13 +11,42 @@ import { setMessageInstance } from './utils/message';
 import { routes } from './App.routes';
 
 /**
+ * Global React Query client — configured per design spec:
+ * - staleTime: 5 minutes (data stays fresh for 5 min before background refetch)
+ * - gcTime: 30 minutes (unused cache entries are garbage-collected after 30 min)
+ * - stale-while-revalidate: refetchOnWindowFocus keeps data fresh
+ * - retry: 2 attempts on failure
+ */
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,   // 5 خولەک
+      gcTime: 30 * 60 * 1000,      // 30 خولەک
+      refetchOnWindowFocus: true,
+      retry: 2,
+    },
+  },
+});
+
+/**
  * Drives the global `<Routes>` from the JS-importable `routes` array exported
  * from `./App.routes`. Using `useRoutes` (instead of `<Routes>`/`<Route>` JSX)
  * means the audit (`scripts/nav-audit.mjs`) and the Playwright sweep
  * (`tests/e2e/nav-sweep.spec.ts`) can import the same array and apply
  * `matchRoutes` with semantics identical to the runtime.
+ *
+ * AnimatePresence is keyed on the pathname so that exit animations fire
+ * when navigating between pages (Requirement 4.2).
  */
-const RoutesElement: React.FC = () => useRoutes(routes);
+const RoutesElement: React.FC = () => {
+  const location = useLocation();
+  const element = useRoutes(routes, location);
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      {element && React.cloneElement(element, { key: location.pathname })}
+    </AnimatePresence>
+  );
+};
 
 const App: React.FC = () => {
   const { i18n } = useTranslation();
@@ -33,6 +64,7 @@ const App: React.FC = () => {
   }, [isAuthenticated, loadSettings]);
 
   return (
+    <QueryClientProvider client={queryClient}>
     <ConfigProvider
       direction={isRTL ? 'rtl' : 'ltr'}
       theme={{
@@ -110,6 +142,7 @@ const App: React.FC = () => {
       </BrowserRouter>
       </AntApp>
     </ConfigProvider>
+    </QueryClientProvider>
   );
 };
 

@@ -13,6 +13,7 @@ import { useAuthStore } from './store';
 import AppLayout from './layouts/AppShell';
 import Login from './pages/Login';
 import PageTransition from './components/PageTransition';
+import LandingPage from './pages/LandingPage';
 
 // Hardened lazy loader: surfaces stringifiable errors so React's error reporter
 // cannot crash with "Cannot convert object to primitive value" when a chunk
@@ -161,6 +162,10 @@ const AcceptInvite = lazy(() => import('./pages/AcceptInvite'));
 const SignUp = lazy(() => import('./pages/SignUp'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+// Auth module pages (Task 3.3)
+const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
+const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
+const MFAPage = lazy(() => import('./pages/auth/MFAPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const ServerError = lazy(() => import('./pages/ServerError'));
 // POS Pages
@@ -330,8 +335,22 @@ const PLMEngineeringChanges = lazy(() => import('./pages/plm/PLMEngineeringChang
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  // Requirement 1.1: unauthenticated users visiting any protected route are
+  // redirected to the public landing page first (not directly to /login).
+  if (!isAuthenticated) return <Navigate to="/landing" replace />;
   return <>{children}</>;
+};
+
+/**
+ * LandingRoute — shows the public landing page for unauthenticated visitors.
+ * Authenticated users are redirected straight to the dashboard.
+ * Requirement 1.1: WHEN بەکارهێنەر بچێتە `/` بەبێ لۆگئین، THE سیستەم SHALL
+ * ئەوان بگەیەنێت بۆ پەرەی سەرەتای گشتی.
+ */
+const LandingRoute: React.FC = () => {
+  const { isAuthenticated } = useAuthStore();
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  return <PageTransition><LandingPage /></PageTransition>;
 };
 
 /**
@@ -351,11 +370,19 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
  *     visual fallback is unchanged.
  */
 export const routes: RouteObject[] = [
+  // Public landing page — unauthenticated visitors see the marketing page;
+  // authenticated users are redirected to /dashboard (Requirement 1.1)
+  { path: '/landing', element: <LandingRoute /> },
+  { path: '/', element: <LandingRoute /> },
   { path: '/login', element: <PageTransition><Login /></PageTransition> },
   { path: '/signup', element: <Suspense fallback={<Spin />}><PageTransition><SignUp /></PageTransition></Suspense> },
   { path: '/forgot-password', element: <Suspense fallback={<Spin />}><PageTransition><ForgotPassword /></PageTransition></Suspense> },
   { path: '/reset-password', element: <Suspense fallback={<Spin />}><PageTransition><ResetPassword /></PageTransition></Suspense> },
   { path: '/accept-invite', element: <Suspense fallback={<Spin />}><PageTransition><AcceptInvite /></PageTransition></Suspense> },
+  // Auth module pages (Task 3.3) — dedicated auth pages with enhanced validation and MFA
+  { path: '/register', element: <Suspense fallback={<Spin />}><PageTransition><RegisterPage /></PageTransition></Suspense> },
+  { path: '/auth/login', element: <Suspense fallback={<Spin />}><PageTransition><LoginPage /></PageTransition></Suspense> },
+  { path: '/mfa', element: <Suspense fallback={<Spin />}><PageTransition><MFAPage /></PageTransition></Suspense> },
   // Wave E: Public Storefront Routes
   { path: '/store', element: <Suspense fallback={<Spin />}><PageTransition><StoreHome /></PageTransition></Suspense> },
   { path: '/store/product/:id', element: <Suspense fallback={<Spin />}><PageTransition><StoreProduct /></PageTransition></Suspense> },

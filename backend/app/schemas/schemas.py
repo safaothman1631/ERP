@@ -62,6 +62,7 @@ class ResetPasswordRequest(BaseModel):
 
 class TokenResponse(BaseModel):
     access_token: str
+    refresh_token: Optional[str] = None  # Requirement 2.8: 7-day refresh token
     token_type: str = "bearer"
     user_id: str
     org_id: str

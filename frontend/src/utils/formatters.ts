@@ -1,3 +1,15 @@
+/**
+ * formatters.ts — locale-aware formatting utilities
+ *
+ * Provides:
+ *   - formatMoney()    — currency formatting for IQD/USD/EUR (ku + en)
+ *   - formatCurrency() — alias / extended version of formatMoney
+ *   - formatDate()     — date formatting respecting user locale
+ *   - formatNumber()   — number formatting with locale separators
+ *   - formatTime()     — time formatting (12h / 24h)
+ *
+ * Requirements: 18.1, 18.2, 18.3, 18.4
+ */
 import i18n from '../i18n';
 import { useSettingsStore } from '../store/settingsStore';
 
@@ -22,6 +34,39 @@ function localeFromI18n(): string {
   if (lang.startsWith('ku')) return 'ckb-IQ';
   if (lang.startsWith('ar')) return 'ar-IQ';
   return 'en-US';
+}
+
+/**
+ * formatMoney — primary money formatter for the ERP system.
+ *
+ * Formats a monetary amount with the correct locale and currency symbol.
+ * - Kurdish (ku): uses 'ar-IQ' locale (Arabic-Iraq number formatting, RTL)
+ * - English (en): uses 'en-US' locale
+ *
+ * @param amount       - The numeric amount to format
+ * @param currency     - ISO 4217 currency code (default: 'IQD')
+ * @returns            - Formatted string, e.g. "IQD 1,250,000.00" or "١٬٢٥٠٬٠٠٠٫٠٠ د.ع.‏"
+ *
+ * Requirements: 18.3, 18.4
+ */
+export function formatMoney(amount: number, currency = 'IQD'): string {
+  const locale = localeFromI18n();
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    // Fallback: manual formatting if Intl fails (e.g. unsupported currency)
+    const fmt = getFormats();
+    const sep = fmt?.thousand_sep || ',';
+    const dec = fmt?.decimal_sep || '.';
+    const parts = amount.toFixed(2).split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, sep);
+    return `${currency} ${parts.join(dec)}`;
+  }
 }
 
 export function formatCurrency(amount: number, currencyCode?: string): string {

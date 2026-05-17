@@ -8,7 +8,8 @@ from app.firestore.users import UserRepository
 from app.firestore.system import CurrencyRepository, SequenceRepository
 from app.firestore.accounts import AccountRepository
 from app.firestore.taxes import TaxRateRepository
-from app.services.auth import hash_password, verify_password, create_access_token, get_current_user, revoke_token, validate_password_strength
+from app.services.auth import hash_password, verify_password, create_access_token, create_refresh_token, verify_refresh_token, get_current_user, revoke_token, validate_password_strength, record_ip_failure, is_ip_blocked, reset_ip_failures
+from app.services.auth import _TOKEN_TYPE_ACCESS, _TOKEN_TYPE_REFRESH
 from app.schemas.schemas import (
     SetupRequest, LoginRequest, TokenResponse, MessageResponse,
     RegisterRequest, FirebaseRegisterRequest, ForgotPasswordRequest, ResetPasswordRequest,
@@ -94,7 +95,23 @@ def initial_setup(request: Request, data: SetupRequest):
 @router.post("/login", response_model=TokenResponse)
 @limiter.limit("5/minute")
 def login(request: Request, data: LoginRequest):
-    """User login with brute-force lockout (5 failed attempts -> 15 min lock)."""
+    """User login with brute-force lockout (5 failed attempts -> 15 min lock)
+    and IP-based brute-force blocking (Requirement 6.11: 24h block).
+
+    Returns:
+        - access_token: JWT valid for 1 hour (Requirement 2.8)
+        - refresh_token: JWT valid for 7 days (Requirement 2.8)
+    """
+    from datetime import timedelta
+
+    # --- IP-based brute-force block check (Requirement 6.11) ---
+    client_ip = (request.client.host if request and request.client else None) or ""
+    if client_ip and is_ip_blocked(client_ip):
+        raise HTTPException(
+            status_code=429,
+            detail="ئەم IP ەی بۆ ٢٤ ساعەت بلۆک کراوە بەهۆی هەوڵدانی زۆر. تکایە دواتر هەوڵبدەرەوە",
+        )
+
     from app.firebase_client import get_db
     db = get_db()
     users_ref = db.collection("users").where("email", "==", data.email).limit(1).stream()
@@ -105,13 +122,16 @@ def login(request: Request, data: LoginRequest):
         break
     
     if not user_data:
+        # Record IP failure even for non-existent users (prevents user enumeration timing)
+        if client_ip:
+            record_ip_failure(client_ip)
         raise HTTPException(status_code=401, detail="ئیمەیڵ یان وشەی نهێنی هەڵەیە")
 
     # If user signed up via Google and has no password
     if user_data.get("auth_provider") == "google" and not user_data.get("password_hash"):
         raise HTTPException(status_code=400, detail="تکایە بە Google بچۆرە ژوورەوە")
 
-    # --- Brute-force lockout check ---
+    # --- Account-level brute-force lockout check ---
     LOCKOUT_THRESHOLD = 5
     LOCKOUT_MINUTES = 15
     locked_until = user_data.get("locked_until")
@@ -129,28 +149,38 @@ def login(request: Request, data: LoginRequest):
     user_repo = UserRepository(user_data["org_id"])
 
     if not verify_password(data.password, user_data["password_hash"]):
+        # Record failure for both account and IP
         failed = int(user_data.get("failed_login_attempts", 0)) + 1
         update_payload: dict = {"failed_login_attempts": failed}
         if failed >= LOCKOUT_THRESHOLD:
             update_payload["locked_until"] = datetime.utcnow() + timedelta(minutes=LOCKOUT_MINUTES)
             update_payload["failed_login_attempts"] = 0
         user_repo.update(user_data["id"], update_payload)
+        if client_ip:
+            record_ip_failure(client_ip)
         raise HTTPException(status_code=401, detail="ئیمەیڵ یان وشەی نهێنی هەڵەیە")
 
-    # Success: reset counter + update last_login
+    # Success: reset counters + update last_login
     _now = datetime.utcnow()
-    _client_ip = (request.client.host if request and request.client else None)
     user_repo.update(user_data["id"], {
         "last_login": _now,
         "last_login_at": _now,
-        "last_login_ip": _client_ip,
+        "last_login_ip": client_ip,
         "failed_login_attempts": 0,
         "locked_until": None,
     })
+    # Reset IP failure counter on successful login
+    if client_ip:
+        reset_ip_failures(client_ip)
 
-    token = create_access_token(data={"sub": user_data["id"], "org_id": user_data["org_id"]})
+    # Requirement 2.8: access token = 1 hour, refresh token = 7 days
+    token_data = {"sub": user_data["id"], "org_id": user_data["org_id"]}
+    access_token = create_access_token(data=token_data, expires_delta=timedelta(hours=1))
+    refresh_token = create_refresh_token(data=token_data)
+
     return TokenResponse(
-        access_token=token,
+        access_token=access_token,
+        refresh_token=refresh_token,
         user_id=user_data["id"],
         org_id=user_data["org_id"],
         user_name=user_data["name"],
@@ -164,6 +194,7 @@ def firebase_login(request: Request, body: dict):
     import firebase_admin
     from firebase_admin import auth as firebase_auth
     from app.firebase_client import get_db
+    from datetime import timedelta
 
     id_token = body.get("id_token")
     if not id_token:
@@ -196,9 +227,14 @@ def firebase_login(request: Request, body: dict):
         "firebase_uid": decoded.get("uid"),
     })
 
-    token = create_access_token(data={"sub": user_data["id"], "org_id": user_data["org_id"]})
+    # Requirement 2.8: access token = 1 hour, refresh token = 7 days
+    token_data = {"sub": user_data["id"], "org_id": user_data["org_id"]}
+    access_token = create_access_token(data=token_data, expires_delta=timedelta(hours=1))
+    refresh_token = create_refresh_token(data=token_data)
+
     return TokenResponse(
-        access_token=token,
+        access_token=access_token,
+        refresh_token=refresh_token,
         user_id=user_data["id"],
         org_id=user_data["org_id"],
         user_name=user_data.get("name", email),
@@ -219,42 +255,35 @@ def logout(user: dict = Depends(get_current_user)):
     return {"success": True, "message": "دەرچوون بەسەرکەوتوویی ئەنجامدرا"}
 
 
-# Refresh-token grace window: allow exchanging an expired token for a new one
-# within this many days of its original expiry. Beyond this, user must re-login.
-REFRESH_GRACE_DAYS = 7
-
-
 @router.post("/refresh", response_model=TokenResponse)
 def refresh_token_endpoint(request: Request):
-    """Exchange a (possibly expired) access token for a fresh one.
+    """Exchange a refresh token for a new access token.
 
-    Use cases:
-        - Silent token refresh from frontend axios interceptor on 401
-        - Sliding session: extend session without re-login as long as user is active
+    Requirement 2.8: refresh token is valid for 7 days; access token for 1 hour.
 
-    Rules:
-        - Old token must decode (signature + jti must match what was issued)
-        - Old jti must not be in revoked_tokens denylist
-        - Original exp must be within REFRESH_GRACE_DAYS (else force re-login)
-        - User must still be active in DB
-        - On success: new token issued (new jti) + old jti added to denylist
+    The endpoint accepts either:
+    1. A valid refresh token (token_type=refresh) in the Authorization header
+    2. A legacy access token (for backward compatibility with the grace-window approach)
+
+    On success: new 1-hour access token + new 7-day refresh token issued.
+    Old refresh token jti is revoked to prevent reuse.
     """
-    from datetime import datetime, timedelta
-    from jose import JWTError, jwt
+    from datetime import timedelta
+    from jose import JWTError, jwt as _jwt
     from app.config import get_settings as _gs
     from app.services.auth import is_token_revoked as _revoked, revoke_token as _revoke
     s = _gs()
 
-    # Extract bearer token manually (don't depend on get_current_user — it rejects expired tokens)
+    # Extract bearer token from Authorization header
     auth_header = request.headers.get("Authorization") or ""
     if not auth_header.lower().startswith("bearer "):
         raise HTTPException(status_code=401, detail="توکن نەدۆزرایەوە")
-    old_token = auth_header[7:].strip()
+    token_str = auth_header[7:].strip()
 
     try:
-        payload = jwt.decode(
-            old_token, s.SECRET_KEY, algorithms=[s.ALGORITHM],
-            options={"verify_exp": False},  # we validate grace window manually
+        payload = _jwt.decode(
+            token_str, s.SECRET_KEY, algorithms=[s.ALGORITHM],
+            options={"verify_exp": False},  # we validate manually
         )
     except JWTError:
         raise HTTPException(status_code=401, detail="توکن نادروستە")
@@ -263,17 +292,26 @@ def refresh_token_endpoint(request: Request):
     org_id = payload.get("org_id")
     old_jti = payload.get("jti")
     exp_ts = payload.get("exp")
+    token_type = payload.get("token_type", _TOKEN_TYPE_ACCESS)
+
     if not (user_id and org_id and exp_ts):
         raise HTTPException(status_code=401, detail="توکن ناتەواوە")
 
-    # Reject revoked tokens immediately (logout, password reset)
+    # Reject revoked tokens immediately
     if old_jti and _revoked(old_jti):
         raise HTTPException(status_code=401, detail="توکن هەڵوەشێنراوەتەوە")
 
-    # Grace window: original exp must be within REFRESH_GRACE_DAYS of now
     exp_dt = datetime.utcfromtimestamp(int(exp_ts))
-    if datetime.utcnow() - exp_dt > timedelta(days=REFRESH_GRACE_DAYS):
-        raise HTTPException(status_code=401, detail="ماوەی نوێکردنەوە تەواو بووە — تکایە دیسان بچۆ ژوورەوە")
+
+    if token_type == _TOKEN_TYPE_REFRESH:
+        # Refresh token: must not be expired
+        if datetime.utcnow() > exp_dt:
+            raise HTTPException(status_code=401, detail="توکنی نوێکردنەوە بەسەرچووە — تکایە دیسان بچۆ ژوورەوە")
+    else:
+        # Legacy access token: allow within REFRESH_GRACE_DAYS grace window
+        REFRESH_GRACE_DAYS = 7
+        if datetime.utcnow() - exp_dt > timedelta(days=REFRESH_GRACE_DAYS):
+            raise HTTPException(status_code=401, detail="ماوەی نوێکردنەوە تەواو بووە — تکایە دیسان بچۆ ژوورەوە")
 
     # Verify user still active
     from app.firebase_client import get_db as _get_db
@@ -285,13 +323,18 @@ def refresh_token_endpoint(request: Request):
     if not user_data.get("is_active", False):
         raise HTTPException(status_code=401, detail="ئەکاونت چالاک نییە")
 
-    # Revoke old jti to prevent token reuse
+    # Revoke old token jti to prevent reuse
     if old_jti:
         _revoke(old_jti, exp_dt)
 
-    new_token = create_access_token(data={"sub": user_id, "org_id": org_id})
+    # Issue new 1-hour access token + new 7-day refresh token
+    token_data = {"sub": user_id, "org_id": org_id}
+    new_access_token = create_access_token(data=token_data, expires_delta=timedelta(hours=1))
+    new_refresh_token = create_refresh_token(data=token_data)
+
     return TokenResponse(
-        access_token=new_token,
+        access_token=new_access_token,
+        refresh_token=new_refresh_token,
         user_id=user_id,
         org_id=org_id,
         user_name=user_data.get("name", ""),
@@ -320,7 +363,13 @@ def get_me(user: dict = Depends(get_current_user)):
 @router.post("/register", response_model=TokenResponse)
 @limiter.limit("5/hour")
 def register(request: Request, data: RegisterRequest):
-    """Register new user with new organization + seed data"""
+    """Register new user with new organization + seed data.
+
+    Returns:
+        - access_token: JWT valid for 1 hour (Requirement 2.8)
+        - refresh_token: JWT valid for 7 days (Requirement 2.8)
+    """
+    from datetime import timedelta
     # FIX-48: enforce password policy at registration
     validate_password_strength(data.password)
 
@@ -350,9 +399,14 @@ def register(request: Request, data: RegisterRequest):
         "created_at": datetime.utcnow(),
     })
 
-    token = create_access_token(data={"sub": user["id"], "org_id": org_id})
+    # Requirement 2.8: access token = 1 hour, refresh token = 7 days
+    token_data = {"sub": user["id"], "org_id": org_id}
+    access_token = create_access_token(data=token_data, expires_delta=timedelta(hours=1))
+    refresh_token = create_refresh_token(data=token_data)
+
     return TokenResponse(
-        access_token=token,
+        access_token=access_token,
+        refresh_token=refresh_token,
         user_id=user["id"],
         org_id=org_id,
         user_name=user["name"],
@@ -364,6 +418,7 @@ def firebase_register(request: Request, data: FirebaseRegisterRequest):
     """Register new user via Google Sign-In with new organization"""
     from firebase_admin import auth as firebase_auth
     from app.firebase_client import get_db
+    from datetime import timedelta
 
     try:
         decoded = firebase_auth.verify_id_token(data.id_token)
@@ -398,9 +453,14 @@ def firebase_register(request: Request, data: FirebaseRegisterRequest):
         "created_at": datetime.utcnow(),
     })
 
-    token = create_access_token(data={"sub": user["id"], "org_id": org_id})
+    # Requirement 2.8: access token = 1 hour, refresh token = 7 days
+    token_data = {"sub": user["id"], "org_id": org_id}
+    access_token = create_access_token(data=token_data, expires_delta=timedelta(hours=1))
+    refresh_token = create_refresh_token(data=token_data)
+
     return TokenResponse(
-        access_token=token,
+        access_token=access_token,
+        refresh_token=refresh_token,
         user_id=user["id"],
         org_id=org_id,
         user_name=user["name"],

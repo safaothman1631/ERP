@@ -73,7 +73,10 @@ class Settings(BaseSettings):
     # ── Security ──────────────────────────────────────────────────────────────
     # NOTE: SECRET_KEY is intentionally excluded from __repr__ / logs.
     SECRET_KEY: str = "dev-only-insecure-key-change-me-in-production"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 hours
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 hours (legacy default; login uses 60 min)
+    # Requirement 2.8: access token = 1 hour, refresh token = 7 days
+    ACCESS_TOKEN_EXPIRE_MINUTES_SHORT: int = 60   # 1 hour for login-issued access tokens
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7            # 7 days for refresh tokens
     ALGORITHM: str = "HS256"
 
     # ── Database ──────────────────────────────────────────────────────────────

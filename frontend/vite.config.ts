@@ -28,29 +28,45 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       output: {
+        // Code splitting: داواکاری ٥.٤، ٥.١٠
+        // Chunks are ordered from most specific to least specific to avoid
+        // a module matching multiple buckets (first match wins).
         manualChunks(id: string) {
-          if (id.includes('node_modules/@ant-design/icons')) {
-            return 'vendor-antd-icons';
+          // vendor-antd: Ant Design components and icons
+          if (
+            id.includes('node_modules/antd') ||
+            id.includes('node_modules/@ant-design/')
+          ) {
+            return 'vendor-antd';
           }
-          if (id.includes('node_modules/antd') || id.includes('node_modules/@ant-design/')) {
-            return 'vendor-antd-core';
-          }
-          if (id.includes('node_modules/react-dom')) {
-            return 'vendor-react-dom';
-          }
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-router')) {
-            return 'vendor-react';
-          }
+          // vendor-charts: Recharts and any chart-related deps
           if (id.includes('node_modules/recharts')) {
             return 'vendor-charts';
           }
+          // vendor-motion: Framer Motion
+          if (id.includes('node_modules/framer-motion')) {
+            return 'vendor-motion';
+          }
+          // vendor-react: React core, React DOM, React Router, and
+          // all remaining React-ecosystem packages (react-i18next, etc.)
+          if (
+            id.includes('node_modules/react') ||
+            id.includes('node_modules/react-dom') ||
+            id.includes('node_modules/react-router') ||
+            id.includes('node_modules/react-router-dom') ||
+            id.includes('node_modules/react-i18next') ||
+            id.includes('node_modules/@tanstack/react-query')
+          ) {
+            return 'vendor-react';
+          }
+          // vendor-firebase: Firebase SDK
           if (id.includes('node_modules/firebase')) {
             return 'vendor-firebase';
           }
+          // vendor-utils: remaining utility libraries
           if (
             id.includes('node_modules/dayjs') ||
             id.includes('node_modules/i18next') ||
-            id.includes('node_modules/react-i18next') ||
             id.includes('node_modules/axios') ||
             id.includes('node_modules/zustand')
           ) {

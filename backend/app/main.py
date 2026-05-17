@@ -91,6 +91,9 @@ from app.api import imports as imports_api
 from app.api import jobs as jobs_api
 from app.api import feature_flags
 from app.middleware.audit import audit_middleware
+# Task 8.2: /api/v1/ versioned router with cursor-based pagination + RFC 7807 errors
+from app.api.v1.router import v1_router
+from app.api.v1.errors import register_error_handlers
 import os
 
 # Initialize Firebase
@@ -140,13 +143,33 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.APP_NAME,
     version="2.0.0",
-    description="سیستەمی ژمێریاری و داراییی کوردی - ئاستی جیهانی",
+    description=(
+        "سیستەمی ژمێریاری و داراییی کوردی - ئاستی جیهانی\n\n"
+        "## API Versioning\n"
+        "هەموو endpoints ی نوێ لە `/api/v1/` بەردەستن لەگەڵ:\n"
+        "- **Cursor-based pagination** بۆ هەموو لیستەکان\n"
+        "- **RFC 7807 Problem Details** بۆ هەموو error responses\n"
+        "- **Pydantic v2 validation** بۆ هەموو request/response schemas\n\n"
+        "## Authentication\n"
+        "هەموو endpoints پێویستی بە `Authorization: Bearer <JWT>` header هەیە.\n\n"
+        "## Pagination\n"
+        "بەکارهێنانی cursor-based pagination:\n"
+        "```\nGET /api/v1/invoices?limit=20&cursor=<next_cursor>\n```\n"
+        "Response:\n"
+        "```json\n{\"items\": [...], \"next_cursor\": \"abc123\", \"has_more\": true, \"total\": 450}\n```"
+    ),
+    openapi_url="/api/openapi.json",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
     lifespan=lifespan,
 )
 
 app.state.limiter = limiter
 # Requirement 10.4: return 429 with RateLimitExceeded error when limit exceeded
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+
+# Task 8.2: Register RFC 7807 Problem Details error handlers for /api/v1/
+register_error_handlers(app)
 
 # ── CORS (read origins from settings) ──
 _cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
@@ -157,6 +180,22 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "X-Zoho-Retry"],
 )
+
+
+# ── HTTPS Enforcement Middleware ──
+# Requirement 6.12: enforce HTTPS for all connections
+# In production (ENVIRONMENT=production), redirect plain HTTP requests to HTTPS.
+# Cloud Run always terminates TLS and forwards X-Forwarded-Proto, so we check
+# that header rather than the raw connection scheme.
+@app.middleware("http")
+async def enforce_https(request: Request, call_next):
+    if settings.ENVIRONMENT == "production":
+        forwarded_proto = request.headers.get("x-forwarded-proto", "https")
+        if forwarded_proto == "http":
+            https_url = str(request.url).replace("http://", "https://", 1)
+            from fastapi.responses import RedirectResponse
+            return RedirectResponse(url=https_url, status_code=301)
+    return await call_next(request)
 
 
 # ── Security Headers Middleware ──
@@ -352,6 +391,9 @@ app.include_router(agriculture.router)
 app.include_router(ngo.router)
 app.include_router(government.router)
 app.include_router(onboarding.router)
+
+# ── Task 8.2: /api/v1/ versioned router (cursor-based pagination + RFC 7807) ──
+app.include_router(v1_router)
 
 # Rate limit middleware (opt-in via settings bag)
 from app.middleware.rate_limit import RateLimitMiddleware

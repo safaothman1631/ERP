@@ -32,7 +32,12 @@ class BaseRepository:
         self.collection = self.db.collection(self.collection_name)
     
     def get(self, doc_id: str) -> Optional[dict]:
-        """Get single document by ID with caching"""
+        """Get single document by ID with caching.
+
+        Returns the document with `is_deleted` computed field:
+          is_deleted = True  if deleted_at is set (soft-deleted)
+          is_deleted = False if deleted_at is None (active)
+        """
         cache_key = f"{self.collection_name}:{doc_id}"
         cached = cache.get(cache_key)
         if cached:
@@ -41,6 +46,7 @@ class BaseRepository:
         doc = self.collection.document(doc_id).get()
         if doc.exists:
             data = {"id": doc.id, **doc.to_dict()}
+            data["is_deleted"] = data.get("deleted_at") is not None
             cache.set(cache_key, data)
             return data
         return None
@@ -114,19 +120,33 @@ class BaseRepository:
                     break
         
         items = all_items[start_idx:start_idx + limit]
+        # Add is_deleted computed field to each item (داواکاری ٧.٧)
+        for item in items:
+            item["is_deleted"] = item.get("deleted_at") is not None
         return items, total
     
     def create(self, data: dict) -> dict:
-        """Create new document"""
+        """Create new document.
+
+        Soft-delete convention (داواکاری ٧.٧):
+          - `deleted_at` is not set on creation (None = not deleted)
+          - `is_deleted` is a computed alias: is_deleted = (deleted_at is not None)
+          - Use delete(doc_id) for soft-delete, delete(doc_id, hard=True) for hard-delete
+        """
         doc_id = data.pop("id", str(uuid.uuid4()))
         data["org_id"] = self.org_id
         data.setdefault("is_active", True)  # ensure is_active is always set
+        # Soft-delete: deleted_at is None on creation (not deleted)
+        # is_deleted is a computed alias exposed in API responses
+        data.pop("is_deleted", None)  # never store is_deleted; use deleted_at instead
         now = datetime.utcnow()
         data["created_at"] = now
         data["updated_at"] = now
-        
+
         self.collection.document(doc_id).set(data)
-        return {"id": doc_id, **data}
+        result = {"id": doc_id, **data}
+        result["is_deleted"] = result.get("deleted_at") is not None
+        return result
     
     def update(self, doc_id: str, data: dict) -> dict:
         """Update existing document"""

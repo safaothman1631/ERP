@@ -174,6 +174,22 @@ interface AuthState {
   login: (token: string, userId: string, orgId: string, userName: string) => void;
 
   /**
+   * Secure login — stores access token in memory only (NOT localStorage).
+   *
+   * Requirements 2.5 (JWT storage): access token stored in memory (Zustand),
+   * refresh token is set as httpOnly cookie by the backend.
+   * Non-auth data (userId, orgId, userName) is still persisted to localStorage
+   * so the user's identity survives a page reload (the access token will be
+   * refreshed via the httpOnly refresh token cookie on next load).
+   *
+   * @param token    - JWT access token (stored in memory only).
+   * @param userId   - Authenticated user's ID (persisted to localStorage).
+   * @param orgId    - Organisation ID (persisted to localStorage).
+   * @param userName - Display name (persisted to localStorage).
+   */
+  loginSecure: (token: string, userId: string, orgId: string, userName: string) => void;
+
+  /**
    * Revoke the current session and clear all persisted auth state.
    *
    * Steps performed (Req 6.6):
@@ -255,6 +271,19 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.setItem('userId', userId);
     localStorage.setItem('orgId', orgId);
     localStorage.setItem('userName', userName);
+    set({ token, userId, orgId, userName, isAuthenticated: true });
+  },
+
+  loginSecure: (token, userId, orgId, userName) => {
+    // Requirements 2.5: access token stored in memory ONLY (not localStorage).
+    // The refresh token is an httpOnly cookie set by the backend — we never
+    // read or write it client-side.
+    // Non-auth identity data is persisted so the UI can restore user info
+    // after a page reload (the access token will be refreshed via the cookie).
+    localStorage.setItem('userId', userId);
+    localStorage.setItem('orgId', orgId);
+    localStorage.setItem('userName', userName);
+    // Intentionally NOT calling localStorage.setItem('token', token)
     set({ token, userId, orgId, userName, isAuthenticated: true });
   },
 

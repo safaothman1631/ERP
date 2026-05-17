@@ -1,0 +1,721 @@
+rules_version = '2';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Firestore Security Rules — ERP System
+// داواکاری: ٦.٥، ٦.٨، ٧.١١
+//
+// Strategy:
+//   1. All org data lives under organizations/{orgId}/** — enforced by org_id isolation
+//   2. Every read/write requires Firebase Auth (JWT)
+//   3. The user's org_id claim in the JWT must match the orgId path segment
+//   4. Sensitive sub-collections (hr_employees, payroll_runs, audit_logs) have
+//      additional role-based guards using custom claims
+//   5. The global `currencies` collection is read-only for authenticated users
+//   6. No direct client writes to audit_logs (append-only via backend)
+// ─────────────────────────────────────────────────────────────────────────────
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Helper functions
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// Returns true if the request has a valid Firebase Auth token
+    function isAuthenticated() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    /// Returns true if the authenticated user belongs to the given org
+    function belongsToOrg(orgId) {
+      return isAuthenticated()
+        && request.auth.token.org_id == orgId;
+    }
+
+    /// Returns the user's role from the JWT custom claim (set by backend on login)
+    function userRole() {
+      return request.auth.token.get('role', 'viewer');
+    }
+
+    /// Returns true if the user has one of the given roles
+    function hasRole(roles) {
+      return isAuthenticated() && userRole() in roles;
+    }
+
+    /// Returns true if the user is an admin or super_admin
+    function isAdmin(orgId) {
+      return belongsToOrg(orgId) && hasRole(['admin', 'super_admin']);
+    }
+
+    /// Returns true if the user is a manager or above
+    function isManagerOrAbove(orgId) {
+      return belongsToOrg(orgId) && hasRole(['admin', 'super_admin', 'manager']);
+    }
+
+    /// Returns true if the user is an accountant or above
+    function isAccountantOrAbove(orgId) {
+      return belongsToOrg(orgId)
+        && hasRole(['admin', 'super_admin', 'manager', 'accountant']);
+    }
+
+    /// Returns true if the user is an HR manager or above
+    function isHROrAbove(orgId) {
+      return belongsToOrg(orgId)
+        && hasRole(['admin', 'super_admin', 'manager', 'hr']);
+    }
+
+    /// Returns true if the incoming data has the correct org_id
+    function hasCorrectOrgId(orgId) {
+      return request.resource.data.org_id == orgId;
+    }
+
+    /// Returns true if the user is only updating their own profile fields
+    function onlyUpdatingOwnProfile() {
+      let allowedFields = ['display_name', 'language', 'preferences', 'updated_at'];
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(allowedFields);
+    }
+
+    /// Returns true if the document is not soft-deleted
+    function isNotDeleted() {
+      return !('deleted_at' in resource.data)
+        || resource.data.deleted_at == null;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Organizations — root tenant documents
+    // Only admins can read/write their own org document
+    // ─────────────────────────────────────────────────────────────────────────
+    match /organizations/{orgId} {
+      allow read: if belongsToOrg(orgId);
+      allow create: if isAuthenticated();  // handled by backend on registration
+      allow update: if isAdmin(orgId);
+      allow delete: if false;  // orgs are never deleted via client
+
+      // ───────────────────────────────────────────────────────────────────────
+      // Users — org members
+      // ───────────────────────────────────────────────────────────────────────
+      match /users/{userId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isAdmin(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isAdmin(orgId)
+          || (belongsToOrg(orgId) && request.auth.uid == userId
+              && onlyUpdatingOwnProfile());
+        allow delete: if isAdmin(orgId);
+      }
+
+      // ───────────────────────────────────────────────────────────────────────
+      // Contacts — customers and vendors
+      // ───────────────────────────────────────────────────────────────────────
+      match /contacts/{contactId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+
+        match /persons/{personId} {
+          allow read, write: if belongsToOrg(orgId);
+        }
+        match /addresses/{addressId} {
+          allow read, write: if belongsToOrg(orgId);
+        }
+      }
+
+      // ───────────────────────────────────────────────────────────────────────
+      // Items — products and services
+      // ───────────────────────────────────────────────────────────────────────
+      match /items/{itemId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+      }
+
+      // ───────────────────────────────────────────────────────────────────────
+      // Sales — Invoices, Quotes, Sales Orders, Credit Notes
+      // ───────────────────────────────────────────────────────────────────────
+      match /invoices/{invoiceId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+
+        match /lines/{lineId} {
+          allow read, write: if belongsToOrg(orgId);
+        }
+      }
+
+      match /quotes/{quoteId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+
+        match /lines/{lineId} {
+          allow read, write: if belongsToOrg(orgId);
+        }
+      }
+
+      match /sales_orders/{soId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+
+        match /lines/{lineId} {
+          allow read, write: if belongsToOrg(orgId);
+        }
+      }
+
+      match /credit_notes/{cnId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+
+        match /lines/{lineId} {
+          allow read, write: if belongsToOrg(orgId);
+        }
+        match /applications/{appId} {
+          allow read, write: if belongsToOrg(orgId);
+        }
+      }
+
+      match /recurring_invoices/{recId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+      }
+
+      match /payments_received/{paymentId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isAccountantOrAbove(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+
+        match /allocations/{allocId} {
+          allow read, write: if belongsToOrg(orgId);
+        }
+      }
+
+      // ───────────────────────────────────────────────────────────────────────
+      // Purchasing — Purchase Orders, Bills, Vendor Credits
+      // ───────────────────────────────────────────────────────────────────────
+      match /purchase_orders/{poId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+
+        match /lines/{lineId} {
+          allow read, write: if belongsToOrg(orgId);
+        }
+      }
+
+      match /bills/{billId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+
+        match /lines/{lineId} {
+          allow read, write: if belongsToOrg(orgId);
+        }
+      }
+
+      match /vendor_credits/{vcId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+
+        match /lines/{lineId} {
+          allow read, write: if belongsToOrg(orgId);
+        }
+      }
+
+      match /recurring_bills/{recId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+      }
+
+      match /payments_made/{paymentId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isAccountantOrAbove(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+
+        match /allocations/{allocId} {
+          allow read, write: if belongsToOrg(orgId);
+        }
+      }
+
+      match /expenses/{expenseId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+      }
+
+      // ───────────────────────────────────────────────────────────────────────
+      // Accounting — Journal Entries, Accounts, Taxes, Fiscal Years, Budgets
+      // ───────────────────────────────────────────────────────────────────────
+      match /journal_entries/{entryId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isAccountantOrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isAccountantOrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+
+        match /lines/{lineId} {
+          allow read: if belongsToOrg(orgId);
+          allow write: if isAccountantOrAbove(orgId);
+        }
+      }
+
+      match /accounts/{accountId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isAccountantOrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isAccountantOrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /taxes/{taxId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isAccountantOrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isAccountantOrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /fiscal_years/{fyId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isAccountantOrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isAccountantOrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /budgets/{budgetId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isManagerOrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isManagerOrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+
+        match /lines/{lineId} {
+          allow read, write: if isManagerOrAbove(orgId);
+        }
+      }
+
+      match /analytic_accounts/{accountId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isAccountantOrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isAccountantOrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /revaluations/{revId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isAccountantOrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isAccountantOrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      // ───────────────────────────────────────────────────────────────────────
+      // Banking
+      // ───────────────────────────────────────────────────────────────────────
+      match /bank_accounts/{accountId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isAccountantOrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isAccountantOrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /bank_transactions/{txnId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isAccountantOrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isAccountantOrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /bank_reconciliations/{recId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isAccountantOrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isAccountantOrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      // ───────────────────────────────────────────────────────────────────────
+      // Inventory — Stock Moves, Warehouses, Locations
+      // ───────────────────────────────────────────────────────────────────────
+      match /stock_moves/{moveId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+      }
+
+      match /warehouses/{warehouseId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isManagerOrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isManagerOrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /locations/{locationId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isManagerOrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isManagerOrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /inventory_adjustments/{adjId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+
+        match /lines/{lineId} {
+          allow read, write: if belongsToOrg(orgId);
+        }
+      }
+
+      match /stock_transfers/{transferId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+      }
+
+      // ───────────────────────────────────────────────────────────────────────
+      // HR & Payroll — sensitive data, HR role required
+      // ───────────────────────────────────────────────────────────────────────
+      match /hr_employees/{employeeId} {
+        allow read: if isHROrAbove(orgId);
+        allow create: if isHROrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isHROrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /hr_contracts/{contractId} {
+        allow read: if isHROrAbove(orgId);
+        allow create: if isHROrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isHROrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /hr_attendance/{recordId} {
+        allow read: if isHROrAbove(orgId)
+          || (belongsToOrg(orgId) && resource.data.employee_user_id == request.auth.uid);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isHROrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /hr_time_off/{recordId} {
+        allow read: if isHROrAbove(orgId)
+          || (belongsToOrg(orgId) && resource.data.employee_user_id == request.auth.uid);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isHROrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /hr_departments/{deptId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isHROrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isHROrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /hr_positions/{posId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isHROrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isHROrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /hr_leave_types/{typeId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isHROrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isHROrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /hr_leave_allocations/{allocId} {
+        allow read: if isHROrAbove(orgId)
+          || (belongsToOrg(orgId) && resource.data.employee_user_id == request.auth.uid);
+        allow create: if isHROrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isHROrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /payroll_runs/{runId} {
+        // Payroll is highly sensitive — HR or above only
+        allow read: if isHROrAbove(orgId);
+        allow create: if isHROrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isHROrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+
+        match /payslips/{slipId} {
+          allow read: if isHROrAbove(orgId)
+            || (belongsToOrg(orgId) && resource.data.employee_user_id == request.auth.uid);
+          allow write: if isHROrAbove(orgId);
+        }
+      }
+
+      // ───────────────────────────────────────────────────────────────────────
+      // CRM
+      // ───────────────────────────────────────────────────────────────────────
+      match /crm_leads/{leadId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+      }
+
+      match /crm_stages/{stageId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isManagerOrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isManagerOrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /crm_activities/{activityId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+      }
+
+      // ───────────────────────────────────────────────────────────────────────
+      // Fixed Assets
+      // ───────────────────────────────────────────────────────────────────────
+      match /fixed_assets/{assetId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isAccountantOrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isAccountantOrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /mileage/{mileageId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+      }
+
+      // ───────────────────────────────────────────────────────────────────────
+      // Projects
+      // ───────────────────────────────────────────────────────────────────────
+      match /projects/{projectId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+      }
+
+      match /project_milestones/{milestoneId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+      }
+
+      match /task_dependencies/{depId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if belongsToOrg(orgId);
+      }
+
+      // ───────────────────────────────────────────────────────────────────────
+      // POS
+      // ───────────────────────────────────────────────────────────────────────
+      match /pos_sessions/{sessionId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+      }
+
+      match /pos_orders/{orderId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+      }
+
+      // ───────────────────────────────────────────────────────────────────────
+      // Manufacturing
+      // ───────────────────────────────────────────────────────────────────────
+      match /manufacturing_orders/{moId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+      }
+
+      // ───────────────────────────────────────────────────────────────────────
+      // Marketing
+      // ───────────────────────────────────────────────────────────────────────
+      match /marketing_campaigns/{campaignId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+      }
+
+      match /subscriptions/{subId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isAdmin(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isAdmin(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      // ───────────────────────────────────────────────────────────────────────
+      // Settings & Configuration
+      // ───────────────────────────────────────────────────────────────────────
+      match /settings/{settingKey} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isAdmin(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isAdmin(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /numbering_sequences/{seqId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isAdmin(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isAdmin(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /price_lists/{listId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isManagerOrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isManagerOrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+
+        match /items/{itemId} {
+          allow read, write: if isManagerOrAbove(orgId);
+        }
+      }
+
+      match /email_templates/{templateId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isAdmin(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isAdmin(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /automation_rules/{ruleId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isAdmin(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isAdmin(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /custom_reports/{reportId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+      }
+
+      match /dashboards/{dashboardId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if belongsToOrg(orgId);
+      }
+
+      match /reporting_tags/{tagId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isManagerOrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isManagerOrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /saved_filters/{filterId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if belongsToOrg(orgId);
+      }
+
+      match /scheduled_reports/{reportId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if isManagerOrAbove(orgId) && hasCorrectOrgId(orgId);
+        allow update: if isManagerOrAbove(orgId);
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /custom_field_values/{fieldId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId);
+        allow delete: if isManagerOrAbove(orgId);
+      }
+
+      match /chatter/{chatterId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if false;  // chatter messages are immutable
+        allow delete: if isAdmin(orgId);
+      }
+
+      match /comments/{commentId} {
+        allow read: if belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        allow update: if belongsToOrg(orgId)
+          && resource.data.created_by == request.auth.uid;
+        allow delete: if isManagerOrAbove(orgId)
+          || (belongsToOrg(orgId) && resource.data.created_by == request.auth.uid);
+      }
+
+      match /job_runs/{jobId} {
+        allow read: if isAdmin(orgId);
+        allow create: if false;  // only backend creates job runs
+        allow update: if false;
+        allow delete: if isAdmin(orgId);
+      }
+
+      // ───────────────────────────────────────────────────────────────────────
+      // Audit Logs — append-only, no client writes
+      // داواکاری ٦.٦: audit log بۆ هەموو کردارە گرینگەکان
+      // ───────────────────────────────────────────────────────────────────────
+      match /audit_logs/{logId} {
+        allow read: if isAdmin(orgId);
+        allow create: if false;  // only backend (audit middleware) writes audit logs
+        allow update: if false;  // audit logs are immutable
+        allow delete: if false;  // audit logs are never deleted
+      }
+
+      // ───────────────────────────────────────────────────────────────────────
+      // Catch-all for any sub-collections not explicitly listed above
+      // Deny by default — explicit rules above take precedence
+      // ───────────────────────────────────────────────────────────────────────
+      match /{document=**} {
+        allow read, write: if false;
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Global Collections (not under organizations/)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Currencies — read-only for all authenticated users
+    match /currencies/{currencyId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if false;  // managed by backend seed only
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Default deny — any path not matched above is denied
+    // ─────────────────────────────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+

@@ -61,8 +61,10 @@ const NumberingSequences: React.FC = () => {
 
   const fetchBranches = async () => {
     try {
-      const response = await api.get('/branches');
-      setBranches(response.data || []);
+      const response = await api.get('/api/branches');
+      // API returns a plain array; guard against unexpected shapes
+      const data = response.data;
+      setBranches(Array.isArray(data) ? data : (data?.items ?? data?.branches ?? []));
     } catch (error) {
       console.error('Failed to fetch branches', error);
     }

@@ -112,69 +112,69 @@ const Settings: React.FC = () => {
     { key: 'profile',        group: 'account',      label: t('profile'),                         icon: <UserOutlined /> },
     { key: 'security',       group: 'account',      label: t('security_settings'),               icon: <SafetyOutlined /> },
     { key: 'notifications',  group: 'account',      label: t('notification_preferences'),        icon: <BellOutlined /> },
-    { key: 'preferences',    group: 'account',      label: t('settings_pref', 'Preferences'),    icon: <BgColorsOutlined />, badge: 'soon' },
+    { key: 'preferences',    group: 'account',      label: t('settings_pref', 'Preferences'),    icon: <BgColorsOutlined /> },
     // ── General & Appearance (Requirement 12.2) ───────────────────────
     { key: 'general',        group: 'general_app',  label: t('settings_general', 'General'),     icon: <SettingOutlined /> },
     { key: 'appearance',     group: 'general_app',  label: t('settings_appearance', 'Appearance'), icon: <BgColorsOutlined /> },
     { key: 'feature_flags',  group: 'general_app',  label: t('settings_feature_flags', 'Feature flags'), icon: <ExperimentOutlined /> },
     // ── Organization ──────────────────────────────────────────────────
     { key: 'organization',   group: 'organization', label: t('organization_settings'),           icon: <BankOutlined /> },
-    { key: 'branches',       group: 'organization', label: t('branches', 'Branches'),            icon: <ApartmentOutlined />, badge: 'soon' },
-    { key: 'branding',       group: 'organization', label: t('branding', 'Branding'),            icon: <BgColorsOutlined />, badge: 'soon' },
-    { key: 'working_hours',  group: 'organization', label: t('working_hours', 'Working hours'),  icon: <FieldTimeOutlined />, badge: 'soon' },
-    { key: 'holidays',       group: 'organization', label: t('holidays', 'Public holidays'),     icon: <GiftOutlined />, badge: 'soon' },
+    { key: 'branches',       group: 'organization', label: t('branches', 'Branches'),            icon: <ApartmentOutlined /> },
+    { key: 'branding',       group: 'organization', label: t('branding', 'Branding'),            icon: <BgColorsOutlined /> },
+    { key: 'working_hours',  group: 'organization', label: t('working_hours', 'Working hours'),  icon: <FieldTimeOutlined /> },
+    { key: 'holidays',       group: 'organization', label: t('holidays', 'Public holidays'),     icon: <GiftOutlined /> },
     // ── Users & access ────────────────────────────────────────────────
-    { key: 'users',          group: 'users',        label: t('users', 'Users'),                  icon: <TeamOutlined />, badge: 'soon' },
-    { key: 'roles',          group: 'users',        label: t('roles', 'Roles'),                  icon: <IdcardOutlined />, badge: 'soon' },
-    { key: 'permissions',    group: 'users',        label: t('permissions', 'Permissions'),      icon: <SafetyCertificateOutlined />, badge: 'soon' },
-    { key: 'sso',            group: 'users',        label: t('sso', 'Single sign-on'),           icon: <KeyOutlined />, badge: 'soon' },
-    { key: 'portals',        group: 'users',        label: t('portals', 'Customer / Vendor portals'), icon: <UsergroupAddOutlined />, badge: 'soon' },
+    { key: 'users',          group: 'users',        label: t('users', 'Users'),                  icon: <TeamOutlined /> },
+    { key: 'roles',          group: 'users',        label: t('roles', 'Roles'),                  icon: <IdcardOutlined /> },
+    { key: 'permissions',    group: 'users',        label: t('permissions', 'Permissions'),      icon: <SafetyCertificateOutlined /> },
+    { key: 'sso',            group: 'users',        label: t('sso', 'Single sign-on'),           icon: <KeyOutlined /> },
+    { key: 'portals',        group: 'users',        label: t('portals', 'Customer / Vendor portals'), icon: <UsergroupAddOutlined /> },
     // ── Localization ──────────────────────────────────────────────────
-    { key: 'localization',   group: 'localization', label: t('localization', 'Localization'),    icon: <GlobalOutlined />, badge: 'soon' },
+    { key: 'localization',   group: 'localization', label: t('localization', 'Localization'),    icon: <GlobalOutlined /> },
     { key: 'currencies',     group: 'localization', label: t('currencies'),                      icon: <DollarOutlined /> },
-    { key: 'languages',      group: 'localization', label: t('languages', 'Languages'),          icon: <TranslationOutlined />, badge: 'soon' },
-    { key: 'formats',        group: 'localization', label: t('formats', 'Date & number formats'), icon: <ClockCircleOutlined />, badge: 'soon' },
+    { key: 'languages',      group: 'localization', label: t('languages', 'Languages'),          icon: <TranslationOutlined /> },
+    { key: 'formats',        group: 'localization', label: t('formats', 'Date & number formats'), icon: <ClockCircleOutlined /> },
     // ── Finance & compliance ──────────────────────────────────────────
     { key: 'fiscal',         group: 'finance',      label: t('fiscal_years'),                    icon: <CalendarOutlined /> },
     { key: 'budgets',        group: 'finance',      label: t('budgets'),                         icon: <FundOutlined /> },
-    { key: 'taxes',          group: 'finance',      label: t('taxes', 'Taxes'),                  icon: <PercentageOutlined />, badge: 'soon' },
-    { key: 'banking',        group: 'finance',      label: t('banking_settings', 'Banking'),     icon: <BankOutlined />, badge: 'soon' },
-    { key: 'payment_methods',group: 'finance',      label: t('payment_methods', 'Payment methods'), icon: <CreditCardOutlined />, badge: 'soon' },
+    { key: 'taxes',          group: 'finance',      label: t('taxes', 'Taxes'),                  icon: <PercentageOutlined /> },
+    { key: 'banking',        group: 'finance',      label: t('banking_settings', 'Banking'),     icon: <BankOutlined /> },
+    { key: 'payment_methods',group: 'finance',      label: t('payment_methods', 'Payment methods'), icon: <CreditCardOutlined /> },
     { key: 'einvoice',       group: 'finance',      label: t('einvoice_settings'),               icon: <FileProtectOutlined /> },
     { key: 'templates',      group: 'finance',      label: t('invoice_templates'),               icon: <FileTextOutlined /> },
     { key: 'reminders',      group: 'finance',      label: t('reminder_settings'),               icon: <ClockCircleOutlined /> },
     // ── Commerce ──────────────────────────────────────────────────────
-    { key: 'sales',          group: 'commerce',     label: t('sales_settings', 'Sales'),         icon: <ShoppingCartOutlined />, badge: 'soon' },
-    { key: 'crm',            group: 'commerce',     label: t('crm_settings', 'CRM'),             icon: <ContactsOutlined />, badge: 'soon' },
-    { key: 'purchases',      group: 'commerce',     label: t('purchases_settings', 'Purchases'), icon: <ShopOutlined />, badge: 'soon' },
-    { key: 'inventory',      group: 'commerce',     label: t('inventory_settings', 'Inventory'), icon: <InboxOutlined />, badge: 'soon' },
-    { key: 'mrp',            group: 'commerce',     label: t('mrp_settings', 'Manufacturing'),   icon: <BuildOutlined />, badge: 'soon' },
-    { key: 'pos',            group: 'commerce',     label: t('pos_settings', 'Point of Sale'),   icon: <DesktopOutlined />, badge: 'soon' },
-    { key: 'ecommerce',      group: 'commerce',     label: t('ecommerce_settings', 'E-commerce'), icon: <RocketOutlined />, badge: 'soon' },
-    { key: 'helpdesk',       group: 'commerce',     label: t('helpdesk_settings', 'Helpdesk'),   icon: <CustomerServiceOutlined />, badge: 'soon' },
+    { key: 'sales',          group: 'commerce',     label: t('sales_settings', 'Sales'),         icon: <ShoppingCartOutlined /> },
+    { key: 'crm',            group: 'commerce',     label: t('crm_settings', 'CRM'),             icon: <ContactsOutlined /> },
+    { key: 'purchases',      group: 'commerce',     label: t('purchases_settings', 'Purchases'), icon: <ShopOutlined /> },
+    { key: 'inventory',      group: 'commerce',     label: t('inventory_settings', 'Inventory'), icon: <InboxOutlined /> },
+    { key: 'mrp',            group: 'commerce',     label: t('mrp_settings', 'Manufacturing'),   icon: <BuildOutlined /> },
+    { key: 'pos',            group: 'commerce',     label: t('pos_settings', 'Point of Sale'),   icon: <DesktopOutlined /> },
+    { key: 'ecommerce',      group: 'commerce',     label: t('ecommerce_settings', 'E-commerce'), icon: <RocketOutlined /> },
+    { key: 'helpdesk',       group: 'commerce',     label: t('helpdesk_settings', 'Helpdesk'),   icon: <CustomerServiceOutlined /> },
     // ── Operations ────────────────────────────────────────────────────
-    { key: 'hr',             group: 'operations',   label: t('hr_settings', 'Human resources'),  icon: <TeamOutlined />, badge: 'soon' },
-    { key: 'payroll',        group: 'operations',   label: t('payroll_settings', 'Payroll'),     icon: <WalletOutlined />, badge: 'soon' },
-    { key: 'projects',       group: 'operations',   label: t('projects_settings', 'Projects'),   icon: <ProjectOutlined />, badge: 'soon' },
-    { key: 'marketing',      group: 'operations',   label: t('marketing_settings', 'Marketing'), icon: <SoundOutlined />, badge: 'soon' },
+    { key: 'hr',             group: 'operations',   label: t('hr_settings', 'Human resources'),  icon: <TeamOutlined /> },
+    { key: 'payroll',        group: 'operations',   label: t('payroll_settings', 'Payroll'),     icon: <WalletOutlined /> },
+    { key: 'projects',       group: 'operations',   label: t('projects_settings', 'Projects'),   icon: <ProjectOutlined /> },
+    { key: 'marketing',      group: 'operations',   label: t('marketing_settings', 'Marketing'), icon: <SoundOutlined /> },
     // ── Automation & integrations ─────────────────────────────────────
-    { key: 'workflows',      group: 'automation',   label: t('workflows', 'Workflows'),          icon: <PartitionOutlined />, badge: 'soon' },
-    { key: 'approvals',      group: 'automation',   label: t('approvals', 'Approvals'),          icon: <CheckCircleOutlined />, badge: 'soon' },
-    { key: 'integrations',   group: 'automation',   label: t('integrations', 'Integrations'),   icon: <ClusterOutlined />, badge: 'soon' },
-    { key: 'webhooks',       group: 'automation',   label: t('webhooks', 'Webhooks'),            icon: <BranchesOutlined />, badge: 'soon' },
-    { key: 'api_tokens',     group: 'automation',   label: t('api_tokens', 'API tokens'),        icon: <ApiOutlined />, badge: 'soon' },
+    { key: 'workflows',      group: 'automation',   label: t('workflows', 'Workflows'),          icon: <PartitionOutlined /> },
+    { key: 'approvals',      group: 'automation',   label: t('approvals', 'Approvals'),          icon: <CheckCircleOutlined /> },
+    { key: 'integrations',   group: 'automation',   label: t('integrations', 'Integrations'),   icon: <ClusterOutlined /> },
+    { key: 'webhooks',       group: 'automation',   label: t('webhooks', 'Webhooks'),            icon: <BranchesOutlined /> },
+    { key: 'api_tokens',     group: 'automation',   label: t('api_tokens', 'API tokens'),        icon: <ApiOutlined /> },
     // ── Content & comms ───────────────────────────────────────────────
-    { key: 'documents',      group: 'content',      label: t('documents', 'Documents'),          icon: <FolderOpenOutlined />, badge: 'soon' },
+    { key: 'documents',      group: 'content',      label: t('documents', 'Documents'),          icon: <FolderOpenOutlined /> },
     { key: 'numbering',      group: 'content',      label: t('numbering_sequences', 'Numbering'), icon: <NumberOutlined />, link: '/settings/numbering' },
     { key: 'email',          group: 'content',      label: t('email_settings'),                  icon: <MailOutlined /> },
-    { key: 'sms_whatsapp',   group: 'content',      label: t('sms_whatsapp', 'SMS & WhatsApp'),  icon: <MessageOutlined />, badge: 'soon' },
+    { key: 'sms_whatsapp',   group: 'content',      label: t('sms_whatsapp', 'SMS & WhatsApp'),  icon: <MessageOutlined /> },
     // ── System ────────────────────────────────────────────────────────
     { key: 'modules',        group: 'system',       label: t('settings_additions.modules'),      icon: <AppstoreOutlined /> },
     { key: 'backup',         group: 'system',       label: t('backup_settings'),                 icon: <DatabaseOutlined /> },
     { key: 'activity',       group: 'system',       label: t('system_log'),                      icon: <HistoryOutlined /> },
-    { key: 'audit',          group: 'system',       label: t('audit_compliance', 'Audit & compliance'), icon: <AuditOutlined />, badge: 'soon' },
-    { key: 'gdpr',           group: 'system',       label: t('gdpr', 'Data privacy'),            icon: <EyeInvisibleOutlined />, badge: 'soon' },
-    { key: 'mobile',         group: 'system',       label: t('mobile_app', 'Mobile app'),        icon: <MobileOutlined />, badge: 'soon' },
+    { key: 'audit',          group: 'system',       label: t('audit_compliance', 'Audit & compliance'), icon: <AuditOutlined /> },
+    { key: 'gdpr',           group: 'system',       label: t('gdpr', 'Data privacy'),            icon: <EyeInvisibleOutlined /> },
+    { key: 'mobile',         group: 'system',       label: t('mobile_app', 'Mobile app'),        icon: <MobileOutlined /> },
     { key: 'system',         group: 'system',       label: t('system_info'),                     icon: <InfoCircleOutlined /> },
   ], [t]);
 
@@ -707,7 +707,12 @@ const FeatureFlagsSettings: React.FC = () => {
   const handleToggle = async (flagKey: string, enabled: boolean) => {
     setSaving(flagKey);
     try {
-      await api.put(`/api/feature-flags/${flagKey}`, { enabled });
+      // Backend only supports POST (upsert) — no PUT route exists
+      const current = flags.find(f => f.key === flagKey);
+      await api.post(`/api/feature-flags/${flagKey}`, {
+        enabled,
+        rollout_pct: current?.rollout_pct ?? 100,
+      });
       setFlags(prev => prev.map(f => f.key === flagKey ? { ...f, enabled } : f));
       message.success(t('success'));
     } catch {
@@ -725,7 +730,12 @@ const FeatureFlagsSettings: React.FC = () => {
     }
     setSaving(flagKey);
     try {
-      await api.put(`/api/feature-flags/${flagKey}`, { rollout_pct });
+      // Backend only supports POST (upsert) — no PUT route exists
+      const current = flags.find(f => f.key === flagKey);
+      await api.post(`/api/feature-flags/${flagKey}`, {
+        enabled: current?.enabled ?? true,
+        rollout_pct,
+      });
       setFlags(prev => prev.map(f => f.key === flagKey ? { ...f, rollout_pct } : f));
       message.success(t('success'));
     } catch {

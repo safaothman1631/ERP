@@ -17,6 +17,7 @@ import NotificationsDrawer from './NotificationsDrawer';
 import QuickCreateMenu, { useQuickCreateKeyboard } from './QuickCreateMenu';
 import ShortcutCheatsheet from './ShortcutCheatsheet';
 import { QuickSearch } from '../design-system';
+import { ConnectionStatus } from '../design-system';
 import { useUiStore } from '../stores/uiStore';
 import { useToastBridge } from '../design-system/Toast';
 import {
@@ -171,6 +172,8 @@ export const AppShell: React.FC = () => {
             onOpenPalette={() => setPaletteOpen(true)}
           />
         )}
+        {/* Offline indicator banner — Requirement 4.12 */}
+        <ConnectionStatus variant="banner" />
         {showTabs && <WorkspaceTabs isDark={isDark} isRTL={isRTL} />}
         {showDashboardKpis && <DashboardKpiStrip isDark={isDark} />}
         <Layout.Content id="main-content" style={{

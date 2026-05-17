@@ -1,0 +1,5 @@
+ENVIRONMENT: production
+CORS_ORIGINS: "https://erpiq.systems,https://www.erpiq.systems"
+GCP_PROJECT: erp-system-494716
+FIREBASE_PROJECT_ID: erp-system-494716
+ALLOWED_ORIGINS: "https://erpiq.systems,https://www.erpiq.systems"

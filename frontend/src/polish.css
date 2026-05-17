@@ -70,6 +70,43 @@ body, html {
   text-rendering: optimizeLegibility;
 }
 
+/* ── Smooth dark/light mode transition (Requirement 4.6) ──────────────────
+ * Applies a CSS transition to all colour-bearing properties so that toggling
+ * between dark and light mode feels smooth rather than an instant flash.
+ * The transition is intentionally short (200ms) to feel snappy.
+ * Respects prefers-reduced-motion for accessibility.
+ * ─────────────────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  transition:
+    background-color 200ms cubic-bezier(0.2, 0, 0, 1),
+    border-color     200ms cubic-bezier(0.2, 0, 0, 1),
+    color            200ms cubic-bezier(0.2, 0, 0, 1),
+    box-shadow       200ms cubic-bezier(0.2, 0, 0, 1),
+    fill             200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Exclude elements where the transition would cause visual glitches */
+*:where(
+  .ant-spin-dot,
+  .ant-progress-bg,
+  [class*="framer"],
+  [class*="motion"],
+  .ant-skeleton-element,
+  .ant-skeleton-content
+) {
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+  }
+}
+
 .ant-layout {
   background: var(--pl-bg) !important;
 }

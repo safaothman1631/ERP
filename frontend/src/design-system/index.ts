@@ -30,7 +30,7 @@ export { default as CopyButton, type CopyButtonProps } from './CopyButton';
 export { default as InlineEdit, type InlineEditProps } from './InlineEdit';
 export { default as ShortcutCheatsheet, type ShortcutCheatsheetProps, type Shortcut } from './ShortcutCheatsheet';
 export { default as EnvironmentBadge, type EnvironmentBadgeProps } from './EnvironmentBadge';
-export { default as ConnectionStatus } from './ConnectionStatus';
+export { default as ConnectionStatus, type ConnectionStatusProps, type ConnectionStatusVariant } from './ConnectionStatus';
 export { default as Stepper, type StepperProps } from './Stepper';
 export { default as Timeline, type TimelineProps } from './Timeline';
 export { default as AvatarGroup, type AvatarGroupProps, type AvatarItem } from './AvatarGroup';
@@ -47,3 +47,22 @@ export { default as AdvancedFilterDrawer, type AdvancedFilterDrawerProps } from 
 // Wave 8.C: Premium UX Features
 export { default as PrintView, usePrint, type PrintViewProps } from './PrintView';
 export { default as QuickSearch, type QuickSearchProps } from './QuickSearch';
+
+// Task 5.1: Framer Motion Animation Components (Requirements 4.1–4.5)
+export { default as PageTransition } from '../components/PageTransition';
+export { default as MotionModal, MotionModalContent } from '../components/MotionModal';
+export { default as AnimatedList, AnimatedListItem } from '../components/AnimatedList';
+export { default as MotionButton, type MotionButtonProps } from '../components/MotionButton';
+export {
+  pageVariants,
+  modalVariants,
+  listVariants,
+  itemVariants,
+  pressAnimation,
+  hoverLift,
+  reducedPageVariants,
+  reducedModalVariants,
+} from '../utils/animations';
+
+// Performance: Image optimization (داواکاری ٥.٧) — WebP، lazy loading، responsive sizes
+export { default as OptimizedImage, type OptimizedImageProps } from './OptimizedImage';

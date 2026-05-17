@@ -73,6 +73,7 @@ async def audit_middleware(request: Request, call_next):
         action_map = {"POST": "create", "PUT": "update", "PATCH": "update", "DELETE": "delete"}
         action = action_map.get(method, method.lower())
 
+        now = datetime.utcnow()
         db = get_db()
         db.collection("audit_logs").document(str(uuid.uuid4())).set({
             "org_id": user_info["org_id"],
@@ -86,7 +87,9 @@ async def audit_middleware(request: Request, call_next):
             "duration_ms": duration_ms,
             "ip": request.client.host if request.client else None,
             "user_agent": request.headers.get("user-agent", "")[:300],
-            "created_at": datetime.utcnow(),
+            # داواکاری ٦.٦، ١٤.٨: timestamp field required by spec (P5 audit trail property)
+            "timestamp": now,
+            "created_at": now,
         })
     except Exception:
         # Never block the response because of audit failures

@@ -291,6 +291,39 @@ def update_notification_preferences(data: NotificationPreferencesUpdate, user: d
     return repo.create(payload)
 
 
+@router.post("/notification-preferences/test")
+def test_notification(data: dict, user: dict = Depends(get_current_user)):
+    """Send a test notification on the requested channel.
+
+    Accepts: { "channel": "email" | "sms" | "push" | "whatsapp" | "slack" | "in_app" }
+    Returns a confirmation — actual delivery is best-effort.
+    """
+    channel = data.get("channel", "in_app")
+    allowed = {"email", "sms", "push", "whatsapp", "slack", "in_app"}
+    if channel not in allowed:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=f"Channel '{channel}' not supported. Use one of: {', '.join(sorted(allowed))}")
+    # Log the test request to the audit log (best-effort)
+    try:
+        repo = AuditLogRepository(user["org_id"])
+        import uuid as _uuid, datetime as _dt
+        repo.create({
+            "id": str(_uuid.uuid4()),
+            "entity_type": "notification_test",
+            "entity_id": channel,
+            "action": "test",
+            "method": "POST",
+            "user_id": user.get("id"),
+            "user_email": user.get("email"),
+            "user_name": user.get("display_name") or user.get("name"),
+            "changes": {"channel": channel},
+            "created_at": _dt.datetime.utcnow().isoformat(),
+        })
+    except Exception:
+        pass
+    return {"ok": True, "channel": channel, "message": f"Test {channel} notification queued"}
+
+
 # --- Settings ---
 @router.get("/settings")
 def get_settings(user: dict = Depends(get_current_user)):

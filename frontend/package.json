@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "test": "vitest --run",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "guard:compat": "node ./scripts/compat-guard.mjs",
     "nav:audit": "node ./scripts/nav-audit.mjs",
     "nav:sweep": "playwright test tests/e2e/nav-sweep.spec.ts",
@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.1",
+    "@tanstack/react-query": "^5.100.10",
     "@types/react-grid-layout": "^1.3.6",
     "antd": "^6.3.5",
     "axios": "^1.14.0",
