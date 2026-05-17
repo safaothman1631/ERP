@@ -6,13 +6,76 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional, List
-from app.firestore.system import SettingsRepository, CurrencyRepository, ExchangeRateRepository, ReminderSettingsRepository
+from app.firestore.system import SettingsRepository, CurrencyRepository, ExchangeRateRepository, ReminderSettingsRepository, AuditLogRepository
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user, hash_password, verify_password
 from app.services import settings_service as _settings_service
+from app.services.permissions import require_perm, user_has_perm
 from app.firebase_client import get_db
 
 router = APIRouter(prefix="/api/system", tags=["System"])
+
+
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+
+def _require_settings_write(user: dict) -> None:
+    """Raise 403 if the user does not have admin or owner role.
+
+    Settings write operations (POST /settings, PUT /organization, etc.) require
+    the user to hold the 'admin' or 'owner' role.
+
+    Requirement 12.4 — Changes SHALL require appropriate permission (admin/owner).
+    """
+    role = user.get("role", "")
+    if role not in ("admin", "owner") and not user_has_perm(user, "settings.update"):
+        raise HTTPException(
+            status_code=403,
+            detail="دەسەڵات نییە: تەنها بەڕێوەبەر یان خاوەن دەتوانێت ڕێکخستنەکان بگۆڕێت",
+        )
+
+
+def _log_settings_change(
+    user: dict,
+    category: str,
+    key: str,
+    old_value: object,
+    new_value: object,
+) -> None:
+    """Write an audit log entry for a settings change.
+
+    Requirement 12.5 — THE System SHALL log all setting changes for audit purposes.
+
+    Args:
+        user:      The authenticated user performing the change.
+        category:  The settings category (e.g. "general", "sales").
+        key:       The settings key being modified.
+        old_value: The previous value (may be None for new keys).
+        new_value: The new value being written.
+    """
+    try:
+        repo = AuditLogRepository(user["org_id"])
+        repo.create({
+            "id": str(uuid.uuid4()),
+            "entity_type": "settings",
+            "entity_id": f"{category}/{key}",
+            "action": "update",
+            "method": "POST",
+            "user_id": user.get("id"),
+            "user_email": user.get("email"),
+            "user_name": user.get("display_name") or user.get("name"),
+            "changes": {
+                "category": category,
+                "key": key,
+                "old_value": old_value,
+                "new_value": new_value,
+            },
+            "created_at": datetime.datetime.utcnow().isoformat(),
+        })
+    except Exception:
+        # Audit logging must never block the main operation.
+        pass
 
 
 # --- Repositories ---
@@ -187,14 +250,22 @@ def switch_organization(target_org_id: str, user: dict = Depends(get_current_use
 
 @router.put("/organization")
 def update_organization(data: OrganizationUpdate, user: dict = Depends(get_current_user)):
+    # Requirement 12.4 — Organization settings write requires admin/owner role.
+    _require_settings_write(user)
+
     repo = OrganizationRepository(user["org_id"])
     items, _ = repo.list(limit=1)
     payload = {k: v for k, v in data.model_dump().items() if v is not None}
     if not payload:
         raise HTTPException(status_code=400, detail="هیچ داتایەک نەنێردرا")
-    if items:
-        return repo.update(items[0]["id"], payload)
-    return repo.create(payload)
+
+    old_value = items[0] if items else None
+    result = repo.update(items[0]["id"], payload) if items else repo.create(payload)
+
+    # Requirement 12.5 — Log organization settings change.
+    _log_settings_change(user, "organization", "blob", old_value, payload)
+
+    return result
 
 
 # --- Notification Preferences ---
@@ -223,6 +294,7 @@ def update_notification_preferences(data: NotificationPreferencesUpdate, user: d
 # --- Settings ---
 @router.get("/settings")
 def get_settings(user: dict = Depends(get_current_user)):
+    """List all raw settings documents for the current organisation."""
     repo = SettingsRepository(user["org_id"])
     items, _ = repo.list(limit=100)
     return items
@@ -230,6 +302,14 @@ def get_settings(user: dict = Depends(get_current_user)):
 
 @router.post("/settings")
 def upsert_setting(data: dict, user: dict = Depends(get_current_user)):
+    """Upsert a single settings key/value pair for the current organisation.
+
+    Requirement 12.4 — Requires admin or owner role.
+    Requirement 12.5 — Logs the change to the audit log.
+    """
+    # Requirement 12.4 — Settings write requires admin/owner role.
+    _require_settings_write(user)
+
     key = data.get("key")
     if not key:
         raise HTTPException(status_code=400, detail="key required")
@@ -243,9 +323,14 @@ def upsert_setting(data: dict, user: dict = Depends(get_current_user)):
         ],
         limit=1,
     )
+
+    # Capture old value for audit log before overwriting.
+    old_value = items[0].get("value") if items else None
+    new_value = data.get("value", "")
+
     payload = {
         "key": key,
-        "value": data.get("value", ""),
+        "value": new_value,
         "category": category,
     }
     result = repo.update(items[0]["id"], payload) if items else repo.create(payload)
@@ -253,6 +338,56 @@ def upsert_setting(data: dict, user: dict = Depends(get_current_user)):
         _settings_service.invalidate(user["org_id"], category)
     except Exception:
         pass
+
+    # Requirement 12.5 — Log all setting changes for audit purposes.
+    _log_settings_change(user, category, key, old_value, new_value)
+
+    return result
+
+
+@router.get("/settings/{category}")
+def get_settings_bag(category: str, user: dict = Depends(get_current_user)):
+    """Return the merged settings bag for *category* scoped to the current
+    organisation (Requirement 11.4).  Defaults are applied for any key not
+    yet stored in Firestore so callers always receive a complete dict.
+
+    The response is organisation-scoped: two organisations sharing the same
+    Firestore project never see each other's settings (Requirement 11.4).
+    """
+    return _settings_service.get_bag(user["org_id"], category)
+
+
+@router.put("/settings/{category}")
+def set_settings_bag(category: str, data: dict, user: dict = Depends(get_current_user)):
+    """Persist a full settings bag for *category* scoped to the current
+    organisation (Requirements 11.2, 11.4).
+
+    The entire *data* dict is serialised as a JSON blob and stored in
+    Firestore under ``settings/{category}``.  The in-process cache is
+    invalidated so subsequent GET calls reflect the new values immediately.
+    Server settings take precedence over any conflicting client-side values
+    (Requirement 11.5).
+
+    Requirement 12.4 — Requires admin or owner role.
+    Requirement 12.5 — Logs the change to the audit log.
+    """
+    # Requirement 12.4 — Settings write requires admin/owner role.
+    _require_settings_write(user)
+
+    if not isinstance(data, dict):
+        raise HTTPException(status_code=400, detail="Request body must be a JSON object")
+
+    # Capture old value for audit log.
+    old_value = _settings_service.get_bag(user["org_id"], category)
+
+    try:
+        result = _settings_service.set_bag(user["org_id"], category, data)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    # Requirement 12.5 — Log all setting changes for audit purposes.
+    _log_settings_change(user, category, "blob", old_value, data)
+
     return result
 
 
@@ -273,8 +408,12 @@ def get_reminder_settings(user: dict = Depends(get_current_user)):
 
 @router.put("/reminder-settings")
 def update_reminder_settings(data: dict, user: dict = Depends(get_current_user)):
+    # Requirement 12.4 — Settings write requires admin/owner role.
+    _require_settings_write(user)
+
     repo = ReminderSettingsRepository(user["org_id"])
     items, _ = repo.list(limit=1)
+    old_value = items[0] if items else None
     payload = {
         "before_due_days": data.get("before_due_days", "3,7,14"),
         "after_due_days": data.get("after_due_days", "1,3,7"),
@@ -282,9 +421,12 @@ def update_reminder_settings(data: dict, user: dict = Depends(get_current_user))
         "email_body_template": data.get("email_body_template", "Your invoice is due soon."),
         "is_active": bool(data.get("is_active", True)),
     }
-    if items:
-        return repo.update(items[0]["id"], payload)
-    return repo.create(payload)
+    result = repo.update(items[0]["id"], payload) if items else repo.create(payload)
+
+    # Requirement 12.5 — Log reminder settings change.
+    _log_settings_change(user, "reminders", "blob", old_value, payload)
+
+    return result
 
 
 @router.get("/currencies")

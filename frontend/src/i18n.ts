@@ -5,7 +5,7 @@ import en from './locales/en.json';
 import ar from './locales/ar.json';
 
 const savedLang = localStorage.getItem('app_language') || 'ku';
-const RTL_LANGS = new Set(['ku', 'ar']);
+export const RTL_LANGS = new Set(['ku', 'ar']);
 
 /**
  * Humanize a missing translation key into readable text.
@@ -13,7 +13,7 @@ const RTL_LANGS = new Set(['ku', 'ar']);
  *   "returns.sales_returns" -> "Sales Returns"
  *   "nav.desc_invoices"     -> "Desc Invoices"
  */
-const humanizeKey = (key: string): string => {
+export const humanizeKey = (key: string): string => {
   const last = key.split('.').pop() || key;
   return last
     .replace(/[_\-]+/g, ' ')

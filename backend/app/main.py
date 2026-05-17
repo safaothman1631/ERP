@@ -5,8 +5,6 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from app.config import settings, validate_env
 from app.firebase_client import init_firebase
@@ -91,6 +89,7 @@ from app.api import (
 )
 from app.api import imports as imports_api
 from app.api import jobs as jobs_api
+from app.api import feature_flags
 from app.middleware.audit import audit_middleware
 import os
 
@@ -101,7 +100,10 @@ init_firebase()
 validate_env()
 
 # ── Rate Limiter ──
-limiter = Limiter(key_func=get_remote_address)
+# Requirement 10.1: use slowapi for rate limiting
+# Requirement 10.2: key function is get_remote_address (IP-based)
+# Requirement 10.3: optional via settings.RATE_LIMITING_ENABLED
+from app.middleware.rate_limit import limiter, rate_limit_exceeded_handler
 
 # Sprint 19 (FIX-269): app start timestamp for uptime metrics
 from datetime import datetime as _datetime
@@ -143,7 +145,8 @@ app = FastAPI(
 )
 
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+# Requirement 10.4: return 429 with RateLimitExceeded error when limit exceeded
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
 # ── CORS (read origins from settings) ──
 _cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
@@ -182,6 +185,7 @@ async def add_security_headers(request: Request, call_next):
     # FIX-45: HSTS - force HTTPS for 1 year + subdomains + preload list eligibility
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
     # FIX-45: Permissions-Policy - disable powerful browser features by default
+    # Requirements 5.4: camera=(), microphone=(), geolocation=(), payment=()
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()"
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
@@ -195,7 +199,6 @@ async def add_security_headers(request: Request, call_next):
         "frame-src 'self' https://accounts.google.com https://*.firebaseapp.com; "
         "frame-ancestors 'none'"
     )
-    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     if request.url.path.startswith("/api/"):
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
     return response
@@ -224,6 +227,8 @@ app.include_router(custom_reports.router)
 app.include_router(dashboards.router)
 # Wave L: Background jobs monitoring
 app.include_router(jobs_api.router)
+# Feature Flags (Requirement 7)
+app.include_router(feature_flags.router)
 # Phase 1: Sales & Purchase Pipeline
 app.include_router(quotes.router)
 app.include_router(sales_orders.router)

@@ -4,8 +4,18 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/test-setup.ts'],
+    globals: true,
+  },
   server: {
     port: 5173,
+    // Development proxy: all /api requests are forwarded to the FastAPI backend.
+    // In production, the frontend is served as static files and the backend is
+    // deployed separately. Set VITE_API_BASE_URL (e.g. https://api.example.com)
+    // in the production environment and prefix all API calls with that variable
+    // so they reach the correct host without a proxy.
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:8000',

@@ -1160,3 +1160,102 @@ html[data-high-contrast="true"][data-theme="dark"] *:focus-visible { outline-col
 /* WCAG AA contrast fix for placeholder text (4.5:1 minimum) */
 .ant-input::placeholder, .ant-input-password input::placeholder, input.ant-input::placeholder { color: #595959 !important; opacity: 1; }
 
+
+
+/* ============================================
+   Layout Mode Styles — Requirement 8.4
+   Applied via document.documentElement[data-layout]
+   ============================================ */
+
+/* ── classic-sidebar (default) ─────────────────────────────────────────── */
+:root[data-layout="classic-sidebar"] .ant-layout-sider {
+  display: flex;
+}
+:root[data-layout="classic-sidebar"] .top-megamenu-bar {
+  display: none;
+}
+
+/* ── top-megamenu ───────────────────────────────────────────────────────── */
+:root[data-layout="top-megamenu"] .ant-layout-sider {
+  display: none !important;
+}
+:root[data-layout="top-megamenu"] .top-megamenu-bar {
+  display: flex;
+}
+
+/* ── dual-rail ──────────────────────────────────────────────────────────── */
+:root[data-layout="dual-rail"] .ant-layout-sider {
+  display: flex;
+}
+:root[data-layout="dual-rail"] .ant-layout-sider {
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+}
+
+/* ── icon-rail ──────────────────────────────────────────────────────────── */
+:root[data-layout="icon-rail"] .ant-layout-sider {
+  display: flex;
+  width: 64px !important;
+  min-width: 64px !important;
+  max-width: 64px !important;
+}
+:root[data-layout="icon-rail"] .ant-layout-sider .ant-menu-item-group-title,
+:root[data-layout="icon-rail"] .ant-layout-sider .ant-menu-title-content {
+  display: none;
+}
+
+/* ── dashboard-first ────────────────────────────────────────────────────── */
+:root[data-layout="dashboard-first"] .ant-layout-sider {
+  display: flex;
+}
+
+/* ── command-centric ────────────────────────────────────────────────────── */
+:root[data-layout="command-centric"] .ant-layout-sider {
+  display: none !important;
+}
+
+/* ── workspace-tabs ─────────────────────────────────────────────────────── */
+:root[data-layout="workspace-tabs"] .ant-layout-sider {
+  display: none !important;
+}
+
+/* ── apps-launcher ──────────────────────────────────────────────────────── */
+:root[data-layout="apps-launcher"] .ant-layout-sider {
+  display: none !important;
+}
+
+/* ── split-master-detail ────────────────────────────────────────────────── */
+:root[data-layout="split-master-detail"] .ant-layout-sider {
+  display: flex;
+  width: 280px !important;
+  min-width: 280px !important;
+  max-width: 280px !important;
+}
+
+/* ── mobile-bottom-nav ──────────────────────────────────────────────────── */
+:root[data-layout="mobile-bottom-nav"] .ant-layout-sider {
+  display: none !important;
+}
+:root[data-layout="mobile-bottom-nav"] .mobile-bottom-nav-bar {
+  display: flex;
+}
+
+/* ── Responsive: collapse sidebar on small screens for all sidebar layouts ── */
+@media (max-width: 768px) {
+  :root[data-layout="classic-sidebar"] .ant-layout-sider,
+  :root[data-layout="dual-rail"] .ant-layout-sider,
+  :root[data-layout="split-master-detail"] .ant-layout-sider {
+    position: fixed !important;
+    z-index: 200;
+    height: 100vh;
+  }
+
+  /* icon-rail collapses to a bottom bar on mobile */
+  :root[data-layout="icon-rail"] .ant-layout-sider {
+    display: none !important;
+  }
+  :root[data-layout="icon-rail"] .mobile-bottom-nav-bar {
+    display: flex;
+  }
+}

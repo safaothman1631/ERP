@@ -1,12 +1,27 @@
 """
-SettingsService — central reader for "bag" settings stored as
+SettingsService — central reader/writer for "bag" settings stored as
 {key: 'blob', category: <name>, value: <json string>} in the `settings`
-collection. Used by every domain module to apply user configuration.
+Firestore collection. Used by every domain module to apply user configuration.
 
-Pattern: each Settings page section in the UI saves a JSON blob under a
-category. This service reads the blob, parses it, merges with defaults,
-and caches the result in-process for 60 seconds per (org_id, category).
-Cache is invalidated by SettingsRepository on POST /api/system/settings.
+Storage layout (Requirement 11.2):
+    Firestore path: settings/{category}/{doc_id}
+    Each document: { org_id, key: "blob", category: <name>, value: <json string> }
+
+Organization scoping (Requirements 11.4, 11.5):
+    Every read and write is scoped to a single org_id.  Two organisations
+    sharing the same Firestore project never see each other's settings.
+    When a client-side setting conflicts with a server setting, the server
+    value takes precedence (enforced by get_bag merging: server data
+    overwrites the caller-supplied defaults).
+
+Public API:
+    get_bag(org_id, category, defaults)  — read a settings bag (cached 60 s)
+    set_bag(org_id, category, data)      — write / replace a settings bag
+    invalidate(org_id, category)         — drop cache for one category
+    invalidate_all()                     — drop entire cache (tests / admin)
+
+Convenience getters (e.g. get_sales_settings) call get_bag with domain
+defaults so callers always receive a fully-populated dict.
 """
 from __future__ import annotations
 
@@ -27,8 +42,28 @@ def _cache_key(org_id: str, category: str) -> str:
 
 
 def get_bag(org_id: str, category: str, defaults: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Return merged settings bag for (org_id, category). Defaults supplied
-    by caller fill missing keys. Cached 60s. Returns a NEW dict (safe to mutate)."""
+    """Return merged settings bag for (org_id, category).
+
+    Reads from the Firestore ``settings`` collection scoped to *org_id*.
+    The stored JSON blob is merged on top of *defaults* so that any key
+    present in Firestore overrides the caller-supplied default (server
+    takes precedence — Requirement 11.5).
+
+    Results are cached in-process for ``_TTL_SECONDS`` (60 s) to avoid
+    repeated Firestore reads on hot paths.  The cache is invalidated by
+    :func:`set_bag` and by ``POST /api/system/settings``.
+
+    Args:
+        org_id:   Organisation identifier.  Settings are strictly scoped
+                  to this org (Requirement 11.4).
+        category: Settings category name (e.g. ``"sales"``, ``"branding"``).
+        defaults: Fallback values for keys not yet stored in Firestore.
+
+    Returns:
+        A **new** dict (safe to mutate) with defaults merged under stored
+        values.  Returns a copy of *defaults* when org_id/category are
+        empty or Firestore is unavailable.
+    """
     if not org_id or not category:
         return dict(defaults or {})
     key = _cache_key(org_id, category)
@@ -65,6 +100,55 @@ def get_bag(org_id: str, category: str, defaults: Optional[Dict[str, Any]] = Non
     base = dict(defaults or {})
     base.update(parsed)
     return base
+
+
+def set_bag(org_id: str, category: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    """Persist a settings bag for (org_id, category) in Firestore.
+
+    Serialises *data* as a JSON string and upserts the ``blob`` document
+    for the given category under the organisation's ``settings`` collection
+    (Requirement 11.2).  The in-process cache entry is invalidated so the
+    next :func:`get_bag` call reflects the new values immediately.
+
+    Args:
+        org_id:   Organisation identifier.  The write is strictly scoped
+                  to this org (Requirement 11.4).
+        category: Settings category name (e.g. ``"sales"``, ``"branding"``).
+        data:     Dict of settings to store.  Must be JSON-serialisable.
+
+    Returns:
+        The stored document dict as returned by Firestore.
+
+    Raises:
+        ValueError: If *org_id* or *category* are empty, or *data* is not
+                    a dict.
+    """
+    if not org_id or not category:
+        raise ValueError("org_id and category are required")
+    if not isinstance(data, dict):
+        raise ValueError("data must be a dict")
+
+    repo = SettingsRepository(org_id)
+    # Find existing blob document for this category
+    items, _ = repo.list(filters=[
+        {"field": "key", "op": "==", "value": "blob"},
+        {"field": "category", "op": "==", "value": category},
+    ], limit=1)
+
+    payload = {
+        "key": "blob",
+        "category": category,
+        "value": json.dumps(data),
+    }
+
+    if items:
+        result = repo.update(items[0]["id"], payload)
+    else:
+        result = repo.create(payload)
+
+    # Invalidate cache so next get_bag reads fresh data
+    invalidate(org_id, category)
+    return result
 
 
 def invalidate(org_id: str, category: Optional[str] = None) -> None:

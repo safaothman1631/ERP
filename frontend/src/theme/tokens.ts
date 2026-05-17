@@ -2,11 +2,13 @@
  * Zoho ERP — Design Tokens
  * یەک سەرچاوەی هەڵنابڕاو بۆ هەموو Color / Spacing / Typography / Motion.
  * هیچ inline color/spacing لە کۆد قبوڵ نییە — تەنها ئەم tokens.
+ *
+ * Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6
  */
 
 // ───────────────────────────── Brand Palette ─────────────────────────────
 export const palette = {
-  // Primary — Zoho-inspired modern blue
+  // Primary — Zoho-inspired modern blue (shades 50–900)
   primary50:  '#EBF2FF',
   primary100: '#D6E4FF',
   primary200: '#ADC8FF',
@@ -18,17 +20,83 @@ export const palette = {
   primary800: '#0B2F66',
   primary900: '#061B3A',
 
-  // Semantic
-  success: '#16A34A',
-  successBg: '#DCFCE7',
-  warning: '#F59E0B',
-  warningBg: '#FEF3C7',
-  danger:  '#DC2626',
+  // Semantic — success (green scale)
+  success50:  '#F0FDF4',
+  success100: '#DCFCE7',
+  success200: '#BBF7D0',
+  success300: '#86EFAC',
+  success400: '#4ADE80',
+  success500: '#16A34A', // base
+  success600: '#15803D',
+  success700: '#166534',
+  success800: '#14532D',
+  success900: '#052E16',
+  success:    '#16A34A',
+  successBg:  '#DCFCE7',
+  successDark:'#4ADE80',
+  successDarkBg: 'rgba(74,222,128,0.12)',
+
+  // Semantic — warning (amber scale)
+  warning50:  '#FFFBEB',
+  warning100: '#FEF3C7',
+  warning200: '#FDE68A',
+  warning300: '#FCD34D',
+  warning400: '#FBBF24',
+  warning500: '#F59E0B', // base
+  warning600: '#D97706',
+  warning700: '#B45309',
+  warning800: '#92400E',
+  warning900: '#451A03',
+  warning:    '#F59E0B',
+  warningBg:  '#FEF3C7',
+  warningDark:'#FBBF24',
+  warningDarkBg: 'rgba(251,191,36,0.12)',
+
+  // Semantic — error/danger (red scale)
+  error50:  '#FFF1F2',
+  error100: '#FFE4E6',
+  error200: '#FECDD3',
+  error300: '#FDA4AF',
+  error400: '#FB7185',
+  error500: '#DC2626', // base
+  error600: '#B91C1C',
+  error700: '#991B1B',
+  error800: '#7F1D1D',
+  error900: '#450A0A',
+  danger:   '#DC2626',
   dangerBg: '#FEE2E2',
+  dangerDark:'#FB7185',
+  dangerDarkBg: 'rgba(251,113,133,0.12)',
+
+  // Semantic — info (sky scale)
+  info50:  '#F0F9FF',
+  info100: '#E0F2FE',
+  info200: '#BAE6FD',
+  info300: '#7DD3FC',
+  info400: '#38BDF8',
+  info500: '#0EA5E9', // base
+  info600: '#0284C7',
+  info700: '#0369A1',
+  info800: '#075985',
+  info900: '#0C4A6E',
   info:    '#0EA5E9',
   infoBg:  '#E0F2FE',
+  infoDark:'#38BDF8',
+  infoDarkBg: 'rgba(56,189,248,0.12)',
 
-  // Neutrals — Light
+  // Neutrals — gray scale (50–900)
+  gray50:  '#F8FAFC',
+  gray100: '#F1F5F9',
+  gray200: '#E2E8F0',
+  gray300: '#CBD5E1',
+  gray400: '#94A3B8',
+  gray500: '#64748B',
+  gray600: '#475569',
+  gray700: '#334155',
+  gray800: '#1E293B',
+  gray900: '#0F172A',
+
+  // Neutrals — semantic aliases (Light)
   ink900: '#0F172A',
   ink700: '#334155',
   ink500: '#64748B',
@@ -48,6 +116,7 @@ export const palette = {
 } as const;
 
 // ───────────────────────────── Spacing scale (4pt grid) ─────────────────────────────
+/** Named semantic spacing aliases */
 export const space = {
   xxs: 2,
   xs:  4,
@@ -57,6 +126,32 @@ export const space = {
   xl:  24,
   xxl: 32,
   xxxl:48,
+} as const;
+
+/**
+ * Numeric spacing scale — 4px base unit.
+ * Usage: spacing[4] === 16px, spacing[6] === 24px, etc.
+ * Requirements: 3.2
+ */
+export const spacing = {
+  0:  0,
+  1:  4,
+  2:  8,
+  3:  12,
+  4:  16,
+  5:  20,
+  6:  24,
+  7:  28,
+  8:  32,
+  9:  36,
+  10: 40,
+  11: 44,
+  12: 48,
+  14: 56,
+  16: 64,
+  20: 80,
+  24: 96,
+  32: 128,
 } as const;
 
 // ───────────────────────────── Radius ─────────────────────────────
@@ -70,6 +165,10 @@ export const radius = {
 } as const;
 
 // ───────────────────────────── Typography ─────────────────────────────
+/**
+ * Font families — Latin (LTR) and Arabic/Kurdish RTL stacks.
+ * Requirements: 3.3, 3.5
+ */
 export const fontFamily = {
   // RTL stack: Vazirmatn supports Arabic + Kurdish-Sorani well; falls back to Noto Sans Arabic.
   rtl: "'Vazirmatn', 'Noto Sans Arabic', 'Segoe UI', system-ui, sans-serif",
@@ -77,6 +176,10 @@ export const fontFamily = {
   mono:"'JetBrains Mono', 'Menlo', monospace",
 } as const;
 
+/**
+ * Font sizes — xs through 5xl.
+ * Requirements: 3.3
+ */
 export const fontSize = {
   xs:   12,
   sm:   13,
@@ -84,10 +187,52 @@ export const fontSize = {
   md:   15,
   lg:   16,
   xl:   18,
+  '2xl':20,
+  '3xl':24,
+  '4xl':30,
+  '5xl':36,
+  // Legacy aliases (kept for backward compatibility)
   h4:   20,
   h3:   24,
   h2:   30,
   h1:   36,
+} as const;
+
+/**
+ * Font weights — light through bold.
+ * Requirements: 3.3
+ */
+export const fontWeight = {
+  light:    300,
+  regular:  400,
+  medium:   500,
+  semibold: 600,
+  bold:     700,
+  extrabold:800,
+} as const;
+
+/**
+ * Line heights — unitless multipliers.
+ * Requirements: 3.3
+ */
+export const lineHeight = {
+  none:    1,
+  tight:   1.25,
+  snug:    1.375,
+  normal:  1.5,
+  relaxed: 1.625,
+  loose:   2,
+  // Pixel values for specific sizes
+  xs:  16,
+  sm:  18,
+  base:20,
+  md:  22,
+  lg:  24,
+  xl:  28,
+  '2xl':30,
+  '3xl':32,
+  '4xl':40,
+  '5xl':44,
 } as const;
 
 // ───────────────────────────── Control sizing (density) ─────────────────────────────
@@ -98,6 +243,19 @@ export const controlHeight = {
 } as const;
 
 // ───────────────────────────── Motion ─────────────────────────────
+/**
+ * Duration tokens — fast: 150ms, normal: 250ms, slow: 400ms.
+ * Requirements: 3.4
+ */
+export const duration = {
+  instant:  0,
+  fast:     150,
+  normal:   250,
+  slow:     400,
+  verySlow: 600,
+} as const;
+
+/** @deprecated Use `duration` instead. Kept for backward compatibility. */
 export const motion = {
   durFast:    120,
   durBase:    200,
@@ -106,12 +264,35 @@ export const motion = {
   easeEmph:   'cubic-bezier(0.3, 0, 0, 1)',
 } as const;
 
+/** Easing functions */
+export const easing = {
+  standard: 'cubic-bezier(0.2, 0, 0, 1)',
+  emphasized:'cubic-bezier(0.3, 0, 0, 1)',
+  decelerate:'cubic-bezier(0, 0, 0.2, 1)',
+  accelerate:'cubic-bezier(0.4, 0, 1, 1)',
+  linear:    'linear',
+} as const;
+
 // ───────────────────────────── Shadow ─────────────────────────────
+/**
+ * Shadow tokens — sm, md, lg, xl.
+ * Requirements: 3.2
+ */
 export const shadow = {
-  sm: '0 1px 2px rgba(15,23,42,0.06)',
-  md: '0 4px 12px rgba(15,23,42,0.08)',
-  lg: '0 12px 32px rgba(15,23,42,0.12)',
+  none: 'none',
+  sm:   '0 1px 2px rgba(15,23,42,0.06)',
+  md:   '0 4px 12px rgba(15,23,42,0.08)',
+  lg:   '0 12px 32px rgba(15,23,42,0.12)',
+  xl:   '0 24px 48px rgba(15,23,42,0.18), 0 8px 16px rgba(15,23,42,0.08)',
   primary: '0 6px 16px rgba(31,111,235,0.28)',
+  // Dark mode variants
+  dark: {
+    none: 'none',
+    sm:   '0 1px 2px rgba(0,0,0,0.30)',
+    md:   '0 4px 12px rgba(0,0,0,0.40)',
+    lg:   '0 12px 32px rgba(0,0,0,0.50)',
+    xl:   '0 24px 48px rgba(0,0,0,0.60), 0 8px 16px rgba(0,0,0,0.40)',
+  },
 } as const;
 
 // ───────────────────────────── Status (semantic with bg/border/hover) ─────────────────────────────

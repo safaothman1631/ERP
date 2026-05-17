@@ -31,6 +31,8 @@ import dayjs from 'dayjs';
 import { useOnboardingStore } from '../onboarding/store';
 import { INDUSTRIES, MODULES } from '../onboarding/industries';
 import { useAuthStore } from '../store';
+import { useSettingsStore } from '../store/settingsStore';
+import { usePermission } from '../hooks/usePermission';
 import SectionCard from '../components/ui/SectionCard';
 import SettingsRow from '../components/ui/SettingsRow';
 import SectionHelpPopover from '../components/ui/SectionHelpPopover';
@@ -47,6 +49,8 @@ const { RangePicker } = DatePicker;
 type SectionKey =
   // Account & personal
   | 'profile' | 'security' | 'notifications' | 'preferences'
+  // General & appearance (Requirement 12.2)
+  | 'general' | 'appearance' | 'feature_flags'
   // Organization
   | 'organization' | 'branches' | 'branding' | 'working_hours' | 'holidays'
   // Users & access
@@ -69,7 +73,7 @@ type SectionKey =
   | 'modules' | 'backup' | 'activity' | 'audit' | 'gdpr' | 'mobile' | 'system';
 
 type SectionGroup =
-  | 'account' | 'organization' | 'users' | 'localization'
+  | 'account' | 'general_app' | 'organization' | 'users' | 'localization'
   | 'finance' | 'commerce' | 'operations' | 'automation'
   | 'content' | 'system';
 
@@ -89,6 +93,9 @@ const Settings: React.FC = () => {
   const initial = (params.get('s') as SectionKey) || 'profile';
   const [active, setActive] = useState<SectionKey>(initial);
 
+  // Requirement 12.4 — Changes SHALL require appropriate permission (admin/owner).
+  const { hasSettingsAccess, isAuthenticated, role } = usePermission();
+
   useEffect(() => {
     const next = (params.get('s') as SectionKey) || 'profile';
     if (next !== active) setActive(next);
@@ -106,6 +113,10 @@ const Settings: React.FC = () => {
     { key: 'security',       group: 'account',      label: t('security_settings'),               icon: <SafetyOutlined /> },
     { key: 'notifications',  group: 'account',      label: t('notification_preferences'),        icon: <BellOutlined /> },
     { key: 'preferences',    group: 'account',      label: t('settings_pref', 'Preferences'),    icon: <BgColorsOutlined />, badge: 'soon' },
+    // ── General & Appearance (Requirement 12.2) ───────────────────────
+    { key: 'general',        group: 'general_app',  label: t('settings_general', 'General'),     icon: <SettingOutlined /> },
+    { key: 'appearance',     group: 'general_app',  label: t('settings_appearance', 'Appearance'), icon: <BgColorsOutlined /> },
+    { key: 'feature_flags',  group: 'general_app',  label: t('settings_feature_flags', 'Feature flags'), icon: <ExperimentOutlined /> },
     // ── Organization ──────────────────────────────────────────────────
     { key: 'organization',   group: 'organization', label: t('organization_settings'),           icon: <BankOutlined /> },
     { key: 'branches',       group: 'organization', label: t('branches', 'Branches'),            icon: <ApartmentOutlined />, badge: 'soon' },
@@ -169,6 +180,7 @@ const Settings: React.FC = () => {
 
   const groupLabels: Record<SectionGroup, string> = {
     account:      t('settings_group_account', 'Account'),
+    general_app:  t('settings_group_general', 'General'),
     organization: t('settings_group_org', 'Organization'),
     users:        t('settings_group_users', 'Users & access'),
     localization: t('settings_group_l10n', 'Localization'),
@@ -181,6 +193,24 @@ const Settings: React.FC = () => {
   };
 
   const activeDef = sections.find(s => s.key === active) ?? sections[0];
+
+  // Requirement 12.4 — Settings access requires admin or owner role.
+  // Show an access-denied message for authenticated users without the right role.
+  // Note: if role is null (token not decodable), we allow access and let the
+  // backend enforce the permission check on write operations.
+  if (isAuthenticated && role !== null && !hasSettingsAccess) {
+    return (
+      <Result
+        status="403"
+        title={t('access_denied', 'Access Denied')}
+        subTitle={t(
+          'settings_access_denied',
+          'You need administrator or owner privileges to access Settings.',
+        )}
+        icon={<LockOutlined style={{ color: palette.primary500 }} />}
+      />
+    );
+  }
 
   return (
     <>
@@ -196,7 +226,7 @@ const Settings: React.FC = () => {
           </div>
 
           <nav className="st-aside-nav">
-            {(['account','organization','users','localization','finance','commerce','operations','automation','content','system'] as const).map(group => {
+            {(['account','general_app','organization','users','localization','finance','commerce','operations','automation','content','system'] as const).map(group => {
               const items = sections.filter(s => s.group === group);
               if (items.length === 0) return null;
               return (
@@ -260,6 +290,9 @@ const Settings: React.FC = () => {
             {active === 'security'        && <SecuritySettings />}
             {active === 'notifications'   && <NotificationSettings />}
             {active === 'preferences'     && <PreferencesSettings />}
+            {active === 'general'         && <GeneralSettings />}
+            {active === 'appearance'      && <AppearanceSettings />}
+            {active === 'feature_flags'   && <FeatureFlagsSettings />}
             {active === 'branches'        && <BranchesSettings />}
             {active === 'branding'        && <BrandingSettings />}
             {active === 'working_hours'   && <WorkingHoursSettings />}
@@ -325,6 +358,9 @@ const sectionSubtitle = (key: SectionKey, t: (k: string, fb?: string) => unknown
     case 'security':        return tt('settings_sub_security', 'Two-factor authentication and active sessions.');
     case 'notifications':   return tt('settings_sub_notif', 'Choose which events trigger email or in-app alerts.');
     case 'preferences':     return tt('settings_sub_pref', 'Personal display preferences: theme, density, language.');
+    case 'general':         return tt('settings_sub_general', 'Application name, default language, and timezone.');
+    case 'appearance':      return tt('settings_sub_appearance', 'Theme, layout mode, and display density.');
+    case 'feature_flags':   return tt('settings_sub_feature_flags', 'Enable or disable features for your organization.');
     case 'branches':        return tt('settings_sub_branches', 'Manage warehouses, branches, and operating locations.');
     case 'branding':        return tt('settings_sub_branding', 'Logos, brand colors, favicon, and email theme.');
     case 'working_hours':   return tt('settings_sub_wh', 'Operating hours used for SLAs and service availability.');
@@ -375,6 +411,370 @@ const sectionSubtitle = (key: SectionKey, t: (k: string, fb?: string) => unknown
     case 'system':          return tt('settings_sub_system', 'Build, runtime, and environment diagnostics.');
     default: return '';
   }
+};
+
+// ─────────────────────── General (Requirement 12.2) ───────────────────────
+const GeneralSettings: React.FC = () => {
+  const { t, i18n } = useTranslation();
+  const [form] = Form.useForm();
+  const [saving, setSaving] = useState(false);
+  const settingsConfig = useSettingsStore((s) => s.config);
+  const setConfig = useSettingsStore((s) => s.setConfig);
+
+  // Populate form from settingsStore + API on mount
+  useEffect(() => {
+    form.setFieldsValue({
+      app_name: 'Zoho ERP',
+      language: settingsConfig.languages?.default_lang || i18n.language || 'ku',
+      timezone: settingsConfig.working_hours?.open_time ? 'Asia/Baghdad' : 'Asia/Baghdad',
+    });
+    api.get('/api/system/organization').then(r => {
+      if (r.data?.name) form.setFieldValue('app_name', r.data.name);
+    }).catch(() => {});
+    api.get('/api/system/settings/general').then(r => {
+      if (r.data) form.setFieldsValue(r.data);
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const vals = await form.validateFields();
+      await api.put('/api/system/settings/general', vals);
+      // Sync language change to i18n and settingsStore
+      if (vals.language && vals.language !== i18n.language) {
+        await i18n.changeLanguage(vals.language);
+        localStorage.setItem('app_language', vals.language);
+        document.documentElement.lang = vals.language;
+        document.documentElement.dir = ['ku', 'ar'].includes(vals.language) ? 'rtl' : 'ltr';
+      }
+      // Update settingsStore with new language preference
+      setConfig({
+        languages: {
+          ...settingsConfig.languages,
+          default_lang: vals.language,
+        },
+      });
+      message.success(t('success'));
+    } catch {
+      message.error(t('error'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const TIMEZONES = [
+    { value: 'Asia/Baghdad', label: 'Asia/Baghdad (UTC+3)' },
+    { value: 'Asia/Dubai', label: 'Asia/Dubai (UTC+4)' },
+    { value: 'Asia/Riyadh', label: 'Asia/Riyadh (UTC+3)' },
+    { value: 'Asia/Kuwait', label: 'Asia/Kuwait (UTC+3)' },
+    { value: 'Asia/Beirut', label: 'Asia/Beirut (UTC+2/+3)' },
+    { value: 'Asia/Amman', label: 'Asia/Amman (UTC+2/+3)' },
+    { value: 'Asia/Cairo', label: 'Africa/Cairo (UTC+2)' },
+    { value: 'Europe/Istanbul', label: 'Europe/Istanbul (UTC+3)' },
+    { value: 'UTC', label: 'UTC (UTC+0)' },
+    { value: 'Europe/London', label: 'Europe/London (UTC+0/+1)' },
+    { value: 'America/New_York', label: 'America/New_York (UTC-5/-4)' },
+    { value: 'America/Los_Angeles', label: 'America/Los_Angeles (UTC-8/-7)' },
+  ];
+
+  return (
+    <Space direction="vertical" size="large" style={{ width: '100%' }}>
+      <SectionCard
+        icon={<SettingOutlined />}
+        title={t('settings_general', 'General')}
+        description={t('settings_sub_general', 'Application name, default language, and timezone.')}
+      >
+        <Form form={form} layout="vertical">
+          <Row gutter={24}>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label={t('app_name', 'Application name')}
+                name="app_name"
+                rules={[
+                  { required: true, message: t('required') },
+                  { min: 2, message: t('min_length_2', 'Must be at least 2 characters') },
+                  { max: 100, message: t('max_length_100', 'Must be at most 100 characters') },
+                ]}
+              >
+                <Input
+                  placeholder="Zoho ERP"
+                  prefix={<SettingOutlined style={{ color: palette.ink300 }} />}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label={t('default_language', 'Default language')}
+                name="language"
+                rules={[{ required: true, message: t('required') }]}
+              >
+                <Select
+                  style={{ width: '100%' }}
+                  options={[
+                    { value: 'ku', label: 'کوردی (Kurdish)' },
+                    { value: 'ar', label: 'العربية (Arabic)' },
+                    { value: 'en', label: 'English' },
+                  ]}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label={t('timezone', 'Timezone')}
+                name="timezone"
+                rules={[{ required: true, message: t('required') }]}
+              >
+                <Select
+                  style={{ width: '100%' }}
+                  showSearch
+                  optionFilterProp="label"
+                  options={TIMEZONES}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Button type="primary" onClick={handleSave} loading={saving}>
+            {t('save')}
+          </Button>
+        </Form>
+      </SectionCard>
+    </Space>
+  );
+};
+
+// ─────────────────────── Appearance (Requirement 12.2) ───────────────────────
+const AppearanceSettings: React.FC = () => {
+  const { t } = useTranslation();
+  const currentTheme = useAuthStore((s) => s.theme);
+  const toggleTheme = useAuthStore((s) => s.toggleTheme);
+  const currentLayout = useAuthStore((s) => s.layoutMode);
+  const setLayoutMode = useAuthStore((s) => s.setLayoutMode);
+  const [form] = Form.useForm();
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    form.setFieldsValue({
+      theme: currentTheme,
+      layout: currentLayout,
+      density: 'default',
+    });
+    api.get('/api/system/settings/appearance').then(r => {
+      if (r.data) form.setFieldsValue(r.data);
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTheme, currentLayout]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const vals = await form.validateFields();
+      // Apply theme change immediately
+      if (vals.theme && vals.theme !== currentTheme) {
+        toggleTheme();
+      }
+      // Apply layout change immediately
+      if (vals.layout && vals.layout !== currentLayout) {
+        setLayoutMode(vals.layout);
+      }
+      await api.put('/api/system/settings/appearance', vals).catch(() => {});
+      message.success(t('success'));
+    } catch {
+      message.error(t('error'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const LAYOUT_OPTIONS = [
+    { value: 'classic-sidebar',    label: t('layout_classic_sidebar', 'Classic sidebar') },
+    { value: 'top-megamenu',       label: t('layout_top_megamenu', 'Top mega-menu') },
+    { value: 'dual-rail',          label: t('layout_dual_rail', 'Dual rail') },
+    { value: 'icon-rail',          label: t('layout_icon_rail', 'Icon rail') },
+    { value: 'dashboard-first',    label: t('layout_dashboard_first', 'Dashboard first') },
+    { value: 'command-centric',    label: t('layout_command_centric', 'Command centric') },
+    { value: 'workspace-tabs',     label: t('layout_workspace_tabs', 'Workspace tabs') },
+    { value: 'apps-launcher',      label: t('layout_apps_launcher', 'Apps launcher') },
+    { value: 'split-master-detail',label: t('layout_split_master', 'Split master-detail') },
+    { value: 'mobile-bottom-nav',  label: t('layout_mobile_bottom', 'Mobile bottom nav') },
+  ];
+
+  return (
+    <Space direction="vertical" size="large" style={{ width: '100%' }}>
+      <SectionCard
+        icon={<BgColorsOutlined />}
+        title={t('settings_appearance', 'Appearance')}
+        description={t('settings_sub_appearance', 'Theme, layout mode, and display density.')}
+      >
+        <Form form={form} layout="vertical">
+          <Row gutter={24}>
+            <Col xs={24} md={8}>
+              <Form.Item
+                label={t('pref_theme', 'Theme')}
+                name="theme"
+                rules={[{ required: true, message: t('required') }]}
+              >
+                <Select
+                  style={{ width: '100%' }}
+                  options={[
+                    { value: 'light', label: t('theme_light', 'Light') },
+                    { value: 'dark', label: t('theme_dark', 'Dark') },
+                  ]}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
+              <Form.Item
+                label={t('layout_mode', 'Layout mode')}
+                name="layout"
+                rules={[{ required: true, message: t('required') }]}
+              >
+                <Select
+                  style={{ width: '100%' }}
+                  options={LAYOUT_OPTIONS}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
+              <Form.Item
+                label={t('pref_density', 'Density')}
+                name="density"
+                rules={[{ required: true, message: t('required') }]}
+              >
+                <Select
+                  style={{ width: '100%' }}
+                  options={[
+                    { value: 'compact', label: t('density_compact', 'Compact') },
+                    { value: 'default', label: t('density_default', 'Default') },
+                    { value: 'comfort', label: t('density_comfort', 'Comfort') },
+                  ]}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Button type="primary" onClick={handleSave} loading={saving}>
+            {t('save')}
+          </Button>
+        </Form>
+      </SectionCard>
+    </Space>
+  );
+};
+
+// ─────────────────────── Feature Flags (Requirement 12.2) ───────────────────────
+interface FeatureFlag {
+  key: string;
+  label: string;
+  description: string;
+  enabled: boolean;
+  rollout_pct?: number;
+}
+
+const FeatureFlagsSettings: React.FC = () => {
+  const { t } = useTranslation();
+  const [flags, setFlags] = useState<FeatureFlag[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState<string | null>(null);
+
+  const DEFAULT_FLAGS: FeatureFlag[] = [
+    { key: 'ai_assist',        label: t('ff_ai_assist', 'AI Assist'),           description: t('ff_ai_assist_desc', 'Enable AI-powered suggestions and anomaly detection.'), enabled: false, rollout_pct: 0 },
+    { key: 'ocr_receipts',     label: t('ff_ocr', 'OCR Receipts'),              description: t('ff_ocr_desc', 'Automatic receipt scanning and data extraction.'), enabled: false, rollout_pct: 0 },
+    { key: 'advanced_reports', label: t('ff_adv_reports', 'Advanced Reports'),  description: t('ff_adv_reports_desc', 'Custom report builder and scheduled reports.'), enabled: true, rollout_pct: 100 },
+    { key: 'pos_module',       label: t('ff_pos', 'Point of Sale'),             description: t('ff_pos_desc', 'POS terminal, sessions, and floor plans.'), enabled: false, rollout_pct: 0 },
+    { key: 'ecommerce',        label: t('ff_ecommerce', 'E-commerce Storefront'), description: t('ff_ecommerce_desc', 'Public storefront and customer portal.'), enabled: false, rollout_pct: 0 },
+    { key: 'iot_telemetry',    label: t('ff_iot', 'IoT Telemetry'),             description: t('ff_iot_desc', 'Device management and real-time sensor data.'), enabled: false, rollout_pct: 0 },
+    { key: 'multi_entity',     label: t('ff_multi_entity', 'Multi-Entity'),     description: t('ff_multi_entity_desc', 'Manage multiple companies and intercompany transactions.'), enabled: false, rollout_pct: 0 },
+    { key: 'whatsapp_integration', label: t('ff_whatsapp', 'WhatsApp Integration'), description: t('ff_whatsapp_desc', 'Send invoices and notifications via WhatsApp Business API.'), enabled: false, rollout_pct: 0 },
+  ];
+
+  useEffect(() => {
+    setLoading(true);
+    api.get('/api/feature-flags').then(r => {
+      const serverFlags: FeatureFlag[] = r.data || [];
+      // Merge server flags with defaults
+      const merged = DEFAULT_FLAGS.map(def => {
+        const server = serverFlags.find(f => f.key === def.key);
+        return server ? { ...def, ...server } : def;
+      });
+      setFlags(merged);
+    }).catch(() => {
+      setFlags(DEFAULT_FLAGS);
+    }).finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleToggle = async (flagKey: string, enabled: boolean) => {
+    setSaving(flagKey);
+    try {
+      await api.put(`/api/feature-flags/${flagKey}`, { enabled });
+      setFlags(prev => prev.map(f => f.key === flagKey ? { ...f, enabled } : f));
+      message.success(t('success'));
+    } catch {
+      message.error(t('error'));
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleRolloutChange = async (flagKey: string, rollout_pct: number) => {
+    // Validate rollout percentage
+    if (rollout_pct < 0 || rollout_pct > 100) {
+      message.error(t('rollout_pct_invalid', 'Rollout percentage must be between 0 and 100'));
+      return;
+    }
+    setSaving(flagKey);
+    try {
+      await api.put(`/api/feature-flags/${flagKey}`, { rollout_pct });
+      setFlags(prev => prev.map(f => f.key === flagKey ? { ...f, rollout_pct } : f));
+      message.success(t('success'));
+    } catch {
+      message.error(t('error'));
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  return (
+    <Space direction="vertical" size="large" style={{ width: '100%' }}>
+      <SectionCard
+        icon={<ExperimentOutlined />}
+        title={t('settings_feature_flags', 'Feature flags')}
+        description={t('settings_sub_feature_flags', 'Enable or disable features for your organization.')}
+        loading={loading}
+      >
+        {flags.map((flag, idx) => (
+          <SettingsRow
+            key={flag.key}
+            label={flag.label}
+            description={flag.description}
+            divider={idx < flags.length - 1}
+          >
+            <Space>
+              <Switch
+                checked={flag.enabled}
+                loading={saving === flag.key}
+                onChange={(checked) => handleToggle(flag.key, checked)}
+              />
+              {flag.enabled && (
+                <Tooltip title={t('rollout_pct_tooltip', 'Percentage of users who see this feature (0–100)')}>
+                  <InputNumber
+                    min={0}
+                    max={100}
+                    value={flag.rollout_pct ?? 100}
+                    onChange={(v) => { if (v !== null) handleRolloutChange(flag.key, v); }}
+                    addonAfter="%"
+                    style={{ width: 110 }}
+                    disabled={saving === flag.key}
+                  />
+                </Tooltip>
+              )}
+            </Space>
+          </SettingsRow>
+        ))}
+      </SectionCard>
+    </Space>
+  );
 };
 
 // ─────────────────────── Profile ───────────────────────

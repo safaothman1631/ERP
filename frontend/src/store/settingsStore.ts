@@ -108,13 +108,77 @@ const DEFAULTS: PublicConfig = {
   languages: { active: ['ku', 'en', 'ar'], default_lang: 'ku', document_lang: 'en', rtl: true },
 };
 
+/**
+ * Conflict resolution strategy (Requirement 11.5):
+ *
+ * When local (localStorage) settings conflict with server settings, the server
+ * always takes precedence.  The merge is performed at the "bag" level:
+ *
+ *   merged = { ...DEFAULTS, ...localBag, ...serverBag }
+ *
+ * This means:
+ *  1. DEFAULTS fill any key absent from both sources.
+ *  2. Local values override defaults (so offline edits are not lost until sync).
+ *  3. Server values override local values (server is the source of truth).
+ *
+ * `syncFromServer()` is called after login (Requirement 11.3) and accepts the
+ * orgId for traceability, even though the actual org-scoping is enforced by the
+ * backend via the JWT claim.  The function fetches `/api/system/public-config`
+ * which returns the full org-scoped config blob, then applies the server-wins
+ * merge and persists the result to localStorage via Zustand persist middleware.
+ */
 interface SettingsState {
   config: PublicConfig;
   loaded: boolean;
   loading: boolean;
+  /** orgId that was last synced from the server, or null if not yet synced. */
+  syncedOrgId: string | null;
   load: () => Promise<void>;
   refresh: () => Promise<void>;
   setConfig: (cfg: Partial<PublicConfig>) => void;
+  /**
+   * Sync server settings to the client after login (Requirement 11.3).
+   *
+   * Fetches the org-scoped public config from the backend and merges it with
+   * the current local config using server-wins conflict resolution
+   * (Requirement 11.5).  The `orgId` parameter is used to tag the sync so
+   * callers can detect stale data when the user switches organisations
+   * (Requirement 11.4).
+   *
+   * @param orgId - The organisation ID of the logged-in user.
+   */
+  syncFromServer: (orgId: string) => Promise<void>;
+}
+
+/**
+ * Merge a server config bag over the current local config using server-wins
+ * conflict resolution (Requirement 11.5).
+ *
+ * For each category bag the precedence order is:
+ *   DEFAULTS  <  local (current store value)  <  server
+ *
+ * This ensures:
+ * - Missing keys are filled from DEFAULTS.
+ * - Local-only edits (e.g. offline changes) are preserved until the server
+ *   provides an explicit value.
+ * - Any key present in the server response overrides the local value.
+ */
+function mergeServerWins(
+  local: PublicConfig,
+  server: Partial<PublicConfig>,
+): PublicConfig {
+  return {
+    formats:         { ...DEFAULTS.formats,         ...local.formats,         ...(server.formats         || {}) },
+    branding:        { ...DEFAULTS.branding,        ...local.branding,        ...(server.branding        || {}) },
+    payment_methods: { ...DEFAULTS.payment_methods, ...local.payment_methods, ...(server.payment_methods || {}) },
+    localization:    { ...DEFAULTS.localization,    ...local.localization,    ...(server.localization    || {}) },
+    mobile:          { ...DEFAULTS.mobile,          ...local.mobile,          ...(server.mobile          || {}) },
+    working_hours:   { ...DEFAULTS.working_hours,   ...local.working_hours,   ...(server.working_hours   || {}) },
+    holidays:        { ...DEFAULTS.holidays,        ...local.holidays,        ...(server.holidays        || {}) },
+    sso:             { ...DEFAULTS.sso,             ...local.sso,             ...(server.sso             || {}) },
+    portals:         { ...DEFAULTS.portals,         ...local.portals,         ...(server.portals         || {}) },
+    languages:       { ...DEFAULTS.languages,       ...local.languages,       ...(server.languages       || {}) },
+  };
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -123,38 +187,63 @@ export const useSettingsStore = create<SettingsState>()(
       config: DEFAULTS,
       loaded: false,
       loading: false,
+      syncedOrgId: null,
+
       load: async () => {
         if (get().loading) return;
         set({ loading: true });
         try {
           const r = await api.get('/api/system/public-config');
           const cfg = (r.data || {}) as Partial<PublicConfig>;
+          // Server-wins merge against DEFAULTS (no prior local state on initial load)
           set({
-            config: {
-              formats: { ...DEFAULTS.formats, ...(cfg.formats || {}) },
-              branding: { ...DEFAULTS.branding, ...(cfg.branding || {}) },
-              payment_methods: { ...DEFAULTS.payment_methods, ...(cfg.payment_methods || {}) },
-              localization: { ...DEFAULTS.localization, ...(cfg.localization || {}) },
-              mobile: { ...DEFAULTS.mobile, ...(cfg.mobile || {}) },
-              working_hours: { ...DEFAULTS.working_hours, ...(cfg.working_hours || {}) },
-              holidays: { ...DEFAULTS.holidays, ...(cfg.holidays || {}) },
-              sso: { ...DEFAULTS.sso, ...(cfg.sso || {}) },
-              portals: { ...DEFAULTS.portals, ...(cfg.portals || {}) },
-              languages: { ...DEFAULTS.languages, ...(cfg.languages || {}) },
-            },
+            config: mergeServerWins(DEFAULTS, cfg),
             loaded: true,
           });
         } catch {
-          /* swallow */
+          /* swallow — keep cached/default config */
         } finally {
           set({ loading: false });
         }
       },
+
       refresh: async () => {
         set({ loaded: false });
         await get().load();
       },
+
       setConfig: (cfg) => set((s) => ({ config: { ...s.config, ...cfg } as PublicConfig })),
+
+      /**
+       * Sync server settings to the client after login (Requirement 11.3).
+       *
+       * Fetches `/api/system/public-config` which is scoped to the
+       * authenticated user's organisation via the JWT claim (Requirement 11.4).
+       * Applies server-wins conflict resolution against the current local
+       * config (Requirement 11.5) and persists the result to localStorage via
+       * the Zustand persist middleware (Requirement 11.1).
+       *
+       * @param orgId - The organisation ID of the logged-in user.  Used to
+       *   tag the last-synced org so callers can detect stale data when the
+       *   user switches organisations.
+       */
+      syncFromServer: async (orgId: string) => {
+        if (!orgId) return;
+        if (get().loading) return;
+        set({ loading: true });
+        try {
+          const r = await api.get('/api/system/public-config');
+          const serverCfg = (r.data || {}) as Partial<PublicConfig>;
+          const localCfg = get().config;
+          // Server takes precedence on conflicts (Requirement 11.5)
+          const merged = mergeServerWins(localCfg, serverCfg);
+          set({ config: merged, loaded: true, syncedOrgId: orgId });
+        } catch {
+          /* swallow — keep existing local config; sync will retry on next login */
+        } finally {
+          set({ loading: false });
+        }
+      },
     }),
     {
       name: 'settings-config-cache',
@@ -170,7 +259,7 @@ export const useSettingsStore = create<SettingsState>()(
           try { window.localStorage.removeItem('settings-config-cache'); } catch { /* noop */ }
         }
       },
-      partialize: (s) => ({ config: s.config, loaded: s.loaded }),
+      partialize: (s) => ({ config: s.config, loaded: s.loaded, syncedOrgId: s.syncedOrgId }),
       version: 1,
     }
   )

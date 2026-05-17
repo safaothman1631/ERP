@@ -43,7 +43,11 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    // Kurdish (Iraq) locale — triggers app i18n to load Kurdish translations
+    // and set document.documentElement.dir = "rtl" (Requirement 9.5).
     locale: 'ku-IQ',
+    // Baghdad timezone matches the primary deployment region.
+    timezoneId: 'Asia/Baghdad',
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
