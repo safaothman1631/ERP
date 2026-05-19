@@ -1415,3 +1415,18 @@ html[data-high-contrast="true"][data-theme="dark"] *:focus-visible { outline-col
   margin-inline-start: 8px !important;
   margin-inline-end: 0 !important;
 }
+
+
+/* ── Switch: prevent touch-target rules from enlarging the visual size ───── */
+@media (max-width: 768px), (pointer: coarse) {
+  .ant-switch {
+    min-height: auto !important;
+    min-width: auto !important;
+    height: 22px !important;
+    width: 44px !important;
+  }
+  .ant-switch.ant-switch-small {
+    height: 16px !important;
+    width: 28px !important;
+  }
+}

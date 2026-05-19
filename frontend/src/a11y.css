@@ -61,8 +61,7 @@
   .ant-switch {
     min-height: auto !important;
     min-width: auto !important;
-    padding-block: 10px !important;
-    margin-block: -10px !important;
+    height: auto !important;
   }
 
   /* Ensure icon-only buttons have adequate touch targets */

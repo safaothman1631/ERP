@@ -475,8 +475,7 @@ html {
   .ant-switch {
     min-height: auto;
     min-width: auto;
-    padding-block: 10px;
-    margin-block: -10px;
+    height: auto;
   }
 
   /* Ensure icon-only buttons have adequate touch area */
