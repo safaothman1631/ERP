@@ -50,12 +50,19 @@
   .ant-btn,
   .ant-checkbox-wrapper,
   .ant-radio-wrapper,
-  .ant-switch,
   .ant-select,
   .ant-picker,
   .ant-input-affix-wrapper {
     min-height: 44px !important;
     min-width: 44px !important;
+  }
+
+  /* Switch: keep visual size but expand tap area via padding */
+  .ant-switch {
+    min-height: auto !important;
+    min-width: auto !important;
+    padding-block: 10px !important;
+    margin-block: -10px !important;
   }
 
   /* Ensure icon-only buttons have adequate touch targets */
