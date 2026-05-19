@@ -1962,7 +1962,7 @@ const ModulesSettings: React.FC = () => {
             <div style={{ fontSize: fontSize.sm, fontWeight: 600, color: palette.ink500, marginBottom: space.md }}>
               {t('enabled_modules', 'Enabled modules')} <span style={{ color: palette.ink300 }}>({enabled.length})</span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: space.md }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(220px, 100%), 1fr))', gap: space.md }}>
               {enabled.map(m => (
                 <div
                   key={m.key}
@@ -3487,8 +3487,8 @@ const WorkingHoursSettings: React.FC = () => {
         <SettingsRow label={t('wh_timezone', 'Default timezone')}>
           <Select value={values.timezone} onChange={(v) => setValue('timezone', v)} disabled={loading} style={{ width: '100%', maxWidth: 320 }} options={[{ value: 'Asia/Baghdad', label: 'Asia/Baghdad' }, { value: 'Asia/Dubai', label: 'Asia/Dubai' }, { value: 'Asia/Riyadh', label: 'Asia/Riyadh' }, { value: 'Europe/Istanbul', label: 'Europe/Istanbul' }, { value: 'UTC', label: 'UTC' }]} />
         </SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.honor_holidays} onChange={(v) => setValue('honor_holidays', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.sla_business_hours_only} onChange={(v) => setValue('sla_business_hours_only', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('wh_holidays', 'Honor public holidays')}><Switch checked={values.honor_holidays} onChange={(v) => setValue('honor_holidays', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('wh_sla', 'SLA business-hours only')}><Switch checked={values.sla_business_hours_only} onChange={(v) => setValue('sla_business_hours_only', v)} disabled={loading} /></SettingsRow>
       </SectionCard>
       <SaveBar dirty={dirty} saving={saving} onSave={save} />
     </Space>
@@ -3511,8 +3511,8 @@ const HolidaysSettings: React.FC = () => {
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <SectionCard icon={<GiftOutlined />} title={t('hol_title', 'Public holidays')} description={t('hol_desc', 'Holiday calendars by country and region — drives leave and SLA timers.')}>
         <SettingsRow label={t('hol_country', 'Country preset')}><Select value={values.country_preset} onChange={(v) => setValue('country_preset', v)} disabled={loading} style={{ width: 240 }} options={[{ value: 'IQ', label: 'Iraq' }, { value: 'KRG', label: 'Kurdistan Region' }, { value: 'AE', label: 'UAE' }, { value: 'SA', label: 'Saudi Arabia' }, { value: 'TR', label: 'Türkiye' }, { value: 'NONE', label: t('none', 'None') }]} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.honor_regional} onChange={(v) => setValue('honor_regional', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.carry_next_year} onChange={(v) => setValue('carry_next_year', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('hol_regional', 'Honor regional holidays')}><Switch checked={values.honor_regional} onChange={(v) => setValue('honor_regional', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('hol_carry', 'Carry to next year')}><Switch checked={values.carry_next_year} onChange={(v) => setValue('carry_next_year', v)} disabled={loading} /></SettingsRow>
         <Divider titlePlacement="start">{t('hol_custom', 'Custom holidays')}</Divider>
         <ResponsiveTableAdapter<HolidayItem>
           rowKey={(_, i) => String(i)}
@@ -3851,7 +3851,7 @@ const SsoSettings: React.FC = () => {
           <SettingsRow label={t('sso_client_secret', 'Client secret')}><Input.Password value={values.client_secret} onChange={(e) => setValue('client_secret', e.target.value)} disabled={loading} /></SettingsRow>
           <SettingsRow label={t('sso_attr_email', 'Attribute mapping: email')}><Input value={values.attribute_email} onChange={(e) => setValue('attribute_email', e.target.value)} disabled={loading} style={{ width: 240 }} /></SettingsRow>
           <SettingsRow label={t('sso_attr_name', 'Attribute mapping: name')}><Input value={values.attribute_name} onChange={(e) => setValue('attribute_name', e.target.value)} disabled={loading} style={{ width: 240 }} /></SettingsRow>
-          <SettingsRow label={} inline><Switch checked={values.jit_provisioning} onChange={(v) => setValue('jit_provisioning', v)} disabled={loading} /></SettingsRow>
+          <SettingsRow label={t('sso_jit', 'Just-in-time provisioning')}><Switch checked={values.jit_provisioning} onChange={(v) => setValue('jit_provisioning', v)} disabled={loading} /></SettingsRow>
           <SettingsRow label={t('sso_enforce', 'Enforce SSO for email domain')}><Input value={values.enforce_domain} onChange={(e) => setValue('enforce_domain', e.target.value)} disabled={loading} placeholder="example.com" style={{ width: 280 }} /></SettingsRow>
         </>}
       </SectionCard>
@@ -3870,14 +3870,14 @@ const PortalsSettings: React.FC = () => {
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <SectionCard icon={<UsergroupAddOutlined />} title={t('portals_title', 'Customer & vendor portals')} description={t('portals_desc', 'Self-service portals for customers and vendors with branded login.')}>
-        <SettingsRow label={} inline><Switch checked={values.customer_portal_enabled} onChange={(v) => setValue('customer_portal_enabled', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.vendor_portal_enabled} onChange={(v) => setValue('vendor_portal_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('po_cust', 'Customer portal')}><Switch checked={values.customer_portal_enabled} onChange={(v) => setValue('customer_portal_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('po_vendor', 'Vendor portal')}><Switch checked={values.vendor_portal_enabled} onChange={(v) => setValue('vendor_portal_enabled', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('po_subdomain', 'Custom subdomain')} description={t('po_subdomain_desc', 'e.g. portal.your-company.com')}><Input value={values.subdomain} onChange={(e) => setValue('subdomain', e.target.value)} disabled={loading} placeholder="portal.example.com" style={{ width: 320 }} /></SettingsRow>
         <Divider titlePlacement="start">{t('portal_capabilities', 'Capabilities')}</Divider>
-        <SettingsRow label={} inline><Switch checked={values.allow_invoice_download} onChange={(v) => setValue('allow_invoice_download', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.allow_quote_acceptance} onChange={(v) => setValue('allow_quote_acceptance', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.allow_document_share} onChange={(v) => setValue('allow_document_share', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.require_terms_acceptance} onChange={(v) => setValue('require_terms_acceptance', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('po_inv', 'Invoice download & pay')}><Switch checked={values.allow_invoice_download} onChange={(v) => setValue('allow_invoice_download', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('po_quote', 'Quote acceptance')}><Switch checked={values.allow_quote_acceptance} onChange={(v) => setValue('allow_quote_acceptance', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('po_doc', 'Document sharing')}><Switch checked={values.allow_document_share} onChange={(v) => setValue('allow_document_share', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('po_terms', 'Require terms acceptance')}><Switch checked={values.require_terms_acceptance} onChange={(v) => setValue('require_terms_acceptance', v)} disabled={loading} /></SettingsRow>
         {values.require_terms_acceptance && <SettingsRow label={t('po_terms_url', 'Terms URL')}><Input value={values.terms_url} onChange={(e) => setValue('terms_url', e.target.value)} disabled={loading} placeholder="https://..." /></SettingsRow>}
       </SectionCard>
       <SaveBar dirty={dirty} saving={saving} onSave={save} />
@@ -3914,7 +3914,7 @@ const LocalizationSettings: React.FC = () => {
         <SettingsRow label={t('l_address', 'Address format')}><Input.TextArea value={values.address_format} onChange={(e) => setValue('address_format', e.target.value)} disabled={loading} rows={3} /></SettingsRow>
         <SettingsRow label={t('l_phone', 'Phone format')}><Input value={values.phone_format} onChange={(e) => setValue('phone_format', e.target.value)} disabled={loading} style={{ width: 280 }} /></SettingsRow>
         <SettingsRow label={t('l_postal', 'Postal code format')}><Input value={values.postal_code_format} onChange={(e) => setValue('postal_code_format', e.target.value)} disabled={loading} style={{ width: 200 }} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.iban_validation} onChange={(v) => setValue('iban_validation', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('l_iban', 'IBAN / SWIFT validation')}><Switch checked={values.iban_validation} onChange={(v) => setValue('iban_validation', v)} disabled={loading} /></SettingsRow>
       </SectionCard>
       <SaveBar dirty={dirty} saving={saving} onSave={save} />
     </Space>
@@ -3934,7 +3934,7 @@ const LanguagesSettings: React.FC = () => {
         <SettingsRow label={t('lg_active', 'Active languages')}><Select mode="multiple" value={values.active} onChange={(v) => setValue('active', v)} disabled={loading} options={langOpts} style={{ minWidth: 320 }} /></SettingsRow>
         <SettingsRow label={t('lg_default', 'Default workspace language')}><Select value={values.default_lang} onChange={(v) => { setValue('default_lang', v); i18n.changeLanguage(v); }} disabled={loading} options={langOpts.filter((l) => values.active.includes(l.value))} style={{ width: 240 }} /></SettingsRow>
         <SettingsRow label={t('lg_doc', 'Document language')}><Select value={values.document_lang} onChange={(v) => setValue('document_lang', v)} disabled={loading} options={langOpts.filter((l) => values.active.includes(l.value))} style={{ width: 240 }} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.rtl} onChange={(v) => setValue('rtl', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('lg_rtl', 'RTL support')}><Switch checked={values.rtl} onChange={(v) => setValue('rtl', v)} disabled={loading} /></SettingsRow>
       </SectionCard>
       <SaveBar dirty={dirty} saving={saving} onSave={save} />
     </Space>
@@ -4161,7 +4161,7 @@ const PaymentMethodsSettings: React.FC = () => {
     cash: true, bank_transfer: true, cheque: true, card_visa_mc: false, fib: false, zaincash: false, asiahawala: false, stripe: false, paypal: false, qr: false, installments: false, default_method: 'cash',
   });
   const Row2 = ({ k, label }: { k: keyof PaymentMethodsBag; label: string }) => (
-    <SettingsRow label={} inline><Switch checked={Boolean(values[k])} onChange={(v) => setValue(k, v as PaymentMethodsBag[typeof k])} disabled={loading} /></SettingsRow>
+    <SettingsRow label={label}><Switch checked={Boolean(values[k])} onChange={(v) => setValue(k, v as PaymentMethodsBag[typeof k])} disabled={loading} /></SettingsRow>
   );
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -4212,10 +4212,10 @@ const SalesSettings: React.FC = () => {
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <SectionCard icon={<ShoppingCartOutlined />} title={t('sales_title', 'Sales')} description={t('sales_desc', 'Quote → order → invoice flow, pricing, discounts, and stages.')}>
         <SettingsRow label={t('sl_quote_expiry', 'Quote expiry (days)')}><InputNumber min={1} max={365} value={values.quote_expiry_days} onChange={(v) => setValue('quote_expiry_days', Number(v) || 30)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.auto_followup_quote} onChange={(v) => setValue('auto_followup_quote', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('sl_auto_followup', 'Auto follow-up before expiry')}><Switch checked={values.auto_followup_quote} onChange={(v) => setValue('auto_followup_quote', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('sl_terms_days', 'Default payment terms (days)')}><InputNumber min={0} max={180} value={values.default_payment_terms_days} onChange={(v) => setValue('default_payment_terms_days', Number(v) || 30)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
         <SettingsRow label={t('sl_default_discount', 'Default discount (%)')}><InputNumber min={0} max={100} step={0.1} value={values.default_discount_pct} onChange={(v) => setValue('default_discount_pct', Number(v) || 0)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.require_discount_approval} onChange={(v) => setValue('require_discount_approval', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('sl_discount_approval', 'Require approval for discounts')}><Switch checked={values.require_discount_approval} onChange={(v) => setValue('require_discount_approval', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('sl_commission', 'Default sales commission (%)')}><InputNumber min={0} max={100} step={0.1} value={values.commission_pct} onChange={(v) => setValue('commission_pct', Number(v) || 0)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
         <SettingsRow label={t('sl_pipeline', 'Pipeline stages (comma-separated)')}><Input value={values.pipeline_stages} onChange={(e) => setValue('pipeline_stages', e.target.value)} disabled={loading} /></SettingsRow>
       </SectionCard>
@@ -4241,8 +4241,8 @@ const CrmSettings: React.FC = () => {
         <SettingsRow label={t('cr_lost', 'Lost reasons (comma-separated)')}><Input value={values.lost_reasons} onChange={(e) => setValue('lost_reasons', e.target.value)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('cr_score_high', 'Hot lead score ≥')}><InputNumber min={0} max={100} value={values.scoring_high} onChange={(v) => setValue('scoring_high', Number(v) || 80)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
         <SettingsRow label={t('cr_score_med', 'Warm lead score ≥')}><InputNumber min={0} max={100} value={values.scoring_medium} onChange={(v) => setValue('scoring_medium', Number(v) || 50)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.round_robin} onChange={(v) => setValue('round_robin', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.duplicate_detection} onChange={(v) => setValue('duplicate_detection', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('cr_assign', 'Round-robin assignment')}><Switch checked={values.round_robin} onChange={(v) => setValue('round_robin', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('cr_dup', 'Duplicate detection')}><Switch checked={values.duplicate_detection} onChange={(v) => setValue('duplicate_detection', v)} disabled={loading} /></SettingsRow>
       </SectionCard>
       <SaveBar dirty={dirty} saving={saving} onSave={save} />
     </Space>
@@ -4259,12 +4259,12 @@ const PurchasesSettings: React.FC = () => {
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <SectionCard icon={<ShopOutlined />} title={t('purch_title', 'Purchases')} description={t('purch_desc', 'RFQ flow, vendor pricing, three-way match, and approval thresholds.')}>
-        <SettingsRow label={} inline><Switch checked={values.rfq_required} onChange={(v) => setValue('rfq_required', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.three_way_match} onChange={(v) => setValue('three_way_match', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('pu_rfq', 'Require RFQ before PO')}><Switch checked={values.rfq_required} onChange={(v) => setValue('rfq_required', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('pu_3way', 'Three-way match (PO / receipt / bill)')}><Switch checked={values.three_way_match} onChange={(v) => setValue('three_way_match', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('pu_appr', 'Approval threshold (amount)')}><InputNumber min={0} step={100} value={values.approval_threshold} onChange={(v) => setValue('approval_threshold', Number(v) || 0)} disabled={loading} style={{ width: 200 }} /></SettingsRow>
         <SettingsRow label={t('pu_lead', 'Default lead time (days)')}><InputNumber min={0} max={365} value={values.default_lead_time_days} onChange={(v) => setValue('default_lead_time_days', Number(v) || 7)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
         <SettingsRow label={t('pu_terms_days', 'Default payment terms (days)')}><InputNumber min={0} max={180} value={values.default_payment_terms_days} onChange={(v) => setValue('default_payment_terms_days', Number(v) || 30)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.allow_dropship} onChange={(v) => setValue('allow_dropship', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('pu_drop', 'Allow drop-shipping')}><Switch checked={values.allow_dropship} onChange={(v) => setValue('allow_dropship', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('pu_over_receipt', 'Allow over-receipt (%)')}><InputNumber min={0} max={100} step={1} value={values.over_receipt_pct} onChange={(v) => setValue('over_receipt_pct', Number(v) || 0)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
       </SectionCard>
       <SaveBar dirty={dirty} saving={saving} onSave={save} />
@@ -4284,11 +4284,11 @@ const InventorySettings: React.FC = () => {
       <SectionCard icon={<InboxOutlined />} title={t('inv_title', 'Inventory')} description={t('inv_desc', 'Warehouses, lots, serials, putaway, removal strategies, and routes.')}>
         <SettingsRow label={t('iv_default_wh', 'Default warehouse code')}><Input value={values.default_warehouse} onChange={(e) => setValue('default_warehouse', e.target.value)} disabled={loading} style={{ width: 200 }} /></SettingsRow>
         <SettingsRow label={t('iv_strategy', 'Removal strategy')}><Segmented value={values.removal_strategy} onChange={(v) => setValue('removal_strategy', v as InventoryBag['removal_strategy'])} options={[{ value: 'fifo', label: 'FIFO' }, { value: 'lifo', label: 'LIFO' }, { value: 'fefo', label: 'FEFO' }]} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.allow_negative_stock} onChange={(v) => setValue('allow_negative_stock', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.lot_tracking} onChange={(v) => setValue('lot_tracking', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.serial_tracking} onChange={(v) => setValue('serial_tracking', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.barcode_required} onChange={(v) => setValue('barcode_required', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.reorder_enabled} onChange={(v) => setValue('reorder_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('iv_neg', 'Allow negative stock')}><Switch checked={values.allow_negative_stock} onChange={(v) => setValue('allow_negative_stock', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('iv_lot', 'Lot tracking')}><Switch checked={values.lot_tracking} onChange={(v) => setValue('lot_tracking', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('iv_serial', 'Serial tracking')}><Switch checked={values.serial_tracking} onChange={(v) => setValue('serial_tracking', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('iv_barcode', 'Barcode required')}><Switch checked={values.barcode_required} onChange={(v) => setValue('barcode_required', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('iv_reorder', 'Auto-reorder rules enabled')}><Switch checked={values.reorder_enabled} onChange={(v) => setValue('reorder_enabled', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('iv_reorder_lead', 'Reorder lead time (days)')}><InputNumber min={0} max={365} value={values.reorder_lead_days} onChange={(v) => setValue('reorder_lead_days', Number(v) || 7)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
       </SectionCard>
       <SaveBar dirty={dirty} saving={saving} onSave={save} />
@@ -4306,10 +4306,10 @@ const MrpSettings: React.FC = () => {
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <SectionCard icon={<BuildOutlined />} title={t('mrp_title', 'Manufacturing (MRP)')} description={t('mrp_desc', 'BOMs, work centers, routings, and quality checks.')}>
-        <SettingsRow label={} inline><Switch checked={values.quality_checks_required} onChange={(v) => setValue('quality_checks_required', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.auto_create_work_orders} onChange={(v) => setValue('auto_create_work_orders', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.allow_subcontracting} onChange={(v) => setValue('allow_subcontracting', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.allow_byproducts} onChange={(v) => setValue('allow_byproducts', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('mr_qc', 'Quality checks required')}><Switch checked={values.quality_checks_required} onChange={(v) => setValue('quality_checks_required', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('mr_auto_wo', 'Auto-create work orders from MO')}><Switch checked={values.auto_create_work_orders} onChange={(v) => setValue('auto_create_work_orders', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('mr_sub', 'Allow subcontracting')}><Switch checked={values.allow_subcontracting} onChange={(v) => setValue('allow_subcontracting', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('mr_byproduct', 'Allow by-products')}><Switch checked={values.allow_byproducts} onChange={(v) => setValue('allow_byproducts', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('mr_bom_qty', 'Default BOM quantity')}><InputNumber min={0.01} step={0.1} value={values.bom_default_qty} onChange={(v) => setValue('bom_default_qty', Number(v) || 1)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
         <SettingsRow label={t('mr_wc', 'Default work center capacity (hours/day)')}><InputNumber min={1} max={24} value={values.default_workcenter_capacity_hours} onChange={(v) => setValue('default_workcenter_capacity_hours', Number(v) || 8)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
       </SectionCard>
@@ -4329,14 +4329,14 @@ const PosSettings: React.FC = () => {
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <SectionCard icon={<DesktopOutlined />} title={t('pos_title', 'Point of Sale')} description={t('pos_desc', 'Receipt printers, cash drawers, payment terminals, and tip rules.')}>
         <SettingsRow label={t('po_printer', 'Receipt printer URL (ESC/POS)')}><Input value={values.receipt_printer_url} onChange={(e) => setValue('receipt_printer_url', e.target.value)} disabled={loading} placeholder="http://192.168.1.20:9100" /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.cash_drawer_enabled} onChange={(v) => setValue('cash_drawer_enabled', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.barcode_scanner_enabled} onChange={(v) => setValue('barcode_scanner_enabled', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.card_terminal_enabled} onChange={(v) => setValue('card_terminal_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('po_drawer', 'Cash drawer')}><Switch checked={values.cash_drawer_enabled} onChange={(v) => setValue('cash_drawer_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('po_scan', 'Barcode scanner')}><Switch checked={values.barcode_scanner_enabled} onChange={(v) => setValue('barcode_scanner_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('po_card', 'Card terminal')}><Switch checked={values.card_terminal_enabled} onChange={(v) => setValue('card_terminal_enabled', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('po_tip', 'Default tip (%)')}><InputNumber min={0} max={50} step={0.5} value={values.tip_default_pct} onChange={(v) => setValue('tip_default_pct', Number(v) || 0)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
         <SettingsRow label={t('po_service', 'Service charge (%)')}><InputNumber min={0} max={50} step={0.5} value={values.service_charge_pct} onChange={(v) => setValue('service_charge_pct', Number(v) || 0)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.offline_mode} onChange={(v) => setValue('offline_mode', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.restaurant_mode} onChange={(v) => setValue('restaurant_mode', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.require_cashier_pin} onChange={(v) => setValue('require_cashier_pin', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('po_offline', 'Offline mode & sync')}><Switch checked={values.offline_mode} onChange={(v) => setValue('offline_mode', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('po_table', 'Restaurant mode (tables & courses)')}><Switch checked={values.restaurant_mode} onChange={(v) => setValue('restaurant_mode', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('po_pin', 'Require cashier PIN')}><Switch checked={values.require_cashier_pin} onChange={(v) => setValue('require_cashier_pin', v)} disabled={loading} /></SettingsRow>
       </SectionCard>
       <SaveBar dirty={dirty} saving={saving} onSave={save} />
     </Space>
@@ -4355,10 +4355,10 @@ const EcommerceSettings: React.FC = () => {
       <SectionCard icon={<RocketOutlined />} title={t('ec_title', 'E-commerce & website')} description={t('ec_desc', 'Storefront theme, checkout, shipping, abandoned cart, and SEO.')}>
         <SettingsRow label={t('e_theme', 'Storefront theme')}><Select value={values.storefront_theme} onChange={(v) => setValue('storefront_theme', v)} disabled={loading} style={{ width: 220 }} options={[{ value: 'classic', label: 'Classic' }, { value: 'modern', label: 'Modern' }, { value: 'minimal', label: 'Minimal' }, { value: 'elegant', label: 'Elegant' }]} /></SettingsRow>
         <SettingsRow label={t('e_checkout_steps', 'Checkout steps')}><Segmented value={values.checkout_steps} onChange={(v) => setValue('checkout_steps', Number(v) as EcommerceBag['checkout_steps'])} options={[{ value: 1, label: '1 (one-page)' }, { value: 2, label: '2' }, { value: 3, label: '3' }]} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.abandoned_cart_recovery} onChange={(v) => setValue('abandoned_cart_recovery', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('e_abandon', 'Abandoned cart recovery')}><Switch checked={values.abandoned_cart_recovery} onChange={(v) => setValue('abandoned_cart_recovery', v)} disabled={loading} /></SettingsRow>
         {values.abandoned_cart_recovery && <SettingsRow label={t('e_abandon_hours', 'Trigger after (hours)')}><InputNumber min={1} max={168} value={values.abandoned_cart_hours} onChange={(v) => setValue('abandoned_cart_hours', Number(v) || 24)} disabled={loading} style={{ width: 160 }} /></SettingsRow>}
-        <SettingsRow label={} inline><Switch checked={values.reviews_enabled} onChange={(v) => setValue('reviews_enabled', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.wishlist_enabled} onChange={(v) => setValue('wishlist_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('e_review', 'Product reviews')}><Switch checked={values.reviews_enabled} onChange={(v) => setValue('reviews_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('e_wishlist', 'Wishlists')}><Switch checked={values.wishlist_enabled} onChange={(v) => setValue('wishlist_enabled', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('e_seo_title', 'Default SEO title')}><Input value={values.seo_default_title} onChange={(e) => setValue('seo_default_title', e.target.value)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('e_seo_desc', 'Default SEO description')}><Input.TextArea value={values.seo_default_description} onChange={(e) => setValue('seo_default_description', e.target.value)} disabled={loading} rows={2} /></SettingsRow>
       </SectionCard>
@@ -4381,8 +4381,8 @@ const HelpdeskSettings: React.FC = () => {
         <SettingsRow label={t('h_sla_first', 'SLA: first response (hours)')}><InputNumber min={1} max={168} value={values.sla_first_response_hours} onChange={(v) => setValue('sla_first_response_hours', Number(v) || 4)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
         <SettingsRow label={t('h_sla_resolve', 'SLA: resolution (hours)')}><InputNumber min={1} max={720} value={values.sla_resolve_hours} onChange={(v) => setValue('sla_resolve_hours', Number(v) || 48)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
         <SettingsRow label={t('h_route', 'Auto-assignment strategy')}><Segmented value={values.auto_assign} onChange={(v) => setValue('auto_assign', v as HelpdeskBag['auto_assign'])} options={[{ value: 'manual', label: t('manual', 'Manual') }, { value: 'round_robin', label: t('round_robin', 'Round-robin') }, { value: 'load_balance', label: t('load_balance', 'Load balance') }]} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.csat_enabled} onChange={(v) => setValue('csat_enabled', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.kb_enabled} onChange={(v) => setValue('kb_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('h_csat', 'CSAT surveys')}><Switch checked={values.csat_enabled} onChange={(v) => setValue('csat_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('h_kb', 'Knowledge base')}><Switch checked={values.kb_enabled} onChange={(v) => setValue('kb_enabled', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('h_email', 'Support email alias')}><Input value={values.email_alias} onChange={(e) => setValue('email_alias', e.target.value)} disabled={loading} placeholder="support@example.com" /></SettingsRow>
       </SectionCard>
       <SaveBar dirty={dirty} saving={saving} onSave={save} />
@@ -4407,8 +4407,8 @@ const HrSettings: React.FC = () => {
         <SettingsRow label={t('hr_sick', 'Sick leave (days/year)')}><InputNumber min={0} max={60} value={values.sick_leave_days} onChange={(v) => setValue('sick_leave_days', Number(v) || 10)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
         <SettingsRow label={t('hr_off', 'Weekly off days')}><InputNumber min={0} max={3} value={values.weekly_off_days} onChange={(v) => setValue('weekly_off_days', Number(v) || 1)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
         <SettingsRow label={t('hr_overtime', 'Max overtime (hours/month)')}><InputNumber min={0} max={200} value={values.max_overtime_hours} onChange={(v) => setValue('max_overtime_hours', Number(v) || 40)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.require_check_in} onChange={(v) => setValue('require_check_in', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.geofence_enabled} onChange={(v) => setValue('geofence_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('hr_attend', 'Require attendance check-in')}><Switch checked={values.require_check_in} onChange={(v) => setValue('require_check_in', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('hr_geofence', 'Geofence enforcement')}><Switch checked={values.geofence_enabled} onChange={(v) => setValue('geofence_enabled', v)} disabled={loading} /></SettingsRow>
       </SectionCard>
       <SaveBar dirty={dirty} saving={saving} onSave={save} />
     </Space>
@@ -4431,7 +4431,7 @@ const PayrollSettings: React.FC = () => {
         <SettingsRow label={t('p_ot', 'Overtime multiplier')}><InputNumber min={1} max={3} step={0.1} value={values.overtime_multiplier} onChange={(v) => setValue('overtime_multiplier', Number(v) || 1.5)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
         <SettingsRow label={t('p_allow', 'Default allowance amount')}><InputNumber min={0} step={50} value={values.allowance_default} onChange={(v) => setValue('allowance_default', Number(v) || 0)} disabled={loading} style={{ width: 200 }} /></SettingsRow>
         <SettingsRow label={t('p_deduct', 'Default deduction amount')}><InputNumber min={0} step={50} value={values.deduction_default} onChange={(v) => setValue('deduction_default', Number(v) || 0)} disabled={loading} style={{ width: 200 }} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.payslip_email_enabled} onChange={(v) => setValue('payslip_email_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('p_payslip', 'Email payslips automatically')}><Switch checked={values.payslip_email_enabled} onChange={(v) => setValue('payslip_email_enabled', v)} disabled={loading} /></SettingsRow>
       </SectionCard>
       <SaveBar dirty={dirty} saving={saving} onSave={save} />
     </Space>
@@ -4448,11 +4448,11 @@ const ProjectsSettings: React.FC = () => {
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <SectionCard icon={<ProjectOutlined />} title={t('proj_title', 'Projects & timesheets')} description={t('proj_desc', 'Project templates, task workflows, billable rates, and Gantt.')}>
         <SettingsRow label={t('pj_billable', 'Default billing model')}><Segmented value={values.default_billing} onChange={(v) => setValue('default_billing', v as ProjectsBag['default_billing'])} options={[{ value: 'fixed', label: t('fixed_price', 'Fixed price') }, { value: 'time_material', label: t('time_material', 'Time & material') }, { value: 'milestone', label: t('milestone', 'Milestone') }]} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.require_timesheet_approval} onChange={(v) => setValue('require_timesheet_approval', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('pj_ts', 'Require timesheet approval')}><Switch checked={values.require_timesheet_approval} onChange={(v) => setValue('require_timesheet_approval', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('pj_rate', 'Default hourly rate')}><InputNumber min={0} step={1} value={values.default_hourly_rate} onChange={(v) => setValue('default_hourly_rate', Number(v) || 25)} disabled={loading} style={{ width: 200 }} /></SettingsRow>
         <SettingsRow label={t('pj_budget', 'Budget alert threshold (%)')}><InputNumber min={1} max={100} value={values.budget_alert_pct} onChange={(v) => setValue('budget_alert_pct', Number(v) || 80)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.gantt_enabled} onChange={(v) => setValue('gantt_enabled', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.kanban_enabled} onChange={(v) => setValue('kanban_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('pj_gantt', 'Gantt scheduling view')}><Switch checked={values.gantt_enabled} onChange={(v) => setValue('gantt_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('pj_kanban', 'Kanban for tasks')}><Switch checked={values.kanban_enabled} onChange={(v) => setValue('kanban_enabled', v)} disabled={loading} /></SettingsRow>
       </SectionCard>
       <SaveBar dirty={dirty} saving={saving} onSave={save} />
     </Space>
@@ -4471,12 +4471,12 @@ const MarketingSettings: React.FC = () => {
       <SectionCard icon={<SoundOutlined />} title={t('mkt_title', 'Marketing')} description={t('mkt_desc', 'Email campaigns, automations, segments, and lead capture.')}>
         <SettingsRow label={t('mk_sender_name', 'Default sender name')}><Input value={values.default_sender_name} onChange={(e) => setValue('default_sender_name', e.target.value)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('mk_sender_email', 'Default sender email')}><Input value={values.default_sender_email} onChange={(e) => setValue('default_sender_email', e.target.value)} disabled={loading} placeholder="hello@example.com" /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.double_opt_in} onChange={(v) => setValue('double_opt_in', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('mk_optin', 'Double opt-in')}><Switch checked={values.double_opt_in} onChange={(v) => setValue('double_opt_in', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('mk_unsub', 'Unsubscribe footer')}><Input.TextArea value={values.unsubscribe_footer} onChange={(e) => setValue('unsubscribe_footer', e.target.value)} disabled={loading} rows={2} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.track_opens} onChange={(v) => setValue('track_opens', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.track_clicks} onChange={(v) => setValue('track_clicks', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('mk_open', 'Track email opens')}><Switch checked={values.track_opens} onChange={(v) => setValue('track_opens', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('mk_click', 'Track link clicks')}><Switch checked={values.track_clicks} onChange={(v) => setValue('track_clicks', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('mk_max', 'Max emails per day')}><InputNumber min={0} max={1000000} step={100} value={values.max_emails_per_day} onChange={(v) => setValue('max_emails_per_day', Number(v) || 0)} disabled={loading} style={{ width: 200 }} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.ab_testing_enabled} onChange={(v) => setValue('ab_testing_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('mk_ab', 'A/B testing')}><Switch checked={values.ab_testing_enabled} onChange={(v) => setValue('ab_testing_enabled', v)} disabled={loading} /></SettingsRow>
       </SectionCard>
       <SaveBar dirty={dirty} saving={saving} onSave={save} />
     </Space>
@@ -4609,17 +4609,17 @@ const IntegrationsSettings: React.FC = () => {
           />
         }
       >
-        <SettingsRow label={} inline><Switch checked={values.whatsapp_enabled} onChange={(v) => setValue('whatsapp_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('i_whatsapp', 'WhatsApp Business API')}><Switch checked={values.whatsapp_enabled} onChange={(v) => setValue('whatsapp_enabled', v)} disabled={loading} /></SettingsRow>
         {values.whatsapp_enabled && <SettingsRow label={t('i_wa_phone', 'WhatsApp Phone Number ID')}><Input value={values.whatsapp_phone_id} onChange={(e) => setValue('whatsapp_phone_id', e.target.value)} disabled={loading} /></SettingsRow>}
-        <SettingsRow label={} inline><Switch checked={values.google_calendar} onChange={(v) => setValue('google_calendar', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.google_drive} onChange={(v) => setValue('google_drive', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.dropbox} onChange={(v) => setValue('dropbox', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('i_google', 'Google Calendar sync')}><Switch checked={values.google_calendar} onChange={(v) => setValue('google_calendar', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('i_drive', 'Google Drive')}><Switch checked={values.google_drive} onChange={(v) => setValue('google_drive', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('i_dropbox', 'Dropbox')}><Switch checked={values.dropbox} onChange={(v) => setValue('dropbox', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('i_slack', 'Slack webhook URL')}><Input value={values.slack_webhook} onChange={(e) => setValue('slack_webhook', e.target.value)} disabled={loading} placeholder="https://hooks.slack.com/..." /></SettingsRow>
         <SettingsRow label={t('i_microsoft', 'MS Teams webhook URL')}><Input value={values.teams_webhook} onChange={(e) => setValue('teams_webhook', e.target.value)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.stripe_enabled} onChange={(v) => setValue('stripe_enabled', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.shopify_enabled} onChange={(v) => setValue('shopify_enabled', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.openai_enabled} onChange={(v) => setValue('openai_enabled', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.ocr_enabled} onChange={(v) => setValue('ocr_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('i_stripe', 'Stripe / PayPal')}><Switch checked={values.stripe_enabled} onChange={(v) => setValue('stripe_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('i_shopify', 'Shopify / WooCommerce')}><Switch checked={values.shopify_enabled} onChange={(v) => setValue('shopify_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('i_openai', 'OpenAI / LLM features')}><Switch checked={values.openai_enabled} onChange={(v) => setValue('openai_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('i_ocr', 'OCR for receipts & invoices')}><Switch checked={values.ocr_enabled} onChange={(v) => setValue('ocr_enabled', v)} disabled={loading} /></SettingsRow>
       </SectionCard>
       <SaveBar dirty={dirty} saving={saving} onSave={save} />
     </Space>
@@ -4664,9 +4664,9 @@ const ApiTokensSettings: React.FC = () => {
       <SectionCard icon={<ApiOutlined />} title={t('api_title', 'API tokens & OAuth')} description={t('api_desc', 'Personal access tokens, OAuth applications, and scoped keys.')}>
         <SettingsRow label={t('ap_rate', 'Rate limit (requests/minute)')}><InputNumber min={1} max={100000} value={values.rate_limit_per_min} onChange={(v) => setValue('rate_limit_per_min', Number(v) || 600)} disabled={loading} style={{ width: 200 }} /></SettingsRow>
         <SettingsRow label={t('ap_rotate', 'Default token TTL (days)')}><InputNumber min={1} max={3650} value={values.default_token_ttl_days} onChange={(v) => setValue('default_token_ttl_days', Number(v) || 90)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.require_ip_whitelist} onChange={(v) => setValue('require_ip_whitelist', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('ap_ip', 'Require IP allowlist')}><Switch checked={values.require_ip_whitelist} onChange={(v) => setValue('require_ip_whitelist', v)} disabled={loading} /></SettingsRow>
         {values.require_ip_whitelist && <SettingsRow label={t('ap_ip_list', 'Allowlist (comma-separated CIDRs)')}><Input.TextArea value={values.ip_whitelist} onChange={(e) => setValue('ip_whitelist', e.target.value)} disabled={loading} rows={2} placeholder="10.0.0.0/8, 192.168.1.0/24" /></SettingsRow>}
-        <SettingsRow label={} inline><Switch checked={values.require_2fa_for_token_creation} onChange={(v) => setValue('require_2fa_for_token_creation', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('ap_2fa', 'Require 2FA to mint tokens')}><Switch checked={values.require_2fa_for_token_creation} onChange={(v) => setValue('require_2fa_for_token_creation', v)} disabled={loading} /></SettingsRow>
       </SectionCard>
       <SaveBar dirty={dirty} saving={saving} onSave={save} />
     </Space>
@@ -4686,9 +4686,9 @@ const DocumentsSettings: React.FC = () => {
       <SectionCard icon={<FolderOpenOutlined />} title={t('docs_title', 'Documents (DMS)')} description={t('docs_desc', 'Centralized document storage with tagging, sharing, and versioning.')} actions={<Button onClick={() => window.location.assign('/dms')}>{t('open_documents', 'Open documents')}</Button>}>
         <SettingsRow label={t('d_storage', 'Storage backend')}><Segmented value={values.storage_backend} onChange={(v) => setValue('storage_backend', v as DocumentsBag['storage_backend'])} options={[{ value: 'local', label: 'Local' }, { value: 's3', label: 'AWS S3' }, { value: 'gcs', label: 'Google Cloud Storage' }]} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('d_max_size', 'Max upload size (MB)')}><InputNumber min={1} max={1024} value={values.max_file_size_mb} onChange={(v) => setValue('max_file_size_mb', Number(v) || 25)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.ocr_enabled} onChange={(v) => setValue('ocr_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('d_ocr', 'OCR & full-text search')}><Switch checked={values.ocr_enabled} onChange={(v) => setValue('ocr_enabled', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('d_share', 'Default share link expiry (days)')}><InputNumber min={1} max={365} value={values.share_link_expiry_days} onChange={(v) => setValue('share_link_expiry_days', Number(v) || 7)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.require_signin_for_share} onChange={(v) => setValue('require_signin_for_share', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('d_share_signin', 'Require sign-in for shared links')}><Switch checked={values.require_signin_for_share} onChange={(v) => setValue('require_signin_for_share', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('d_ext', 'Allowed file extensions (comma-separated)')}><Input value={values.allowed_extensions} onChange={(e) => setValue('allowed_extensions', e.target.value)} disabled={loading} /></SettingsRow>
       </SectionCard>
       <SaveBar dirty={dirty} saving={saving} onSave={save} />
@@ -4770,9 +4770,9 @@ const AuditSettings: React.FC = () => {
       >
         <SettingsRow label={t('au_retain', 'Retention period (days)')}><InputNumber min={30} max={3650} value={values.retention_days} onChange={(v) => setValue('retention_days', Number(v) || 365)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
         <SettingsRow label={t('au_export', 'Compliance export format')}><Segmented value={values.export_format} onChange={(v) => setValue('export_format', v as AuditBag['export_format'])} options={[{ value: 'csv', label: 'CSV' }, { value: 'json', label: 'JSON' }, { value: 'both', label: t('both', 'Both') }]} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.anomaly_alerts} onChange={(v) => setValue('anomaly_alerts', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('au_anom', 'Anomaly alerts')}><Switch checked={values.anomaly_alerts} onChange={(v) => setValue('anomaly_alerts', v)} disabled={loading} /></SettingsRow>
         {values.anomaly_alerts && <SettingsRow label={t('au_alert_email', 'Alert email')}><Input value={values.alert_email} onChange={(e) => setValue('alert_email', e.target.value)} disabled={loading} placeholder="security@example.com" /></SettingsRow>}
-        <SettingsRow label={} inline><Switch checked={values.immutable_log} onChange={(v) => setValue('immutable_log', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('au_log', 'Tamper-evident immutable log')}><Switch checked={values.immutable_log} onChange={(v) => setValue('immutable_log', v)} disabled={loading} /></SettingsRow>
       </SectionCard>
       <SaveBar dirty={dirty} saving={saving} onSave={save} />
     </Space>
@@ -4788,11 +4788,11 @@ const GdprSettings: React.FC = () => {
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <SectionCard icon={<EyeInvisibleOutlined />} title={t('gdpr_title', 'Data privacy (GDPR/CCPA)')} description={t('gdpr_desc', 'Consent management, data subject requests, and erasure workflows.')} accent="danger">
-        <SettingsRow label={} inline><Switch checked={values.consent_required} onChange={(v) => setValue('consent_required', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('g_consent', 'Require explicit consent at signup')}><Switch checked={values.consent_required} onChange={(v) => setValue('consent_required', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('g_dsr', 'Data subject request email')}><Input value={values.dsr_email} onChange={(e) => setValue('dsr_email', e.target.value)} disabled={loading} placeholder="privacy@example.com" /></SettingsRow>
         <SettingsRow label={t('g_retain', 'Default retention period (days)')}><InputNumber min={30} max={3650} value={values.default_retention_days} onChange={(v) => setValue('default_retention_days', Number(v) || 730)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.allow_self_export} onChange={(v) => setValue('allow_self_export', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.allow_self_delete} onChange={(v) => setValue('allow_self_delete', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('g_self_export', 'Allow self-service data export')}><Switch checked={values.allow_self_export} onChange={(v) => setValue('allow_self_export', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('g_self_delete', 'Allow self-service account deletion')}><Switch checked={values.allow_self_delete} onChange={(v) => setValue('allow_self_delete', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('g_breach_hours', 'Breach notification window (hours)')}><InputNumber min={1} max={168} value={values.breach_notify_within_hours} onChange={(v) => setValue('breach_notify_within_hours', Number(v) || 72)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
         <SettingsRow label={t('g_breach_email', 'Breach notification email')}><Input value={values.breach_notify_email} onChange={(e) => setValue('breach_notify_email', e.target.value)} disabled={loading} placeholder="dpo@example.com" /></SettingsRow>
       </SectionCard>
@@ -4810,12 +4810,12 @@ const MobileSettings: React.FC = () => {
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <SectionCard icon={<MobileOutlined />} title={t('mob_title', 'Mobile app')} description={t('mob_desc', 'Mobile app configuration, push notifications, and offline behavior.')}>
-        <SettingsRow label={} inline><Switch checked={values.push_enabled} onChange={(v) => setValue('push_enabled', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.biometric_required} onChange={(v) => setValue('biometric_required', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('m_push', 'Push notifications enabled')}><Switch checked={values.push_enabled} onChange={(v) => setValue('push_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('m_biometric', 'Require biometric unlock')}><Switch checked={values.biometric_required} onChange={(v) => setValue('biometric_required', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('m_force', 'Minimum app version (force update)')}><Input value={values.force_min_version} onChange={(e) => setValue('force_min_version', e.target.value)} disabled={loading} style={{ width: 200 }} placeholder="1.0.0" /></SettingsRow>
         <SettingsRow label={t('m_deeplink', 'Deep link scheme')}><Input value={values.deep_link_scheme} onChange={(e) => setValue('deep_link_scheme', e.target.value)} disabled={loading} style={{ width: 240 }} placeholder="app://" /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.offline_sync_enabled} onChange={(v) => setValue('offline_sync_enabled', v)} disabled={loading} /></SettingsRow>
-        <SettingsRow label={} inline><Switch checked={values.camera_barcode_enabled} onChange={(v) => setValue('camera_barcode_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('m_offline', 'Offline data sync')}><Switch checked={values.offline_sync_enabled} onChange={(v) => setValue('offline_sync_enabled', v)} disabled={loading} /></SettingsRow>
+        <SettingsRow label={t('m_camera', 'Camera & barcode scanning')}><Switch checked={values.camera_barcode_enabled} onChange={(v) => setValue('camera_barcode_enabled', v)} disabled={loading} /></SettingsRow>
       </SectionCard>
       <SaveBar dirty={dirty} saving={saving} onSave={save} />
     </Space>
@@ -4959,6 +4959,7 @@ const settingsCss = `
   max-width: 1100px;
   width: 100%;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .st-content { padding-bottom: 24px; }
@@ -4972,7 +4973,17 @@ const settingsCss = `
   .st-aside { display: none; }
   .st-main { padding: 0 0 64px; }
   .st-mobile-nav-bar { margin: 0 0 12px; }
-  .st-content { padding: 0; }
+  .st-content {
+    padding: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+  /* Ensure all direct children of st-content are constrained */
+  .st-content > * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
 }
 
 /* ── Mobile: sticky section picker bar ─────────────────────── */
@@ -5141,4 +5152,3 @@ const settingsCss = `
 `;
 
 export default Settings;
-
