@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Card, Row, Col, Statistic, DatePicker, Select, Space } from 'antd';
+import { Card, Row, Col, Statistic, DatePicker, Select, Space } from 'antd';
 import { message } from '../utils/message';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { PageHeader } from '../design-system';
 import dayjs from 'dayjs';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -54,7 +55,7 @@ const AnalyticReport: React.FC = () => {
     <div>
       <PageHeader
         title={t('analytic_report')}
-        subtitle={t('analytic_report_subtitle', 'ڕاپۆرتی شیکاری')}
+        subtitle={t('analytic_report_subtitle', 'Analytic report')}
         helpKey="analytic"
       />
       
@@ -92,7 +93,7 @@ const AnalyticReport: React.FC = () => {
             </Row>
 
             <Card>
-              <Table
+              <ResponsiveTableAdapter
                 dataSource={summary.lines || []}
                 columns={columns}
                 rowKey="id"

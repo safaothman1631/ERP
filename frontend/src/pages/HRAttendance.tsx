@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Card, Table, Button, Select, Space, message, Tag, DatePicker } from 'antd';
+import { Card, Button, Select, Space, message, Tag, DatePicker } from 'antd';
 import { ReloadOutlined, LoginOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs, { Dayjs } from 'dayjs';
+import { HelpIcon } from '../help/HelpIcon';
 import api from '../api';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 
 interface Att { id: string; employee_id: string; check_in?: string; check_out?: string; duration_hours?: number; }
 interface Emp { id: string; name: string; }
@@ -54,9 +56,10 @@ export default function HRAttendance() {
   ];
 
   return (
-    <div style={{ padding: 16 }}>
+    <div style={{ padding: 16 }} data-section-id="hr.attendance">
       <Space style={{ marginBottom: 12 }} wrap>
         <h2 style={{ margin: 0 }}>{t('attendance')}</h2>
+        <HelpIcon sectionId="hr.attendance" />
         <Select
           placeholder={t('employee')}
           allowClear
@@ -69,7 +72,7 @@ export default function HRAttendance() {
         <Button icon={<ReloadOutlined />} onClick={load}>{t('refresh')}</Button>
         <Button type="primary" icon={<LoginOutlined />} onClick={checkIn} disabled={!emp}>{t('check_in')}</Button>
       </Space>
-      <Card><Table rowKey="id" dataSource={list} columns={cols} pagination={{ pageSize: 20 }} /></Card>
+      <Card><ResponsiveTableAdapter rowKey="id" dataSource={list} columns={cols} pagination={{ pageSize: 20 }} /></Card>
     </div>
   );
 }

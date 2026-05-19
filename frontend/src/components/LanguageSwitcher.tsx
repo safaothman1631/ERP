@@ -1,22 +1,30 @@
 /**
- * LanguageSwitcher — reusable language toggle button.
+ * LanguageSwitcher — dropdown language selector supporting ku / en / ar.
  *
- * Switches between Kurdish (ku) and English (en) without a page reload.
- * The active language is persisted to localStorage via i18n.ts's
- * `languageChanged` listener, and the document direction (RTL/LTR) is
- * updated automatically.
+ * Features:
+ * - Always visible in Topbar and Sidebar footer (Requirements 3.2, 3.3)
+ * - Visible on login page before authentication (Requirement 3.2)
+ * - On language change: calls i18n.changeLanguage(), updates uiStore.language,
+ *   sets document dir + lang attributes (Requirements 3.4, 3.5, 3.6)
+ * - Persists to localStorage['i18n.language'] (Requirement 3.7)
+ * - Falls back to in-memory Zustand value if localStorage unavailable (Requirement 3.7)
+ * - Uses resolveLanguage() to guard against invalid codes (Requirement 3.8)
+ * - Displays active-language indicator (checkmark) (Requirement 3.9)
+ * - Direction change applies with 250ms CSS transition (Requirement 3.4)
  *
  * Usage:
  *   <LanguageSwitcher />                  — icon + label, default size
  *   <LanguageSwitcher size="small" />     — compact variant
  *   <LanguageSwitcher showLabel={false} /> — icon only
  *
- * Requirements: 18.1, 18.5
+ * Requirements: 3.1–3.9, 10.1–10.9
  */
 import React from 'react';
-import { Button, Tooltip } from 'antd';
-import { GlobalOutlined } from '@ant-design/icons';
+import { Button, Dropdown, Tooltip } from 'antd';
+import { GlobalOutlined, CheckOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { resolveLanguage, isRTLLanguage, type Language } from '../utils/language';
+import { useUiStore } from '../stores/uiStore';
 
 interface LanguageSwitcherProps {
   /** Ant Design button size */
@@ -29,11 +37,43 @@ interface LanguageSwitcherProps {
   type?: 'text' | 'default' | 'primary' | 'dashed' | 'link';
 }
 
-const LANG_LABELS: Record<string, { label: string; next: string; nextLabel: string }> = {
-  ku: { label: 'کوردی', next: 'en', nextLabel: 'English' },
-  en: { label: 'English', next: 'ku', nextLabel: 'کوردی' },
-  ar: { label: 'عربی', next: 'en', nextLabel: 'English' },
+/** All supported languages with their display labels */
+const LANGUAGES: Array<{ code: Language; label: string; nativeLabel: string }> = [
+  { code: 'ku', label: 'Kurdish Sorani', nativeLabel: 'کوردی سۆرانی' },
+  { code: 'en', label: 'English',        nativeLabel: 'English' },
+  { code: 'ar', label: 'Arabic',         nativeLabel: 'العربية' },
+];
+
+/** Short labels shown in the button */
+const LANG_SHORT: Record<Language, string> = {
+  ku: 'کو',
+  en: 'EN',
+  ar: 'ع',
 };
+
+/**
+ * Persist language to localStorage under the spec-required key 'i18n.language'.
+ * Falls back silently if localStorage is unavailable (private browsing, etc.).
+ * Requirements: 3.7
+ */
+function persistLanguage(lang: Language): void {
+  try {
+    localStorage.setItem('i18n.language', lang);
+  } catch {
+    // localStorage unavailable — in-memory Zustand value is the fallback (Requirement 3.7)
+  }
+}
+
+/**
+ * Apply RTL/LTR direction to the document root element.
+ * Uses a 250ms CSS transition (set in globalStyles.css) for smooth direction change.
+ * Requirements: 3.4, 3.5, 3.6
+ */
+function applyDocumentDirection(lang: Language): void {
+  const isRTL = isRTLLanguage(lang);
+  document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+  document.documentElement.setAttribute('lang', lang);
+}
 
 const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
   size = 'middle',
@@ -42,29 +82,89 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
   type = 'text',
 }) => {
   const { i18n, t } = useTranslation();
-  const current = i18n.language || 'ku';
-  const info = LANG_LABELS[current] ?? LANG_LABELS['ku'];
+  const setLanguage = useUiStore((s) => s.setLanguage);
 
-  const handleToggle = () => {
-    i18n.changeLanguage(info.next);
+  // Resolve current language — guard against invalid codes (Requirement 3.8)
+  const rawLang = i18n.language || 'ku';
+  const currentLang = resolveLanguage(rawLang);
+  const shortLabel = LANG_SHORT[currentLang];
+
+  const handleLanguageChange = (code: Language) => {
+    // Guard against invalid codes (Requirement 3.8)
+    const resolved = resolveLanguage(code);
+
+    // 1. Call i18n.changeLanguage (triggers i18n.ts languageChanged listener)
+    i18n.changeLanguage(resolved);
+
+    // 2. Update uiStore.language (Requirement 3.7 fallback)
+    setLanguage(resolved);
+
+    // 3. Apply document direction + lang attribute (Requirements 3.5, 3.6)
+    applyDocumentDirection(resolved);
+
+    // 4. Persist to localStorage['i18n.language'] (Requirement 3.7)
+    persistLanguage(resolved);
   };
 
-  return (
-    <Tooltip title={`${t('tooltip_language_switch', 'Switch Language')} → ${info.nextLabel}`}>
-      <Button
-        type={type}
-        size={size}
-        icon={<GlobalOutlined />}
-        onClick={handleToggle}
-        aria-label={`${t('tooltip_language_switch', 'Switch Language')} → ${info.nextLabel}`}
-        className={className}
+  const menuItems = LANGUAGES.map(({ code, nativeLabel }) => ({
+    key: code,
+    label: (
+      <span
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 24,
+          minWidth: 160,
+          fontWeight: code === currentLang ? 600 : 400,
+        }}
       >
-        {showLabel && (
-          <span style={{ fontSize: size === 'small' ? 11 : 13, fontWeight: 600 }}>
-            {info.nextLabel}
-          </span>
+        <span>{nativeLabel}</span>
+        {/* Active-language indicator — checkmark (Requirement 3.9) */}
+        {code === currentLang && (
+          <CheckOutlined
+            style={{ color: '#1F6FEB', fontSize: 12 }}
+            aria-label={t('language_active', 'Active language')}
+          />
         )}
-      </Button>
+      </span>
+    ),
+    onClick: () => handleLanguageChange(code),
+  }));
+
+  const trigger = (
+    <Button
+      type={type}
+      size={size}
+      icon={<GlobalOutlined />}
+      aria-label={t('tooltip_language_switch', 'Switch Language')}
+      aria-haspopup="listbox"
+      aria-expanded={undefined}
+      className={className}
+    >
+      {showLabel && (
+        <span
+          style={{
+            fontSize: size === 'small' ? 11 : 13,
+            fontWeight: 600,
+            marginInlineStart: 2,
+          }}
+        >
+          {shortLabel}
+        </span>
+      )}
+    </Button>
+  );
+
+  return (
+    <Tooltip title={t('tooltip_language_switch', 'Switch Language')}>
+      <Dropdown
+        menu={{ items: menuItems, selectedKeys: [currentLang] }}
+        trigger={['click']}
+        placement="bottomRight"
+      >
+        {trigger}
+      </Dropdown>
     </Tooltip>
   );
 };

@@ -5,6 +5,8 @@ import {
   ThunderboltOutlined, GlobalOutlined, LineChartOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { glass, palette } from '../theme/tokens';
+import LanguageSwitcher from './LanguageSwitcher';
 
 /**
  * AuthLayout v2 — Premium auth shell
@@ -105,11 +107,23 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitle }) =>
   ];
 
   return (
-    <div style={s.wrapper}>
+    <div style={s.wrapper} className="responsive-shell">
       <style>{cssOverrides}</style>
 
       <div className="auth-mesh" aria-hidden />
       <div className="auth-mesh-2" aria-hidden />
+
+      {/* LanguageSwitcher — accessible before authentication (Requirement 3.2, 16.4) */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 16,
+          insetInlineEnd: 16,
+          zIndex: 10,
+        }}
+      >
+        <LanguageSwitcher size="small" type="default" />
+      </div>
 
       <div style={s.container} className="auth-container">
         <div className="auth-brand-panel" style={s.brandPanel}>
@@ -235,6 +249,25 @@ const cssOverrides = `
     max-width: 380px;
     margin: 0 auto;
   }
+
+  /* Glass morphism on login card — @supports gate — Requirements 12.4, 12.5, 12.6 */
+  @supports (backdrop-filter: blur(1px)) {
+    .auth-container {
+      background: ${glass.login.light.bg} !important;
+      backdrop-filter: ${glass.login.light.blur} !important;
+      -webkit-backdrop-filter: ${glass.login.light.blur} !important;
+      border: 1px solid ${glass.login.light.border} !important;
+    }
+  }
+  /* Fallback: solid surface when backdrop-filter is unsupported — Requirement 12.5 */
+  @supports not (backdrop-filter: blur(1px)) {
+    .auth-container {
+      background: ${palette.surface} !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+  }
+
   .auth-input .ant-input,
   .auth-input .ant-input-affix-wrapper {
     border-radius: 12px !important;
@@ -303,7 +336,12 @@ const s: Record<string, CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     background: '#EEF2F8',
-    padding: 20,
+    // Logical-property padding so RTL inverts and safe-area-insets respect
+    // device notches (Requirements 2.5, 2.7, 3.8, 14.7).
+    paddingInlineStart: 'max(20px, env(safe-area-inset-left))',
+    paddingInlineEnd:   'max(20px, env(safe-area-inset-right))',
+    paddingBlockStart:  'max(20px, env(safe-area-inset-top))',
+    paddingBlockEnd:    'max(20px, env(safe-area-inset-bottom))',
     position: 'relative',
     overflow: 'hidden',
     fontFamily: "'Vazirmatn', 'Noto Sans Arabic', 'Inter', 'Segoe UI', system-ui, sans-serif",
@@ -318,10 +356,10 @@ const s: Record<string, CSSProperties> = {
     borderRadius: 24,
     overflow: 'hidden',
     boxShadow: '0 32px 80px rgba(15,23,42,0.18), 0 8px 24px rgba(15,23,42,0.08)',
-    background: 'rgba(255,255,255,0.85)',
-    backdropFilter: 'blur(20px)',
-    WebkitBackdropFilter: 'blur(20px)',
-    border: '1px solid rgba(255,255,255,0.6)',
+    // Base: solid surface fallback (overridden by @supports block in cssOverrides when backdrop-filter is supported)
+    // Requirements: 12.4, 12.5, 12.6
+    background: palette.surface,
+    border: `1px solid ${glass.login.light.border}`,
   },
   brandPanel: {
     flex: '0 0 52%',

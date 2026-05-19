@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, Select, DatePicker, Button, Row, Col, Statistic, Table, Space, Divider } from 'antd';
+import { Card, Select, DatePicker, Button, Row, Col, Statistic, Space, Divider } from 'antd';
 import { BankOutlined, AccountBookOutlined, WalletOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { ColumnsType } from 'antd/es/table';
@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 import { PageHeader } from '../../design-system';
 import api from '../../api';
 import { message } from '../../utils/message';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 interface Company {
   id: string;
@@ -199,7 +200,7 @@ const ConsolidatedBS = () => {
               </Button>
             }
           >
-            <Table
+            <ResponsiveTableAdapter
               columns={columns}
               dataSource={bsData.rows}
               rowKey="company_id"

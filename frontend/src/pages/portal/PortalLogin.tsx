@@ -5,6 +5,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
 import api from '../../api';
+import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
 
 const { Title, Text } = Typography;
 
@@ -75,6 +76,7 @@ const PortalLogin: React.FC = () => {
 
           {step === 0 && (
             <Form form={form} layout="vertical" onFinish={requestLink}>
+              <ResponsiveForm layout="single">
               <Form.Item
                 label={t('portal.email')}
                 name="email"
@@ -99,7 +101,8 @@ const PortalLogin: React.FC = () => {
               >
                 {t('portal.send_magic_link')}
               </Button>
-            </Form>
+              </ResponsiveForm>
+</Form>
           )}
 
           {step === 1 && (

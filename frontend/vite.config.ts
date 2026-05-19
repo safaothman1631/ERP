@@ -32,6 +32,20 @@ export default defineConfig({
         // Chunks are ordered from most specific to least specific to avoid
         // a module matching multiple buckets (first match wins).
         manualChunks(id: string) {
+          // help: lazy-loaded Help_Registry chunk
+          // (system-wide-ux-overhaul, R8.1, R8.3, R15.5, R16.1, task 2.2).
+          // The registry module is dynamically imported by `useHelp` on first
+          // Help_Icon activation; isolating it as its own chunk keeps the
+          // initial bundle under the per-route budget defined in
+          // `frontend/perf-budgets.json` (R5.6, R15.1) and lets the help
+          // payload fail independently from the rest of the app — `useHelp`
+          // falls back to the always-bundled `help.unavailable.message` key
+          // when this chunk fails to load (R6.1, R8.4). The registry's only
+          // sibling (`sectionIds.ts`) is intentionally excluded so it remains
+          // tree-shakeable for type-only consumers.
+          if (id.includes('/src/help/registry')) {
+            return 'help';
+          }
           // vendor-antd: Ant Design components and icons
           if (
             id.includes('node_modules/antd') ||

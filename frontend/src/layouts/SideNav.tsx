@@ -1,5 +1,5 @@
 import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
-import { Layout, Input, Tooltip } from 'antd';
+import { Drawer, Input, Layout, Tooltip } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
@@ -13,24 +13,15 @@ import { palette, radius, space, motion as motionTk } from '../theme/tokens';
 import { buildNavSections, buildNavZones, flattenRoutes, type FlattenedNavLeaf, type NavSection, type NavZone } from './navigation';
 import { getModuleKeyForPath } from './moduleMap';
 import { isModuleEnabled, useOnboardingStore } from '../onboarding/store';
+import { useNavStore, type NavItem } from '../stores/navStore';
+import { useUiStore } from '../stores/uiStore';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const { Sider } = Layout;
 
-const MAX_RECENTS = 5;
+/** Breakpoint below which the sidebar renders as a Drawer overlay (Requirement 4.4) */
+const MOBILE_BREAKPOINT = 768;
 
-const readStoredPaths = (storageKey: string): string[] => {
-  try {
-    const raw = localStorage.getItem(storageKey);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === 'string') : [];
-  } catch {
-    return [];
-  }
-};
-const writeStoredPaths = (storageKey: string, values: string[]) => {
-  try { localStorage.setItem(storageKey, JSON.stringify(values)); } catch { /* ignore */ }
-};
 const pathMatchesRoute = (pathname: string, route: FlattenedNavLeaf) =>
   pathname === route.key || (route.key !== '/' && pathname.startsWith(`${route.key}/`));
 const findMatchingRoute = (pathname: string, routes: FlattenedNavLeaf[]) =>
@@ -55,9 +46,19 @@ interface SideNavProps {
 }
 
 /**
- * SideNav v3 — Linear / Vercel / Notion-inspired minimal navigation.
- * Flat hierarchy, single-line items, no card-in-card, no count badges,
- * no zone blurbs, no section icon containers. Subtle hover, accent active.
+ * SideNav — collapsible sectioned navigation.
+ *
+ * Features:
+ * - 240px expanded / 64px collapsed on desktop (Requirements 4.2, 4.3)
+ * - Drawer overlay on screens < 768px (Requirement 4.4)
+ * - Favorites section (top) + Recents section from navStore (Requirements 4.7, 4.8, 5.7)
+ * - Inline search with debounced filtering ≤ 200ms (Requirement 5.2, 5.3)
+ * - Hover-intent section opening at 700ms (Requirement 5.5)
+ * - Flyout panel for collapsed mode (Requirement 5.6)
+ * - Active item highlight with primary color + accent rail (Requirement 5.4)
+ * - Module visibility from onboarding (Requirement 5.9)
+ * - LanguageSwitcher in footer (Requirement 5.8)
+ * - Collapsed state persisted to uiStore (Requirement 4.10)
  */
 export const SideNav: React.FC<SideNavProps> = ({
   collapsed, width, collapsedWidth, isRTL, isDark,
@@ -69,6 +70,21 @@ export const SideNav: React.FC<SideNavProps> = ({
   const prefersReducedMotion = useReducedMotion();
   void onOpenSectionDocs; // not surfaced in v3 (kept for API compat)
 
+  // ── Responsive: detect mobile viewport ────────────────────────
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < MOBILE_BREAKPOINT : false
+  );
+  const setSidebarCollapsed = useUiStore((s) => s.setSidebarCollapsed);
+
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    setIsMobile(mq.matches);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  // ── Nav data ───────────────────────────────────────────────────
   const sections = useMemo<NavSection[]>(() => buildNavSections(t), [t]);
   const zones = useMemo<NavZone[]>(() => buildNavZones(t), [t]);
 
@@ -85,15 +101,15 @@ export const SideNav: React.FC<SideNavProps> = ({
 
   const flattenedRoutes = useMemo(() => flattenRoutes(filteredSections, zones), [filteredSections, zones]);
 
-  const storageScope = useMemo(() => {
-    try { return localStorage.getItem('orgId') || 'global'; } catch { return 'global'; }
-  }, []);
-  const favoritesKey = `nav.favorites.${storageScope}`;
-  const recentsKey = `nav.recents.${storageScope}`;
+  // ── navStore: favorites + recents (Requirements 4.7, 4.8, 5.7, 5.10) ──
+  const navFavorites = useNavStore((s) => s.favorites);
+  const navRecents = useNavStore((s) => s.recents);
+  const navPin = useNavStore((s) => s.pin);
+  const navUnpin = useNavStore((s) => s.unpin);
+  const navAddRecent = useNavStore((s) => s.addRecent);
 
+  // ── Search ─────────────────────────────────────────────────────
   const [query, setQuery] = useState('');
-  const [favoritePaths, setFavoritePaths] = useState<string[]>(() => readStoredPaths(favoritesKey));
-  const [recentPaths, setRecentPaths] = useState<string[]>(() => readStoredPaths(recentsKey));
   const [flyout, setFlyout] = useState<{ sectionKey: string; top: number } | null>(null);
 
   const delayedQuery = useDeferredValue(query);
@@ -134,9 +150,16 @@ export const SideNav: React.FC<SideNavProps> = ({
     [visibleSections, zones]
   );
 
+  // Resolve navStore recents to FlattenedNavLeaf for rendering
   const recentRoutes = useMemo(
-    () => recentPaths.map((p) => routeByKey.get(p)).filter((r): r is FlattenedNavLeaf => Boolean(r)),
-    [recentPaths, routeByKey]
+    () => navRecents.map((r) => routeByKey.get(r.key)).filter((r): r is FlattenedNavLeaf => Boolean(r)),
+    [navRecents, routeByKey]
+  );
+
+  // Resolve navStore favorites to FlattenedNavLeaf for rendering
+  const favoriteRoutes = useMemo(
+    () => navFavorites.map((r) => routeByKey.get(r.key)).filter((r): r is FlattenedNavLeaf => Boolean(r)),
+    [navFavorites, routeByKey]
   );
 
   const isSearching = delayedQuery.trim().length > 0;
@@ -153,13 +176,18 @@ export const SideNav: React.FC<SideNavProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSectionKey]);
 
-  useEffect(() => { writeStoredPaths(favoritesKey, favoritePaths); }, [favoritePaths, favoritesKey]);
-  useEffect(() => { writeStoredPaths(recentsKey, recentPaths); }, [recentPaths, recentsKey]);
-
+  // Track page visits → navStore.addRecent (Requirement 4.8, 5.7)
   useEffect(() => {
     if (!activeLeaf) return;
-    setRecentPaths((prev) => [activeLeaf.key, ...prev.filter((p) => p !== activeLeaf.key)].slice(0, MAX_RECENTS));
-  }, [activeLeaf]);
+    const item: NavItem = {
+      key: activeLeaf.key,
+      label: activeLeaf.label,
+      icon: undefined,
+      section: activeLeaf.sectionKey,
+    };
+    navAddRecent(item);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeLeaf?.key]);
 
   useEffect(() => { if (!collapsed) setFlyout(null); }, [collapsed]);
   useEffect(() => { setFlyout(null); }, [location.pathname]);
@@ -193,7 +221,7 @@ export const SideNav: React.FC<SideNavProps> = ({
   const toggleSection = (key: string) => {
     if (isSearching) return;
     setOpenKeys((prev) => prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]);
-    hoverOpened.current.delete(key); // user click → no longer hover-managed
+    hoverOpened.current.delete(key);
   };
   const openSection = (key: string) => {
     if (isSearching) return;
@@ -224,16 +252,22 @@ export const SideNav: React.FC<SideNavProps> = ({
       clearTimeout(tid);
       delete hoverTimers.current[key];
     }
-    // Auto-close only sections we opened via hover, never the active one
     if (hoverOpened.current.has(key) && key !== activeSectionKey) {
       hoverOpened.current.delete(key);
       closeSection(key);
     }
   };
 
-  const toggleFavorite = (path: string) => {
-    setFavoritePaths((prev) => prev.includes(path) ? prev.filter((p) => p !== path) : [path, ...prev].slice(0, 10));
+  // Toggle favorite via navStore (Requirement 5.10)
+  const toggleFavorite = (route: FlattenedNavLeaf) => {
+    const isFav = navFavorites.some((f) => f.key === route.key);
+    if (isFav) {
+      navUnpin(route.key);
+    } else {
+      navPin({ key: route.key, label: route.label, section: route.sectionKey });
+    }
   };
+
   const handleSectionFlyout = (key: string, target: HTMLElement) => {
     const b = target.getBoundingClientRect();
     const top = Math.max(76, Math.min(b.top - 10, window.innerHeight - 340));
@@ -243,13 +277,15 @@ export const SideNav: React.FC<SideNavProps> = ({
   // ── Leaf renderer ──────────────────────────────────────────────
   const renderLeaf = (route: FlattenedNavLeaf) => {
     const isActive = activeLeaf?.key === route.key;
-    const isFav = favoritePaths.includes(route.key);
+    const isFav = navFavorites.some((f) => f.key === route.key);
     return (
       <button
         key={route.key}
         type="button"
         onClick={() => navigate(route.key)}
         className={`sn3-leaf${isActive ? ' is-active' : ''}`}
+        aria-label={route.label}
+        aria-current={isActive ? 'page' : undefined}
         style={{
           position: 'relative',
           width: '100%',
@@ -275,7 +311,7 @@ export const SideNav: React.FC<SideNavProps> = ({
             transition={{ type: 'spring', stiffness: 380, damping: 32 }}
             style={{
               position: 'absolute', top: 6, bottom: 6,
-              [isRTL ? 'right' : 'left']: 6,
+              [isRTL ? 'insetInlineEnd' : 'insetInlineStart']: 6,
               width: 2.5, borderRadius: 2,
               background: palette.primary500,
             }}
@@ -289,7 +325,7 @@ export const SideNav: React.FC<SideNavProps> = ({
             role="button"
             tabIndex={-1}
             aria-label={isFav ? t('remove_favorite', 'Remove favorite') : t('add_favorite', 'Add favorite')}
-            onClick={(e) => { e.stopPropagation(); toggleFavorite(route.key); }}
+            onClick={(e) => { e.stopPropagation(); toggleFavorite(route); }}
             className="sn3-fav"
             data-active={isFav ? 'true' : 'false'}
             style={{
@@ -308,6 +344,333 @@ export const SideNav: React.FC<SideNavProps> = ({
 
   const flyoutSection = flyout ? filteredSections.find((s) => s.key === flyout.sectionKey) : null;
 
+  // ── Sidebar body content (shared between Sider and Drawer) ─────
+  const sidebarContent = (
+    <>
+      {/* ── Brand row (slim) ────────────────────────────────── */}
+      <div style={{
+        height: 56,
+        padding: collapsed && !isMobile ? '0' : '0 16px',
+        display: 'flex', alignItems: 'center', justifyContent: (collapsed && !isMobile) ? 'center' : 'flex-start',
+        gap: 10, borderBottom: `1px solid ${borderCol}`,
+        flexShrink: 0,
+      }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: 8,
+          background: `linear-gradient(135deg, ${palette.primary500}, ${palette.primary700})`,
+          display: 'grid', placeItems: 'center', color: '#fff',
+          fontWeight: 700, fontSize: 13,
+          boxShadow: '0 2px 6px rgba(31,111,235,0.32)',
+          flexShrink: 0,
+        }}>Z</div>
+        {(!collapsed || isMobile) && (
+          <div style={{ minWidth: 0, fontSize: 13.5, fontWeight: 600, color: ink,
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {t('app_name')}
+          </div>
+        )}
+      </div>
+
+      {/* ── Search (slim) ───────────────────────────────────── */}
+      {(!collapsed || isMobile) && (
+        <div style={{ padding: '12px 12px 8px', flexShrink: 0 }}>
+          <Input
+            allowClear
+            size="middle"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            prefix={<SearchOutlined style={{ color: inkDim, fontSize: 13 }} />}
+            placeholder={t('search_or_jump', 'Search or jump to…')}
+            aria-label={t('nav.search_label', 'Search navigation')}
+            aria-controls="sn3-results"
+            aria-expanded={isSearching}
+            className="sn3-search"
+            style={{
+              borderRadius: 8,
+              border: `1px solid ${borderCol}`,
+              background: hoverBg,
+              fontSize: 13,
+              height: 34,
+            }}
+          />
+        </div>
+      )}
+
+      {/* ── Body (scrollable) ───────────────────────────────── */}
+      <div id="sn3-results" className="sn3-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden',
+        padding: (collapsed && !isMobile) ? '8px 6px 16px' : '4px 8px 16px' }}>
+
+        {/* aria-live region for search result count — Requirement 17.1 */}
+        {(!collapsed || isMobile) && (
+          <div
+            aria-live="polite"
+            aria-atomic="true"
+            style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}
+          >
+            {isSearching
+              ? t('nav.search_results_count', '{{n}} results found', { n: visibleZones.reduce((acc, z) => acc + z.sections.reduce((a, s) => a + s.items.length, 0), 0) })
+              : ''}
+          </div>
+        )}
+
+        {/* ── Favorites section (top) — from navStore (Requirement 5.7) ── */}
+        {(!collapsed || isMobile) && !isSearching && favoriteRoutes.length > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <div className="sn3-zone-label" style={{ color: inkDim }}>
+              {t('favorites', 'Favorites')}
+            </div>
+            <div style={{ display: 'grid', gap: 1 }}>
+              {favoriteRoutes.map((r) => renderLeaf(r))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Recents section — from navStore (Requirement 5.7) ── */}
+        {(!collapsed || isMobile) && !isSearching && recentRoutes.length > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <div className="sn3-zone-label" style={{ color: inkDim }}>
+              {t('recent', 'Recent')}
+            </div>
+            <div style={{ display: 'grid', gap: 1 }}>
+              {recentRoutes.slice(0, 3).map((r) => renderLeaf(r))}
+            </div>
+          </div>
+        )}
+
+        {/* Expanded view: zones → sections → items */}
+        {(!collapsed || isMobile) && visibleZones.map((zone) => (
+          <div key={zone.key} style={{ marginBottom: 14 }}>
+            <div className="sn3-zone-label" style={{ color: inkDim }}>
+              {zone.label}
+            </div>
+            <div>
+              {zone.sections.map((section) => {
+                const isOpen = isSearching || openKeys.includes(section.key) || section.key === activeSectionKey;
+                return (
+                  <div
+                    key={section.key}
+                    style={{ marginBottom: 2 }}
+                    onMouseEnter={() => handleSectionHoverEnter(section.key)}
+                    onMouseLeave={() => handleSectionHoverLeave(section.key)}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => toggleSection(section.key)}
+                      className="sn3-section-toggle"
+                      aria-expanded={isOpen}
+                      aria-controls={`sn3-section-${section.key}`}
+                      aria-label={section.label}
+                      style={{
+                        width: '100%', border: 'none', background: 'transparent',
+                        color: ink,
+                        padding: `${itemPadY}px 10px ${itemPadY}px 12px`,
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        cursor: 'pointer', textAlign: 'start',
+                        borderRadius: radius.md,
+                        fontSize: itemFont,
+                        fontWeight: 500,
+                        lineHeight: 1.4,
+                        transition: 'background 0.12s',
+                      }}
+                    >
+                      <span style={{
+                        color: inkMuted, fontSize: 12,
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        width: 16, height: 16, flexShrink: 0,
+                      }}>
+                        {section.icon}
+                      </span>
+                      <span style={{ flex: 1, minWidth: 0, whiteSpace: 'nowrap',
+                        overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {section.label}
+                      </span>
+                      <motion.span
+                        animate={{ rotate: isOpen ? 90 : 0 }}
+                        transition={{ duration: animSec }}
+                        style={{ color: inkDim, fontSize: 9, lineHeight: 1, flexShrink: 0 }}
+                      >
+                        <CaretRightOutlined />
+                      </motion.span>
+                    </button>
+
+                    <AnimatePresence initial={false}>
+                      {isOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: animSec, ease: [0.2, 0, 0, 1] }}
+                          id={`sn3-section-${section.key}`}
+                          style={{ overflow: 'hidden', paddingInlineStart: 22 }}
+                        >
+                          <div style={{ display: 'grid', gap: 1, paddingTop: 1, paddingBottom: 4 }}>
+                            {section.items.map((item) => renderLeaf(routeByKey.get(item.key) || {
+                              key: item.key, label: item.label,
+                              description: item.description, keywords: item.keywords,
+                              favoriteEligible: item.favoriteEligible ?? true,
+                              icon: section.icon, sectionKey: section.key,
+                              sectionLabel: section.label, zone: section.zone,
+                              zoneLabel: zone.label,
+                            }))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+
+        {/* Collapsed view: just icons */}
+        {collapsed && !isMobile && (
+          <div style={{ display: 'grid', gap: 4 }}>
+            {zones.map((zone, zi) => {
+              const zoneSections = filteredSections.filter((s) => s.zone === zone.key);
+              return (
+                <React.Fragment key={zone.key}>
+                  {zi > 0 && <div style={{ height: 1, margin: '6px 8px', background: borderCol }} />}
+                  {zoneSections.map((section) => {
+                    const isActiveSec = section.key === activeSectionKey;
+                    return (
+                      <Tooltip key={section.key} placement={isRTL ? 'left' : 'right'} title={section.label}>
+                        <button
+                          type="button"
+                          data-nav-section-button="true"
+                          onClick={(e) => handleSectionFlyout(section.key, e.currentTarget)}
+                          className="sn3-collapsed-btn"
+                          style={{
+                            width: 36, height: 36, marginInline: 'auto',
+                            borderRadius: 8, border: 'none',
+                            background: isActiveSec ? activeBg : 'transparent',
+                            color: isActiveSec ? palette.primary600 : inkMuted,
+                            display: 'grid', placeItems: 'center',
+                            cursor: 'pointer', fontSize: 14,
+                            transition: 'background 0.12s, color 0.12s',
+                          }}
+                        >
+                          {section.icon}
+                        </button>
+                      </Tooltip>
+                    );
+                  })}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        )}
+
+        {(!collapsed || isMobile) && visibleZones.length === 0 && (
+          <div style={{ padding: '40px 16px', textAlign: 'center', color: inkMuted }}>
+            <div style={{ fontSize: 13, fontWeight: 500 }}>{t('no_results', 'No results')}</div>
+            <div style={{ marginTop: 4, fontSize: 11, color: inkDim }}>
+              {t('nav_search_no_results', 'Try another keyword or open the command palette')}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Footer — LanguageSwitcher + version (Requirement 5.8) ── */}
+      <div style={{
+        flexShrink: 0,
+        padding: (collapsed && !isMobile) ? '8px 0' : '8px 12px',
+        display: 'flex', alignItems: 'center',
+        justifyContent: (collapsed && !isMobile) ? 'center' : 'space-between',
+        borderTop: `1px solid ${borderCol}`,
+        gap: 8,
+      }}>
+        {(collapsed && !isMobile) ? (
+          <Tooltip placement={isRTL ? 'left' : 'right'} title={t('language', 'Language')}>
+            <LanguageSwitcher showLabel={false} size="small" type="text" />
+          </Tooltip>
+        ) : (
+          <>
+            <LanguageSwitcher showLabel size="small" type="text" />
+            <span style={{ fontSize: 10.5, color: inkDim, opacity: 0.7, whiteSpace: 'nowrap' }}>
+              {t('app_subtitle')}
+            </span>
+          </>
+        )}
+      </div>
+    </>
+  );
+
+  // ── Mobile: render as Drawer overlay (Requirement 4.4) ────────
+  if (isMobile) {
+    return (
+      <>
+        <style>{sn3Css}</style>
+        <Drawer
+          open={!collapsed}
+          onClose={() => setSidebarCollapsed(true)}
+          placement={isRTL ? 'right' : 'left'}
+          width={width}
+          styles={{
+            body: {
+              padding: 0,
+              background: sidebarBg,
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+            },
+            header: { display: 'none' },
+          }}
+          style={{ zIndex: 1200 }}
+          aria-label={t('nav.sidebar', 'Navigation')}
+        >
+          {sidebarContent}
+        </Drawer>
+
+        {/* Flyout (mobile — not typically needed but kept for consistency) */}
+        <AnimatePresence>
+          {flyoutSection && (
+            <motion.aside
+              key={flyoutSection.key}
+              data-nav-flyout="true"
+              initial={{ opacity: 0, x: isRTL ? 10 : -10, scale: 0.98 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: isRTL ? 10 : -10, scale: 0.98 }}
+              transition={{ duration: animSec }}
+              style={{
+                position: 'fixed',
+                top: flyout?.top ?? 76,
+                [isRTL ? 'right' : 'left']: collapsedWidth + 8,
+                width: 240,
+                maxHeight: 'calc(100vh - 88px)',
+                overflowY: 'auto',
+                background: isDark ? '#111A2E' : '#FFFFFF',
+                border: `1px solid ${borderCol}`,
+                borderRadius: 12,
+                boxShadow: isDark
+                  ? '0 12px 32px rgba(0,0,0,0.45)'
+                  : '0 12px 32px rgba(15,23,42,0.16)',
+                zIndex: 1300,
+                padding: '8px 6px',
+              }}
+            >
+              <div style={{ padding: '6px 12px 8px', fontSize: 12, fontWeight: 600,
+                color: inkMuted, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                {flyoutSection.label}
+              </div>
+              <div style={{ display: 'grid', gap: 1 }}>
+                {flyoutSection.items.map((item) => renderLeaf(routeByKey.get(item.key) || {
+                  key: item.key, label: item.label,
+                  description: item.description, keywords: item.keywords,
+                  favoriteEligible: item.favoriteEligible ?? true,
+                  icon: flyoutSection.icon, sectionKey: flyoutSection.key,
+                  sectionLabel: flyoutSection.label, zone: flyoutSection.zone,
+                  zoneLabel: zoneByKey.get(flyoutSection.zone)?.label || '',
+                }))}
+              </div>
+            </motion.aside>
+          )}
+        </AnimatePresence>
+      </>
+    );
+  }
+
+  // ── Desktop: render as fixed Sider ────────────────────────────
   return (
     <>
       <style>{sn3Css}</style>
@@ -318,6 +681,8 @@ export const SideNav: React.FC<SideNavProps> = ({
         width={width}
         collapsedWidth={collapsedWidth}
         className="sn3-sider"
+        role="navigation"
+        aria-label={t('nav.sidebar', 'Navigation')}
         style={{
           background: sidebarBg,
           borderInlineEnd: `1px solid ${borderCol}`,
@@ -330,223 +695,7 @@ export const SideNav: React.FC<SideNavProps> = ({
           flexDirection: 'column',
         }}
       >
-        {/* ── Brand row (slim) ────────────────────────────────── */}
-        <div style={{
-          height: 56,
-          padding: collapsed ? '0' : '0 16px',
-          display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start',
-          gap: 10, borderBottom: `1px solid ${borderCol}`,
-          flexShrink: 0,
-        }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: 8,
-            background: `linear-gradient(135deg, ${palette.primary500}, ${palette.primary700})`,
-            display: 'grid', placeItems: 'center', color: '#fff',
-            fontWeight: 700, fontSize: 13,
-            boxShadow: '0 2px 6px rgba(31,111,235,0.32)',
-            flexShrink: 0,
-          }}>Z</div>
-          {!collapsed && (
-            <div style={{ minWidth: 0, fontSize: 13.5, fontWeight: 600, color: ink,
-              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {t('app_name')}
-            </div>
-          )}
-        </div>
-
-        {/* ── Search (slim) ───────────────────────────────────── */}
-        {!collapsed && (
-          <div style={{ padding: '12px 12px 8px', flexShrink: 0 }}>
-            <Input
-              allowClear
-              size="middle"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              prefix={<SearchOutlined style={{ color: inkDim, fontSize: 13 }} />}
-              placeholder={t('search_or_jump', 'Search or jump to…')}
-              className="sn3-search"
-              style={{
-                borderRadius: 8,
-                border: `1px solid ${borderCol}`,
-                background: hoverBg,
-                fontSize: 13,
-                height: 34,
-              }}
-            />
-          </div>
-        )}
-
-        {/* ── Body (scrollable) ───────────────────────────────── */}
-        <div className="sn3-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden',
-          padding: collapsed ? '8px 6px 16px' : '4px 8px 16px' }}>
-
-          {/* Recent (only when not searching, not collapsed, has items) */}
-          {!collapsed && !isSearching && recentRoutes.length > 0 && (
-            <div style={{ marginBottom: 12 }}>
-              <div className="sn3-zone-label" style={{ color: inkDim }}>
-                {t('recent', 'Recent')}
-              </div>
-              <div style={{ display: 'grid', gap: 1 }}>
-                {recentRoutes.slice(0, 3).map((r) => renderLeaf(r))}
-              </div>
-            </div>
-          )}
-
-          {/* Expanded view: zones → sections → items */}
-          {!collapsed && visibleZones.map((zone) => (
-            <div key={zone.key} style={{ marginBottom: 14 }}>
-              <div className="sn3-zone-label" style={{ color: inkDim }}>
-                {zone.label}
-              </div>
-              <div>
-                {zone.sections.map((section) => {
-                  const isOpen = isSearching || openKeys.includes(section.key) || section.key === activeSectionKey;
-                  return (
-                    <div
-                      key={section.key}
-                      style={{ marginBottom: 2 }}
-                      onMouseEnter={() => handleSectionHoverEnter(section.key)}
-                      onMouseLeave={() => handleSectionHoverLeave(section.key)}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => toggleSection(section.key)}
-                        className="sn3-section-toggle"
-                        style={{
-                          width: '100%', border: 'none', background: 'transparent',
-                          color: ink,
-                          padding: `${itemPadY}px 10px ${itemPadY}px 12px`,
-                          display: 'flex', alignItems: 'center', gap: 10,
-                          cursor: 'pointer', textAlign: 'start',
-                          borderRadius: radius.md,
-                          fontSize: itemFont,
-                          fontWeight: 500,
-                          lineHeight: 1.4,
-                          transition: 'background 0.12s',
-                        }}
-                      >
-                        <span style={{
-                          color: inkMuted, fontSize: 12,
-                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                          width: 16, height: 16, flexShrink: 0,
-                        }}>
-                          {section.icon}
-                        </span>
-                        <span style={{ flex: 1, minWidth: 0, whiteSpace: 'nowrap',
-                          overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {section.label}
-                        </span>
-                        <motion.span
-                          animate={{ rotate: isOpen ? 90 : 0 }}
-                          transition={{ duration: animSec }}
-                          style={{ color: inkDim, fontSize: 9, lineHeight: 1, flexShrink: 0 }}
-                        >
-                          <CaretRightOutlined />
-                        </motion.span>
-                      </button>
-
-                      <AnimatePresence initial={false}>
-                        {isOpen && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: animSec, ease: [0.2, 0, 0, 1] }}
-                            style={{ overflow: 'hidden', paddingInlineStart: 22 }}
-                          >
-                            <div style={{ display: 'grid', gap: 1, paddingTop: 1, paddingBottom: 4 }}>
-                              {section.items.map((item) => renderLeaf(routeByKey.get(item.key) || {
-                                key: item.key, label: item.label,
-                                description: item.description, keywords: item.keywords,
-                                favoriteEligible: item.favoriteEligible ?? true,
-                                icon: section.icon, sectionKey: section.key,
-                                sectionLabel: section.label, zone: section.zone,
-                                zoneLabel: zone.label,
-                              }))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-
-          {/* Collapsed view: just icons */}
-          {collapsed && (
-            <div style={{ display: 'grid', gap: 4 }}>
-              {zones.map((zone, zi) => {
-                const zoneSections = filteredSections.filter((s) => s.zone === zone.key);
-                return (
-                  <React.Fragment key={zone.key}>
-                    {zi > 0 && <div style={{ height: 1, margin: '6px 8px', background: borderCol }} />}
-                    {zoneSections.map((section) => {
-                      const isActiveSec = section.key === activeSectionKey;
-                      return (
-                        <Tooltip key={section.key} placement={isRTL ? 'left' : 'right'} title={section.label}>
-                          <button
-                            type="button"
-                            data-nav-section-button="true"
-                            onClick={(e) => handleSectionFlyout(section.key, e.currentTarget)}
-                            className="sn3-collapsed-btn"
-                            style={{
-                              width: 36, height: 36, marginInline: 'auto',
-                              borderRadius: 8, border: 'none',
-                              background: isActiveSec ? activeBg : 'transparent',
-                              color: isActiveSec ? palette.primary600 : inkMuted,
-                              display: 'grid', placeItems: 'center',
-                              cursor: 'pointer', fontSize: 14,
-                              transition: 'background 0.12s, color 0.12s',
-                            }}
-                          >
-                            {section.icon}
-                          </button>
-                        </Tooltip>
-                      );
-                    })}
-                  </React.Fragment>
-                );
-              })}
-            </div>
-          )}
-
-          {!collapsed && visibleZones.length === 0 && (
-            <div style={{ padding: '40px 16px', textAlign: 'center', color: inkMuted }}>
-              <div style={{ fontSize: 13, fontWeight: 500 }}>{t('no_results', 'No results')}</div>
-              <div style={{ marginTop: 4, fontSize: 11, color: inkDim }}>
-                {t('nav_search_no_results', 'Try another keyword or open the command palette')}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ── Footer (single line) ────────────────────────────── */}
-        <div style={{
-          height: 36, flexShrink: 0,
-          padding: collapsed ? '0' : '0 14px',
-          display: 'flex', alignItems: 'center',
-          justifyContent: collapsed ? 'center' : 'space-between',
-          borderTop: `1px solid ${borderCol}`,
-          fontSize: 11, color: inkDim,
-        }}>
-          {collapsed ? (
-            <span>v1</span>
-          ) : (
-            <>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <span style={{
-                  width: 6, height: 6, borderRadius: '50%',
-                  background: palette.success,
-                  boxShadow: `0 0 0 2px ${palette.success}33`,
-                }} />
-                <span>v1.4.2</span>
-              </span>
-              <span style={{ fontSize: 10.5, opacity: 0.7 }}>{t('app_subtitle')}</span>
-            </>
-          )}
-        </div>
+        {sidebarContent}
       </Sider>
 
       {/* ── Flyout (collapsed mode) ─────────────────────────── */}

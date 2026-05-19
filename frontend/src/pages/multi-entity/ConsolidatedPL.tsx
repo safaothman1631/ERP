@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, Select, DatePicker, Button, Row, Col, Statistic, Table, Space } from 'antd';
+import { Card, Select, DatePicker, Button, Row, Col, Statistic, Space } from 'antd';
 import { FileTextOutlined, DollarOutlined, LineChartOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { ColumnsType } from 'antd/es/table';
@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 import { PageHeader } from '../../design-system';
 import api from '../../api';
 import { message } from '../../utils/message';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 interface Company {
   id: string;
@@ -215,7 +216,7 @@ const ConsolidatedPL = () => {
               </Button>
             }
           >
-            <Table
+            <ResponsiveTableAdapter
               columns={columns}
               dataSource={plData.rows}
               rowKey="company_id"

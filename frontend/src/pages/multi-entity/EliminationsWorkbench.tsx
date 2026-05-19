@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Table, Button, Card, Space, Tag, Popconfirm, Alert } from 'antd';
+import { Button, Card, Space, Tag, Popconfirm, Alert } from 'antd';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { ColumnsType } from 'antd/es/table';
@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 import { PageHeader } from '../../design-system';
 import api from '../../api';
 import { message } from '../../utils/message';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 interface ICTransaction {
   id: string;
@@ -222,7 +223,7 @@ const EliminationsWorkbench = () => {
         style={{ marginBottom: 16 }}
       />
       <Card>
-        <Table
+        <ResponsiveTableAdapter
           columns={columns}
           dataSource={pairs}
           rowKey="id"

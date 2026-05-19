@@ -8,12 +8,18 @@
 import React, { lazy as _reactLazy, Suspense } from 'react';
 import type { RouteObject } from 'react-router-dom';
 import { Navigate } from 'react-router-dom';
-import { Spin } from 'antd';
 import { useAuthStore } from './store';
 import AppLayout from './layouts/AppShell';
 import Login from './pages/Login';
 import PageTransition from './components/PageTransition';
 import LandingPage from './pages/LandingPage';
+import { LoadingSkeleton } from './design-system/LoadingSkeleton';
+
+/**
+ * Shared Suspense fallback for all feature routes.
+ * Uses LoadingSkeleton variant="table" per spec requirement 4.1, 18.2.
+ */
+const FeatureFallback = <LoadingSkeleton variant="table" />;
 
 // Hardened lazy loader: surfaces stringifiable errors so React's error reporter
 // cannot crash with "Cannot convert object to primitive value" when a chunk
@@ -57,6 +63,11 @@ function lazy<T extends React.ComponentType<any>>(
     }
   });
 }
+
+// Task 19: Form Pages — feature-sliced form templates (Requirements 15.1–15.7)
+const InvoiceFormRedesign = lazy(() => import('./features/sales/invoices/InvoiceForm'));
+const BillFormRedesign = lazy(() => import('./features/purchases/bills/BillForm'));
+const PurchaseOrderFormRedesign = lazy(() => import('./features/purchases/purchase-orders/PurchaseOrderForm'));
 
 // Lazy-loaded pages
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -165,6 +176,8 @@ const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 // Auth module pages (Task 3.3)
 const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
+// Task 16: Login Page Redesign — features/auth/LoginPage with split-screen, Particles, glass morphism
+const LoginPageRedesign = lazy(() => import('./features/auth/LoginPage'));
 const MFAPage = lazy(() => import('./pages/auth/MFAPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const ServerError = lazy(() => import('./pages/ServerError'));
@@ -332,6 +345,13 @@ const ConstructionProjects = lazy(() => import('./pages/construction/Constructio
 const BOQEditor = lazy(() => import('./pages/construction/BOQEditor'));
 const FieldsAndYield = lazy(() => import('./pages/agriculture/FieldsAndYield'));
 const PLMEngineeringChanges = lazy(() => import('./pages/plm/PLMEngineeringChanges'));
+// Task 18: List Pages — modern redesigned list page templates (Requirements 14.1–14.9)
+const InvoicesListModern = lazy(() => import('./features/sales/invoices/InvoicesList'));
+const CustomersListModern = lazy(() => import('./features/sales/customers/CustomersList'));
+const ItemsListModern = lazy(() => import('./features/inventory/items/ItemsList'));
+const BillsListModern = lazy(() => import('./features/purchases/bills/BillsList'));
+const PurchaseOrdersListModern = lazy(() => import('./features/purchases/purchase-orders/PurchaseOrdersList'));
+const PaymentsListModern = lazy(() => import('./features/banking/payments/PaymentsList'));
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
@@ -366,7 +386,7 @@ const LandingRoute: React.FC = () => {
  *   - All public routes are siblings of the protected branch (so unauthenticated
  *     users can reach them without redirect).
  *   - Every lazy page is wrapped in <PageTransition>; routes that previously
- *     had inner <Suspense fallback={<Spin />}> wrappers retain them so the
+ *     had inner <Suspense fallback={FeatureFallback}> wrappers retain them so the
  *     visual fallback is unchanged.
  */
 export const routes: RouteObject[] = [
@@ -374,34 +394,35 @@ export const routes: RouteObject[] = [
   // authenticated users are redirected to /dashboard (Requirement 1.1)
   { path: '/landing', element: <LandingRoute /> },
   { path: '/', element: <LandingRoute /> },
-  { path: '/login', element: <PageTransition><Login /></PageTransition> },
-  { path: '/signup', element: <Suspense fallback={<Spin />}><PageTransition><SignUp /></PageTransition></Suspense> },
-  { path: '/forgot-password', element: <Suspense fallback={<Spin />}><PageTransition><ForgotPassword /></PageTransition></Suspense> },
-  { path: '/reset-password', element: <Suspense fallback={<Spin />}><PageTransition><ResetPassword /></PageTransition></Suspense> },
-  { path: '/accept-invite', element: <Suspense fallback={<Spin />}><PageTransition><AcceptInvite /></PageTransition></Suspense> },
+  // Task 16: Login Page Redesign — modern split-screen with Particles, glass morphism, attempt tracking
+  { path: '/login', element: <Suspense fallback={FeatureFallback}><PageTransition><LoginPageRedesign /></PageTransition></Suspense> },
+  { path: '/signup', element: <Suspense fallback={FeatureFallback}><PageTransition><SignUp /></PageTransition></Suspense> },
+  { path: '/forgot-password', element: <Suspense fallback={FeatureFallback}><PageTransition><ForgotPassword /></PageTransition></Suspense> },
+  { path: '/reset-password', element: <Suspense fallback={FeatureFallback}><PageTransition><ResetPassword /></PageTransition></Suspense> },
+  { path: '/accept-invite', element: <Suspense fallback={FeatureFallback}><PageTransition><AcceptInvite /></PageTransition></Suspense> },
   // Auth module pages (Task 3.3) — dedicated auth pages with enhanced validation and MFA
-  { path: '/register', element: <Suspense fallback={<Spin />}><PageTransition><RegisterPage /></PageTransition></Suspense> },
-  { path: '/auth/login', element: <Suspense fallback={<Spin />}><PageTransition><LoginPage /></PageTransition></Suspense> },
-  { path: '/mfa', element: <Suspense fallback={<Spin />}><PageTransition><MFAPage /></PageTransition></Suspense> },
+  { path: '/register', element: <Suspense fallback={FeatureFallback}><PageTransition><RegisterPage /></PageTransition></Suspense> },
+  { path: '/auth/login', element: <Suspense fallback={FeatureFallback}><PageTransition><LoginPage /></PageTransition></Suspense> },
+  { path: '/mfa', element: <Suspense fallback={FeatureFallback}><PageTransition><MFAPage /></PageTransition></Suspense> },
   // Wave E: Public Storefront Routes
-  { path: '/store', element: <Suspense fallback={<Spin />}><PageTransition><StoreHome /></PageTransition></Suspense> },
-  { path: '/store/product/:id', element: <Suspense fallback={<Spin />}><PageTransition><StoreProduct /></PageTransition></Suspense> },
-  { path: '/store/cart', element: <Suspense fallback={<Spin />}><PageTransition><StoreCart /></PageTransition></Suspense> },
-  { path: '/store/checkout', element: <Suspense fallback={<Spin />}><PageTransition><StoreCheckout /></PageTransition></Suspense> },
-  { path: '/store/order/:orderId', element: <Suspense fallback={<Spin />}><PageTransition><StoreOrderConfirm /></PageTransition></Suspense> },
+  { path: '/store', element: <Suspense fallback={FeatureFallback}><PageTransition><StoreHome /></PageTransition></Suspense> },
+  { path: '/store/product/:id', element: <Suspense fallback={FeatureFallback}><PageTransition><StoreProduct /></PageTransition></Suspense> },
+  { path: '/store/cart', element: <Suspense fallback={FeatureFallback}><PageTransition><StoreCart /></PageTransition></Suspense> },
+  { path: '/store/checkout', element: <Suspense fallback={FeatureFallback}><PageTransition><StoreCheckout /></PageTransition></Suspense> },
+  { path: '/store/order/:orderId', element: <Suspense fallback={FeatureFallback}><PageTransition><StoreOrderConfirm /></PageTransition></Suspense> },
   // Wave E: Customer Portal Routes
-  { path: '/portal/login', element: <Suspense fallback={<Spin />}><PageTransition><PortalLogin /></PageTransition></Suspense> },
-  { path: '/portal', element: <Suspense fallback={<Spin />}><PageTransition><PortalDashboard /></PageTransition></Suspense> },
-  { path: '/portal/invoices', element: <Suspense fallback={<Spin />}><PageTransition><PortalInvoices /></PageTransition></Suspense> },
-  { path: '/portal/orders', element: <Suspense fallback={<Spin />}><PageTransition><PortalOrders /></PageTransition></Suspense> },
-  { path: '/portal/statements', element: <Suspense fallback={<Spin />}><PageTransition><PortalStatements /></PageTransition></Suspense> },
+  { path: '/portal/login', element: <Suspense fallback={FeatureFallback}><PageTransition><PortalLogin /></PageTransition></Suspense> },
+  { path: '/portal', element: <Suspense fallback={FeatureFallback}><PageTransition><PortalDashboard /></PageTransition></Suspense> },
+  { path: '/portal/invoices', element: <Suspense fallback={FeatureFallback}><PageTransition><PortalInvoices /></PageTransition></Suspense> },
+  { path: '/portal/orders', element: <Suspense fallback={FeatureFallback}><PageTransition><PortalOrders /></PageTransition></Suspense> },
+  { path: '/portal/statements', element: <Suspense fallback={FeatureFallback}><PageTransition><PortalStatements /></PageTransition></Suspense> },
   // Wave J: Vendor Portal Routes
-  { path: '/vendor-portal/login', element: <Suspense fallback={<Spin />}><PageTransition><VendorPortalLogin /></PageTransition></Suspense> },
-  { path: '/vendor-portal', element: <Suspense fallback={<Spin />}><PageTransition><VendorPortalDashboard /></PageTransition></Suspense> },
-  { path: '/vendor-portal/purchase-orders', element: <Suspense fallback={<Spin />}><PageTransition><VendorPortalPOs /></PageTransition></Suspense> },
-  { path: '/vendor-portal/submit-bill', element: <Suspense fallback={<Spin />}><PageTransition><VendorPortalSubmitBill /></PageTransition></Suspense> },
-  { path: '/vendor-portal/bills', element: <Suspense fallback={<Spin />}><PageTransition><VendorPortalBills /></PageTransition></Suspense> },
-  { path: '/vendor-portal/payments', element: <Suspense fallback={<Spin />}><PageTransition><VendorPortalPayments /></PageTransition></Suspense> },
+  { path: '/vendor-portal/login', element: <Suspense fallback={FeatureFallback}><PageTransition><VendorPortalLogin /></PageTransition></Suspense> },
+  { path: '/vendor-portal', element: <Suspense fallback={FeatureFallback}><PageTransition><VendorPortalDashboard /></PageTransition></Suspense> },
+  { path: '/vendor-portal/purchase-orders', element: <Suspense fallback={FeatureFallback}><PageTransition><VendorPortalPOs /></PageTransition></Suspense> },
+  { path: '/vendor-portal/submit-bill', element: <Suspense fallback={FeatureFallback}><PageTransition><VendorPortalSubmitBill /></PageTransition></Suspense> },
+  { path: '/vendor-portal/bills', element: <Suspense fallback={FeatureFallback}><PageTransition><VendorPortalBills /></PageTransition></Suspense> },
+  { path: '/vendor-portal/payments', element: <Suspense fallback={FeatureFallback}><PageTransition><VendorPortalPayments /></PageTransition></Suspense> },
   {
     path: '/',
     element: (
@@ -412,24 +433,45 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <PageTransition><Dashboard /></PageTransition> },
       { path: 'contacts', element: <PageTransition><Contacts /></PageTransition> },
+      // Task 18: Modern Customers List Page (PageHeader + FilterBar + BulkActionBar + DataTable + Pagination)
+      { path: 'customers/list', element: <Suspense fallback={FeatureFallback}><CustomersListModern /></Suspense> },
       { path: 'items', element: <PageTransition><Items /></PageTransition> },
       { path: 'items/new', element: <PageTransition><ItemForm /></PageTransition> },
       { path: 'items/:id/edit', element: <PageTransition><ItemForm /></PageTransition> },
+      // Task 18: Modern Items List Page (PageHeader + FilterBar + BulkActionBar + DataTable + Pagination)
+      { path: 'items/list', element: <Suspense fallback={FeatureFallback}><ItemsListModern /></Suspense> },
       { path: 'invoices', element: <PageTransition><Invoices /></PageTransition> },
       { path: 'invoices/new', element: <PageTransition><InvoiceForm /></PageTransition> },
+      // Task 18: Modern Invoices List Page (PageHeader + FilterBar + BulkActionBar + DataTable + Pagination)
+      { path: 'invoices/list', element: <Suspense fallback={FeatureFallback}><InvoicesListModern /></Suspense> },
+      // Task 19: Modern Invoice Form (FormLayout + EditableLineItems + useAutoSave + split save)
+      { path: 'invoices/create', element: <Suspense fallback={FeatureFallback}><InvoiceFormRedesign /></Suspense> },
+      { path: 'invoices/:id/edit', element: <Suspense fallback={FeatureFallback}><InvoiceFormRedesign /></Suspense> },
       { path: 'quotes', element: <PageTransition><Quotes /></PageTransition> },
       { path: 'quotes/new', element: <PageTransition><QuoteForm /></PageTransition> },
       { path: 'sales-orders', element: <PageTransition><SalesOrders /></PageTransition> },
       { path: 'credit-notes', element: <PageTransition><CreditNotes /></PageTransition> },
       { path: 'expenses', element: <PageTransition><Expenses /></PageTransition> },
       { path: 'bills', element: <PageTransition><Bills /></PageTransition> },
+      // Task 18: Modern Bills List Page (PageHeader + FilterBar + BulkActionBar + DataTable + Pagination)
+      { path: 'bills/list', element: <Suspense fallback={FeatureFallback}><BillsListModern /></Suspense> },
+      // Task 19: Modern Bill Form (FormLayout + EditableLineItems + useAutoSave + split save)
+      { path: 'bills/create', element: <Suspense fallback={FeatureFallback}><BillFormRedesign /></Suspense> },
+      { path: 'bills/:id/edit', element: <Suspense fallback={FeatureFallback}><BillFormRedesign /></Suspense> },
       { path: 'purchase-orders', element: <PageTransition><PurchaseOrders /></PageTransition> },
+      // Task 18: Modern Purchase Orders List Page (PageHeader + FilterBar + BulkActionBar + DataTable + Pagination)
+      { path: 'purchase-orders/list', element: <Suspense fallback={FeatureFallback}><PurchaseOrdersListModern /></Suspense> },
+      // Task 19: Modern Purchase Order Form (FormLayout + EditableLineItems + useAutoSave + split save)
+      { path: 'purchase-orders/create', element: <Suspense fallback={FeatureFallback}><PurchaseOrderFormRedesign /></Suspense> },
+      { path: 'purchase-orders/:id/edit', element: <Suspense fallback={FeatureFallback}><PurchaseOrderFormRedesign /></Suspense> },
       { path: 'vendor-credits', element: <PageTransition><VendorCredits /></PageTransition> },
       { path: 'recurring-invoices', element: <PageTransition><RecurringInvoices /></PageTransition> },
       { path: 'inventory', element: <PageTransition><Inventory /></PageTransition> },
       { path: 'accounts', element: <PageTransition><Accounts /></PageTransition> },
       { path: 'journals', element: <PageTransition><Journals /></PageTransition> },
       { path: 'banking', element: <PageTransition><Banking /></PageTransition> },
+      // Task 18: Modern Payments List Page (PageHeader + FilterBar + BulkActionBar + DataTable + Pagination)
+      { path: 'payments/list', element: <Suspense fallback={FeatureFallback}><PaymentsListModern /></Suspense> },
       { path: 'banking/rules', element: <PageTransition><BankRules /></PageTransition> },
       { path: 'banking/reconciliation', element: <PageTransition><BankReconciliation /></PageTransition> },
       { path: 'banking/:accountId/import', element: <PageTransition><ImportStatement /></PageTransition> },

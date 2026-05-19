@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Card, Button, Space, DatePicker } from 'antd';
+import { Card, Button, Space, DatePicker } from 'antd';
 import { message } from '../utils/message';
 import { MailOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +7,7 @@ import { useSearchParams } from 'react-router-dom';
 import api from '../api';
 import { PageHeader } from '../design-system';
 import dayjs from 'dayjs';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 
 const { RangePicker } = DatePicker;
 
@@ -88,7 +89,7 @@ const CustomerStatements: React.FC = () => {
     <div>
       <PageHeader
         title={t('customer_statement')}
-        subtitle={data?.contact_name || t('customer_statement_subtitle', 'رێکەوتی کڕیار')}
+        subtitle={data?.contact_name || t('customer_statement_subtitle', 'Customer statement')}
         helpKey="statements"
         extra={
           <Space>
@@ -112,7 +113,7 @@ const CustomerStatements: React.FC = () => {
         </Card>
 
         <Card>
-          <Table
+          <ResponsiveTableAdapter
             dataSource={data?.transactions || []}
             columns={columns}
             rowKey={(r: any, idx) => `${r.date}_${idx}`}

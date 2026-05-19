@@ -33,7 +33,12 @@ router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
 def get_dashboard(user: dict = Depends(get_current_user)):
     org_id = user["org_id"]
 
-    # Repositories
+    # ── Cache: serve stale data for up to 60 s to reduce Firestore reads ──
+    from app.cache import cache as _cache
+    _cache_key = f"dashboard:{org_id}"
+    cached = _cache.get(_cache_key)
+    if cached is not None:
+        return cached
     inv_repo = InvoiceRepository(org_id)
     bill_repo = BillRepository(org_id)
     payment_repo = PaymentReceivedRepository(org_id)
@@ -134,7 +139,7 @@ def get_dashboard(user: dict = Depends(get_current_user)):
             "expense": float(month_expense),
         })
 
-    return DashboardResponse(
+    result = DashboardResponse(
         total_receivable=float(total_receivable),
         total_payable=float(total_payable),
         income_this_month=float(income_this_month),
@@ -156,3 +161,5 @@ def get_dashboard(user: dict = Depends(get_current_user)):
         ],
         income_expense_chart=income_chart,
     )
+    _cache.set(_cache_key, result)
+    return result

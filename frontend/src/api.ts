@@ -66,6 +66,8 @@ api.interceptors.response.use(
       } else {
         message.error(i18n.t('error_validation'));
       }
+    } else if (status === 429) {
+      message.warning(i18n.t('error_quota', 'Service temporarily busy. Please try again in a moment.'));
     } else if (status >= 500) {
       message.error(i18n.t('error_server'));
     }

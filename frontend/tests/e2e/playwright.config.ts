@@ -28,7 +28,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: '.',
-  testMatch: ['nav-sweep.spec.ts', 'nav-sweep.exploration.spec.ts'],
+  testMatch: ['nav-sweep.spec.ts', 'nav-sweep.exploration.spec.ts', 'route-walk.spec.ts'],
   timeout: 60_000,
   expect: { timeout: 5_000 },
   fullyParallel: true,

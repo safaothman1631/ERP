@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Tabs, Table, Card, Tag, Button, Upload, Select, Space } from 'antd';
+import { Tabs, Card, Tag, Button, Upload, Select, Space } from 'antd';
 import { message } from '../utils/message';
 import { UploadOutlined, LinkOutlined, SettingOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { PageHeader } from '../design-system';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 
 const Banking: React.FC = () => {
   const { t } = useTranslation();
 
   return (
     <div>
-      <PageHeader title={t('banking')} subtitle={t('banking_subtitle', 'بەڕێوەبردنی ژمارەبانکی و پارەپێدانەکان')} helpKey="banking" />
+      <PageHeader title={t('banking')} subtitle={t('banking_subtitle', 'Manage bank accounts and payments')} helpKey="banking" sectionId="banking" />
       <Tabs defaultActiveKey="accounts" items={[
         { key: 'accounts', label: t('accounts'), children: <BankAccounts /> },
         { key: 'import', label: t('importCSV'), children: <ImportCSV /> },
@@ -53,7 +54,7 @@ const BankAccounts: React.FC = () => {
         <Button icon={<LinkOutlined />} onClick={() => navigate('/banking/reconciliation')}>{t('reconciliation')}</Button>
         <Button icon={<SettingOutlined />} onClick={() => navigate('/banking/rules')}>{t('bankRules')}</Button>
       </div>
-      <Table dataSource={accounts} columns={columns} rowKey="id" loading={loading} pagination={false} />
+      <ResponsiveTableAdapter dataSource={accounts} columns={columns} rowKey="id" loading={loading} pagination={false} />
     </div>
   );
 };
@@ -162,7 +163,7 @@ const ImportCSV: React.FC = () => {
 
       {fileData.length > 0 && (
         <>
-          <Table
+          <ResponsiveTableAdapter
             dataSource={fileData}
             columns={csvColumns.map(c => ({ title: c, dataIndex: c, key: c }))}
             rowKey="key"

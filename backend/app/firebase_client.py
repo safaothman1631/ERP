@@ -33,6 +33,12 @@ def init_firebase():
 
         cred = None
         mode = None
+        # Explicit Firebase project ID — prevents 'aud claim mismatch' on
+        # Cloud Run when ADC project differs from Firebase project.
+        firebase_project_id = os.environ.get("FIREBASE_PROJECT_ID", "zoho-83cda")
+        init_options = init_options or {}
+        init_options["projectId"] = firebase_project_id
+
         if os.path.exists(cred_path):
             cred = credentials.Certificate(cred_path)
             mode = f"service-account file ({cred_path})"

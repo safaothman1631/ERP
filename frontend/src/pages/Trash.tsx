@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   Card,
-  Table,
   Button,
   Space,
   Tag,
@@ -12,8 +11,7 @@ import {
   Row,
   Col,
   Empty,
-  message as antMessage,
-} from 'antd';
+  message as antMessage } from 'antd';
 import {
   DeleteOutlined,
   UndoOutlined,
@@ -22,6 +20,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import HelpButton from '../components/HelpButton';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 
 const { Title, Text } = Typography;
 
@@ -197,7 +196,7 @@ const Trash: React.FC = () => {
         {items.length === 0 && !loading ? (
           <Empty description={t('trash_empty')} />
         ) : (
-          <Table
+          <ResponsiveTableAdapter
             rowKey={(r) => `${r._collection}-${r.id}`}
             dataSource={items}
             columns={columns}

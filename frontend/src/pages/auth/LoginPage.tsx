@@ -19,6 +19,7 @@ import { useAuthStore } from '../../store';
 import api from '../../api';
 import AuthLayout from '../../components/AuthLayout';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
+import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
 
 // ---------------------------------------------------------------------------
 // LoginPage
@@ -188,7 +189,7 @@ const LoginPage: React.FC = () => {
             {t('auth_login')}
           </Button>
         </Form.Item>
-      </Form>
+</Form>
 
       <Divider style={{ margin: '8px 0', color: '#aaa', fontSize: 12 }}>
         {t('or') || 'یان'}

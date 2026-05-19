@@ -1,8 +1,9 @@
 import React from 'react';
-import { Button, Space, Divider } from 'antd';
+import { Space, Divider } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { palette, space, radius, shadow } from '../theme/tokens';
+import { MotionButton } from '../components/MotionButton';
 
 export interface BulkAction {
   key: string;
@@ -25,8 +26,9 @@ export interface BulkActionBarProps {
 /**
  * BulkActionBar — Sprint 5 — appears when rows are selected in a DataTable.
  * Floating mode: pinned to bottom of viewport with strong elevation.
+ * React.memo applied per Requirements 18.4.
  */
-export const BulkActionBar: React.FC<BulkActionBarProps> = ({
+const BulkActionBarInner: React.FC<BulkActionBarProps> = ({
   selectedCount, onClear, actions, isDark = false, floating = true,
 }) => {
   const { t } = useTranslation();
@@ -36,33 +38,37 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
   const sep = isDark ? palette.darkBorder : palette.border;
 
   const inner = (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: space.md,
-      background: surface,
-      border: `1px solid ${sep}`,
-      borderRadius: radius.md,
-      padding: `${space.sm}px ${space.md}px`,
-      boxShadow: floating ? shadow.lg : shadow.sm,
-    }}>
+    <div
+      role="toolbar"
+      aria-label={t('data_table_v2.bulk_actions', 'Bulk actions')}
+      style={{
+        display: 'flex', alignItems: 'center', gap: space.md,
+        background: surface,
+        border: `1px solid ${sep}`,
+        borderRadius: radius.md,
+        padding: `${space.sm}px ${space.md}px`,
+        boxShadow: floating ? shadow.lg : shadow.sm,
+      }}
+    >
       <span style={{ fontWeight: 600, color: isDark ? palette.darkInk : palette.ink900 }}>
         {t('data_table_v2.selected_n', '{{n}} selected', { n: selectedCount })}
       </span>
       <Divider type="vertical" style={{ margin: 0 }} />
       <Space size={space.xs}>
         {actions.map((a) => (
-          <Button
+          <MotionButton
             key={a.key} icon={a.icon} danger={a.danger}
             disabled={a.disabled} onClick={() => { void a.onClick(); }}
             size="small"
           >
             {a.label}
-          </Button>
+          </MotionButton>
         ))}
       </Space>
       <Divider type="vertical" style={{ margin: 0 }} />
-      <Button type="text" size="small" icon={<CloseOutlined />} onClick={onClear} aria-label={t('data_table_v2.clear_selection', 'Clear selection')}>
+      <MotionButton type="text" size="small" icon={<CloseOutlined />} onClick={onClear} aria-label={t('data_table_v2.clear_selection', 'Clear selection')}>
         {t('data_table_v2.clear_selection', 'Clear selection')}
-      </Button>
+      </MotionButton>
     </div>
   );
 
@@ -76,5 +82,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
     </div>
   );
 };
+
+export const BulkActionBar = React.memo(BulkActionBarInner);
 
 export default BulkActionBar;

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Card, Descriptions, Steps, Timeline, Button, Space, Tag, Spin } from 'antd';
+import { Card, Descriptions, Steps, Timeline, Button, Space, Tag } from 'antd';
 import { message } from '../../utils/message';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, CloseOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import api from '../../api';
+import { LoadingSkeleton } from '../../design-system/LoadingSkeleton';
+import { useLoadingState } from '../../hooks/useLoadingState';
 
 interface ApprovalRequest {
   id: string;
@@ -42,6 +44,7 @@ export default function ApprovalDetail() {
   const navigate = useNavigate();
   const [request, setRequest] = useState<ApprovalRequest | null>(null);
   const [loading, setLoading] = useState(true);
+  const { showSkeleton } = useLoadingState(loading);
   const [users, setUsers] = useState<Record<string, any>>({});
 
   useEffect(() => {
@@ -94,10 +97,10 @@ export default function ApprovalDetail() {
     return 'wait';
   };
 
-  if (loading) {
+  if (showSkeleton) {
     return (
       <Card>
-        <Spin />
+        <LoadingSkeleton variant="card" />
       </Card>
     );
   }

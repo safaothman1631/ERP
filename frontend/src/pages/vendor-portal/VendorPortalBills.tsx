@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Button, Select, Space, Empty, Typography } from 'antd';
+import { Card, Tag, Button, Select, Space, Empty, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
 import vendorApi from '../../api/vendorPortal';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 const { Title } = Typography;
 
@@ -126,7 +127,7 @@ const VendorPortalBills: React.FC = () => {
           />
         </Space>
 
-        <Table
+        <ResponsiveTableAdapter
           dataSource={bills}
           columns={columns}
           loading={loading}

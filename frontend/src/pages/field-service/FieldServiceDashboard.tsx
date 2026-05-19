@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Statistic, Table, Tag, Space } from 'antd';
+import { Row, Col, Card, Statistic, Tag, Space } from 'antd';
 import {
   FileTextOutlined,
   ClockCircleOutlined,
@@ -8,11 +8,14 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import api from '../../api';
 import { PageHeader } from '../../design-system';
 import { message } from '../../utils/message';
 import type { ColumnsType } from 'antd/es/table';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
+import { asTranslationKey } from '../../i18n/types';
 
 interface DashboardData {
   total_orders: number;
@@ -193,7 +196,7 @@ const FieldServiceDashboard: React.FC = () => {
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         <Col xs={24} lg={16}>
           <Card title={t('field_service.todays_schedule')} loading={loading}>
-            <Table
+            <ResponsiveTableAdapter
               dataSource={schedules}
               columns={scheduleColumns}
               rowKey="id"
@@ -204,7 +207,12 @@ const FieldServiceDashboard: React.FC = () => {
         </Col>
         <Col xs={24} lg={8}>
           <Card title={t('field_service.completion_rate')}>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveChart
+              legendItems={[
+                { id: 'completed', labelKey: asTranslationKey('field_service.status_done'), color: '#52c41a' },
+                { id: 'total', labelKey: asTranslationKey('total'), color: '#d9d9d9' },
+              ]}
+            >
               <BarChart data={completionData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="day" />
@@ -213,7 +221,7 @@ const FieldServiceDashboard: React.FC = () => {
                 <Bar dataKey="completed" fill="#52c41a" name={t('field_service.status_done')} />
                 <Bar dataKey="total" fill="#d9d9d9" name={t('total')} />
               </BarChart>
-            </ResponsiveContainer>
+            </ResponsiveChart>
           </Card>
         </Col>
       </Row>

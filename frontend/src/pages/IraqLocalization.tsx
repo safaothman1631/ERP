@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Card, Row, Col, Statistic, Table, Button, DatePicker, Space, Tag, Typography, Divider } from 'antd';
+import { Card, Row, Col, Statistic, Button, DatePicker, Space, Tag, Typography, Divider } from 'antd';
 import { CheckCircleOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import { message } from '../utils/message';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
@@ -80,7 +81,7 @@ export default function IraqLocalization() {
       </Card>
 
       <Card title="Tax Categories" style={{ marginTop: 16 }}>
-        <Table
+        <ResponsiveTableAdapter
           dataSource={categories}
           rowKey="code"
           pagination={false}
@@ -95,7 +96,7 @@ export default function IraqLocalization() {
       </Card>
 
       <Card title="Withholding Tax Rules" style={{ marginTop: 16 }}>
-        <Table
+        <ResponsiveTableAdapter
           dataSource={whRules}
           rowKey="applies_to"
           pagination={false}

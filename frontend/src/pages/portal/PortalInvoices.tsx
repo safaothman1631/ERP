@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Table, Tag, Button, Typography } from 'antd';
+import { Card, Tag, Button, Typography } from 'antd';
 import { LeftOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
 import api from '../../api';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 const { Title, Text } = Typography;
 
@@ -108,7 +109,7 @@ const PortalInvoices: React.FC = () => {
         <Card>
           <Title level={2}>{t('portal.my_invoices')}</Title>
 
-          <Table
+          <ResponsiveTableAdapter
             dataSource={invoices}
             columns={columns}
             rowKey="id"

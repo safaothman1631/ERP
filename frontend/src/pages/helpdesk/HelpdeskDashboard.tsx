@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Card, Row, Col, Table, Spin, Empty } from 'antd';
+import { Card, Row, Col, Empty } from 'antd';
 import type { TableProps } from 'antd';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { PageHeader, KpiCard, StatusTag } from '../../design-system';
+import { PageHeader, KpiCard, StatusTag, LoadingSkeleton } from '../../design-system';
 import { space } from '../../theme/tokens';
 import type { StatusKind } from '../../design-system';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { InlineError } from '../../components/feedback/InlineError';
+import { useLoadingState } from '../../hooks/useLoadingState';
+import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
 
 interface Stats {
   total: number;
@@ -33,6 +37,8 @@ export default function HelpdeskDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [recentTickets, setRecentTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const { showSkeleton } = useLoadingState(loading);
 
   const load = async () => {
     setLoading(true);
@@ -45,6 +51,7 @@ export default function HelpdeskDashboard() {
       setRecentTickets(ticketsRes.data.items || []);
     } catch (err) {
       console.error('Failed to load helpdesk dashboard:', err);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -97,18 +104,9 @@ export default function HelpdeskDashboard() {
     },
   ];
 
-  if (loading) {
-    return (
-      <Spin
-        size="large"
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '60vh',
-        }}
-      />
-    );
+  if (error) return <InlineError onRetry={load} />;
+  if (showSkeleton) {
+    return <LoadingSkeleton variant="card" />;
   }
 
   const openTickets = stats?.by_status.open || 0;
@@ -150,7 +148,7 @@ export default function HelpdeskDashboard() {
       <Row gutter={[16, 16]} style={{ marginTop: space.md }}>
         <Col xs={24} md={12}>
           <Card title={t('helpdesk.recent_tickets')}>
-            <Table
+            <ResponsiveTableAdapter
               dataSource={recentTickets}
               columns={columns}
               rowKey="id"
@@ -162,7 +160,7 @@ export default function HelpdeskDashboard() {
         <Col xs={24} md={12}>
           <Card title={t('helpdesk.by_status')}>
             {statusData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveChart legendItems={[]} minMobileBlockSize={300}>
                 <PieChart>
                   <Pie
                     data={statusData}
@@ -181,7 +179,7 @@ export default function HelpdeskDashboard() {
                   <Tooltip />
                   <Legend />
                 </PieChart>
-              </ResponsiveContainer>
+              </ResponsiveChart>
             ) : (
               <Empty description={t('no_data')} />
             )}

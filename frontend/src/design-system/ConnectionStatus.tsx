@@ -52,7 +52,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ variant = 't
             style={{ overflow: 'hidden' }}
             role="status"
             aria-live="polite"
-            aria-label={t('offline_banner_label', 'ئینتەرنێت نییە')}
+            aria-label={t('offline_banner_label', 'Offline')}
           >
             <Alert
               type="warning"
@@ -61,7 +61,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ variant = 't
               banner
               title={
                 <span style={{ fontWeight: 600 }}>
-                  {t('offline_title', 'دەرهێڵ — ئینتەرنێت نییە')}
+                  {t('offline_title', 'Offline — no internet connection')}
                 </span>
               }
               description={t(
@@ -78,7 +78,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ variant = 't
 
   // Default: compact tag variant
   return (
-    <Tooltip title={online ? t('online', 'سەرهێڵە') : t('offline', 'دەرهێڵە')}>
+    <Tooltip title={online ? t('online', 'Online') : t('offline', 'Offline')}>
       <Tag
         color={online ? 'green' : 'red'}
         icon={online ? <WifiOutlined /> : <DisconnectOutlined />}
@@ -86,7 +86,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ variant = 't
         role="status"
         aria-live="polite"
       >
-        {online ? t('online', 'سەرهێڵ') : t('offline', 'دەرهێڵ')}
+        {online ? t('online', 'Online') : t('offline', 'Offline')}
       </Tag>
     </Tooltip>
   );

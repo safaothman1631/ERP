@@ -1,15 +1,26 @@
 /**
- * MotionButton — دوگمەی Ant Design لەگەڵ press animation
+ * MotionButton — دوگمەی Ant Design لەگەڵ micro-interaction animations
  *
- * scale down animation لەکاتی کلیک بەپێی دیزاین spec.
- * بەکارهێنانی `pressAnimation` لە animations.ts.
+ * Implements button micro-interaction variants per spec:
+ *   - rest:    y: 0, shadow.sm
+ *   - hover:   y: -2, shadow.md, 150ms
+ *   - pressed: y: 1, shadow.none, 50ms
  *
- * Validates: Requirements 4.1, 4.3
+ * Loading state: shows AntD spinner + disables button; restores on completion.
+ * بەکارهێنانی `useReducedMotion` بۆ دەستگەیشتنپەزیری.
+ * کاتی reduced motion: هیچ animation ناکرێت (duration: 0).
+ *
+ * Validates: Requirements 8.1, 8.2, 8.5, 8.8
  *
  * @example
  * ```tsx
  * // بەجێگرەوەی Button ی AntD
  * <MotionButton type="primary" onClick={handleSave}>
+ *   پاشەکەوتکردن
+ * </MotionButton>
+ *
+ * // لەگەڵ loading state
+ * <MotionButton type="primary" loading={isSaving}>
  *   پاشەکەوتکردن
  * </MotionButton>
  *
@@ -22,33 +33,54 @@
 import React from 'react';
 import { Button, type ButtonProps } from 'antd';
 import { motion, useReducedMotion } from 'framer-motion';
-import { pressAnimation } from '../utils/animations';
+import { buttonVariants } from '../utils/animations';
 
 // motion.button wrapper بۆ AntD Button
 const MotionButtonBase = motion.create(Button);
 
 export interface MotionButtonProps extends ButtonProps {
-  /** ئەگەر false بێت، press animation ناکرێت */
+  /** ئەگەر false بێت، animation ناکرێت */
   animated?: boolean;
 }
 
 /**
- * MotionButton — AntD Button لەگەڵ press (scale down) animation.
+ * MotionButton — AntD Button لەگەڵ rest/hover/pressed micro-interaction variants.
  * هەموو props ی AntD Button پشتگیری دەکات.
+ *
+ * - When `loading` is true: AntD shows spinner + disables button; hover/press animations are paused.
+ * - When `disabled` is true: hover/press animations are paused.
+ * - When prefers-reduced-motion is set: all animations are fully disabled (duration: 0).
  */
 export const MotionButton: React.FC<MotionButtonProps> = ({
   animated = true,
   children,
+  loading,
+  disabled,
   ...buttonProps
 }) => {
   const shouldReduceMotion = useReducedMotion();
 
-  // کاتی reduced motion یان animated=false، ئەنیمەیشن ناکرێت
-  const tapAnimation = animated && !shouldReduceMotion ? pressAnimation : undefined;
+  // Disable animation when loading, disabled, or reduced motion is preferred
+  const shouldAnimate = animated && !shouldReduceMotion && !loading && !disabled;
+
+  // کاتی reduced motion یان animated=false یان loading/disabled، ئەنیمەیشن ناکرێت
+  if (!shouldAnimate) {
+    return (
+      <Button loading={loading} disabled={disabled} {...buttonProps}>
+        {children}
+      </Button>
+    );
+  }
 
   return (
     <MotionButtonBase
-      whileTap={tapAnimation}
+      variants={buttonVariants}
+      initial="rest"
+      whileHover="hover"
+      whileTap="pressed"
+      animate="rest"
+      loading={loading}
+      disabled={disabled}
       {...buttonProps}
     >
       {children}

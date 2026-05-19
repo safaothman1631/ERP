@@ -56,6 +56,29 @@ _IP_FAIL_WINDOW_MINUTES = 60      # rolling window for counting IP failures
 # Password utilities
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _to_naive_utc(dt) -> "datetime | None":
+    """Normalize a datetime to naive UTC.
+
+    Firestore returns timezone-aware datetimes (UTC). Python's datetime.utcnow()
+    returns naive datetimes. Comparing them raises TypeError. This helper strips
+    the tzinfo so comparisons work correctly.
+    """
+    if dt is None:
+        return None
+    if isinstance(dt, str):
+        try:
+            dt = datetime.fromisoformat(dt)
+        except Exception:
+            return None
+    if not isinstance(dt, datetime):
+        return None
+    if dt.tzinfo is not None:
+        # Convert to UTC then strip tzinfo
+        from datetime import timezone
+        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+    return dt
+
+
 def hash_password(password: str) -> str:
     """Hash a plain-text password using bcrypt.
 
@@ -286,12 +309,7 @@ def record_ip_failure(ip: str) -> None:
     if doc.exists:
         data = doc.to_dict()
         # Reset counter if the window has passed
-        window_start = data.get("window_start")
-        if isinstance(window_start, str):
-            try:
-                window_start = datetime.fromisoformat(window_start)
-            except Exception:
-                window_start = None
+        window_start = _to_naive_utc(data.get("window_start"))
         if window_start and (now - window_start).total_seconds() > _IP_FAIL_WINDOW_MINUTES * 60:
             # New window
             doc_ref.set({
@@ -347,12 +365,14 @@ def is_ip_blocked(ip: str) -> bool:
     if not blocked_until:
         return False
 
-    if isinstance(blocked_until, str):
-        try:
-            blocked_until = datetime.fromisoformat(blocked_until)
-        except Exception:
-            return False
+    blocked_until = _to_naive_utc(blocked_until)
+    if blocked_until is None:
+        return False
 
+    if isinstance(blocked_until, datetime) and blocked_until > datetime.utcnow():
+        # Normalize timezone-aware datetime from Firestore to naive UTC
+        if blocked_until.tzinfo is not None:
+            blocked_until = blocked_until.replace(tzinfo=None)
     if isinstance(blocked_until, datetime) and blocked_until > datetime.utcnow():
         # Cache the block status for 60 seconds
         cache.set(f"ip_blocked:{ip}", True)

@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Table, Button, Space, Tag, message, Row, Col } from 'antd';
+import { Card, Button, Space, Tag, message, Row, Col } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, Legend, Tooltip } from 'recharts';
 import api from '../../api';
 import { PageHeader, KpiCard } from '../../design-system';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
 
 interface Activity {
   id: string;
@@ -182,7 +184,7 @@ export default function ActivitiesDashboard() {
       <Row gutter={16}>
         <Col xs={24} lg={12}>
           <Card title={t('activities.by_user')} style={{ marginBottom: 16 }}>
-            <Table
+            <ResponsiveTableAdapter
               dataSource={userRows}
               columns={columns}
               rowKey="userId"
@@ -197,7 +199,7 @@ export default function ActivitiesDashboard() {
             {typeData.length === 0 ? (
               <div style={{ textAlign: 'center', padding: 40 }}>{t('activities.no_data')}</div>
             ) : (
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveChart legendItems={[]} minMobileBlockSize={300}>
                 <PieChart>
                   <Pie
                     data={typeData}
@@ -215,7 +217,7 @@ export default function ActivitiesDashboard() {
                   <Tooltip />
                   <Legend />
                 </PieChart>
-              </ResponsiveContainer>
+              </ResponsiveChart>
             )}
           </Card>
         </Col>

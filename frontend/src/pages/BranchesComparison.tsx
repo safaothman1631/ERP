@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, Table, DatePicker, Space, Button } from 'antd';
+import { Card, DatePicker, Space, Button } from 'antd';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid,
+  BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
 } from 'recharts';
 import dayjs, { Dayjs } from 'dayjs';
 import { ReloadOutlined } from '@ant-design/icons';
 import { message } from '../utils/message';
 import api from '../api';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
+import { ResponsiveChart } from '../components/responsive/ResponsiveChart';
+import { asTranslationKey } from '../i18n/types';
 
 interface Row {
   branch_id: string;
@@ -65,19 +68,24 @@ export default function BranchesComparison() {
         </Space>
       }
     >
-      <ResponsiveContainer width="100%" height={320}>
+      <ResponsiveChart
+        legendItems={[
+          { id: 'revenue', labelKey: asTranslationKey('revenue'), color: '#52c41a' },
+          { id: 'expenses', labelKey: asTranslationKey('expenses'), color: '#ff4d4f' },
+          { id: 'profit', labelKey: asTranslationKey('profit'), color: '#1677ff' },
+        ]}
+      >
         <BarChart data={rows}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="branch_name" />
           <YAxis />
           <Tooltip />
-          <Legend />
           <Bar dataKey="revenue" fill="#52c41a" name={t('revenue') || 'Revenue'} />
           <Bar dataKey="expenses" fill="#ff4d4f" name={t('expenses') || 'Expenses'} />
           <Bar dataKey="profit" fill="#1677ff" name={t('profit') || 'Profit'} />
         </BarChart>
-      </ResponsiveContainer>
-      <Table
+      </ResponsiveChart>
+      <ResponsiveTableAdapter
         rowKey="branch_id"
         dataSource={rows}
         columns={cols}

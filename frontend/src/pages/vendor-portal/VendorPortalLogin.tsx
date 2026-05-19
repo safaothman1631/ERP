@@ -5,6 +5,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
 import vendorApi from '../../api/vendorPortal';
+import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
 
 const { Title, Text } = Typography;
 
@@ -135,7 +136,7 @@ const VendorPortalLogin: React.FC = () => {
                   {t('vendor_portal.request_link')}
                 </Button>
               </Form.Item>
-            </Form>
+</Form>
           )}
 
           {step === 1 && (

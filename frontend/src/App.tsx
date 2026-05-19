@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter, useRoutes, useLocation } from 'react-router-dom';
-import { App as AntApp, ConfigProvider, Spin, theme as antTheme } from 'antd';
+import { App as AntApp, ConfigProvider, theme as antTheme } from 'antd';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,8 @@ import { useSettingsStore } from './store/settingsStore';
 import PageTransition from './components/PageTransition';
 import { setMessageInstance } from './utils/message';
 import { routes } from './App.routes';
+import { LoadingSkeleton } from './design-system/LoadingSkeleton';
+import { isRTLLanguage, resolveLanguage } from './utils/language';
 
 /**
  * Global React Query client — configured per design spec:
@@ -52,12 +54,20 @@ const App: React.FC = () => {
   const { i18n } = useTranslation();
   const { theme: appTheme, isAuthenticated } = useAuthStore();
   const loadSettings = useSettingsStore((s) => s.load);
-  const isRTL = i18n.language === 'ku';
+  // Resolve language and determine RTL — supports ku, en, ar (Requirements 3.5, 3.6, 10.3)
+  const currentLang = resolveLanguage(i18n.language || 'ku');
+  const isRTL = isRTLLanguage(currentLang);
   const isDark = appTheme === 'dark';
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', appTheme);
   }, [appTheme]);
+
+  // Apply RTL/LTR direction and lang attribute on language change (Requirements 3.5, 3.6)
+  useEffect(() => {
+    document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+    document.documentElement.setAttribute('lang', currentLang);
+  }, [currentLang, isRTL]);
 
   useEffect(() => {
     if (isAuthenticated) loadSettings();
@@ -102,8 +112,7 @@ const App: React.FC = () => {
           borderRadiusLG: 14,
           borderRadiusSM: 6,
           fontSize: 14,
-          fontFamily: isRTL ? "'Noto Sans Arabic', sans-serif" : "'Inter', sans-serif",
-          controlHeight: 36,
+          fontFamily: isRTL ? "'Noto Sans Arabic', sans-serif" : "'Inter', sans-serif",          controlHeight: 36,
           wireframe: false,
         },
         components: isDark ? {
@@ -136,7 +145,7 @@ const App: React.FC = () => {
       <AntApp>
         <AppInitializer />
       <BrowserRouter>
-        <Suspense fallback={<PageTransition><Spin size="large" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }} /></PageTransition>}>
+        <Suspense fallback={<PageTransition><LoadingSkeleton variant="table" /></PageTransition>}>
           <RoutesElement />
         </Suspense>
       </BrowserRouter>

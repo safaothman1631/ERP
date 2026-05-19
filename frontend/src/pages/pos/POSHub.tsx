@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { Card, Button, Row, Col, Tag, Space, Typography, Spin, Empty } from 'antd';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Card, Button, Row, Col, Tag, Space, Typography, Empty } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ShopOutlined, PlayCircleOutlined, PlusOutlined, SettingOutlined } from '@ant-design/icons';
 import api from '../../api';
 import { message } from '../../utils/message';
+import { LoadingSkeleton } from '../../design-system/LoadingSkeleton';
+import { InlineError } from '../../components/feedback/InlineError';
+import { useLoadingState } from '../../hooks/useLoadingState';
 
 const { Title, Text } = Typography;
 
@@ -13,19 +16,22 @@ const POSHub: React.FC = () => {
   const navigate = useNavigate();
   const [configs, setConfigs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const [checkingAvailability, setCheckingAvailability] = useState<Record<string, boolean>>({});
+  const { showSkeleton } = useLoadingState(loading);
 
-  const fetchConfigs = async () => {
+  const fetchConfigs = useCallback(async () => {
     setLoading(true);
+    setError(false);
     try {
       const res = await api.get('/api/pos/configs', { params: { is_active: true, page_size: 100 } });
       setConfigs(res.data.items || []);
     } catch {
-      message.error(t('error'));
+      setError(true);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchConfigs();
@@ -57,10 +63,14 @@ const POSHub: React.FC = () => {
     }
   };
 
-  if (loading) {
+  if (error) {
+    return <InlineError onRetry={fetchConfigs} />;
+  }
+
+  if (showSkeleton) {
     return (
       <div style={{ textAlign: 'center', padding: 100 }}>
-        <Spin size="large" />
+        <LoadingSkeleton variant="card" />
       </div>
     );
   }

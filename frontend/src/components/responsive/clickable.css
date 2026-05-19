@@ -1,0 +1,29 @@
+/*
+ * Touch-target utility — system-wide-ux-overhaul task 4.5.
+ *
+ * Provides a `.touchTarget` class that any component can apply to a
+ * tappable element to guarantee a minimum 44 × 44 px hit area on
+ * Mobile_Viewport and Tablet_Viewport, plus an 8 px gap between
+ * adjacent siblings to prevent mis-taps.
+ *
+ * Validates:
+ *   - Requirement 5.1 (≥ 44 × 44 px hit area)
+ *   - Requirement 5.2 (≥ 8 px spacing between adjacent Touch_Targets)
+ *
+ * Usage (per-component import; not applied globally):
+ *   import './clickable.css';                  // or wherever your bundler resolves it
+ *   <button className="touchTarget">…</button>
+ *
+ * Logical CSS only — no left/right (Requirements 3.8, 14.7).
+ */
+
+.touchTarget {
+  min-block-size: 44px;
+  min-inline-size: 44px;
+}
+
+/* 8 px gap between consecutive touch targets — adjacent-sibling selector
+ * uses `margin-inline-start` so RTL inverts automatically. */
+.touchTarget + .touchTarget {
+  margin-inline-start: 8px;
+}

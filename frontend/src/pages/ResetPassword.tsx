@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams, Link } from 'react-router-dom';
 import api from '../api';
 import AuthLayout from '../components/AuthLayout';
+import { ResponsiveForm } from '../components/responsive/ResponsiveForm';
 
 const ResetPassword: React.FC = () => {
   const { t } = useTranslation();
@@ -82,6 +83,7 @@ const ResetPassword: React.FC = () => {
             />
           ) : (
             <Form layout="vertical" onFinish={handleSubmit} style={{ direction: 'rtl' }}>
+              <ResponsiveForm layout="single">
               <Form.Item
                 name="new_password"
                 style={{ marginBottom: 16 }}
@@ -125,7 +127,8 @@ const ResetPassword: React.FC = () => {
                   {t('auth_reset_password')}
                 </Button>
               </Form.Item>
-            </Form>
+              </ResponsiveForm>
+</Form>
           )}
 
           <div style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: '#666' }}>

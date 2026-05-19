@@ -4,7 +4,9 @@ import { message } from '../utils/message';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { PageHeader } from '../design-system';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { ResponsiveChart } from '../components/responsive/ResponsiveChart';
+import { asTranslationKey } from '../i18n/types';
 
 const { Option } = Select;
 
@@ -34,13 +36,13 @@ const CashflowForecast: React.FC = () => {
     <div>
       <PageHeader
         title={t('cashflow_forecast')}
-        subtitle={t('cashflow_forecast_subtitle', 'پێش‌بینی گۆڕانی پارە')}
+        subtitle={t('cashflow_forecast_subtitle', 'Forecast cash flow')}
         helpKey="cashflow"
         extra={
           <Select value={days} onChange={setDays} style={{ width: 150 }}>
-            <Option value={30}>{t('30_days', '٣٠ ڕۆژ')}</Option>
-            <Option value={60}>{t('60_days', '٦٠ ڕۆژ')}</Option>
-            <Option value={90}>{t('90_days', '٩٠ ڕۆژ')}</Option>
+            <Option value={30}>{t('30_days', '30 days')}</Option>
+            <Option value={60}>{t('60_days', '60 days')}</Option>
+            <Option value={90}>{t('90_days', '90 days')}</Option>
           </Select>
         }
       />
@@ -90,18 +92,24 @@ const CashflowForecast: React.FC = () => {
         </Row>
 
         <Card title={t('daily_breakdown')}>
-          <ResponsiveContainer width="100%" height={400}>
+          <ResponsiveChart
+            legendItems={[
+              { id: 'balance', labelKey: asTranslationKey('balance'), color: '#8884d8' },
+              { id: 'inflow', labelKey: asTranslationKey('inflow'), color: '#82ca9d' },
+              { id: 'outflow', labelKey: asTranslationKey('outflow'), color: '#ff7875' },
+            ]}
+            minMobileBlockSize={300}
+          >
             <LineChart data={data?.daily_breakdown || []}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis />
               <Tooltip />
-              <Legend />
               <Line type="monotone" dataKey="balance" stroke="#8884d8" name={t('balance')} />
               <Line type="monotone" dataKey="inflow" stroke="#82ca9d" name={t('inflow')} />
               <Line type="monotone" dataKey="outflow" stroke="#ff7875" name={t('outflow')} />
             </LineChart>
-          </ResponsiveContainer>
+          </ResponsiveChart>
         </Card>
       </Space>
     </div>

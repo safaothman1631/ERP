@@ -120,7 +120,12 @@ class NotificationPreferencesUpdate(BaseModel):
 # --- Profile ---
 @router.get("/profile")
 def get_profile(user: dict = Depends(get_current_user)):
-    return {
+    from app.cache import cache as _cache
+    _ck = f"profile:{user['id']}"
+    cached = _cache.get(_ck)
+    if cached is not None:
+        return cached
+    result = {
         "id": user["id"],
         "email": user.get("email", ""),
         "display_name": user.get("display_name", ""),
@@ -128,6 +133,8 @@ def get_profile(user: dict = Depends(get_current_user)):
         "role": user.get("role", ""),
         "org_id": user.get("org_id", ""),
     }
+    _cache.set(_ck, result)
+    return result
 
 
 @router.put("/profile")
@@ -328,8 +335,14 @@ def test_notification(data: dict, user: dict = Depends(get_current_user)):
 @router.get("/settings")
 def get_settings(user: dict = Depends(get_current_user)):
     """List all raw settings documents for the current organisation."""
+    from app.cache import cache as _cache
+    _ck = f"settings_all:{user['org_id']}"
+    cached = _cache.get(_ck)
+    if cached is not None:
+        return cached
     repo = SettingsRepository(user["org_id"])
     items, _ = repo.list(limit=100)
+    _cache.set(_ck, items)
     return items
 
 
@@ -371,6 +384,9 @@ def upsert_setting(data: dict, user: dict = Depends(get_current_user)):
         _settings_service.invalidate(user["org_id"], category)
     except Exception:
         pass
+    # Invalidate settings cache
+    from app.cache import cache as _cache
+    _cache.delete(f"settings_all:{user['org_id']}")
 
     # Requirement 12.5 — Log all setting changes for audit purposes.
     _log_settings_change(user, category, key, old_value, new_value)

@@ -6,10 +6,12 @@ import {
   ExperimentOutlined, AlertOutlined, BulbOutlined,
   ScanOutlined, LineChartOutlined, ReloadOutlined,
 } from '@ant-design/icons';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import type { TooltipProps } from 'recharts';
 import { PageHeader } from '../../design-system';
 import api from '../../api';
+import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
+import { asTranslationKey } from '../../i18n/types';
 
 const { Text, Title } = Typography;
 
@@ -165,7 +167,11 @@ const AIAssistDashboard: React.FC = () => {
         title={<Title level={5}>{t('ai.anomaly_score_trend')}</Title>}
       >
         {stats?.anomaly_trend && stats.anomaly_trend.length > 0 ? (
-          <ResponsiveContainer width="100%" height={240}>
+          <ResponsiveChart
+            legendItems={[
+              { id: 'score', labelKey: asTranslationKey('ai.anomaly_score'), color: '#ff4d4f' },
+            ]}
+          >
             <LineChart data={stats.anomaly_trend}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" tick={{ fontSize: 12 }} />
@@ -173,7 +179,7 @@ const AIAssistDashboard: React.FC = () => {
               <Tooltip content={<CustomTooltip />} />
               <Line type="monotone" dataKey="score" stroke="#ff4d4f" strokeWidth={2} dot={{ r: 4 }} />
             </LineChart>
-          </ResponsiveContainer>
+          </ResponsiveChart>
         ) : (
           <Space direction="vertical" align="center" style={{ width: '100%', padding: '40px 0' }}>
             <ExperimentOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />

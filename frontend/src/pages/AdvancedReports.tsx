@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Card, Form, DatePicker, Button, Row, Col, Statistic, Table, Tabs, Empty } from 'antd';
+import { Card, Form, DatePicker, Button, Row, Col, Statistic, Tabs, Empty } from 'antd';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import api from '../api';
 import { message } from '../utils/message';
 import ExportButton from '../components/ExportButton';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
+import { ResponsiveForm } from '../components/responsive/ResponsiveForm';
 
 const { RangePicker } = DatePicker;
 
@@ -74,7 +76,7 @@ const DateRangeForm: React.FC<DateRangeFormProps> = ({ initial, loading, onSubmi
           {t('generate')}
         </Button>
       </Form.Item>
-    </Form>
+</Form>
   );
 };
 
@@ -153,7 +155,7 @@ const AdvancedReports: React.FC = () => {
                       <Col span={8}><Statistic title={t('outflows')} value={cashFlow.total_outflows} precision={0} suffix="IQD" styles={{ content: { color: '#cf1322' } }} /></Col>
                       <Col span={8}><Statistic title={t('net_cash_flow')} value={cashFlow.net_cash_flow} precision={0} suffix="IQD" /></Col>
                     </Row>
-                    <Table
+                    <ResponsiveTableAdapter
                       style={{ marginTop: 16 }}
                       dataSource={cashFlow.periods}
                       columns={periodCols}
@@ -190,7 +192,7 @@ const AdvancedReports: React.FC = () => {
                             </Col>
                           ))}
                         </Row>
-                        <Table
+                        <ResponsiveTableAdapter
                           dataSource={arAging.details}
                           columns={agingCols('invoice_number', 'contact_name')}
                           rowKey="invoice_id"
@@ -221,7 +223,7 @@ const AdvancedReports: React.FC = () => {
                             </Col>
                           ))}
                         </Row>
-                        <Table
+                        <ResponsiveTableAdapter
                           dataSource={apAging.details}
                           columns={agingCols('bill_number', 'vendor_name')}
                           rowKey="bill_id"
@@ -253,7 +255,7 @@ const AdvancedReports: React.FC = () => {
                 <Row gutter={16} style={{ marginTop: 24 }}>
                   <Col xs={24} lg={12}>
                     <h4>{t('top_customers')}</h4>
-                    <Table
+                    <ResponsiveTableAdapter
                       dataSource={salesCustomer?.customers || []}
                       columns={customerCols}
                       rowKey="customer"
@@ -263,7 +265,7 @@ const AdvancedReports: React.FC = () => {
                   </Col>
                   <Col xs={24} lg={12}>
                     <h4>{t('top_products')}</h4>
-                    <Table
+                    <ResponsiveTableAdapter
                       dataSource={salesItem?.items || []}
                       columns={itemCols}
                       rowKey="item"

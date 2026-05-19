@@ -29,7 +29,7 @@ export const SkipToContent: React.FC = () => {
       onFocus={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
       onBlur={(e) => { e.currentTarget.style.transform = 'translateY(-150%)'; }}
     >
-      {t('a11y.skip_to_content', 'بازدان بۆ ناوەڕۆکی سەرەکی')}
+      {t('a11y.skip_to_content', 'Skip to main content')}
     </a>
   );
 };

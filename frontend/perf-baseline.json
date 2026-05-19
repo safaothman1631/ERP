@@ -1,0 +1,48 @@
+{
+  "_documentation": {
+    "purpose": "Lighthouse no-regression baseline for the system-wide-ux-overhaul umbrella. The `lighthouse` CI job compares each route's measured Performance and Accessibility scores against the values stored here; a Performance regression greater than `noRegressionDeltaPoints` (defined in frontend/perf-budgets.json, currently 3) fails the build. See .kiro/specs/system-wide-ux-overhaul/design.md (Lighthouse CI section) and requirements.md R15.1-R15.4, R14.8.",
+    "schemaVersion": 1,
+    "scoreScale": "0-100 (Lighthouse category score, integer)",
+    "thresholds": {
+      "performanceMin": 85,
+      "accessibilityMin": 95,
+      "lcpMaxSecondsHomeAndLogin": 2.5,
+      "clsMaxAllRoutes": 0.1,
+      "inpMaxMillisDashboardAndList": 200,
+      "noRegressionDeltaPoints": 3
+    },
+    "placeholderSemantics": "A `null` score means the baseline has not yet been recorded for that route. Until a route's baseline is non-null, the no-regression delta gate is skipped for that route and only the absolute floors (performanceMin, accessibilityMin) are enforced.",
+    "updateProcedure": [
+      "1. The first successful Lighthouse CI run on the main branch after this file lands MUST populate every `null` score by writing the median Performance and Accessibility values from the lhci report.",
+      "2. Subsequent updates: open a PR titled 'chore(perf): refresh Lighthouse baseline' that updates the affected route(s) and bumps `lastMeasuredAt` (UTC ISO-8601) and `lastMeasuredCommit` (git SHA).",
+      "3. Increases from organic improvement may merge through normal review.",
+      "4. Decreases (raising the no-regression floor downward) require explicit reviewer sign-off and a written rationale in the PR description; never silently lower a baseline to make a failing build pass.",
+      "5. When adding a new route to the Lighthouse CI matrix (frontend/lighthouserc.json), add a matching entry here with `null` scores in the same PR.",
+      "6. When removing a route, delete the entry here in the same PR; never leave stale routes in the baseline."
+    ],
+    "lastMeasuredAt": null,
+    "lastMeasuredCommit": null
+  },
+  "routes": {
+    "/": {
+      "performance": null,
+      "accessibility": null
+    },
+    "/login": {
+      "performance": null,
+      "accessibility": null
+    },
+    "/dashboard": {
+      "performance": null,
+      "accessibility": null
+    },
+    "/settings": {
+      "performance": null,
+      "accessibility": null
+    },
+    "/sales/invoices": {
+      "performance": null,
+      "accessibility": null
+    }
+  }
+}

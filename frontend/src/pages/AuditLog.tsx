@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Table, Select, Tag, Card, Row, Col, Statistic, Space, DatePicker, Button, Tooltip } from 'antd';
+import { Select, Tag, Card, Row, Col, Statistic, Space, DatePicker, Button, Tooltip } from 'antd';
 import { ReloadOutlined, UserOutlined } from '@ant-design/icons';
 import { message } from '../utils/message';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
 import { downloadCsv } from '../utils/exportCsv';
 import { useAuthStore } from '../store';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 
 const { RangePicker } = DatePicker;
 
@@ -216,7 +217,7 @@ export default function AuditLog() {
         </Space>
       </Card>
 
-      <Table
+      <ResponsiveTableAdapter
         dataSource={data}
         columns={visibleColumns}
         rowKey="id"

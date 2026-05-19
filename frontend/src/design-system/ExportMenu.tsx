@@ -21,8 +21,9 @@ export interface ExportMenuProps {
 /**
  * ExportMenu — Wave 8.C — Reusable dropdown button "Export ▾" with options:
  * PDF, Excel (.xlsx), CSV, Print, Copy to Clipboard.
+ * React.memo applied per Requirements 18.4.
  */
-export const ExportMenu: React.FC<ExportMenuProps> = ({
+const ExportMenuInner: React.FC<ExportMenuProps> = ({
   onExport,
   onPrint,
   disabled = false,
@@ -114,5 +115,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
     </Dropdown>
   );
 };
+
+export const ExportMenu = React.memo(ExportMenuInner);
 
 export default ExportMenu;

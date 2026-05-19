@@ -16,7 +16,6 @@ export interface NavLeaf {
   label: string;        // i18n key OR label
   description?: string;
   keywords?: string[];
-  keywordsKu?: string[];   // Kurdish-only search keywords
   favoriteEligible?: boolean;
 }
 
@@ -49,6 +48,31 @@ const fallbackZoneLabels: Record<NavZoneKey, string> = {
   operations: 'Operations',
   people: 'People',
   'finance-control': 'Finance & Control',
+};
+
+/**
+ * Resolve a per-locale keyword array from the i18n registry.
+ *
+ * Spec: system-wide-ux-overhaul task 6.2 — Kurdish nav keywords live under
+ * `nav.keywords.<routeKey>` in `ku.json`; English variants live under the
+ * same key in `en.json`. The active locale's array is returned so nav search
+ * resolves keywords per active language (R12.4).
+ *
+ * `t(key, { returnObjects: true })` returns the array as-is when defined.
+ * If the key is missing or resolves to a non-array (e.g. a humanized fallback
+ * string from `parseMissingKeyHandler`), we fall back to the supplied English
+ * defaults so the search experience never degrades to "no keywords at all".
+ */
+const resolveNavKeywords = (
+  t: TFunction,
+  key: string,
+  fallback: string[],
+): string[] => {
+  const resolved = t(key, { returnObjects: true, defaultValue: fallback }) as unknown;
+  if (Array.isArray(resolved) && resolved.every((entry) => typeof entry === 'string')) {
+    return resolved as string[];
+  }
+  return fallback;
 };
 
 export const buildNavZones = (t: TFunction): NavZone[] => [
@@ -470,8 +494,8 @@ export const buildNavSections = (t: TFunction): NavSection[] => [
       { key: '/admin/job-runs', label: t('jobs.scheduler_title'), description: t('nav.desc_job_runs', 'Background job monitoring and control'), keywords: ['scheduler', 'jobs', 'cron', 'background'] },
       { key: '/studio', label: t('studio.title', 'Studio (No-Code)'), description: t('nav.desc_studio', 'No-code customization and field builder'), keywords: ['custom', 'fields', 'builder', 'nocode'], favoriteEligible: true },
       { key: '/onboarding', label: t('onboarding.wizard_title'), description: t('nav.desc_onboarding', 'Setup wizard for new organizations'), keywords: ['setup', 'wizard', 'onboarding'] },
-      { key: '/docs', label: t('docs_hub', 'Help Center'), description: t('nav.desc_docs', 'In-app guides, fields, workflows, and shortcuts'), keywords: ['help', 'docs', 'documentation'], keywordsKu: ['یارمەتی', 'دۆکیومێنت'], favoriteEligible: true },
-      { key: '/ui-gallery', label: t('ui_gallery', 'Layout Gallery'), description: t('nav.desc_ui_gallery', 'Preview and pick a UI layout style for the app shell'), keywords: ['layout', 'theme', 'ui', 'shell'], keywordsKu: ['ڕووکار', 'گاڵەری'], favoriteEligible: true },
+      { key: '/docs', label: t('docs_hub', 'Help Center'), description: t('nav.desc_docs', 'In-app guides, fields, workflows, and shortcuts'), keywords: resolveNavKeywords(t, 'nav.keywords.docs', ['help', 'docs', 'documentation']), favoriteEligible: true },
+      { key: '/ui-gallery', label: t('ui_gallery', 'Layout Gallery'), description: t('nav.desc_ui_gallery', 'Preview and pick a UI layout style for the app shell'), keywords: resolveNavKeywords(t, 'nav.keywords.uiGallery', ['layout', 'theme', 'ui', 'shell']), favoriteEligible: true },
       { key: '/trash', label: t('trash', 'Trash'), description: t('nav.desc_trash', 'Recently deleted items, restore or permanently remove'), keywords: ['recycle', 'deleted', 'restore'] },
     ],
   },

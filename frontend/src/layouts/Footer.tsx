@@ -40,7 +40,7 @@ export const Footer: React.FC<FooterProps> = ({ isDark, isRTL }) => {
 
   const syncRel = React.useMemo(() => {
     const diff = Math.floor((Date.now() - lastSync.getTime()) / 1000);
-    if (diff < 60) return t('footer.just_now', 'ئێستا');
+    if (diff < 60) return t('footer.just_now', 'just now');
     const m = Math.floor(diff / 60);
     return t('footer.minutes_ago', '{{n}} خولەک پێشتر', { n: m });
   }, [lastSync, t]);
@@ -85,7 +85,7 @@ export const Footer: React.FC<FooterProps> = ({ isDark, isRTL }) => {
   return (
     <footer
       role="contentinfo"
-      aria-label={t('footer.label', 'شریطی دۆخ')}
+      aria-label={t('footer.label', 'Status bar')}
       style={{
         position: 'sticky',
         bottom: 0,
@@ -121,12 +121,12 @@ export const Footer: React.FC<FooterProps> = ({ isDark, isRTL }) => {
             }}
           />
           <span aria-live="polite" style={{ color: fgBold, fontWeight: 600 }}>
-            {online ? t('footer.online', 'سەرهێڵ') : t('footer.offline', 'دەرهێڵ')}
+            {online ? t('footer.online', 'Online') : t('footer.offline', 'Offline')}
           </span>
         </Chip>
 
         <Chip>
-          <span>{t('footer.fiscal_year', 'ساڵی دارایی')}</span>
+          <span>{t('footer.fiscal_year', 'FY')}</span>
           <span style={{ color: fgBold, fontWeight: 600 }}>{fiscalYear}</span>
         </Chip>
 
@@ -144,7 +144,7 @@ export const Footer: React.FC<FooterProps> = ({ isDark, isRTL }) => {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <Chip>
           <span title={lastSync.toLocaleString()}>
-            {t('footer.synced', 'هاوکات')} <span style={{ color: fgBold, fontWeight: 600 }}>{syncRel}</span>
+            {t('footer.synced', 'Synced')} <span style={{ color: fgBold, fontWeight: 600 }}>{syncRel}</span>
           </span>
         </Chip>
 
@@ -175,7 +175,7 @@ export const Footer: React.FC<FooterProps> = ({ isDark, isRTL }) => {
           style={{ color: fg, textDecoration: 'none', padding: '2px 6px', borderRadius: 6, fontSize: 11.5 }}
           className="fb-link"
         >
-          {t('footer.help', 'یارمەتی')}
+          {t('footer.help', 'Help')}
         </Link>
         <a
           href="http://localhost:8000/docs"

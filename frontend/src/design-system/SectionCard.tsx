@@ -20,8 +20,9 @@ export interface SectionCardProps {
 /**
  * SectionCard — تەنها سەرچاوەی container-ـی section لە forms/settings/details.
  * AntD Card بەکار دەهێنێت بەڵام spacing/elevation/heading consistent دەکات.
+ * React.memo applied per Requirements 18.4.
  */
-export const SectionCard: React.FC<SectionCardProps> = ({
+const SectionCardInner: React.FC<SectionCardProps> = ({
   title, subtitle, extra, bordered = true, padded = true, elevation = 1, children, style, bodyStyle,
 }) => {
   const isDark = useAuthStore((s) => s.theme) === 'dark';
@@ -49,5 +50,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
     </Card>
   );
 };
+
+export const SectionCard = React.memo(SectionCardInner);
 
 export default SectionCard;

@@ -8,6 +8,7 @@ import api from '../api';
 import dayjs from 'dayjs';
 import { FormLayout, type FormSection } from '../design-system';
 import { useAuthStore } from '../store';
+import { ResponsiveForm } from '../components/responsive/ResponsiveForm';
 
 const QuoteForm: React.FC = () => {
   const { t } = useTranslation();
@@ -83,22 +84,46 @@ const QuoteForm: React.FC = () => {
       title: t('items'),
       children: (
         <>
-          <table style={{ width: '100%', marginBottom: 16 }}>
-            <thead><tr><th style={{ width: '25%' }}>{t('items')}</th><th style={{ width: '25%' }}>{t('description')}</th><th style={{ width: '10%' }}>{t('quantity')}</th><th style={{ width: '15%' }}>{t('unit_price')}</th><th style={{ width: '10%' }}>{t('discount')}%</th><th style={{ width: '10%' }}>{t('total')}</th><th style={{ width: '5%' }}></th></tr></thead>
-            <tbody>
-              {lines.map(line => (
-                <tr key={line.key}>
-                  <td style={{ padding: 4 }}><Select style={{ width: '100%' }} value={line.item_id || undefined} onChange={v => updateLine(line.key, 'item_id', v)} options={items.map(i => ({ label: i.name, value: i.id }))} showSearch optionFilterProp="label" allowClear /></td>
-                  <td style={{ padding: 4 }}><Input value={line.description} onChange={e => updateLine(line.key, 'description', e.target.value)} /></td>
-                  <td style={{ padding: 4 }}><InputNumber min={1} value={line.quantity} onChange={v => updateLine(line.key, 'quantity', v || 1)} style={{ width: '100%' }} /></td>
-                  <td style={{ padding: 4 }}><InputNumber min={0} value={line.unit_price} onChange={v => updateLine(line.key, 'unit_price', v || 0)} style={{ width: '100%' }} /></td>
-                  <td style={{ padding: 4 }}><InputNumber min={0} max={100} value={line.discount_percent} onChange={v => updateLine(line.key, 'discount_percent', v || 0)} style={{ width: '100%' }} /></td>
-                  <td style={{ padding: 4, textAlign: 'center' }}>{(line.quantity * line.unit_price * (1 - line.discount_percent / 100)).toLocaleString()}</td>
-                  <td style={{ padding: 4 }}><Button icon={<DeleteOutlined />} size="small" danger onClick={() => removeLine(line.key)} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {lines.map(line => (
+            <ResponsiveForm.LineItem
+              key={line.key}
+              summary={
+                <span>
+                  {items.find(i => i.id === line.item_id)?.name || line.description || t('items')}
+                  {' — '}
+                  {(line.quantity * line.unit_price * (1 - line.discount_percent / 100)).toLocaleString()} IQD
+                </span>
+              }
+            >
+              <Space size="middle" wrap style={{ width: '100%' }}>
+                <div style={{ minWidth: 200, flex: 1 }}>
+                  <label>{t('items')}</label>
+                  <Select style={{ width: '100%' }} value={line.item_id || undefined} onChange={v => updateLine(line.key, 'item_id', v)} options={items.map(i => ({ label: i.name, value: i.id }))} showSearch optionFilterProp="label" allowClear />
+                </div>
+                <div style={{ minWidth: 200, flex: 1 }}>
+                  <label>{t('description')}</label>
+                  <Input value={line.description} onChange={e => updateLine(line.key, 'description', e.target.value)} />
+                </div>
+                <div style={{ minWidth: 100 }}>
+                  <label>{t('quantity')}</label>
+                  <InputNumber min={1} value={line.quantity} onChange={v => updateLine(line.key, 'quantity', v || 1)} style={{ width: '100%' }} />
+                </div>
+                <div style={{ minWidth: 120 }}>
+                  <label>{t('unit_price')}</label>
+                  <InputNumber min={0} value={line.unit_price} onChange={v => updateLine(line.key, 'unit_price', v || 0)} style={{ width: '100%' }} />
+                </div>
+                <div style={{ minWidth: 80 }}>
+                  <label>{t('discount')}%</label>
+                  <InputNumber min={0} max={100} value={line.discount_percent} onChange={v => updateLine(line.key, 'discount_percent', v || 0)} style={{ width: '100%' }} />
+                </div>
+                <div style={{ minWidth: 80, textAlign: 'center' }}>
+                  <label>{t('total')}</label>
+                  <div>{(line.quantity * line.unit_price * (1 - line.discount_percent / 100)).toLocaleString()}</div>
+                </div>
+                <Button icon={<DeleteOutlined />} size="small" danger onClick={() => removeLine(line.key)} />
+              </Space>
+            </ResponsiveForm.LineItem>
+          ))}
           <Button type="dashed" onClick={addLine} icon={<PlusOutlined />} style={{ marginBottom: 16 }}>{t('add_line')}</Button>
           <div style={{ textAlign: 'start', fontSize: 18, fontWeight: 'bold' }}>{t('total')}: {calcTotal().toLocaleString()} IQD</div>
         </>

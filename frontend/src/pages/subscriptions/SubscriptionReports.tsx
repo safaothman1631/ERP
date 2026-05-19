@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Statistic, Table, Tag } from 'antd';
+import { Card, Row, Col, Statistic, Tag } from 'antd';
 import { ArrowUpOutlined, ArrowDownOutlined, DollarOutlined, TeamOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import api from '../../api';
 import { PageHeader } from '../../design-system';
 import { space } from '../../theme/tokens';
+import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
+import { asTranslationKey } from '../../i18n/types';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 interface MRRData {
   current_mrr: number;
@@ -149,20 +152,23 @@ const SubscriptionReports: React.FC = () => {
       </Row>
 
       <Card title={t('subscription.mrr_trend')} loading={loading} style={{ marginTop: space.md }}>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveChart
+          legendItems={[
+            { id: 'mrr', labelKey: asTranslationKey('subscription.mrr'), color: '#1890ff' },
+          ]}
+        >
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="month" />
             <YAxis />
             <Tooltip />
-            <Legend />
             <Line type="monotone" dataKey="mrr" stroke="#1890ff" name={t('subscription.mrr')} />
           </LineChart>
-        </ResponsiveContainer>
+        </ResponsiveChart>
       </Card>
 
       <Card title={t('subscription.mrr_by_plan')} loading={loading} style={{ marginTop: space.md }}>
-        <Table
+        <ResponsiveTableAdapter
           columns={planColumns}
           dataSource={mrrData?.by_plan || []}
           rowKey="plan"

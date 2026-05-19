@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Table, Button, Tag, Select, Dropdown, Space } from 'antd';
+import { Button, Tag, Select, Dropdown, Space } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, MoreOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,8 @@ import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, Exp
 import { downloadCsv } from '../utils/exportCsv';
 import { space } from '../theme/tokens';
 import { useAuthStore } from '../store';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
+import { useAddGate } from '../components/AddGate/useAddGate';
 
 const statusColors: Record<string, string> = {
   draft: 'default', sent: 'blue', accepted: 'green', declined: 'red', expired: 'grey', invoiced: 'purple',
@@ -27,6 +29,9 @@ const Quotes: React.FC = () => {
   });
   const isDark = useAuthStore((s) => s.theme === 'dark');
 
+  // AddGate: wire Selective Add for quotes section (R9.1, R9.5)
+  const addGate = useAddGate('sales.quotes');
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -36,6 +41,9 @@ const Quotes: React.FC = () => {
   };
 
   useEffect(() => { fetchData(); }, [page, statusFilter]);
+
+  // Sync record count into AddGate store (R9.5, R9.6)
+  useEffect(() => { addGate.setRecordCount(total); }, [total, addGate.setRecordCount]);
 
   const handleAction = async (id: string, action: string) => {
     try {
@@ -93,14 +101,15 @@ const Quotes: React.FC = () => {
   };
 
   return (
-    <div>
+    <div data-addgate-section="sales.quotes">
       <PageHeader
         title={t('quotes')}
-        subtitle={t('quotes_subtitle', 'پێشنیاری نرخ بۆ کڕیاران')}
+        subtitle={t('quotes_subtitle', 'Quotes for customers')}
         helpKey="quotes"
+        sectionId="sales.quotes"
         extra={
           <Space size={space.sm}>
-            <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => navigate('/quotes/new')}>{t('new_quote')}</Button>
+            <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => navigate('/quotes/new')} data-add-action="sales.quotes">{t('new_quote')}</Button>
           </Space>
         }
       />
@@ -119,7 +128,7 @@ const Quotes: React.FC = () => {
         />
         <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
       </div>
-      <Table dataSource={data} columns={visibleColumns} rowKey="id" loading={loading} pagination={{ current: page, total, pageSize: 20, onChange: setPage }} />
+      <ResponsiveTableAdapter dataSource={data} columns={visibleColumns} rowKey="id" loading={loading} pagination={{ current: page, total, pageSize: 20, onChange: setPage }} />
     </div>
   );
 };

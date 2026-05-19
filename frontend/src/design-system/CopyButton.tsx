@@ -20,21 +20,21 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ text, size = 'small', to
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
-      message.success(t('copied', 'کۆپی کرا'));
+      message.success(t('copied', 'Copied'));
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      message.error(t('copy_failed', 'کۆپی شکست هێنا'));
+      message.error(t('copy_failed', 'Copy failed'));
     }
   };
 
   return (
-    <Tooltip title={tooltip ?? t('copy', 'کۆپی')}>
+    <Tooltip title={tooltip ?? t('copy', 'Copy')}>
       <Button
         type="text"
         size={size}
         icon={copied ? <CheckOutlined style={{ color: '#16A34A' }} /> : <CopyOutlined />}
         onClick={handleCopy}
-        aria-label={t('copy', 'کۆپی')}
+        aria-label={t('copy', 'Copy')}
       />
     </Tooltip>
   );

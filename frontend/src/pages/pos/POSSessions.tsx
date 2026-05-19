@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Table, Button, Tag, Space, Select, Typography } from 'antd';
+import { Button, Tag, Space, Select, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { EyeOutlined, PlayCircleOutlined } from '@ant-design/icons';
@@ -9,6 +9,7 @@ import { formatCurrency, formatDate } from '../../utils/formatters';
 import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../../design-system';
 import { downloadCsv } from '../../utils/exportCsv';
 import { useAuthStore } from '../../store';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 const { Title } = Typography;
 
@@ -187,7 +188,7 @@ const POSSessions: React.FC = () => {
         <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
       </div>
 
-      <Table
+      <ResponsiveTableAdapter
         dataSource={data}
         columns={visibleColumns}
         rowKey="id"

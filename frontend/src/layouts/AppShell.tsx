@@ -19,6 +19,7 @@ import ShortcutCheatsheet from './ShortcutCheatsheet';
 import { QuickSearch } from '../design-system';
 import { ConnectionStatus } from '../design-system';
 import { useUiStore } from '../stores/uiStore';
+import { useCommandStore } from '../stores/commandStore';
 import { useToastBridge } from '../design-system/Toast';
 import {
   TopMegaMenu, BottomNav, WorkspaceTabs, AppsLauncher, CommandHero, LayoutQuickDock,
@@ -27,9 +28,13 @@ import {
 } from './LayoutChrome';
 import { palette, space, radius, motion, shadow } from '../theme/tokens';
 
-const SIDER_WIDTH_COMFORTABLE = 248;
-const SIDER_WIDTH_COMPACT = 224;
-const SIDER_COLLAPSED = 56;
+/**
+ * Sidebar width constants per spec requirements 4.2, 4.3.
+ * Expanded: 240px, Collapsed: 64px.
+ */
+const SIDER_WIDTH_COMFORTABLE = 240;
+const SIDER_WIDTH_COMPACT = 240;
+const SIDER_COLLAPSED = 64;
 
 /**
  * AppShell — modern shell: SideNav + TopBar + Content + CommandPalette ⌘K.
@@ -105,7 +110,11 @@ export const AppShell: React.FC = () => {
   // SideNav only supports compact|comfortable; spacious widens like comfortable
   const density: 'compact' | 'comfortable' = densityFull === 'compact' ? 'compact' : 'comfortable';
   const handleSideDensity = (d: 'compact' | 'comfortable') => setDensity(d);
-  const [paletteOpen, setPaletteOpen] = useState(false);
+  // Command palette state — driven by commandStore (session-only, no persist)
+  const paletteOpen = useCommandStore(s => s.open);
+  const openPalette = useCommandStore(s => s.openPalette);
+  const closePalette = useCommandStore(s => s.closePalette);
+  const setPaletteOpen = (v: boolean) => v ? openPalette() : closePalette();
   const [sectionDocsKey, setSectionDocsKey] = useState<string | null>(null);
 
   // Keyboard: c-then-X quick create sequences + ? cheatsheet (latter inside ShortcutCheatsheet)
@@ -132,7 +141,8 @@ export const AppShell: React.FC = () => {
 
   const effectiveCollapsed = forceCollapsed || collapsed;
   const sideOffset = sidebarHidden ? 0 : (effectiveCollapsed ? SIDER_COLLAPSED : SIDER_WIDTH);
-  const marginProp = isRTL ? 'marginRight' : 'marginLeft';
+  // Use CSS logical property marginInlineStart so RTL/LTR is handled automatically.
+  // Requirements: 4.1, 10.1
 
   const toggle = useCallback(() => {
     if (forceCollapsed) return;
@@ -143,7 +153,7 @@ export const AppShell: React.FC = () => {
     : `radial-gradient(circle at top ${isRTL ? 'right' : 'left'}, rgba(31, 111, 235, 0.09), transparent 28%), ${palette.bg}`;
 
   return (
-    <Layout style={{ minHeight: '100vh', background: shellBg, direction: isRTL ? 'rtl' : 'ltr' }}>
+    <Layout className="responsive-shell" style={{ minHeight: '100vh', background: shellBg, direction: isRTL ? 'rtl' : 'ltr' }}>
       <SkipToContent />
       {!sidebarHidden && (
         <SideNav
@@ -159,7 +169,7 @@ export const AppShell: React.FC = () => {
         />
       )}
       {showSplitMaster && <SplitMasterPanel isDark={isDark} isRTL={isRTL} />}
-      <Layout style={{ [marginProp]: sideOffset, transition: `margin ${motion.durBase}ms ${motion.easeStandard}`, background: 'transparent' }}>
+      <Layout style={{ marginInlineStart: sideOffset, transition: `margin-inline-start ${motion.durBase}ms ${motion.easeStandard}`, background: 'transparent' }}>
         {showTopMega && (
           <TopMegaMenu isDark={isDark} isRTL={isRTL} onOpenPalette={() => setPaletteOpen(true)} />
         )}
@@ -179,7 +189,12 @@ export const AppShell: React.FC = () => {
         <Layout.Content id="main-content" style={{
           margin: space.lg,
           marginBottom: showBottomNav ? 80 : space.lg,
-          padding: space.xl,
+          // Logical-property longhands so RTL inverts and safe-area-insets
+          // respect device notches on mobile (Requirements 2.5, 2.7, 3.8, 14.7).
+          paddingInlineStart: `max(${space.xl}px, env(safe-area-inset-left))`,
+          paddingInlineEnd:   `max(${space.xl}px, env(safe-area-inset-right))`,
+          paddingBlockStart:  `${space.xl}px`,
+          paddingBlockEnd:    `${space.xl}px`,
           background: isDark ? 'linear-gradient(180deg, rgba(17,26,46,0.98), rgba(17,26,46,0.94))' : 'linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.92))',
           borderRadius: radius.lg,
           minHeight: 'calc(100vh - 60px - 32px)',

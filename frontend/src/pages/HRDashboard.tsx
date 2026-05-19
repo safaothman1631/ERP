@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
-import { Card, Row, Col, Statistic, Spin } from 'antd';
+import { useEffect, useState, useCallback } from 'react';
+import { Card, Row, Col, Statistic } from 'antd';
 import { TeamOutlined, FileProtectOutlined, CalendarOutlined, CheckCircleOutlined, UserOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
+import { LoadingSkeleton } from '../design-system/LoadingSkeleton';
+import { InlineError } from '../components/feedback/InlineError';
+import { useLoadingState } from '../hooks/useLoadingState';
 
 interface HRStats {
   employees_total?: number;
@@ -18,14 +21,22 @@ export default function HRDashboard() {
   const navigate = useNavigate();
   const [stats, setStats] = useState<HRStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const { showSkeleton } = useLoadingState(loading);
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
+    setLoading(true);
+    setError(false);
     api.get('/api/hr/dashboard')
       .then(res => setStats(res.data))
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <Spin style={{ display: 'block', margin: 80 }} />;
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  if (error) return <InlineError onRetry={fetchData} />;
+  if (showSkeleton) return <LoadingSkeleton variant="card" />;
 
   const cards = [
     { title: t('employees_total'), value: stats?.employees_total ?? 0, icon: <TeamOutlined />, color: '#1677ff', go: '/hr/employees' },

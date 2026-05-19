@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Card, Row, Col, Table, Statistic, Spin, message, Tag } from 'antd';
+import { Card, Row, Col, Statistic, message, Tag } from 'antd';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import ExportButton from '../components/ExportButton';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
+import { LoadingSkeleton } from '../design-system/LoadingSkeleton';
+import { useLoadingState } from '../hooks/useLoadingState';
 
 interface ForecastMonth { month: string; weighted_value: number; }
 interface ForecastResp { months: ForecastMonth[]; total: number; }
@@ -23,6 +26,7 @@ export default function CRMInsights() {
   const [pipeline, setPipeline] = useState<PipelineResp | null>(null);
   const [wonLost, setWonLost] = useState<WonLostResp | null>(null);
   const [leaders, setLeaders] = useState<LeaderboardItem[]>([]);
+  const { showSkeleton } = useLoadingState(loading);
 
   useEffect(() => {
     (async () => {
@@ -46,7 +50,7 @@ export default function CRMInsights() {
     })();
   }, [t]);
 
-  if (loading && !forecast) return <Spin style={{ margin: 32 }} />;
+  if (showSkeleton && !forecast) return <LoadingSkeleton variant="card" />;
 
   return (
     <div style={{ padding: 16 }}>
@@ -68,7 +72,7 @@ export default function CRMInsights() {
       <Row gutter={12} style={{ marginBottom: 16 }}>
         <Col span={12}>
           <Card title={t('forecast_by_month')} extra={<ExportButton endpoint="/api/export/sales-by-customer" filename="forecast" />}>
-            <Table
+            <ResponsiveTableAdapter
               rowKey="month"
               size="small"
               pagination={false}
@@ -82,7 +86,7 @@ export default function CRMInsights() {
         </Col>
         <Col span={12}>
           <Card title={t('pipeline_by_stage')}>
-            <Table
+            <ResponsiveTableAdapter
               rowKey="stage_id"
               size="small"
               pagination={false}
@@ -112,7 +116,7 @@ export default function CRMInsights() {
         </Col>
         <Col span={12}>
           <Card title={t('top_owners')}>
-            <Table
+            <ResponsiveTableAdapter
               rowKey="owner_id"
               size="small"
               pagination={false}

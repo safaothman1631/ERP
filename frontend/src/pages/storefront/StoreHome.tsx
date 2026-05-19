@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Input, Tag, Spin, Empty, Typography, Button } from 'antd';
+import { Row, Col, Card, Input, Tag, Empty, Typography, Button } from 'antd';
 import { SearchOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
+import { LoadingSkeleton } from '../../design-system/LoadingSkeleton';
+import { useLoadingState } from '../../hooks/useLoadingState';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -26,6 +28,7 @@ const StoreHome: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const { showSkeleton } = useLoadingState(loading);
 
   useEffect(() => {
     fetchData();
@@ -109,9 +112,9 @@ const StoreHome: React.FC = () => {
           </Col>
 
           <Col xs={24} md={18}>
-            {loading ? (
+            {showSkeleton ? (
               <div style={{ textAlign: 'center', padding: 48 }}>
-                <Spin size="large" />
+                <LoadingSkeleton variant="card" />
               </div>
             ) : products.length === 0 ? (
               <Empty description={t('storefront.no_products')} />
@@ -135,6 +138,8 @@ const StoreHome: React.FC = () => {
                             <img
                               src={product.image_url}
                               alt={product.name}
+                              loading="lazy"
+                              decoding="async"
                               style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'cover' }}
                             />
                           ) : (

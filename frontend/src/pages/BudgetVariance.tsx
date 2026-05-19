@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Card, Tag } from 'antd';
+import { Card, Tag } from 'antd';
 import { message } from '../utils/message';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import api from '../api';
 import { PageHeader } from '../design-system';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 
 const BudgetVariance: React.FC = () => {
   const { t } = useTranslation();
@@ -44,11 +45,11 @@ const BudgetVariance: React.FC = () => {
     <div>
       <PageHeader
         title={t('budget_variance')}
-        subtitle={data?.budget_name || t('budget_variance_subtitle', 'جیاوازی بودجە و ڕاستەقینە')}
+        subtitle={data?.budget_name || t('budget_variance_subtitle', 'Budget vs actual variance')}
         helpKey="budgets"
       />
       <Card>
-        <Table
+        <ResponsiveTableAdapter
           dataSource={data?.variances || []}
           columns={columns}
           rowKey={(r) => `${r.account_id}_${r.period_year}_${r.period_month}`}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, App } from 'antd';
+import { App } from 'antd';
 import { useTranslation } from 'react-i18next';
 import PINPad from './PINPad';
 import api from '../../api';

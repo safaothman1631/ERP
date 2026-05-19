@@ -20,6 +20,7 @@ let messageApi: ReturnType<typeof antdMessage.useMessage>[0] | null = null;
 
 /**
  * Mount once at app root. Returns a context holder that must be rendered.
+ * Includes an aria-live region for screen reader announcements (Requirement 17.1).
  */
 export function useToastBridge() {
   const [notifApi, notifHolder] = notification.useNotification();
@@ -29,11 +30,35 @@ export function useToastBridge() {
     <>
       {notifHolder}
       {msgHolder}
+      {/* aria-live region for toast announcements — Requirement 17.1 */}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        id="toast-announcer"
+        style={{
+          position: 'absolute',
+          width: 1,
+          height: 1,
+          overflow: 'hidden',
+          clip: 'rect(0,0,0,0)',
+          whiteSpace: 'nowrap',
+          border: 0,
+        }}
+      />
     </>
   );
 }
 
 function emit(type: 'success' | 'info' | 'warning' | 'error', text: string, opts: ToastOptions = {}) {
+  // Announce to aria-live region for screen readers — Requirement 17.1
+  const announcer = document.getElementById('toast-announcer');
+  if (announcer) {
+    announcer.textContent = '';
+    // Use setTimeout to ensure the DOM update triggers a new announcement
+    setTimeout(() => { announcer.textContent = text; }, 50);
+  }
+
   if (opts.onUndo && api) {
     api[type]({
       message: text,

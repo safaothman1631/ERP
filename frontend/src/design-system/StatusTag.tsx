@@ -39,18 +39,25 @@ export interface StatusTagProps {
   status: StatusKind | string;
   label?: React.ReactNode;
   icon?: React.ReactNode;
+  /** Optional accessible label override. Defaults to the displayed label text. */
+  ariaLabel?: string;
 }
 
 /**
  * StatusTag — tag یەکسان بۆ هەموو دۆخ. بەرامبەر AntD Tag، token-driven.
+ * role="status" per WCAG AA — Requirements: 17.6
+ * React.memo applied per Requirements 18.4.
  */
-export const StatusTag: React.FC<StatusTagProps> = ({ status, label, icon }) => {
+const StatusTagInner: React.FC<StatusTagProps> = ({ status, label, icon, ariaLabel }) => {
   const key = (MAP[status as StatusKind] ? status : 'default') as StatusKind;
   const cfg = MAP[key];
+  const displayLabel = label ?? status;
   return (
     <Tag
       variant="filled"
       icon={icon}
+      role="status"
+      aria-label={ariaLabel ?? (typeof displayLabel === 'string' ? displayLabel : String(status))}
       style={{
         color: cfg.color,
         background: cfg.bg,
@@ -61,9 +68,11 @@ export const StatusTag: React.FC<StatusTagProps> = ({ status, label, icon }) => 
         margin: 0,
       }}
     >
-      {label ?? status}
+      {displayLabel}
     </Tag>
   );
 };
+
+export const StatusTag = React.memo(StatusTagInner);
 
 export default StatusTag;

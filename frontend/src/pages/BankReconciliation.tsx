@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Tag, Card, Row, Col, Statistic, Select, Space, Checkbox, Empty, Typography } from 'antd';
+import { Button, Tag, Card, Row, Col, Statistic, Select, Space, Checkbox, Empty, Typography } from 'antd';
 import { message } from '../utils/message';
 import { SyncOutlined, CheckCircleOutlined, LinkOutlined, BankOutlined, DollarOutlined, WarningOutlined, InboxOutlined, CloudUploadOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { PageHeader } from '../design-system';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 
 const { Text, Title } = Typography;
 
@@ -168,7 +169,7 @@ const BankReconciliation: React.FC = () => {
     <div>
       <PageHeader 
         title={t('reconciliation')} 
-        subtitle={t('reconciliation_subtitle', 'پاکییەکردنی حیسابە بانکییەکان')}
+        subtitle={t('reconciliation_subtitle', 'Reconcile bank accounts')}
         extra={
           selectedAccount ? (
             <Space>
@@ -277,7 +278,7 @@ const BankReconciliation: React.FC = () => {
             size="small"
             style={{ borderRadius: 12, borderTop: '3px solid #2563eb' }}
           >
-            <Table
+            <ResponsiveTableAdapter
               dataSource={bankTransactions}
               columns={bankColumns}
               rowKey="id"
@@ -301,7 +302,7 @@ const BankReconciliation: React.FC = () => {
             size="small"
             style={{ borderRadius: 12, borderTop: '3px solid #16a34a' }}
           >
-            <Table
+            <ResponsiveTableAdapter
               dataSource={systemTransactions}
               columns={systemColumns}
               rowKey="id"

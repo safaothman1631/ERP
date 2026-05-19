@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, Table, DatePicker, Space, Statistic, Row, Col, Tabs } from 'antd';
+import { Card, DatePicker, Space, Statistic, Row, Col, Tabs } from 'antd';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid,
+  BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
 } from 'recharts';
 import dayjs, { Dayjs } from 'dayjs';
 import { message } from '../utils/message';
 import api from '../api';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
+import { ResponsiveChart } from '../components/responsive/ResponsiveChart';
+import { asTranslationKey } from '../i18n/types';
 
 interface ConsolidatedRow {
   company_id: string;
@@ -80,19 +83,24 @@ export default function ConsolidatedReports() {
             <Col span={8}><Statistic title={t('expenses') || 'Expenses'} value={pl?.totals.expenses || 0} /></Col>
             <Col span={8}><Statistic title={t('profit') || 'Profit'} value={pl?.totals.profit || 0} /></Col>
           </Row>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveChart
+            legendItems={[
+              { id: 'revenue', labelKey: asTranslationKey('revenue'), color: '#52c41a' },
+              { id: 'expenses', labelKey: asTranslationKey('expenses'), color: '#ff4d4f' },
+              { id: 'profit', labelKey: asTranslationKey('profit'), color: '#1677ff' },
+            ]}
+          >
             <BarChart data={pl?.rows || []}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="company_name" />
               <YAxis />
               <Tooltip />
-              <Legend />
               <Bar dataKey="revenue" fill="#52c41a" name={t('revenue') || 'Revenue'} />
               <Bar dataKey="expenses" fill="#ff4d4f" name={t('expenses') || 'Expenses'} />
               <Bar dataKey="profit" fill="#1677ff" name={t('profit') || 'Profit'} />
             </BarChart>
-          </ResponsiveContainer>
-          <Table
+          </ResponsiveChart>
+          <ResponsiveTableAdapter
             rowKey="company_id"
             dataSource={pl?.rows || []}
             columns={plCols}
@@ -112,7 +120,7 @@ export default function ConsolidatedReports() {
             <Col span={8}><Statistic title={t('liabilities') || 'Liabilities'} value={bs?.totals.liabilities || 0} /></Col>
             <Col span={8}><Statistic title={t('equity') || 'Equity'} value={bs?.totals.equity || 0} /></Col>
           </Row>
-          <Table
+          <ResponsiveTableAdapter
             rowKey="company_id"
             dataSource={bs?.rows || []}
             columns={bsCols}

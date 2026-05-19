@@ -67,7 +67,7 @@ const DocsHub: React.FC = () => {
           {item.content.purpose}
         </Paragraph>
         <Text type="secondary" style={{ fontSize: 12 }}>
-          {t('click_to_open', 'کلیک بکە بۆ کردنەوە')}
+          {t('click_to_open', 'Click to open')}
         </Text>
       </Card>
     </List.Item>
@@ -81,7 +81,7 @@ const DocsHub: React.FC = () => {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <Title level={3} style={{ margin: 0 }}>
-          <BookOutlined /> {t('docs_hub', 'سەنتەری یارمەتی')}
+          <BookOutlined /> {t('docs_hub', 'Help Center')}
         </Title>
         <HelpButton pageKey="docs" />
       </div>
@@ -91,7 +91,7 @@ const DocsHub: React.FC = () => {
           allowClear
           size="large"
           prefix={<SearchOutlined />}
-          placeholder={t('docs_search_placeholder', 'گەڕان بەدوای پەیج، فیچەر، یان وۆرک‌فلۆ…')}
+          placeholder={t('docs_search_placeholder', 'Search any page, feature, or workflow…')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -99,7 +99,7 @@ const DocsHub: React.FC = () => {
 
       {filteredFlat ? (
         filteredFlat.length === 0 ? (
-          <Empty description={t('no_results', 'هیچ ئەنجامێک نەدۆزرایەوە')} />
+          <Empty description={t('no_results', 'No results found')} />
         ) : (
           <List
             grid={{ gutter: 16, xs: 1, sm: 2, md: 2, lg: 3, xl: 3 }}

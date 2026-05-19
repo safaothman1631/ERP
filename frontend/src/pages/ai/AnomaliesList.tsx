@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, Tag, Select, Input, message } from 'antd';
+import { Button, Space, Tag, Select, Input, message } from 'antd';
 import type { TableProps } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { SearchOutlined, ReloadOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../design-system';
 import api from '../../api';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 interface Anomaly {
   id: string;
@@ -245,7 +246,7 @@ const AnomaliesList: React.FC = () => {
         </Space>
       </Space>
 
-      <Table
+      <ResponsiveTableAdapter
         columns={columns}
         dataSource={filteredData}
         rowKey="id"

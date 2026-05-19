@@ -1,6 +1,8 @@
 import React from 'react';
 import { palette, radius, space, shadow, fontSize } from '../../theme/tokens';
 import { useAuthStore } from '../../store';
+import { HelpIcon } from '../../help/HelpIcon';
+import type { SectionId } from '../../help/sectionIds';
 
 /**
  * SectionCard — Premium card primitive for Settings & Detail pages.
@@ -20,6 +22,8 @@ export interface SectionCardProps {
   children?: React.ReactNode;
   style?: React.CSSProperties;
   className?: string;
+  /** When provided, renders a HelpIcon adjacent to the title (R6.1, R7.1, R7.5). */
+  sectionId?: SectionId;
 }
 
 const accentColor: Record<NonNullable<SectionCardProps['accent']>, string> = {
@@ -32,7 +36,7 @@ const accentColor: Record<NonNullable<SectionCardProps['accent']>, string> = {
 
 const SectionCard: React.FC<SectionCardProps> = ({
   icon, title, description, actions, footer, loading, noPadding,
-  accent = 'default', children, style, className,
+  accent = 'default', children, style, className, sectionId,
 }) => {
   const isDark = useAuthStore(s => s.theme) === 'dark';
 
@@ -46,6 +50,7 @@ const SectionCard: React.FC<SectionCardProps> = ({
   return (
     <div
       className={['sc-card', className].filter(Boolean).join(' ')}
+      data-section-id={sectionId || undefined}
       style={{
         position: 'relative',
         background: surface,
@@ -105,8 +110,9 @@ const SectionCard: React.FC<SectionCardProps> = ({
           )}
           <div style={{ flex: 1, minWidth: 0 }}>
             {title && (
-              <div style={{ fontSize: fontSize.md, fontWeight: 600, color: ink, lineHeight: 1.3 }}>
+              <div style={{ fontSize: fontSize.md, fontWeight: 600, color: ink, lineHeight: 1.3, display: 'flex', alignItems: 'center', gap: 4 }}>
                 {title}
+                {sectionId && <HelpIcon sectionId={sectionId} />}
               </div>
             )}
             {description && (

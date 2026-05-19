@@ -7,11 +7,20 @@ import { buildNavSections, flattenRoutes } from './navigation';
 import type { NavSection, NavLeaf } from './navigation';
 
 /**
- * Minimal mock for TFunction — returns the fallback if provided, otherwise the key.
- * This mirrors how i18next behaves when a key is missing.
+ * Minimal mock for TFunction — supports both signatures used in navigation.tsx:
+ *   t(key, fallbackString) — returns fallback string when provided, else the key
+ *   t(key, { returnObjects, defaultValue }) — returns defaultValue when missing
+ *     (mirrors how i18next handles arrays via `returnObjects: true` for
+ *     `nav.keywords.<routeKey>` introduced by system-wide-ux-overhaul task 6.2).
  */
-const mockT = (key: string, fallback?: string | Record<string, unknown>): string => {
+const mockT = (
+  key: string,
+  fallback?: string | Record<string, unknown>,
+): unknown => {
   if (typeof fallback === 'string') return fallback;
+  if (fallback && typeof fallback === 'object' && 'defaultValue' in fallback) {
+    return (fallback as { defaultValue: unknown }).defaultValue;
+  }
   return key;
 };
 
@@ -130,15 +139,19 @@ describe('flattenRoutes', () => {
 });
 
 /**
- * Unit tests for mixed-language keyword fix
- * Validates: Requirements 8.5, 8.6, 8.7
+ * Unit tests for per-locale Kurdish keyword resolution.
+ * Validates: Requirements 8.5, 8.6, 8.7 (nav-settings-cleanup) and Requirement 12.4
+ * (system-wide-ux-overhaul) — Kurdish keywords live in `ku.json` under
+ * `nav.keywords.<routeKey>` and are resolved per active locale, never inlined
+ * into the shared `keywords[]` source code.
  */
 describe('mixed-language keyword fix', () => {
   const sections = buildNavSections(mockT as any);
 
   /**
-   * Requirement 8.6, 8.7: No Kurdish characters in the shared keywords[] array.
-   * Kurdish text must live in keywordsKu[], not keywords[].
+   * With the English-mode mock `t`, every NavLeaf's `keywords[]` array must
+   * contain only ASCII / Latin-script entries. Kurdish keywords only surface
+   * when `t` resolves `nav.keywords.<routeKey>` against `ku.json` at runtime.
    */
   it('no keywords[] array in any NavLeaf contains Kurdish Unicode characters', () => {
     const kurdishRange = /[\u0600-\u06FF]/;
@@ -183,12 +196,13 @@ describe('Kurdish UI translation', () => {
     const kuTranslations = require('../locales/ku.json');
 
     /**
-     * Resolve a dot-notation key against a nested object.
-     * e.g. 'maintenance.requests' -> kuTranslations.maintenance.requests
+     * Resolve a dot-notation key against a nested object. Returns the raw
+     * value (string OR array) so `t(key, { returnObjects: true })`-style
+     * lookups (e.g. `nav.keywords.docs`) can pass through unchanged.
      */
-    const resolveKey = (obj: Record<string, unknown>, key: string): string | undefined => {
+    const resolveKey = (obj: Record<string, unknown>, key: string): unknown => {
       // First try flat lookup (most keys are top-level)
-      if (typeof obj[key] === 'string') return obj[key] as string;
+      if (key in obj) return obj[key];
       // Then try dot-notation traversal for nested keys
       const parts = key.split('.');
       let current: unknown = obj;
@@ -196,10 +210,25 @@ describe('Kurdish UI translation', () => {
         if (current == null || typeof current !== 'object') return undefined;
         current = (current as Record<string, unknown>)[part];
       }
-      return typeof current === 'string' ? current : undefined;
+      return current;
     };
 
-    const kuT = (key: string, fallback?: string) => resolveKey(kuTranslations, key) ?? fallback ?? key;
+    const kuT = (
+      key: string,
+      fallback?: string | Record<string, unknown>,
+    ): unknown => {
+      const resolved = resolveKey(kuTranslations, key);
+      if (resolved !== undefined) return resolved;
+      if (typeof fallback === 'string') return fallback;
+      if (
+        fallback &&
+        typeof fallback === 'object' &&
+        'defaultValue' in fallback
+      ) {
+        return (fallback as { defaultValue: unknown }).defaultValue;
+      }
+      return key;
+    };
 
     const sections = buildNavSections(kuT as any);
     const allLabels = [

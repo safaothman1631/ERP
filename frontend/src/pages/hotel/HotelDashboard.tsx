@@ -1,13 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Spin, Button, Typography } from 'antd';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Row, Col, Card, Button, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined, BankOutlined, LoginOutlined, LogoutOutlined, DollarOutlined } from '@ant-design/icons';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import type { TooltipProps } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { PageHeader, KpiCard } from '../../design-system';
+import { PageHeader, KpiCard, LoadingSkeleton } from '../../design-system';
+import { InlineError } from '../../components/feedback/InlineError';
+import { useLoadingState } from '../../hooks/useLoadingState';
 import { space, radius } from '../../theme/tokens';
+import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
+import { asTranslationKey } from '../../i18n/types';
 
 const { Text } = Typography;
 
@@ -26,68 +30,73 @@ const HotelDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const { showSkeleton } = useLoadingState(loading);
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const [roomsRes, reservationsRes] = await Promise.all([
-          api.get('/api/hotel/rooms'),
-          api.get('/api/hotel/reservations'),
-        ]);
-        const rooms = roomsRes.data.items || [];
-        const reservations = reservationsRes.data.items || [];
-        
-        const totalRooms = rooms.length;
-        const occupiedRooms = rooms.filter((r: any) => r.status === 'occupied').length;
-        const occupancyRate = totalRooms > 0 ? (occupiedRooms / totalRooms) * 100 : 0;
-        
-        const today = new Date().toISOString().substring(0, 10);
-        const todayCheckins = reservations.filter((r: any) => r.check_in_date === today).length;
-        const todayCheckouts = reservations.filter((r: any) => r.check_out_date === today).length;
-        
-        const revenueToday = reservations
-          .filter((r: any) => r.check_in_date === today)
-          .reduce((sum: number, r: any) => sum + (r.rate || 0), 0);
-        
-        // Generate daily occupancy for last 7 days
-        const dailyOccupancy = [];
-        for (let i = 6; i >= 0; i--) {
-          const date = new Date();
-          date.setDate(date.getDate() - i);
-          const dateStr = date.toISOString().substring(0, 10);
-          const dayOccupied = rooms.filter((r: any) => {
-            const res = reservations.find((rv: any) => 
-              rv.room_id === r.id && 
-              rv.check_in_date <= dateStr && 
-              rv.check_out_date >= dateStr &&
-              rv.status === 'checked_in'
-            );
-            return res !== undefined;
-          }).length;
-          const dayRate = totalRooms > 0 ? (dayOccupied / totalRooms) * 100 : 0;
-          dailyOccupancy.push({ date: dateStr, occupancy: Math.round(dayRate) });
-        }
-        
-        setData({
-          total_rooms: totalRooms,
-          occupied_rooms: occupiedRooms,
-          occupancy_rate: occupancyRate,
-          today_checkins: todayCheckins,
-          today_checkouts: todayCheckouts,
-          revenue_today: revenueToday,
-          daily_occupancy: dailyOccupancy,
-        });
-      } catch {
-        setData(null);
-      } finally {
-        setLoading(false);
+  const fetchDashboard = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const [roomsRes, reservationsRes] = await Promise.all([
+        api.get('/api/hotel/rooms'),
+        api.get('/api/hotel/reservations'),
+      ]);
+      const rooms = roomsRes.data.items || [];
+      const reservations = reservationsRes.data.items || [];
+      
+      const totalRooms = rooms.length;
+      const occupiedRooms = rooms.filter((r: any) => r.status === 'occupied').length;
+      const occupancyRate = totalRooms > 0 ? (occupiedRooms / totalRooms) * 100 : 0;
+      
+      const today = new Date().toISOString().substring(0, 10);
+      const todayCheckins = reservations.filter((r: any) => r.check_in_date === today).length;
+      const todayCheckouts = reservations.filter((r: any) => r.check_out_date === today).length;
+      
+      const revenueToday = reservations
+        .filter((r: any) => r.check_in_date === today)
+        .reduce((sum: number, r: any) => sum + (r.rate || 0), 0);
+      
+      // Generate daily occupancy for last 7 days
+      const dailyOccupancy = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().substring(0, 10);
+        const dayOccupied = rooms.filter((r: any) => {
+          const res = reservations.find((rv: any) => 
+            rv.room_id === r.id && 
+            rv.check_in_date <= dateStr && 
+            rv.check_out_date >= dateStr &&
+            rv.status === 'checked_in'
+          );
+          return res !== undefined;
+        }).length;
+        const dayRate = totalRooms > 0 ? (dayOccupied / totalRooms) * 100 : 0;
+        dailyOccupancy.push({ date: dateStr, occupancy: Math.round(dayRate) });
       }
-    };
-    void fetchDashboard();
+      
+      setData({
+        total_rooms: totalRooms,
+        occupied_rooms: occupiedRooms,
+        occupancy_rate: occupancyRate,
+        today_checkins: todayCheckins,
+        today_checkouts: todayCheckouts,
+        revenue_today: revenueToday,
+        daily_occupancy: dailyOccupancy,
+      });
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  if (loading) return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />;
-  if (!data) return null;
+  useEffect(() => {
+    void fetchDashboard();
+  }, [fetchDashboard]);
+
+  if (error) return <InlineError onRetry={fetchDashboard} />;
+  if (showSkeleton || !data) return <LoadingSkeleton variant="card" />;
 
   const occupancyPct = data.occupancy_rate || 0;
   const fmtIQD = (v: number) => new Intl.NumberFormat('en-US').format(v || 0);
@@ -159,7 +168,11 @@ const HotelDashboard: React.FC = () => {
         style={{ marginTop: space.lg, borderRadius: radius.lg }}
       >
         {data.daily_occupancy && data.daily_occupancy.length > 0 ? (
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveChart
+            legendItems={[
+              { id: 'occupancy', labelKey: asTranslationKey('hotel.occupancy'), color: '#1f6feb' },
+            ]}
+          >
             <LineChart data={data.daily_occupancy}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
@@ -173,7 +186,7 @@ const HotelDashboard: React.FC = () => {
                 dot={{ r: 4 }}
               />
             </LineChart>
-          </ResponsiveContainer>
+          </ResponsiveChart>
         ) : (
           <Text type="secondary">{t('no_data')}</Text>
         )}

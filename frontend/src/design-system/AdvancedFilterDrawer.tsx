@@ -1,7 +1,7 @@
 import React from 'react';
-import { Drawer, Button, Space } from 'antd';
-import { FilterOutlined } from '@ant-design/icons';
+import { Button, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { FormDialog } from '../components/responsive/FormDialog';
 
 export interface AdvancedFilterDrawerProps {
   open: boolean;
@@ -14,24 +14,25 @@ export interface AdvancedFilterDrawerProps {
 
 /**
  * AdvancedFilterDrawer — Sprint 5 — slide-in drawer for complex filter forms.
+ * Now uses ResponsiveDialog (via FormDialog) for mobile-first responsive behavior.
  */
-export const AdvancedFilterDrawer: React.FC<AdvancedFilterDrawerProps> = ({ open, onClose, onApply, onReset, children, width = 400 }) => {
+export const AdvancedFilterDrawer: React.FC<AdvancedFilterDrawerProps> = ({ open, onClose, onApply, onReset, children }) => {
   const { t } = useTranslation();
   return (
-    <Drawer
+    <FormDialog
       open={open}
       onClose={onClose}
-      title={<><FilterOutlined /> {t('advanced_filters', 'فلتەری پێشکەوتوو')}</>}
-      width={width}
-      extra={
-        <Space>
-          {onReset && <Button onClick={onReset}>{t('reset', 'سڕینەوە')}</Button>}
-          <Button type="primary" onClick={onApply}>{t('apply', 'جێبەجێکردن')}</Button>
-        </Space>
-      }
+      title={t('advanced_filters', 'Advanced filters')}
+      onOk={onApply}
+      okText={t('apply', 'Apply')}
     >
       {children}
-    </Drawer>
+      {onReset && (
+        <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-start' }}>
+          <Button onClick={onReset}>{t('reset', 'Reset')}</Button>
+        </div>
+      )}
+    </FormDialog>
   );
 };
 

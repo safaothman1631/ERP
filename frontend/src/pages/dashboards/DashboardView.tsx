@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Spin, Button, DatePicker, Space, Statistic, Table, Typography, message } from 'antd';
+import { Row, Col, Card, Button, DatePicker, Space, Statistic, Typography, message } from 'antd';
 import { ReloadOutlined, EditOutlined, DollarOutlined, RiseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, LoadingSkeleton } from '../../design-system';
 import dayjs, { Dayjs } from 'dayjs';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 // react-grid-layout uses CommonJS namespace export — import as default and destructure
 import RGL from 'react-grid-layout';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
+import { InlineError } from '../../components/feedback/InlineError';
+import { useLoadingState } from '../../hooks/useLoadingState';
 const { Responsive, WidthProvider } = RGL as any;
 type Layout = { i: string; x: number; y: number; w: number; h: number };
 
@@ -27,6 +31,7 @@ const DashboardView: React.FC = () => {
   const [dashboard, setDashboard] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [widgetData, setWidgetData] = useState<Record<string, any>>({});
+  const { showSkeleton } = useLoadingState(loading);
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([dayjs().startOf('month'), dayjs()]);
 
   useEffect(() => {
@@ -107,7 +112,7 @@ const DashboardView: React.FC = () => {
       }));
       return (
         <Card title={widget.title} style={{ height: '100%' }}>
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveChart legendItems={[]} minMobileBlockSize={250}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
@@ -115,7 +120,7 @@ const DashboardView: React.FC = () => {
               <Tooltip />
               <Bar dataKey="value" fill={config.color || '#8884d8'} />
             </BarChart>
-          </ResponsiveContainer>
+          </ResponsiveChart>
         </Card>
       );
     }
@@ -124,7 +129,7 @@ const DashboardView: React.FC = () => {
       const items = data?.raw?.data?.items || [];
       return (
         <Card title={widget.title} style={{ height: '100%' }}>
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveChart legendItems={[]} minMobileBlockSize={250}>
             <LineChart data={items}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
@@ -132,7 +137,7 @@ const DashboardView: React.FC = () => {
               <Tooltip />
               <Line type="monotone" dataKey="value" stroke={config.color || '#8884d8'} />
             </LineChart>
-          </ResponsiveContainer>
+          </ResponsiveChart>
         </Card>
       );
     }
@@ -141,7 +146,7 @@ const DashboardView: React.FC = () => {
       const items = data?.raw?.data?.items || [];
       return (
         <Card title={widget.title} style={{ height: '100%' }}>
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveChart legendItems={[]} minMobileBlockSize={250}>
             <PieChart>
               <Pie data={items} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
                 {items.map((_: any, index: number) => (
@@ -150,7 +155,7 @@ const DashboardView: React.FC = () => {
               </Pie>
               <Tooltip />
             </PieChart>
-          </ResponsiveContainer>
+          </ResponsiveChart>
         </Card>
       );
     }
@@ -164,7 +169,7 @@ const DashboardView: React.FC = () => {
       })) : [];
       return (
         <Card title={widget.title} style={{ height: '100%' }}>
-          <Table dataSource={items} columns={columns} pagination={false} size="small" scroll={{ y: 200 }} />
+          <ResponsiveTableAdapter dataSource={items} columns={columns} pagination={false} size="small" scroll={{ y: 200 }} />
         </Card>
       );
     }
@@ -197,9 +202,9 @@ const DashboardView: React.FC = () => {
     static: true
   })) || [];
 
-  if (loading) return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />;
+  if (showSkeleton) return <LoadingSkeleton variant="card" />;
 
-  if (!dashboard) return <div>{t('dashboard_not_found')}</div>;
+  if (!dashboard) return <InlineError messageKey="error_loading_dashboard" onRetry={() => window.location.reload()} />;
 
   return (
     <div>

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
 import api from '../../api';
+import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -182,7 +183,7 @@ const StoreCheckout: React.FC = () => {
                 </Row>
               </>
             )}
-          </Form>
+</Form>
         </Card>
       </div>
     </div>

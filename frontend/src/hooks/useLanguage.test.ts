@@ -98,6 +98,6 @@ describe('useLanguage hook', () => {
       await result.current.changeLanguage('en');
     });
 
-    expect(mockSetItem).toHaveBeenCalledWith('app_language', 'en');
+    expect(mockSetItem).toHaveBeenCalledWith('i18n.language', 'en');
   });
 });

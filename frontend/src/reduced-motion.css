@@ -1,0 +1,150 @@
+/* =============================================================================
+ * reduced-motion.css — Comprehensive prefers-reduced-motion handling
+ *
+ * Validates: Requirements 5.8, 14.9
+ *
+ * Strategy:
+ *   - Disable ALL non-essential animations (parallax, particle effects,
+ *     decorative motion, page transitions, card hover lifts, stagger reveals)
+ *   - PRESERVE functional motion:
+ *     • Focus rings (outline transitions)
+ *     • Loading indicators (spinners, skeleton shimmer, progress bars)
+ *     • Validation animations (shake on error, field highlight)
+ *     • Opacity-only fade-ins for content visibility (reduced duration)
+ *
+ * This file is the single source of truth for reduced-motion CSS overrides.
+ * Framer-motion components additionally use `useReducedMotion()` hook at the
+ * JS level (see PageTransition, MotionGate, MotionCard, MotionButton, etc.).
+ * ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  /* ─── 1. Global: Kill all non-essential animations and transitions ──────── */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* ─── 2. PRESERVE: Focus rings ─────────────────────────────────────────── */
+  /* Focus ring transitions should remain instant (already 0.01ms above is fine
+     since focus rings are typically outline with no transition needed).
+     Ensure outline is never removed. */
+  :focus-visible {
+    outline: 2px solid #1F6FEB !important;
+    outline-offset: 2px !important;
+    /* No transition needed — instant focus ring is acceptable */
+  }
+
+  /* ─── 3. PRESERVE: Loading indicators (spinners, skeletons, progress) ──── */
+  /* AntD Spin */
+  .ant-spin .ant-spin-dot,
+  .ant-spin-dot-item,
+  .ant-spin .anticon-loading {
+    animation-duration: 1s !important;
+    animation-iteration-count: infinite !important;
+  }
+
+  /* AntD Progress bar animation */
+  .ant-progress-bg,
+  .ant-progress-success-bg {
+    transition-duration: 0.3s !important;
+  }
+
+  /* Custom loading spinners */
+  .loading-spinner,
+  [data-loading="true"],
+  [role="progressbar"],
+  .ant-skeleton-active .ant-skeleton-content .ant-skeleton-title,
+  .ant-skeleton-active .ant-skeleton-content .ant-skeleton-paragraph > li,
+  .ant-skeleton-active .ant-skeleton-avatar,
+  .ant-skeleton-active .ant-skeleton-button,
+  .ant-skeleton-active .ant-skeleton-input,
+  .ant-skeleton-active .ant-skeleton-image {
+    animation-duration: 1.5s !important;
+    animation-iteration-count: infinite !important;
+  }
+
+  /* Skeleton shimmer — keep a subtle pulse for loading indication */
+  .skeleton {
+    animation-duration: 1.5s !important;
+    animation-iteration-count: infinite !important;
+  }
+
+  /* ─── 4. PRESERVE: Validation animations ───────────────────────────────── */
+  /* Form field error shake / highlight */
+  .ant-form-item-has-error .ant-input,
+  .ant-form-item-has-error .ant-select-selector,
+  .ant-form-item-has-error .ant-picker,
+  .ant-form-item-explain-error,
+  [data-validation-error="true"] {
+    transition-duration: 0.15s !important;
+  }
+
+  /* Validation message appearance */
+  .ant-form-item-explain {
+    transition-duration: 0.15s !important;
+  }
+
+  /* ─── 5. Disable: Page transitions ─────────────────────────────────────── */
+  /* Framer-motion page transitions are handled via useReducedMotion() in JS,
+     but ensure any CSS-based page transitions are also killed */
+  .page-transition,
+  [data-page-transition] {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* ─── 6. Disable: Decorative hover effects ─────────────────────────────── */
+  .ant-card:hover,
+  .ant-btn:hover,
+  .stat-card:hover,
+  .quick-action-btn:hover,
+  [data-hoverable]:hover {
+    transform: none !important;
+    box-shadow: inherit !important;
+  }
+
+  /* ─── 7. Disable: Parallax and particle effects ────────────────────────── */
+  .parallax,
+  [data-parallax],
+  .particles,
+  [data-particles],
+  .particle-effect {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  /* ─── 8. Disable: Custom cursor animations (LandingPage) ───────────────── */
+  .custom-cursor,
+  [data-custom-cursor] {
+    display: none !important;
+  }
+
+  /* ─── 9. Disable: Stagger/reveal animations on lists and cards ──────────── */
+  .ant-table-row,
+  .premium-sidenav-shell *,
+  .premium-nav-focus {
+    transition: none !important;
+    transform: none !important;
+    animation: none !important;
+  }
+
+  /* ─── 10. Disable: Smooth scrolling (use instant jump) ─────────────────── */
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  /* ─── 11. PRESERVE: Opacity transitions for content visibility ─────────── */
+  /* Allow very short opacity fades so content doesn't "pop" jarringly */
+  .ant-modal,
+  .ant-drawer,
+  .ant-notification,
+  .ant-message,
+  .ant-tooltip {
+    transition-duration: 0.1s !important;
+    transition-property: opacity !important;
+  }
+}

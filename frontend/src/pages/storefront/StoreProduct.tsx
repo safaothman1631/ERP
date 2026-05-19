@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, InputNumber, Typography, Row, Col, Tag, Spin, Divider } from 'antd';
+import { Card, Button, InputNumber, Typography, Row, Col, Tag, Divider } from 'antd';
 import { ShoppingCartOutlined, LeftOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
 import api from '../../api';
+import { LoadingSkeleton } from '../../design-system/LoadingSkeleton';
+import { useLoadingState } from '../../hooks/useLoadingState';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -27,6 +29,7 @@ const StoreProduct: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [adding, setAdding] = useState(false);
+  const { showSkeleton } = useLoadingState(loading);
 
   useEffect(() => {
     fetchProduct();
@@ -89,10 +92,10 @@ const StoreProduct: React.FC = () => {
     }
   };
 
-  if (loading) {
+  if (showSkeleton) {
     return (
       <div style={{ textAlign: 'center', padding: 48 }}>
-        <Spin size="large" />
+        <LoadingSkeleton variant="card" />
       </div>
     );
   }
@@ -129,6 +132,8 @@ const StoreProduct: React.FC = () => {
                   <img
                     src={product.image_url}
                     alt={product.name}
+                    loading="lazy"
+                    decoding="async"
                     style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
                   />
                 ) : (

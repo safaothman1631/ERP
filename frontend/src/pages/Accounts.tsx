@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tag} from 'antd';
+import { Tag} from 'antd';
 import { message } from '../utils/message';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { PageHeader } from '../design-system';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 
 const Accounts: React.FC = () => {
   const { t } = useTranslation();
@@ -30,8 +31,8 @@ const Accounts: React.FC = () => {
 
   return (
     <div>
-      <PageHeader title={t('chart_of_accounts', t('accounts'))} subtitle={t('coa_subtitle', 'پلانی ژمارەکان')} helpKey="reports" />
-      <Table dataSource={data} columns={columns} rowKey="id" loading={loading} pagination={false} />
+      <PageHeader title={t('chart_of_accounts', t('accounts'))} subtitle={t('coa_subtitle', 'Chart of accounts')} helpKey="reports" sectionId="accounting.accounts" />
+      <ResponsiveTableAdapter dataSource={data} columns={columns} rowKey="id" loading={loading} pagination={false} />
     </div>
   );
 };

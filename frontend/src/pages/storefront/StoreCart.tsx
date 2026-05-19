@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Button, InputNumber, Empty, Typography, Row, Col } from 'antd';
+import { Card, Button, InputNumber, Empty, Typography, Row, Col } from 'antd';
 import { DeleteOutlined, ShoppingOutlined, LeftOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
 import api from '../../api';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 const { Title, Text } = Typography;
 
@@ -177,7 +178,7 @@ const StoreCart: React.FC = () => {
             </Empty>
           ) : (
             <>
-              <Table
+              <ResponsiveTableAdapter
                 dataSource={lines}
                 columns={columns}
                 rowKey="item_id"

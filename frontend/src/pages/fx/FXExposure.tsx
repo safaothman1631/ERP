@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, DatePicker, Statistic, Row, Col, Space, Typography, Tag, message } from 'antd';
+import { Card, DatePicker, Statistic, Row, Col, Space, Typography, Tag, message } from 'antd';
 import { DollarOutlined, RiseOutlined, FallOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 const { Title, Text } = Typography;
 
@@ -88,7 +89,7 @@ const FXExposure: React.FC = () => {
     ];
 
     return (
-      <Table
+      <ResponsiveTableAdapter
         columns={accountColumns}
         dataSource={record.accounts}
         rowKey="account_id"
@@ -198,7 +199,7 @@ const FXExposure: React.FC = () => {
           </Col>
         </Row>
 
-        <Table
+        <ResponsiveTableAdapter
           columns={columns}
           dataSource={exposure?.currencies || []}
           rowKey="currency"

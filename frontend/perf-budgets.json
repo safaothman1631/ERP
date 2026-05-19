@@ -1,0 +1,14 @@
+{
+  "defaults": {
+    "publicGzipKb": 250,
+    "authenticatedGzipKb": 350
+  },
+  "routes": {
+    "/": { "gzipKb": 250, "type": "public" },
+    "/login": { "gzipKb": 250, "type": "public" },
+    "/signup": { "gzipKb": 250, "type": "public" },
+    "/dashboard": { "gzipKb": 350, "type": "auth" },
+    "/sales/invoices": { "gzipKb": 350, "type": "auth" }
+  },
+  "noRegressionDeltaPoints": 3
+}

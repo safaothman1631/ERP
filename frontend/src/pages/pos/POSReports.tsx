@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, DatePicker, Button, Table, Typography, Space, Progress } from 'antd';
+import { Card, Row, Col, Statistic, DatePicker, Button, Typography, Space, Progress } from 'antd';
 import { DollarOutlined, ShoppingCartOutlined, BarChartOutlined, FileTextOutlined, ReloadOutlined, DownloadOutlined } from '@ant-design/icons';
 import { posApi } from '../../api';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { ComingSoon } from '../../components/feedback/ComingSoon';
 
 const { RangePicker } = DatePicker;
 const { Text } = Typography;
@@ -279,7 +281,7 @@ export default function POSReports() {
 
         {/* Detailed Tables */}
         <Card title={t('sales_by_product')} bordered={false}>
-          <Table
+          <ResponsiveTableAdapter
             dataSource={productData}
             columns={productColumns}
             rowKey="product_id"
@@ -289,7 +291,7 @@ export default function POSReports() {
         </Card>
 
         <Card title={t('sales_by_cashier')} bordered={false}>
-          <Table
+          <ResponsiveTableAdapter
             dataSource={cashierData}
             columns={cashierColumns}
             rowKey="cashier_id"
@@ -300,7 +302,7 @@ export default function POSReports() {
 
         {/* Hourly Heatmap */}
         <Card title={t('hourly_sales_heatmap')} bordered={false}>
-          <Text type="secondary">{t('coming_soon')} - 7×24 heatmap visualization</Text>
+          <ComingSoon featureNameKey="hourly_sales_heatmap" />
         </Card>
       </Space>
     </div>

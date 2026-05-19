@@ -266,6 +266,7 @@ body, html {
 [data-theme="dark"] .ant-btn-text:hover {
   background: rgba(255,255,255,0.06) !important;
 }
+/* outline:none is safe — box-shadow provides the visible focus indicator (R14.3) */
 .ant-btn:focus-visible {
   outline: none !important;
   box-shadow: var(--pl-shadow-focus) !important;
@@ -736,16 +737,21 @@ h4.ant-typography, h5.ant-typography, h6.ant-typography {
 }
 
 /* ============================================================================
- * FOCUS RING (universal)
+ * FOCUS RING (universal) — R14.3
+ * No `outline: none` without a replacement focus indicator.
+ * The visible focus ring is sourced from tokens.ts (a11y.focusRingWidth,
+ * a11y.focusRingColor, a11y.focusRingOffset) via CSS custom properties
+ * defined in globalStyles.css and a11y.css.
+ *
+ * AntD components use box-shadow as their focus indicator; the outline is
+ * replaced (not removed) with the box-shadow ring below.
  * ========================================================================= */
-:focus-visible {
-  outline: none;
-}
 .ant-input:focus-visible,
 .ant-btn:focus-visible,
 .ant-select-focused,
 .ant-picker-focused {
   outline: none;
+  box-shadow: var(--pl-shadow-focus) !important;
 }
 
 /* ============================================================================

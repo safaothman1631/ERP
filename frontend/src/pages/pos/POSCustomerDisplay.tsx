@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, Row, Col, Typography, Spin } from 'antd';
+import { Card, Row, Col, Typography } from 'antd';
 import { posApi } from '../../api';
 import { useTranslation } from 'react-i18next';
+import { LoadingSkeleton } from '../../design-system/LoadingSkeleton';
+import { useLoadingState } from '../../hooks/useLoadingState';
 
 const { Title, Text } = Typography;
 
@@ -11,6 +13,7 @@ export default function POSCustomerDisplay() {
   const { t } = useTranslation();
   const [display, setDisplay] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { showSkeleton } = useLoadingState(loading);
 
   const fetchDisplay = async () => {
     try {
@@ -42,10 +45,10 @@ export default function POSCustomerDisplay() {
     return () => clearInterval(interval);
   }, [configId]);
 
-  if (loading) {
+  if (showSkeleton) {
     return (
       <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#001529' }}>
-        <Spin size="large" />
+        <LoadingSkeleton variant="card" isDark />
       </div>
     );
   }
@@ -185,7 +188,7 @@ export default function POSCustomerDisplay() {
         </div>
       ) : (
         <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Spin size="large" />
+          <LoadingSkeleton variant="card" />
         </div>
       )}
     </div>

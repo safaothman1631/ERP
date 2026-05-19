@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
-import { Card, Row, Col, Input, Tree, List, Tag, Empty, Spin } from 'antd';
+import { useEffect, useState, useCallback } from 'react';
+import { Card, Row, Col, Input, Tree, List, Tag, Empty } from 'antd';
 import { SearchOutlined, FileTextOutlined, FolderOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, LoadingSkeleton } from '../../design-system';
+import { InlineError } from '../../components/feedback/InlineError';
+import { useLoadingState } from '../../hooks/useLoadingState';
 import { space } from '../../theme/tokens';
 
 interface Category {
@@ -31,11 +33,14 @@ export default function KnowledgeBase() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [popular, setPopular] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
+  const { showSkeleton } = useLoadingState(loading);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
+    setError(false);
     try {
       const [catRes, artRes] = await Promise.all([
         api.get('/api/knowledge/categories'),
@@ -46,11 +51,11 @@ export default function KnowledgeBase() {
       setArticles(arts);
       setPopular(arts.sort((a: Article, b: Article) => (b.view_count || 0) - (a.view_count || 0)).slice(0, 5));
     } catch (err) {
-      console.error('Failed to load knowledge base:', err);
+      setError(true);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     load();
@@ -66,13 +71,12 @@ export default function KnowledgeBase() {
     .filter((a) => (selectedCat ? a.category_id === selectedCat : true))
     .filter((a) => (searchQuery ? a.title.toLowerCase().includes(searchQuery.toLowerCase()) : true));
 
-  if (loading) {
-    return (
-      <Spin
-        size="large"
-        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}
-      />
-    );
+  if (error) {
+    return <InlineError onRetry={load} />;
+  }
+
+  if (showSkeleton) {
+    return <LoadingSkeleton variant="row" rows={8} />;
   }
 
   return (

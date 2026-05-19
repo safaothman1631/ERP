@@ -8,6 +8,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, Form, Input, Button, Typography, Result, Spin, App as AntApp } from 'antd';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
+import { ResponsiveForm } from '../components/responsive/ResponsiveForm';
 
 const { Title, Text } = Typography;
 
@@ -32,7 +33,7 @@ export default function AcceptInvite() {
 
   useEffect(() => {
     if (!token) {
-      setError(t('invite_missing_token', 'تۆکن نەنووسراوە'));
+      setError(t('invite_missing_token', 'Invitation token is missing'));
       setVerifying(false);
       return;
     }
@@ -40,7 +41,7 @@ export default function AcceptInvite() {
       .get('/api/users/invite/verify', { params: { token } })
       .then((r) => setInfo(r.data))
       .catch((e) => {
-        setError(e?.response?.data?.detail || t('invite_invalid', 'بانگهێشت نادروستە یان بەسەرچوو'));
+        setError(e?.response?.data?.detail || t('invite_invalid', 'Invitation is invalid or has expired'));
       })
       .finally(() => setVerifying(false));
   }, [token, t]);
@@ -58,7 +59,7 @@ export default function AcceptInvite() {
       localStorage.setItem('userId', res.data.user_id);
       localStorage.setItem('orgId', res.data.org_id);
       localStorage.setItem('userName', res.data.user_name || '');
-      message.success(t('account_activated', 'ئەکاونتت چالاک کرا'));
+      message.success(t('account_activated', 'Your account has been activated'));
       navigate('/');
     } catch (e: unknown) {
       const detail = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
@@ -81,9 +82,9 @@ export default function AcceptInvite() {
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '70vh' }}>
         <Result
           status="error"
-          title={t('invite_invalid', 'بانگهێشت نادروستە')}
+          title={t('invite_invalid', 'Invitation is invalid or has expired')}
           subTitle={error}
-          extra={<Button type="primary" onClick={() => navigate('/login')}>{t('go_to_login', 'بڕۆ بۆ چوونەژوورەوە')}</Button>}
+          extra={<Button type="primary" onClick={() => navigate('/login')}>{t('go_to_login', 'Go to login')}</Button>}
         />
       </div>
     );
@@ -92,9 +93,9 @@ export default function AcceptInvite() {
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', padding: 24 }}>
       <Card style={{ width: '100%', maxWidth: 460 }}>
-        <Title level={3} style={{ marginBottom: 8 }}>{t('accept_invite_title', 'بانگهێشتت قبووڵ بکە')}</Title>
+        <Title level={3} style={{ marginBottom: 8 }}>{t('accept_invite_title', 'Accept your invitation')}</Title>
         <Text type="secondary">
-          {t('accept_invite_subtitle', 'بەخێربێیت بۆ ')} <strong>{info.org_name}</strong>
+          {t('accept_invite_subtitle', 'Welcome to ')} <strong>{info.org_name}</strong>
         </Text>
         <div style={{ marginTop: 20, marginBottom: 16 }}>
           <Text strong>{info.name}</Text>
@@ -102,33 +103,34 @@ export default function AcceptInvite() {
           <Text type="secondary">{info.email}</Text>
         </div>
         <Form form={form} layout="vertical" onFinish={submit}>
+          <ResponsiveForm layout="single">
           <Form.Item
             name="password"
-            label={t('password', 'وشەی نهێنی')}
+            label={t('password', 'Password')}
             rules={[
               { required: true, min: 8 },
               {
                 validator: (_, val) => {
                   if (!val) return Promise.resolve();
-                  if (!/[A-Z]/.test(val)) return Promise.reject(new Error(t('password_need_upper', 'پێویستە یەک پیتی گەورە')));
-                  if (!/[0-9]/.test(val)) return Promise.reject(new Error(t('password_need_digit', 'پێویستە یەک ژمارە')));
+                  if (!/[A-Z]/.test(val)) return Promise.reject(new Error(t('password_need_upper', 'Password must contain at least one uppercase letter')));
+                  if (!/[0-9]/.test(val)) return Promise.reject(new Error(t('password_need_digit', 'Password must contain at least one digit')));
                   return Promise.resolve();
                 },
               },
             ]}
           >
-            <Input.Password autoFocus placeholder={t('choose_password', 'وشەی نهێنیێک هەڵبژێرە')} />
+            <Input.Password autoFocus placeholder={t('choose_password', 'Choose a password')} />
           </Form.Item>
           <Form.Item
             name="confirm"
-            label={t('confirm_password', 'دووپاتکردنەوەی وشەی نهێنی')}
+            label={t('confirm_password', 'Confirm Password')}
             dependencies={['password']}
             rules={[
               { required: true },
               ({ getFieldValue }) => ({
                 validator(_, val) {
                   if (!val || getFieldValue('password') === val) return Promise.resolve();
-                  return Promise.reject(new Error(t('passwords_dont_match', 'وشە نهێنییەکان وەک یەک نین')));
+                  return Promise.reject(new Error(t('passwords_dont_match', 'Passwords do not match')));
                 },
               }),
             ]}
@@ -136,9 +138,10 @@ export default function AcceptInvite() {
             <Input.Password />
           </Form.Item>
           <Button type="primary" htmlType="submit" block loading={submitting}>
-            {t('activate_account', 'چالاککردنی ئەکاونت')}
+            {t('activate_account', 'Activate account')}
           </Button>
-        </Form>
+          </ResponsiveForm>
+</Form>
       </Card>
     </div>
   );

@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
 import type { FC } from 'react';
-import { Card, List, Progress, Button, Tag, Space, Empty, Spin } from 'antd';
+import { Card, List, Progress, Button, Tag, Space, Empty } from 'antd';
 import { CheckCircleOutlined, RightOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, LoadingSkeleton } from '../../design-system';
+import AddGateProvider, {
+  type FlowStepBinding,
+  type FlowStepStatus,
+} from '../../components/AddGate/AddGateProvider';
+import type { SectionId } from '../../help/sectionIds';
 
 interface ChecklistItem {
   key: string;
@@ -16,7 +21,41 @@ interface ChecklistItem {
   action_path: string;
 }
 
-const OnboardingChecklist: FC = () => {
+/** Flow ID for the onboarding checklist multi-step flow. */
+const CHECKLIST_FLOW_ID = 'onboarding-checklist';
+
+/** Maps checklist item keys to their corresponding SectionIds. */
+const CHECKLIST_SECTION_MAP: Record<string, SectionId> = {
+  add_bank: 'onboarding.checklist.bank',
+  add_contact: 'onboarding.checklist.contact',
+  add_item: 'onboarding.checklist.item',
+  first_invoice: 'onboarding.checklist.invoice',
+  invite_user: 'onboarding.checklist.user',
+  setup_tax: 'onboarding.checklist.tax',
+};
+
+/**
+ * Build flow bindings for the checklist based on loaded items.
+ * Items that are already completed are marked as such; others are
+ * required-incomplete.
+ */
+function buildChecklistFlowBindings(items: ChecklistItem[]): FlowStepBinding[] {
+  return items.map((item) => {
+    const sectionId = CHECKLIST_SECTION_MAP[item.key] ?? ('onboarding.checklist.bank' as SectionId);
+    const status: FlowStepStatus = item.completed
+      ? 'completed'
+      : 'required-incomplete';
+    return {
+      flowId: CHECKLIST_FLOW_ID,
+      stepId: item.key,
+      sectionId,
+      status,
+      route: item.action_path,
+    };
+  });
+}
+
+const OnboardingChecklistInner: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -97,7 +136,7 @@ const OnboardingChecklist: FC = () => {
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
-        <Spin size="large" />
+        <LoadingSkeleton variant="row" rows={6} />
       </div>
     );
   }
@@ -141,16 +180,21 @@ const OnboardingChecklist: FC = () => {
                 actions={[
                   item.completed ? (
                     <Tag icon={<CheckCircleOutlined />} color="success">
-                      {t('completed')}
+                      {t('addGate.flow.completed')}
                     </Tag>
                   ) : (
-                    <Button
-                      type="link"
-                      icon={<RightOutlined />}
-                      onClick={() => navigate(item.action_path)}
-                    >
-                      {item.action_label}
-                    </Button>
+                    <Space>
+                      <Tag color="warning">
+                        {t('addGate.flow.requiredIncomplete')}
+                      </Tag>
+                      <Button
+                        type="link"
+                        icon={<RightOutlined />}
+                        onClick={() => navigate(item.action_path)}
+                      >
+                        {item.action_label}
+                      </Button>
+                    </Space>
                   ),
                 ]}
               >
@@ -191,6 +235,36 @@ const OnboardingChecklist: FC = () => {
         </div>
       </Card>
     </div>
+  );
+};
+
+/**
+ * OnboardingChecklist wrapped in AddGateProvider to integrate with the
+ * Selective Add system (R10.1, R10.2, R10.3, R10.4).
+ *
+ * Each checklist item is bound to a sectionId. Items that are already
+ * completed (from the API) are marked as such in the flow bindings.
+ * The progress indicator surfaces step status using AddGate semantics.
+ */
+const OnboardingChecklist: FC = () => {
+  // The checklist builds its flow bindings dynamically after loading
+  // items from the API. We wrap with an empty initial binding set;
+  // the inner component can register flows dynamically if needed.
+  // For the static fallback case, we pre-build bindings.
+  const staticBindings: FlowStepBinding[] = Object.entries(CHECKLIST_SECTION_MAP).map(
+    ([key, sectionId]) => ({
+      flowId: CHECKLIST_FLOW_ID,
+      stepId: key,
+      sectionId,
+      status: 'required-incomplete' as FlowStepStatus,
+      route: `/${key.replace('_', '-')}`,
+    }),
+  );
+
+  return (
+    <AddGateProvider flowBindings={staticBindings}>
+      <OnboardingChecklistInner />
+    </AddGateProvider>
   );
 };
 

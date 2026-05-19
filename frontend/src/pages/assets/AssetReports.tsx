@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Statistic, Table, Spin } from 'antd';
+import { Card, Row, Col, Statistic, Spin } from 'antd';
 import { DollarOutlined, FallOutlined, RiseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, Legend, Tooltip } from 'recharts';
 import api from '../../api';
 import { PageHeader } from '../../design-system';
 import { message } from '../../utils/message';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
 
 interface Summary {
   total_cost: number;
@@ -86,7 +88,7 @@ const AssetReports: React.FC = () => {
       <Card title={t('assets.by_category')} style={{ marginTop: 16 }}>
         <Row gutter={16}>
           <Col span={12}>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveChart legendItems={[]} minMobileBlockSize={300}>
               <PieChart>
                 <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
                   {pieData.map((entry, index) => (
@@ -96,10 +98,10 @@ const AssetReports: React.FC = () => {
                 <Tooltip />
                 <Legend />
               </PieChart>
-            </ResponsiveContainer>
+            </ResponsiveChart>
           </Col>
           <Col span={12}>
-            <Table columns={categoryColumns} dataSource={summary.by_category} rowKey="category_id" pagination={false} />
+            <ResponsiveTableAdapter columns={categoryColumns} dataSource={summary.by_category} rowKey="category_id" pagination={false} />
           </Col>
         </Row>
       </Card>

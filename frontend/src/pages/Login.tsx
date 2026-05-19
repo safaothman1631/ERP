@@ -7,6 +7,7 @@ import { useAuthStore } from '../store';
 import api from '../api';
 import AuthLayout from '../components/AuthLayout';
 import GoogleSignInButton from '../components/GoogleSignInButton';
+import { ResponsiveForm } from '../components/responsive/ResponsiveForm';
 
 const Login: React.FC = () => {
   const { t } = useTranslation();
@@ -70,6 +71,7 @@ const Login: React.FC = () => {
       )}
 
       <Form layout="vertical" onFinish={handleLogin} style={{ direction: 'rtl' }}>
+        <ResponsiveForm layout="single">
         <Form.Item
           name="email"
           style={{ marginBottom: 16 }}
@@ -119,6 +121,7 @@ const Login: React.FC = () => {
             {t('auth_login')}
           </Button>
         </Form.Item>
+        </ResponsiveForm>
       </Form>
 
       <Divider style={{ margin: '8px 0', color: '#aaa', fontSize: 12 }}>
@@ -134,11 +137,11 @@ const Login: React.FC = () => {
           const msg = err?.message || String(err);
           // Friendly messages for the most common Firebase auth errors
           if (code === 'auth/unauthorized-domain') {
-            setErrorMsg('Domain ـی ئەم سایتە لە Firebase Authorized Domains زیاد نەکراوە. Firebase Console → Authentication → Settings → Authorized domains ـدا erpiq.systems زیاد بکە.');
+            setErrorMsg(t('auth_google_error_unauthorized_domain'));
           } else if (code === 'auth/popup-blocked') {
-            setErrorMsg('Browser ـت popup ـی Google ـی بلۆک کرد. تکایە popup blocker لە لاپەڕەکە بکە.');
+            setErrorMsg(t('auth_google_error_popup_blocked'));
           } else if (code === 'auth/network-request-failed') {
-            setErrorMsg('کێشەی ئینتەرنێت — تکایە ئینتەرنێتەکەت چێک بکە.');
+            setErrorMsg(t('auth_google_error_network'));
           } else {
             setErrorMsg(`${t('error')}: ${code || msg}`);
           }

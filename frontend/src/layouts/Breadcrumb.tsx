@@ -47,7 +47,7 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({ isDark, isRTL }) => {
   const fgActive = isDark ? palette.darkInk : palette.ink900;
 
   return (
-    <nav aria-label={t('topbar.breadcrumb', 'ڕێگا')} style={{
+    <nav aria-label={t('topbar.breadcrumb', 'Breadcrumb')} style={{
       display: 'flex', alignItems: 'center', gap: 6,
       fontSize: 13, color: fg, minWidth: 0, overflow: 'hidden',
     }}>

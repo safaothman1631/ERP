@@ -2,19 +2,22 @@
  * animations.ts — Framer Motion variant definitions
  *
  * ئەم فایلە هەموو animation variants ی سیستەمەکە دیاری دەکات بەپێی دیزاین spec:
- *   - pageVariants:  fade + slide، 300ms بۆ هەموو پەیجەکان
- *   - modalVariants: scale + fade، 200ms بۆ هەموو مۆداڵەکان
- *   - listVariants:  stagger container، 100ms بۆ هەر ئایتەمێک
- *   - itemVariants:  تایبەتمەندی هەر ئایتەمێک لە لیستدا
- *   - pressAnimation: scale down بۆ دوگمەکان
+ *   - pageVariants:    fade + 8px slide، 200ms بۆ هەموو پەیجەکان (Req 9.1)
+ *   - buttonVariants:  rest / hover / pressed micro-interactions (Req 8.1, 8.2)
+ *   - cardVariants:    hover upward shift + shadow (Req 8.4)
+ *   - modalVariants:   scale + fade، 200ms بۆ هەموو مۆداڵەکان
+ *   - listVariants:    stagger container، 100ms بۆ هەر ئایتەمێک
+ *   - itemVariants:    تایبەتمەندی هەر ئایتەمێک لە لیستدا
+ *   - pressAnimation:  scale down بۆ دوگمەکان (legacy)
  *
- * Validates: Requirements 4.1, 4.2, 4.3, 4.4, 4.5
+ * Validates: Requirements 8.1, 8.2, 8.4, 8.8, 9.1, 9.2, 9.7
  */
 
 import type { Variants, TargetAndTransition } from 'framer-motion';
+import { shadow } from '../theme/tokens';
 
 // ---------------------------------------------------------------------------
-// Page Transition — fade + slide، 300ms (Requirement 4.2)
+// Page Transition — fade + 8px slide، 200ms (Requirement 9.1)
 // ---------------------------------------------------------------------------
 export const pageVariants: Variants = {
   initial: {
@@ -25,7 +28,7 @@ export const pageVariants: Variants = {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.3,
+      duration: 0.2,
       ease: [0.2, 0, 0, 1],
     },
   },
@@ -34,7 +37,63 @@ export const pageVariants: Variants = {
     y: -8,
     transition: {
       duration: 0.2,
-      ease: [0.4, 0, 1, 1],
+      ease: [0.2, 0, 0, 1],
+    },
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Button micro-interaction variants (Requirement 8.1, 8.2, 8.8)
+// rest → hover: y -2px, shadow.md, 150ms
+// hover → pressed: y +1px, shadow.none, 50ms
+// All complete within 150ms maximum
+// ---------------------------------------------------------------------------
+export const buttonVariants: Variants = {
+  rest: {
+    y: 0,
+    boxShadow: shadow.sm,
+    transition: {
+      duration: 0.15,
+      ease: [0.2, 0, 0, 1],
+    },
+  },
+  hover: {
+    y: -2,
+    boxShadow: shadow.md,
+    transition: {
+      duration: 0.15,
+      ease: [0.2, 0, 0, 1],
+    },
+  },
+  pressed: {
+    y: 1,
+    boxShadow: shadow.none,
+    transition: {
+      duration: 0.05,
+      ease: [0.2, 0, 0, 1],
+    },
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Card hover micro-interaction (Requirement 8.4)
+// Upward shift + increased shadow within 150ms
+// ---------------------------------------------------------------------------
+export const cardVariants: Variants = {
+  rest: {
+    y: 0,
+    boxShadow: shadow.sm,
+    transition: {
+      duration: 0.15,
+      ease: [0.2, 0, 0, 1],
+    },
+  },
+  hover: {
+    y: -4,
+    boxShadow: shadow.lg,
+    transition: {
+      duration: 0.15,
+      ease: [0.2, 0, 0, 1],
     },
   },
 };

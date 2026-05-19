@@ -1,6 +1,8 @@
 import React from 'react';
 import { palette, radius, space, fontSize } from '../../theme/tokens';
 import { useAuthStore } from '../../store';
+import { HelpIcon } from '../../help/HelpIcon';
+import type { SectionId } from '../../help/sectionIds';
 
 /**
  * PremiumPageHeader — Polished page header with title, subtitle,
@@ -14,10 +16,12 @@ export interface PremiumPageHeaderProps {
   icon?: React.ReactNode;
   actions?: React.ReactNode;
   meta?: React.ReactNode;
+  /** When provided, renders a HelpIcon adjacent to the title (R6.1, R7.1, R7.5). */
+  sectionId?: SectionId;
 }
 
 const PremiumPageHeader: React.FC<PremiumPageHeaderProps> = ({
-  eyebrow, title, subtitle, icon, actions, meta,
+  eyebrow, title, subtitle, icon, actions, meta, sectionId,
 }) => {
   const isDark = useAuthStore(s => s.theme) === 'dark';
   const ink = isDark ? palette.darkInk : palette.ink900;
@@ -27,6 +31,7 @@ const PremiumPageHeader: React.FC<PremiumPageHeaderProps> = ({
   return (
     <div
       className="pph"
+      data-section-id={sectionId || undefined}
       style={{
         position: 'relative',
         padding: `${space.lg}px ${space.xl}px ${space.lg}px`,
@@ -67,8 +72,9 @@ const PremiumPageHeader: React.FC<PremiumPageHeaderProps> = ({
               {eyebrow}
             </div>
           )}
-          <div style={{ fontSize: fontSize.h3, fontWeight: 700, color: ink, lineHeight: 1.15 }}>
+          <div style={{ fontSize: fontSize.h3, fontWeight: 700, color: ink, lineHeight: 1.15, display: 'flex', alignItems: 'center', gap: 8 }}>
             {title}
+            {sectionId && <HelpIcon sectionId={sectionId} />}
           </div>
           {subtitle && (
             <div style={{ marginTop: 6, fontSize: fontSize.md, color: inkMuted, lineHeight: 1.5 }}>

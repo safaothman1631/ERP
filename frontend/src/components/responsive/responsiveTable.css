@@ -1,0 +1,195 @@
+/*
+ * ResponsiveTable — table → card pattern (system-wide-ux-overhaul, task 4.2).
+ *
+ * Validates:
+ *   - Requirement 4.1 (Mobile_Viewport renders rows as stacked cards
+ *     preserving the same data + same row actions as the desktop table).
+ *   - Requirement 4.2 (above Mobile_Viewport, traditional grid table with
+ *     sortable columns and sticky header).
+ *   - Requirement 4.3 (> 5 columns and viewport ≤ Tablet — only high-priority
+ *     columns render; the rest sit behind a per-row "Show more" affordance).
+ *   - Requirement 5.3 (horizontal swipe on a Mobile_Viewport row card reveals
+ *     row actions; an equivalent tap-only path is provided via a Dropdown
+ *     button rendered inside the card header).
+ *
+ * Logical-CSS only — no `left`/`right`/`margin-left`/`padding-right`
+ * (R3.8, R14.7). Card spacing is sourced from `theme/tokens.ts` via the
+ * inline `space` consumption in `ResponsiveTable.tsx`; this stylesheet only
+ * holds rules whose CSS shape (selectors, transitions, grid templates) is
+ * easier to read in plain CSS than in inline styles.
+ */
+
+/* ------------------------------------------------------------------ */
+/* Mobile card wrapper + swipe-to-reveal panel (R4.1, R5.3)            */
+/* ------------------------------------------------------------------ */
+
+.responsive-table__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /*
+   * The list is a `<ul>` with no marker; on mobile it scrolls vertically
+   * with the page, never horizontally. `touch-action: pan-y` on each card
+   * captures horizontal pointer drags for the swipe-to-reveal gesture
+   * while still allowing the page to scroll vertically.
+   */
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.responsive-table__card-wrapper {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 14px;
+  background: var(--color-surface, #FFFFFF);
+}
+
+/*
+ * Action panel — absolutely positioned at the inline-end edge of the
+ * wrapper, sized to MOBILE_REVEAL_DISTANCE (96 px) wide. The card body
+ * sits above it (z-index: 1) and translates inline-start to reveal it.
+ *
+ * The panel is hidden from assistive technology when not revealed
+ * (`aria-hidden` toggled by JS) so AT users discover row actions through
+ * the tap-only Dropdown trigger in the card header instead.
+ */
+.responsive-table__actions-panel {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  inline-size: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(15, 23, 42, 0.04);
+  z-index: 0;
+}
+
+.responsive-table__actions-panel[hidden] {
+  display: none;
+}
+
+/*
+ * Card body — opaque, on top of the action panel, translates on swipe.
+ * `touch-action: pan-y` allows the page to keep scrolling vertically while
+ * the card captures horizontal swipes.
+ */
+.responsive-table__card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  background: inherit;
+  transition: transform 200ms cubic-bezier(0.2, 0, 0, 1);
+  touch-action: pan-y;
+}
+
+.responsive-table__card--dragging {
+  transition: none;
+}
+
+.responsive-table__card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* The body of label/value pairs uses a <dl>; the layout is a 2-col grid
+ * per pair so labels align consistently across rows of the same card. */
+.responsive-table__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.responsive-table__row {
+  display: grid;
+  grid-template-columns: minmax(96px, 40%) minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+}
+
+.responsive-table__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-ink-500, #64748B);
+  margin: 0;
+}
+
+.responsive-table__value {
+  font-size: 14px;
+  color: var(--color-ink-900, #0F172A);
+  margin: 0;
+  min-inline-size: 0;
+  word-break: break-word;
+}
+
+.responsive-table__row--align-start .responsive-table__value {
+  text-align: start;
+}
+.responsive-table__row--align-center .responsive-table__value {
+  text-align: center;
+}
+.responsive-table__row--align-end .responsive-table__value {
+  text-align: end;
+}
+
+/* Per-card "Show more" toggle — visible only when the table has more
+ * columns than the priority budget allows (R4.3 — > 5 columns + Tablet
+ * applies on Mobile cards too: the card shows high-priority rows first
+ * and stacks the rest behind a toggle). */
+.responsive-table__show-more {
+  align-self: flex-start;
+  margin-block-start: 4px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Tablet expanded-row content (R4.3 — per-row "Show more")             */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Rendered by AntD `Table.expandable.expandedRowRender` when the table
+ * has more than 5 columns and the viewport is ≤ Tablet. Each non-high
+ * column is shown as a stacked label/value pair below the row.
+ */
+.responsive-table__expanded {
+  display: grid;
+  grid-template-columns: minmax(120px, 30%) minmax(0, 1fr);
+  gap: 8px 16px;
+  padding-block: 8px;
+}
+
+.responsive-table__expanded-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-ink-500, #64748B);
+  margin: 0;
+}
+
+.responsive-table__expanded-value {
+  font-size: 14px;
+  color: var(--color-ink-900, #0F172A);
+  margin: 0;
+  min-inline-size: 0;
+  word-break: break-word;
+}
+
+/* ------------------------------------------------------------------ */
+/* Empty state (Mobile path)                                           */
+/* ------------------------------------------------------------------ */
+
+.responsive-table__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+}

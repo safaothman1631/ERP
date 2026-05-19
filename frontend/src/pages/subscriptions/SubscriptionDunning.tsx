@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Tag, message, Card } from 'antd';
+import { Button, Tag, message, Card } from 'antd';
 import { ReloadOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +7,7 @@ import api from '../../api';
 import { PageHeader } from '../../design-system';
 import { space } from '../../theme/tokens';
 import dayjs from 'dayjs';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 interface Subscription {
   id: string;
@@ -128,7 +129,7 @@ const SubscriptionDunning: React.FC = () => {
       />
       
       <Card style={{ marginTop: space.md }}>
-        <Table
+        <ResponsiveTableAdapter
           columns={columns}
           dataSource={subscriptions}
           loading={loading}

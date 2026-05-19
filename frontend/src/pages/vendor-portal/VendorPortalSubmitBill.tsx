@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Input, DatePicker, Button, Table, InputNumber, Space, Select, Typography } from 'antd';
+import { Card, Form, Input, DatePicker, Button, InputNumber, Space, Select, Typography } from 'antd';
 import { PlusOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { message } from '../../utils/message';
 import vendorApi from '../../api/vendorPortal';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
 
 const { TextArea } = Input;
 const { Title } = Typography;
@@ -279,7 +281,7 @@ const VendorPortalSubmitBill: React.FC = () => {
                 </Button>
               </div>
 
-              <Table
+              <ResponsiveTableAdapter
                 dataSource={lines}
                 columns={columns}
                 pagination={false}

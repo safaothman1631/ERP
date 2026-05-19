@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Row, Col, Card, Table, Spin, Button, Space, Timeline, Typography, Empty } from 'antd';
+import { Row, Col, Card, Button, Space, Timeline, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import {
   DollarOutlined, TeamOutlined, WarningOutlined,
@@ -7,12 +7,18 @@ import {
   FileTextOutlined, BarChartOutlined, WalletOutlined,
   ClockCircleOutlined, CheckCircleOutlined, InboxOutlined,
 } from '@ant-design/icons';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import api, { backendRetryConfig, isBackendUnavailableError } from '../api';
-import { PageHeader, KpiCard, StatusTag, EmptyState } from '../design-system';
+import { PageHeader, KpiCard, StatusTag, EmptyState, LoadingSkeleton } from '../design-system';
 import DashboardHero from '../components/DashboardHero';
 import { palette, space, radius } from '../theme/tokens';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
+import { ResponsiveChart } from '../components/responsive/ResponsiveChart';
+import { asTranslationKey } from '../i18n/types';
+import { HelpIcon } from '../help/HelpIcon';
+import { InlineError } from '../components/feedback/InlineError';
+import { useLoadingState } from '../hooks/useLoadingState';
 
 const { Text, Title } = Typography;
 
@@ -23,6 +29,7 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [backendUnavailable, setBackendUnavailable] = useState(false);
   const initialFetchDoneRef = useRef(false);
+  const { showSkeleton } = useLoadingState(loading);
 
   const fetchDashboard = async (forceRetry = false) => {
     setLoading(true);
@@ -53,6 +60,7 @@ const Dashboard: React.FC = () => {
       title={t('dashboard')}
       subtitle={t('overview_subtitle')}
       helpKey="dashboard"
+      sectionId="dashboard.kpis"
       extra={
         <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => navigate('/invoices/new')}>
           {t('new_invoice')}
@@ -61,25 +69,22 @@ const Dashboard: React.FC = () => {
     />
   );
 
-  if (loading) return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />;
+  if (showSkeleton) return (
+    <div>
+      {pageHeader}
+      <LoadingSkeleton variant="card" />
+    </div>
+  );
   if (backendUnavailable) return (
     <div>
       {pageHeader}
-      <EmptyState
-        icon={<WarningOutlined />}
-        title={t('backend_unavailable_title')}
-        description={t('backend_unavailable_description')}
-        actionLabel={t('retry')}
-        onAction={() => void fetchDashboard(true)}
-      />
+      <InlineError messageKey="error_backend_unavailable" onRetry={() => void fetchDashboard(true)} />
     </div>
   );
   if (!data) return (
     <div>
       {pageHeader}
-      <Empty description={t('error')} style={{ marginTop: 100 }}>
-        <Button onClick={() => void fetchDashboard(true)}>{t('retry')}</Button>
-      </Empty>
+      <InlineError messageKey="error_loading" onRetry={() => void fetchDashboard(true)} />
     </div>
   );
 
@@ -112,7 +117,7 @@ const Dashboard: React.FC = () => {
       <DashboardHero onCreateInvoice={() => navigate('/invoices/new')} />
 
       {/* KPI cards */}
-      <Row gutter={[space.md, space.md]}>
+      <Row gutter={[space.md, space.md]} data-section-id="dashboard.kpis">
         <Col xs={24} sm={12} lg={6}>
           <KpiCard
             title={t('total_receivable')}
@@ -178,7 +183,7 @@ const Dashboard: React.FC = () => {
       </Row>
 
       {/* Quick actions */}
-      <Card style={cardStyle} title={<Title level={5} style={{ margin: 0 }}>{t('quick_actions')}</Title>}>
+      <Card style={cardStyle} title={<Space align="center"><Title level={5} style={{ margin: 0 }}>{t('quick_actions')}</Title><HelpIcon sectionId="dashboard.quickActions" /></Space>} data-section-id="dashboard.quickActions">
         <Row gutter={[space.sm, space.sm]}>
           {quickActions.map((action, i) => (
             <Col xs={12} sm={6} key={i}>
@@ -197,8 +202,14 @@ const Dashboard: React.FC = () => {
       </Card>
 
       {/* Income vs Expense chart */}
-      <Card style={cardStyle} title={<Title level={5} style={{ margin: 0 }}>{t('income')} / {t('expenses')}</Title>}>
-        <ResponsiveContainer width="100%" height={320}>
+      <Card style={cardStyle} title={<Space align="center"><Title level={5} style={{ margin: 0 }}>{t('income')} / {t('expenses')}</Title><HelpIcon sectionId="dashboard.incomeExpenseChart" /></Space>} data-section-id="dashboard.incomeExpenseChart">
+        <ResponsiveChart
+          legendItems={[
+            { id: 'income', labelKey: asTranslationKey('income'), color: palette.success },
+            { id: 'expense', labelKey: asTranslationKey('expenses'), color: palette.danger },
+          ]}
+          minMobileBlockSize={320}
+        >
           <BarChart data={data.income_expense_chart} barSize={28}>
             <CartesianGrid strokeDasharray="3 3" stroke={palette.ink100} />
             <XAxis dataKey="month" tick={{ fill: palette.ink500, fontSize: 12 }} />
@@ -207,21 +218,21 @@ const Dashboard: React.FC = () => {
               contentStyle={{ borderRadius: radius.md, border: `1px solid ${palette.border}`, boxShadow: '0 8px 24px rgba(15,23,42,0.10)' }}
               formatter={(value) => [`${(value as number)?.toLocaleString()} ${currencySuffix}`]}
             />
-            <Legend wrapperStyle={{ paddingTop: space.md }} />
             <Bar dataKey="income"  fill={palette.success} name={t('income')}   radius={[8, 8, 0, 0]} />
             <Bar dataKey="expense" fill={palette.danger}  name={t('expenses')} radius={[8, 8, 0, 0]} />
           </BarChart>
-        </ResponsiveContainer>
+        </ResponsiveChart>
       </Card>
 
       {/* Recent invoices */}
       <Card
         style={cardStyle}
-        title={<Title level={5} style={{ margin: 0 }}>{t('invoices')}</Title>}
+        title={<Space align="center"><Title level={5} style={{ margin: 0 }}>{t('invoices')}</Title><HelpIcon sectionId="dashboard.recentInvoices" /></Space>}
         extra={<Button type="link" onClick={() => navigate('/invoices')}>{t('all')} {'>'}</Button>}
+        data-section-id="dashboard.recentInvoices"
       >
         {data.recent_invoices?.length > 0 ? (
-          <Table dataSource={data.recent_invoices} columns={invoiceCols} rowKey="id" pagination={false} size="small" />
+          <ResponsiveTableAdapter dataSource={data.recent_invoices} columns={invoiceCols} rowKey="id" pagination={false} size="small" />
         ) : (
           <EmptyState
             icon={<InboxOutlined />}
@@ -234,7 +245,7 @@ const Dashboard: React.FC = () => {
       </Card>
 
       {/* Activity timeline */}
-      <Card style={cardStyle} title={<Title level={5} style={{ margin: 0 }}>{t('activities')}</Title>}>
+      <Card style={cardStyle} title={<Space align="center"><Title level={5} style={{ margin: 0 }}>{t('activities')}</Title><HelpIcon sectionId="dashboard.activities" /></Space>} data-section-id="dashboard.activities">
         <Timeline
           items={[
             { color: 'green', icon: <CheckCircleOutlined />, content: (

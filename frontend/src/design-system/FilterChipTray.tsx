@@ -21,8 +21,9 @@ export interface FilterChipTrayProps {
 /**
  * FilterChipTray — Sprint 5 — shows active filters as removable chips above a list.
  * Pair with FilterBar: each chip = one applied filter; remove chip = clear that filter.
+ * React.memo applied per Requirements 18.4.
  */
-export const FilterChipTray: React.FC<FilterChipTrayProps> = ({ chips, onClearAll, isDark = false }) => {
+const FilterChipTrayInner: React.FC<FilterChipTrayProps> = ({ chips, onClearAll, isDark = false }) => {
   const { t } = useTranslation();
   if (chips.length === 0) return null;
 
@@ -58,5 +59,7 @@ export const FilterChipTray: React.FC<FilterChipTrayProps> = ({ chips, onClearAl
     </div>
   );
 };
+
+export const FilterChipTray = React.memo(FilterChipTrayInner);
 
 export default FilterChipTray;

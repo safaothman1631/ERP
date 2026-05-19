@@ -30,15 +30,15 @@ export const AddressInput: React.FC<AddressInputProps> = ({ value = {}, onChange
   return (
     <Row gutter={[8, 8]}>
       <Col span={24}>
-        <Input placeholder={t('street', 'شەقام')} value={value.street} onChange={(e) => set({ street: e.target.value })} />
+        <Input placeholder={t('street', 'Street')} value={value.street} onChange={(e) => set({ street: e.target.value })} />
       </Col>
       <Col span={12}>
-        <Input placeholder={t('city', 'شار')} value={value.city} onChange={(e) => set({ city: e.target.value })} />
+        <Input placeholder={t('city', 'City')} value={value.city} onChange={(e) => set({ city: e.target.value })} />
       </Col>
       <Col span={12}>
         <Select
           showSearch
-          placeholder={t('governorate', 'پارێزگا')}
+          placeholder={t('governorate', 'Governorate')}
           value={value.governorate}
           onChange={(v: string) => set({ governorate: v })}
           options={IRAQ_GOVERNORATES.map((g) => ({ label: g, value: g }))}
@@ -46,10 +46,10 @@ export const AddressInput: React.FC<AddressInputProps> = ({ value = {}, onChange
         />
       </Col>
       <Col span={12}>
-        <Input placeholder={t('postal_code', 'کۆدی پۆستە')} value={value.postal_code} onChange={(e) => set({ postal_code: e.target.value })} />
+        <Input placeholder={t('postal_code', 'Postal code')} value={value.postal_code} onChange={(e) => set({ postal_code: e.target.value })} />
       </Col>
       <Col span={12}>
-        <Input placeholder={t('country', 'وڵات')} value={value.country ?? 'Iraq'} onChange={(e) => set({ country: e.target.value })} />
+        <Input placeholder={t('country', 'Country')} value={value.country ?? 'Iraq'} onChange={(e) => set({ country: e.target.value })} />
       </Col>
     </Row>
   );

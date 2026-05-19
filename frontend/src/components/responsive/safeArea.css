@@ -1,0 +1,48 @@
+/*
+ * Safe-area-inset shell utility — system-wide-ux-overhaul task 4.5.
+ *
+ * Applies `env(safe-area-inset-*)` padding to root layout containers and
+ * full-screen Dialogs so that content never collides with device notches,
+ * rounded corners, or home indicators on iOS / Android.
+ *
+ * Validates:
+ *   - Requirement 2.5 (Mobile_Viewport content occupies inline width minus
+ *     Safe_Area_Insets)
+ *   - Requirement 2.7 (root layout containers + full-screen Dialogs apply
+ *     padding-inline-start/end and padding-block-start/end with
+ *     env(safe-area-inset-*))
+ *   - Requirement 3.8 / 14.7 (logical properties only — no left/right)
+ *
+ * Apply by adding the `responsive-shell` class to the outermost element of
+ * any layout that should respect safe areas:
+ *   - AppShell  (`<Layout className="responsive-shell">`)
+ *   - AuthLayout (`<div className="responsive-shell">`)
+ *   - Any full-screen Dialog (`className="responsive-shell"` on the
+ *     overlay / wrapper)
+ *
+ * The class adds insets ON TOP of any padding the container already
+ * declares — `padding` is set with `env()` directly, which gracefully
+ * resolves to `0` on browsers/devices that don't expose safe-area
+ * environment variables.
+ */
+
+.responsive-shell {
+  /* Logical-side padding so RTL inverts automatically. */
+  padding-inline-start: env(safe-area-inset-left);
+  padding-inline-end: env(safe-area-inset-right);
+  padding-block-start: env(safe-area-inset-top);
+  padding-block-end: env(safe-area-inset-bottom);
+}
+
+/*
+ * Compose with `.responsive-shell--max` to ALSO clamp the container's
+ * available inline-size to (100vw - safe-area-insets) on Mobile_Viewport.
+ *
+ * Use sparingly — primarily on full-screen Dialogs that render edge-to-edge
+ * on phones, where 100vw can otherwise hide content under a device notch.
+ */
+.responsive-shell--max {
+  max-inline-size: calc(
+    100vw - env(safe-area-inset-left) - env(safe-area-inset-right)
+  );
+}

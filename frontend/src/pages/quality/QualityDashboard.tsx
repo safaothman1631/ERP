@@ -1,12 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Table, Spin } from 'antd';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Card, Row, Col } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import api from '../../api';
 import { message } from '../../utils/message';
-import { PageHeader, KpiCard, StatusTag } from '../../design-system';
+import { PageHeader, KpiCard, StatusTag, LoadingSkeleton } from '../../design-system';
+import { InlineError } from '../../components/feedback/InlineError';
+import { useLoadingState } from '../../hooks/useLoadingState';
 import { space } from '../../theme/tokens';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
+import { asTranslationKey } from '../../i18n/types';
 
 interface DashboardData {
   checks_total: number;
@@ -26,12 +31,15 @@ interface FailedCheck {
 const QualityDashboard: React.FC = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [data, setData] = useState<DashboardData | null>(null);
   const [recentFailures, setRecentFailures] = useState<FailedCheck[]>([]);
   const [trendData, setTrendData] = useState<any[]>([]);
+  const { showSkeleton } = useLoadingState(loading);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
+    setError(false);
     try {
       const [dashRes, checksRes] = await Promise.all([
         api.get('/api/quality/dashboard'),
@@ -54,11 +62,11 @@ const QualityDashboard: React.FC = () => {
       }
       setTrendData(trend);
     } catch {
-      message.error(t('error'));
+      setError(true);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -85,8 +93,12 @@ const QualityDashboard: React.FC = () => {
     },
   ];
 
-  if (loading || !data) {
-    return <Spin size="large" style={{ display: 'flex', justifyContent: 'center', marginTop: 100 }} />;
+  if (error) {
+    return <InlineError onRetry={fetchData} />;
+  }
+
+  if (showSkeleton || !data) {
+    return <LoadingSkeleton variant="card" />;
   }
 
   const passRate = data.checks_total > 0 ? ((data.checks_passed / data.checks_total) * 100).toFixed(1) : '0.0';
@@ -135,7 +147,7 @@ const QualityDashboard: React.FC = () => {
       <Row gutter={[space.md, space.md]}>
         <Col xs={24} lg={12}>
           <Card title={t('quality.recent_failures')} bordered={false}>
-            <Table
+            <ResponsiveTableAdapter
               dataSource={recentFailures}
               columns={failureColumns}
               rowKey="id"
@@ -146,7 +158,12 @@ const QualityDashboard: React.FC = () => {
         </Col>
         <Col xs={24} lg={12}>
           <Card title={t('quality.trend_chart')} bordered={false}>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveChart
+              legendItems={[
+                { id: 'pass', labelKey: asTranslationKey('quality.passed'), color: '#52c41a' },
+                { id: 'fail', labelKey: asTranslationKey('quality.failed'), color: '#ff4d4f' },
+              ]}
+            >
               <LineChart data={trendData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="week" />
@@ -155,7 +172,7 @@ const QualityDashboard: React.FC = () => {
                 <Line type="monotone" dataKey="pass" stroke="#52c41a" name={t('quality.passed')} />
                 <Line type="monotone" dataKey="fail" stroke="#ff4d4f" name={t('quality.failed')} />
               </LineChart>
-            </ResponsiveContainer>
+            </ResponsiveChart>
           </Card>
         </Col>
       </Row>

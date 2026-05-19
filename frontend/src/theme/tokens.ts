@@ -237,9 +237,11 @@ export const lineHeight = {
 
 // ───────────────────────────── Control sizing (density) ─────────────────────────────
 export const controlHeight = {
-  compact: 32,
-  default: 36,
-  comfort: 44,
+  compact:     32,
+  default:     36,
+  comfortable: 36,
+  comfort:     44,
+  spacious:    44,
 } as const;
 
 // ───────────────────────────── Motion ─────────────────────────────
@@ -412,11 +414,108 @@ export const hcDark = {
   focus: '#FFFF00',
 } as const;
 
+// ───────────────────────────── Glass Morphism ─────────────────────────────
+/**
+ * Glass morphism tokens for Topbar, Command Palette, Login card, and Modals.
+ * Requirements: 12.1–12.6
+ */
+export const glass = {
+  topbar: {
+    light: { bg: 'rgba(255,255,255,0.82)', blur: 'blur(20px) saturate(160%)', border: 'rgba(15,23,42,0.08)' },
+    dark:  { bg: 'rgba(17,26,46,0.86)',    blur: 'blur(20px) saturate(160%)', border: 'rgba(255,255,255,0.12)' },
+  },
+  palette: {
+    light: { bg: 'rgba(255,255,255,0.70)', blur: 'blur(24px)', border: 'rgba(15,23,42,0.08)' },
+    dark:  { bg: 'rgba(17,26,46,0.15)',    blur: 'blur(24px)', border: 'rgba(255,255,255,0.12)' },
+  },
+  login: {
+    light: { bg: 'rgba(255,255,255,0.70)', blur: 'blur(16px)', border: 'rgba(15,23,42,0.08)' },
+    dark:  { bg: 'rgba(17,26,46,0.70)',    blur: 'blur(16px)', border: 'rgba(255,255,255,0.12)' },
+  },
+  modal: {
+    light: { bg: 'rgba(255,255,255,0.70)', blur: 'blur(20px)', border: 'rgba(15,23,42,0.08)' },
+    dark:  { bg: 'rgba(17,26,46,0.86)',    blur: 'blur(20px)', border: 'rgba(255,255,255,0.12)' },
+  },
+} as const;
+
+/**
+ * Returns a GlassStyle object for use in inline styles or CSS-in-JS.
+ * Uses the glass token map for consistent values across all surfaces.
+ * Falls back to solid surface token when backdrop-filter is unsupported.
+ * Requirements: 12.1–12.6
+ */
+export interface GlassStyle {
+  backdropFilter: string;
+  WebkitBackdropFilter: string;
+  background: string;
+  border: string;
+  boxShadow: string;
+  /** Solid fallback background for @supports not (backdrop-filter) */
+  fallbackBackground: string;
+}
+
+/**
+ * Surface keys that map to the glass token map.
+ * Use 'topbar' for the sticky header, 'palette' for the command palette,
+ * 'login' for the login page card, 'modal' for modals and drawers.
+ */
+export type GlassSurface = keyof typeof glass;
+
+/**
+ * Returns a GlassStyle object for a given surface and mode.
+ * The blur parameter overrides the token blur when provided.
+ *
+ * @param mode    - 'light' | 'dark'
+ * @param blur    - backdrop-filter blur radius in px (uses token value when 0)
+ * @param surface - which glass token surface to use (default: 'modal')
+ *
+ * Requirements: 12.1–12.6
+ */
+export function getGlassStyle(
+  mode: 'light' | 'dark',
+  blur: number,
+  surface: GlassSurface = 'modal',
+): GlassStyle {
+  const isDark = mode === 'dark';
+  const tokens = glass[surface][isDark ? 'dark' : 'light'];
+
+  // Use the provided blur if non-zero, otherwise extract from the token blur string
+  const blurValue = blur > 0 ? blur : parseInt(tokens.blur.match(/blur\((\d+)px\)/)?.[1] ?? '20', 10);
+  const backdropFilterValue = blur > 0
+    ? `blur(${blurValue}px)`
+    : tokens.blur;
+
+  return {
+    backdropFilter: backdropFilterValue,
+    WebkitBackdropFilter: backdropFilterValue,
+    background: tokens.bg,
+    border: `1px solid ${tokens.border}`,
+    boxShadow: isDark ? shadow.dark.lg : shadow.lg,
+    fallbackBackground: isDark ? palette.darkSurface : palette.surface,
+  };
+}
+
 // ───────────────────────────── AntD Token Bundles ─────────────────────────────
-export type Density = 'compact' | 'default' | 'comfort';
+/**
+ * Density type — three modes with concrete base spacing.
+ * compact: 4px grid, 32px controlHeight, 16px page padding (ERP default)
+ * comfortable: 6px grid, 36px controlHeight, 20px page padding
+ * spacious: 8px grid, 44px controlHeight, 24px page padding
+ * Requirements: 1.5
+ */
+export type Density = 'compact' | 'default' | 'comfortable' | 'comfort' | 'spacious';
+
+/** Page padding per density mode */
+export const densityPagePadding: Record<Density, number> = {
+  compact:     16,
+  default:     20,
+  comfortable: 20,
+  comfort:     24,
+  spacious:    24,
+} as const;
 
 export const buildAntTokens = (mode: 'light' | 'dark', density: Density, isRTL: boolean) => {
-  const ch = controlHeight[density];
+  const ch = controlHeight[density] ?? controlHeight.default;
   const family = isRTL ? fontFamily.rtl : fontFamily.ltr;
 
   const base = {

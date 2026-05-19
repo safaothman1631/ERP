@@ -1,0 +1,293 @@
+{
+  "title": "Settings",
+  "general": "General",
+  "general_desc": "General system settings",
+  "account": "Account",
+  "account_desc": "Account and personal settings",
+  "organization": "Organization",
+  "organization_desc": "Organization settings",
+  "company": "Company",
+  "company_desc": "Company information",
+  "company_name": "Company Name",
+  "company_logo": "Company Logo",
+  "company_address": "Company Address",
+  "company_phone": "Company Phone",
+  "company_email": "Company Email",
+  "company_website": "Company Website",
+  "company_tax_id": "Company Tax ID",
+  "branches": "Branches",
+  "branches_desc": "Manage branches",
+  "new_branch": "New Branch",
+  "branch_name": "Branch Name",
+  "branch_address": "Branch Address",
+  "branch_phone": "Branch Phone",
+  "branch_manager": "Branch Manager",
+  "users": "Users",
+  "users_desc": "Manage users",
+  "roles": "Roles",
+  "roles_desc": "Manage roles",
+  "permissions": "Permissions",
+  "permissions_desc": "Manage permissions",
+  "localization": "Localization",
+  "localization_desc": "Language and locale settings",
+  "language": "Language",
+  "language_desc": "System language selection",
+  "timezone": "Timezone",
+  "date_format": "Date Format",
+  "number_format": "Number Format",
+  "currency": "Currency",
+  "currency_desc": "Currency settings",
+  "default_currency": "Default Currency",
+  "currencies": "Currencies",
+  "exchange_rates": "Exchange Rates",
+  "taxes": "Taxes",
+  "taxes_desc": "Manage taxes",
+  "tax_rates": "Tax Rates",
+  "tax_groups": "Tax Groups",
+  "payment_methods": "Payment Methods",
+  "payment_methods_desc": "Manage payment methods",
+  "payment_terms": "Payment Terms",
+  "payment_terms_desc": "Manage payment terms",
+  "fiscal_year": "Fiscal Year",
+  "fiscal_year_desc": "Fiscal year settings",
+  "fiscal_years": "Fiscal Years",
+  "close_year": "Close Year",
+  "budgets": "Budgets",
+  "budgets_desc": "Manage budgets",
+  "accounts": "Accounts",
+  "accounts_desc": "Chart of accounts",
+  "journals": "Journals",
+  "journals_desc": "Manage journals",
+  "warehouses": "Warehouses",
+  "warehouses_desc": "Manage warehouses",
+  "units": "Units",
+  "units_desc": "Units of measure",
+  "categories": "Categories",
+  "categories_desc": "Item categories",
+  "brands": "Brands",
+  "brands_desc": "Item brands",
+  "pricelists": "Price Lists",
+  "pricelists_desc": "Manage price lists",
+  "email": "Email",
+  "email_desc": "Email settings",
+  "smtp_host": "SMTP Host",
+  "smtp_port": "SMTP Port",
+  "smtp_user": "SMTP User",
+  "smtp_password": "SMTP Password",
+  "email_from": "From",
+  "sms": "SMS",
+  "sms_desc": "SMS settings",
+  "notifications": "Notifications",
+  "notifications_desc": "Notification settings",
+  "integrations": "Integrations",
+  "integrations_desc": "Manage integrations",
+  "webhooks": "Webhooks",
+  "api_tokens": "API Tokens",
+  "appearance": "Appearance",
+  "appearance_desc": "Appearance settings",
+  "theme": "Theme",
+  "density": "Density",
+  "security": "Security",
+  "security_desc": "Security settings",
+  "two_factor": "Two-Factor",
+  "session_timeout": "Session Timeout",
+  "backup": "Backup",
+  "backup_desc": "Backup and restore",
+  "create_backup": "Create Backup",
+  "restore_backup": "Restore Backup",
+  "audit": "Audit",
+  "audit_desc": "Audit log",
+  "numbering": "Numbering",
+  "numbering_desc": "Document numbering settings",
+  "automation": "Automation",
+  "automation_desc": "Automation settings",
+  "cost_centers": "Cost Centers",
+  "cost_centers_desc": "Manage cost centers",
+  "analytic": "Analytics",
+  "analytic_desc": "Analytics settings",
+  "jobs": "Jobs",
+  "jobs_desc": "Manage background jobs",
+  "studio": "Studio",
+  "studio_desc": "Studio settings",
+  "docs_hub": "Docs Hub",
+  "docs_hub_desc": "Manage documents",
+  "ui_gallery": "UI Gallery",
+  "ui_gallery_desc": "Browse UI components",
+  "save_settings": "Save Settings",
+  "settings_saved": "Settings saved",
+  "settings_error": "Error saving settings",
+  "reset_to_default": "Reset to Default",
+  "confirm_reset": "Are you sure you want to reset to default?",
+  "help": {
+    "fiscal": {
+      "what": "What is a fiscal year?",
+      "why": "Why is a fiscal year needed?",
+      "step_1": "Create a fiscal year"
+    },
+    "currencies": {
+      "what": "What are currencies?",
+      "why": "Why are currencies needed?",
+      "step_1": "Add a new currency"
+    },
+    "budgets": {
+      "what": "What is a budget?",
+      "why": "Why is a budget needed?",
+      "step_1": "Create a new budget"
+    },
+    "taxes": {
+      "what": "What is tax?",
+      "why": "Why is tax needed?",
+      "step_1": "Add a new tax rate"
+    },
+    "warehouses": {
+      "what": "What is a warehouse?",
+      "why": "Why is a warehouse needed?",
+      "step_1": "Create a new warehouse"
+    },
+    "units": {
+      "what": "What are units of measure?",
+      "why": "Why are units of measure needed?",
+      "step_1": "Add a new unit"
+    },
+    "categories": {
+      "what": "What are categories?",
+      "why": "Why are categories needed?",
+      "step_1": "Create a new category"
+    },
+    "brands": {
+      "what": "What are brands?",
+      "why": "Why are brands needed?",
+      "step_1": "Add a new brand"
+    },
+    "pricelists": {
+      "what": "What is a price list?",
+      "why": "Why is a price list needed?",
+      "step_1": "Create a new price list"
+    },
+    "payment_methods": {
+      "what": "What are payment methods?",
+      "why": "Why are payment methods needed?",
+      "step_1": "Add a new payment method"
+    },
+    "payment_terms": {
+      "what": "What are payment terms?",
+      "why": "Why are payment terms needed?",
+      "step_1": "Create new payment terms"
+    },
+    "accounts": {
+      "what": "What is a chart of accounts?",
+      "why": "Why is a chart of accounts needed?",
+      "step_1": "Add a new account"
+    },
+    "journals": {
+      "what": "What is a journal?",
+      "why": "Why is a journal needed?",
+      "step_1": "Create a new journal"
+    },
+    "cost_centers": {
+      "what": "What is a cost center?",
+      "why": "Why is a cost center needed?",
+      "step_1": "Create a new cost center"
+    },
+    "analytic": {
+      "what": "What is analytics?",
+      "why": "Why is analytics needed?",
+      "step_1": "Create analytics configuration"
+    },
+    "numbering": {
+      "what": "What is numbering?",
+      "why": "Why is numbering needed?",
+      "step_1": "Create numbering configuration"
+    },
+    "automation": {
+      "what": "What is automation?",
+      "why": "Why is automation needed?",
+      "step_1": "Create a new automation"
+    },
+    "audit": {
+      "what": "What is audit?",
+      "why": "Why is audit needed?",
+      "step_1": "View audit log"
+    },
+    "jobs": {
+      "what": "What are background jobs?",
+      "why": "Why are background jobs needed?",
+      "step_1": "Create a new background job"
+    },
+    "users": {
+      "what": "What are users?",
+      "why": "Why are users needed?",
+      "step_1": "Add a new user"
+    },
+    "roles": {
+      "what": "What are roles?",
+      "why": "Why are roles needed?",
+      "step_1": "Create a new role"
+    },
+    "company": {
+      "what": "What is company information?",
+      "why": "Why is company information needed?",
+      "step_1": "Fill in company information"
+    },
+    "branches": {
+      "what": "What are branches?",
+      "why": "Why are branches needed?",
+      "step_1": "Create a new branch"
+    },
+    "localization": {
+      "what": "What is localization?",
+      "why": "Why is localization needed?",
+      "step_1": "Create localization settings"
+    },
+    "email": {
+      "what": "What are email settings?",
+      "why": "Why are email settings needed?",
+      "step_1": "Fill in SMTP settings"
+    },
+    "sms": {
+      "what": "What are SMS settings?",
+      "why": "Why are SMS settings needed?",
+      "step_1": "Fill in SMS settings"
+    },
+    "notifications": {
+      "what": "What are notifications?",
+      "why": "Why are notifications needed?",
+      "step_1": "Create notification settings"
+    },
+    "integrations": {
+      "what": "What are integrations?",
+      "why": "Why are integrations needed?",
+      "step_1": "Add a new integration"
+    },
+    "appearance": {
+      "what": "What is appearance?",
+      "why": "Why is appearance needed?",
+      "step_1": "Select your preferred appearance"
+    },
+    "security": {
+      "what": "What is security?",
+      "why": "Why is security needed?",
+      "step_1": "Create security settings"
+    },
+    "backup": {
+      "what": "What is backup?",
+      "why": "Why is backup needed?",
+      "step_1": "Create a new backup"
+    },
+    "studio": {
+      "what": "What is Studio?",
+      "why": "Why is Studio needed?",
+      "step_1": "Open Studio"
+    },
+    "docs_hub": {
+      "what": "What is Docs Hub?",
+      "why": "Why is Docs Hub needed?",
+      "step_1": "Browse documents"
+    },
+    "ui_gallery": {
+      "what": "What is UI Gallery?",
+      "why": "Why is UI Gallery needed?",
+      "step_1": "Open UI Gallery"
+    }
+  }
+}

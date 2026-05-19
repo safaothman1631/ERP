@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Card, Table, Button, Space, Tag, Typography, Row, Col, Slider, Alert, Empty, Modal, Descriptions } from 'antd';
+import { Card, Button, Space, Tag, Typography, Row, Col, Slider, Alert, Empty, Descriptions } from 'antd';
 import { message } from '../../utils/message';
 import { ThunderboltOutlined, LinkOutlined, CloseOutlined, ArrowLeftOutlined, InboxOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader } from '../../design-system';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 const { Text, Title } = Typography;
 
@@ -192,7 +193,7 @@ const SmartMatch: React.FC = () => {
     <div>
       <PageHeader
         title={t('smart_match')}
-        subtitle={t('smart_match_subtitle', 'پاکییەکردنی خۆکار')}
+        subtitle={t('smart_match_subtitle', 'Intelligent transaction matching')}
         extra={
           <Space>
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`/banking/${accountId}/reconciliation`)}>
@@ -256,7 +257,7 @@ const SmartMatch: React.FC = () => {
             size="small"
             style={{ borderRadius: 12 }}
           >
-            <Table
+            <ResponsiveTableAdapter
               dataSource={transactions}
               columns={txnColumns}
               rowKey="id"
@@ -299,7 +300,7 @@ const SmartMatch: React.FC = () => {
                   <Descriptions.Item label={t('reference')}>{selectedTxn.reference || '-'}</Descriptions.Item>
                 </Descriptions>
 
-                <Table
+                <ResponsiveTableAdapter
                   dataSource={candidates}
                   columns={candidateColumns}
                   rowKey="target_id"

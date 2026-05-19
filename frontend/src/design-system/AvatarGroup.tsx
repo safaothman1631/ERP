@@ -15,8 +15,9 @@ export interface AvatarGroupProps {
 
 /**
  * AvatarGroup — Sprint 10 — overlapping avatars with overflow count.
+ * React.memo applied per Requirements 18.4.
  */
-export const AvatarGroup: React.FC<AvatarGroupProps> = ({ users, max = 4, size = 28 }) => {
+const AvatarGroupInner: React.FC<AvatarGroupProps> = ({ users, max = 4, size = 28 }) => {
   const visible = users.slice(0, max);
   const overflow = users.length - visible.length;
   return (
@@ -32,5 +33,7 @@ export const AvatarGroup: React.FC<AvatarGroupProps> = ({ users, max = 4, size =
     </Avatar.Group>
   );
 };
+
+export const AvatarGroup = React.memo(AvatarGroupInner);
 
 export default AvatarGroup;

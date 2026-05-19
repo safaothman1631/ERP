@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { space } from '../theme/tokens';
 import HelpButton from '../components/HelpButton';
+import { HelpIcon } from '../help/HelpIcon';
+import type { SectionId } from '../help/sectionIds';
 
 const { Title, Text } = Typography;
 
@@ -15,13 +17,16 @@ export interface PageHeaderProps {
   tag?: React.ReactNode;
   /** When provided, a HelpButton drawer is shown next to the title. */
   helpKey?: string;
+  /** When provided, renders the universal HelpIcon from the Help_Registry (R6.1, R7.5). */
+  sectionId?: SectionId;
 }
 
 /**
  * PageHeader — title + breadcrumb + actions، پەترۆنی هاوبەش بۆ هەموو لاپەڕە.
  * Sprint 7: respects prefers-reduced-motion.
+ * React.memo applied per Requirements 18.4.
  */
-export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, breadcrumb, extra, tag, helpKey }) => {
+const PageHeaderInner: React.FC<PageHeaderProps> = ({ title, subtitle, breadcrumb, extra, tag, helpKey, sectionId }) => {
   const reduce = useReducedMotion();
   return (
   <motion.div
@@ -29,6 +34,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, breadcr
     animate={reduce ? undefined : { opacity: 1, y: 0 }}
     transition={{ duration: reduce ? 0 : 0.2, ease: [0.2, 0, 0, 1] }}
     style={{ marginBottom: space.lg }}
+    data-section-id={sectionId || undefined}
   >
     {breadcrumb && breadcrumb.length > 0 && (
       <Breadcrumb
@@ -43,7 +49,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, breadcr
         <Space align="center" size={space.sm}>
           <Title level={3} style={{ margin: 0, fontWeight: 600 }}>{title}</Title>
           {tag}
-          {helpKey && <HelpButton pageKey={helpKey} />}
+          {sectionId && <HelpIcon sectionId={sectionId} />}
+          {helpKey && !sectionId && <HelpButton pageKey={helpKey} />}
         </Space>
         {subtitle && (
           <div style={{ marginTop: space.xs }}>
@@ -56,5 +63,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, breadcr
   </motion.div>
   );
 };
+
+export const PageHeader = React.memo(PageHeaderInner);
 
 export default PageHeader;

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Button, Space, Tag, List, Input, message, Spin, Divider } from 'antd';
+import { Card, Button, Space, Tag, List, Input, message, Divider } from 'antd';
 import { EditOutlined, LikeOutlined, DislikeOutlined, CommentOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, LoadingSkeleton } from '../../design-system';
 import { space } from '../../theme/tokens';
+import { useLoadingState } from '../../hooks/useLoadingState';
 
 interface Article {
   id: string;
@@ -34,6 +35,7 @@ export default function ArticleView() {
   const [article, setArticle] = useState<Article | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
+  const { showSkeleton } = useLoadingState(loading);
   const [commentText, setCommentText] = useState('');
 
   const load = async () => {
@@ -80,13 +82,8 @@ export default function ArticleView() {
     }
   };
 
-  if (loading || !article) {
-    return (
-      <Spin
-        size="large"
-        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}
-      />
-    );
+  if (showSkeleton || !article) {
+    return <LoadingSkeleton variant="card" />;
   }
 
   return (

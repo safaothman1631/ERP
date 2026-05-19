@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useState, useEffect } from 'react';
-import { Table, Button, Space, Switch, Tag, Card, Tabs, Segmented } from 'antd';
+import { Button, Space, Switch, Tag, Card, Tabs, Segmented } from 'antd';
 import { message } from '../../utils/message';
 import { ArrowUpOutlined, ArrowDownOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../design-system';
 import { space } from '../../theme/tokens';
 import api from '../../api';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 interface FieldLayout {
   field_name: string;
@@ -112,7 +113,7 @@ const ViewLayoutEditor: React.FC = () => {
     if (!entity) return;
     try {
       await api.put(`/api/studio/view-layouts/${entity}`, { fields });
-      message.success(t('saved', 'پاشەکەوت کرا'));
+      message.success(t('saved', 'Saved'));
       setHasChanges(false);
     } catch {
       message.error(t('error'));
@@ -209,7 +210,7 @@ const ViewLayoutEditor: React.FC = () => {
             </Tag>
           </div>
 
-          <Table
+          <ResponsiveTableAdapter
             columns={columnsForm}
             dataSource={fields}
             rowKey="field_name"
@@ -220,7 +221,7 @@ const ViewLayoutEditor: React.FC = () => {
 
           {hasChanges && (
             <div style={{ padding: space.md, background: '#fff7e6', borderRadius: 8, border: '1px solid #ffd591' }}>
-              {t('studio.unsaved_changes', 'پێویستە دەستکارییەکان بپارێزیت')}
+              {t('studio.unsaved_changes', 'You have unsaved changes')}
             </div>
           )}
         </Space>

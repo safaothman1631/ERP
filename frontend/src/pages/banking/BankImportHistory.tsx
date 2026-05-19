@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Card, Table, Button, Typography, Space, Tag, Empty } from 'antd';
+import { Card, Button, Typography, Space, Tag, Empty } from 'antd';
 import { message } from '../../utils/message';
 import { HistoryOutlined, ArrowLeftOutlined, InboxOutlined, CloudUploadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader } from '../../design-system';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 const { Text } = Typography;
 
@@ -80,7 +81,7 @@ const BankImportHistory: React.FC = () => {
     <div>
       <PageHeader
         title={t('import_history')}
-        subtitle={t('import_history_subtitle', 'مێژووی هێنانەکان')}
+        subtitle={t('import_history_subtitle', 'View past imports')}
         extra={
           <Space>
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`/banking/${accountId}/reconciliation`)}>
@@ -94,7 +95,7 @@ const BankImportHistory: React.FC = () => {
       />
 
       <Card>
-        <Table
+        <ResponsiveTableAdapter
           dataSource={data}
           columns={columns}
           rowKey="id"

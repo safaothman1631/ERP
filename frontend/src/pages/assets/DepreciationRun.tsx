@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Card, DatePicker, Button, Space, Alert, Table, Spin, Empty } from 'antd';
+import { Card, DatePicker, Button, Space, Alert, Empty } from 'antd';
 import { PlayCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import dayjs, { Dayjs } from 'dayjs';
-import { PageHeader } from '../../design-system';
+import { PageHeader, LoadingSkeleton } from '../../design-system';
 import { message } from '../../utils/message';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 interface RunResult {
   processed: number;
@@ -59,7 +60,7 @@ const DepreciationRun: React.FC = () => {
             </Button>
           </div>
 
-          {running && <Spin tip={t('assets.running_depreciation')} />}
+          {running && <LoadingSkeleton variant="row" rows={2} />}
 
           {result && (
             <>
@@ -77,7 +78,7 @@ const DepreciationRun: React.FC = () => {
               {result.errors.length > 0 && (
                 <div>
                   <h4>{t('errors')}</h4>
-                  <Table columns={errorColumns} dataSource={result.errors} rowKey="asset_id" pagination={false} />
+                  <ResponsiveTableAdapter columns={errorColumns} dataSource={result.errors} rowKey="asset_id" pagination={false} />
                 </div>
               )}
             </>

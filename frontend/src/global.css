@@ -420,6 +420,15 @@ html {
 
 }
 
+/* Focus ring replacement for premium-nav-leaf (R14.3) —
+   outline:none above is safe because :focus-visible provides a visible
+   focus indicator sourced from tokens.ts (a11y.focusRingColor). */
+.premium-nav-leaf:focus-visible {
+  outline: 2px solid var(--focus-ring-color, #1F6FEB);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 .premium-nav-leaf:hover {
 
   background: rgba(31, 111, 235, 0.055) !important;

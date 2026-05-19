@@ -402,10 +402,10 @@ export const DashboardKpiStrip: React.FC<{ isDark: boolean }> = ({ isDark }) => 
   }, []);
 
   const items: Array<{ key: string; label: string; value: string; color: string; goTo: string }> = [
-    { key: 'rev', label: t('kpi.revenue', 'داهات'),       value: fmtMoney(kpis.revenue),     color: palette.success, goTo: '/reports' },
-    { key: 'ar',  label: t('kpi.receivables', 'وەرگرتنی پێشتر'), value: fmtMoney(kpis.receivables), color: palette.primary500, goTo: '/invoices' },
-    { key: 'ap',  label: t('kpi.payables', 'دانانی پێشتر'),     value: fmtMoney(kpis.payables),    color: palette.warning, goTo: '/bills' },
-    { key: 'cash',label: t('kpi.cash', 'پارەی نەخت'),     value: fmtMoney(kpis.cash),        color: palette.info, goTo: '/banking' },
+    { key: 'rev', label: t('kpi.revenue', 'Revenue'),       value: fmtMoney(kpis.revenue),     color: palette.success, goTo: '/reports' },
+    { key: 'ar',  label: t('kpi.receivables', 'Receivables'), value: fmtMoney(kpis.receivables), color: palette.primary500, goTo: '/invoices' },
+    { key: 'ap',  label: t('kpi.payables', 'Payables'),     value: fmtMoney(kpis.payables),    color: palette.warning, goTo: '/bills' },
+    { key: 'cash',label: t('kpi.cash', 'Cash'),     value: fmtMoney(kpis.cash),        color: palette.info, goTo: '/banking' },
   ];
 
   return (

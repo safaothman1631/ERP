@@ -26,3 +26,6 @@ dist-ssr
 playwright-report/
 test-results/
 .lighthouseci/
+.vercel
+.env*.local
+release-readiness-report.md

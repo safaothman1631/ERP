@@ -112,7 +112,7 @@ const KitchenDisplay: React.FC = () => {
                 size="small"
                 style={{
                   borderRadius: radius.md,
-                  borderLeft: `4px solid ${ticketColor(ticket.status)}`,
+                  borderInlineStart: `4px solid ${ticketColor(ticket.status)}`,
                 }}
               >
                 <Space direction="vertical" style={{ width: '100%' }}>

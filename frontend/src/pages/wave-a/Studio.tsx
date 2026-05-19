@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, Modal, Form, Input, Select, Tag, message, Card } from 'antd';
+import { Button, Space, Form, Input, Select, Tag, message, Card } from 'antd';
 import { EyeOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader } from '../../design-system';
 import { space } from '../../theme/tokens';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 const Studio: React.FC = () => {
   const { t } = useTranslation();
@@ -77,13 +78,13 @@ const Studio: React.FC = () => {
       />
       <Card style={{ marginTop: space.md }}>
         <h3>{t('studio.custom_models')}</h3>
-        <Table dataSource={models} columns={modelsColumns} loading={loading} rowKey="name" />
+        <ResponsiveTableAdapter dataSource={models} columns={modelsColumns} loading={loading} rowKey="name" />
       </Card>
 
       {selectedModel && (
         <Card style={{ marginTop: space.md }}>
           <h3>{t('studio.fields_for', { model: selectedModel })}</h3>
-          <Table dataSource={fields} columns={fieldsColumns} loading={loading} rowKey="name" />
+          <ResponsiveTableAdapter dataSource={fields} columns={fieldsColumns} loading={loading} rowKey="name" />
           <Button style={{ marginTop: space.md }} onClick={() => { setSelectedModel(null); setFields([]); }}>
             {t('studio.back_to_models')}
           </Button>

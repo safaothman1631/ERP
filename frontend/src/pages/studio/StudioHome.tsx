@@ -79,7 +79,7 @@ const StudioHome: React.FC = () => {
     <div>
       <PageHeader
         title={t('studio.title', 'Studio (No-Code)')}
-        subtitle={t('studio.home_subtitle', 'دەستکاری و خانەی تایبەت بۆ هەر entity')}
+        subtitle={t('studio.home_subtitle', 'Customize and extend any entity with no code')}
         breadcrumb={[{ label: t('home'), to: '/' }, { label: t('studio.title') }]}
       />
 
@@ -98,7 +98,7 @@ const StudioHome: React.FC = () => {
                     {entity.icon}
                   </div>
                   {entity.hasCustomizations && (
-                    <Badge status="success" text={t('studio.customized', 'دەستکاریکراو')} />
+                    <Badge status="success" text={t('studio.customized', 'Customized')} />
                   )}
                 </div>
                 <div>
@@ -120,27 +120,27 @@ const StudioHome: React.FC = () => {
       <Card style={{ marginTop: space.lg }}>
         <div style={{ textAlign: 'center', padding: space.lg }}>
           <AppstoreOutlined style={{ fontSize: 48, color: '#6366f1', marginBottom: space.md }} />
-          <h3>{t('studio.what_can_you_do', 'چیت دەکرێت بکەیت؟')}</h3>
+          <h3>{t('studio.what_can_you_do', 'What can you do in Studio?')}</h3>
           <Row gutter={[space.md, space.md]} style={{ marginTop: space.md }}>
             <Col xs={24} md={8}>
               <div>
                 <SettingOutlined style={{ fontSize: 24, color: '#10b981' }} />
-                <h4>{t('studio.custom_fields', 'خانەی تایبەت')}</h4>
-                <p>{t('studio.custom_fields_desc', 'زیادکردنی خانەی تایبەت بۆ هەر entity')}</p>
+                <h4>{t('studio.custom_fields', 'Custom Fields')}</h4>
+                <p>{t('studio.custom_fields_desc', 'Add custom fields to any entity')}</p>
               </div>
             </Col>
             <Col xs={24} md={8}>
               <div>
                 <AppstoreOutlined style={{ fontSize: 24, color: '#f59e0b' }} />
-                <h4>{t('studio.view_layout', 'ڕێکخستنی دیمەن')}</h4>
-                <p>{t('studio.view_layout_desc', 'دەستکاری بەرچاوبوونی خانەکان لە فۆرم و لیست')}</p>
+                <h4>{t('studio.view_layout', 'View Layout')}</h4>
+                <p>{t('studio.view_layout_desc', 'Control field visibility in forms and lists')}</p>
               </div>
             </Col>
             <Col xs={24} md={8}>
               <div>
                 <ProjectOutlined style={{ fontSize: 24, color: '#ec4899' }} />
-                <h4>{t('studio.automation', 'خۆکارکردن')}</h4>
-                <p>{t('studio.automation_desc', 'درووستکردنی workflow بۆ entity')}</p>
+                <h4>{t('studio.automation', 'Automation')}</h4>
+                <p>{t('studio.automation_desc', 'Create workflows for any entity')}</p>
               </div>
             </Col>
           </Row>

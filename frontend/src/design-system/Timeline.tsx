@@ -7,7 +7,10 @@ export interface TimelineProps extends AntTimelineProps {
 
 /**
  * Timeline — Sprint 10 — wraps AntD Timeline.
+ * React.memo applied per Requirements 18.4.
  */
-export const Timeline: React.FC<TimelineProps> = (props) => <AntTimeline {...props} />;
+const TimelineInner: React.FC<TimelineProps> = (props) => <AntTimeline {...props} />;
+
+export const Timeline = React.memo(TimelineInner);
 
 export default Timeline;

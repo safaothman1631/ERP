@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Table, Spin, Button, Space, Tag, Typography } from 'antd';
+import { Row, Col, Card, Button, Space, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { CalendarOutlined, UserOutlined, DollarOutlined, CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { PageHeader, KpiCard, StatusTag } from '../../design-system';
+import { PageHeader, KpiCard, StatusTag, LoadingSkeleton } from '../../design-system';
 import api from '../../api';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { InlineError } from '../../components/feedback/InlineError';
+import { useLoadingState } from '../../hooks/useLoadingState';
 
 const { Text } = Typography;
 
@@ -32,6 +35,8 @@ const ClinicDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
+  const [error, setError] = useState(false);
+  const { showSkeleton } = useLoadingState(loading);
 
   useEffect(() => {
     void fetchDashboard();
@@ -70,6 +75,7 @@ const ClinicDashboard: React.FC = () => {
     } catch (error) {
       console.error(error);
       setData(null);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -112,8 +118,9 @@ const ClinicDashboard: React.FC = () => {
     },
   ];
 
-  if (loading) {
-    return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />;
+  if (error) return <InlineError onRetry={fetchDashboard} />;
+  if (showSkeleton) {
+    return <LoadingSkeleton variant="card" />;
   }
 
   return (
@@ -171,7 +178,7 @@ const ClinicDashboard: React.FC = () => {
       </Row>
 
       <Card title={t('healthcare.recent_appointments')} style={{ marginTop: 24 }}>
-        <Table
+        <ResponsiveTableAdapter
           dataSource={data?.recent_appointments ?? []}
           columns={columns}
           rowKey="id"

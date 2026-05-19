@@ -49,8 +49,10 @@ export interface OptimizedImageProps
  *  - graceful error handling with fallback src
  *  - `decoding="async"` for non-blocking image decode
  *  - `fetchpriority="low"` for lazy images (browser hint)
+ *
+ * React.memo applied per Requirements 18.4, 18.6.
  */
-export const OptimizedImage: React.FC<OptimizedImageProps> = ({
+const OptimizedImageInner: React.FC<OptimizedImageProps> = ({
   src,
   fallbackSrc,
   alt,
@@ -118,5 +120,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
     </div>
   );
 };
+
+export const OptimizedImage = React.memo(OptimizedImageInner);
 
 export default OptimizedImage;

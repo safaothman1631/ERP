@@ -134,13 +134,9 @@ def login(request: Request, data: LoginRequest):
     # --- Account-level brute-force lockout check ---
     LOCKOUT_THRESHOLD = 5
     LOCKOUT_MINUTES = 15
-    locked_until = user_data.get("locked_until")
-    if isinstance(locked_until, str):
-        try:
-            locked_until = datetime.fromisoformat(locked_until)
-        except Exception:
-            locked_until = None
-    if locked_until and isinstance(locked_until, datetime) and locked_until > datetime.utcnow():
+    from app.services.auth import _to_naive_utc
+    locked_until = _to_naive_utc(user_data.get("locked_until"))
+    if locked_until and locked_until > datetime.utcnow():
         raise HTTPException(
             status_code=423,
             detail="هەژمارەکە بە کاتی بلۆک کراوە بەهۆی دووبارە هەوڵدانی هەڵە. تکایە دواتر هەوڵبدەرەوە",
@@ -202,7 +198,9 @@ def firebase_login(request: Request, body: dict):
 
     try:
         decoded = firebase_auth.verify_id_token(id_token)
-    except Exception:
+    except Exception as exc:
+        import logging
+        logging.error(f"Firebase token verification failed: {type(exc).__name__}: {exc}")
         raise HTTPException(status_code=401, detail="توکنی Firebase هەڵەیە")
 
     email = decoded.get("email")

@@ -1,0 +1,126 @@
+/*
+ * ResponsiveChart styles — system-wide-ux-overhaul task 4.4.
+ *
+ * Logical-CSS only — no left/right/margin-left/padding-right
+ * (Requirements 3.8, 14.7).
+ *
+ * Validates:
+ *   - Requirement 4.6 (100 % inline width, min visible block size 240 px on
+ *     Mobile_Viewport)
+ *   - Requirement 4.7 (legend reflow when intrinsic width exceeds the chart
+ *     container's inline-size)
+ */
+
+.responsive-chart {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+/*
+ * Chart surface — 100 % inline width with `min-block-size` clamping to
+ * keep the chart visible on Mobile_Viewport when the parent grid has not
+ * pinned a height. Recharts' <ResponsiveContainer> fills this surface.
+ */
+.responsive-chart__surface {
+  position: relative;
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+/*
+ * Legend — flex container of legend chips. The `flex-wrap` value is
+ * driven by JS (intrinsic-vs-container measurement) so the legend stays
+ * on a single inline row when it fits, and wraps onto multiple rows when
+ * it does not (R4.7). Logical alignment with `column-gap` / `row-gap`.
+ */
+.responsive-chart__legend {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  column-gap: 16px;
+  row-gap: 8px;
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding-block-start: 12px;
+  padding-block-end: 0;
+  padding-inline-start: 0;
+  padding-inline-end: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.responsive-chart__legend--wrap {
+  flex-wrap: wrap;
+}
+
+.responsive-chart__legend--nowrap {
+  flex-wrap: nowrap;
+  /*
+   * When the legend fits on a single row we still clamp `min-inline-size`
+   * to 0 so a long single label cannot push the row past the container
+   * inline-size on the rare frame between a viewport-resize and the
+   * ResizeObserver callback.
+   */
+  overflow: hidden;
+}
+
+.responsive-chart__legend-item-wrapper {
+  display: inline-flex;
+  align-items: center;
+  /*
+   * Each <li> behaves as a single flex item in the legend row so the
+   * wrap decision is made at the chip level — not the character level.
+   * `min-inline-size: 0` permits flex shrinking when nowrap is active.
+   */
+  min-inline-size: 0;
+}
+
+.responsive-chart__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  /*
+   * Prevent a single legend label from breaking mid-word — the wrap
+   * decision is made at the chip level, not the character level.
+   */
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 18px;
+  /*
+   * `min-inline-size: 0` is intentional so flex shrinking does not push
+   * a long chip past the container's inline-size when nowrap is active.
+   */
+  min-inline-size: 0;
+}
+
+.responsive-chart__legend-swatch {
+  display: inline-block;
+  inline-size: 12px;
+  block-size: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/*
+ * Ghost legend — used purely for intrinsic-width measurement. Removed
+ * from the accessibility tree (`aria-hidden="true"`) and the layout flow
+ * (`position: absolute`), and forced onto a single row regardless of
+ * the visible legend's wrap state.
+ *
+ * `inset-inline-start: -9999px` keeps the ghost off-screen in both LTR
+ * and RTL without using physical `left` / `right` properties.
+ */
+.responsive-chart__legend-ghost {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: -9999px;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 16px;
+}

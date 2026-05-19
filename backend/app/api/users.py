@@ -269,7 +269,7 @@ def list_users(
         items = [it for it in items if role_id in (it.get("role_ids") or [])]
 
     total = len(items)
-    items.sort(key=lambda x: (x.get("created_at") or ""), reverse=True)
+    items.sort(key=lambda x: str(x.get("created_at") or ""), reverse=True)
     return {
         "items": items[offset: offset + limit],
         "total": total,

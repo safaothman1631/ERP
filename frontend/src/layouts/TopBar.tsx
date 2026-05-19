@@ -1,7 +1,7 @@
 import React from 'react';
 import { Layout, Button, Tooltip, Avatar, Dropdown, Space, Badge } from 'antd';
 import {
-  MenuFoldOutlined, MenuUnfoldOutlined, MoonOutlined, SunOutlined, GlobalOutlined,
+  MenuFoldOutlined, MenuUnfoldOutlined, MoonOutlined, SunOutlined,
   LogoutOutlined, UserOutlined, BellOutlined, SearchOutlined, DownOutlined, PlusOutlined,
   QuestionCircleOutlined, ColumnHeightOutlined, SettingOutlined,
 } from '@ant-design/icons';
@@ -9,10 +9,12 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store';
 import { useUiStore } from '../stores/uiStore';
-import { palette, space, radius, layout, transitions } from '../theme/tokens';
+import { palette, space, radius, layout, transitions, glass, zIndex } from '../theme/tokens';
 import Breadcrumb from './Breadcrumb';
 import { useUnreadCount } from './NotificationsDrawer';
 import OrgSwitcher from './OrgSwitcher';
+import BranchSwitcher from './BranchSwitcher';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const { Header } = Layout;
 
@@ -25,11 +27,15 @@ interface TopBarProps {
 }
 
 /**
- * TopBar v2 — premium glass header.
- * - Glassmorphism + subtle gradient underline
- * - Pill-shaped command-K search w/ animated focus
- * - Refined icon cluster + grouped pill controls
- * - Gradient avatar w/ presence dot
+ * TopBar — sticky glass-morphism header.
+ *
+ * - position: sticky; top: 0; z-index: 1100 (zIndex.sticky)
+ * - Glass Morphism: backdrop-filter blur(20px) saturate(160%) from glass.topbar tokens
+ * - @supports not (backdrop-filter) fallback to solid surface token
+ * - Includes: OrgSwitcher, BranchSwitcher, QuickSearch (⌘K), NotificationsDrawer trigger,
+ *   LanguageSwitcher, ThemeToggle
+ *
+ * Requirements: 4.5, 4.6, 4.9, 12.1
  */
 export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDark, onOpenPalette }) => {
   const { t, i18n } = useTranslation();
@@ -43,52 +49,72 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
   const unread = useUnreadCount();
 
   const handleLogout = () => { logout(); navigate('/login'); };
-  const toggleLanguage = () => i18n.changeLanguage(i18n.language === 'ku' ? 'en' : 'ku');
   const collapseIcon = isRTL
     ? (collapsed ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />)
     : (collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />);
 
-  const userMenu = { items: [
-    { key: 'profile',   icon: <UserOutlined />,             label: t('profile', 'Profile') },
-    { key: 'settings',  icon: <SettingOutlined />,          label: t('settings'), onClick: () => navigate('/settings') },
-    { key: 'shortcuts', icon: <QuestionCircleOutlined />,   label: `${t('shortcuts.title', 'Keyboard shortcuts')}  ?`, onClick: () => setShortcutsOpen(true) },
-    { type: 'divider' as const },
-    { key: 'logout',    icon: <LogoutOutlined />, danger: true, label: t('logout'), onClick: handleLogout },
-  ] };
-  const densityMenu = { items: [
-    { key: 'compact',     label: t('density.compact', 'Compact'),         onClick: () => setDensity('compact') },
-    { key: 'comfortable', label: t('density.comfortable', 'Comfortable'), onClick: () => setDensity('comfortable') },
-    { key: 'spacious',    label: t('density.spacious', 'Spacious'),       onClick: () => setDensity('spacious') },
-  ], selectedKeys: [density] };
+  const userMenu = {
+    items: [
+      { key: 'profile',   icon: <UserOutlined />,           label: t('profile', 'Profile') },
+      { key: 'settings',  icon: <SettingOutlined />,        label: t('settings'), onClick: () => navigate('/settings') },
+      { key: 'shortcuts', icon: <QuestionCircleOutlined />, label: `${t('shortcuts.title', 'Keyboard shortcuts')}  ?`, onClick: () => setShortcutsOpen(true) },
+      { type: 'divider' as const },
+      { key: 'logout',    icon: <LogoutOutlined />, danger: true, label: t('logout'), onClick: handleLogout },
+    ],
+  };
+  const densityMenu = {
+    items: [
+      { key: 'compact',     label: t('density.compact', 'Compact'),         onClick: () => setDensity('compact') },
+      { key: 'comfortable', label: t('density.comfortable', 'Comfortable'), onClick: () => setDensity('comfortable') },
+      { key: 'spacious',    label: t('density.spacious', 'Spacious'),       onClick: () => setDensity('spacious') },
+    ],
+    selectedKeys: [density],
+  };
 
-  // Theme-aware colors
-  const headerBg = isDark
-    ? 'linear-gradient(180deg, rgba(17,26,46,0.86) 0%, rgba(17,26,46,0.78) 100%)'
-    : 'linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.82) 100%)';
-  const borderCol = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)';
-  const searchBg  = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.04)';
+  // Glass morphism tokens — Requirements 4.6, 12.1
+  const glassTokens = isDark ? glass.topbar.dark : glass.topbar.light;
+
+  // Fallback solid background for @supports not (backdrop-filter) — Requirement 12.5
+  const solidFallbackBg = isDark ? palette.darkSurface : palette.surface;
+
+  // Derived colors
+  const borderCol  = glassTokens.border;
+  const searchBg   = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.04)';
   const searchBorder = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)';
-  const searchInk = isDark ? 'rgba(255,255,255,0.62)' : palette.ink500;
-  const kbdBg = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.05)';
-  const userInk = isDark ? palette.darkInk : palette.ink900;
+  const searchInk  = isDark ? 'rgba(255,255,255,0.62)' : palette.ink500;
+  const kbdBg      = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.05)';
+  const userInk    = isDark ? palette.darkInk : palette.ink900;
 
   return (
-    <Header style={{
-      padding: `0 ${space.lg}px`,
-      background: headerBg,
-      borderBottom: `1px solid ${borderCol}`,
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      gap: space.md, position: 'sticky', top: 0, zIndex: 99,
-      height: layout.topbarHeight,
-      backdropFilter: 'blur(20px) saturate(160%)',
-      WebkitBackdropFilter: 'blur(20px) saturate(160%)',
-      boxShadow: isDark
-        ? '0 1px 0 rgba(255,255,255,0.04), 0 8px 24px rgba(0,0,0,0.18)'
-        : '0 1px 0 rgba(15,23,42,0.04), 0 8px 24px rgba(15,23,42,0.06)',
-    }}>
-      <style>{topbarCss}</style>
+    <Header
+      className="topbar"
+      style={{
+        padding: `0 ${space.lg}px`,
+        // Glass morphism background — Requirement 12.1
+        background: glassTokens.bg,
+        borderBottom: `1px solid ${borderCol}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: space.md,
+        // Sticky positioning — Requirement 4.5
+        position: 'sticky',
+        top: 0,
+        // z-index 1100 per spec — Requirement 4.5
+        zIndex: zIndex.sticky,
+        height: layout.topbarHeight,
+        // Glass morphism blur — Requirement 4.6, 12.1
+        backdropFilter: glassTokens.blur,
+        WebkitBackdropFilter: glassTokens.blur,
+        boxShadow: isDark
+          ? '0 1px 0 rgba(255,255,255,0.04), 0 8px 24px rgba(0,0,0,0.18)'
+          : '0 1px 0 rgba(15,23,42,0.04), 0 8px 24px rgba(15,23,42,0.06)',
+      }}
+    >
+      {/* Inline CSS: @supports not (backdrop-filter) fallback + micro-interactions */}
+      <style>{topbarCss(solidFallbackBg, isDark)}</style>
 
-      {/* Left: collapse + breadcrumb */}
+      {/* Left: collapse toggle + breadcrumb */}
       <Space size={space.sm} align="center" style={{ minWidth: 0, flex: '1 1 auto', overflow: 'hidden' }}>
         <Button
           type="text"
@@ -101,21 +127,25 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
         <Breadcrumb isDark={isDark} isRTL={isRTL} />
       </Space>
 
-      {/* Center: pill command search */}
+      {/* Center: pill command search — QuickSearch ⌘K trigger — Requirement 4.9 */}
       <button
         type="button"
         onClick={onOpenPalette}
         aria-label={t('search_or_jump', 'Search or jump to\u2026')}
         className="tb-search"
         style={{
-          display: 'flex', alignItems: 'center', gap: space.sm,
+          display: 'flex',
+          alignItems: 'center',
+          gap: space.sm,
           background: searchBg,
           border: `1px solid ${searchBorder}`,
           borderRadius: radius.pill,
           padding: `8px 14px`,
           color: searchInk,
           cursor: 'pointer',
-          minWidth: 320, maxWidth: 460, fontSize: 13,
+          minWidth: 320,
+          maxWidth: 460,
+          fontSize: 13,
           transition: transitions.base,
           flexShrink: 0,
           height: 38,
@@ -125,20 +155,25 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
         <span style={{ flex: 1, textAlign: 'start', color: searchInk }}>
           {t('search_or_jump', 'Search or jump to\u2026')}
         </span>
-        <kbd style={{
-          background: kbdBg,
-          border: `1px solid ${searchBorder}`,
-          borderRadius: 6,
-          padding: '2px 7px',
-          fontSize: 11,
-          color: searchInk,
-          fontFamily: '"SF Mono","JetBrains Mono",Consolas,monospace',
-          fontWeight: 500,
-        }}>⌘K</kbd>
+        <kbd
+          style={{
+            background: kbdBg,
+            border: `1px solid ${searchBorder}`,
+            borderRadius: 6,
+            padding: '2px 7px',
+            fontSize: 11,
+            color: searchInk,
+            fontFamily: '"SF Mono","JetBrains Mono",Consolas,monospace',
+            fontWeight: 500,
+          }}
+        >
+          ⌘K
+        </kbd>
       </button>
 
       {/* Right: action cluster */}
       <Space size={4} align="center" style={{ flexShrink: 0 }}>
+        {/* Quick create */}
         <Tooltip title={t('topbar.quick_create', 'Quick create')}>
           <Button
             type="primary"
@@ -157,6 +192,15 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
 
         <span className="tb-divider" style={{ background: borderCol }} />
 
+        {/* OrgSwitcher — Requirement 4.9 */}
+        <OrgSwitcher isRTL={isRTL} />
+
+        {/* BranchSwitcher — Requirement 4.9 */}
+        <BranchSwitcher isRTL={isRTL} />
+
+        <span className="tb-divider" style={{ background: borderCol }} />
+
+        {/* NotificationsDrawer trigger — Requirement 4.9 */}
         <Tooltip title={t('topbar.notifications', 'Notifications')}>
           <Badge count={unread} size="small" offset={[-4, 4]} color="#EF4444">
             <Button
@@ -170,6 +214,7 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
           </Badge>
         </Tooltip>
 
+        {/* Help / shortcuts */}
         <Tooltip title={t('topbar.help', 'Help')}>
           <Button
             type="text"
@@ -181,7 +226,12 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
           />
         </Tooltip>
 
-        <Dropdown menu={densityMenu} placement={isRTL ? 'bottomLeft' : 'bottomRight'} trigger={['click']}>
+        {/* Density switcher */}
+        <Dropdown
+          menu={densityMenu}
+          placement={isRTL ? 'bottomLeft' : 'bottomRight'}
+          trigger={['click']}
+        >
           <Tooltip title={t('topbar.density', 'Density')}>
             <Button
               type="text"
@@ -193,6 +243,7 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
           </Tooltip>
         </Dropdown>
 
+        {/* ThemeToggle — Requirement 4.9 */}
         <Tooltip title={isDark ? t('light_mode') : t('dark_mode')}>
           <Button
             type="text"
@@ -204,31 +255,25 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
           />
         </Tooltip>
 
-        <Tooltip title={i18n.language === 'ku' ? 'English' : '\u06A9\u0648\u0631\u062F\u06CC'}>
-          <Button
-            type="text"
-            icon={<GlobalOutlined />}
-            onClick={toggleLanguage}
-            aria-label="Language"
-            className="tb-icon-btn tb-lang-btn"
-          >
-            <span style={{ fontSize: 11, fontWeight: 600, marginInlineStart: 4 }}>
-              {i18n.language === 'ku' ? 'EN' : '\u06A9\u0648'}
-            </span>
-          </Button>
-        </Tooltip>
+        {/* LanguageSwitcher — Requirement 4.9, 3.2 */}
+        <LanguageSwitcher size="small" type="text" showLabel className="tb-icon-btn tb-lang-btn" />
 
         <span className="tb-divider" style={{ background: borderCol }} />
 
-        <OrgSwitcher isRTL={isRTL} />
-
-        <Dropdown menu={userMenu} placement={isRTL ? 'bottomLeft' : 'bottomRight'} trigger={['click']}>
+        {/* User menu */}
+        <Dropdown
+          menu={userMenu}
+          placement={isRTL ? 'bottomLeft' : 'bottomRight'}
+          trigger={['click']}
+        >
           <button
             type="button"
             className="tb-user-btn"
             aria-label={t('user_menu', 'User menu')}
             style={{
-              display: 'flex', alignItems: 'center', gap: space.sm,
+              display: 'flex',
+              alignItems: 'center',
+              gap: space.sm,
               background: searchBg,
               border: `1px solid ${searchBorder}`,
               cursor: 'pointer',
@@ -249,19 +294,31 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
               >
                 {(userName || 'U').slice(0, 1).toUpperCase()}
               </Avatar>
-              <span style={{
-                position: 'absolute', bottom: 0, insetInlineEnd: 0,
-                width: 9, height: 9, borderRadius: '50%',
-                background: '#16A34A',
-                border: `2px solid ${isDark ? '#111A2E' : '#fff'}`,
-              }} />
+              {/* Online presence dot */}
+              <span
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  insetInlineEnd: 0,
+                  width: 9,
+                  height: 9,
+                  borderRadius: '50%',
+                  background: '#16A34A',
+                  border: `2px solid ${isDark ? '#111A2E' : '#fff'}`,
+                }}
+              />
             </span>
-            <span style={{
-              fontSize: 13, fontWeight: 500,
-              color: userInk,
-              maxWidth: 110, whiteSpace: 'nowrap',
-              overflow: 'hidden', textOverflow: 'ellipsis',
-            }}>
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 500,
+                color: userInk,
+                maxWidth: 110,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
               {userName ?? 'User'}
             </span>
             <DownOutlined style={{ fontSize: 9, color: searchInk }} />
@@ -272,47 +329,73 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
   );
 };
 
-const topbarCss = `
-  .tb-icon-btn {
-    border-radius: 10px !important;
-    transition: background 0.18s, transform 0.12s !important;
-  }
-  .tb-icon-btn:hover {
-    background: rgba(31,111,235,0.08) !important;
-    transform: translateY(-1px);
-  }
-  .tb-icon-btn:active { transform: translateY(0); }
-  .tb-cta-btn:hover {
-    transform: translateY(-1px) scale(1.04);
-    box-shadow: 0 6px 18px rgba(31,111,235,0.42) !important;
-  }
-  .tb-cta-btn { transition: transform 0.15s, box-shadow 0.2s !important; }
-  .tb-search:hover {
-    border-color: rgba(31,111,235,0.32) !important;
-    background: rgba(31,111,235,0.05) !important;
-  }
-  .tb-search:focus-visible {
-    outline: 2px solid rgba(31,111,235,0.45);
-    outline-offset: 2px;
-  }
-  .tb-user-btn:hover {
-    border-color: rgba(31,111,235,0.32) !important;
-    background: rgba(31,111,235,0.06) !important;
-  }
-  .tb-divider {
-    width: 1px;
-    height: 22px;
-    margin: 0 6px;
-    display: inline-block;
-    align-self: center;
-  }
-  .tb-lang-btn { border-radius: 10px !important; padding-inline: 10px !important; }
-  @media (max-width: 960px) {
-    .tb-search { min-width: 200px !important; }
-  }
-  @media (max-width: 720px) {
-    .tb-search { display: none !important; }
-  }
-`;
+/**
+ * Generates topbar CSS including:
+ * - @supports not (backdrop-filter) fallback to solid surface — Requirement 12.5
+ * - Micro-interaction hover/active states — Requirement 8.1–8.8
+ * - Responsive hiding of search bar on small screens
+ */
+function topbarCss(solidFallbackBg: string, isDark: boolean): string {
+  return `
+    /* Glass morphism @supports fallback — Requirement 12.5 */
+    @supports not (backdrop-filter: blur(1px)) {
+      .topbar {
+        background: ${solidFallbackBg} !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+      }
+    }
+
+    .tb-icon-btn {
+      border-radius: 10px !important;
+      transition: background 0.18s, transform 0.12s !important;
+    }
+    .tb-icon-btn:hover {
+      background: rgba(31,111,235,0.08) !important;
+      transform: translateY(-1px);
+    }
+    .tb-icon-btn:active { transform: translateY(0); }
+
+    .tb-cta-btn:hover {
+      transform: translateY(-1px) scale(1.04);
+      box-shadow: 0 6px 18px rgba(31,111,235,0.42) !important;
+    }
+    .tb-cta-btn { transition: transform 0.15s, box-shadow 0.2s !important; }
+
+    .tb-search:hover {
+      border-color: rgba(31,111,235,0.32) !important;
+      background: rgba(31,111,235,0.05) !important;
+    }
+    .tb-search:focus-visible {
+      outline: 2px solid rgba(31,111,235,0.45);
+      outline-offset: 2px;
+    }
+
+    .tb-user-btn:hover {
+      border-color: rgba(31,111,235,0.32) !important;
+      background: rgba(31,111,235,0.06) !important;
+    }
+
+    .tb-divider {
+      width: 1px;
+      height: 22px;
+      margin: 0 6px;
+      display: inline-block;
+      align-self: center;
+    }
+
+    .tb-lang-btn {
+      border-radius: 10px !important;
+      padding-inline: 10px !important;
+    }
+
+    @media (max-width: 960px) {
+      .tb-search { min-width: 200px !important; }
+    }
+    @media (max-width: 720px) {
+      .tb-search { display: none !important; }
+    }
+  `;
+}
 
 export default TopBar;

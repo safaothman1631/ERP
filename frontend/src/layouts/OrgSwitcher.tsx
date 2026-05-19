@@ -53,7 +53,7 @@ export const OrgSwitcher: React.FC<OrgSwitcherProps> = ({ isRTL }) => {
       if (newToken) {
         localStorage.setItem('token', newToken);
         localStorage.setItem('orgId', target.id);
-        message.success(t('org_switcher.switched', 'دامەزراوە گۆڕدرا'));
+        message.success(t('org_switcher.switched', 'Organization switched'));
         // Reload so all data is re-fetched under the new org context.
         setTimeout(() => window.location.reload(), 400);
       } else {
@@ -61,7 +61,7 @@ export const OrgSwitcher: React.FC<OrgSwitcherProps> = ({ isRTL }) => {
       }
     } catch (e: any) {
       const detail = e?.response?.data?.detail;
-      message.error(detail || t('org_switcher.switch_failed', 'گۆڕینی دامەزراوە سەرکەوتوو نەبوو'));
+      message.error(detail || t('org_switcher.switch_failed', 'Failed to switch organization'));
     } finally {
       setLoading(false);
     }

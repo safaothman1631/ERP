@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Button, Empty, Tag, Typography } from 'antd';
+import { Card, Button, Empty, Tag, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
 import vendorApi from '../../api/vendorPortal';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 const { Title } = Typography;
 
@@ -88,7 +89,7 @@ const VendorPortalPayments: React.FC = () => {
       </div>
 
       <Card style={{ marginTop: 24 }}>
-        <Table
+        <ResponsiveTableAdapter
           dataSource={payments}
           columns={columns}
           loading={loading}

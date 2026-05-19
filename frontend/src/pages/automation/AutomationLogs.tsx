@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tag, Card, Select, DatePicker, Space, Button } from 'antd';
+import { Tag, Card, Select, DatePicker, Space, Button } from 'antd';
 import { ReloadOutlined, FilterOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader } from '../../design-system';
 import { space } from '../../theme/tokens';
 import dayjs, { Dayjs } from 'dayjs';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 const { RangePicker } = DatePicker;
 
@@ -142,7 +143,7 @@ const AutomationLogs: React.FC = () => {
       </Card>
       
       <Card>
-        <Table dataSource={logs} columns={columns} loading={loading} rowKey={(r) => `${r.id || r.ran_at}`} />
+        <ResponsiveTableAdapter dataSource={logs} columns={columns} loading={loading} rowKey={(r) => `${r.id || r.ran_at}`} />
       </Card>
     </div>
   );

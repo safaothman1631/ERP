@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import {
-  Card, Upload, Button, Form, Input, InputNumber, Table, Space, Tag, message, Row, Col, Image, Alert, Popconfirm,
-} from 'antd';
+  Card, Upload, Button, Form, Input, InputNumber, Space, Tag, message, Row, Col, Image, Alert, Popconfirm } from 'antd';
 import { InboxOutlined, ReloadOutlined, CheckOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
+import { ResponsiveForm } from '../components/responsive/ResponsiveForm';
 
 const { Dragger } = Upload;
 
@@ -149,6 +150,7 @@ export default function OCRReceipts() {
               <Button type="primary" icon={<CheckOutlined />} onClick={confirm}>{t('confirm_create_bill')}</Button>
             ) : null}>
             <Form form={form} layout="vertical">
+              <ResponsiveForm layout="single">
               <Row gutter={12}>
                 <Col span={12}><Form.Item name="vendor" label={t('vendor')}><Input /></Form.Item></Col>
                 <Col span={12}><Form.Item name="date" label={t('date')}><Input placeholder="YYYY-MM-DD" /></Form.Item></Col>
@@ -157,12 +159,13 @@ export default function OCRReceipts() {
                 <Col span={8}><Form.Item name="total" label={t('total')}><InputNumber style={{ width: '100%' }} /></Form.Item></Col>
                 <Col span={24}><Form.Item name="currency" label={t('currency')}><Input /></Form.Item></Col>
               </Row>
-            </Form>
+              </ResponsiveForm>
+</Form>
 
             {scan?.parsed?.items && scan.parsed.items.length > 0 && (
               <>
                 <h4>{t('line_items')}</h4>
-                <Table
+                <ResponsiveTableAdapter
                   rowKey={(r, i) => `${i}`}
                   size="small"
                   pagination={false}
@@ -189,7 +192,7 @@ export default function OCRReceipts() {
       </Row>
 
       <Card title={t('scan_history')} style={{ marginTop: 16 }}>
-        <Table rowKey="id" dataSource={history} columns={histCols} pagination={{ pageSize: 10 }} />
+        <ResponsiveTableAdapter rowKey="id" dataSource={history} columns={histCols} pagination={{ pageSize: 10 }} />
       </Card>
     </div>
   );

@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Table, Button, Typography, Spin, Empty, Space } from 'antd';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Card, Row, Col, Statistic, Button, Typography, Empty, Space } from 'antd';
 import { ShoppingOutlined, FileTextOutlined, DollarOutlined, WarningOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
 import vendorApi from '../../api/vendorPortal';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { LoadingSkeleton } from '../../design-system/LoadingSkeleton';
+import { InlineError } from '../../components/feedback/InlineError';
+import { useLoadingState } from '../../hooks/useLoadingState';
 
 const { Title, Text } = Typography;
 
@@ -20,17 +24,16 @@ const VendorPortalDashboard: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentPOs, setRecentPOs] = useState<any[]>([]);
   const [recentBills, setRecentBills] = useState<any[]>([]);
+  const { showSkeleton } = useLoadingState(loading);
 
-  useEffect(() => {
-    loadDashboard();
-  }, []);
-
-  const loadDashboard = async () => {
+  const loadDashboard = useCallback(async () => {
     try {
       setLoading(true);
+      setError(false);
       const [dashRes, posRes, billsRes] = await Promise.all([
         vendorApi.get('/api/vendor-portal/me/dashboard'),
         vendorApi.get('/api/vendor-portal/me/purchase-orders?status=open'),
@@ -45,12 +48,12 @@ const VendorPortalDashboard: React.FC = () => {
         message.error(t('vendor_portal.token_invalid'));
         handleLogout();
       } else {
-        message.error(t('portal.load_failed'));
+        setError(true);
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('vendor_jwt');
@@ -58,6 +61,8 @@ const VendorPortalDashboard: React.FC = () => {
     localStorage.removeItem('vendor_contact_id');
     navigate('/vendor-portal/login');
   };
+
+  useEffect(() => { loadDashboard(); }, [loadDashboard]);
 
   const poColumns = [
     {
@@ -109,10 +114,14 @@ const VendorPortalDashboard: React.FC = () => {
     },
   ];
 
-  if (loading) {
+  if (error) {
+    return <InlineError onRetry={loadDashboard} />;
+  }
+
+  if (showSkeleton) {
     return (
       <div style={{ textAlign: 'center', paddingTop: 100 }}>
-        <Spin size="large" />
+        <LoadingSkeleton variant="card" />
       </div>
     );
   }
@@ -196,7 +205,7 @@ const VendorPortalDashboard: React.FC = () => {
             }
           >
             {recentPOs.length > 0 ? (
-              <Table
+              <ResponsiveTableAdapter
                 dataSource={recentPOs}
                 columns={poColumns}
                 pagination={false}
@@ -218,7 +227,7 @@ const VendorPortalDashboard: React.FC = () => {
             }
           >
             {recentBills.length > 0 ? (
-              <Table
+              <ResponsiveTableAdapter
                 dataSource={recentBills}
                 columns={billColumns}
                 pagination={false}

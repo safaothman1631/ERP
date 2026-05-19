@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, Tag, Select, DatePicker, message } from 'antd';
+import { Button, Space, Tag, Select, DatePicker, message } from 'antd';
 import { ReloadOutlined, CheckOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import dayjs, { Dayjs } from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 dayjs.extend(relativeTime);
 
@@ -229,7 +230,7 @@ const AlertHistory: React.FC = () => {
         </Select>
       </Space>
 
-      <Table
+      <ResponsiveTableAdapter
         dataSource={alerts}
         columns={columns}
         rowKey="id"

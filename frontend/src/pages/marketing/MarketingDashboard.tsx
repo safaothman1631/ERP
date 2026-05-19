@@ -1,19 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Statistic, Table, Spin, Empty } from 'antd';
-import type { TableColumnsType } from 'antd';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Card, Row, Col, Statistic, Empty } from 'antd';
+
 import { useTranslation } from 'react-i18next';
-import { PageHeader } from '../../design-system';
+import { PageHeader, LoadingSkeleton } from '../../design-system';
+import { InlineError } from '../../components/feedback/InlineError';
+import { useLoadingState } from '../../hooks/useLoadingState';
 import api from '../../api';
-import { message } from '../../utils/message';
 import { MailOutlined, SendOutlined, EyeOutlined, ThunderboltOutlined } from '@ant-design/icons';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { formatDate } from '../../utils/formatters';
 import { useNavigate } from 'react-router-dom';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
+import { asTranslationKey } from '../../i18n/types';
 
 const MarketingDashboard: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [kpis, setKpis] = useState({
     campaignsSentThisMonth: 0,
@@ -22,9 +27,11 @@ const MarketingDashboard: React.FC = () => {
     activeAutomations: 0,
   });
   const [chartData, setChartData] = useState<any[]>([]);
+  const { showSkeleton } = useLoadingState(loading);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
+    setError(false);
     try {
       const [campRes, autoRes] = await Promise.all([
         api.get('/api/marketing/campaigns', { params: { limit: 10 } }),
@@ -63,17 +70,17 @@ const MarketingDashboard: React.FC = () => {
       });
       setChartData(chartStub);
     } catch {
-      message.error(t('error'));
+      setError(true);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
-  const columns: TableColumnsType<any> = [
+  const columns: any[] = [
     { title: t('marketing.name'), dataIndex: 'name', key: 'name' },
     { title: t('marketing.subject'), dataIndex: 'subject', key: 'subject' },
     { title: t('marketing.status'), dataIndex: 'status', key: 'status' },
@@ -91,11 +98,13 @@ const MarketingDashboard: React.FC = () => {
     },
   ];
 
+  if (error) return <InlineError onRetry={fetchData} />;
+  if (showSkeleton) return <LoadingSkeleton variant="card" />;
+
   return (
     <div>
       <PageHeader title={t('marketing.dashboard')} subtitle={t('marketing.dashboard_subtitle')} />
 
-      <Spin spinning={loading}>
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
           <Col xs={24} sm={12} lg={6}>
             <Card>
@@ -138,7 +147,11 @@ const MarketingDashboard: React.FC = () => {
 
         <Card title={t('marketing.sends_per_day')} style={{ marginBottom: 24 }}>
           {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveChart
+              legendItems={[
+                { id: 'sent', labelKey: asTranslationKey('marketing.sent'), color: '#1890ff' },
+              ]}
+            >
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
@@ -146,14 +159,14 @@ const MarketingDashboard: React.FC = () => {
                 <Tooltip />
                 <Line type="monotone" dataKey="sent" stroke="#1890ff" />
               </LineChart>
-            </ResponsiveContainer>
+            </ResponsiveChart>
           ) : (
             <Empty description={t('no_data')} />
           )}
         </Card>
 
         <Card title={t('marketing.recent_campaigns')}>
-          <Table
+          <ResponsiveTableAdapter
             columns={columns}
             dataSource={campaigns}
             rowKey="id"
@@ -162,7 +175,6 @@ const MarketingDashboard: React.FC = () => {
             style={{ cursor: 'pointer' }}
           />
         </Card>
-      </Spin>
     </div>
   );
 };

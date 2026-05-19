@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Statistic, Table, Tag, Button, Space } from 'antd';
+import { Card, Row, Col, Statistic, Tag, Button, Space } from 'antd';
 import { 
   HddOutlined, CheckCircleOutlined, CloseCircleOutlined, 
   WarningOutlined, BellOutlined 
@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 dayjs.extend(relativeTime);
 
@@ -194,7 +195,7 @@ const IoTDashboard: React.FC = () => {
             style={{ marginBottom: 16 }}
             extra={<Button onClick={() => navigate('/iot/alerts')}>{t('common.view_all', 'View All')}</Button>}
           >
-            <Table
+            <ResponsiveTableAdapter
               dataSource={recentAlerts}
               columns={alertColumns}
               rowKey="id"

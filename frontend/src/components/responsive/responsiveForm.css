@@ -1,0 +1,161 @@
+/*
+ * ResponsiveForm — descendant rules for token-driven touch-target sizing
+ * on Mobile_Viewport. system-wide-ux-overhaul, task 4.3.
+ *
+ * Validates:
+ *   - Requirement 4.4 (≥ 44 px min-block-size on Mobile_Viewport for every
+ *     form input: input, select, button, checkbox, radio, switch, date
+ *     picker trigger).
+ *   - Requirement 5.1 (≥ 44 × 44 px hit area for every Touch_Target).
+ *   - Requirement 5.2 (≥ 8 px spacing between adjacent Touch_Targets —
+ *     enforced by the grid `row-gap` declared inline in `ResponsiveForm`
+ *     and by the `.responsive-form__line-item` block-start margin).
+ *   - Requirement 4.5 (single-column on Mobile_Viewport — the grid
+ *     template is set inline; this stylesheet only sizes children).
+ *   - Requirement 4.8 (line-item subforms render as expandable cards on
+ *     Mobile_Viewport).
+ *
+ * Boundary semantics — Mobile_Viewport is `width <= 640 px` (R2.6, mirrors
+ * `useViewport`'s classification). Tablet_Viewport (≤ 1024 px) ALSO needs
+ * ≥ 44 px touch targets per R5.1; we re-apply the rule below.
+ *
+ * Logical-CSS only — no `left`/`right`/`margin-left`/`padding-right`
+ * (R3.8, R14.7).
+ */
+
+/* -------------------------------------------------------------------------
+ * R4.4 + R5.1 — touch-target sizing on Mobile_Viewport.
+ *
+ * The descendant selector list covers:
+ *   - native HTML form controls (input, select, textarea, button)
+ *   - AntD Input / Input.Search / Input.Password (`.ant-input`,
+ *     `.ant-input-affix-wrapper`, `.ant-input-number`)
+ *   - AntD Select trigger (`.ant-select-selector`)
+ *   - AntD DatePicker / TimePicker / RangePicker triggers (`.ant-picker`)
+ *   - AntD Button (`.ant-btn`)
+ *   - AntD Switch (`.ant-switch`)
+ *   - AntD Checkbox / Radio wrappers (the visible hit-area element)
+ *
+ * `min-block-size` is logical, so RTL/vertical writing modes inherit the
+ * correct axis.
+ * ------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+  .responsive-form input,
+  .responsive-form select,
+  .responsive-form textarea,
+  .responsive-form button,
+  .responsive-form .ant-input,
+  .responsive-form .ant-input-affix-wrapper,
+  .responsive-form .ant-input-number,
+  .responsive-form .ant-input-number-input,
+  .responsive-form .ant-select-selector,
+  .responsive-form .ant-picker,
+  .responsive-form .ant-btn,
+  .responsive-form .ant-switch,
+  .responsive-form .ant-checkbox-wrapper,
+  .responsive-form .ant-radio-wrapper,
+  .responsive-form summary {
+    min-block-size: 44px;
+  }
+}
+
+/* -------------------------------------------------------------------------
+ * R5.1 — Tablet_Viewport (640 < width ≤ 1024) also requires ≥ 44 × 44 px
+ * touch targets. Desktop (> 1024) keeps AntD's default `controlHeight` as
+ * configured in `theme/tokens.ts` so density modes (`compact`, `default`,
+ * `comfortable`) still apply.
+ * ------------------------------------------------------------------------- */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .responsive-form input,
+  .responsive-form select,
+  .responsive-form textarea,
+  .responsive-form button,
+  .responsive-form .ant-input,
+  .responsive-form .ant-input-affix-wrapper,
+  .responsive-form .ant-input-number,
+  .responsive-form .ant-input-number-input,
+  .responsive-form .ant-select-selector,
+  .responsive-form .ant-picker,
+  .responsive-form .ant-btn,
+  .responsive-form .ant-switch,
+  .responsive-form .ant-checkbox-wrapper,
+  .responsive-form .ant-radio-wrapper,
+  .responsive-form summary {
+    min-block-size: 44px;
+  }
+}
+
+/* -------------------------------------------------------------------------
+ * R4.8 — line-item subforms as expandable cards on Mobile_Viewport.
+ *
+ * The base contract is provided by the native <details>/<summary> element
+ * inside `ResponsiveForm.LineItem`. This stylesheet only adds the visual
+ * card chrome and the inline-end-anchored toggle hint label so the
+ * disclosure triangle, summary content, and "Edit details" affordance read
+ * naturally in both LTR and RTL.
+ * ------------------------------------------------------------------------- */
+.responsive-form__line-item {
+  display: block;
+}
+
+/* Mobile_Viewport: card chrome + toggle hint. */
+@media (max-width: 640px) {
+  .responsive-form__line-item--card {
+    border: 1px solid var(--color-border, #E5E7EB);
+    border-radius: 10px;
+    padding: 12px;
+    background: var(--color-surface, #FFFFFF);
+  }
+
+  .responsive-form__line-item--card > summary {
+    cursor: pointer;
+    list-style: none;
+    /* Logical-side padding so RTL inverts the disclosure spacing. */
+    padding-inline-end: 8px;
+    /* Layout: summary content fills row; "Edit details" hint sits at the
+     * inline-end edge. */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  /* Hide the default disclosure marker — we render an explicit textual
+   * affordance ("Edit details") via the toggle <span> below. */
+  .responsive-form__line-item--card > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .responsive-form__line-item-toggle {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-primary, #1F6FEB);
+    /* Touch-target floor for the toggle hint itself when it is the only
+     * tappable hint. The summary already gets ≥ 44 px above. */
+    min-block-size: 24px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .responsive-form__line-item--card[open] > summary {
+    margin-block-end: 8px;
+  }
+
+  .responsive-form__line-item-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 12px;
+  }
+}
+
+/* Desktop / Tablet: render the line-item flat. <summary> is still a valid
+ * descendant of <details>; we let the browser's default rendering apply but
+ * we DO want the same 8 px row-gap between summary content and the rest of
+ * the body so two-column line-item subforms read consistently. */
+@media (min-width: 641px) {
+  .responsive-form__line-item--inline {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 8px;
+  }
+}

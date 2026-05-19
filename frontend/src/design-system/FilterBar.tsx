@@ -1,8 +1,9 @@
 import React from 'react';
-import { Input, Select, Space, Button, Tooltip } from 'antd';
+import { Input, Select, Space, Tooltip } from 'antd';
 import { SearchOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { space } from '../theme/tokens';
+import { MotionButton } from '../components/MotionButton';
 
 export interface FilterDef {
   key: string;
@@ -25,14 +26,15 @@ export interface FilterBarProps {
 
 /**
  * FilterBar — search + filters + actions. Standard UX pattern لە هەموو list pages.
+ * React.memo applied per Requirements 18.4.
  */
-export const FilterBar: React.FC<FilterBarProps> = ({
+const FilterBarInner: React.FC<FilterBarProps> = ({
   searchPlaceholder, searchValue, onSearchChange,
   filters = [], values = {}, onChange,
   extra, onReset, onRefresh,
 }) => {
   const { t } = useTranslation();
-  const setVal = (k: string, v: unknown) => onChange?.({ ...values, [k]: v });
+  const setVal = React.useCallback((k: string, v: unknown) => onChange?.({ ...values, [k]: v }), [onChange, values]);
 
   return (
     <div style={{
@@ -68,10 +70,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
       ))}
       <div style={{ flex: 1 }} />
       <Space>
-        {onReset && <Button onClick={onReset}>{t('reset') ?? 'Reset'}</Button>}
+        {onReset && <MotionButton onClick={onReset}>{t('reset') ?? 'Reset'}</MotionButton>}
         {onRefresh && (
           <Tooltip title={t('refresh') ?? 'Refresh'}>
-            <Button icon={<ReloadOutlined />} onClick={onRefresh} />
+            <MotionButton icon={<ReloadOutlined />} onClick={onRefresh} />
           </Tooltip>
         )}
         {extra}
@@ -79,5 +81,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     </div>
   );
 };
+
+export const FilterBar = React.memo(FilterBarInner);
 
 export default FilterBar;

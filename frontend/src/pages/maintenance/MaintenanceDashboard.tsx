@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Statistic, Button, Table, Space, Tag } from 'antd';
+import { Row, Col, Card, Statistic, Button, Space, Tag } from 'antd';
 import {
   ToolOutlined,
   CheckCircleOutlined,
@@ -13,7 +13,10 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import { PageHeader } from '../../design-system';
 import { message } from '../../utils/message';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
+import { asTranslationKey } from '../../i18n/types';
 
 interface DashboardData {
   equipment_count: number;
@@ -185,31 +188,38 @@ const MaintenanceDashboard: React.FC = () => {
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} lg={12}>
           <Card title={t('maintenance.requests_by_type')}>
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveChart
+              legendItems={[
+                { id: 'requests', labelKey: asTranslationKey('maintenance.requests'), color: '#1890ff' },
+              ]}
+            >
               <BarChart data={requestsByType}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Legend />
                 <Bar dataKey="value" fill="#1890ff" name={t('maintenance.requests')} />
               </BarChart>
-            </ResponsiveContainer>
+            </ResponsiveChart>
           </Card>
         </Col>
         <Col xs={24} lg={12}>
           <Card title={t('maintenance.mtbf_mttr_trend')}>
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveChart
+              legendItems={[
+                { id: 'mtbf', labelKey: asTranslationKey('maintenance.mtbf'), color: '#52c41a' },
+                { id: 'mttr', labelKey: asTranslationKey('maintenance.mttr'), color: '#faad14' },
+              ]}
+            >
               <LineChart data={mtbfMttrTrend}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip />
-                <Legend />
                 <Line type="monotone" dataKey="mtbf" stroke="#52c41a" name={t('maintenance.mtbf')} />
                 <Line type="monotone" dataKey="mttr" stroke="#faad14" name={t('maintenance.mttr')} />
               </LineChart>
-            </ResponsiveContainer>
+            </ResponsiveChart>
           </Card>
         </Col>
       </Row>
@@ -224,7 +234,7 @@ const MaintenanceDashboard: React.FC = () => {
               </Button>
             }
           >
-            <Table
+            <ResponsiveTableAdapter
               columns={requestColumns}
               dataSource={recentRequests}
               rowKey="id"
@@ -242,7 +252,7 @@ const MaintenanceDashboard: React.FC = () => {
               </Button>
             }
           >
-            <Table
+            <ResponsiveTableAdapter
               columns={scheduleColumns}
               dataSource={overdueSchedules}
               rowKey="id"

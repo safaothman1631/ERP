@@ -1,9 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Table, Button, Tag, Form, Input, InputNumber, DatePicker, Space,
+  Button, Tag, Form, Input, InputNumber, DatePicker, Space,
   Row, Col, Popconfirm, Switch, Select, Tabs, TimePicker, Alert, Tooltip,
-  Divider, Segmented, Result,
-} from 'antd';
+  Divider, Segmented, Result } from 'antd';
 import { message } from '../utils/message';
 import {
   PlusOutlined, DownloadOutlined, CloudOutlined, DeleteOutlined, LockOutlined,
@@ -39,6 +38,9 @@ import SectionHelpPopover from '../components/ui/SectionHelpPopover';
 import PremiumModal from '../components/ui/PremiumModal';
 import PremiumPageHeader from '../components/ui/PremiumPageHeader';
 import { palette, radius, space, fontSize } from '../theme/tokens';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
+import { ResponsiveForm } from '../components/responsive/ResponsiveForm';
+import { ComingSoon } from '../components/feedback/ComingSoon';
 
 const { RangePicker } = DatePicker;
 
@@ -278,11 +280,12 @@ const Settings: React.FC = () => {
             title={activeDef.label}
             subtitle={activeDef.description ?? sectionSubtitle(activeDef.key, t as unknown as (k: string, fb?: string) => unknown)}
             icon={activeDef.icon}
+            sectionId={`settings.${activeDef.key}` as any}
           />
 
           <div className="st-content">
             {activeDef.badge === 'soon' ? (
-              <Result status="info" title={t('coming_soon')} />
+              <ComingSoon featureNameKey={activeDef.key} />
             ) : (
               <>
             {active === 'profile'         && <ProfileSettings />}
@@ -487,6 +490,7 @@ const GeneralSettings: React.FC = () => {
         description={t('settings_sub_general', 'Application name, default language, and timezone.')}
       >
         <Form form={form} layout="vertical">
+          <ResponsiveForm layout="single">
           <Row gutter={24}>
             <Col xs={24} md={12}>
               <Form.Item
@@ -538,7 +542,8 @@ const GeneralSettings: React.FC = () => {
           <Button type="primary" onClick={handleSave} loading={saving}>
             {t('save')}
           </Button>
-        </Form>
+          </ResponsiveForm>
+</Form>
       </SectionCard>
     </Space>
   );
@@ -608,6 +613,7 @@ const AppearanceSettings: React.FC = () => {
         description={t('settings_sub_appearance', 'Theme, layout mode, and display density.')}
       >
         <Form form={form} layout="vertical">
+          <ResponsiveForm layout="single">
           <Row gutter={24}>
             <Col xs={24} md={8}>
               <Form.Item
@@ -656,7 +662,8 @@ const AppearanceSettings: React.FC = () => {
           <Button type="primary" onClick={handleSave} loading={saving}>
             {t('save')}
           </Button>
-        </Form>
+          </ResponsiveForm>
+</Form>
       </SectionCard>
     </Space>
   );
@@ -849,6 +856,7 @@ const ProfileSettings: React.FC = () => {
         }
       >
         <Form form={form} layout="vertical">
+          <ResponsiveForm layout="single">
           <Row gutter={24}>
             <Col xs={24} md={12}>
               <Form.Item label={t('email')} name="email">
@@ -867,7 +875,8 @@ const ProfileSettings: React.FC = () => {
             </Col>
           </Row>
           <Button type="primary" onClick={handleSave} loading={saving}>{t('save')}</Button>
-        </Form>
+          </ResponsiveForm>
+</Form>
       </SectionCard>
 
       <SectionCard
@@ -877,6 +886,7 @@ const ProfileSettings: React.FC = () => {
         accent="warning"
       >
         <Form form={pwForm} layout="vertical">
+          <ResponsiveForm layout="single">
           <Row gutter={24}>
             <Col xs={24} md={8}>
               <Form.Item label={t('current_password')} name="current_password" rules={[{ required: true, message: t('required') }]}>
@@ -895,7 +905,8 @@ const ProfileSettings: React.FC = () => {
             </Col>
           </Row>
           <Button type="primary" onClick={handleChangePassword} loading={changingPw}>{t('save')}</Button>
-        </Form>
+          </ResponsiveForm>
+</Form>
       </SectionCard>
     </Space>
   );
@@ -944,6 +955,7 @@ const OrganizationSettings: React.FC = () => {
         }
       >
         <Form form={form} layout="vertical">
+          <ResponsiveForm layout="single">
           <Row gutter={24}>
             <Col xs={24} md={12}>
               <Form.Item label={t('organization_name')} name="name" rules={[{ required: true, message: t('required') }]}>
@@ -983,7 +995,8 @@ const OrganizationSettings: React.FC = () => {
           </Row>
 
           <Button type="primary" onClick={handleSave} loading={saving}>{t('save')}</Button>
-        </Form>
+          </ResponsiveForm>
+</Form>
       </SectionCard>
     </Space>
   );
@@ -1106,7 +1119,7 @@ const SecuritySettings: React.FC = () => {
         {qrCode && (
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: space.lg }}>
             <div style={{ padding: space.md, background: '#fff', border: `1px solid ${palette.border}`, borderRadius: radius.md }}>
-              <img src={qrCode} alt="2FA QR" style={{ width: 200, height: 200, display: 'block' }} />
+              <img src={qrCode} alt="2FA QR" loading="lazy" decoding="async" style={{ width: 200, height: 200, display: 'block' }} />
             </div>
           </div>
         )}
@@ -1598,6 +1611,7 @@ const NotificationSettings: React.FC = () => {
 
                   {ch.key === 'email' && (
                     <Form layout="vertical" size="small" disabled={!ch.available}>
+                      <ResponsiveForm layout="single">
                       <Form.Item label={t('reply_to_address', 'Reply-to address')}>
                         <Input
                           placeholder="you@company.com"
@@ -1605,10 +1619,12 @@ const NotificationSettings: React.FC = () => {
                           onChange={(e) => setPrefs(p => ({ ...p, channels_meta: { ...p.channels_meta, email: e.target.value } }))}
                         />
                       </Form.Item>
-                    </Form>
+                      </ResponsiveForm>
+</Form>
                   )}
                   {ch.key === 'sms' && (
                     <Form layout="vertical" size="small" disabled={!ch.available}>
+                      <ResponsiveForm layout="single">
                       <Form.Item label={t('mobile_number', 'Mobile number')}>
                         <Input
                           placeholder="+964 750 000 0000"
@@ -1616,10 +1632,12 @@ const NotificationSettings: React.FC = () => {
                           onChange={(e) => setPrefs(p => ({ ...p, channels_meta: { ...p.channels_meta, sms_phone: e.target.value } }))}
                         />
                       </Form.Item>
-                    </Form>
+                      </ResponsiveForm>
+</Form>
                   )}
                   {ch.key === 'whatsapp' && (
                     <Form layout="vertical" size="small" disabled={!ch.available}>
+                      <ResponsiveForm layout="single">
                       <Form.Item label={t('whatsapp_number', 'WhatsApp number')}>
                         <Input
                           placeholder="+964 750 000 0000"
@@ -1627,10 +1645,12 @@ const NotificationSettings: React.FC = () => {
                           onChange={(e) => setPrefs(p => ({ ...p, channels_meta: { ...p.channels_meta, whatsapp_phone: e.target.value } }))}
                         />
                       </Form.Item>
-                    </Form>
+                      </ResponsiveForm>
+</Form>
                   )}
                   {ch.key === 'slack' && (
                     <Form layout="vertical" size="small" disabled={!ch.available}>
+                      <ResponsiveForm layout="single">
                       <Form.Item label={t('slack_workspace', 'Slack workspace')}>
                         <Input
                           placeholder="acme.slack.com"
@@ -1638,7 +1658,8 @@ const NotificationSettings: React.FC = () => {
                           onChange={(e) => setPrefs(p => ({ ...p, channels_meta: { ...p.channels_meta, slack_workspace: e.target.value } }))}
                         />
                       </Form.Item>
-                    </Form>
+                      </ResponsiveForm>
+</Form>
                   )}
                   {ch.key === 'push' && (
                     <div style={{ fontSize: fontSize.sm, color: mutedClr }}>
@@ -1875,7 +1896,7 @@ const FiscalYears: React.FC = () => {
       }
       noPadding
     >
-      <Table
+      <ResponsiveTableAdapter
         dataSource={data}
         size="middle"
         columns={[
@@ -1903,6 +1924,7 @@ const FiscalYears: React.FC = () => {
         cancelText={t('cancel')}
       >
         <Form form={form} layout="vertical">
+          <ResponsiveForm layout="single">
           <Form.Item label={t('name')} name="name" rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item label={t('start_date')} name="start_date" rules={[{ required: true }]}>
             <DatePicker style={{ width: '100%' }} />
@@ -1910,7 +1932,8 @@ const FiscalYears: React.FC = () => {
           <Form.Item label={t('end_date')} name="end_date" rules={[{ required: true }]}>
             <DatePicker style={{ width: '100%' }} />
           </Form.Item>
-        </Form>
+          </ResponsiveForm>
+</Form>
       </PremiumModal>
     </SectionCard>
   );
@@ -1979,7 +2002,7 @@ const Budgets: React.FC = () => {
       }
       noPadding
     >
-      <Table
+      <ResponsiveTableAdapter
         dataSource={data}
         size="middle"
         columns={[
@@ -2004,6 +2027,7 @@ const Budgets: React.FC = () => {
         cancelText={t('cancel')}
       >
         <Form form={form} layout="vertical">
+          <ResponsiveForm layout="single">
           <Form.Item label={t('name')} name="name" rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item label={t('fiscal_year')} name="fiscal_year_id" rules={[{ required: true }]}>
             <Select
@@ -2019,7 +2043,8 @@ const Budgets: React.FC = () => {
               }}
             />
           </Form.Item>
-        </Form>
+          </ResponsiveForm>
+</Form>
       </PremiumModal>
     </SectionCard>
   );
@@ -2075,7 +2100,7 @@ const Currencies: React.FC = () => {
           />
         }
       >
-        <Table
+        <ResponsiveTableAdapter
           dataSource={currencies}
           columns={[
             { title: t('currency'), dataIndex: 'code', key: 'code' },
@@ -2100,7 +2125,7 @@ const Currencies: React.FC = () => {
         }
         noPadding
       >
-        <Table
+        <ResponsiveTableAdapter
           dataSource={rates}
           columns={[
             { title: t('from'), dataIndex: 'from_currency', key: 'from_currency' },
@@ -2126,6 +2151,7 @@ const Currencies: React.FC = () => {
         cancelText={t('cancel')}
       >
         <Form form={form} layout="vertical" initialValues={{ date: dayjs() }}>
+          <ResponsiveForm layout="single">
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item label={t('from')} name="from_currency" rules={[{ required: true }]}>
@@ -2166,7 +2192,8 @@ const Currencies: React.FC = () => {
           <Form.Item label={t('date')} name="date" rules={[{ required: true }]}>
             <DatePicker style={{ width: '100%' }} />
           </Form.Item>
-        </Form>
+          </ResponsiveForm>
+</Form>
       </PremiumModal>
     </Space>
   );
@@ -2230,7 +2257,7 @@ const InvoiceTemplates: React.FC = () => {
       }
       noPadding
     >
-      <Table
+      <ResponsiveTableAdapter
         dataSource={templates}
         size="middle"
         columns={[
@@ -2257,6 +2284,7 @@ const InvoiceTemplates: React.FC = () => {
         cancelText={t('cancel')}
       >
         <Form form={form} layout="vertical" initialValues={{ layout: 'classic', show_logo: true }}>
+          <ResponsiveForm layout="single">
           <Form.Item label={t('template_name')} name="name" rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item label={t('layout')} name="layout">
             <Select
@@ -2271,7 +2299,8 @@ const InvoiceTemplates: React.FC = () => {
           <Form.Item label="Colors" name="colors"><Input placeholder="#1677ff" /></Form.Item>
           <Form.Item label={t('show_logo')} name="show_logo" valuePropName="checked"><Switch /></Form.Item>
           <Form.Item label={t('footer_text')} name="footer_text"><Input.TextArea rows={2} /></Form.Item>
-        </Form>
+          </ResponsiveForm>
+</Form>
       </PremiumModal>
     </SectionCard>
   );
@@ -2324,6 +2353,7 @@ const ReminderSettings: React.FC = () => {
       }
     >
       <Form form={form} layout="vertical">
+        <ResponsiveForm layout="single">
         <Row gutter={24}>
           <Col xs={24} md={12}>
             <Form.Item label={t('before_due_days')} name="before_due_days">
@@ -2349,7 +2379,8 @@ const ReminderSettings: React.FC = () => {
             </Form.Item>
           </Col>
         </Row>
-      </Form>
+        </ResponsiveForm>
+</Form>
     </SectionCard>
   );
 };
@@ -2438,6 +2469,7 @@ const EInvoiceSettings: React.FC = () => {
         }
       >
         <Form form={form} layout="vertical">
+          <ResponsiveForm layout="single">
           <Row gutter={24}>
             <Col xs={24} md={8}>
               <Form.Item label={t('iraq_einvoice_enabled')} name="enabled" valuePropName="checked"><Switch /></Form.Item>
@@ -2466,7 +2498,8 @@ const EInvoiceSettings: React.FC = () => {
               </Form.Item>
             </Col>
           </Row>
-        </Form>
+          </ResponsiveForm>
+</Form>
       </SectionCard>
 
       <SectionCard
@@ -2501,7 +2534,7 @@ const EInvoiceSettings: React.FC = () => {
         accent="danger"
         noPadding
       >
-        <Table<EInvoiceRecord>
+        <ResponsiveTableAdapter<EInvoiceRecord>
           dataSource={errors}
           rowKey="id"
           pagination={false}
@@ -2576,6 +2609,7 @@ const EmailSettings: React.FC = () => {
       }
     >
       <Form form={form} layout="vertical">
+        <ResponsiveForm layout="single">
         <Row gutter={24}>
           <Col xs={24} md={12}><Form.Item label={t('smtp_host')} name="smtp_host"><Input /></Form.Item></Col>
           <Col xs={24} md={12}><Form.Item label={t('smtp_port')} name="smtp_port"><Input /></Form.Item></Col>
@@ -2583,7 +2617,8 @@ const EmailSettings: React.FC = () => {
           <Col xs={24} md={12}><Form.Item label={t('smtp_password')} name="smtp_password"><Input.Password /></Form.Item></Col>
           <Col xs={24} md={12}><Form.Item label={t('email_from')} name="email_from"><Input /></Form.Item></Col>
         </Row>
-      </Form>
+        </ResponsiveForm>
+</Form>
     </SectionCard>
   );
 };
@@ -2643,7 +2678,7 @@ const BackupRestore: React.FC = () => {
       }
       noPadding
     >
-      <Table
+      <ResponsiveTableAdapter
         dataSource={backups}
         size="middle"
         columns={[
@@ -2733,7 +2768,7 @@ const ActivityLog: React.FC = () => {
           </Col>
         </Row>
       </div>
-      <Table
+      <ResponsiveTableAdapter
         dataSource={data}
         size="middle"
         columns={[
@@ -3192,7 +3227,7 @@ const BranchesSettings: React.FC = () => {
           </Space>
         }
       >
-        <Table<BranchRow>
+        <ResponsiveTableAdapter<BranchRow>
           rowKey="id"
           dataSource={rows}
           loading={loading}
@@ -3222,6 +3257,7 @@ const BranchesSettings: React.FC = () => {
         title={editing?.id ? t('edit_branch', 'Edit branch') : t('new_branch', 'New branch')}
       >
         <Form form={form} layout="vertical">
+          <ResponsiveForm layout="single">
           <Form.Item name="name" label={t('name', 'Name')} rules={[{ required: true }]}><Input /></Form.Item>
           <Row gutter={12}>
             <Col span={12}><Form.Item name="code" label={t('code', 'Code')}><Input /></Form.Item></Col>
@@ -3232,7 +3268,8 @@ const BranchesSettings: React.FC = () => {
             <Col span={12}><Form.Item name="country" label={t('country', 'Country')}><Input /></Form.Item></Col>
           </Row>
           <Form.Item name="is_active" label={t('active', 'Active')} valuePropName="checked"><Switch /></Form.Item>
-        </Form>
+          </ResponsiveForm>
+</Form>
       </PremiumModal>
     </Space>
   );
@@ -3305,7 +3342,7 @@ const HolidaysSettings: React.FC = () => {
         <SettingsRow label={t('hol_regional', 'Honor regional holidays')}><Switch checked={values.honor_regional} onChange={(v) => setValue('honor_regional', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('hol_carry', 'Carry to next year')}><Switch checked={values.carry_next_year} onChange={(v) => setValue('carry_next_year', v)} disabled={loading} /></SettingsRow>
         <Divider titlePlacement="start">{t('hol_custom', 'Custom holidays')}</Divider>
-        <Table<HolidayItem>
+        <ResponsiveTableAdapter<HolidayItem>
           rowKey={(_, i) => String(i)}
           dataSource={values.items}
           pagination={false}
@@ -3367,7 +3404,7 @@ const UsersSettings: React.FC = () => {
           </Space>
         }
       >
-        <Table<UserRow>
+        <ResponsiveTableAdapter<UserRow>
           rowKey="id"
           dataSource={rows}
           loading={loading}
@@ -3393,10 +3430,12 @@ const UsersSettings: React.FC = () => {
       </SectionCard>
       <PremiumModal open={inviting} onCancel={() => setInviting(false)} onOk={invite} title={t('invite_user', 'Invite user')}>
         <Form form={form} layout="vertical">
+          <ResponsiveForm layout="single">
           <Form.Item name="email" label={t('email', 'Email')} rules={[{ required: true, type: 'email' }]}><Input /></Form.Item>
           <Form.Item name="display_name" label={t('name', 'Name')}><Input /></Form.Item>
           <Form.Item name="role" label={t('role', 'Role')} initialValue="user"><Select options={[{ value: 'admin', label: t('role_admin', 'Administrator') }, { value: 'manager', label: t('role_manager', 'Manager') }, { value: 'user', label: t('role_user', 'User') }, { value: 'accountant', label: t('role_accountant', 'Accountant') }]} /></Form.Item>
-        </Form>
+          </ResponsiveForm>
+</Form>
       </PremiumModal>
     </Space>
   );
@@ -3446,7 +3485,7 @@ const RolesSettings: React.FC = () => {
           </Space>
         }
       >
-        <Table<RoleRow>
+        <ResponsiveTableAdapter<RoleRow>
           rowKey="id"
           dataSource={rows}
           loading={loading}
@@ -3469,10 +3508,12 @@ const RolesSettings: React.FC = () => {
       </SectionCard>
       <PremiumModal open={!!editing} onCancel={() => setEditing(null)} onOk={submit} title={editing?.id ? t('edit_role', 'Edit role') : t('new_role', 'New role')}>
         <Form form={form} layout="vertical">
+          <ResponsiveForm layout="single">
           <Form.Item name="name" label={t('name', 'Name')} rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item name="description" label={t('description', 'Description')}><Input.TextArea rows={2} /></Form.Item>
           <Alert type="info" showIcon message={t('role_perm_hint', 'Use the Permissions section to fine-tune capabilities for this role.')} />
-        </Form>
+          </ResponsiveForm>
+</Form>
       </PremiumModal>
     </Space>
   );
@@ -3490,7 +3531,20 @@ const PermissionsSettings: React.FC = () => {
     setLoading(true);
     try {
       const [p, r] = await Promise.all([api.get('/api/rbac/permissions'), api.get('/api/rbac/roles')]);
-      const permList: string[] = (p.data || []).map((x: { code?: string; name?: string }) => x.code || x.name || '').filter(Boolean);
+      // Backend returns { permissions: string[], count: N } — extract the array
+      const rawPerms: unknown[] = Array.isArray(p.data)
+        ? p.data
+        : (p.data?.permissions ?? []);
+      const permList: string[] = rawPerms
+        .map((x: unknown) => {
+          if (typeof x === 'string') return x;
+          if (x && typeof x === 'object') {
+            const o = x as { code?: string; name?: string };
+            return o.code || o.name || '';
+          }
+          return '';
+        })
+        .filter(Boolean);
       setPerms(permList);
       const roleList: RoleRow[] = r.data || [];
       setRoles(roleList);
@@ -3740,7 +3794,7 @@ const TaxesSettings: React.FC = () => {
           </Space>
         }
       >
-        <Table<TaxRow>
+        <ResponsiveTableAdapter<TaxRow>
           rowKey="id"
           dataSource={rows}
           loading={loading}
@@ -3764,13 +3818,15 @@ const TaxesSettings: React.FC = () => {
       </SectionCard>
       <PremiumModal open={!!editing} onCancel={() => setEditing(null)} onOk={submit} title={editing?.id ? t('edit_tax', 'Edit tax') : t('new_tax', 'New tax')}>
         <Form form={form} layout="vertical">
+          <ResponsiveForm layout="single">
           <Form.Item name="name" label={t('name', 'Name')} rules={[{ required: true }]}><Input /></Form.Item>
           <Row gutter={12}>
             <Col span={12}><Form.Item name="rate" label={t('tax_rate', 'Rate (%)')} rules={[{ required: true }]}><InputNumber min={0} max={100} step={0.01} style={{ width: '100%' }} /></Form.Item></Col>
             <Col span={12}><Form.Item name="tax_type" label={t('tax_type', 'Type')}><Select options={[{ value: 'vat', label: 'VAT' }, { value: 'sales', label: t('tax_sales', 'Sales tax') }, { value: 'withholding', label: t('tax_wht', 'Withholding') }, { value: 'service', label: t('tax_service', 'Service') }]} /></Form.Item></Col>
           </Row>
           <Form.Item name="is_inclusive" label={t('tax_inclusive', 'Tax inclusive')} valuePropName="checked"><Switch /></Form.Item>
-        </Form>
+          </ResponsiveForm>
+</Form>
       </PremiumModal>
     </Space>
   );
@@ -3829,7 +3885,7 @@ const BankingSettings: React.FC = () => {
           </Space>
         }
       >
-        <Table<BankRow>
+        <ResponsiveTableAdapter<BankRow>
           rowKey="id"
           dataSource={rows}
           loading={loading}
@@ -3853,6 +3909,7 @@ const BankingSettings: React.FC = () => {
       </SectionCard>
       <PremiumModal open={!!editing} onCancel={() => setEditing(null)} onOk={submit} title={editing?.id ? t('edit_bank_account', 'Edit account') : t('new_bank_account', 'New bank account')}>
         <Form form={form} layout="vertical">
+          <ResponsiveForm layout="single">
           <Form.Item name="name" label={t('name', 'Account name')} rules={[{ required: true }]}><Input /></Form.Item>
           <Row gutter={12}>
             <Col span={12}><Form.Item name="bank_name" label={t('bank_name', 'Bank')}><Input /></Form.Item></Col>
@@ -3875,7 +3932,8 @@ const BankingSettings: React.FC = () => {
           <Form.Item name="iban" label={t('iban', 'IBAN')}><Input /></Form.Item>
           <Form.Item name="opening_balance" label={t('opening_balance', 'Opening balance')}><InputNumber min={0} step={0.01} style={{ width: '100%' }} /></Form.Item>
           <Form.Item name="is_active" label={t('active', 'Active')} valuePropName="checked"><Switch /></Form.Item>
-        </Form>
+          </ResponsiveForm>
+</Form>
       </PremiumModal>
     </Space>
   );
@@ -4216,10 +4274,15 @@ const WorkflowsSettings: React.FC = () => {
   const { t } = useTranslation();
   const [rows, setRows] = useState<WfRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const load = async () => {
-    setLoading(true);
-    try { const r = await api.get('/api/automation/workflows'); setRows(r.data || []); }
-    catch { setRows([]); } finally { setLoading(false); }
+    setLoading(true); setError(null);
+    try { const r = await api.get('/api/automation/workflows'); setRows(Array.isArray(r.data) ? r.data : (r.data?.items ?? [])); }
+    catch (e: unknown) {
+      const status = (e as { response?: { status?: number } })?.response?.status;
+      setError(status === 429 ? t('error_quota', 'Service temporarily busy. Please try again.') : t('error_load', 'Failed to load workflows.'));
+      setRows([]);
+    } finally { setLoading(false); }
   };
   useEffect(() => { load(); }, []);
   const toggle = async (row: WfRow) => { try { await api.post(`/api/automation/workflows/${row.id}/toggle`); load(); } catch { message.error(t('action_failed', 'Action failed')); } };
@@ -4230,9 +4293,10 @@ const WorkflowsSettings: React.FC = () => {
         icon={<PartitionOutlined />}
         title={t('wf_title', 'Workflows')}
         description={t('wf_desc', 'No-code business rules: when X happens, then do Y.')}
-        actions={<Button type="primary" icon={<PlusOutlined />} onClick={() => window.location.assign('/automation')}>{t('open_builder', 'Open builder')}</Button>}
+        actions={<Button type="primary" icon={<PlusOutlined />} onClick={() => window.location.assign('/automation/workflows')}>{t('open_builder', 'Open builder')}</Button>}
       >
-        <Table<WfRow>
+        {error && <Alert type="warning" showIcon message={error} action={<Button size="small" onClick={load}>{t('retry', 'Retry')}</Button>} style={{ marginBottom: 16 }} />}
+        <ResponsiveTableAdapter<WfRow>
           rowKey="id"
           dataSource={rows}
           loading={loading}
@@ -4261,10 +4325,15 @@ const ApprovalsSettings: React.FC = () => {
   const { t } = useTranslation();
   const [rows, setRows] = useState<ApprRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const load = async () => {
-    setLoading(true);
-    try { const r = await api.get('/api/approvals/approval-rules'); setRows(r.data || []); }
-    catch { setRows([]); } finally { setLoading(false); }
+    setLoading(true); setError(null);
+    try { const r = await api.get('/api/approvals/approval-rules'); setRows(Array.isArray(r.data) ? r.data : (r.data?.items ?? [])); }
+    catch (e: unknown) {
+      const status = (e as { response?: { status?: number } })?.response?.status;
+      setError(status === 429 ? t('error_quota', 'Service temporarily busy. Please try again.') : t('error_load', 'Failed to load approval rules.'));
+      setRows([]);
+    } finally { setLoading(false); }
   };
   useEffect(() => { load(); }, []);
   const toggle = async (row: ApprRow) => { try { await api.post(`/api/approvals/approval-rules/${row.id}/toggle`); load(); } catch { message.error(t('action_failed', 'Action failed')); } };
@@ -4277,7 +4346,8 @@ const ApprovalsSettings: React.FC = () => {
         description={t('appr_desc', 'Multi-step approvals for bills, expenses, POs, and time off.')}
         actions={<Button type="primary" icon={<PlusOutlined />} onClick={() => window.location.assign('/approvals')}>{t('open_approvals', 'Open approvals')}</Button>}
       >
-        <Table<ApprRow>
+        {error && <Alert type="warning" showIcon message={error} action={<Button size="small" onClick={load}>{t('retry', 'Retry')}</Button>} style={{ marginBottom: 16 }} />}
+        <ResponsiveTableAdapter<ApprRow>
           rowKey="id"
           dataSource={rows}
           loading={loading}
@@ -4398,7 +4468,7 @@ const DocumentsSettings: React.FC = () => {
   });
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
-      <SectionCard icon={<FolderOpenOutlined />} title={t('docs_title', 'Documents (DMS)')} description={t('docs_desc', 'Centralized document storage with tagging, sharing, and versioning.')} actions={<Button onClick={() => window.location.assign('/documents')}>{t('open_documents', 'Open documents')}</Button>}>
+      <SectionCard icon={<FolderOpenOutlined />} title={t('docs_title', 'Documents (DMS)')} description={t('docs_desc', 'Centralized document storage with tagging, sharing, and versioning.')} actions={<Button onClick={() => window.location.assign('/dms')}>{t('open_documents', 'Open documents')}</Button>}>
         <SettingsRow label={t('d_storage', 'Storage backend')}><Segmented value={values.storage_backend} onChange={(v) => setValue('storage_backend', v as DocumentsBag['storage_backend'])} options={[{ value: 'local', label: 'Local' }, { value: 's3', label: 'AWS S3' }, { value: 'gcs', label: 'Google Cloud Storage' }]} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('d_max_size', 'Max upload size (MB)')}><InputNumber min={1} max={1024} value={values.max_file_size_mb} onChange={(v) => setValue('max_file_size_mb', Number(v) || 25)} disabled={loading} style={{ width: 160 }} /></SettingsRow>
         <SettingsRow label={t('d_ocr', 'OCR & full-text search')}><Switch checked={values.ocr_enabled} onChange={(v) => setValue('ocr_enabled', v)} disabled={loading} /></SettingsRow>
@@ -4466,7 +4536,7 @@ const AuditSettings: React.FC = () => {
                 t('settings.help.audit.step_3'),
               ]}
             />
-            <Button onClick={() => window.location.assign('/audit')}>{t('open_audit', 'Open audit log')}</Button>
+            <Button onClick={() => window.location.assign('/audit-log-viewer')}>{t('open_audit', 'Open audit log')}</Button>
           </Space>
         }
       >

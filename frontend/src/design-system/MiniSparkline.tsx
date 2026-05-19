@@ -9,8 +9,9 @@ export interface MiniSparklineProps {
 
 /**
  * MiniSparkline — Sprint 10 — tiny inline svg sparkline (no external dep).
+ * React.memo applied per Requirements 18.4.
  */
-export const MiniSparkline: React.FC<MiniSparklineProps> = ({ data, width = 80, height = 24, color = '#1F6FEB' }) => {
+const MiniSparklineInner: React.FC<MiniSparklineProps> = ({ data, width = 80, height = 24, color = '#1F6FEB' }) => {
   if (!data || data.length === 0) return null;
   const max = Math.max(...data);
   const min = Math.min(...data);
@@ -23,5 +24,7 @@ export const MiniSparkline: React.FC<MiniSparklineProps> = ({ data, width = 80, 
     </svg>
   );
 };
+
+export const MiniSparkline = React.memo(MiniSparklineInner);
 
 export default MiniSparkline;

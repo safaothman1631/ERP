@@ -4,6 +4,7 @@ import { Button, Card, Row, Col, InputNumber, Typography, Space, Form, Input, Ap
 import { PlusOutlined, MinusOutlined, ShoppingCartOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
+import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
 
 const { Title, Text } = Typography;
 
@@ -385,6 +386,7 @@ const POSSelfOrder: React.FC = () => {
           <div style={{ maxWidth: 500, margin: '0 auto' }}>
             <Title level={2}>{t('checkout')}</Title>
             <Form layout="vertical" onFinish={handleSubmitOrder}>
+              <ResponsiveForm layout="single">
               <Form.Item name="customer_name" label={t('name')}>
                 <Input size="large" />
               </Form.Item>
@@ -396,7 +398,8 @@ const POSSelfOrder: React.FC = () => {
                   {t('confirm_order')}
                 </Button>
               </Form.Item>
-            </Form>
+              </ResponsiveForm>
+</Form>
           </div>
         )}
 

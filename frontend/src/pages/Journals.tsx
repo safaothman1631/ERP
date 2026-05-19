@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Table, Tag} from 'antd';
+import { Tag} from 'antd';
 import { message } from '../utils/message';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
@@ -7,6 +7,7 @@ import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, Exp
 import { downloadCsv } from '../utils/exportCsv';
 import { space as spaceTk } from '../theme/tokens';
 import { useAuthStore } from '../store';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 
 const Journals: React.FC = () => {
   const { t } = useTranslation();
@@ -55,7 +56,7 @@ const Journals: React.FC = () => {
 
   return (
     <div>
-      <PageHeader title={t('journals')} subtitle={t('journals_subtitle', 'تۆمارە ژمارییەکان')} />
+      <PageHeader title={t('journals')} subtitle={t('journals_subtitle', 'Accounting journals')} sectionId="accounting.journals" />
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: spaceTk.md }}>
         <ExportMenu
           formats={['csv']}
@@ -68,7 +69,7 @@ const Journals: React.FC = () => {
         />
         <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
       </div>
-      <Table
+      <ResponsiveTableAdapter
         dataSource={data}
         columns={visibleColumns}
         rowKey="id"

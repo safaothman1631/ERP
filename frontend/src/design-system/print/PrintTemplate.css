@@ -1,0 +1,353 @@
+/**
+ * PrintTemplate.css — Shared print template styles
+ * Task 22 (Requirements 19.2, 19.3, 19.5, 19.7)
+ *
+ * A4 paper size, RTL/LTR support, @media print rules
+ */
+
+/* ─── Screen preview styles ─────────────────────────────────────────────── */
+.print-template {
+  font-family: 'Vazirmatn', 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1a1a1a;
+  background: #fff;
+  max-width: 210mm;
+  margin: 0 auto;
+  padding: 20mm;
+  box-sizing: border-box;
+}
+
+/* RTL support — Requirements 19.3 */
+.print-template[dir='rtl'] {
+  text-align: right;
+}
+
+.print-template[dir='ltr'] {
+  text-align: left;
+}
+
+/* ─── Company header ─────────────────────────────────────────────────────── */
+.print-template__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #1a1a1a;
+  gap: 16px;
+}
+
+.print-template[dir='rtl'] .print-template__header {
+  flex-direction: row-reverse;
+}
+
+.print-template__company {
+  flex: 1;
+}
+
+.print-template__logo {
+  max-width: 120px;
+  max-height: 60px;
+  object-fit: contain;
+}
+
+.print-template__company-name {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: #1a1a1a;
+}
+
+.print-template__company-details {
+  font-size: 11px;
+  color: #555;
+  line-height: 1.6;
+}
+
+/* ─── Document title block ───────────────────────────────────────────────── */
+.print-template__title-block {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.print-template__doc-type {
+  font-size: 22px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #1a1a1a;
+  margin: 0 0 4px 0;
+}
+
+.print-template__doc-number {
+  font-size: 14px;
+  color: #555;
+  margin: 0;
+}
+
+/* ─── Meta info grid (date, due date, etc.) ──────────────────────────────── */
+.print-template__meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.print-template__meta-section {
+  background: #f8f8f8;
+  border-radius: 4px;
+  padding: 12px;
+}
+
+.print-template__meta-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #888;
+  margin-bottom: 4px;
+}
+
+.print-template__meta-value {
+  font-size: 13px;
+  color: #1a1a1a;
+  font-weight: 500;
+}
+
+/* ─── Party info (customer / vendor) ─────────────────────────────────────── */
+.print-template__parties {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.print-template__party {
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+.print-template__party-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #888;
+  margin-bottom: 6px;
+}
+
+.print-template__party-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 2px;
+}
+
+.print-template__party-detail {
+  font-size: 12px;
+  color: #555;
+  line-height: 1.5;
+}
+
+/* ─── Line items table ───────────────────────────────────────────────────── */
+.print-template__table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+  font-size: 12px;
+}
+
+.print-template__table th {
+  background: #1a1a1a;
+  color: #fff;
+  padding: 8px 10px;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.print-template__table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e8e8e8;
+  vertical-align: top;
+}
+
+.print-template__table tbody tr:nth-child(even) td {
+  background: #fafafa;
+}
+
+.print-template__table .col-num {
+  width: 40px;
+  text-align: center;
+}
+
+.print-template__table .col-desc {
+  min-width: 200px;
+}
+
+.print-template__table .col-qty {
+  width: 70px;
+  text-align: center;
+}
+
+.print-template__table .col-price,
+.print-template__table .col-discount,
+.print-template__table .col-tax,
+.print-template__table .col-total {
+  width: 100px;
+  text-align: end;
+}
+
+/* RTL table alignment */
+.print-template[dir='rtl'] .print-template__table th,
+.print-template[dir='rtl'] .print-template__table td {
+  text-align: right;
+}
+
+.print-template[dir='rtl'] .print-template__table .col-num {
+  text-align: center;
+}
+
+/* ─── Totals section ─────────────────────────────────────────────────────── */
+.print-template__totals {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.print-template[dir='rtl'] .print-template__totals {
+  justify-content: flex-start;
+}
+
+.print-template__totals-table {
+  width: 280px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.print-template__totals-table td {
+  padding: 5px 10px;
+}
+
+.print-template__totals-table .totals-label {
+  color: #555;
+  text-align: start;
+}
+
+.print-template__totals-table .totals-value {
+  text-align: end;
+  font-weight: 500;
+}
+
+.print-template__totals-table .totals-grand td {
+  border-top: 2px solid #1a1a1a;
+  font-size: 15px;
+  font-weight: 700;
+  padding-top: 8px;
+}
+
+.print-template__totals-table .totals-balance td {
+  color: #c0392b;
+  font-weight: 700;
+}
+
+/* ─── Notes and terms ────────────────────────────────────────────────────── */
+.print-template__footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  font-size: 12px;
+}
+
+.print-template__footer-section h4 {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #888;
+  margin: 0 0 6px 0;
+}
+
+.print-template__footer-section p {
+  color: #555;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ─── Status badge ───────────────────────────────────────────────────────── */
+.print-template__status {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid currentColor;
+}
+
+/* ─── @media print rules — Requirements 19.5, 19.7 ──────────────────────── */
+@media print {
+  /* Hide navigation and sidebar */
+  .sidebar,
+  .topbar,
+  .no-print,
+  .ant-layout-sider,
+  .ant-layout-header,
+  nav,
+  header {
+    display: none !important;
+  }
+
+  /* Show print-only elements */
+  .print-only {
+    display: block !important;
+  }
+
+  /* A4 paper — Requirements 19.2 */
+  @page {
+    size: A4;
+    margin: 20mm;
+  }
+
+  body {
+    font-size: 12pt;
+    color: #000 !important;
+    background: #fff !important;
+    margin: 0;
+    padding: 0;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print-template {
+    padding: 0;
+    max-width: 100%;
+    margin: 0;
+    box-shadow: none;
+  }
+
+  .print-template__table th {
+    background: #1a1a1a !important;
+    color: #fff !important;
+  }
+
+  /* Avoid page breaks inside rows */
+  .print-template__table tr {
+    page-break-inside: avoid;
+  }
+
+  .print-template__header {
+    page-break-after: avoid;
+  }
+}

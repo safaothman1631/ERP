@@ -8,6 +8,7 @@ import api from '../api';
 import dayjs from 'dayjs';
 import { FormLayout, type FormSection } from '../design-system';
 import { useAuthStore } from '../store';
+import { ResponsiveForm } from '../components/responsive/ResponsiveForm';
 
 interface LineRow {
   key: number;
@@ -115,56 +116,58 @@ const BillForm: React.FC = () => {
       title: t('items'),
       children: (
         <>
-          <table style={{ width: '100%', marginBottom: 16 }}>
-            <thead>
-              <tr>
-                <th style={{ width: '30%' }}>{t('description')}</th>
-                <th style={{ width: '20%' }}>{t('account')}</th>
-                <th style={{ width: '10%' }}>{t('quantity')}</th>
-                <th style={{ width: '15%' }}>{t('rate')}</th>
-                <th style={{ width: '15%' }}>{t('amount')}</th>
-                <th style={{ width: '10%' }}>{t('tax')}</th>
-                <th style={{ width: '5%' }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {lines.map(line => (
-                <tr key={line.key}>
-                  <td style={{ padding: 4 }}>
-                    <Input value={line.description} onChange={e => updateLine(line.key, 'description', e.target.value)} />
-                  </td>
-                  <td style={{ padding: 4 }}>
-                    <Select
-                      style={{ width: '100%' }}
-                      value={line.account_id || undefined}
-                      onChange={v => updateLine(line.key, 'account_id', v)}
-                      options={accounts.map((a: any) => ({ label: `${a.code} - ${a.name}`, value: a.id }))}
-                      showSearch optionFilterProp="label" allowClear
-                    />
-                  </td>
-                  <td style={{ padding: 4 }}>
-                    <InputNumber min={0} value={line.quantity} onChange={v => updateLine(line.key, 'quantity', v || 1)} style={{ width: '100%' }} />
-                  </td>
-                  <td style={{ padding: 4 }}>
-                    <InputNumber min={0} value={line.rate} onChange={v => updateLine(line.key, 'rate', v || 0)} style={{ width: '100%' }} />
-                  </td>
-                  <td style={{ padding: 4, textAlign: 'center' }}>{((line.quantity || 0) * (line.rate || 0)).toLocaleString()}</td>
-                  <td style={{ padding: 4 }}>
-                    <Select
-                      style={{ width: '100%' }}
-                      value={line.tax_id || undefined}
-                      onChange={v => updateLine(line.key, 'tax_id', v)}
-                      options={taxes.map((tx: any) => ({ label: tx.name, value: tx.id }))}
-                      allowClear
-                    />
-                  </td>
-                  <td style={{ padding: 4 }}>
-                    <Button icon={<DeleteOutlined />} size="small" danger onClick={() => removeLine(line.key)} disabled={lines.length <= 1} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {lines.map(line => (
+            <ResponsiveForm.LineItem
+              key={line.key}
+              summary={
+                <span>
+                  {line.description || t('items')}
+                  {' — '}
+                  {((line.quantity || 0) * (line.rate || 0)).toLocaleString()} IQD
+                </span>
+              }
+            >
+              <Space size="middle" wrap style={{ width: '100%' }}>
+                <div style={{ minWidth: 200, flex: 1 }}>
+                  <label>{t('description')}</label>
+                  <Input value={line.description} onChange={e => updateLine(line.key, 'description', e.target.value)} />
+                </div>
+                <div style={{ minWidth: 200, flex: 1 }}>
+                  <label>{t('account')}</label>
+                  <Select
+                    style={{ width: '100%' }}
+                    value={line.account_id || undefined}
+                    onChange={v => updateLine(line.key, 'account_id', v)}
+                    options={accounts.map((a: any) => ({ label: `${a.code} - ${a.name}`, value: a.id }))}
+                    showSearch optionFilterProp="label" allowClear
+                  />
+                </div>
+                <div style={{ minWidth: 100 }}>
+                  <label>{t('quantity')}</label>
+                  <InputNumber min={0} value={line.quantity} onChange={v => updateLine(line.key, 'quantity', v || 1)} style={{ width: '100%' }} />
+                </div>
+                <div style={{ minWidth: 120 }}>
+                  <label>{t('rate')}</label>
+                  <InputNumber min={0} value={line.rate} onChange={v => updateLine(line.key, 'rate', v || 0)} style={{ width: '100%' }} />
+                </div>
+                <div style={{ minWidth: 80, textAlign: 'center' }}>
+                  <label>{t('amount')}</label>
+                  <div>{((line.quantity || 0) * (line.rate || 0)).toLocaleString()}</div>
+                </div>
+                <div style={{ minWidth: 120 }}>
+                  <label>{t('tax')}</label>
+                  <Select
+                    style={{ width: '100%' }}
+                    value={line.tax_id || undefined}
+                    onChange={v => updateLine(line.key, 'tax_id', v)}
+                    options={taxes.map((tx: any) => ({ label: tx.name, value: tx.id }))}
+                    allowClear
+                  />
+                </div>
+                <Button icon={<DeleteOutlined />} size="small" danger onClick={() => removeLine(line.key)} disabled={lines.length <= 1} />
+              </Space>
+            </ResponsiveForm.LineItem>
+          ))}
           <Button type="dashed" onClick={addLine} icon={<PlusOutlined />} style={{ marginBottom: 16 }}>{t('add_line')}</Button>
           <div style={{ textAlign: 'start', fontSize: 18, fontWeight: 'bold' }}>
             {t('total')}: {calcTotal().toLocaleString()} IQD

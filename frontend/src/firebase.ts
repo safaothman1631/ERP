@@ -30,8 +30,18 @@ import { getAnalytics } from 'firebase/analytics';
 /**
  * Firebase project configuration object.
  *
+ * All fields are read from Vite environment variables (VITE_FIREBASE_*).
+ * For local development, copy `.env.local.example` to `.env.local` and fill in values.
+ * For Vercel deployment, set these variables in the Vercel project dashboard under
+ * Settings → Environment Variables for both Production and Preview environments.
+ *
  * All fields are required for full Firebase functionality. They are obtained from
  * the Firebase Console under Project Settings → Your apps → Web app.
+ *
+ * ## Security note
+ * These values are public client-side identifiers — they are safe to commit.
+ * Firebase security is enforced via Firestore Security Rules and Authentication,
+ * NOT by keeping these keys secret.
  */
 const firebaseConfig = {
   /**
@@ -39,7 +49,7 @@ const firebaseConfig = {
    * Used to authenticate requests from the browser to Firebase services.
    * Found in: Firebase Console → Project Settings → General → Web API key
    */
-  apiKey: 'AIzaSyDGM0lLMx0hbF0WuVx8Qr03u5GMs-h-xFw',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY as string || 'AIzaSyDGM0lLMx0hbF0WuVx8Qr03u5GMs-h-xFw',
 
   /**
    * The Firebase Authentication domain for this project.
@@ -47,14 +57,14 @@ const firebaseConfig = {
    * Format: <projectId>.firebaseapp.com
    * Found in: Firebase Console → Authentication → Settings → Authorized domains
    */
-  authDomain: 'zoho-83cda.firebaseapp.com',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string || 'zoho-83cda.firebaseapp.com',
 
   /**
    * The unique identifier for this Firebase project.
    * Used to scope all Firestore, Storage, and other service requests.
    * Found in: Firebase Console → Project Settings → General → Project ID
    */
-  projectId: 'zoho-83cda',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID as string || 'zoho-83cda',
 
   /**
    * The default Cloud Storage bucket for this project.
@@ -62,21 +72,21 @@ const firebaseConfig = {
    * Format: <projectId>.firebasestorage.app
    * Found in: Firebase Console → Storage → Files (shown in the bucket URL)
    */
-  storageBucket: 'zoho-83cda.firebasestorage.app',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET as string || 'zoho-83cda.firebasestorage.app',
 
   /**
    * The sender ID for Firebase Cloud Messaging (FCM).
    * Required for push notifications. Identifies the Firebase project to FCM.
    * Found in: Firebase Console → Project Settings → Cloud Messaging → Sender ID
    */
-  messagingSenderId: '363501065969',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID as string || '363501065969',
 
   /**
    * The unique identifier for this specific web app registration within the project.
    * Format: 1:<messagingSenderId>:web:<uniqueHash>
    * Found in: Firebase Console → Project Settings → Your apps → App ID
    */
-  appId: '1:363501065969:web:5f18d232f71aeaacb6fb50',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID as string || '1:363501065969:web:5f18d232f71aeaacb6fb50',
 
   /**
    * The Google Analytics measurement ID linked to this Firebase project.
@@ -84,7 +94,7 @@ const firebaseConfig = {
    * Format: G-XXXXXXXXXX
    * Found in: Firebase Console → Project Settings → Your apps → Measurement ID
    */
-  measurementId: 'G-3N2ZX9189E',
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID as string || 'G-3N2ZX9189E',
 };
 
 /**

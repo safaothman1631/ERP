@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Steps, Card, Upload, Button, Select, Table, Row, Col, Space, Form, Typography, Tag, Alert, message } from 'antd';
+import { Steps, Card, Upload, Button, Select, Row, Col, Space, Form, Typography, Tag, Alert, message } from 'antd';
 import { InboxOutlined, CloudUploadOutlined, CheckCircleOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { RcFile } from 'antd/es/upload';
 import api from '../../api';
 import { PageHeader } from '../../design-system';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
 
 const { Dragger } = Upload;
 const { Text, Title } = Typography;
@@ -165,7 +167,7 @@ const ImportStatement: React.FC = () => {
     <div>
       <PageHeader
         title={t('import_statement')}
-        subtitle={t('import_statement_subtitle', 'هێنانی بیانوویی بانکی')}
+        subtitle={t('import_statement_subtitle', 'Import bank statement')}
         extra={
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`/banking/${accountId}/reconciliation`)}>
             {t('back_to_reconciliation')}
@@ -197,7 +199,7 @@ const ImportStatement: React.FC = () => {
             <Title level={5}>{t('column_mapping')}</Title>
             <Alert
               message={t('csv_mapping_hint')}
-              description={t('csv_mapping_description', 'نیشانی بە ستوونەکان بدە')}
+              description={t('csv_mapping_description', 'Select the columns for each field')}
               type="info"
               showIcon
               style={{ marginBottom: 16 }}
@@ -225,6 +227,7 @@ const ImportStatement: React.FC = () => {
             </Card>
 
             <Form layout="vertical">
+              <ResponsiveForm layout="single">
               <Row gutter={16}>
                 <Col span={8}>
                   <Form.Item label={t('date_column')}>
@@ -291,7 +294,8 @@ const ImportStatement: React.FC = () => {
                   </Form.Item>
                 </Col>
               </Row>
-            </Form>
+              </ResponsiveForm>
+</Form>
 
             <Space>
               <Button onClick={() => setCurrent(0)}>{t('back')}</Button>
@@ -319,7 +323,7 @@ const ImportStatement: React.FC = () => {
               style={{ marginBottom: 16 }}
             />
 
-            <Table
+            <ResponsiveTableAdapter
               dataSource={preview.preview}
               columns={previewColumns}
               rowKey={(r, idx) => idx as number}

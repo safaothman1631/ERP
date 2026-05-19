@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, Select, DatePicker, Input, message, Card, Tag } from 'antd';
+import { Button, Space, Select, DatePicker, Input, message, Card, Tag } from 'antd';
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { PageHeader } from '../design-system';
 import { space } from '../theme/tokens';
 import dayjs, { Dayjs } from 'dayjs';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 
 const { RangePicker } = DatePicker;
 
@@ -154,7 +155,7 @@ const AuditLogViewer: React.FC = () => {
           />
           <Button onClick={handleReset}>{t('reset')}</Button>
         </Space>
-        <Table
+        <ResponsiveTableAdapter
           dataSource={logs}
           columns={columns}
           loading={loading}

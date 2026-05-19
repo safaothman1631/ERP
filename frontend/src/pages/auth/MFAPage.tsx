@@ -15,7 +15,7 @@ import { Button, Alert } from 'antd';
 import { SafetyCertificateOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useAuthStore } from '../../store';
 import api from '../../api';
 import AuthLayout from '../../components/AuthLayout';
@@ -131,6 +131,7 @@ const MFAPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { loginSecure } = useAuthStore();
+  const prefersReducedMotion = useReducedMotion();
 
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
@@ -201,9 +202,9 @@ const MFAPage: React.FC = () => {
       subtitle={t('mfa_subtitle')}
     >
       <motion.div
-        initial={{ opacity: 0, y: 8 }}
+        initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: prefersReducedMotion ? 0 : 0.3 }}
       >
         {/* Icon */}
         <div style={{ textAlign: 'center', marginBottom: 8 }}>

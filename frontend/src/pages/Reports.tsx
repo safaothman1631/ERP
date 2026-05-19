@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Form, DatePicker, Button, Space, Table, Statistic, Row, Col, Divider, Select} from 'antd';
+import { Card, Form, DatePicker, Button, Space, Statistic, Row, Col, Divider, Select, Table} from 'antd';
 import { message } from '../utils/message';
 import { FilePdfOutlined, FileExcelOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import dayjs from 'dayjs';
 import { PageHeader } from '../design-system';
+import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
+import { ResponsiveForm } from '../components/responsive/ResponsiveForm';
 
 const Reports: React.FC = () => {
   const { t } = useTranslation();
@@ -100,17 +102,19 @@ const Reports: React.FC = () => {
 
   return (
     <div>
-      <PageHeader title={t('reports')} subtitle={t('reports_subtitle', 'راپۆرتە داراییەکان')} helpKey="reports" />
+      <PageHeader title={t('reports')} subtitle={t('reports_subtitle', 'Financial reports')} helpKey="reports" sectionId="reports" />
       <Row gutter={16}>
         {/* Profit & Loss */}
         <Col xs={24} md={8}>
           <Card title={t('profit_loss')} size="small">
             <Form onFinish={fetchProfitLoss} layout="vertical"
               initialValues={{ start: dayjs().startOf('year'), end: dayjs() }}>
+              <ResponsiveForm layout="single">
               <Form.Item label={t('from_date')} name="start"><DatePicker style={{ width: '100%' }} /></Form.Item>
               <Form.Item label={t('to_date')} name="end"><DatePicker style={{ width: '100%' }} /></Form.Item>
               <Button type="primary" htmlType="submit" loading={loading} block>{t('generate')}</Button>
-            </Form>
+              </ResponsiveForm>
+</Form>
           </Card>
         </Col>
 
@@ -118,9 +122,11 @@ const Reports: React.FC = () => {
         <Col xs={24} md={8}>
           <Card title={t('balance_sheet')} size="small">
             <Form onFinish={fetchBalanceSheet} layout="vertical" initialValues={{ date: dayjs() }}>
+              <ResponsiveForm layout="single">
               <Form.Item label={t('date')} name="date"><DatePicker style={{ width: '100%' }} /></Form.Item>
               <Button type="primary" htmlType="submit" loading={loading} block>{t('generate')}</Button>
-            </Form>
+              </ResponsiveForm>
+</Form>
           </Card>
         </Col>
 
@@ -128,9 +134,11 @@ const Reports: React.FC = () => {
         <Col xs={24} md={8}>
           <Card title={t('trial_balance')} size="small">
             <Form onFinish={fetchTrialBalance} layout="vertical" initialValues={{ date: dayjs() }}>
+              <ResponsiveForm layout="single">
               <Form.Item label={t('date')} name="date"><DatePicker style={{ width: '100%' }} /></Form.Item>
               <Button type="primary" htmlType="submit" loading={loading} block>{t('generate')}</Button>
-            </Form>
+              </ResponsiveForm>
+</Form>
           </Card>
         </Col>
 
@@ -138,13 +146,15 @@ const Reports: React.FC = () => {
         <Col xs={24} md={8} style={{ marginTop: 16 }}>
           <Card title={t('account_transactions') || 'مامەڵەکانی هەژمار'} size="small">
             <Form onFinish={fetchAccountTransactions} layout="vertical">
+              <ResponsiveForm layout="single">
               <Form.Item label={t('account')} name="account_id" rules={[{ required: true }]}>
                 <Select options={accounts} showSearch optionFilterProp="label" placeholder={t('select')} />
               </Form.Item>
               <Form.Item label={t('from_date')} name="start" rules={[{ required: true }]}><DatePicker style={{ width: '100%' }} /></Form.Item>
               <Form.Item label={t('to_date')} name="end" rules={[{ required: true }]}><DatePicker style={{ width: '100%' }} /></Form.Item>
               <Button type="primary" htmlType="submit" loading={loading} block>{t('generate')}</Button>
-            </Form>
+              </ResponsiveForm>
+</Form>
           </Card>
         </Col>
       </Row>
@@ -158,9 +168,9 @@ const Reports: React.FC = () => {
             <Col span={8}><Statistic title={t('net_profit')} value={data.net_profit} precision={0} suffix="IQD" styles={{ content: { color: data.net_profit >= 0 ? '#3f8600' : '#cf1322' } }} /></Col>
           </Row>
           <Divider>{t('income')}</Divider>
-          <Table dataSource={data.revenue || []} columns={accountCols} rowKey="account_id" pagination={false} size="small" />
+          <ResponsiveTableAdapter dataSource={data.revenue || []} columns={accountCols} rowKey="account_id" pagination={false} size="small" />
           <Divider>{t('expenses')}</Divider>
-          <Table dataSource={data.expenses || []} columns={accountCols} rowKey="account_id" pagination={false} size="small" />
+          <ResponsiveTableAdapter dataSource={data.expenses || []} columns={accountCols} rowKey="account_id" pagination={false} size="small" />
         </Card>
       )}
 
@@ -176,7 +186,7 @@ const Reports: React.FC = () => {
 
       {reportType === 'tb' && data && (
         <Card style={{ marginTop: 24 }} title={t('trial_balance')} extra={<Space><Button icon={<FilePdfOutlined />} size="small" onClick={() => exportReport('pdf')}>PDF</Button><Button icon={<FileExcelOutlined />} size="small" onClick={() => exportReport('excel')}>Excel</Button></Space>}>
-          <Table dataSource={data.accounts || []} columns={tbCols} rowKey="account_id" pagination={false} size="small" />
+          <ResponsiveTableAdapter dataSource={data.accounts || []} columns={tbCols} rowKey="account_id" pagination={false} size="small" />
           <Row gutter={16} style={{ marginTop: 16 }}>
             <Col span={12}><Statistic title={t('debit')} value={data.total_debit} precision={0} suffix="IQD" /></Col>
             <Col span={12}><Statistic title={t('credit')} value={data.total_credit} precision={0} suffix="IQD" /></Col>
@@ -186,7 +196,7 @@ const Reports: React.FC = () => {
 
       {reportType === 'at' && data && (
         <Card style={{ marginTop: 24 }} title={t('account_transactions') || 'مامەڵەکانی هەژمار'} extra={<Space><Button icon={<FilePdfOutlined />} size="small" onClick={() => exportReport('pdf')}>PDF</Button><Button icon={<FileExcelOutlined />} size="small" onClick={() => exportReport('excel')}>Excel</Button></Space>}>
-          <Table
+          <ResponsiveTableAdapter
             dataSource={data.transactions || []}
             columns={[
               { title: t('date'), dataIndex: 'date', key: 'date' },

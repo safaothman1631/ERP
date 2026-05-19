@@ -13,8 +13,9 @@ export interface DateRangePickerRTLProps {
 
 /**
  * DateRangePickerRTL — Sprint 10 — wraps AntD RangePicker with RTL-friendly defaults.
+ * React.memo applied per Requirements 18.4.
  */
-export const DateRangePickerRTL: React.FC<DateRangePickerRTLProps> = ({ value, onChange, size, placeholder }) => {
+const DateRangePickerRTLInner: React.FC<DateRangePickerRTLProps> = ({ value, onChange, size, placeholder }) => {
   return (
     <RangePicker
       value={value ?? undefined}
@@ -25,5 +26,7 @@ export const DateRangePickerRTL: React.FC<DateRangePickerRTLProps> = ({ value, o
     />
   );
 };
+
+export const DateRangePickerRTL = React.memo(DateRangePickerRTLInner);
 
 export default DateRangePickerRTL;

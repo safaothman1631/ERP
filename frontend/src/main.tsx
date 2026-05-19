@@ -5,6 +5,13 @@ import './i18n'
 import './global.css'
 import './polish.css'
 import './print.css'
+import './a11y.css'
+import './reduced-motion.css'
+// Safe-area-inset shell utility — applied via .responsive-shell class on
+// AppShell, AuthLayout, and full-screen Dialogs. Imported globally so the
+// class is available app-wide. Touch-target utility (clickable.css) is
+// imported per-component, not globally (Requirements 2.5, 2.7, 5.1, 5.2).
+import './components/responsive/safeArea.css'
 
 const STALE_CHUNK_RELOAD_KEY = 'zoho:stale-chunk-reload'
 
