@@ -1570,49 +1570,57 @@ const NotificationSettings: React.FC = () => {
             {/* Matrix — card list on mobile, table on desktop */}
             {isMobile ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {filteredEvents.map((ev) => {
+                    {filteredEvents.map((ev) => {
                   const cat = NOTIF_CATEGORIES.find(c => c.key === ev.category);
                   const row = prefs.matrix?.[ev.key] ?? { in_app: false, email: false, sms: false, push: false, whatsapp: false, slack: false };
-                  const inApp = !!row.in_app;
-                  const lockedOn = !!ev.critical;
+                  const availableChannels = NOTIF_CHANNELS.filter(ch => ch.available);
                   return (
                     <div key={ev.key} style={{
                       border: `1px solid ${borderClr}`,
                       borderRadius: 12,
                       padding: '12px 14px',
                       background: cardBg,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
                     }}>
-                      {/* Left: event info */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 3 }}>
-                          <Tag color={cat?.color} style={{ margin: 0, fontSize: 10 }}>
-                            {t(`notif_cat_${ev.category}`, cat?.label ?? ev.category)}
-                          </Tag>
-                          {ev.critical && (
-                            <Tag color="red" style={{ margin: 0, fontSize: 10 }}>
-                              {t('critical', 'Critical')}
+                      {/* Event info */}
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 3 }}>
+                            <Tag color={cat?.color} style={{ margin: 0, fontSize: 10 }}>
+                              {t(`notif_cat_${ev.category}`, cat?.label ?? ev.category)}
                             </Tag>
-                          )}
-                        </div>
-                        <div style={{ fontWeight: 600, fontSize: 13, color: isDark ? palette.darkInk : palette.ink900, lineHeight: 1.3 }}>
-                          {t(`notif_ev_${ev.key}`, ev.label)}
-                        </div>
-                        <div style={{ fontSize: 11, color: mutedClr, lineHeight: 1.4, marginTop: 2 }}>
-                          {t(`notif_ev_${ev.key}_desc`, ev.desc)}
+                            {ev.critical && (
+                              <Tag color="red" style={{ margin: 0, fontSize: 10 }}>
+                                {t('critical', 'Critical')}
+                              </Tag>
+                            )}
+                          </div>
+                          <div style={{ fontWeight: 600, fontSize: 13, color: isDark ? palette.darkInk : palette.ink900, lineHeight: 1.3 }}>
+                            {t(`notif_ev_${ev.key}`, ev.label)}
+                          </div>
+                          <div style={{ fontSize: 11, color: mutedClr, lineHeight: 1.4, marginTop: 2 }}>
+                            {t(`notif_ev_${ev.key}_desc`, ev.desc)}
+                          </div>
                         </div>
                       </div>
-                      {/* Right: In-App toggle */}
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                        <BellOutlined style={{ fontSize: 14, color: mutedClr }} />
-                        <Switch
-                          size="small"
-                          checked={inApp}
-                          disabled={lockedOn}
-                          onChange={() => toggleCell(ev.key, 'in_app')}
-                        />
+                      {/* Channel toggles row */}
+                      <div style={{ display: 'flex', gap: 12, borderTop: `1px solid ${borderClr}`, paddingTop: 10 }}>
+                        {availableChannels.map(ch => {
+                          const checked = !!row[ch.key];
+                          const lockedOn = !!ev.critical && ch.key === 'in_app';
+                          return (
+                            <div key={ch.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 1 }}>
+                              <span style={{ fontSize: 16, color: checked ? palette.primary500 : mutedClr, opacity: checked ? 1 : 0.5 }}>
+                                {ch.icon}
+                              </span>
+                              <Switch
+                                size="small"
+                                checked={checked}
+                                disabled={lockedOn}
+                                onChange={() => toggleCell(ev.key, ch.key)}
+                              />
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   );
