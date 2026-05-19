@@ -27,6 +27,7 @@ import {
   SIDEBAR_HIDDEN_MODES, FORCE_COLLAPSED_MODES, SHOW_TABS_MODES,
 } from './LayoutChrome';
 import { palette, space, radius, motion, shadow } from '../theme/tokens';
+import { useViewport } from '../hooks/useViewport';
 
 /**
  * Sidebar width constants per spec requirements 4.2, 4.3.
@@ -43,14 +44,15 @@ const SIDER_COLLAPSED = 64;
 export const AppShell: React.FC = () => {
   const { i18n } = useTranslation();
   const { theme: appTheme } = useAuthStore();
+  const { isMobile } = useViewport();
   const orgId = useAuthStore(s => s.orgId);
   const layoutMode = useAuthStore(s => s.layoutMode);
   const isRTL = i18n.language === 'ku' || i18n.language === 'ar';
   const isDark = appTheme === 'dark';
-  const sidebarHidden = SIDEBAR_HIDDEN_MODES.includes(layoutMode);
+  const sidebarHidden = SIDEBAR_HIDDEN_MODES.includes(layoutMode) || isMobile;
   const forceCollapsed = FORCE_COLLAPSED_MODES.includes(layoutMode);
   const showTabs = SHOW_TABS_MODES.includes(layoutMode);
-  const showBottomNav = layoutMode === 'mobile-bottom-nav';
+  const showBottomNav = layoutMode === 'mobile-bottom-nav' || isMobile;
   const showTopMega = layoutMode === 'top-megamenu';
   const showAppsLauncher = layoutMode === 'apps-launcher';
   const showCommandHero = layoutMode === 'command-centric';

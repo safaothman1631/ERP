@@ -1,6 +1,5 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import HttpBackend from 'i18next-http-backend';
 import ar from './locales/ar.json';
 import { message as toast } from './utils/message';
 
@@ -136,30 +135,22 @@ if (isTestEnv) {
   // Production / development: per-locale dynamic loading (R15.6).
   // Only the active locale's bundle is shipped in the initial chunk; the
   // other supported locale loads on first switch.
-  const initialResources: Record<string, { translation: Resource }> = {
-    ar: { translation: ar as Resource },
-  };
-
-  if (savedLang === 'en' || savedLang === 'ku') {
-    const data = await loaders[savedLang]();
-    initialResources[savedLang] = { translation: data };
-  }
+  // Load BOTH locales at init so language switching is instant (no 404s).
+  // The locale files are code-split by Vite so only the active one blocks
+  // initial render; the other loads in parallel.
+  const [enData, kuData] = await Promise.all([loaders.en(), loaders.ku()]);
 
   i18n
-    .use(HttpBackend)
     .use(initReactI18next)
     .init({
       lng: savedLang,
-      fallbackLng: 'ku',
-      defaultNS: 'common',
-      ns: I18N_NAMESPACES,
-      // R15.6 — only the active locale at init; partial bundle support so
-      // pre-loaded resources merge with HttpBackend-loaded namespaces.
-      load: 'currentOnly',
-      partialBundledLanguages: true,
-      resources: initialResources,
-      backend: {
-        loadPath: '/locales/{{lng}}/{{ns}}.json',
+      fallbackLng: 'en',
+      defaultNS: 'translation',
+      ns: ['translation'],
+      resources: {
+        en: { translation: enData },
+        ku: { translation: kuData },
+        ar: { translation: ar as Resource },
       },
       interpolation: { escapeValue: false },
       parseMissingKeyHandler: (key, defaultValue) => {
