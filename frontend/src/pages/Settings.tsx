@@ -1543,34 +1543,99 @@ const NotificationSettings: React.FC = () => {
                   {filteredEvents.length} / {NOTIF_EVENTS.length}
                 </span>
               </div>
-              <div style={{ overflowX: 'auto', paddingBottom: 2 }}>
-                <Segmented
+              {isMobile ? (
+                <Select
                   value={filterCat}
                   onChange={(v) => setFilterCat(v as typeof filterCat)}
+                  style={{ width: '100%' }}
                   options={[
                     { label: t('all', 'All'), value: 'all' },
                     ...NOTIF_CATEGORIES.map(c => ({ label: t(`notif_cat_${c.key}`, c.label), value: c.key })),
                   ]}
                 />
-              </div>
+              ) : (
+                <div style={{ overflowX: 'auto', paddingBottom: 2 }}>
+                  <Segmented
+                    value={filterCat}
+                    onChange={(v) => setFilterCat(v as typeof filterCat)}
+                    options={[
+                      { label: t('all', 'All'), value: 'all' },
+                      ...NOTIF_CATEGORIES.map(c => ({ label: t(`notif_cat_${c.key}`, c.label), value: c.key })),
+                    ]}
+                  />
+                </div>
+              )}
             </div>
 
-            {/* Matrix */}
+            {/* Matrix — card list on mobile, table on desktop */}
+            {isMobile ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {filteredEvents.map((ev) => {
+                  const cat = NOTIF_CATEGORIES.find(c => c.key === ev.category);
+                  const row = prefs.matrix?.[ev.key] ?? { in_app: false, email: false, sms: false, push: false, whatsapp: false, slack: false };
+                  const inApp = !!row.in_app;
+                  const lockedOn = !!ev.critical;
+                  return (
+                    <div key={ev.key} style={{
+                      border: `1px solid ${borderClr}`,
+                      borderRadius: 12,
+                      padding: '12px 14px',
+                      background: cardBg,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                    }}>
+                      {/* Left: event info */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 3 }}>
+                          <Tag color={cat?.color} style={{ margin: 0, fontSize: 10 }}>
+                            {t(`notif_cat_${ev.category}`, cat?.label ?? ev.category)}
+                          </Tag>
+                          {ev.critical && (
+                            <Tag color="red" style={{ margin: 0, fontSize: 10 }}>
+                              {t('critical', 'Critical')}
+                            </Tag>
+                          )}
+                        </div>
+                        <div style={{ fontWeight: 600, fontSize: 13, color: isDark ? palette.darkInk : palette.ink900, lineHeight: 1.3 }}>
+                          {t(`notif_ev_${ev.key}`, ev.label)}
+                        </div>
+                        <div style={{ fontSize: 11, color: mutedClr, lineHeight: 1.4, marginTop: 2 }}>
+                          {t(`notif_ev_${ev.key}_desc`, ev.desc)}
+                        </div>
+                      </div>
+                      {/* Right: In-App toggle */}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                        <span style={{ fontSize: 10, color: mutedClr, whiteSpace: 'nowrap' }}>
+                          {t('channel_in_app', 'In-App')}
+                        </span>
+                        <Switch
+                          size="small"
+                          checked={inApp}
+                          disabled={lockedOn}
+                          onChange={() => toggleCell(ev.key, 'in_app')}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
             <div style={{
               border: `1px solid ${borderClr}`,
               borderRadius: radius.lg,
               overflow: 'hidden',
               background: cardBg,
             }}>
-              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' as any }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: isMobile ? 320 : 480 }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 480 }}>
                   <thead>
                     <tr style={{ background: headerBg }}>
                       <th style={{ textAlign: 'start', padding: `${space.md}px ${space.lg}px`, fontSize: fontSize.sm, fontWeight: 600, color: mutedClr, borderBottom: `1px solid ${borderClr}`, position: 'sticky', insetInlineStart: 0, background: headerBg, zIndex: 1 }}>
                         {t('event', 'Event')}
                       </th>
-                      {NOTIF_CHANNELS.filter(ch => !isMobile || ch.key === 'in_app').map(ch => (
-                        <th key={ch.key} style={{ padding: `${space.sm}px ${space.md}px`, textAlign: 'center', fontSize: fontSize.sm, fontWeight: 600, color: ch.available ? mutedClr : palette.ink300, borderBottom: `1px solid ${borderClr}`, minWidth: isMobile ? 72 : 90 }}>
+                      {NOTIF_CHANNELS.map(ch => (
+                        <th key={ch.key} style={{ padding: `${space.sm}px ${space.md}px`, textAlign: 'center', fontSize: fontSize.sm, fontWeight: 600, color: ch.available ? mutedClr : palette.ink300, borderBottom: `1px solid ${borderClr}`, minWidth: 90 }}>
                           <Tooltip title={ch.available ? t('toggle_column', 'Click header to toggle column') : t('channel_unavailable', 'Channel not yet available')}>
                             <div
                               onClick={() => ch.available && setColumn(ch.key, !filteredEvents.every(ev => prefs.matrix?.[ev.key]?.[ch.key]))}
@@ -1582,11 +1647,9 @@ const NotificationSettings: React.FC = () => {
                           </Tooltip>
                         </th>
                       ))}
-                      {!isMobile && (
-                        <th style={{ padding: `${space.sm}px ${space.md}px`, fontSize: fontSize.sm, fontWeight: 600, color: mutedClr, borderBottom: `1px solid ${borderClr}` }}>
-                          {t('all', 'All')}
-                        </th>
-                      )}
+                      <th style={{ padding: `${space.sm}px ${space.md}px`, fontSize: fontSize.sm, fontWeight: 600, color: mutedClr, borderBottom: `1px solid ${borderClr}` }}>
+                        {t('all', 'All')}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1614,7 +1677,7 @@ const NotificationSettings: React.FC = () => {
                               </div>
                             </div>
                           </td>
-                          {NOTIF_CHANNELS.filter(ch => !isMobile || ch.key === 'in_app').map(ch => {
+                          {NOTIF_CHANNELS.map(ch => {
                             const checked = !!row[ch.key];
                             const lockedOn = !!ev.critical && ch.key === 'in_app';
                             return (
@@ -1630,11 +1693,9 @@ const NotificationSettings: React.FC = () => {
                               </td>
                             );
                           })}
-                          {!isMobile && (
-                            <td style={{ textAlign: 'center', padding: `${space.sm}px`, borderBottom: `1px solid ${borderClr}` }}>
-                              <Switch size="small" checked={allOn} onChange={(v) => setRow(ev.key, v)} />
-                            </td>
-                          )}
+                          <td style={{ textAlign: 'center', padding: `${space.sm}px`, borderBottom: `1px solid ${borderClr}` }}>
+                            <Switch size="small" checked={allOn} onChange={(v) => setRow(ev.key, v)} />
+                          </td>
                         </tr>
                       );
                     })}
@@ -1642,6 +1703,7 @@ const NotificationSettings: React.FC = () => {
                 </table>
               </div>
             </div>
+            )}
 
             <Alert
               type="info"
