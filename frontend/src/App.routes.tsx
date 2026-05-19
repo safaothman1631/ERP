@@ -263,6 +263,7 @@ const StoreProduct = lazy(() => import('./pages/storefront/StoreProduct'));
 const SalesReturnsRefund = lazy(() => import('./pages/returns/SalesReturns'));
 const VendorReturnsRefund = lazy(() => import('./pages/returns/VendorReturns'));
 const NumberingSequences = lazy(() => import('./pages/settings/NumberingSequences'));
+const SystemHealthPage = lazy(() => import('./pages/settings/SystemHealthPage'));
 const StoreCart = lazy(() => import('./pages/storefront/StoreCart'));
 const StoreCheckout = lazy(() => import('./pages/storefront/StoreCheckout'));
 const StoreOrderConfirm = lazy(() => import('./pages/storefront/StoreOrderConfirm'));
@@ -538,6 +539,7 @@ export const routes: RouteObject[] = [
       { path: 'tax-settings', element: <PageTransition><TaxSettings /></PageTransition> },
       { path: 'settings', element: <PageTransition><Settings /></PageTransition> },
       { path: 'settings/numbering', element: <PageTransition><NumberingSequences /></PageTransition> },
+      { path: 'settings/system-health', element: <PageTransition><SystemHealthPage /></PageTransition> },
       { path: 'trash', element: <PageTransition><Trash /></PageTransition> },
       { path: 'docs', element: <PageTransition><DocsHub /></PageTransition> },
       { path: 'ui-gallery', element: <PageTransition><UIGallery /></PageTransition> },

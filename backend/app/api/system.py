@@ -1,9 +1,6 @@
 import uuid
-import io
-import json
 import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional, List
 from app.firestore.system import SettingsRepository, CurrencyRepository, ExchangeRateRepository, ReminderSettingsRepository, AuditLogRepository
@@ -544,37 +541,6 @@ def set_default_template(template_id: str, user: dict = Depends(get_current_user
     for item in items:
         repo.update(item["id"], {"is_default": item["id"] == template_id})
     return {"ok": True}
-
-
-# --- Backup ---
-class BackupRepo(BaseRepository):
-    collection_name = "backups"
-
-
-@router.get("/backup/list")
-def list_backups(user: dict = Depends(get_current_user)):
-    repo = BackupRepo(user["org_id"])
-    items, _ = repo.list(limit=50)
-    return items
-
-
-@router.post("/backup", status_code=201)
-def create_backup(user: dict = Depends(get_current_user)):
-    repo = BackupRepo(user["org_id"])
-    now = datetime.datetime.utcnow()
-    filename = f"backup_{now.strftime('%Y%m%d_%H%M%S')}.json"
-    entry = repo.create({"filename": filename, "created": now.isoformat(), "size": 0})
-    return entry
-
-
-@router.get("/backup/download")
-def download_backup(user: dict = Depends(get_current_user)):
-    data = json.dumps({"org_id": user["org_id"], "exported_at": datetime.datetime.utcnow().isoformat()})
-    return StreamingResponse(
-        io.BytesIO(data.encode()),
-        media_type="application/json",
-        headers={"Content-Disposition": "attachment; filename=backup.json"}
-    )
 
 
 # --- Activity Log ---

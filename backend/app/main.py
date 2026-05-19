@@ -90,6 +90,7 @@ from app.api import (
 from app.api import imports as imports_api
 from app.api import jobs as jobs_api
 from app.api import feature_flags
+from app.api import health as health_api, backup as backup_api
 from app.middleware.audit import audit_middleware
 # Task 8.2: /api/v1/ versioned router with cursor-based pagination + RFC 7807 errors
 from app.api.v1.router import v1_router
@@ -287,6 +288,8 @@ app.include_router(taxes.router)
 app.include_router(fiscal.router)
 # Phase 6: System (Settings, Audit, Backup, Search)
 app.include_router(system.router)
+app.include_router(health_api.router)
+app.include_router(backup_api.router)
 # Phase 7: Advanced Features (Shipments, Returns, Workflows, Portals)
 app.include_router(shipments.router)
 app.include_router(shipments.challans_router)

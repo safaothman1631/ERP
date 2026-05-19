@@ -21,6 +21,7 @@ cachetools>=5.3.2
 pyotp>=2.9.0
 qrcode>=7.4.2
 apscheduler>=3.10.4
+psutil>=5.9.0
 reportlab>=4.0.0
 arabic-reshaper>=3.0.0
 python-bidi>=0.6.0

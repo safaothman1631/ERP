@@ -85,3 +85,7 @@ def get_bucket():
     if _bucket is None:
         raise RuntimeError("Firebase Storage is not configured. Set FIREBASE_STORAGE_BUCKET env var.")
     return _bucket
+
+
+# Alias used by scheduler.py and other modules
+get_firestore_client = get_db

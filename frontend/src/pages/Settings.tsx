@@ -2793,16 +2793,23 @@ const BackupRestore: React.FC = () => {
 
   const createBackup = async () => {
     setCreating(true);
-    try { await api.post('/api/system/backup'); message.success(t('success')); fetchBackups(); }
+    // Updated to use the new /run endpoint (returns 202 Accepted)
+    try { await api.post('/api/system/backup/run'); message.success(t('success')); fetchBackups(); }
     catch { message.error(t('error')); } finally { setCreating(false); }
   };
 
-  const downloadBackup = async () => {
+  const downloadBackup = async (backupId: string, filename?: string) => {
     try {
-      const r = await api.get('/api/system/backup/download', { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([r.data]));
-      const a = document.createElement('a'); a.href = url; a.download = 'backup.db'; a.click();
-      window.URL.revokeObjectURL(url);
+      // Endpoint streams the file directly — fetch as blob with auth header
+      const r = await api.get(`/api/system/backup/${backupId}/download`, { responseType: 'blob' });
+      const blobUrl = window.URL.createObjectURL(new Blob([r.data]));
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename || 'backup.json.gz';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
     } catch { message.error(t('error')); }
   };
 
@@ -2825,7 +2832,6 @@ const BackupRestore: React.FC = () => {
           <Button type="primary" icon={<CloudOutlined />} onClick={createBackup} loading={creating}>
             {t('create_backup')}
           </Button>
-          <Button icon={<DownloadOutlined />} onClick={downloadBackup}>{t('download_backup')}</Button>
         </Space>
       }
       noPadding
@@ -2835,11 +2841,20 @@ const BackupRestore: React.FC = () => {
         size="middle"
         columns={[
           { title: t('name'), dataIndex: 'filename', key: 'filename' },
-          { title: t('date'), dataIndex: 'created',  key: 'created' },
-          { title: t('size'), dataIndex: 'size',     key: 'size',
-            render: (v: number) => `${(v / 1024).toFixed(1)} KB` },
+          { title: t('date'), dataIndex: 'created_at', key: 'created_at',
+            render: (v: string) => v ? new Date(v).toLocaleString() : '—' },
+          { title: t('size'), dataIndex: 'file_size_bytes', key: 'file_size_bytes',
+            render: (v: number) => v ? `${(v / 1024).toFixed(1)} KB` : '—' },
+          { title: t('status'), dataIndex: 'status', key: 'status' },
+          { title: t('download'), key: 'download',
+            render: (_: unknown, record: any) => (
+              <Button size="small" disabled={record.status === 'failed'}
+                onClick={() => downloadBackup(record.id, record.filename)}>
+                {t('download_backup')}
+              </Button>
+            )},
         ]}
-        rowKey="filename"
+        rowKey="id"
         loading={loading}
       />
     </SectionCard>

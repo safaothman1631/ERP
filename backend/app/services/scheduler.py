@@ -90,8 +90,20 @@ def start_scheduler(app=None):
         replace_existing=True,
     )
 
+    # System Health Backup: Daily backup of all organizations
+    _scheduler.add_job(
+        _job_daily_backup,
+        trigger=CronTrigger(
+            hour=int(os.getenv("BACKUP_CRON_HOUR", "2")),
+            minute=int(os.getenv("BACKUP_CRON_MINUTE", "0")),
+        ),
+        id="daily_backup",
+        name="Daily Organization Backup",
+        replace_existing=True,
+    )
+
     _scheduler.start()
-    logger.info("✅ Scheduler started with 6 jobs")
+    logger.info("✅ Scheduler started with 7 jobs")
 
 
 def shutdown_scheduler():
@@ -414,6 +426,45 @@ def _job_monthly_depreciation():
             finished_at=datetime.utcnow().isoformat(),
             status="failed",
         )
+
+
+def _job_daily_backup():
+    """Run daily backup for all organizations.
+
+    Fetches all organizations from Firestore and runs BackupService for each.
+    Logs start time, org list, total duration, count backed up, and failures.
+    Continues to the next org on per-org failure (never aborts the full run).
+    """
+    import asyncio
+    from app.firebase_client import get_firestore_client
+    from app.services.backup_service import BackupService
+
+    started_at = datetime.utcnow()
+    logger.info(f"🗄️ Daily backup job started at {started_at.isoformat()}")
+
+    db = get_firestore_client()
+    orgs = list(db.collection("organizations").stream())
+    org_ids = [doc.id for doc in orgs]
+    logger.info(f"🗄️ Daily backup: {len(org_ids)} organizations to back up: {org_ids}")
+
+    backed_up = 0
+    failures = []
+
+    for org_id in org_ids:
+        try:
+            record = asyncio.run(BackupService(org_id).run_backup())
+            backed_up += 1
+            logger.info(f"✅ Backup completed for org {org_id}: status={record.status}, integrity={record.integrity_status}")
+        except Exception as e:
+            failures.append(org_id)
+            logger.error(f"❌ Backup failed for org {org_id}: {e}")
+
+    duration_seconds = (datetime.utcnow() - started_at).total_seconds()
+    logger.info(
+        f"🗄️ Daily backup finished in {duration_seconds:.1f}s — "
+        f"{backed_up} backed up, {len(failures)} failed"
+        + (f": {failures}" if failures else "")
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════════════
