@@ -15,11 +15,13 @@ export interface SettingsRowProps {
   divider?: boolean;
   align?: 'center' | 'start';
   controlWidth?: number | string;
+  /** Force inline layout (label + control side by side). Use for Switch/Toggle. */
+  inline?: boolean;
 }
 
 const SettingsRow: React.FC<SettingsRowProps> = ({
   label, description, htmlFor, children, divider = true,
-  align = 'center', controlWidth,
+  align = 'center', controlWidth, inline = false,
 }) => {
   const isDark = useAuthStore(s => s.theme) === 'dark';
   const ink = isDark ? palette.darkInk : palette.ink900;
@@ -53,8 +55,8 @@ const SettingsRow: React.FC<SettingsRowProps> = ({
         >
           {label}
         </label>
-        {/* Inline control for simple toggles (Switch) — no description, no wide control */}
-        {!description && !controlWidth && (
+        {/* Inline control — Switch/Toggle or explicitly inline */}
+        {inline && (
           <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
             {children}
           </div>
@@ -65,8 +67,8 @@ const SettingsRow: React.FC<SettingsRowProps> = ({
           {description}
         </div>
       )}
-      {/* Full-width control for inputs, selects, time pickers */}
-      {(description || controlWidth) && (
+      {/* Full-width control */}
+      {!inline && (
         <div
           style={{
             width: controlWidth ?? '100%',
