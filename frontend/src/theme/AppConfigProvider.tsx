@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
 import { ConfigProvider, theme as antTheme } from 'antd';
+import enUS from 'antd/locale/en_US';
+import arEG from 'antd/locale/ar_EG';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store';
 import { useSettingsStore } from '../store/settingsStore';
@@ -24,10 +26,15 @@ interface Props {
  */
 export const AppConfigProvider: React.FC<Props> = ({ children, density: densityProp }) => {
   const { i18n } = useTranslation();
-  const isRTL = i18n.language === 'ar' || i18n.language === 'ku';
+  // Force re-render on language change by reading i18n.language through useTranslation
+  // The useTranslation hook subscribes to language changes automatically
+  const currentLanguage = i18n.language;
+  const isRTL = currentLanguage === 'ar' || currentLanguage === 'ku';
   const appTheme = useAuthStore((s) => s.theme);
   const brandColor = useSettingsStore((s) => s.config.branding.primary_color);
   const storeDensity = useUiStore((s) => s.density);
+  // Also subscribe to uiStore.language so ConfigProvider re-renders on language switch
+  const storeLanguage = useUiStore((s) => s.language);
   const isDark = appTheme === 'dark';
 
   // Prop overrides store value (for storybook / testing); store value is the
@@ -42,10 +49,13 @@ export const AppConfigProvider: React.FC<Props> = ({ children, density: densityP
       components: buildAntComponents(isDark ? 'dark' : 'light'),
       hashed: true,
     };
-  }, [isDark, density, isRTL, brandColor]);
+  }, [isDark, density, isRTL, brandColor, storeLanguage]);
+
+  // AntD locale — switch based on language
+  const antLocale = currentLanguage === 'ar' ? arEG : enUS;
 
   return (
-    <ConfigProvider direction={isRTL ? 'rtl' : 'ltr'} theme={themeConfig}>
+    <ConfigProvider direction={isRTL ? 'rtl' : 'ltr'} theme={themeConfig} locale={antLocale}>
       {children}
     </ConfigProvider>
   );

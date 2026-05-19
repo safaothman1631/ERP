@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Layout } from 'antd';
+import { Layout, Drawer } from 'antd';
 import { Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store';
@@ -44,7 +44,7 @@ const SIDER_COLLAPSED = 64;
 export const AppShell: React.FC = () => {
   const { i18n } = useTranslation();
   const { theme: appTheme } = useAuthStore();
-  const { isMobile } = useViewport();
+  const { isMobile, isTablet } = useViewport();
   const orgId = useAuthStore(s => s.orgId);
   const layoutMode = useAuthStore(s => s.layoutMode);
   const isRTL = i18n.language === 'ku' || i18n.language === 'ar';
@@ -119,6 +119,16 @@ export const AppShell: React.FC = () => {
   const setPaletteOpen = (v: boolean) => v ? openPalette() : closePalette();
   const [sectionDocsKey, setSectionDocsKey] = useState<string | null>(null);
 
+  // Mobile SideNav drawer state — Requirement 1.3, 4.1
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Auto-collapse sidebar on tablet — Requirement 1.9
+  useEffect(() => {
+    if (isTablet && !collapsed) {
+      setSidebarCollapsed(true);
+    }
+  }, [isTablet]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Keyboard: c-then-X quick create sequences + ? cheatsheet (latter inside ShortcutCheatsheet)
   useQuickCreateKeyboard();
 
@@ -147,17 +157,32 @@ export const AppShell: React.FC = () => {
   // Requirements: 4.1, 10.1
 
   const toggle = useCallback(() => {
+    if (isMobile) {
+      // On mobile: toggle the drawer overlay — Requirement 1.3
+      setDrawerOpen(prev => !prev);
+      return;
+    }
     if (forceCollapsed) return;
     setSidebarCollapsed(!collapsed);
-  }, [forceCollapsed, collapsed, setSidebarCollapsed]);
+  }, [isMobile, forceCollapsed, collapsed, setSidebarCollapsed]);
   const shellBg = isDark
     ? `radial-gradient(circle at top ${isRTL ? 'right' : 'left'}, rgba(31, 111, 235, 0.14), transparent 32%), ${palette.darkBg}`
     : `radial-gradient(circle at top ${isRTL ? 'right' : 'left'}, rgba(31, 111, 235, 0.09), transparent 28%), ${palette.bg}`;
 
   return (
-    <Layout className="responsive-shell" style={{ minHeight: '100vh', background: shellBg, direction: isRTL ? 'rtl' : 'ltr' }}>
+    <Layout className="responsive-shell" style={{
+      minHeight: '100vh',
+      background: shellBg,
+      direction: isRTL ? 'rtl' : 'ltr',
+      // Safe-area insets on root — Requirements 1.6, 1.7, 10.1
+      paddingInlineStart: 'env(safe-area-inset-left, 0px)',
+      paddingInlineEnd: 'env(safe-area-inset-right, 0px)',
+      paddingBlockStart: 'env(safe-area-inset-top, 0px)',
+    }}>
       <SkipToContent />
-      {!sidebarHidden && (
+
+      {/* Desktop/Tablet: SideNav inline — hidden on mobile */}
+      {!sidebarHidden && !isMobile && (
         <SideNav
           collapsed={effectiveCollapsed}
           width={SIDER_WIDTH}
@@ -170,8 +195,37 @@ export const AppShell: React.FC = () => {
           onOpenSectionDocs={(key) => setSectionDocsKey(key)}
         />
       )}
+
+      {/* Mobile: SideNav as Drawer overlay — Requirements 1.3, 1.4, 4.3–4.6, 16.6 */}
+      {isMobile && (
+        <Drawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          placement={isRTL ? 'right' : 'left'}
+          width={SIDER_WIDTH}
+          closable={false}
+          styles={{
+            body: { padding: 0, overflow: 'hidden' },
+          }}
+          role="navigation"
+          aria-label={t('nav.main', 'Main navigation')}
+        >
+          <SideNav
+            collapsed={false}
+            width={SIDER_WIDTH}
+            collapsedWidth={SIDER_COLLAPSED}
+            isRTL={isRTL}
+            isDark={isDark}
+            density={density}
+            onDensityChange={handleSideDensity}
+            onOpenPalette={() => { setPaletteOpen(true); setDrawerOpen(false); }}
+            onOpenSectionDocs={(key) => { setSectionDocsKey(key); setDrawerOpen(false); }}
+          />
+        </Drawer>
+      )}
+
       {showSplitMaster && <SplitMasterPanel isDark={isDark} isRTL={isRTL} />}
-      <Layout style={{ marginInlineStart: sideOffset, transition: `margin-inline-start ${motion.durBase}ms ${motion.easeStandard}`, background: 'transparent' }}>
+      <Layout style={{ marginInlineStart: isMobile ? 0 : sideOffset, transition: `margin-inline-start ${motion.durBase}ms ${motion.easeStandard}`, background: 'transparent' }}>
         {showTopMega && (
           <TopMegaMenu isDark={isDark} isRTL={isRTL} onOpenPalette={() => setPaletteOpen(true)} />
         )}
@@ -182,6 +236,7 @@ export const AppShell: React.FC = () => {
             isRTL={isRTL}
             isDark={isDark}
             onOpenPalette={() => setPaletteOpen(true)}
+            drawerOpen={drawerOpen}
           />
         )}
         {/* Offline indicator banner — Requirement 4.12 */}
@@ -193,10 +248,13 @@ export const AppShell: React.FC = () => {
           marginBottom: showBottomNav ? 80 : space.lg,
           // Logical-property longhands so RTL inverts and safe-area-insets
           // respect device notches on mobile (Requirements 2.5, 2.7, 3.8, 14.7).
-          paddingInlineStart: `max(${space.xl}px, env(safe-area-inset-left))`,
-          paddingInlineEnd:   `max(${space.xl}px, env(safe-area-inset-right))`,
+          paddingInlineStart: `max(${space.xl}px, env(safe-area-inset-left, 0px))`,
+          paddingInlineEnd:   `max(${space.xl}px, env(safe-area-inset-right, 0px))`,
           paddingBlockStart:  `${space.xl}px`,
-          paddingBlockEnd:    `${space.xl}px`,
+          // On mobile: extra bottom padding to clear BottomNav + safe-area — Requirement 1.5, 10.5
+          paddingBlockEnd: isMobile
+            ? `max(80px, calc(80px + env(safe-area-inset-bottom, 0px)))`
+            : `${space.xl}px`,
           background: isDark ? 'linear-gradient(180deg, rgba(17,26,46,0.98), rgba(17,26,46,0.94))' : 'linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.92))',
           borderRadius: radius.lg,
           minHeight: 'calc(100vh - 60px - 32px)',
@@ -204,6 +262,8 @@ export const AppShell: React.FC = () => {
           boxShadow: shadow.lg,
           backdropFilter: 'blur(18px)',
           overflow: 'hidden',
+          // Prevent horizontal overflow on mobile — Requirement 13.2
+          maxInlineSize: '100%',
         }}>
           <ErrorBoundary>
             <ModuleGuard>

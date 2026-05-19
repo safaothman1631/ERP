@@ -3,7 +3,7 @@ import { Layout, Button, Tooltip, Avatar, Dropdown, Space, Badge } from 'antd';
 import {
   MenuFoldOutlined, MenuUnfoldOutlined, MoonOutlined, SunOutlined,
   LogoutOutlined, UserOutlined, BellOutlined, SearchOutlined, DownOutlined, PlusOutlined,
-  QuestionCircleOutlined, ColumnHeightOutlined, SettingOutlined,
+  QuestionCircleOutlined, ColumnHeightOutlined, SettingOutlined, MenuOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +15,7 @@ import { useUnreadCount } from './NotificationsDrawer';
 import OrgSwitcher from './OrgSwitcher';
 import BranchSwitcher from './BranchSwitcher';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useViewport } from '../hooks/useViewport';
 
 const { Header } = Layout;
 
@@ -24,6 +25,8 @@ interface TopBarProps {
   isRTL: boolean;
   isDark: boolean;
   onOpenPalette?: () => void;
+  /** Whether the mobile SideNav drawer is open — used for aria-expanded */
+  drawerOpen?: boolean;
 }
 
 /**
@@ -37,7 +40,7 @@ interface TopBarProps {
  *
  * Requirements: 4.5, 4.6, 4.9, 12.1
  */
-export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDark, onOpenPalette }) => {
+export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDark, onOpenPalette, drawerOpen = false }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { userName, logout, toggleTheme } = useAuthStore();
@@ -47,11 +50,117 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
   const density = useUiStore((s) => s.density);
   const setDensity = useUiStore((s) => s.setDensity);
   const unread = useUnreadCount();
+  const { isMobile } = useViewport();
 
   const handleLogout = () => { logout(); navigate('/login'); };
   const collapseIcon = isRTL
     ? (collapsed ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />)
     : (collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />);
+
+  // Glass morphism tokens — Requirements 4.6, 12.1
+  const glassTokens = isDark ? glass.topbar.dark : glass.topbar.light;
+  const solidFallbackBg = isDark ? palette.darkSurface : palette.surface;
+  const borderCol  = glassTokens.border;
+  const searchBg   = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.04)';
+  const searchBorder = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)';
+  const searchInk  = isDark ? 'rgba(255,255,255,0.62)' : palette.ink500;
+  const kbdBg      = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.05)';
+  const userInk    = isDark ? palette.darkInk : palette.ink900;
+
+  // ─── Mobile compact TopBar — Requirements 2.1–2.8 ───────────────────────
+  if (isMobile) {
+    return (
+      <Header
+        className="topbar topbar--mobile"
+        style={{
+          // Safe-area padding — Requirement 2.7, 10.3
+          paddingInlineStart: 'max(16px, env(safe-area-inset-left, 0px))',
+          paddingInlineEnd: 'max(16px, env(safe-area-inset-right, 0px))',
+          paddingBlockStart: 'env(safe-area-inset-top, 0px)',
+          background: glassTokens.bg,
+          borderBlockEnd: `1px solid ${borderCol}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'sticky',
+          insetBlockStart: 0,
+          zIndex: zIndex.sticky,
+          // 56px height — Requirement 2.1
+          height: 56,
+          backdropFilter: glassTokens.blur,
+          WebkitBackdropFilter: glassTokens.blur,
+          boxShadow: isDark
+            ? '0 1px 0 rgba(255,255,255,0.04), 0 4px 12px rgba(0,0,0,0.18)'
+            : '0 1px 0 rgba(15,23,42,0.04), 0 4px 12px rgba(15,23,42,0.06)',
+        }}
+      >
+        <style>{topbarCss(solidFallbackBg, isDark)}</style>
+
+        {/* RTL: hamburger on inline-end, bell on inline-start — Requirement 2.8, 11.6 */}
+        {isRTL ? (
+          <>
+            {/* Bell on inline-start for RTL */}
+            <Badge count={unread} size="small" offset={[-4, 4]} color="#EF4444">
+              <Button
+                type="text"
+                shape="circle"
+                icon={<BellOutlined />}
+                onClick={() => setNotificationsOpen(true)}
+                aria-label={t('topbar.notifications', 'Notifications')}
+                className="tb-icon-btn tb-mobile-touch"
+              />
+            </Badge>
+
+            {/* Centered logo */}
+            <span style={{ fontWeight: 700, fontSize: 16, color: isDark ? '#fff' : palette.ink900, flex: 1, textAlign: 'center' }}>
+              {t('app_name', 'ERP IQ')}
+            </span>
+
+            {/* Hamburger on inline-end for RTL */}
+            <Button
+              type="text"
+              icon={<MenuOutlined />}
+              onClick={onToggle}
+              aria-label={t('toggle_menu', 'Toggle menu')}
+              aria-expanded={drawerOpen}
+              className="tb-icon-btn tb-mobile-touch"
+            />
+          </>
+        ) : (
+          <>
+            {/* Hamburger on inline-start for LTR */}
+            <Button
+              type="text"
+              icon={<MenuOutlined />}
+              onClick={onToggle}
+              aria-label={t('toggle_menu', 'Toggle menu')}
+              aria-expanded={drawerOpen}
+              className="tb-icon-btn tb-mobile-touch"
+            />
+
+            {/* Centered logo */}
+            <span style={{ fontWeight: 700, fontSize: 16, color: isDark ? '#fff' : palette.ink900, flex: 1, textAlign: 'center' }}>
+              {t('app_name', 'ERP IQ')}
+            </span>
+
+            {/* Bell on inline-end for LTR */}
+            <Badge count={unread} size="small" offset={[-4, 4]} color="#EF4444">
+              <Button
+                type="text"
+                shape="circle"
+                icon={<BellOutlined />}
+                onClick={() => setNotificationsOpen(true)}
+                aria-label={t('topbar.notifications', 'Notifications')}
+                className="tb-icon-btn tb-mobile-touch"
+              />
+            </Badge>
+          </>
+        )}
+      </Header>
+    );
+  }
+
+  // ─── Desktop / Tablet full TopBar ────────────────────────────────────────
 
   const userMenu = {
     items: [
@@ -70,20 +179,6 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
     ],
     selectedKeys: [density],
   };
-
-  // Glass morphism tokens — Requirements 4.6, 12.1
-  const glassTokens = isDark ? glass.topbar.dark : glass.topbar.light;
-
-  // Fallback solid background for @supports not (backdrop-filter) — Requirement 12.5
-  const solidFallbackBg = isDark ? palette.darkSurface : palette.surface;
-
-  // Derived colors
-  const borderCol  = glassTokens.border;
-  const searchBg   = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.04)';
-  const searchBorder = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)';
-  const searchInk  = isDark ? 'rgba(255,255,255,0.62)' : palette.ink500;
-  const kbdBg      = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.05)';
-  const userInk    = isDark ? palette.darkInk : palette.ink900;
 
   return (
     <Header
@@ -394,6 +489,15 @@ function topbarCss(solidFallbackBg: string, isDark: boolean): string {
     }
     @media (max-width: 720px) {
       .tb-search { display: none !important; }
+    }
+
+    /* Mobile touch targets ≥ 44×44px — Requirement 9.5 */
+    .tb-mobile-touch {
+      min-inline-size: 44px !important;
+      min-block-size: 44px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
     }
   `;
 }

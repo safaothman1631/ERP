@@ -116,9 +116,9 @@ const Dashboard: React.FC = () => {
       {/* Premium greeting hero */}
       <DashboardHero onCreateInvoice={() => navigate('/invoices/new')} />
 
-      {/* KPI cards */}
+      {/* KPI cards — 2×2 on mobile/tablet, 4-col on desktop — Requirement 4.5, 4.8, 4.9 */}
       <Row gutter={[space.md, space.md]} data-section-id="dashboard.kpis">
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={12} sm={12} lg={6}>
           <KpiCard
             title={t('total_receivable')}
             value={fmtIQD(data.total_receivable)}
@@ -128,7 +128,7 @@ const Dashboard: React.FC = () => {
             onClick={() => navigate('/invoices?status=open')}
           />
         </Col>
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={12} sm={12} lg={6}>
           <KpiCard
             title={t('total_payable')}
             value={fmtIQD(data.total_payable)}
@@ -138,7 +138,7 @@ const Dashboard: React.FC = () => {
             onClick={() => navigate('/bills?status=open')}
           />
         </Col>
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={12} sm={12} lg={6}>
           <KpiCard
             title={t('income_this_month')}
             value={fmtIQD(data.income_this_month)}
@@ -148,7 +148,7 @@ const Dashboard: React.FC = () => {
             onClick={() => navigate('/reports/advanced')}
           />
         </Col>
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={12} sm={12} lg={6}>
           <KpiCard
             title={t('expenses_this_month')}
             value={fmtIQD(data.expenses_this_month)}

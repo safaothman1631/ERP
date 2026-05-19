@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Space } from 'antd';
+import { Button } from 'antd';
 import {
   PlusOutlined, FileTextOutlined, WalletOutlined,
   DollarOutlined, BarChartOutlined,
@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store';
 import { palette, radius, space } from '../theme/tokens';
+import { useViewport } from '../hooks/useViewport';
 
 /**
  * DashboardHero — Premium greeting card for the Dashboard page
@@ -26,6 +27,7 @@ const DashboardHero: React.FC<Props> = ({ onCreateInvoice }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const userName = useAuthStore((s) => s.userName) || t('user');
+  const { isMobile } = useViewport();
 
   const hour = new Date().getHours();
   const greetingKey =
@@ -54,20 +56,39 @@ const DashboardHero: React.FC<Props> = ({ onCreateInvoice }) => {
   ];
 
   return (
-    <div style={styles.wrap}>
+    <div style={{ ...styles.wrap, overflow: 'hidden' }}>
       <style>{css}</style>
       <div className="dh-glow dh-glow-1" aria-hidden />
       <div className="dh-glow dh-glow-2" aria-hidden />
 
-      <div style={styles.inner}>
-        <div style={styles.left}>
+      <div style={{
+        ...styles.inner,
+        // Mobile: stack vertically — Requirement 4.1, 4.2
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: isMobile ? 'stretch' : 'center',
+      }}>
+        <div style={{ ...styles.left, minWidth: isMobile ? 0 : 280 }}>
           <div style={styles.eyebrow}>{dateLabel}</div>
-          <div style={styles.greeting}>
+          <div style={{
+            ...styles.greeting,
+            // Mobile: 20px font — Requirement 4.3
+            fontSize: isMobile ? 20 : 26,
+          }}>
             {t(greetingKey)}<span style={styles.userName}>، {userName}</span>
           </div>
-          <div style={styles.sub}>{t('dashboard_hero_sub')}</div>
+          <div style={{
+            ...styles.sub,
+            // Mobile: 13px font — Requirement 4.3
+            fontSize: isMobile ? 13 : 14,
+          }}>{t('dashboard_hero_sub')}</div>
 
-          <Space size={[8, 8]} wrap style={{ marginTop: space.md }}>
+          {/* Quick-action chips: 2×2 grid on mobile, horizontal row on desktop — Requirement 4.2 */}
+          <div style={{
+            marginTop: space.md,
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, auto)',
+            gap: 8,
+          }}>
             {quickChips.map((c) => (
               <Button
                 key={c.label}
@@ -76,20 +97,31 @@ const DashboardHero: React.FC<Props> = ({ onCreateInvoice }) => {
                 icon={c.icon}
                 onClick={c.onClick}
                 className="dh-chip"
+                style={isMobile ? { width: '100%', justifyContent: 'center' } : undefined}
               >
                 {c.label}
               </Button>
             ))}
-          </Space>
+          </div>
         </div>
 
-        <div style={styles.right}>
+        <div style={{
+          ...styles.right,
+          // Mobile: full width CTA — Requirement 4.4
+          width: isMobile ? '100%' : undefined,
+          marginBlockStart: isMobile ? space.md : 0,
+        }}>
           <Button
             type="primary"
             size="large"
             icon={<PlusOutlined />}
             onClick={onCreateInvoice ?? (() => navigate('/invoices/new'))}
             className="dh-cta"
+            style={{
+              // Mobile: full width, min 44px height — Requirement 4.4
+              width: isMobile ? '100%' : undefined,
+              minBlockSize: 44,
+            }}
           >
             {t('new_invoice')}
           </Button>

@@ -94,49 +94,87 @@ export const TopMegaMenu: React.FC<{ isDark: boolean; isRTL: boolean; onOpenPale
 export const BottomNav: React.FC<{ isDark: boolean; onOpenPalette: () => void }> = ({ isDark, onOpenPalette }) => {
   const { t } = useTranslation();
   const loc = useLocation();
+
+  // 5 tabs: Home, Invoices, Items, Banking, Search — Requirements 3.2, 3.3, 3.4
   const items = [
     { key: '/', icon: <HomeOutlined />, label: t('home', 'Home') },
     { key: '/invoices', icon: <FileTextOutlined />, label: t('invoices') },
     { key: '/items', icon: <ShoppingCartOutlined />, label: t('items') },
     { key: '/banking', icon: <WalletOutlined />, label: t('banking', 'Banking') },
   ];
+
+  const tabStyle = (active: boolean): React.CSSProperties => ({
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 2,
+    fontSize: 11,
+    color: active ? BRAND : (isDark ? '#9ca3af' : INK_MUTED),
+    textDecoration: 'none',
+    // Touch target ≥ 44×44px — Requirement 9.4
+    minInlineSize: 44,
+    minBlockSize: 44,
+    justifyContent: 'center',
+    flex: 1,
+    fontWeight: active ? 600 : 400,
+    transition: 'color 0.15s',
+  });
+
   return (
     <nav
+      role="navigation"
+      aria-label={t('bottom_nav', 'Main navigation')}
       style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
+        // Logical properties only — no left/right/bottom — Requirements 3.10, 11.7
+        position: 'fixed',
+        insetBlockEnd: 0,
+        insetInlineStart: 0,
+        insetInlineEnd: 0,
+        zIndex: 100,
         background: isDark ? palette.darkSurface : palette.surface,
-        borderTop: `1px solid ${isDark ? palette.darkBorder : palette.border}`,
+        borderBlockStart: `1px solid ${isDark ? palette.darkBorder : palette.border}`,
         boxShadow: '0 -8px 24px rgba(0,0,0,0.08)',
-        display: 'flex', justifyContent: 'space-around', padding: '8px 0',
+        display: 'flex',
+        justifyContent: 'space-around',
+        alignItems: 'stretch',
+        // Height = 56px + safe-area-inset-bottom — Requirement 3.1, 10.2
+        paddingBlockEnd: 'env(safe-area-inset-bottom, 0px)',
+        minBlockSize: 'calc(56px + env(safe-area-inset-bottom, 0px))',
+        // Prevent horizontal overflow — Requirement 13.6
+        width: '100%',
+        overflow: 'hidden',
       }}
     >
       {items.map(it => {
-        const active = loc.pathname === it.key;
+        const active = loc.pathname === it.key || (it.key !== '/' && loc.pathname.startsWith(it.key));
         return (
           <Link
             key={it.key}
             to={it.key}
-            style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-              fontSize: 11, color: active ? BRAND : (isDark ? '#9ca3af' : INK_MUTED),
-              textDecoration: 'none', minWidth: 56,
-            }}
+            style={tabStyle(active)}
+            aria-label={it.label}
+            aria-current={active ? 'page' : undefined}
           >
-            <span style={{ fontSize: 20 }}>{it.icon}</span>
-            <span>{it.label}</span>
+            <span style={{ fontSize: 20, lineHeight: 1 }}>{it.icon}</span>
+            <span style={{ fontSize: 10, lineHeight: 1.2 }}>{it.label}</span>
           </Link>
         );
       })}
+      {/* Search / ⌘K tab — Requirement 3.2, 3.6 */}
       <button
+        type="button"
         onClick={onOpenPalette}
+        aria-label={t('search_or_jump', 'Search')}
         style={{
-          background: 'transparent', border: 'none', cursor: 'pointer',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-          fontSize: 11, color: isDark ? '#9ca3af' : INK_MUTED, minWidth: 56,
+          ...tabStyle(false),
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          color: isDark ? '#9ca3af' : INK_MUTED,
         }}
       >
-        <SearchOutlined style={{ fontSize: 20 }} />
-        <span>âŒ˜K</span>
+        <SearchOutlined style={{ fontSize: 20, lineHeight: 1 }} />
+        <span style={{ fontSize: 10, lineHeight: 1.2 }}>⌘K</span>
       </button>
     </nav>
   );

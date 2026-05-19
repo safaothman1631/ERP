@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store';
 import { palette, space, layout, zIndex, radius } from '../theme/tokens';
+import { useViewport } from '../hooks/useViewport';
 
 interface FooterProps {
   isDark: boolean;
@@ -22,6 +23,10 @@ export const Footer: React.FC<FooterProps> = ({ isDark, isRTL }) => {
   const orgId = useAuthStore((s) => s.orgId);
   const [online, setOnline] = React.useState<boolean>(typeof navigator !== 'undefined' ? navigator.onLine : true);
   const [lastSync, setLastSync] = React.useState<Date>(new Date());
+  const { isMobile, isTablet } = useViewport();
+
+  // Hide footer entirely on mobile — Requirement 12.1
+  if (isMobile) return null;
 
   React.useEffect(() => {
     const onUp = () => setOnline(true);
@@ -108,7 +113,32 @@ export const Footer: React.FC<FooterProps> = ({ isDark, isRTL }) => {
         WebkitBackdropFilter: 'blur(18px) saturate(160%)',
       }}
     >
-      {/* Left cluster */}
+      {/* Tablet: show only online/offline + version — Requirement 12.3 */}
+      {isTablet ? (
+        <>
+          <Chip title={online ? 'Online' : 'Offline'}>
+            <span
+              aria-hidden
+              style={{
+                width: 8, height: 8, borderRadius: '50%',
+                background: online ? palette.success : palette.danger,
+                boxShadow: online ? `0 0 0 3px ${palette.success}22` : 'none',
+                animation: online ? 'fb-pulse 2.4s ease-in-out infinite' : undefined,
+              }}
+            />
+            <span aria-live="polite" style={{ color: fgBold, fontWeight: 600 }}>
+              {online ? t('footer.online', 'Online') : t('footer.offline', 'Offline')}
+            </span>
+          </Chip>
+          <Chip>
+            <span style={{ fontFamily: '"SF Mono",Consolas,monospace', color: fgBold, fontWeight: 600 }}>
+              {APP_VERSION}
+            </span>
+          </Chip>
+        </>
+      ) : (
+        <>
+      {/* Desktop: Left cluster */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
         <Chip title={online ? 'Online' : 'Offline'}>
           <span
@@ -187,6 +217,8 @@ export const Footer: React.FC<FooterProps> = ({ isDark, isRTL }) => {
           API
         </a>
       </div>
+        </>
+      )}
 
       <style>{`
         @keyframes fb-pulse {
