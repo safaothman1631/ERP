@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Form, Input, InputNumber, Select, message, Space, Tag, Popconfirm } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, ArrowLeftOutlined, SettingOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { PageHeader } from '../../design-system';
+import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
+import { palette } from '../../theme/tokens';
 
 const { Option } = Select;
 
@@ -37,6 +39,7 @@ const DOC_TYPES = [
 
 const NumberingSequences: React.FC = () => {
  const { t } = useTranslation();
+ const navigate = useNavigate();
  const [form] = Form.useForm();
  const [loading, setLoading] = useState(false);
  const [sequences, setSequences] = useState<NumberingSequence[]>([]);
@@ -227,6 +230,28 @@ const NumberingSequences: React.FC = () => {
 
  return (
  <div>
+   {/* Settings breadcrumb / back button */}
+   <button
+     onClick={() => navigate('/settings?s=numbering')}
+     style={{
+       display: 'flex',
+       alignItems: 'center',
+       gap: 8,
+       background: 'none',
+       border: 'none',
+       cursor: 'pointer',
+       color: palette.primary500,
+       fontSize: 13,
+       fontWeight: 500,
+       padding: '0 0 12px',
+       marginBottom: 4,
+     }}
+   >
+     <ArrowLeftOutlined style={{ fontSize: 12 }} />
+     <SettingOutlined style={{ fontSize: 12 }} />
+     <span>{t('settings', 'Settings')} — {t('numbering_sequences', 'Numbering')}</span>
+   </button>
+
  <PageHeader
  title={t('numbering.sequences')}
  extra={
