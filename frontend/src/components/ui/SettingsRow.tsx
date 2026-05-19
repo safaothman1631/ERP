@@ -5,7 +5,7 @@ import { useAuthStore } from '../../store';
 /**
  * SettingsRow — Linear/Stripe-style settings row.
  * Label + description on the start side, control on the end side.
- * Stack vertically on small screens.
+ * Stack vertically on small screens (< 600px).
  */
 export interface SettingsRowProps {
   label: React.ReactNode;
@@ -31,13 +31,14 @@ const SettingsRow: React.FC<SettingsRowProps> = ({
       className="sc-row"
       style={{
         display: 'flex',
-        alignItems: align === 'center' ? 'center' : 'flex-start',
-        gap: space.lg,
+        flexDirection: 'column',
+        gap: space.sm,
         padding: `${space.md}px 0`,
         borderBottom: divider ? `1px solid ${border}` : 'none',
       }}
     >
-      <div style={{ flex: 1, minWidth: 0 }}>
+      {/* Label row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: space.md, minWidth: 0 }}>
         <label
           htmlFor={htmlFor}
           style={{
@@ -46,27 +47,36 @@ const SettingsRow: React.FC<SettingsRowProps> = ({
             fontWeight: 500,
             color: ink,
             cursor: htmlFor ? 'pointer' : 'default',
+            flex: 1,
+            minWidth: 0,
           }}
         >
           {label}
         </label>
-        {description && (
-          <div style={{ marginTop: 2, fontSize: fontSize.sm, color: inkMuted, lineHeight: 1.5 }}>
-            {description}
+        {/* Inline control for simple toggles (Switch) — no description, no wide control */}
+        {!description && !controlWidth && (
+          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+            {children}
           </div>
         )}
       </div>
-      <div
-        style={{
-          flexShrink: 0,
-          width: controlWidth,
-          display: 'flex',
-          justifyContent: 'flex-end',
-          alignItems: 'center',
-        }}
-      >
-        {children}
-      </div>
+      {description && (
+        <div style={{ fontSize: fontSize.sm, color: inkMuted, lineHeight: 1.5 }}>
+          {description}
+        </div>
+      )}
+      {/* Full-width control for inputs, selects, time pickers */}
+      {(description || controlWidth) && (
+        <div
+          style={{
+            width: controlWidth ?? '100%',
+            display: 'flex',
+            alignItems: 'center',
+          }}
+        >
+          {children}
+        </div>
+      )}
     </div>
   );
 };

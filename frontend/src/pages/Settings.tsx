@@ -3463,10 +3463,30 @@ const WorkingHoursSettings: React.FC = () => {
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <SectionCard icon={<FieldTimeOutlined />} title={t('wh_title', 'Working hours')} description={t('wh_desc', 'Operating schedule used for SLAs, helpdesk routing, and availability.')}>
-        <SettingsRow label={t('wh_workweek', 'Work week')}><Select mode="multiple" value={values.work_days} onChange={(v) => setValue('work_days', v)} disabled={loading} options={dayOpts} style={{ minWidth: 320 }} /></SettingsRow>
-        <SettingsRow label={t('wh_hours', 'Working hours')}><Space><TimePicker format="HH:mm" value={parseHHmm(values.start_time)} onChange={(d) => setValue('start_time', d ? d.format('HH:mm') : '09:00')} disabled={loading} /><span style={{ color: palette.ink500 }}>—</span><TimePicker format="HH:mm" value={parseHHmm(values.end_time)} onChange={(d) => setValue('end_time', d ? d.format('HH:mm') : '17:00')} disabled={loading} /></Space></SettingsRow>
-        <SettingsRow label={t('wh_breaks', 'Break window')}><Space><TimePicker format="HH:mm" value={parseHHmm(values.break_start)} onChange={(d) => setValue('break_start', d ? d.format('HH:mm') : '12:00')} disabled={loading} /><span style={{ color: palette.ink500 }}>—</span><TimePicker format="HH:mm" value={parseHHmm(values.break_end)} onChange={(d) => setValue('break_end', d ? d.format('HH:mm') : '13:00')} disabled={loading} /></Space></SettingsRow>
-        <SettingsRow label={t('wh_timezone', 'Default timezone')}><Select value={values.timezone} onChange={(v) => setValue('timezone', v)} disabled={loading} style={{ width: 280 }} options={[{ value: 'Asia/Baghdad', label: 'Asia/Baghdad' }, { value: 'Asia/Dubai', label: 'Asia/Dubai' }, { value: 'Asia/Riyadh', label: 'Asia/Riyadh' }, { value: 'Europe/Istanbul', label: 'Europe/Istanbul' }, { value: 'UTC', label: 'UTC' }]} /></SettingsRow>
+        {/* Work week — full width select */}
+        <SettingsRow label={t('wh_workweek', 'Work week')}>
+          <Select mode="multiple" value={values.work_days} onChange={(v) => setValue('work_days', v)} disabled={loading} options={dayOpts} style={{ width: '100%', maxWidth: 400 }} />
+        </SettingsRow>
+        {/* Working hours — stacked on mobile */}
+        <SettingsRow label={t('wh_hours', 'Working hours')}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <TimePicker format="HH:mm" value={parseHHmm(values.start_time)} onChange={(d) => setValue('start_time', d ? d.format('HH:mm') : '09:00')} disabled={loading} style={{ flex: 1, minWidth: 100 }} />
+            <span style={{ color: palette.ink500 }}>—</span>
+            <TimePicker format="HH:mm" value={parseHHmm(values.end_time)} onChange={(d) => setValue('end_time', d ? d.format('HH:mm') : '17:00')} disabled={loading} style={{ flex: 1, minWidth: 100 }} />
+          </div>
+        </SettingsRow>
+        {/* Break window */}
+        <SettingsRow label={t('wh_breaks', 'Break window')}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <TimePicker format="HH:mm" value={parseHHmm(values.break_start)} onChange={(d) => setValue('break_start', d ? d.format('HH:mm') : '12:00')} disabled={loading} style={{ flex: 1, minWidth: 100 }} />
+            <span style={{ color: palette.ink500 }}>—</span>
+            <TimePicker format="HH:mm" value={parseHHmm(values.break_end)} onChange={(d) => setValue('break_end', d ? d.format('HH:mm') : '13:00')} disabled={loading} style={{ flex: 1, minWidth: 100 }} />
+          </div>
+        </SettingsRow>
+        {/* Timezone */}
+        <SettingsRow label={t('wh_timezone', 'Default timezone')}>
+          <Select value={values.timezone} onChange={(v) => setValue('timezone', v)} disabled={loading} style={{ width: '100%', maxWidth: 320 }} options={[{ value: 'Asia/Baghdad', label: 'Asia/Baghdad' }, { value: 'Asia/Dubai', label: 'Asia/Dubai' }, { value: 'Asia/Riyadh', label: 'Asia/Riyadh' }, { value: 'Europe/Istanbul', label: 'Europe/Istanbul' }, { value: 'UTC', label: 'UTC' }]} />
+        </SettingsRow>
         <SettingsRow label={t('wh_holidays', 'Honor public holidays')}><Switch checked={values.honor_holidays} onChange={(v) => setValue('honor_holidays', v)} disabled={loading} /></SettingsRow>
         <SettingsRow label={t('wh_sla', 'SLA business-hours only')}><Switch checked={values.sla_business_hours_only} onChange={(v) => setValue('sla_business_hours_only', v)} disabled={loading} /></SettingsRow>
       </SectionCard>
