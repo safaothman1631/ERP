@@ -304,11 +304,21 @@ class BackupService:
 
     @classmethod
     def _local_path(cls, storage_path: str) -> str:
-        """Convert a storage_path like 'backups/org/date/file.gz' to an absolute local path."""
+        """Convert a storage_path to an absolute local path.
+
+        - Development: uses backend/backups/ directory
+        - Production (Cloud Run): uses /tmp/backups/ (ephemeral but sufficient for download)
+        """
         import os
-        base = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), cls._LOCAL_BACKUP_DIR)
-        # storage_path already starts with "backups/..." — strip the leading "backups/" prefix
-        # to avoid doubling it, then join with base.
+        env = os.environ.get("ENVIRONMENT", "development")
+        if env == "production":
+            base = "/tmp/backups"
+        else:
+            base = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                cls._LOCAL_BACKUP_DIR,
+            )
+        # storage_path starts with "backups/..." — strip the leading "backups/" prefix
         relative = storage_path[len("backups/"):] if storage_path.startswith("backups/") else storage_path
         return os.path.join(base, relative)
 
