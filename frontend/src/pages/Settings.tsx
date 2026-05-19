@@ -4977,7 +4977,6 @@ const settingsCss = `
     padding: 0;
     max-width: 100%;
     box-sizing: border-box;
-    overflow: hidden;
   }
   /* Ensure all direct children of st-content are constrained */
   .st-content > * {

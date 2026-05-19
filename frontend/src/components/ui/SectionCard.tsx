@@ -57,7 +57,7 @@ const SectionCard: React.FC<SectionCardProps> = ({
         border: `1px solid ${border}`,
         borderRadius: radius.lg,
         boxShadow: isDark ? '0 1px 0 rgba(255,255,255,0.02) inset' : shadow.sm,
-        overflow: 'hidden',
+        overflow: 'clip',
         transition: 'box-shadow 200ms cubic-bezier(0.2,0,0,1), border-color 200ms',
         opacity: loading ? 0.6 : 1,
         ...style,
@@ -88,6 +88,8 @@ const SectionCard: React.FC<SectionCardProps> = ({
             background: isDark
               ? 'linear-gradient(180deg, rgba(255,255,255,0.02), transparent)'
               : 'linear-gradient(180deg, rgba(15,23,42,0.015), transparent)',
+            flexWrap: 'wrap',
+            minWidth: 0,
           }}
         >
           {icon && (
@@ -122,7 +124,7 @@ const SectionCard: React.FC<SectionCardProps> = ({
             )}
           </div>
           {actions && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: space.sm, flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: space.sm, flexShrink: 0, flexWrap: 'wrap' }}>
               {actions}
             </div>
           )}
