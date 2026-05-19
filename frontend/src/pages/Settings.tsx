@@ -1522,36 +1522,40 @@ const NotificationSettings: React.FC = () => {
         {activeTab === 'events' && (
           <div>
             {/* Filter row */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: space.md, marginBottom: space.lg, alignItems: 'center' }}>
-              <Input.Search
-                placeholder={t('search_events', 'Search events...')}
-                allowClear
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                style={{ maxWidth: 320 }}
-              />
-              <Segmented
-                value={filterCat}
-                onChange={(v) => setFilterCat(v as typeof filterCat)}
-                options={[
-                  { label: t('all', 'All'), value: 'all' },
-                  ...NOTIF_CATEGORIES.map(c => ({ label: t(`notif_cat_${c.key}`, c.label), value: c.key })),
-                ]}
-              />
-              <span style={{ color: mutedClr, fontSize: fontSize.sm }}>
-                {filteredEvents.length} / {NOTIF_EVENTS.length}
-              </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: space.sm, marginBottom: space.lg }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: space.sm }}>
+                <Input.Search
+                  placeholder={t('search_events', 'Search events...')}
+                  allowClear
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  style={{ flex: 1 }}
+                />
+                <span style={{ color: mutedClr, fontSize: fontSize.sm, whiteSpace: 'nowrap' }}>
+                  {filteredEvents.length} / {NOTIF_EVENTS.length}
+                </span>
+              </div>
+              <div style={{ overflowX: 'auto', paddingBottom: 2 }}>
+                <Segmented
+                  value={filterCat}
+                  onChange={(v) => setFilterCat(v as typeof filterCat)}
+                  options={[
+                    { label: t('all', 'All'), value: 'all' },
+                    ...NOTIF_CATEGORIES.map(c => ({ label: t(`notif_cat_${c.key}`, c.label), value: c.key })),
+                  ]}
+                />
+              </div>
             </div>
 
             {/* Matrix */}
             <div style={{
               border: `1px solid ${borderClr}`,
               borderRadius: radius.lg,
-              overflow: 'hidden',
+              overflow: 'visible',
               background: cardBg,
             }}>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 720 }}>
+              <div style={{ overflowX: 'auto', borderRadius: radius.lg }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 480 }}>
                   <thead>
                     <tr style={{ background: headerBg }}>
                       <th style={{ textAlign: 'start', padding: `${space.md}px ${space.lg}px`, fontSize: fontSize.sm, fontWeight: 600, color: mutedClr, borderBottom: `1px solid ${borderClr}`, position: 'sticky', insetInlineStart: 0, background: headerBg, zIndex: 1 }}>
