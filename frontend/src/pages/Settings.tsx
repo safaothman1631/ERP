@@ -1605,10 +1605,8 @@ const NotificationSettings: React.FC = () => {
                         </div>
                       </div>
                       {/* Right: In-App toggle */}
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                        <span style={{ fontSize: 10, color: mutedClr, whiteSpace: 'nowrap' }}>
-                          {t('channel_in_app', 'In-App')}
-                        </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                        <BellOutlined style={{ fontSize: 14, color: mutedClr }} />
                         <Switch
                           size="small"
                           checked={inApp}
