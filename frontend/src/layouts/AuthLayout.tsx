@@ -312,6 +312,72 @@ const cssOverrides = `
     .auth-layout-bubble,
     .auth-layout-container { animation: none !important; }
   }
+
+  /* ── Auth input styles ─────────────────────────────────────────── */
+  .auth-input.ant-input-affix-wrapper {
+    border-radius: 12px !important;
+    border: 1.5px solid #E5E7EB !important;
+    background: #FAFBFC !important;
+    font-size: 14px !important;
+    height: 48px !important;
+    box-shadow: none !important;
+    outline: none !important;
+    transition: border-color .18s, box-shadow .18s, background .18s !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 14px !important;
+    direction: ltr !important;
+  }
+  .auth-input.ant-input-affix-wrapper .ant-input {
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+    height: auto !important;
+    direction: ltr !important;
+    text-align: left !important;
+  }
+  .auth-input.ant-input-affix-wrapper .ant-input::placeholder {
+    direction: ltr !important;
+    text-align: left !important;
+  }
+  .auth-input.ant-input-affix-wrapper:hover {
+    border-color: rgba(31,111,235,0.35) !important;
+    box-shadow: none !important;
+  }
+  .auth-input.ant-input-affix-wrapper:focus,
+  .auth-input.ant-input-affix-wrapper-focused {
+    border-color: #1F6FEB !important;
+    box-shadow: 0 0 0 3px rgba(31,111,235,0.12) !important;
+    background: #ffffff !important;
+    outline: none !important;
+  }
+  .auth-input.ant-input-affix-wrapper .ant-input-prefix {
+    color: #94A3B8 !important;
+    margin-inline-end: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+  .auth-input.ant-input-affix-wrapper .ant-input-suffix {
+    color: #94A3B8 !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+  /* Auth button */
+  .auth-btn.ant-btn {
+    background: linear-gradient(135deg, #1F6FEB 0%, #114393 100%) !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    height: 48px !important;
+    box-shadow: 0 6px 16px rgba(31,111,235,0.28) !important;
+    transition: transform .15s, box-shadow .2s !important;
+  }
+  .auth-btn.ant-btn:hover:not(:disabled) {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 24px rgba(31,111,235,0.36) !important;
+    opacity: 1 !important;
+  }
 `;
 
 const s: Record<string, CSSProperties> = {

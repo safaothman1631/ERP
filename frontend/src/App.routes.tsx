@@ -170,7 +170,7 @@ const RbacRoles = lazy(() => import('./pages/RbacRoles'));
 const UserRoles = lazy(() => import('./pages/UserRoles'));
 const Users = lazy(() => import('./pages/Users'));
 const AcceptInvite = lazy(() => import('./pages/AcceptInvite'));
-const SignUp = lazy(() => import('./pages/SignUp'));
+const SignUp = lazy(() => import('./pages/auth/RegisterPage'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 // Auth module pages (Task 3.3)

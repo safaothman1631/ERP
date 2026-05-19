@@ -4,11 +4,13 @@ import {
   MenuFoldOutlined, MenuUnfoldOutlined, MoonOutlined, SunOutlined,
   LogoutOutlined, UserOutlined, BellOutlined, SearchOutlined, DownOutlined, PlusOutlined,
   QuestionCircleOutlined, ColumnHeightOutlined, SettingOutlined, MenuOutlined,
+  StarOutlined, StarFilled,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store';
 import { useUiStore } from '../stores/uiStore';
+import { useNavStore } from '../stores/navStore';
 import { palette, space, radius, layout, transitions, glass, zIndex } from '../theme/tokens';
 import Breadcrumb from './Breadcrumb';
 import { useUnreadCount } from './NotificationsDrawer';
@@ -43,6 +45,7 @@ interface TopBarProps {
 export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDark, onOpenPalette, drawerOpen = false }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { userName, logout, toggleTheme } = useAuthStore();
   const setNotificationsOpen = useUiStore((s) => s.setNotificationsOpen);
   const setQuickCreateOpen = useUiStore((s) => s.setQuickCreateOpen);
@@ -51,6 +54,25 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
   const setDensity = useUiStore((s) => s.setDensity);
   const unread = useUnreadCount();
   const { isMobile } = useViewport();
+
+  // Favorite toggle for current page — mobile only
+  const navFavorites = useNavStore((s) => s.favorites);
+  const navPin = useNavStore((s) => s.pin);
+  const navUnpin = useNavStore((s) => s.unpin);
+  const currentPath = location.pathname;
+  const isCurrentFav = navFavorites.some((f) => f.key === currentPath);
+  const toggleCurrentFav = () => {
+    if (isCurrentFav) {
+      navUnpin(currentPath);
+    } else {
+      // Derive a label from the path — capitalize last segment
+      const segments = currentPath.split('/').filter(Boolean);
+      const label = segments.length > 0
+        ? segments[segments.length - 1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+        : currentPath;
+      navPin({ key: currentPath, label, section: segments[0] ?? '' });
+    }
+  };
 
   const handleLogout = () => { logout(); navigate('/login'); };
   const collapseIcon = isRTL
@@ -99,17 +121,31 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
         {/* RTL: hamburger on inline-end, bell on inline-start — Requirement 2.8, 11.6 */}
         {isRTL ? (
           <>
-            {/* Bell on inline-start for RTL */}
-            <Badge count={unread} size="small" offset={[-4, 4]} color="#EF4444">
+            {/* Star + Bell on inline-start for RTL */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Button
                 type="text"
                 shape="circle"
-                icon={<BellOutlined />}
-                onClick={() => setNotificationsOpen(true)}
-                aria-label={t('topbar.notifications', 'Notifications')}
+                icon={isCurrentFav
+                  ? <StarFilled style={{ color: '#F59E0B', fontSize: 16 }} />
+                  : <StarOutlined style={{ fontSize: 16 }} />
+                }
+                onClick={toggleCurrentFav}
+                aria-label={isCurrentFav ? t('remove_favorite', 'Remove favorite') : t('add_favorite', 'Add favorite')}
                 className="tb-icon-btn tb-mobile-touch"
+                style={{ color: isCurrentFav ? '#F59E0B' : undefined }}
               />
-            </Badge>
+              <Badge count={unread} size="small" offset={[-4, 4]} color="#EF4444">
+                <Button
+                  type="text"
+                  shape="circle"
+                  icon={<BellOutlined />}
+                  onClick={() => setNotificationsOpen(true)}
+                  aria-label={t('topbar.notifications', 'Notifications')}
+                  className="tb-icon-btn tb-mobile-touch"
+                />
+              </Badge>
+            </div>
 
             {/* Centered logo */}
             <span style={{ fontWeight: 700, fontSize: 16, color: isDark ? '#fff' : palette.ink900, flex: 1, textAlign: 'center' }}>
@@ -143,17 +179,31 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
               {t('app_name', 'ERP IQ')}
             </span>
 
-            {/* Bell on inline-end for LTR */}
-            <Badge count={unread} size="small" offset={[-4, 4]} color="#EF4444">
+            {/* Star + Bell on inline-end for LTR */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Button
                 type="text"
                 shape="circle"
-                icon={<BellOutlined />}
-                onClick={() => setNotificationsOpen(true)}
-                aria-label={t('topbar.notifications', 'Notifications')}
+                icon={isCurrentFav
+                  ? <StarFilled style={{ color: '#F59E0B', fontSize: 16 }} />
+                  : <StarOutlined style={{ fontSize: 16 }} />
+                }
+                onClick={toggleCurrentFav}
+                aria-label={isCurrentFav ? t('remove_favorite', 'Remove favorite') : t('add_favorite', 'Add favorite')}
                 className="tb-icon-btn tb-mobile-touch"
+                style={{ color: isCurrentFav ? '#F59E0B' : undefined }}
               />
-            </Badge>
+              <Badge count={unread} size="small" offset={[-4, 4]} color="#EF4444">
+                <Button
+                  type="text"
+                  shape="circle"
+                  icon={<BellOutlined />}
+                  onClick={() => setNotificationsOpen(true)}
+                  aria-label={t('topbar.notifications', 'Notifications')}
+                  className="tb-icon-btn tb-mobile-touch"
+                />
+              </Badge>
+            </div>
           </>
         )}
       </Header>

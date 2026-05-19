@@ -14,9 +14,20 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <meta name="theme-color" content="#1F6FEB" />
+    <script>
+      // Apply persisted language direction before React mounts to prevent flash
+      (function() {
+        try {
+          var lang = localStorage.getItem('i18n.language') || 'ku';
+          var rtl = lang === 'ku' || lang === 'ar';
+          document.documentElement.setAttribute('lang', lang);
+          document.documentElement.setAttribute('dir', rtl ? 'rtl' : 'ltr');
+        } catch(e) {}
+      })();
+    </script>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font-family: 'Vazirmatn', 'Noto Sans Arabic', 'Segoe UI', Tahoma, sans-serif; direction: rtl; }
+      body { font-family: 'Vazirmatn', 'Noto Sans Arabic', 'Segoe UI', Tahoma, sans-serif; }
     </style>
   </head>
   <body>

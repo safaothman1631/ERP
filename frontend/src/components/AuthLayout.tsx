@@ -97,7 +97,9 @@ interface AuthLayoutProps {
 }
 
 const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitle }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ku' || i18n.language === 'ar';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   const features = [
     { icon: <LineChartOutlined />,         key: 'auth_feature_finance' },
@@ -162,7 +164,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitle }) =>
           </div>
         </div>
 
-        <div className="auth-form-panel" style={s.formPanel}>
+        <div className="auth-form-panel" style={{ ...s.formPanel, direction: dir }}>
           <div className="auth-form-inner">
             <div style={s.logoRow}>
               <BrandMark size={36} />
@@ -276,17 +278,47 @@ const cssOverrides = `
     font-size: 14px !important;
     height: 48px !important;
     transition: border-color .18s, box-shadow .18s, background .18s !important;
+    display: flex !important;
+    align-items: center !important;
   }
   .auth-input .ant-input-affix-wrapper { padding: 0 14px !important; }
-  .auth-input .ant-input { background: transparent !important; height: auto !important; }
+  .auth-input .ant-input { background: transparent !important; height: auto !important; box-shadow: none !important; }
   .auth-input .ant-input:focus,
   .auth-input .ant-input-affix-wrapper:focus,
   .auth-input .ant-input-affix-wrapper-focused {
     border-color: #1F6FEB !important;
-    box-shadow: 0 0 0 4px rgba(31,111,235,0.12) !important;
+    box-shadow: 0 0 0 3px rgba(31,111,235,0.12) !important;
     background: #ffffff !important;
+    outline: none !important;
   }
-  .auth-input .ant-input-prefix { color: #94A3B8 !important; margin-inline-end: 10px !important; }
+  .auth-input .ant-input-affix-wrapper:hover {
+    border-color: rgba(31,111,235,0.40) !important;
+    box-shadow: none !important;
+  }
+  .auth-input .ant-input-prefix {
+    color: #94A3B8 !important;
+    margin-inline-end: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+  /* Force LTR layout on auth inputs when document is RTL */
+  .auth-form-ltr .auth-input .ant-input-affix-wrapper,
+  .auth-form-ltr .auth-input .ant-input {
+    direction: ltr !important;
+    text-align: start !important;
+  }
+  .auth-form-ltr .auth-input .ant-input::placeholder {
+    text-align: start !important;
+  }
+  /* Force LTR layout on auth inputs when document is RTL */
+  .auth-form-ltr .auth-input .ant-input-affix-wrapper,
+  .auth-form-ltr .auth-input .ant-input {
+    direction: ltr !important;
+    text-align: start !important;
+  }
+  .auth-form-ltr .auth-input .ant-input::placeholder {
+    text-align: start !important;
+  }
   .auth-btn {
     background: linear-gradient(135deg, #1F6FEB 0%, #114393 100%) !important;
     border: none !important;
@@ -425,12 +457,11 @@ const s: Record<string, CSSProperties> = {
   formPanel: {
     flex: '1 1 48%',
     display: 'flex', flexDirection: 'column',
-    justifyContent: 'center', padding: '48px 40px', direction: 'rtl',
+    justifyContent: 'center', padding: '48px 40px',
     background: 'rgba(255,255,255,0.96)', overflowY: 'auto',
   },
   logoRow: {
     display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32,
-    direction: 'rtl',
   },
   logoText: { fontSize: 16, fontWeight: 700, color: '#0F172A', lineHeight: 1.2 },
   logoSub:  { fontSize: 11, color: '#94A3B8', fontWeight: 500, letterSpacing: 0.3 },

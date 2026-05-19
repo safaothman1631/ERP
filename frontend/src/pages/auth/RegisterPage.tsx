@@ -10,7 +10,7 @@
  * - JWT storage: access token in memory (Zustand), refresh token in httpOnly cookie (set by backend)
  */
 import React, { useState, useCallback } from 'react';
-import { Form, Input, Button, Alert, Progress, Divider } from 'antd';
+import { Form, Input, Button, Alert, Progress, Divider, ConfigProvider } from 'antd';
 import {
   MailOutlined,
   LockOutlined,
@@ -23,9 +23,10 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../../store';
 import api from '../../api';
-import AuthLayout from '../../components/AuthLayout';
+import AuthLayout from '../../layouts/AuthLayout';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
 import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
+import { isRTLLanguage } from '../../utils/language';
 
 // ---------------------------------------------------------------------------
 // Password strength helpers
@@ -132,9 +133,10 @@ const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps> = ({ p
 // ---------------------------------------------------------------------------
 
 const RegisterPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { loginSecure } = useAuthStore();
+  const isRTL = isRTLLanguage(i18n.language as 'ku' | 'ar' | 'en');
 
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -236,11 +238,13 @@ const RegisterPage: React.FC = () => {
         />
       )}
 
+      <ConfigProvider direction={isRTL ? 'rtl' : 'ltr'}>
       <Form
         form={form}
         layout="vertical"
         onFinish={handleRegister}
-        style={{ direction: 'rtl' }}
+        className={isRTL ? undefined : 'auth-form-ltr'}
+        style={{ direction: isRTL ? 'rtl' : 'ltr' }}
         validateTrigger={['onChange', 'onBlur']}
       >
         {/* Company name */}
@@ -255,7 +259,7 @@ const RegisterPage: React.FC = () => {
             size="large"
             placeholder={t('placeholder_company')}
             prefix={<BankOutlined />}
-            style={{ borderRadius: 10, height: 46 }}
+            style={{ direction: isRTL ? 'rtl' : 'ltr' }}
           />
         </Form.Item>
 
@@ -274,7 +278,7 @@ const RegisterPage: React.FC = () => {
             size="large"
             placeholder={t('placeholder_name')}
             prefix={<UserOutlined />}
-            style={{ borderRadius: 10, height: 46 }}
+            style={{ direction: isRTL ? 'rtl' : 'ltr' }}
           />
         </Form.Item>
 
@@ -293,7 +297,8 @@ const RegisterPage: React.FC = () => {
             size="large"
             placeholder={t('placeholder_email')}
             prefix={<MailOutlined />}
-            style={{ borderRadius: 10, height: 46 }}
+            style={{ direction: 'ltr' }}
+            autoComplete="email"
           />
         </Form.Item>
 
@@ -309,7 +314,7 @@ const RegisterPage: React.FC = () => {
             size="large"
             placeholder={t('placeholder_password')}
             prefix={<LockOutlined />}
-            style={{ borderRadius: 10, height: 46 }}
+            style={{ direction: isRTL ? 'rtl' : 'ltr' }}
             onChange={(e) => setPasswordValue(e.target.value)}
           />
         </Form.Item>
@@ -330,7 +335,7 @@ const RegisterPage: React.FC = () => {
             size="large"
             placeholder={t('placeholder_confirm_password')}
             prefix={<LockOutlined />}
-            style={{ borderRadius: 10, height: 46 }}
+            style={{ direction: isRTL ? 'rtl' : 'ltr' }}
           />
         </Form.Item>
 
@@ -347,6 +352,7 @@ const RegisterPage: React.FC = () => {
           </Button>
         </Form.Item>
 </Form>
+      </ConfigProvider>
 
       <Divider style={{ margin: '8px 0', color: '#aaa', fontSize: 12 }}>
         {t('or') || 'یان'}

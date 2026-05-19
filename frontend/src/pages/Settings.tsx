@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Button, Tag, Form, Input, InputNumber, DatePicker, Space,
   Row, Col, Popconfirm, Switch, Select, Tabs, TimePicker, Alert, Tooltip,
-  Divider, Segmented, Result } from 'antd';
+  Divider, Segmented, Result, Drawer } from 'antd';
 import { message } from '../utils/message';
 import {
   PlusOutlined, DownloadOutlined, CloudOutlined, DeleteOutlined, LockOutlined,
@@ -21,6 +21,7 @@ import {
   MobileOutlined, FolderOpenOutlined, BookOutlined, CustomerServiceOutlined,
   HddOutlined, ProjectOutlined, SoundOutlined, RobotOutlined,
   PartitionOutlined, BulbOutlined, ExperimentOutlined,
+  MenuOutlined, CloseOutlined, RightOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
@@ -94,6 +95,15 @@ const Settings: React.FC = () => {
   const [params, setParams] = useSearchParams();
   const initial = (params.get('s') as SectionKey) || 'profile';
   const [active, setActive] = useState<SectionKey>(initial);
+  const [navDrawerOpen, setNavDrawerOpen] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(() => typeof window !== 'undefined' ? window.innerWidth : 1024);
+  useEffect(() => {
+    const onResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  const isMobile = windowWidth < 900;
+  const isDark = useAuthStore(s => s.theme) === 'dark';
 
   // Requirement 12.4 — Changes SHALL require appropriate permission (admin/owner).
   const { hasSettingsAccess, isAuthenticated, role } = usePermission();
@@ -107,6 +117,7 @@ const Settings: React.FC = () => {
   const goto = (key: SectionKey) => {
     setActive(key);
     setParams({ s: key }, { replace: true });
+    setNavDrawerOpen(false);
   };
 
   const sections: SectionDef[] = useMemo(() => [
@@ -196,6 +207,54 @@ const Settings: React.FC = () => {
 
   const activeDef = sections.find(s => s.key === active) ?? sections[0];
 
+  // Shared nav list — used in both desktop sidebar and mobile drawer
+  const navList = (
+    <nav className="st-aside-nav">
+      {(['account','general_app','organization','users','localization','finance','commerce','operations','automation','content','system'] as const).map(group => {
+        const items = sections.filter(s => s.group === group);
+        if (items.length === 0) return null;
+        return (
+          <div key={group} className="st-group">
+            <div className="st-group-label">{groupLabels[group]}</div>
+            {items.map(s => {
+              const isActive = s.key === active;
+              const badgeNode = s.badge ? (
+                <span className={`st-nav-badge st-nav-badge--${s.badge}`}>
+                  {s.badge === 'soon' ? t('coming_soon_short', 'soon')
+                    : s.badge === 'beta' ? 'beta'
+                    : 'new'}
+                </span>
+              ) : null;
+              if (s.link) {
+                return (
+                  <Link key={s.key} to={s.link} className="st-nav-item" onClick={() => setNavDrawerOpen(false)}>
+                    <span className="st-nav-icon">{s.icon}</span>
+                    <span className="st-nav-label">{s.label}</span>
+                    {badgeNode}
+                    <span className="st-nav-arrow">↗</span>
+                  </Link>
+                );
+              }
+              return (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => goto(s.key)}
+                  className={`st-nav-item${isActive ? ' is-active' : ''}`}
+                >
+                  <span className="st-nav-icon">{s.icon}</span>
+                  <span className="st-nav-label">{s.label}</span>
+                  {badgeNode}
+                  {isActive && <span className="st-nav-active-bar" aria-hidden />}
+                </button>
+              );
+            })}
+          </div>
+        );
+      })}
+    </nav>
+  );
+
   // Requirement 12.4 — Settings access requires admin or owner role.
   // Show an access-denied message for authenticated users without the right role.
   // Note: if role is null (token not decodable), we allow access and let the
@@ -217,64 +276,73 @@ const Settings: React.FC = () => {
   return (
     <>
       <style>{settingsCss}</style>
-      <div className="st-shell">
-        {/* Left: vertical nav */}
-        <aside className="st-aside">
-          <div className="st-aside-head">
-            <div className="st-aside-title">
-              <SettingOutlined style={{ fontSize: 18, color: palette.primary500, marginInlineEnd: 8 }} />
+
+      {/* ── Mobile: bottom-sheet nav drawer ─────────────────────── */}
+      {isMobile && (
+        <Drawer
+          open={navDrawerOpen}
+          onClose={() => setNavDrawerOpen(false)}
+          placement="bottom"
+          height="82vh"
+          closable={false}
+          styles={{
+            body: { padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column',
+              background: isDark ? '#0B1220' : '#FAFBFC' },
+            wrapper: { borderRadius: '20px 20px 0 0', overflow: 'hidden' },
+          }}
+          rootStyle={{ zIndex: 1100 }}
+        >
+          <div className="st-drawer-header">
+            <div className="st-drawer-handle" />
+            <div className="st-drawer-title">
+              <SettingOutlined style={{ fontSize: 16, color: palette.primary500, marginInlineEnd: 8 }} />
               {t('settings', 'Settings')}
             </div>
+            <button className="st-drawer-close" onClick={() => setNavDrawerOpen(false)} aria-label="Close">
+              <CloseOutlined />
+            </button>
           </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0 32px' }}>
+            {navList}
+          </div>
+        </Drawer>
+      )}
 
-          <nav className="st-aside-nav">
-            {(['account','general_app','organization','users','localization','finance','commerce','operations','automation','content','system'] as const).map(group => {
-              const items = sections.filter(s => s.group === group);
-              if (items.length === 0) return null;
-              return (
-                <div key={group} className="st-group">
-                  <div className="st-group-label">{groupLabels[group]}</div>
-                  {items.map(s => {
-                    const isActive = s.key === active;
-                    const badgeNode = s.badge ? (
-                      <span className={`st-nav-badge st-nav-badge--${s.badge}`}>
-                        {s.badge === 'soon' ? t('coming_soon_short', 'soon')
-                          : s.badge === 'beta' ? 'beta'
-                          : 'new'}
-                      </span>
-                    ) : null;
-                    if (s.link) {
-                      return (
-                        <Link key={s.key} to={s.link} className="st-nav-item">
-                          <span className="st-nav-icon">{s.icon}</span>
-                          <span className="st-nav-label">{s.label}</span>
-                          {badgeNode}
-                          <span className="st-nav-arrow">↗</span>
-                        </Link>
-                      );
-                    }
-                    return (
-                      <button
-                        key={s.key}
-                        type="button"
-                        onClick={() => goto(s.key)}
-                        className={`st-nav-item${isActive ? ' is-active' : ''}`}
-                      >
-                        <span className="st-nav-icon">{s.icon}</span>
-                        <span className="st-nav-label">{s.label}</span>
-                        {badgeNode}
-                        {isActive && <span className="st-nav-active-bar" aria-hidden />}
-                      </button>
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </nav>
-        </aside>
+      <div className="st-shell">
+        {/* Left: vertical nav — desktop only */}
+        {!isMobile && (
+          <aside className="st-aside">
+            <div className="st-aside-head">
+              <div className="st-aside-title">
+                <SettingOutlined style={{ fontSize: 18, color: palette.primary500, marginInlineEnd: 8 }} />
+                {t('settings', 'Settings')}
+              </div>
+            </div>
+            {navList}
+          </aside>
+        )}
 
         {/* Right: content */}
         <main className="st-main">
+          {/* Mobile: sticky section picker */}
+          {isMobile && (
+            <button
+              className="st-mobile-nav-bar"
+              onClick={() => setNavDrawerOpen(true)}
+              aria-label={t('settings_open_nav', 'Open settings navigation')}
+            >
+              <span className="st-mobile-nav-icon">{activeDef.icon}</span>
+              <span className="st-mobile-nav-text">
+                <span className="st-mobile-nav-eyebrow">{t('settings', 'Settings')}</span>
+                <span className="st-mobile-nav-label">{activeDef.label}</span>
+                <span className="st-mobile-nav-hint">{t('settings_tap_to_switch', 'Tap to switch section')}</span>
+              </span>
+              <span className="st-mobile-nav-chevron-wrap">
+                <RightOutlined />
+              </span>
+            </button>
+          )}
+
           <PremiumPageHeader
             eyebrow={t('settings', 'Settings')}
             title={activeDef.label}
@@ -4736,10 +4804,177 @@ const settingsCss = `
 .st-content { padding-bottom: 24px; }
 
 @media (max-width: 900px) {
-  .st-shell { grid-template-columns: 1fr; }
-  .st-aside { position: static; height: auto; border-inline-end: none; border-bottom: 1px solid ${palette.border}; }
-  .st-main { padding: 16px; }
+  .st-shell {
+    grid-template-columns: 1fr;
+    margin: 0;
+    min-height: auto;
+  }
+  .st-aside { display: none; }
+  .st-main { padding: 0 0 64px; }
+  .st-mobile-nav-bar { margin: 0 0 16px; }
+  .st-content { padding: 0; }
 }
+
+/* ── Mobile: sticky section picker bar ─────────────────────── */
+.st-mobile-nav-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 16px;
+  margin: 0 0 16px;
+  border: none;
+  background: linear-gradient(135deg, rgba(31,111,235,0.07) 0%, rgba(99,102,241,0.05) 100%);
+  border-radius: 14px;
+  border: 1.5px solid rgba(31,111,235,0.18);
+  cursor: pointer;
+  text-align: start;
+  box-shadow: 0 2px 12px rgba(31,111,235,0.08);
+  transition: background 0.18s, box-shadow 0.18s, border-color 0.18s, transform 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+[data-theme="dark"] .st-mobile-nav-bar {
+  background: linear-gradient(135deg, rgba(31,111,235,0.12) 0%, rgba(99,102,241,0.08) 100%);
+  border-color: rgba(99,102,241,0.28);
+  box-shadow: 0 2px 12px rgba(31,111,235,0.14);
+}
+.st-mobile-nav-bar:hover {
+  background: linear-gradient(135deg, rgba(31,111,235,0.11) 0%, rgba(99,102,241,0.08) 100%);
+  border-color: rgba(31,111,235,0.30);
+  box-shadow: 0 4px 16px rgba(31,111,235,0.13);
+}
+.st-mobile-nav-bar:active {
+  transform: scale(0.985);
+  box-shadow: 0 1px 6px rgba(31,111,235,0.10);
+}
+
+.st-mobile-nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1F6FEB 0%, #6366F1 100%);
+  color: #fff;
+  font-size: 17px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(31,111,235,0.30);
+}
+
+.st-mobile-nav-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.st-mobile-nav-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: ${palette.primary600};
+  line-height: 1;
+  opacity: 0.75;
+}
+[data-theme="dark"] .st-mobile-nav-eyebrow { color: ${palette.primary300}; }
+
+.st-mobile-nav-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: ${palette.ink900};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+[data-theme="dark"] .st-mobile-nav-label { color: ${palette.darkInk}; }
+
+.st-mobile-nav-hint {
+  font-size: 11px;
+  color: ${palette.ink300};
+  font-weight: 400;
+  line-height: 1;
+  margin-top: 1px;
+}
+[data-theme="dark"] .st-mobile-nav-hint { color: rgba(255,255,255,0.30); }
+
+.st-mobile-nav-chevron-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(31,111,235,0.10);
+  color: ${palette.primary600};
+  font-size: 11px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+[data-theme="dark"] .st-mobile-nav-chevron-wrap {
+  background: rgba(99,102,241,0.18);
+  color: ${palette.primary300};
+}
+.st-mobile-nav-bar:hover .st-mobile-nav-chevron-wrap {
+  background: rgba(31,111,235,0.18);
+}
+
+/* ── Mobile: bottom-sheet drawer header ─────────────────────── */
+.st-drawer-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid ${palette.border};
+  flex-shrink: 0;
+}
+[data-theme="dark"] .st-drawer-header { border-color: ${palette.darkBorder}; }
+
+.st-drawer-handle {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(15,23,42,0.15);
+}
+[data-theme="dark"] .st-drawer-handle { background: rgba(255,255,255,0.18); }
+
+.st-drawer-title {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 700;
+  color: ${palette.ink900};
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+[data-theme="dark"] .st-drawer-title { color: ${palette.darkInk}; }
+
+.st-drawer-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(15,23,42,0.06);
+  border-radius: 8px;
+  cursor: pointer;
+  color: ${palette.ink700};
+  font-size: 13px;
+  margin-top: 8px;
+  transition: background 0.15s;
+}
+[data-theme="dark"] .st-drawer-close {
+  background: rgba(255,255,255,0.08);
+  color: ${palette.darkInkMuted};
+}
+.st-drawer-close:active { background: rgba(31,111,235,0.10); }
 
 .sc-card:hover { border-color: rgba(31,111,235,0.20); }
 [data-theme="dark"] .sc-card:hover { border-color: rgba(96,165,250,0.30); }

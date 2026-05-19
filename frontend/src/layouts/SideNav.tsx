@@ -165,8 +165,10 @@ export const SideNav: React.FC<SideNavProps> = ({
   const isSearching = delayedQuery.trim().length > 0;
   const animSec = prefersReducedMotion ? 0 : motionTk.durBase / 1000;
   const isCompact = density === 'compact';
-  const itemPadY = isCompact ? 5 : 6;
-  const itemFont = isCompact ? 13 : 13.5;
+  const itemPadY = isMobile ? 1 : (isCompact ? 5 : 6);
+  const itemFont = isMobile ? 12.5 : (isCompact ? 13 : 13.5);
+  const itemGap = isMobile ? 7 : 8;
+  const itemBorderRadius = isMobile ? 5 : (radius.md as number | string);
 
   // Auto-expand active section
   useEffect(() => {
@@ -292,35 +294,38 @@ export const SideNav: React.FC<SideNavProps> = ({
           background: isActive ? activeBg : 'transparent',
           color: isActive ? palette.primary600 : ink,
           border: 'none',
-          borderRadius: radius.md,
-          padding: `${itemPadY}px 10px ${itemPadY}px ${isActive ? 18 : 12}px`,
+          borderRadius: isMobile ? 6 : radius.md,
+          padding: isMobile
+            ? `6px 10px 6px ${isActive ? 14 : 10}px`
+            : `${itemPadY}px 10px ${itemPadY}px ${isActive ? 18 : 12}px`,
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
+          gap: itemGap,
           cursor: 'pointer',
           textAlign: 'start',
           fontSize: itemFont,
           fontWeight: isActive ? 600 : 450,
-          lineHeight: 1.4,
+          lineHeight: isMobile ? 1.3 : 1.35,
           transition: 'background 0.12s, color 0.12s',
-        }}
-      >
+          ...(isMobile ? { minHeight: 0, height: 'auto', minWidth: 0 } : {}),
+        }}>
         {isActive && (
           <motion.span
             layoutId="sn3-active-rail"
             transition={{ type: 'spring', stiffness: 380, damping: 32 }}
             style={{
               position: 'absolute', top: 6, bottom: 6,
-              [isRTL ? 'insetInlineEnd' : 'insetInlineStart']: 6,
-              width: 2.5, borderRadius: 2,
-              background: palette.primary500,
+              [isRTL ? 'insetInlineEnd' : 'insetInlineStart']: 4,
+              width: 3, borderRadius: 3,
+              background: 'linear-gradient(180deg, #6366F1 0%, #4F46E5 100%)',
+              boxShadow: '0 0 8px rgba(99,102,241,0.5)',
             }}
           />
         )}
         <span style={{ flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {route.label}
         </span>
-        {route.favoriteEligible && (
+        {route.favoriteEligible && !isMobile && (
           <span
             role="button"
             tabIndex={-1}
@@ -331,6 +336,10 @@ export const SideNav: React.FC<SideNavProps> = ({
             style={{
               color: isFav ? palette.warning : inkDim,
               padding: 2, lineHeight: 1, fontSize: 11,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
               opacity: isFav ? 1 : 0,
               transition: 'opacity 0.12s, color 0.12s',
             }}
@@ -347,50 +356,61 @@ export const SideNav: React.FC<SideNavProps> = ({
   // ── Sidebar body content (shared between Sider and Drawer) ─────
   const sidebarContent = (
     <>
-      {/* ── Brand row (slim) ────────────────────────────────── */}
+      {/* ── Brand row (hidden on mobile — TopBar already shows brand) ─ */}
+      {!isMobile && (
       <div style={{
         height: 56,
-        padding: collapsed && !isMobile ? '0' : '0 16px',
-        display: 'flex', alignItems: 'center', justifyContent: (collapsed && !isMobile) ? 'center' : 'flex-start',
+        padding: collapsed ? '0' : '0 14px',
+        display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start',
         gap: 10, borderBottom: `1px solid ${borderCol}`,
         flexShrink: 0,
+        background: isDark
+          ? 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, transparent 60%)'
+          : 'linear-gradient(135deg, rgba(99,102,241,0.04) 0%, transparent 60%)',
       }}>
         <div style={{
-          width: 28, height: 28, borderRadius: 8,
-          background: `linear-gradient(135deg, ${palette.primary500}, ${palette.primary700})`,
+          width: 28, height: 28,
+          borderRadius: 8,
+          background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 50%, #1F6FEB 100%)',
           display: 'grid', placeItems: 'center', color: '#fff',
-          fontWeight: 700, fontSize: 13,
-          boxShadow: '0 2px 6px rgba(31,111,235,0.32)',
+          fontWeight: 800, fontSize: 13,
+          boxShadow: '0 2px 8px rgba(99,102,241,0.40)',
           flexShrink: 0,
+          letterSpacing: '-0.5px',
         }}>Z</div>
-        {(!collapsed || isMobile) && (
-          <div style={{ minWidth: 0, fontSize: 13.5, fontWeight: 600, color: ink,
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {!collapsed && (
+          <div style={{
+            minWidth: 0,
+            fontSize: 13.5,
+            fontWeight: 700,
+            color: ink,
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            letterSpacing: '-0.2px',
+          }}>
             {t('app_name')}
           </div>
         )}
       </div>
+      )}
 
       {/* ── Search (slim) ───────────────────────────────────── */}
       {(!collapsed || isMobile) && (
-        <div style={{ padding: '12px 12px 8px', flexShrink: 0 }}>
+        <div style={{ padding: isMobile ? '6px 8px 4px' : '12px 12px 8px', flexShrink: 0 }}>
           <Input
             allowClear
             size="middle"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            prefix={<SearchOutlined style={{ color: inkDim, fontSize: 13 }} />}
+            prefix={<SearchOutlined style={{ color: inkDim, fontSize: isMobile ? 11 : 12, opacity: 0.55 }} />}
             placeholder={t('search_or_jump', 'Search or jump to…')}
             aria-label={t('nav.search_label', 'Search navigation')}
             aria-controls="sn3-results"
             aria-expanded={isSearching}
             className="sn3-search"
             style={{
-              borderRadius: 8,
-              border: `1px solid ${borderCol}`,
-              background: hoverBg,
-              fontSize: 13,
-              height: 34,
+              borderRadius: 10,
+              fontSize: isMobile ? 12 : 12.5,
+              height: isMobile ? 30 : 34,
             }}
           />
         </div>
@@ -398,7 +418,7 @@ export const SideNav: React.FC<SideNavProps> = ({
 
       {/* ── Body (scrollable) ───────────────────────────────── */}
       <div id="sn3-results" className="sn3-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden',
-        padding: (collapsed && !isMobile) ? '8px 6px 16px' : '4px 8px 16px' }}>
+        padding: (collapsed && !isMobile) ? '8px 6px 16px' : (isMobile ? '0px 6px 12px' : '4px 8px 16px') }}>
 
         {/* aria-live region for search result count — Requirement 17.1 */}
         {(!collapsed || isMobile) && (
@@ -439,8 +459,8 @@ export const SideNav: React.FC<SideNavProps> = ({
 
         {/* Expanded view: zones → sections → items */}
         {(!collapsed || isMobile) && visibleZones.map((zone) => (
-          <div key={zone.key} style={{ marginBottom: 14 }}>
-            <div className="sn3-zone-label" style={{ color: inkDim }}>
+          <div key={zone.key} style={{ marginBottom: isMobile ? 2 : 14 }}>
+            <div className="sn3-zone-label" style={{ color: inkDim, paddingBlockStart: isMobile ? 4 : 14 }}>
               {zone.label}
             </div>
             <div>
@@ -449,7 +469,7 @@ export const SideNav: React.FC<SideNavProps> = ({
                 return (
                   <div
                     key={section.key}
-                    style={{ marginBottom: 2 }}
+                    style={{ marginBottom: isMobile ? 0 : 2 }}
                     onMouseEnter={() => handleSectionHoverEnter(section.key)}
                     onMouseLeave={() => handleSectionHoverLeave(section.key)}
                   >
@@ -463,20 +483,30 @@ export const SideNav: React.FC<SideNavProps> = ({
                       style={{
                         width: '100%', border: 'none', background: 'transparent',
                         color: ink,
-                        padding: `${itemPadY}px 10px ${itemPadY}px 12px`,
-                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: isMobile
+                          ? '6px 8px'
+                          : `${itemPadY}px 10px ${itemPadY}px 12px`,
+                        display: 'flex', alignItems: 'center', gap: itemGap,
                         cursor: 'pointer', textAlign: 'start',
-                        borderRadius: radius.md,
+                        borderRadius: isMobile ? 5 : radius.md,
                         fontSize: itemFont,
                         fontWeight: 500,
-                        lineHeight: 1.4,
+                        lineHeight: isMobile ? 1.3 : 1.35,
                         transition: 'background 0.12s',
+                        ...(isMobile ? { minHeight: 0, height: 'auto', minWidth: 0 } : {}),
                       }}
                     >
                       <span style={{
-                        color: inkMuted, fontSize: 12,
+                        color: isOpen ? palette.primary500 : palette.primary500,
+                        fontSize: isMobile ? 11 : 13,
                         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                        width: 16, height: 16, flexShrink: 0,
+                        width: isMobile ? 18 : 22, height: isMobile ? 18 : 22,
+                        borderRadius: isMobile ? 4 : 6,
+                        background: isOpen
+                          ? (isDark ? 'rgba(99,102,241,0.18)' : 'rgba(99,102,241,0.10)')
+                          : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.05)'),
+                        flexShrink: 0,
+                        transition: 'background 0.15s, color 0.15s',
                       }}>
                         {section.icon}
                       </span>
@@ -487,7 +517,12 @@ export const SideNav: React.FC<SideNavProps> = ({
                       <motion.span
                         animate={{ rotate: isOpen ? 90 : 0 }}
                         transition={{ duration: animSec }}
-                        style={{ color: inkDim, fontSize: 9, lineHeight: 1, flexShrink: 0 }}
+                        style={{
+                          color: isOpen ? palette.primary500 : inkDim,
+                          fontSize: isMobile ? 10 : 9,
+                          lineHeight: 1, flexShrink: 0,
+                          opacity: isOpen ? 1 : 0.5,
+                        }}
                       >
                         <CaretRightOutlined />
                       </motion.span>
@@ -501,9 +536,9 @@ export const SideNav: React.FC<SideNavProps> = ({
                           exit={{ opacity: 0, height: 0 }}
                           transition={{ duration: animSec, ease: [0.2, 0, 0, 1] }}
                           id={`sn3-section-${section.key}`}
-                          style={{ overflow: 'hidden', paddingInlineStart: 22 }}
+                          style={{ overflow: 'hidden', paddingInlineStart: isMobile ? 12 : 22 }}
                         >
-                          <div style={{ display: 'grid', gap: 1, paddingTop: 1, paddingBottom: 4 }}>
+                          <div style={{ display: 'grid', gap: isMobile ? 0 : 1, paddingTop: isMobile ? 2 : 1, paddingBottom: isMobile ? 2 : 4 }}>
                             {section.items.map((item) => renderLeaf(routeByKey.get(item.key) || {
                               key: item.key, label: item.label,
                               description: item.description, keywords: item.keywords,
@@ -596,76 +631,12 @@ export const SideNav: React.FC<SideNavProps> = ({
     </>
   );
 
-  // ── Mobile: render as Drawer overlay (Requirement 4.4) ────────
+  // ── Mobile: render content directly (AppShell wraps in Drawer) ──
   if (isMobile) {
     return (
       <>
         <style>{sn3Css}</style>
-        <Drawer
-          open={!collapsed}
-          onClose={() => setSidebarCollapsed(true)}
-          placement={isRTL ? 'right' : 'left'}
-          width={width}
-          styles={{
-            body: {
-              padding: 0,
-              background: sidebarBg,
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100%',
-            },
-            header: { display: 'none' },
-          }}
-          style={{ zIndex: 1200 }}
-          aria-label={t('nav.sidebar', 'Navigation')}
-        >
-          {sidebarContent}
-        </Drawer>
-
-        {/* Flyout (mobile — not typically needed but kept for consistency) */}
-        <AnimatePresence>
-          {flyoutSection && (
-            <motion.aside
-              key={flyoutSection.key}
-              data-nav-flyout="true"
-              initial={{ opacity: 0, x: isRTL ? 10 : -10, scale: 0.98 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: isRTL ? 10 : -10, scale: 0.98 }}
-              transition={{ duration: animSec }}
-              style={{
-                position: 'fixed',
-                top: flyout?.top ?? 76,
-                [isRTL ? 'right' : 'left']: collapsedWidth + 8,
-                width: 240,
-                maxHeight: 'calc(100vh - 88px)',
-                overflowY: 'auto',
-                background: isDark ? '#111A2E' : '#FFFFFF',
-                border: `1px solid ${borderCol}`,
-                borderRadius: 12,
-                boxShadow: isDark
-                  ? '0 12px 32px rgba(0,0,0,0.45)'
-                  : '0 12px 32px rgba(15,23,42,0.16)',
-                zIndex: 1300,
-                padding: '8px 6px',
-              }}
-            >
-              <div style={{ padding: '6px 12px 8px', fontSize: 12, fontWeight: 600,
-                color: inkMuted, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                {flyoutSection.label}
-              </div>
-              <div style={{ display: 'grid', gap: 1 }}>
-                {flyoutSection.items.map((item) => renderLeaf(routeByKey.get(item.key) || {
-                  key: item.key, label: item.label,
-                  description: item.description, keywords: item.keywords,
-                  favoriteEligible: item.favoriteEligible ?? true,
-                  icon: flyoutSection.icon, sectionKey: flyoutSection.key,
-                  sectionLabel: flyoutSection.label, zone: flyoutSection.zone,
-                  zoneLabel: zoneByKey.get(flyoutSection.zone)?.label || '',
-                }))}
-              </div>
-            </motion.aside>
-          )}
-        </AnimatePresence>
+        {sidebarContent}
       </>
     );
   }
@@ -753,47 +724,221 @@ const sn3Css = `
     height: 100%;
     min-height: 0;
   }
+
+  /* ── Zone labels ─────────────────────────────────────────────── */
   .sn3-zone-label {
-    padding: 12px 12px 6px;
-    font-size: 10.5px;
-    font-weight: 600;
+    padding: 14px 14px 5px;
+    font-size: 10px;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.6px;
+    letter-spacing: 0.8px;
     line-height: 1;
+    opacity: 0.45;
   }
-  .sn3-leaf:hover:not(.is-active) { background: rgba(15,23,42,0.04); }
-  [data-theme='dark'] .sn3-leaf:hover:not(.is-active) { background: rgba(255,255,255,0.04); }
-  .sn3-leaf:hover .sn3-fav { opacity: 0.6 !important; }
+
+  /* ── Section toggle ──────────────────────────────────────────── */
+  .sn3-section-toggle {
+    position: relative;
+    overflow: hidden;
+  }
+  .sn3-section-toggle::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    border-radius: 8px;
+    transition: background 0.15s;
+  }
+  @media (hover: hover) {
+    .sn3-section-toggle:hover::before {
+      background: rgba(99,102,241,0.06);
+    }
+    [data-theme='dark'] .sn3-section-toggle:hover::before {
+      background: rgba(99,102,241,0.10);
+    }
+  }
+
+  /* ── Nav leaf ────────────────────────────────────────────────── */
+  .sn3-leaf {
+    position: relative;
+    overflow: hidden;
+  }
+  .sn3-leaf::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    border-radius: 8px;
+    transition: background 0.15s;
+  }
+  @media (hover: hover) {
+    .sn3-leaf:hover:not(.is-active)::before {
+      background: rgba(15,23,42,0.04);
+    }
+    [data-theme='dark'] .sn3-leaf:hover:not(.is-active)::before {
+      background: rgba(255,255,255,0.05);
+    }
+  }
+  .sn3-leaf.is-active {
+    background: linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(31,111,235,0.10) 100%) !important;
+    color: #4F46E5 !important;
+    font-weight: 600 !important;
+  }
+  [data-theme='dark'] .sn3-leaf.is-active {
+    background: linear-gradient(135deg, rgba(99,102,241,0.20) 0%, rgba(31,111,235,0.16) 100%) !important;
+    color: #818CF8 !important;
+  }
+
+  /* ── Favorite star ───────────────────────────────────────────── */
+  .sn3-leaf:hover .sn3-fav { opacity: 0.5 !important; }
   .sn3-leaf .sn3-fav[data-active='true'] { opacity: 1 !important; }
   .sn3-leaf .sn3-fav:hover { opacity: 1 !important; color: #F59E0B !important; }
-  .sn3-section-toggle:hover { background: rgba(15,23,42,0.04); }
-  [data-theme='dark'] .sn3-section-toggle:hover { background: rgba(255,255,255,0.04); }
-  .sn3-collapsed-btn:hover { background: rgba(15,23,42,0.05); }
-  [data-theme='dark'] .sn3-collapsed-btn:hover { background: rgba(255,255,255,0.05); }
 
+  /* ── Collapsed icon button ───────────────────────────────────── */
+  .sn3-collapsed-btn {
+    transition: background 0.15s, color 0.15s, transform 0.12s !important;
+  }
+  .sn3-collapsed-btn:hover {
+    background: rgba(99,102,241,0.08) !important;
+    transform: scale(1.05);
+  }
+  [data-theme='dark'] .sn3-collapsed-btn:hover {
+    background: rgba(99,102,241,0.14) !important;
+  }
+
+  /* ── Search input ────────────────────────────────────────────── */
   .sn3-search.ant-input-affix-wrapper {
-    transition: border-color 0.15s, background 0.15s !important;
+    transition: border-color 0.18s, box-shadow 0.18s, background 0.18s !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(15,23,42,0.09) !important;
+    background: rgba(15,23,42,0.05) !important;
+    box-shadow: none !important;
+    outline: none !important;
   }
-  .sn3-search.ant-input-affix-wrapper:hover,
-  .sn3-search.ant-input-affix-wrapper-focused {
-    border-color: rgba(31,111,235,0.32) !important;
-    background: rgba(255,255,255,0.6) !important;
-    box-shadow: 0 0 0 3px rgba(31,111,235,0.08) !important;
+  .sn3-search.ant-input-affix-wrapper .ant-input {
+    background: transparent !important;
   }
-  [data-theme='dark'] .sn3-search.ant-input-affix-wrapper:hover,
-  [data-theme='dark'] .sn3-search.ant-input-affix-wrapper-focused {
-    background: rgba(255,255,255,0.06) !important;
+  [data-theme='dark'] .sn3-search.ant-input-affix-wrapper {
+    border: 1px solid rgba(255,255,255,0.07) !important;
+    background: rgba(255,255,255,0.05) !important;
+  }
+  .sn3-search.ant-input-affix-wrapper:hover {
+    border-color: rgba(99,102,241,0.28) !important;
+    background: rgba(15,23,42,0.07) !important;
+    box-shadow: none !important;
+  }
+  [data-theme='dark'] .sn3-search.ant-input-affix-wrapper:hover {
+    background: rgba(255,255,255,0.08) !important;
+    border-color: rgba(99,102,241,0.22) !important;
+  }
+  .sn3-search.ant-input-affix-wrapper-focused,
+  .sn3-search.ant-input-affix-wrapper:focus-within {
+    border-color: rgba(99,102,241,0.50) !important;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.09) !important;
+    background: rgba(15,23,42,0.03) !important;
+    outline: none !important;
+  }
+  [data-theme='dark'] .sn3-search.ant-input-affix-wrapper-focused,
+  [data-theme='dark'] .sn3-search.ant-input-affix-wrapper:focus-within {
+    background: rgba(255,255,255,0.07) !important;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.14) !important;
+  }
+  /* Placeholder color — subtle */
+  .sn3-search input::placeholder {
+    color: rgba(15,23,42,0.30) !important;
+    font-size: 12.5px !important;
+  }
+  [data-theme='dark'] .sn3-search input::placeholder {
+    color: rgba(255,255,255,0.26) !important;
+  }
+  /* Kill AntD's default blue outline on focus */
+  .sn3-search.ant-input-affix-wrapper input:focus {
+    outline: none !important;
+    box-shadow: none !important;
   }
 
-  .sn3-scroll::-webkit-scrollbar { width: 6px; }
+  /* ── Scrollbar ───────────────────────────────────────────────── */
+  .sn3-scroll::-webkit-scrollbar { width: 4px; }
   .sn3-scroll::-webkit-scrollbar-track { background: transparent; }
   .sn3-scroll::-webkit-scrollbar-thumb {
-    background: rgba(15,23,42,0.10); border-radius: 3px;
+    background: rgba(15,23,42,0.08);
+    border-radius: 4px;
   }
-  .sn3-scroll::-webkit-scrollbar-thumb:hover { background: rgba(15,23,42,0.18); }
-  [data-theme='dark'] .sn3-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); }
+  .sn3-scroll::-webkit-scrollbar-thumb:hover { background: rgba(15,23,42,0.16); }
+  [data-theme='dark'] .sn3-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); }
 
   .sn3-sider { font-family: inherit; }
+
+  /* ── Mobile: advanced professional layout ────────────────────── */
+  @media (max-width: 768px) {
+    /* Zone labels */
+    .sn3-zone-label {
+      padding: 8px 14px 2px;
+      font-size: 9.5px;
+      letter-spacing: 0.9px;
+    }
+
+    /* Section toggle — icon pill + text + chevron */
+    .sn3-section-toggle {
+      font-size: 13px !important;
+      font-weight: 500 !important;
+      padding: 8px 10px !important;
+      border-radius: 5px !important;
+      gap: 7px !important;
+      min-height: 0 !important;
+      height: auto !important;
+    }
+    button.sn3-section-toggle {
+      min-height: 0 !important;
+      min-width: 0 !important;
+      height: auto !important;
+    }
+
+    /* Nav leaf items — padding fits text height only */
+    .sn3-leaf {
+      font-size: 13px !important;
+      padding: 8px 10px !important;
+      border-radius: 5px !important;
+      gap: 7px !important;
+      line-height: 1.3 !important;
+      min-height: 0 !important;
+      height: auto !important;
+      max-height: 36px !important;
+    }
+    button.sn3-leaf {
+      min-height: 0 !important;
+      min-width: 0 !important;
+      height: auto !important;
+      max-height: 36px !important;
+    }
+
+    /* Active leaf — stronger gradient */
+    .sn3-leaf.is-active {
+      background: linear-gradient(135deg, rgba(99,102,241,0.14) 0%, rgba(31,111,235,0.11) 100%) !important;
+    }
+
+    /* Search input */
+    .sn3-search.ant-input-affix-wrapper {
+      height: 32px !important;
+      font-size: 12.5px !important;
+      border-radius: 9px !important;
+    }
+
+    /* Scroll body */
+    .sn3-scroll {
+      padding: 2px 8px 16px !important;
+    }
+
+    /* Sub-items indent */
+    .sn3-scroll [style*="paddingInlineStart: 22"] {
+      padding-inline-start: 14px !important;
+    }
+
+    /* Zone section gap */
+    .sn3-scroll > div {
+      margin-bottom: 4px !important;
+    }
+  }
 `;
 
 // suppress unused

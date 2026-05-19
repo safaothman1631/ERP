@@ -91,17 +91,51 @@ export const TopMegaMenu: React.FC<{ isDark: boolean; isRTL: boolean; onOpenPale
 };
 
 /* ------------- Bottom Nav (mobile-style) ------------- */
+
+// Default tabs — user can customize these
+const DEFAULT_TABS = ['/', '/invoices', '/items', '/banking'];
+const BOTTOM_NAV_KEY = 'shell.bottomNavTabs';
+
+const readBottomTabs = (): string[] => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(BOTTOM_NAV_KEY) || 'null');
+    if (Array.isArray(saved) && saved.length === 4) return saved;
+  } catch { /* ignore */ }
+  return DEFAULT_TABS;
+};
+const writeBottomTabs = (v: string[]) => {
+  try { localStorage.setItem(BOTTOM_NAV_KEY, JSON.stringify(v)); } catch { /* ignore */ }
+};
+
 export const BottomNav: React.FC<{ isDark: boolean; onOpenPalette: () => void }> = ({ isDark, onOpenPalette }) => {
   const { t } = useTranslation();
   const loc = useLocation();
+  const navigate = useNavigate();
+  const [tabs, setTabs] = useState<string[]>(readBottomTabs);
+  const [editing, setEditing] = useState(false);
+  const [swapSlot, setSwapSlot] = useState<number | null>(null);
 
-  // 5 tabs: Home, Invoices, Items, Banking, Search — Requirements 3.2, 3.3, 3.4
-  const items = [
-    { key: '/', icon: <HomeOutlined />, label: t('home', 'Home') },
-    { key: '/invoices', icon: <FileTextOutlined />, label: t('invoices') },
-    { key: '/items', icon: <ShoppingCartOutlined />, label: t('items') },
-    { key: '/banking', icon: <WalletOutlined />, label: t('banking', 'Banking') },
-  ];
+  // Build full route list for picker
+  const allRoutes = useMemo(() => flattenRoutes(buildNavSections(t)), [t]);
+
+  const labelOf = (path: string) => {
+    if (path === '/') return t('home', 'Home');
+    return allRoutes.find(r => r.key === path)?.label || path.replace('/', '').replace(/-/g, ' ');
+  };
+  const iconOf = (path: string): React.ReactNode => {
+    if (path === '/') return <HomeOutlined />;
+    const r = allRoutes.find(r => r.key === path);
+    return r?.icon ?? <AppstoreOutlined />;
+  };
+
+  const saveTab = (slot: number, path: string) => {
+    const next = [...tabs];
+    next[slot] = path;
+    setTabs(next);
+    writeBottomTabs(next);
+    setSwapSlot(null);
+    setEditing(false);
+  };
 
   const tabStyle = (active: boolean): React.CSSProperties => ({
     display: 'flex',
@@ -111,72 +145,233 @@ export const BottomNav: React.FC<{ isDark: boolean; onOpenPalette: () => void }>
     fontSize: 11,
     color: active ? BRAND : (isDark ? '#9ca3af' : INK_MUTED),
     textDecoration: 'none',
-    // Touch target ≥ 44×44px — Requirement 9.4
     minInlineSize: 44,
     minBlockSize: 44,
     justifyContent: 'center',
     flex: 1,
     fontWeight: active ? 600 : 400,
     transition: 'color 0.15s',
+    position: 'relative',
   });
 
+  const surface = isDark ? palette.darkSurface : palette.surface;
+  const border = isDark ? palette.darkBorder : palette.border;
+
   return (
-    <nav
-      role="navigation"
-      aria-label={t('bottom_nav', 'Main navigation')}
-      style={{
-        // Logical properties only — no left/right/bottom — Requirements 3.10, 11.7
-        position: 'fixed',
-        insetBlockEnd: 0,
-        insetInlineStart: 0,
-        insetInlineEnd: 0,
-        zIndex: 100,
-        background: isDark ? palette.darkSurface : palette.surface,
-        borderBlockStart: `1px solid ${isDark ? palette.darkBorder : palette.border}`,
-        boxShadow: '0 -8px 24px rgba(0,0,0,0.08)',
-        display: 'flex',
-        justifyContent: 'space-around',
-        alignItems: 'stretch',
-        // Height = 56px + safe-area-inset-bottom — Requirement 3.1, 10.2
-        paddingBlockEnd: 'env(safe-area-inset-bottom, 0px)',
-        minBlockSize: 'calc(56px + env(safe-area-inset-bottom, 0px))',
-        // Prevent horizontal overflow — Requirement 13.6
-        width: '100%',
-        overflow: 'hidden',
-      }}
-    >
-      {items.map(it => {
-        const active = loc.pathname === it.key || (it.key !== '/' && loc.pathname.startsWith(it.key));
-        return (
-          <Link
-            key={it.key}
-            to={it.key}
-            style={tabStyle(active)}
-            aria-label={it.label}
-            aria-current={active ? 'page' : undefined}
+    <>
+      {/* ── Picker sheet — shown when editing ─────────────────── */}
+      {editing && swapSlot !== null && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: 'rgba(0,0,0,0.45)',
+            display: 'flex', alignItems: 'flex-end',
+          }}
+          onClick={() => { setSwapSlot(null); setEditing(false); }}
+        >
+          <div
+            style={{
+              width: '100%',
+              background: isDark ? '#111827' : '#F8FAFC',
+              borderRadius: '20px 20px 0 0',
+              paddingBlockEnd: 'env(safe-area-inset-bottom, 16px)',
+              maxHeight: '70vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 -8px 32px rgba(15,23,42,0.12)',
+            }}
+            onClick={e => e.stopPropagation()}
           >
-            <span style={{ fontSize: 20, lineHeight: 1 }}>{it.icon}</span>
-            <span style={{ fontSize: 10, lineHeight: 1.2 }}>{it.label}</span>
-          </Link>
-        );
-      })}
-      {/* Search / ⌘K tab — Requirement 3.2, 3.6 */}
-      <button
-        type="button"
-        onClick={onOpenPalette}
-        aria-label={t('search_or_jump', 'Search')}
+            {/* Handle */}
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px' }}>
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(15,23,42,0.15)' }} />
+            </div>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 16px 12px' }}>
+              <span style={{ fontWeight: 700, fontSize: 15, color: isDark ? '#fff' : palette.ink900 }}>
+                {t('choose_tab', 'Choose tab')} {swapSlot + 1}
+              </span>
+              <button
+                onClick={() => { setSwapSlot(null); setEditing(false); }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: isDark ? '#9ca3af' : INK_MUTED, padding: 4 }}
+              >
+                <CloseOutlined />
+              </button>
+            </div>
+            {/* Route grid */}
+            <div style={{ overflowY: 'auto', padding: '0 12px 16px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              {/* Home always available */}
+              {[{ key: '/', label: t('home', 'Home'), icon: <HomeOutlined /> },
+                ...allRoutes.filter(r => r.favoriteEligible !== false)
+              ].map(r => {
+                const isSelected = tabs.includes(r.key) && r.key !== tabs[swapSlot];
+                const isCurrent = tabs[swapSlot] === r.key;
+                return (
+                  <button
+                    key={r.key}
+                    onClick={() => saveTab(swapSlot, r.key)}
+                    disabled={isSelected}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6,
+                      padding: '12px 6px',
+                      borderRadius: 16,
+                      border: isCurrent
+                        ? `2px solid ${BRAND}`
+                        : `1px solid ${isDark ? 'rgba(255,255,255,0.09)' : 'rgba(15,23,42,0.09)'}`,
+                      background: isCurrent
+                        ? (isDark ? 'rgba(31,111,235,0.18)' : 'rgba(31,111,235,0.07)')
+                        : (isDark ? 'rgba(255,255,255,0.04)' : '#fff'),
+                      boxShadow: isCurrent
+                        ? `0 0 0 3px rgba(31,111,235,0.12)`
+                        : (isDark ? 'none' : '0 1px 3px rgba(15,23,42,0.06)'),
+                      cursor: isSelected ? 'not-allowed' : 'pointer',
+                      opacity: isSelected ? 0.30 : 1,
+                      color: isCurrent ? BRAND : (isDark ? '#e5e7eb' : palette.ink900),
+                      transition: 'all 0.15s',
+                      height: 88,
+                      overflow: 'visible',
+                    }}
+                  >
+                    {/* Icon container — fixed size so icon never overflows */}
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 36,
+                      height: 36,
+                      borderRadius: 10,
+                      background: isCurrent
+                        ? (isDark ? 'rgba(31,111,235,0.25)' : 'rgba(31,111,235,0.12)')
+                        : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.05)'),
+                      fontSize: 18,
+                      lineHeight: 1,
+                      color: isCurrent ? BRAND : (isDark ? '#9ca3af' : '#64748B'),
+                      flexShrink: 0,
+                    }}>
+                      {r.icon ?? <AppstoreOutlined />}
+                    </span>
+                    {/* Label — clamp to 2 lines */}
+                    <span style={{
+                      textAlign: 'center',
+                      lineHeight: 1.3,
+                      fontSize: 10.5,
+                      fontWeight: isCurrent ? 600 : 500,
+                      color: isCurrent ? BRAND : (isDark ? '#d1d5db' : '#374151'),
+                      display: 'block',
+                      width: '100%',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {r.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Bottom bar ─────────────────────────────────────────── */}
+      <nav
+        role="navigation"
+        aria-label={t('bottom_nav', 'Main navigation')}
         style={{
-          ...tabStyle(false),
-          background: 'transparent',
-          border: 'none',
-          cursor: 'pointer',
-          color: isDark ? '#9ca3af' : INK_MUTED,
+          position: 'fixed',
+          insetBlockEnd: 0,
+          insetInlineStart: 0,
+          insetInlineEnd: 0,
+          zIndex: 100,
+          background: surface,
+          borderBlockStart: `1px solid ${border}`,
+          boxShadow: '0 -8px 24px rgba(0,0,0,0.08)',
+          display: 'flex',
+          justifyContent: 'space-around',
+          alignItems: 'stretch',
+          paddingBlockEnd: 'env(safe-area-inset-bottom, 0px)',
+          minBlockSize: 'calc(56px + env(safe-area-inset-bottom, 0px))',
+          width: '100%',
+          overflow: 'hidden',
         }}
       >
-        <SearchOutlined style={{ fontSize: 20, lineHeight: 1 }} />
-        <span style={{ fontSize: 10, lineHeight: 1.2 }}>⌘K</span>
-      </button>
-    </nav>
+        {tabs.map((path, idx) => {
+          const active = !editing && (loc.pathname === path || (path !== '/' && loc.pathname.startsWith(path)));
+          const label = labelOf(path);
+          const icon = iconOf(path);
+
+          if (editing) {
+            return (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setSwapSlot(idx)}
+                style={{
+                  ...tabStyle(false),
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: isDark ? '#9ca3af' : INK_MUTED,
+                }}
+              >
+                {/* Edit badge */}
+                <span style={{
+                  position: 'absolute', top: 6, insetInlineEnd: 6,
+                  width: 16, height: 16, borderRadius: '50%',
+                  background: BRAND, color: '#fff',
+                  fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 700,
+                }}>✎</span>
+                <span style={{ fontSize: 20, lineHeight: 1, opacity: 0.5 }}>{icon}</span>
+                <span style={{ fontSize: 10, lineHeight: 1.2, opacity: 0.5 }}>{label}</span>
+              </button>
+            );
+          }
+
+          return (
+            <Link
+              key={path}
+              to={path}
+              style={tabStyle(active)}
+              aria-label={label}
+              aria-current={active ? 'page' : undefined}
+              onContextMenu={e => { e.preventDefault(); setEditing(true); setSwapSlot(idx); }}
+            >
+              <span style={{ fontSize: 20, lineHeight: 1 }}>{icon}</span>
+              <span style={{ fontSize: 10, lineHeight: 1.2 }}>{label}</span>
+            </Link>
+          );
+        })}
+
+        {/* Edit / Done button — 5th slot */}
+        <button
+          type="button"
+          onClick={() => { setEditing(e => !e); setSwapSlot(null); }}
+          aria-label={editing ? t('done', 'Done') : t('edit_tabs', 'Edit tabs')}
+          style={{
+            ...tabStyle(false),
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            color: editing ? BRAND : (isDark ? '#9ca3af' : INK_MUTED),
+            fontWeight: editing ? 700 : 400,
+          }}
+        >
+          {editing
+            ? <CloseOutlined style={{ fontSize: 20, lineHeight: 1 }} />
+            : <AppstoreOutlined style={{ fontSize: 20, lineHeight: 1 }} />
+          }
+          <span style={{ fontSize: 10, lineHeight: 1.2 }}>
+            {editing ? t('done', 'Done') : t('more', 'More')}
+          </span>
+        </button>
+      </nav>
+    </>
   );
 };
 

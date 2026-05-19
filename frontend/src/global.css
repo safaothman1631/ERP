@@ -1145,9 +1145,6 @@ body {
   /* Bigger touch targets */
   .ant-btn { min-height: 36px; }
   .ant-btn-sm { min-height: 30px; }
-  /* Header buttons hide their label text on phones */
-  .ant-layout-header .ant-btn span:not(.anticon) { display: none; }
-  .ant-layout-header .ant-btn kbd { display: none; }
   /* Page-header titles smaller */
   .ant-page-header-heading-title, .ant-typography h2, .ant-typography h3 { font-size: 18px !important; }
 }
@@ -1279,13 +1276,16 @@ html[data-high-contrast="true"][data-theme="dark"] *:focus-visible { outline-col
 @media (max-width: 640px) {
   body,
   p,
-  label,
-  span,
   td,
   th,
   li {
     font-size: max(14px, 1em);
     line-height: 1.5;
+  }
+  /* Labels only — not spans (spans used in nav items) */
+  label {
+    font-size: max(14px, 1em);
+    line-height: 1.4;
   }
   small,
   caption,
@@ -1350,4 +1350,68 @@ html[data-high-contrast="true"][data-theme="dark"] *:focus-visible { outline-col
   .ant-card [style*="font-size: 32"] {
     font-size: 18px !important;
   }
+}
+
+
+/* ── Auth form direction fix — force LTR on inputs when lang is EN ──────── */
+/* When the form has auth-form-ltr class, all AntD input internals go LTR   */
+.auth-form-ltr .ant-input-affix-wrapper {
+  direction: ltr !important;
+}
+.auth-form-ltr .ant-input-affix-wrapper .ant-input {
+  direction: ltr !important;
+  text-align: left !important;
+}
+.auth-form-ltr .ant-input-affix-wrapper .ant-input::placeholder {
+  text-align: left !important;
+  direction: ltr !important;
+}
+.auth-form-ltr .ant-input-affix-wrapper .ant-input-prefix {
+  order: -1 !important;
+  margin-inline-end: 8px !important;
+  margin-inline-start: 0 !important;
+}
+.auth-form-ltr .ant-input-affix-wrapper .ant-input-suffix {
+  order: 1 !important;
+  margin-inline-start: 8px !important;
+  margin-inline-end: 0 !important;
+}
+
+
+/* ── Auth input LTR fix — direct class targeting ────────────────────────── */
+/* The auth-input class is applied directly to the AntD Input component.    */
+/* When document is RTL but language is EN, we need LTR inside auth inputs. */
+/* We use a data attribute on the wrapper to control this.                  */
+.auth-input[data-ltr="true"],
+.auth-input[data-ltr="true"] .ant-input,
+.auth-input[data-ltr="true"] .ant-input-affix-wrapper {
+  direction: ltr !important;
+  text-align: left !important;
+}
+.auth-input[data-ltr="true"] .ant-input::placeholder {
+  text-align: left !important;
+}
+
+
+/* ── Auth input: when document is RTL but form is LTR ───────────────────── */
+/* Target: auth-input inside a form that has direction:ltr set inline       */
+[dir="rtl"] .auth-form-ltr .ant-input-affix-wrapper,
+[dir="rtl"] .auth-form-ltr .ant-input-affix-wrapper .ant-input,
+[dir="rtl"] .auth-form-ltr .ant-input-affix-wrapper input {
+  direction: ltr !important;
+  text-align: left !important;
+  unicode-bidi: embed !important;
+}
+[dir="rtl"] .auth-form-ltr .ant-input-affix-wrapper input::placeholder {
+  text-align: left !important;
+  direction: ltr !important;
+}
+[dir="rtl"] .auth-form-ltr .ant-input-affix-wrapper .ant-input-prefix {
+  order: 0 !important;
+  margin-inline-end: 8px !important;
+  margin-inline-start: 0 !important;
+}
+[dir="rtl"] .auth-form-ltr .ant-input-affix-wrapper .ant-input-suffix {
+  margin-inline-start: 8px !important;
+  margin-inline-end: 0 !important;
 }

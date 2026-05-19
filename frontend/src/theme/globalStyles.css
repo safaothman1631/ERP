@@ -481,9 +481,15 @@ html {
     justify-content: center;
   }
 
-  /* Sidebar nav items */
+  /* Sidebar nav items — use auto height to fit text */
+  button.sn3-leaf,
+  button.sn3-section-toggle,
   .sn3-leaf,
-  .sn3-section-toggle,
+  .sn3-section-toggle {
+    min-height: 0 !important;
+    min-width: 0 !important;
+    height: auto !important;
+  }
   .sn3-collapsed-btn {
     min-height: 44px !important;
   }

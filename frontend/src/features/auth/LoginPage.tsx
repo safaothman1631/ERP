@@ -20,7 +20,7 @@
  * - useUiStore for theme (dark/light)
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Form, Input, Button, Alert, Divider } from 'antd';
+import { Form, Input, Button, Alert, Divider, ConfigProvider } from 'antd';
 import { MailOutlined, LockOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
@@ -118,7 +118,7 @@ export function formatCountdown(ms: number): string {
  * Requirement 16.2: Particles background via MotionGate
  */
 const BrandingParticles: React.FC = () => {
-  const { t } = useTranslation('auth');
+  const { t } = useTranslation();
 
   return (
     <>
@@ -201,7 +201,7 @@ const BrandingParticles: React.FC = () => {
  * Requirements: 16.1–16.7
  */
 const LoginPage: React.FC = () => {
-  const { t, i18n } = useTranslation('auth');
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { login } = useAuthStore();
 
@@ -398,13 +398,66 @@ const LoginPage: React.FC = () => {
           }
         }
 
-        /* Focus ring on all inputs — Requirement 16.7 */
-        .login-form .ant-input:focus,
+        /* Focus ring on all inputs — clean single ring, no double border */
+        .login-form .ant-input-affix-wrapper {
+          border-radius: 10px !important;
+          border: 1.5px solid rgba(15,23,42,0.15) !important;
+          box-shadow: none !important;
+          transition: border-color 0.18s, box-shadow 0.18s !important;
+          display: flex !important;
+          align-items: center !important;
+          height: 46px !important;
+          direction: ltr !important;
+        }
+        .login-form .ant-input-affix-wrapper .ant-input-prefix {
+          display: flex !important;
+          align-items: center !important;
+          margin-inline-end: 8px !important;
+          color: rgba(15,23,42,0.40) !important;
+        }
+        .login-form .ant-input-affix-wrapper .ant-input {
+          line-height: 1.5 !important;
+          padding-block: 0 !important;
+          direction: ltr !important;
+          text-align: left !important;
+        }
+        .login-form .ant-input-affix-wrapper .ant-input::placeholder {
+          direction: ltr !important;
+          text-align: left !important;
+        }
+        .login-form .ant-input-affix-wrapper:hover {
+          border-color: rgba(31,111,235,0.40) !important;
+          box-shadow: none !important;
+        }
         .login-form .ant-input-affix-wrapper:focus,
         .login-form .ant-input-affix-wrapper-focused {
-          outline: 2px solid ${palette.primary500};
-          outline-offset: 2px;
-          box-shadow: 0 0 0 3px rgba(31,111,235,0.15);
+          border-color: ${palette.primary500} !important;
+          box-shadow: 0 0 0 3px rgba(31,111,235,0.12) !important;
+          outline: none !important;
+        }
+        .login-form .ant-input {
+          background: transparent !important;
+          box-shadow: none !important;
+          direction: ltr !important;
+          text-align: left !important;
+        }
+        .login-form .ant-input:focus {
+          outline: none !important;
+          box-shadow: none !important;
+        }
+        .login-form .ant-input::placeholder {
+          direction: ltr !important;
+          text-align: left !important;
+        }
+
+        /* Force LTR layout on auth inputs when document is RTL */
+        .auth-form-ltr .ant-input-affix-wrapper,
+        .auth-form-ltr .ant-input {
+          direction: ltr !important;
+          text-align: start !important;
+        }
+        .auth-form-ltr .ant-input::placeholder {
+          text-align: start !important;
         }
 
         /* Dark mode overrides (Requirement 16.5) */
@@ -494,14 +547,14 @@ const LoginPage: React.FC = () => {
         )}
 
         {/* ── Login Form (Requirements 16.3, 16.7) ── */}
+        <ConfigProvider direction={isRTL ? 'rtl' : 'ltr'}>
         <Form
           form={form}
           layout="vertical"
           onFinish={handleLogin}
-          className="login-form"
+          className={`login-form${isRTL ? '' : ' auth-form-ltr'}`}
           validateTrigger={['onChange', 'onBlur']}
           aria-label={t('login')}
-          // direction follows document dir (RTL/LTR) — no hardcoded direction
         >
           <ResponsiveForm layout="single">
           {/* Email field — Tab order 1 (Requirement 16.7) */}
@@ -510,8 +563,8 @@ const LoginPage: React.FC = () => {
             label={t('email')}
             style={{ marginBottom: 16 }}
             rules={[
-              { required: true, message: t('email_placeholder') },
-              { type: 'email', message: t('invalid_credentials') },
+              { required: true, message: t('validation_required', 'This field is required') },
+              { type: 'email', message: t('validation_email', 'Please enter a valid email') },
             ]}
             validateTrigger={['onChange', 'onBlur']}
           >
@@ -519,7 +572,7 @@ const LoginPage: React.FC = () => {
               size="large"
               placeholder={t('email_placeholder')}
               prefix={<MailOutlined aria-hidden="true" />}
-              style={{ borderRadius: 10, height: 46 }}
+              style={{ height: 46, lineHeight: '46px', display: 'flex', alignItems: 'center' }}
               autoComplete="email"
               disabled={locked || loading}
               aria-label={t('email')}
@@ -534,14 +587,14 @@ const LoginPage: React.FC = () => {
             name="password"
             label={t('password')}
             style={{ marginBottom: 8 }}
-            rules={[{ required: true, message: t('password_placeholder') }]}
+            rules={[{ required: true, message: t('validation_required', 'This field is required') }]}
             validateTrigger={['onChange', 'onBlur']}
           >
             <Input.Password
               size="large"
               placeholder={t('password_placeholder')}
               prefix={<LockOutlined aria-hidden="true" />}
-              style={{ borderRadius: 10, height: 46 }}
+              style={{ height: 46 }}
               autoComplete="current-password"
               disabled={locked || loading}
               aria-label={t('password')}
@@ -581,6 +634,7 @@ const LoginPage: React.FC = () => {
           </Form.Item>
           </ResponsiveForm>
         </Form>
+        </ConfigProvider>
 
         <Divider style={{ margin: '8px 0', color: '#aaa', fontSize: 12 }}>
           {t('or_continue_with')}
