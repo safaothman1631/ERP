@@ -3751,15 +3751,58 @@ const PermissionsSettings: React.FC = () => {
       message.success(t('saved', 'Saved')); load();
     } catch { message.error(t('save_failed', 'Save failed')); } finally { setSaving(false); }
   };
+  const [windowWidth, setWindowWidth] = React.useState(() => typeof window !== 'undefined' ? window.innerWidth : 1024);
+  React.useEffect(() => {
+    const onResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  const isMobile = windowWidth < 768;
+
   const grouped = useMemo(() => {
     const g: Record<string, string[]> = {};
     perms.forEach((p) => { const k = p.split('.')[0] || 'other'; (g[k] = g[k] || []).push(p); });
     return g;
   }, [perms]);
+
+  const isDark = useAuthStore(s => s.theme) === 'dark';
+  const borderClr = isDark ? palette.darkBorder : palette.border;
+  const cardBg = isDark ? '#0f1525' : '#ffffff';
+  const mutedClr = isDark ? palette.darkInkMuted : palette.ink500;
+
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <SectionCard icon={<SafetyCertificateOutlined />} title={t('perm_title', 'Permissions matrix')} description={t('perm_desc', 'Module / action / record-level access control matrix.')}>
-        {loading ? <div style={{ padding: 24, color: palette.ink500 }}>{t('loading', 'Loading...')}</div> : (
+        {loading ? <div style={{ padding: 24, color: palette.ink500 }}>{t('loading', 'Loading...')}</div> : isMobile ? (
+          /* ── Mobile: accordion per permission group ── */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {Object.entries(grouped).map(([group, ps]) => (
+              <div key={group} style={{ border: `1px solid ${borderClr}`, borderRadius: 12, overflow: 'hidden', background: cardBg }}>
+                {/* Group header */}
+                <div style={{ padding: '10px 14px', background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.03)', fontWeight: 600, fontSize: 12, color: mutedClr, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  {group}
+                </div>
+                {/* Permissions */}
+                {ps.map((p, idx) => (
+                  <div key={p} style={{ borderTop: idx === 0 ? `1px solid ${borderClr}` : `1px solid ${borderClr}`, padding: '10px 14px' }}>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: isDark ? palette.darkInk : palette.ink900, marginBottom: 8 }}>{p}</div>
+                    {/* Role toggles */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {roles.map((r) => (
+                        <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 6, background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.04)', borderRadius: 8, padding: '4px 10px' }}>
+                          <span style={{ fontSize: 11, color: mutedClr }}>{r.name}</span>
+                          {r.is_system && <Tag style={{ margin: 0, fontSize: 9, padding: '0 4px' }}>S</Tag>}
+                          <Switch size="small" checked={(matrix[r.id] || new Set()).has(p)} onChange={() => toggle(r.id, p)} disabled={r.is_system} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* ── Desktop: full table ── */
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: fontSize.sm }}>
               <thead><tr style={{ background: palette.bg }}>
