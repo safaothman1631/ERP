@@ -34,9 +34,9 @@ const PremiumPageHeader: React.FC<PremiumPageHeaderProps> = ({
       data-section-id={sectionId || undefined}
       style={{
         position: 'relative',
-        padding: `${space.lg}px ${space.xl}px ${space.lg}px`,
+        padding: `${space.md}px 0 ${space.md}px`,
         borderBottom: `1px solid ${border}`,
-        marginBottom: space.xl,
+        marginBottom: space.lg,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: space.md }}>

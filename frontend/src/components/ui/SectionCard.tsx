@@ -83,7 +83,7 @@ const SectionCard: React.FC<SectionCardProps> = ({
             display: 'flex',
             alignItems: 'flex-start',
             gap: space.md,
-            padding: `${space.lg}px ${space.xl}px`,
+            padding: `${space.md}px ${space.lg}px`,
             borderBottom: `1px solid ${border}`,
             background: isDark
               ? 'linear-gradient(180deg, rgba(255,255,255,0.02), transparent)'
@@ -130,7 +130,7 @@ const SectionCard: React.FC<SectionCardProps> = ({
       )}
 
       {children !== undefined && (
-        <div style={{ padding: noPadding ? 0 : `${space.xl}px ${space.xl}px` }}>
+        <div style={{ padding: noPadding ? 0 : `${space.lg}px ${space.lg}px` }}>
           {children}
         </div>
       )}

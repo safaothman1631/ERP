@@ -4915,7 +4915,7 @@ const settingsCss = `
   }
   .st-aside { display: none; }
   .st-main { padding: 0 0 64px; }
-  .st-mobile-nav-bar { margin: 0 0 16px; }
+  .st-mobile-nav-bar { margin: 0 0 12px; }
   .st-content { padding: 0; }
 }
 
