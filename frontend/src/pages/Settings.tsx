@@ -1368,6 +1368,14 @@ const buildDefaultMatrix = (): ChannelMatrix => {
 
 const NotificationSettings: React.FC = () => {
   const { t } = useTranslation();
+  const [windowWidth, setWindowWidth] = React.useState(() => typeof window !== 'undefined' ? window.innerWidth : 1024);
+  React.useEffect(() => {
+    const onResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  const isMobile = windowWidth < 768;
+
   const [prefs, setPrefs] = useState<NotifPrefsV2>({
     invoice_overdue: true, payment_received: true, quote_accepted: true, expense_approved: true,
     matrix: buildDefaultMatrix(),
@@ -1551,18 +1559,18 @@ const NotificationSettings: React.FC = () => {
             <div style={{
               border: `1px solid ${borderClr}`,
               borderRadius: radius.lg,
-              overflow: 'visible',
+              overflow: 'hidden',
               background: cardBg,
             }}>
-              <div style={{ overflowX: 'auto', borderRadius: radius.lg }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 480 }}>
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' as any }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: isMobile ? 320 : 480 }}>
                   <thead>
                     <tr style={{ background: headerBg }}>
                       <th style={{ textAlign: 'start', padding: `${space.md}px ${space.lg}px`, fontSize: fontSize.sm, fontWeight: 600, color: mutedClr, borderBottom: `1px solid ${borderClr}`, position: 'sticky', insetInlineStart: 0, background: headerBg, zIndex: 1 }}>
                         {t('event', 'Event')}
                       </th>
-                      {NOTIF_CHANNELS.map(ch => (
-                        <th key={ch.key} style={{ padding: `${space.sm}px ${space.md}px`, textAlign: 'center', fontSize: fontSize.sm, fontWeight: 600, color: ch.available ? mutedClr : palette.ink300, borderBottom: `1px solid ${borderClr}`, minWidth: 90 }}>
+                      {NOTIF_CHANNELS.filter(ch => !isMobile || ch.key === 'in_app').map(ch => (
+                        <th key={ch.key} style={{ padding: `${space.sm}px ${space.md}px`, textAlign: 'center', fontSize: fontSize.sm, fontWeight: 600, color: ch.available ? mutedClr : palette.ink300, borderBottom: `1px solid ${borderClr}`, minWidth: isMobile ? 72 : 90 }}>
                           <Tooltip title={ch.available ? t('toggle_column', 'Click header to toggle column') : t('channel_unavailable', 'Channel not yet available')}>
                             <div
                               onClick={() => ch.available && setColumn(ch.key, !filteredEvents.every(ev => prefs.matrix?.[ev.key]?.[ch.key]))}
@@ -1574,9 +1582,11 @@ const NotificationSettings: React.FC = () => {
                           </Tooltip>
                         </th>
                       ))}
-                      <th style={{ padding: `${space.sm}px ${space.md}px`, fontSize: fontSize.sm, fontWeight: 600, color: mutedClr, borderBottom: `1px solid ${borderClr}` }}>
-                        {t('all', 'All')}
-                      </th>
+                      {!isMobile && (
+                        <th style={{ padding: `${space.sm}px ${space.md}px`, fontSize: fontSize.sm, fontWeight: 600, color: mutedClr, borderBottom: `1px solid ${borderClr}` }}>
+                          {t('all', 'All')}
+                        </th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
@@ -1604,7 +1614,7 @@ const NotificationSettings: React.FC = () => {
                               </div>
                             </div>
                           </td>
-                          {NOTIF_CHANNELS.map(ch => {
+                          {NOTIF_CHANNELS.filter(ch => !isMobile || ch.key === 'in_app').map(ch => {
                             const checked = !!row[ch.key];
                             const lockedOn = !!ev.critical && ch.key === 'in_app';
                             return (
@@ -1620,9 +1630,11 @@ const NotificationSettings: React.FC = () => {
                               </td>
                             );
                           })}
-                          <td style={{ textAlign: 'center', padding: `${space.sm}px`, borderBottom: `1px solid ${borderClr}` }}>
-                            <Switch size="small" checked={allOn} onChange={(v) => setRow(ev.key, v)} />
-                          </td>
+                          {!isMobile && (
+                            <td style={{ textAlign: 'center', padding: `${space.sm}px`, borderBottom: `1px solid ${borderClr}` }}>
+                              <Switch size="small" checked={allOn} onChange={(v) => setRow(ev.key, v)} />
+                            </td>
+                          )}
                         </tr>
                       );
                     })}

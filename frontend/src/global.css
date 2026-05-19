@@ -1428,5 +1428,19 @@ html[data-high-contrast="true"][data-theme="dark"] *:focus-visible { outline-col
   .ant-switch.ant-switch-small {
     height: 16px !important;
     width: 28px !important;
+    min-height: auto !important;
+    min-width: auto !important;
+  }
+  /* Fix the handle (white dot) vertical centering */
+  .ant-switch .ant-switch-handle,
+  .ant-switch.ant-switch-small .ant-switch-handle {
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+  }
+  .ant-switch-checked .ant-switch-handle {
+    inset-inline-start: calc(100% - 20px) !important;
+  }
+  .ant-switch.ant-switch-small.ant-switch-checked .ant-switch-handle {
+    inset-inline-start: calc(100% - 14px) !important;
   }
 }
