@@ -58,8 +58,10 @@ export async function initSentry(
 
   if (!dsn) {
     if (prod) {
-      throw new Error(
-        '[observability] VITE_SENTRY_DSN is required in production builds (R6.4)',
+      // Sentry is recommended but not mandatory: warn and continue so the app
+      // still boots when error tracking is intentionally deferred.
+      console.warn(
+        '[observability] VITE_SENTRY_DSN is unset — Sentry disabled (R6.4)',
       );
     }
     return;

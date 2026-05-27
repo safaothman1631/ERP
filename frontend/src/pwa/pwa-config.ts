@@ -55,37 +55,10 @@ export const PWA_CONFIG: VitePWAOptions = {
     categories: ['business', 'productivity', 'finance'],
     icons: [
       {
-        // Placeholder paths — assets to be added under `frontend/public/icons/`.
-        src: '/icons/pwa-192x192.png',
-        sizes: '192x192',
-        type: 'image/png',
-        purpose: 'any',
-      },
-      {
-        src: '/icons/pwa-512x512.png',
-        sizes: '512x512',
-        type: 'image/png',
-        purpose: 'any',
-      },
-      {
-        src: '/icons/pwa-maskable-512x512.png',
-        sizes: '512x512',
-        type: 'image/png',
-        purpose: 'maskable',
-      },
-    ],
-    shortcuts: [
-      {
-        name: 'POS Terminal',
-        short_name: 'POS',
-        url: '/pos',
-        icons: [{ src: '/icons/shortcut-pos.png', sizes: '96x96' }],
-      },
-      {
-        name: 'Invoices',
-        short_name: 'Invoices',
-        url: '/invoices',
-        icons: [{ src: '/icons/shortcut-invoices.png', sizes: '96x96' }],
+        src: '/favicon.svg',
+        sizes: 'any',
+        type: 'image/svg+xml',
+        purpose: 'any maskable',
       },
     ],
   },
