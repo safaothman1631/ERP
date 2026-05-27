@@ -281,7 +281,9 @@ def get_audit_settings(org_id: str) -> Dict[str, Any]:
 
 def get_security_settings(org_id: str) -> Dict[str, Any]:
     return get_bag(org_id, "security", {
-        "require_2fa_for_admin": True,
+        # 2FA is recommended but never required — see two_factor_policy.py.
+        # This flag is advisory only and feeds the org-wide reminder banner.
+        "require_2fa_for_admin": False,
         "session_timeout_minutes": 60,
         "password_min_length": 8,
     })

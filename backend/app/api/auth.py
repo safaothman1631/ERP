@@ -370,7 +370,11 @@ def refresh_token_endpoint(request: Request):
 def get_me(user: dict = Depends(get_current_user)):
     """Get current user info"""
     from app.firebase_client import get_db
-    from app.services.two_factor_policy import user_requires_2fa_setup, user_must_keep_2fa
+    from app.services.two_factor_policy import (
+        user_requires_2fa_setup,
+        user_must_keep_2fa,
+        user_should_remind_2fa,
+    )
 
     db = get_db()
     org_name = ""
@@ -394,6 +398,7 @@ def get_me(user: dict = Depends(get_current_user)):
         "is_2fa_enabled": bool(user.get("is_2fa_enabled", False)),
         "requires_2fa_setup": user_requires_2fa_setup(user),
         "must_keep_2fa": user_must_keep_2fa(user),
+        "should_remind_2fa": user_should_remind_2fa(user),
     }
 
 
