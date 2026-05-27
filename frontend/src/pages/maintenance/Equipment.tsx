@@ -9,6 +9,7 @@ import { PageHeader } from '../../design-system';
 import { message } from '../../utils/message';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
+import { SelectWithQuickCreate } from '../../design-system/empty/SelectWithQuickCreate';
 
 interface Equipment {
  id: string;
@@ -265,13 +266,10 @@ const Equipment: React.FC = () => {
  <Input />
  </Form.Item>
  <Form.Item name="category_id" label={t('maintenance.category')}>
- <Select allowClear placeholder={t('maintenance.select_category')}>
- {categories.map((cat) => (
- <Select.Option key={cat.id} value={cat.id}>
- {cat.name}
- </Select.Option>
- ))}
- </Select>
+ <SelectWithQuickCreate
+ entity="equipment_category"
+ placeholder={t('maintenance.select_category')}
+ />
  </Form.Item>
  <Form.Item name="location" label={t('maintenance.location')}>
  <Input />

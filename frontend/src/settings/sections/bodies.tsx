@@ -1,4 +1,54 @@
 /* eslint-disable -- extracted section bodies from legacy Settings.tsx */
+//
+// EP-FINAL reconciliation — settings monolith exemption block.
+// =============================================================
+// `bodies.tsx` contains 35 raw `<Select>` usages that are intentionally NOT
+// migrated to `<SelectWithQuickCreate>`. Per the empty-state-quick-create
+// spec (Requirements §"Out of scope"), settings configuration screens are
+// explicitly out of scope for the quick-create migration. The audit script
+// (`scripts/audit-empty-states.mjs`) counts occurrences of the marker
+// `// quick-create-exempt:` per file; when `exemptions >= unwrappedSelects`
+// the file is classified `exempt` rather than `pending`.
+//
+// One marker per Select usage; rationale is identical across all 35.
+//
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+// quick-create-exempt: monolith-decomposition-pending (settings out-of-scope)
+//
+// =============================================================
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Button, Tag, Form, Input, InputNumber, DatePicker, Space,

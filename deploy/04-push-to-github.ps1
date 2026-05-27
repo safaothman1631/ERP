@@ -39,7 +39,8 @@ if (-not (Test-Path $LogsDir)) { New-Item -ItemType Directory -Path $LogsDir -Fo
 
 $Timestamp = (Get-Date -Format 'yyyyMMdd-HHmmss')
 $LogFile = Join-Path $LogsDir "push-$Timestamp.log"
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
+try { chcp 65001 | Out-Null } catch { }
 
 function Write-Log {
     param([string]$Message, [string]$Level = 'INFO')
@@ -202,8 +203,9 @@ try {
         Write-Host ""
         Write-Host "Default commit message:" -ForegroundColor Cyan
         Write-Host "  $default" -ForegroundColor White
-        $input = Read-Host "Press Enter to accept, or type a new message"
-        if ($input) { $Message = $input } else { $Message = $default }
+        # NOTE: avoid $input - it's a PowerShell automatic variable
+        $userInput = Read-Host "Press Enter to accept, or type a new message"
+        if ($userInput) { $Message = $userInput } else { $Message = $default }
     }
     Write-Log "Commit message: $Message"
 

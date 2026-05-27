@@ -291,5 +291,3 @@ if (isDirect) {
     process.exit(1);
   });
 }
-;
-}

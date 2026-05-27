@@ -11,6 +11,10 @@ import SavedFiltersBar from '../../components/SavedFiltersBar';
 import { space } from '../../theme/tokens';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
+// EP-3 — Class B drawer migration. The `team` entity registry entry opens
+// the drawer-with-Steps for quick-create.
+import { SelectWithQuickCreate } from '../../design-system/empty/SelectWithQuickCreate';
+import { ListWithEmptyState } from '../../design-system/empty/ListWithEmptyState';
 
 interface Ticket {
  id: string;
@@ -162,8 +166,15 @@ export default function TicketsList() {
  />
  )}
 
+ <ListWithEmptyState
+ entity="ticket"
+ data={tickets}
+ loading={loading}
+ onCreate={() => setCreateOpen(true)}
+ onRetry={() => load()}
+ render={(rows) => (
  <ResponsiveTableAdapter
- dataSource={tickets}
+ dataSource={rows}
  columns={columns}
  rowKey="id"
  loading={loading}
@@ -172,6 +183,8 @@ export default function TicketsList() {
  onChange: (keys) => setSelectedRows(keys as string[]),
  }}
  pagination={{ pageSize: 50 }}
+ />
+ )}
  />
 
  <FormDialog
@@ -196,13 +209,13 @@ export default function TicketsList() {
  </Select>
  </Form.Item>
  <Form.Item name="team_id" label={t('helpdesk.team')}>
- <Select allowClear>
- {teams.map((t) => (
- <Select.Option key={t.id} value={t.id}>
- {t.name}
- </Select.Option>
- ))}
- </Select>
+ {/* EP-3 — Class B team selector. Replaces legacy <Select> with
+     drawer-with-Steps quick-create on empty/CTA click. */}
+ <SelectWithQuickCreate
+ entity="team"
+ allowClear
+ options={teams.map((tm) => ({ value: tm.id, label: tm.name }))}
+ />
  </Form.Item>
  </Form>
  </FormDialog>

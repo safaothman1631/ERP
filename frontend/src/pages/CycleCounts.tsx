@@ -7,6 +7,8 @@ import api from '../api';
 import dayjs from 'dayjs';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
+// EP-3 — Class B `location` selector migration.
+import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 
 const { Text } = Typography;
 
@@ -292,13 +294,15 @@ const CycleCounts: React.FC = () => {
  </Form.Item>
 
  <Form.Item name="location_id" label={t('location')} extra={t('cycle_count_location_hint')}>
- <Select allowClear placeholder={t('all_locations')} disabled={!selectedWarehouse}>
- {locations.map(loc => (
- <Select.Option key={loc.id} value={loc.id}>
- {loc.code} - {loc.name}
- </Select.Option>
- ))}
- </Select>
+ {/* EP-3 — Class B `location` quick-create. Disabled until a warehouse
+     is picked; options remain warehouse-scoped from `fetchLocations`. */}
+ <SelectWithQuickCreate
+ entity="location"
+ allowClear
+ placeholder={t('all_locations')}
+ disabled={!selectedWarehouse}
+ options={locations.map((loc) => ({ value: loc.id, label: `${loc.code} - ${loc.name}` }))}
+ />
  </Form.Item>
 
  <Form.Item name="scheduled_date" label={t('scheduled_date')} rules={[{ required: true }]}>

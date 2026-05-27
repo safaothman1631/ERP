@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Card, Button, Form, Input, Select, DatePicker, Space, Popconfirm, Tag, message } from 'antd';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Card, Button, Form, Input, Select, DatePicker, Space, Popconfirm, Tag, message, Alert } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
@@ -10,6 +11,7 @@ import ChatterWidget from '../components/chatter/ChatterWidget';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 import { HelpIcon } from '../help/HelpIcon';
+import { restoreReturnContext, readReturnToken } from '../utils/returnContext';
 
 interface Employee {
  id: string; name: string; email?: string; phone?: string; job_title?: string;
@@ -19,10 +21,17 @@ interface Department { id: string; name: string; }
 
 export default function HREmployees() {
  const { t } = useTranslation();
+ const navigate = useNavigate();
+ const location = useLocation();
  const [depts, setDepts] = useState<Department[]>([]);
  const [open, setOpen] = useState(false);
  const [editing, setEditing] = useState<Employee | null>(null);
  const [form] = Form.useForm();
+ // Class C return-token: when the URL carries ?returnTo=<token>&autoOpen=1 we
+ // know the user was sent here from another surface (e.g. ticket assign-to).
+ // We auto-open the create form, and on save bounce back with the new id.
+ const returnTokenRef = useRef<string | null>(null);
+ const [returnHint, setReturnHint] = useState<string | null>(null);
  const employeesQuery = useListQuery<Employee, { items?: Employee[]; total?: number }>({
  queryKey: listQueryKeys.hrEmployees(),
  queryFn: () => api.get('/api/hr/employees'),
@@ -42,17 +51,61 @@ export default function HREmployees() {
  void load();
  }, []);
 
+ // Class C round-trip: detect returnTo / autoOpen on mount.
+ useEffect(() => {
+  const params = new URLSearchParams(location.search);
+  const token = readReturnToken(params);
+  const autoOpen = params.get('autoOpen');
+  if (token) {
+   returnTokenRef.current = token;
+   const ctx = restoreReturnContext(token);
+   if (ctx) {
+    setReturnHint(t('hr.return_hint', 'After saving, you\'ll be sent back to where you came from.'));
+   }
+   if (autoOpen === '1') {
+    setEditing(null);
+    form.resetFields();
+    setOpen(true);
+   }
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+ }, []);
+
  const onSave = async () => {
  const v = await form.validateFields();
  if (v.hire_date && typeof v.hire_date !== 'string') {
  v.hire_date = v.hire_date.format('YYYY-MM-DD');
  }
  try {
- if (editing) await api.put(`/api/hr/employees/${editing.id}`, v);
- else await api.post('/api/hr/employees', v);
+ let createdId: string | undefined;
+ if (editing) {
+  await api.put(`/api/hr/employees/${editing.id}`, v);
+  createdId = editing.id;
+ } else {
+  const created = await api.post('/api/hr/employees', v);
+  createdId = created.data?.id;
+ }
  message.success(t('saved'));
  setOpen(false); setEditing(null); form.resetFields();
  await employeesQuery.refetch();
+
+ // If we have an active return token, bounce back to the source surface.
+ const token = returnTokenRef.current;
+ if (token && createdId && !editing) {
+  const ctx = restoreReturnContext(token);
+  if (ctx && typeof ctx.state === 'object' && ctx.state !== null) {
+   const state = ctx.state as { returnPath?: string };
+   const path = state.returnPath || ctx.surface.split('#')[0];
+   if (path) {
+    const qs = new URLSearchParams();
+    qs.set('newEmployeeId', createdId);
+    qs.set('consumedToken', token);
+    returnTokenRef.current = null;
+    navigate(`${path}?${qs.toString()}`);
+    return;
+   }
+  }
+ }
  } catch { message.error(t('error')); }
  };
 
@@ -96,6 +149,15 @@ export default function HREmployees() {
 
  return (
  <div style={{ padding: 16 }} data-section-id="hr.employees">
+ {returnHint && (
+ <Alert
+ type="info"
+ showIcon
+ message={returnHint}
+ style={{ marginBottom: 12 }}
+ data-testid="return-context-hint"
+ />
+ )}
  <Space style={{ marginBottom: 12 }}>
  <h2 style={{ margin: 0 }}>{t('employees')}</h2>
  <HelpIcon sectionId="hr.employees" />

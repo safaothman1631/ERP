@@ -62,6 +62,20 @@ if (-not (Get-Command vercel -ErrorAction SilentlyContinue)) {
     throw "Missing vercel CLI"
 }
 
+# Filter Vercel CLI banner/noise lines from output. Vercel CLI on Windows
+# emits "Vercel CLI x.y.z" and sometimes node.exe banner lines to stderr
+# that pollute captured output. Strip them.
+function Get-VercelOutputClean {
+    param([object[]]$Raw)
+    $clean = $Raw | ForEach-Object { "$_" } | Where-Object {
+        $_ -and
+        $_ -notmatch '^\s*Vercel CLI' -and
+        $_ -notmatch '^\s*node\.exe' -and
+        $_ -notmatch '^\s*$'
+    }
+    return $clean
+}
+
 # Resolve CloudrunUrl
 if (-not $CloudrunUrl) {
     if (Test-Path $CloudrunUrlFile) {
@@ -82,15 +96,18 @@ Write-Log "Checking Vercel auth..."
 $whoami = $null
 try {
     if ($VercelToken) {
-        $whoami = (& vercel whoami --token $VercelToken 2>&1) -join "`n"
+        $rawWho = & vercel whoami --token $VercelToken 2>&1
     } else {
-        $whoami = (& vercel whoami 2>&1) -join "`n"
+        $rawWho = & vercel whoami 2>&1
     }
+    $cleanWho = Get-VercelOutputClean -Raw $rawWho
+    $whoami = ($cleanWho | Select-Object -Last 1)
+    if (-not $whoami) { $whoami = ($rawWho -join "`n") }
 } catch {
     $whoami = "$_"
 }
 
-if ($LASTEXITCODE -ne 0 -or $whoami -like '*Error*' -or $whoami -like '*not authenticated*') {
+if ($LASTEXITCODE -ne 0 -or $whoami -like '*Error*' -or $whoami -like '*not authenticated*' -or $whoami -like '*log in*') {
     Write-Log "Vercel not authenticated. Run: vercel login" 'ERROR'
     Write-Log "Or set VERCEL_TOKEN env var." 'ERROR'
     Write-Log "Vercel چالاک نییە. ئەمە جێبەجێ بکە: vercel login" 'ERROR'

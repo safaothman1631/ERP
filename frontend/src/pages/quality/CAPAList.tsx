@@ -11,6 +11,7 @@ import { Popconfirm } from 'antd';
 import { space } from '../../theme/tokens';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
+import { ListWithEmptyState } from '../../design-system/empty/ListWithEmptyState';
 
 interface CAPA {
  id: string;
@@ -173,12 +174,25 @@ const CAPAList: React.FC = () => {
  </Button>
  }
  />
+ <ListWithEmptyState
+ entity="capa"
+ data={data}
+ loading={loading}
+ onCreate={() => {
+ setEditingId(null);
+ form.resetFields();
+ setDrawerOpen(true);
+ }}
+ onRetry={fetchData}
+ render={(rows) => (
  <ResponsiveTableAdapter
- dataSource={data}
+ dataSource={rows}
  columns={columns}
  rowKey="id"
  loading={loading}
  pagination={{ pageSize: 20 }}
+ />
+ )}
  />
  <FormDialog
  title={editingId ? t('quality.edit_capa') : t('quality.new_capa')}

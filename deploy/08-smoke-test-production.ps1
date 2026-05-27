@@ -292,7 +292,8 @@ Write-Host ""
 Write-Host "  Total : $($results.Count)" -ForegroundColor White
 Write-Host "  Passed: $passCount" -ForegroundColor Green
 Write-Host "  Failed: $failCount" -ForegroundColor Red
-Write-Host "  Critical failures: $criticalFails" -ForegroundColor (if ($criticalFails -gt 0) {'Red'} else {'Green'})
+$critColor = if ($criticalFails -gt 0) { 'Red' } else { 'Green' }
+Write-Host "  Critical failures: $criticalFails" -ForegroundColor $critColor
 Write-Host ""
 Write-Host "  Frontend: $FrontendUrl" -ForegroundColor Cyan
 Write-Host "  Backend : $BackendUrl" -ForegroundColor Cyan

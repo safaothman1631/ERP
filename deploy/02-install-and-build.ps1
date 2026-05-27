@@ -27,7 +27,8 @@ if (-not (Test-Path $LogsDir)) { New-Item -ItemType Directory -Path $LogsDir -Fo
 $Timestamp = (Get-Date -Format 'yyyyMMdd-HHmmss')
 $LogFile = Join-Path $LogsDir "build-$Timestamp.log"
 
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
+try { chcp 65001 | Out-Null } catch { }
 
 $FrontendDir = Join-Path $RepoRoot 'frontend'
 $BackendDir  = Join-Path $RepoRoot 'backend'
@@ -121,8 +122,13 @@ if (-not (Test-Path $FrontendDir)) {
         if ($rc -ne 0) {
             Write-Log "npm run build FAILED (exit $rc)" -Level 'ERROR'
         } else {
-            Write-Log "npm run build OK - dist/ produced" -Level 'OK'
-            $FrontendOK = $true
+            # vite may exit 0 even on partial failures - verify dist/index.html exists
+            $distIndex = Join-Path $FrontendDir 'dist\index.html'
+            if (-not (Test-Path $distIndex)) {
+                Write-Log "npm run build returned 0 but dist/index.html is MISSING" -Level 'ERROR'
+            } else {
+                Write-Log "npm run build OK - dist/index.html present" -Level 'OK'
+                $FrontendOK = $true
 
             # audit:lazy - hard failure if missing
             $rc = Invoke-Logged -Cwd $FrontendDir -Description 'npm run audit:lazy' -Action {
@@ -147,6 +153,7 @@ if (-not (Test-Path $FrontendDir)) {
                 }
             } else {
                 Write-Log "audit:bundle script not present - skipping" -Level 'INFO'
+            }
             }
         }
     }
@@ -184,10 +191,11 @@ if (-not (Test-Path $BackendDir)) {
 
     if (Test-Path $VenvPython) {
         # Inline runner that captures scope-local vars (no $using: gymnastics)
+        # NOTE: parameter name 'CmdArgs' to avoid shadowing PowerShell's automatic $Args
         function Invoke-VenvCmd {
-            param([string]$Desc, [string]$Exe, [string[]]$Args)
+            param([string]$Desc, [string]$Exe, [string[]]$CmdArgs)
             Write-Log "==> $Desc" -Level 'INFO'
-            $out = & $Exe @Args 2>&1
+            $out = & $Exe @CmdArgs 2>&1
             $out | ForEach-Object {
                 Add-Content -Path $LogFile -Value $_ -Encoding UTF8
                 Write-Host $_
@@ -196,14 +204,14 @@ if (-not (Test-Path $BackendDir)) {
         }
 
         # bzlndni pip - kurdi: bzlndni weshani pip
-        $rc = Invoke-VenvCmd -Desc 'pip upgrade' -Exe $VenvPython -Args @('-m','pip','install','--upgrade','pip')
+        $rc = Invoke-VenvCmd -Desc 'pip upgrade' -Exe $VenvPython -CmdArgs @('-m','pip','install','--upgrade','pip')
 
         # damezrandni requirements - kurdi: damezrandni pakejakan
         $reqFile = Join-Path $BackendDir 'requirements.txt'
         if (Test-Path $reqFile) {
             Push-Location $BackendDir
             try {
-                $rc = Invoke-VenvCmd -Desc 'pip install -r requirements.txt' -Exe $VenvPip -Args @('install','-r','requirements.txt')
+                $rc = Invoke-VenvCmd -Desc 'pip install -r requirements.txt' -Exe $VenvPip -CmdArgs @('install','-r','requirements.txt')
             } finally { Pop-Location }
 
             if ($rc -ne 0) {
@@ -212,7 +220,7 @@ if (-not (Test-Path $BackendDir)) {
                 Write-Log "pip install OK" -Level 'OK'
 
                 # hotfix - kurdi: hotfix bo python-json-logger ke P4 agent gootuwiyti
-                $rc = Invoke-VenvCmd -Desc 'pip install python-json-logger (hotfix)' -Exe $VenvPip -Args @('install','python-json-logger')
+                $rc = Invoke-VenvCmd -Desc 'pip install python-json-logger (hotfix)' -Exe $VenvPip -CmdArgs @('install','python-json-logger')
                 if ($rc -ne 0) {
                     Write-Log "python-json-logger hotfix FAILED" -Level 'WARN'
                 } else {

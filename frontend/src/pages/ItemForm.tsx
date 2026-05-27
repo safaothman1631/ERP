@@ -6,25 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
 import { FormLayout, type FormSection } from '../design-system';
 import { useAuthStore } from '../store';
-
-type ApiListResponse<T> = T[] | { items?: T[] } | null | undefined;
-
-interface AccountOption {
-  id: string;
-  code?: string;
-  name?: string;
-}
-
-interface TaxOption {
-  id: string;
-  name?: string;
-}
-
-const toList = <T,>(data: ApiListResponse<T>): T[] => {
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(data?.items)) return data.items;
-  return [];
-};
+import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 
 const ItemForm: React.FC = () => {
   const { t } = useTranslation();
@@ -32,16 +14,10 @@ const ItemForm: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
   const [form] = Form.useForm();
   const isDark = useAuthStore((s) => s.theme === 'dark');
-  const [accounts, setAccounts] = useState<AccountOption[]>([]);
-  const [taxes, setTaxes] = useState<TaxOption[]>([]);
+  // NOTE: tax + account selectors now use SelectWithQuickCreate from the EP-0 registry.
   const [loading, setLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    api.get<ApiListResponse<AccountOption>>('/api/accounts').then(r => setAccounts(toList(r.data))).catch(() => {});
-    api.get<ApiListResponse<TaxOption>>('/api/taxes/rates').then(r => setTaxes(toList(r.data))).catch(() => {});
-  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -106,9 +82,11 @@ const ItemForm: React.FC = () => {
             <InputNumber min={0} style={{ width: '100%' }} placeholder={t('placeholder_amount')} />
           </Form.Item>
           <Form.Item label={t('tax', 'Tax')} name="tax_id" style={{ width: 240 }}>
-            <Select
-              showSearch optionFilterProp="label" allowClear
-              options={taxes.map((tx) => ({ label: tx.name || tx.id, value: tx.id }))}
+            <SelectWithQuickCreate
+              entity="tax_rate"
+              showSearch
+              optionFilterProp="label"
+              allowClear
               placeholder={t('placeholder_select')}
             />
           </Form.Item>
@@ -121,16 +99,14 @@ const ItemForm: React.FC = () => {
       children: (
         <Space size="large" wrap>
           <Form.Item label={t('income_account', 'Income Account')} name="income_account_id" style={{ width: 320 }}>
-            <Select
-              showSearch optionFilterProp="label" allowClear
-              options={accounts.map((a) => ({ label: [a.code, a.name].filter(Boolean).join(' - ') || a.id, value: a.id }))}
+            <SelectWithQuickCreate
+              entity="account"
               placeholder={t('placeholder_select')}
             />
           </Form.Item>
           <Form.Item label={t('expense_account', 'Expense Account')} name="expense_account_id" style={{ width: 320 }}>
-            <Select
-              showSearch optionFilterProp="label" allowClear
-              options={accounts.map((a) => ({ label: [a.code, a.name].filter(Boolean).join(' - ') || a.id, value: a.id }))}
+            <SelectWithQuickCreate
+              entity="account"
               placeholder={t('placeholder_select')}
             />
           </Form.Item>

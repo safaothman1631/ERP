@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { PageHeader, StatusTag } from '../../design-system';
+import { ListWithEmptyState } from '../../design-system/empty/ListWithEmptyState';
 import api from '../../api';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -173,12 +174,23 @@ const PatientsList: React.FC = () => {
  />
  </Space>
 
+ <ListWithEmptyState
+ entity="patient"
+ data={filteredPatients}
+ loading={loading}
+ searchQuery={searchText}
+ onClearSearch={() => setSearchText('')}
+ onCreate={handleCreate}
+ onRetry={() => void fetchPatients()}
+ render={(rows) => (
  <ResponsiveTableAdapter
- dataSource={filteredPatients}
+ dataSource={rows}
  columns={columns}
  rowKey="id"
  loading={loading}
  pagination={{ total, pageSize: 50 }}
+ />
+ )}
  />
 
  <FormDialog

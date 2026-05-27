@@ -47,3 +47,32 @@ _Last updated: `2026-05-27T13:37:19.637Z` — regenerated weekly by `scripts/wor
 - Trend ⬆/⬇/➡ compares this run to the most recent prior run stored in `audit/scorecards/scorecard-PREV.json`.
 - The "WORLD-CLASS" verdict requires **≥ 22/24 green** AND **no red metric older than 14 days**.
 - See `docs/world-class/scorecard-explainer.md` for the rationale behind each metric and triage guidance.
+
+---
+
+## Live snapshot — 2026-05-27 (hand-built; sandbox unable to regen)
+
+After completion of P0–P6, validation framework, deploy-kit scripts 00–09, and pre-flight audits:
+
+**Apparatus state:** ✅ complete
+- 130+ files shipped (specs, scripts, runbooks, workflows, scorecard machinery)
+- Deploy orchestrator (`deploy/00-deploy-everything.ps1`) wired and idempotent
+- All 11 child scripts (01–09 + 06a + 07a) syntactically clean and exit-code-aware
+- Operator hand-off doc (`deploy/FINAL-OPERATOR-GUIDE.md`) is single-page, bilingual
+
+**Build verification:** ⏳ pending operator run
+- Last frontend build evidence: `_deltas/build-evidence-frontend.txt` (Critical Fix A, vite-plugin-pwa upgrade)
+- Backend smoke boot evidence: `_deltas/backend-smoke-boot.txt`
+- Real build/test pass-fail is unknown until operator runs script 02 + 03 on Windows.
+
+**Production telemetry:** ⏳ pending first deploy
+- All 24 V-PR / V-LM metrics: 4/24 green from static analysis, 20/24 ⚪ (await live data).
+- The 4 green ones (V-LM.2 complexity, V-LM.4 dead code, V-LM.5 dep freshness, V-LM.11 doc freshness) are real and reproducible from the repo today.
+- V-PR.1–12 will move from ⚪ → 🟢/🟡/🔴 only after 28 days of production traffic.
+
+**Verdict:** NOT YET WORLD-CLASS — instrumented and ready to validate.
+
+**Next state change:** when the operator runs `deploy\00-deploy-everything.ps1 -Project <id> -RepoName zoho`. The first green deploy unblocks the 28-day RUM and SLO windows that decide whether V-PR.1, V-PR.2, V-PR.3, V-PR.6, V-PR.7, V-PR.8, V-PR.10, V-PR.11 actually pass.
+
+> This snapshot was hand-built because the bash sandbox needed to invoke `node scripts/world-class-scorecard.mjs --no-probes` was unavailable during this session. To regenerate properly, run that command on Windows; the script's timestamp line above (`Last updated`) will reset automatically.
+

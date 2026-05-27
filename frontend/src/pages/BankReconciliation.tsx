@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Tag, Card, Row, Col, Statistic, Select, Space, Checkbox, Empty, Typography } from 'antd';
+import React, { useState } from 'react';
+import { Button, Tag, Card, Row, Col, Statistic, Space, Checkbox, Empty, Typography } from 'antd';
 import { message } from '../utils/message';
 import { SyncOutlined, CheckCircleOutlined, LinkOutlined, BankOutlined, DollarOutlined, WarningOutlined, InboxOutlined, CloudUploadOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { PageHeader } from '../design-system';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
+import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 
 const { Text, Title } = Typography;
 
@@ -29,7 +30,6 @@ interface ReconciliationSummary {
 const BankReconciliation: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [accounts, setAccounts] = useState<{ id: string; account_name: string }[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string>('');
   const [bankTransactions, setBankTransactions] = useState<Transaction[]>([]);
   const [systemTransactions, setSystemTransactions] = useState<Transaction[]>([]);
@@ -39,10 +39,6 @@ const BankReconciliation: React.FC = () => {
   const [selectedSystem, setSelectedSystem] = useState<string[]>([]);
   const [matching, setMatching] = useState(false);
   const [completing, setCompleting] = useState(false);
-
-  useEffect(() => {
-    api.get('/api/banking/accounts').then(r => setAccounts(r.data)).catch(() => {});
-  }, []);
 
   const fetchReconciliation = async (accountId: string) => {
     if (!accountId) return;
@@ -184,12 +180,12 @@ const BankReconciliation: React.FC = () => {
         }
       />
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Select
+        <SelectWithQuickCreate
+          entity="bank_account"
           placeholder={t('account')}
           value={selectedAccount || undefined}
           onChange={handleAccountChange}
           style={{ width: 300 }}
-          options={accounts.map(a => ({ label: a.account_name, value: a.id }))}
         />
         <Space>
           <Button icon={<SyncOutlined />} loading={matching} onClick={handleAutoMatch} disabled={!selectedAccount}>

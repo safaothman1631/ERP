@@ -30,7 +30,8 @@ if (-not (Test-Path $LogsDir)) { New-Item -ItemType Directory -Path $LogsDir -Fo
 
 $Timestamp = (Get-Date -Format 'yyyyMMdd-HHmmss')
 $LogFile = Join-Path $LogsDir "secrets-$Timestamp.log"
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
+try { chcp 65001 | Out-Null } catch { }
 
 function Write-Log {
     param([string]$Message, [string]$Level = 'INFO')
@@ -170,33 +171,52 @@ try {
             continue
         }
 
-        # 3. Call gh secret set - pipe via stdin so value never appears on argv/cmdline
+        # 3. Call gh secret set via stdin - the value never appears on argv/cmdline.
+        # We write the value with NO trailing newline to a temp file, then redirect stdin
+        # from that file via Start-Process. Piping a string in PowerShell adds CRLF which
+        # would corrupt the secret value (gh would store "secret`r`n").
+        $tmpSecretFile = $null
+        $tmpStdoutFile = $null
+        $tmpStderrFile = $null
         try {
-            $value | & gh secret set $name --body - 2>&1 | Out-Null
-            if ($LASTEXITCODE -eq 0) {
+            $tmpSecretFile = [System.IO.Path]::GetTempFileName()
+            $tmpStdoutFile = [System.IO.Path]::GetTempFileName()
+            $tmpStderrFile = [System.IO.Path]::GetTempFileName()
+            # Write value with NO trailing newline using .NET (Out-File / Set-Content always add one)
+            [System.IO.File]::WriteAllText($tmpSecretFile, $value, [System.Text.UTF8Encoding]::new($false))
+
+            $proc = Start-Process -FilePath 'gh' `
+                -ArgumentList @('secret','set',$name,'--body','-') `
+                -NoNewWindow -Wait -PassThru `
+                -RedirectStandardInput  $tmpSecretFile `
+                -RedirectStandardOutput $tmpStdoutFile `
+                -RedirectStandardError  $tmpStderrFile
+            $rc = $proc.ExitCode
+            if ($rc -eq 0) {
                 Write-Log "[OK] $name set" -Level 'OK'
                 $manifest += "[SET] $name"
                 $setCount++
             } else {
-                # Fallback: try without piping (older gh versions)
-                & gh secret set $name --body $value 2>&1 | Out-Null
-                if ($LASTEXITCODE -eq 0) {
-                    Write-Log "[OK] $name set (fallback)" -Level 'OK'
-                    $manifest += "[SET] $name"
-                    $setCount++
-                } else {
-                    Write-Log "[X] $name FAILED" -Level 'ERROR'
-                    $manifest += "[FAILED] $name"
-                    $failCount++
-                }
+                # Log gh's stderr (does NOT contain the secret value - only the name)
+                $ghErr = ''
+                try { $ghErr = (Get-Content -Raw $tmpStderrFile -ErrorAction Stop).Trim() } catch { }
+                if ($ghErr) { Write-Log "gh error for $name : $ghErr" -Level 'WARN' }
+                Write-Log "[X] $name FAILED (exit $rc)" -Level 'ERROR'
+                $manifest += "[FAILED] $name"
+                $failCount++
             }
         } catch {
             Write-Log "[X] $name FAILED: $_" -Level 'ERROR'
             $manifest += "[FAILED] $name"
             $failCount++
         } finally {
-            # zero out value variable
+            # zero out value variable and delete temp files
             $value = $null
+            foreach ($f in @($tmpSecretFile, $tmpStdoutFile, $tmpStderrFile)) {
+                if ($f -and (Test-Path $f)) {
+                    try { Remove-Item -Force $f -ErrorAction Stop } catch { }
+                }
+            }
             [GC]::Collect()
         }
         Write-Host ""

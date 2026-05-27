@@ -10,6 +10,7 @@ import { FormLayout, type FormSection } from '../design-system';
 import { useAuthStore } from '../store';
 import { ResponsiveForm } from '../components/responsive/ResponsiveForm';
 import ChatterWidget from '../components/chatter/ChatterWidget';
+import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 
 interface LineRow {
   key: number;
@@ -26,7 +27,9 @@ const BillForm: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
   const [form] = Form.useForm();
   const isDark = useAuthStore((s) => s.theme === 'dark');
-  const [vendors, setVendors] = useState<any[]>([]);
+  // NOTE: Vendor selector migrated to SelectWithQuickCreate (entity="vendor"), which
+  // fetches its own options. Accounts/taxes for line items remain local for now —
+  // a future EP-2/EP-3 task should migrate the line-item account+tax selectors too.
   const [accounts, setAccounts] = useState<any[]>([]);
   const [taxes, setTaxes] = useState<any[]>([]);
   const [lines, setLines] = useState<LineRow[]>([
@@ -37,8 +40,6 @@ const BillForm: React.FC = () => {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    api.get('/api/contacts', { params: { contact_type: 'vendor', page_size: 200 } })
-      .then(r => setVendors(r.data.items || [])).catch(() => {});
     api.get('/api/accounts')
       .then(r => setAccounts(r.data || [])).catch(() => {});
     api.get('/api/taxes')
@@ -99,7 +100,12 @@ const BillForm: React.FC = () => {
       children: (
         <Space size="large" wrap>
           <Form.Item label={t('vendor')} name="contact_id" rules={[{ required: true, message: t('required_contact') }]} style={{ width: 300 }}>
-            <Select showSearch optionFilterProp="label" placeholder={t('placeholder_vendor')} options={vendors.map(v => ({ label: v.display_name, value: v.id }))} />
+            <SelectWithQuickCreate
+              entity="vendor"
+              showSearch
+              optionFilterProp="label"
+              placeholder={t('placeholder_vendor')}
+            />
           </Form.Item>
           <Form.Item label={t('date')} name="date" rules={[{ required: true, message: t('required_date') }]}>
             <DatePicker placeholder={t('placeholder_date')} />

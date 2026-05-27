@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Tabs, Button, Space, Form, Input, Select, message, List, Tag } from 'antd';
-import { ArrowLeftOutlined, CheckOutlined, CloseOutlined, ReloadOutlined, WarningOutlined } from '@ant-design/icons';
+import { useEffect, useMemo, useState } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Card, Tabs, Button, Space, Form, Input, Select, message, List, Tag, Empty } from 'antd';
+import { ArrowLeftOutlined, CheckOutlined, CloseOutlined, ReloadOutlined, WarningOutlined, PlusOutlined, UserAddOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader, StatusTag, LoadingSkeleton } from '../../design-system';
@@ -9,6 +9,7 @@ import type { StatusKind } from '../../design-system';
 import { space } from '../../theme/tokens';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { useLoadingState } from '../../hooks/useLoadingState';
+import { saveReturnContext, clearReturnContext } from '../../utils/returnContext';
 
 interface Ticket {
  id: string;
@@ -29,10 +30,13 @@ interface Reply {
  is_internal: boolean;
 }
 
+interface EmployeeOption { id: string; name: string; }
+
 export default function TicketDetail() {
  const { id } = useParams<{ id: string }>();
  const { t } = useTranslation();
  const navigate = useNavigate();
+ const location = useLocation();
  const [ticket, setTicket] = useState<Ticket | null>(null);
  const [replies, setReplies] = useState<Reply[]>([]);
  const [loading, setLoading] = useState(false);
@@ -41,6 +45,23 @@ export default function TicketDetail() {
  const [replyForm] = Form.useForm();
  const [assignOpen, setAssignOpen] = useState(false);
  const [assignForm] = Form.useForm();
+ const [employees, setEmployees] = useState<EmployeeOption[]>([]);
+ const [employeeSearch, setEmployeeSearch] = useState('');
+
+ const filteredEmployees = useMemo(() => {
+   const q = employeeSearch.trim().toLowerCase();
+   if (!q) return employees;
+   return employees.filter((e) => e.name.toLowerCase().includes(q));
+ }, [employees, employeeSearch]);
+
+ const fetchEmployees = async () => {
+  try {
+   const r = await api.get('/api/hr/employees', { params: { limit: 500 } });
+   setEmployees((r.data.items || []).map((e: { id: string; name: string }) => ({ id: e.id, name: e.name })));
+  } catch {
+   // silently fail — empty list will trigger CTA
+  }
+ };
 
  const load = async () => {
  if (!id) return;
@@ -61,7 +82,45 @@ export default function TicketDetail() {
 
  useEffect(() => {
  load();
+ void fetchEmployees();
  }, [id]);
+
+ // Handle return-token round-trip: if we just came back from the new-employee
+ // form, auto-open the assign dialog with the new employee pre-selected.
+ useEffect(() => {
+  if (!ticket) return;
+  const params = new URLSearchParams(location.search);
+  const newEmployeeId = params.get('newEmployeeId');
+  const consumedToken = params.get('consumedToken');
+  if (newEmployeeId) {
+   // Refresh employees so the new one shows up, then open assign
+   void (async () => {
+    await fetchEmployees();
+    assignForm.setFieldsValue({ user_id: newEmployeeId });
+    setAssignOpen(true);
+    if (consumedToken) clearReturnContext(consumedToken);
+    // Clean the URL so a refresh doesn't re-trigger
+    const cleaned = new URLSearchParams(location.search);
+    cleaned.delete('newEmployeeId');
+    cleaned.delete('consumedToken');
+    navigate({ pathname: location.pathname, search: cleaned.toString() }, { replace: true });
+   })();
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+ }, [ticket?.id]);
+
+ const handleQuickAddEmployee = () => {
+  const token = saveReturnContext({
+   surface: `${location.pathname}#assigned_to`,
+   state: {
+    ticketId: id,
+    returnPath: location.pathname,
+    formField: 'user_id',
+   },
+  });
+  setAssignOpen(false);
+  navigate(`/hr/employees?returnTo=${encodeURIComponent(token)}&autoOpen=1`);
+ };
 
  const onResolve = async () => {
  if (!id) return;
@@ -259,7 +318,43 @@ export default function TicketDetail() {
  <FormDialog title={t('helpdesk.assign')} open={assignOpen} onOk={onAssign} onClose={() => setAssignOpen(false)}>
  <Form form={assignForm} layout="vertical">
  <Form.Item name="user_id" label={t('helpdesk.assign_to')} rules={[{ required: true }]}>
- <Input placeholder={t('helpdesk.user_id_placeholder')} />
+ <Select
+ showSearch
+ data-testid="assigned-to-select"
+ placeholder={t('helpdesk.select_employee', 'Select employee')}
+ filterOption={false}
+ onSearch={setEmployeeSearch}
+ options={filteredEmployees.map((e) => ({ value: e.id, label: e.name }))}
+ notFoundContent={
+ <div data-empty-surface="selector" data-empty-entity="employee" style={{ padding: 12, textAlign: 'center' }}>
+ <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('helpdesk.no_employees', 'No employees yet')} />
+ <Button
+ type="primary"
+ icon={<UserAddOutlined />}
+ onClick={handleQuickAddEmployee}
+ data-testid="quick-create-employee"
+ style={{ marginTop: 8 }}
+ >
+ {t('helpdesk.add_employee', 'Add new employee')}
+ </Button>
+ </div>
+ }
+ dropdownRender={(menu) => (
+ <>
+ {menu}
+ <div style={{ borderTop: '1px solid #f0f0f0', padding: 8 }}>
+ <Button
+ type="link"
+ icon={<PlusOutlined />}
+ onClick={handleQuickAddEmployee}
+ data-testid="quick-create-employee-footer"
+ >
+ {t('helpdesk.add_employee', 'Add new employee')}
+ </Button>
+ </div>
+ </>
+ )}
+ />
  </Form.Item>
  </Form>
  </FormDialog>

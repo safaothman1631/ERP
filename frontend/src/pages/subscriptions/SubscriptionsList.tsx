@@ -10,6 +10,8 @@ import dayjs from 'dayjs';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { useAddGate } from '../../components/AddGate/useAddGate';
+import { SelectWithQuickCreate } from '../../design-system/empty/SelectWithQuickCreate';
+import { ListWithEmptyState } from '../../design-system/empty/ListWithEmptyState';
 
 interface Subscription {
  id: string;
@@ -270,12 +272,21 @@ const SubscriptionsList: React.FC = () => {
  </Select>
  </Space>
  
+ <ListWithEmptyState
+ entity="subscription"
+ data={subscriptions}
+ loading={loading}
+ onCreate={handleCreate}
+ onRetry={() => void fetchSubscriptions()}
+ render={(rows) => (
  <ResponsiveTableAdapter
  columns={columns}
- dataSource={subscriptions}
+ dataSource={rows}
  loading={loading}
  rowKey="id"
  pagination={{ pageSize: 20 }}
+ />
+ )}
  />
  </Card>
 
@@ -287,16 +298,16 @@ const SubscriptionsList: React.FC = () => {
  >
  <Form form={form} layout="vertical" onFinish={handleSave}>
  <Form.Item name="contact_id" label={t('subscription.contact')} rules={[{ required: true }]}>
- <Input placeholder={t('subscription.contact_id_placeholder')} />
+ <SelectWithQuickCreate
+ entity="customer"
+ placeholder={t('subscription.contact_id_placeholder')}
+ />
  </Form.Item>
  <Form.Item name="plan_id" label={t('subscription.plan')} rules={[{ required: true }]}>
- <Select placeholder={t('subscription.select_plan')}>
- {plans.map(p => (
- <Select.Option key={p.id} value={p.id}>
- {p.name} - {p.price.toLocaleString()}
- </Select.Option>
- ))}
- </Select>
+ <SelectWithQuickCreate
+ entity="subscription_plan"
+ placeholder={t('subscription.select_plan')}
+ />
  </Form.Item>
  <Form.Item name="start_date" label={t('subscription.start_date')}>
  <DatePicker style={{ width: '100%' }} />

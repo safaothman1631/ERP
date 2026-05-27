@@ -208,7 +208,13 @@ if ($redisHost -and $redisHost -notlike '*ERROR*') {
 # 5. Secret Manager secrets
 # -----------------------------------------------------------------------------
 Write-Banner -En "Secret Manager secrets" -Ku "نهێنیەکانی Secret Manager"
-$secrets = @('zoho-secret-key', 'zoho-sentry-dsn', 'zoho-redis-url')
+$secrets = @(
+    'zoho-secret-key',
+    'zoho-sentry-dsn',
+    'zoho-redis-url',
+    'field-encryption-key',
+    'zoho-database-url'
+)
 foreach ($sec in $secrets) {
     $exists = (Invoke-Gcloud -ArgList @('secrets', 'describe', $sec, "--project=$Project", '--format=value(name)') -IgnoreError) -join "`n"
     if ($LASTEXITCODE -ne 0 -or -not $exists) {

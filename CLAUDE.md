@@ -210,3 +210,14 @@ frontend/src/
 - `_deltas/critical-fix-A-summary.md`, `_deltas/build-evidence-frontend.txt`, `_deltas/bundle-sizes-after-build.txt` — تۆماری گۆڕانکاریەکان.
 
 **TODOs بۆ بەکارهێنەر:** بەکارهێنەر دەبێت `npm install --legacy-peer-deps` و `npm run build` و `npm run i18n:split` لە Windows جێبەجێ بکات — ژینگەی Linux sandbox توانای تەواوکردنی install-ی نەبوو.
+
+### 2026-05-28 — EP-2 Long-Tail Selector Migration (Empty State + Quick Create)
+
+- `frontend/src/pages/ItemForm.tsx` — گۆڕینی `income_account_id` و `expense_account_id` بۆ `<SelectWithQuickCreate entity="account" />`. لابردنی `accounts` state و `/api/accounts` fetch.
+- `frontend/src/pages/BankReconciliation.tsx` — گۆڕینی هەڵبژاردنی هەژماری بانک بۆ `<SelectWithQuickCreate entity="bank_account" />`. لابردنی `accounts` state و `useEffect`.
+- `frontend/src/pages/subscriptions/SubscriptionsList.tsx` — گۆڕینی `contact_id` (Input → SelectWithQuickCreate customer) و `plan_id` (Select → SelectWithQuickCreate subscription_plan) لە درۆڕی فۆرم.
+- `frontend/src/pages/maintenance/Equipment.tsx` — گۆڕینی `category_id` لە فۆرمدا بۆ `<SelectWithQuickCreate entity="equipment_category" />`.
+- `frontend/src/pages/multi-entity/CompaniesList.tsx` — گۆڕینی currency Select-ی hardcoded بۆ `<SelectWithQuickCreate entity="currency" />`. لابردنی Select لە antd import.
+- `_deltas/EP-2-summary.md` — تۆماری گۆڕانکاریەکان + skipped files (ExpenseForm, Rental, Repair, IoT, Workflow).
+
+**تێبینی:** ئەم گۆڕانکاریانە پشت بە `frontend/src/design-system/empty/SelectWithQuickCreate.tsx` و `frontend/src/data/quickCreateRegistry.ts` دەبەستن کە EP-0 دروستی دەکات. تا EP-0 جێبەجێ نەکرێت، compile ناکات.

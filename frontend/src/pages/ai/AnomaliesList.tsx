@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { SearchOutlined, ReloadOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../design-system';
+import { ListWithEmptyState } from '../../design-system/empty/ListWithEmptyState';
 import api from '../../api';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
@@ -246,12 +247,22 @@ const AnomaliesList: React.FC = () => {
         </Space>
       </Space>
 
-      <ResponsiveTableAdapter
-        columns={columns}
-        dataSource={filteredData}
-        rowKey="id"
+      <ListWithEmptyState
+        entity="anomaly"
+        data={filteredData}
         loading={loading}
-        pagination={{ pageSize: 50, showSizeChanger: true }}
+        searchQuery={searchText}
+        onClearSearch={() => setSearchText('')}
+        onRetry={() => void fetchAnomalies()}
+        render={(rows) => (
+          <ResponsiveTableAdapter
+            columns={columns}
+            dataSource={rows}
+            rowKey="id"
+            loading={loading}
+            pagination={{ pageSize: 50, showSizeChanger: true }}
+          />
+        )}
       />
     </div>
   );

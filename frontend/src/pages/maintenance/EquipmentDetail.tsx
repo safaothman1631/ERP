@@ -9,6 +9,7 @@ import { PageHeader } from '../../design-system';
 import { message } from '../../utils/message';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
+import { RelatedDataPanel } from '../../design-system/empty/RelatedDataPanel';
 
 interface Equipment {
  id: string;
@@ -217,6 +218,13 @@ const EquipmentDetail: React.FC = () => {
  key: 'requests',
  label: t('maintenance.requests'),
  children: (
+ <RelatedDataPanel
+ entity="maintenance_request"
+ data={requests}
+ loading={loading}
+ emptyTitleKey="maintenance.no_requests_title"
+ emptyDescriptionKey="maintenance.no_requests_description"
+ >
  <ResponsiveTableAdapter
  columns={requestColumns}
  dataSource={requests}
@@ -224,12 +232,20 @@ const EquipmentDetail: React.FC = () => {
  pagination={{ pageSize: 20 }}
  loading={loading}
  />
+ </RelatedDataPanel>
  ),
  },
  {
  key: 'schedules',
  label: t('maintenance.schedules'),
  children: (
+ <RelatedDataPanel
+ entity="maintenance_schedule"
+ data={schedules}
+ loading={loading}
+ emptyTitleKey="maintenance.no_schedules_title"
+ emptyDescriptionKey="maintenance.no_schedules_description"
+ >
  <ResponsiveTableAdapter
  columns={scheduleColumns}
  dataSource={schedules}
@@ -237,6 +253,7 @@ const EquipmentDetail: React.FC = () => {
  pagination={{ pageSize: 20 }}
  loading={loading}
  />
+ </RelatedDataPanel>
  ),
  },
  {
@@ -252,6 +269,13 @@ const EquipmentDetail: React.FC = () => {
  >
  {t('maintenance.new_log')}
  </Button>
+ <RelatedDataPanel
+ entity="maintenance_log"
+ data={logs}
+ loading={loading}
+ emptyTitleKey="maintenance.no_logs_title"
+ emptyDescriptionKey="maintenance.no_logs_description"
+ >
  <ResponsiveTableAdapter
  columns={logColumns}
  dataSource={logs}
@@ -259,6 +283,7 @@ const EquipmentDetail: React.FC = () => {
  pagination={{ pageSize: 20 }}
  loading={loading}
  />
+ </RelatedDataPanel>
  </>
  ),
  },

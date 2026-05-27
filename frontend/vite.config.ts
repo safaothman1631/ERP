@@ -21,7 +21,13 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { VitePWA } from 'vite-plugin-pwa';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { PWA_CONFIG } from './src/pwa/pwa-config';
+
+// `__dirname` is not defined in ESM — derive it from `import.meta.url`.
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // `process.env` is provided by Node when Vite loads this file. The cast keeps
 // us TS-clean without pulling in `@types/node` exclusively for the version.
@@ -67,6 +73,16 @@ export default defineConfig({
      * consistent across error reports and deploys.
      */
     __APP_VERSION__: JSON.stringify(APP_VERSION),
+  },
+  resolve: {
+    /**
+     * `@/...` resolves to `frontend/src/...`. Mirrors the `paths` entry in
+     * `tsconfig.app.json`. Spec text and copy-pasted examples reach for the
+     * alias; first-party code mostly uses relative paths today.
+     */
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
   },
   test: {
     environment: 'jsdom',

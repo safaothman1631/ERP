@@ -80,7 +80,7 @@ $checks = @(
         N=1
         En="Cloud Run min-instances=1 (warm)"
         Ku="Cloud Run هەمیشە چالاک — min-instances=1"
-        Cmd="gcloud run services describe $ServiceName --region=$Region --project=$Project --format='value(spec.template.metadata.annotations.\"autoscaling.knative.dev/minScale\")'"
+        Cmd="gcloud run services describe $ServiceName --region=$Region --project=$Project --format=`"value(spec.template.metadata.annotations['autoscaling.knative.dev/minScale'])`""
         Url="https://console.cloud.google.com/run/detail/$Region/$ServiceName/metrics?project=$Project"
     },
     @{

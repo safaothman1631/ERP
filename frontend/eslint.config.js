@@ -60,6 +60,9 @@ export default defineConfig([
       // React Query data-layer discipline (world-class-performance R2.1)
       'local/require-query-class': 'warn',
       'local/precise-invalidation': 'warn',
+      // Empty-state + quick-create discipline (empty-state-quick-create §1.5)
+      'local/empty-state-required': 'warn',
+      'local/quick-create-select': 'warn',
     },
   },
   // Umbrella runtime layer (system-wide-ux-overhaul) — these directories are

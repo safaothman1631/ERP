@@ -100,8 +100,18 @@ Assert-CommandExists 'gcloud'
 
 # Auth check
 Write-Log "Verifying gcloud auth..."
-$activeAccount = (& gcloud auth list --filter=status:ACTIVE --format='value(account)' 2>&1) -join "`n"
-if (-not $activeAccount -or $activeAccount -like '*ERROR*') {
+# Quote the --filter/--format flags so PowerShell does not try to parse the
+# bare value(...) as a function call. Also filter stderr update-warning
+# noise so the account line is isolated.
+$rawAuth = & gcloud auth list "--filter=status:ACTIVE" "--format=value(account)" 2>&1
+$activeAccount = ($rawAuth | ForEach-Object { "$_" } | Where-Object {
+    $_ -and
+    $_ -notmatch '^WARNING' -and
+    $_ -notmatch '^Updates are available' -and
+    $_ -notmatch '^ERROR' -and
+    $_ -match '@'
+} | Select-Object -First 1)
+if (-not $activeAccount) {
     Write-Log "No active gcloud account. Run: gcloud auth login" 'ERROR'
     Write-Log "هیچ هەژمارێکی چالاکی gcloud نییە. ئەمە جێبەجێ بکە: gcloud auth login" 'ERROR'
     throw "gcloud not authenticated"
@@ -110,7 +120,11 @@ Write-Log "Active account: $activeAccount"
 
 # Project match
 Write-Log "Verifying project..."
-$currentProject = (& gcloud config get-value project 2>&1).Trim()
+$rawProj = & gcloud config get-value project 2>&1
+$currentProject = ($rawProj | ForEach-Object { "$_" } | Where-Object {
+    $_ -and $_ -notmatch '^\(unset\)' -and $_ -notmatch '^WARNING' -and $_ -notmatch '^Your active'
+} | Select-Object -First 1)
+if ($currentProject) { $currentProject = $currentProject.Trim() }
 if ($currentProject -ne $Project) {
     Write-Log "Switching project from '$currentProject' to '$Project'" 'WARN'
     & gcloud config set project $Project 2>&1 | Tee-Object -FilePath $LogFile -Append | Out-Null
@@ -141,13 +155,13 @@ $requiredApis = @(
     'secretmanager.googleapis.com'
 )
 
-$enabled = (& gcloud services list --enabled --format='value(config.name)' --project=$Project 2>&1) -split "`n"
+$enabled = (& gcloud services list --enabled "--format=value(config.name)" "--project=$Project" 2>&1) -split "`n"
 foreach ($api in $requiredApis) {
     if ($enabled -contains $api) {
         Write-Log "OK   $api"
     } else {
         Write-Log "ENABLE $api" 'WARN'
-        & gcloud services enable $api --project=$Project 2>&1 | Tee-Object -FilePath $LogFile -Append | Out-Null
+        & gcloud services enable $api "--project=$Project" 2>&1 | Tee-Object -FilePath $LogFile -Append | Out-Null
     }
 }
 
@@ -163,7 +177,7 @@ try {
     & gcloud builds submit `
         --tag $imageUri `
         --timeout 20m `
-        --project=$Project 2>&1 | Tee-Object -FilePath $LogFile -Append
+        "--project=$Project" 2>&1 | Tee-Object -FilePath $LogFile -Append
 
     if ($LASTEXITCODE -ne 0) {
         Write-Log "Cloud Build failed (exit $LASTEXITCODE)" 'ERROR'
@@ -182,21 +196,26 @@ Write-Banner -En "Deploying to Cloud Run" -Ku "ناردن بۆ Cloud Run"
 $envVars = @(
     "ENVIRONMENT=production",
     "APP_VERSION=$Tag",
+    "APP_NAME=$ServiceName",
     "FIREBASE_PROJECT_ID=$Project",
     "RATE_LIMITING_ENABLED=true",
-    "RUN_MIGRATIONS_ON_BOOT=true"
+    "RUN_MIGRATIONS_ON_BOOT=true",
+    "LOG_LEVEL=INFO",
+    "OTEL_SERVICE_NAME=zoho-backend"
 ) -join ','
 
 $secrets = @(
     "SECRET_KEY=zoho-secret-key:latest",
     "SENTRY_DSN=zoho-sentry-dsn:latest",
-    "REDIS_URL=zoho-redis-url:latest"
+    "REDIS_URL=zoho-redis-url:latest",
+    "FIELD_ENCRYPTION_KEY=field-encryption-key:latest",
+    "DATABASE_URL=zoho-database-url:latest"
 ) -join ','
 
 & gcloud run deploy $ServiceName `
     --image $imageUri `
     --region $Region `
-    --project=$Project `
+    "--project=$Project" `
     --platform managed `
     --allow-unauthenticated `
     --min-instances $MinInstances `
@@ -205,9 +224,10 @@ $secrets = @(
     --cpu $Cpu `
     --concurrency 80 `
     --execution-environment gen2 `
+    --cpu-throttling=false `
     --port 8080 `
-    --set-env-vars $envVars `
-    --set-secrets $secrets `
+    "--set-env-vars=$envVars" `
+    "--set-secrets=$secrets" `
     --quiet 2>&1 | Tee-Object -FilePath $LogFile -Append
 
 if ($LASTEXITCODE -ne 0) {
@@ -220,10 +240,13 @@ if ($LASTEXITCODE -ne 0) {
 # Capture URL
 # -----------------------------------------------------------------------------
 Write-Banner -En "Capturing service URL" -Ku "وەرگرتنی URL خزمەتگوزاری"
-$serviceUrl = (& gcloud run services describe $ServiceName `
+$rawUrl = & gcloud run services describe $ServiceName `
     --region $Region `
-    --project=$Project `
-    --format='value(status.url)' 2>&1).Trim()
+    "--project=$Project" `
+    "--format=value(status.url)" 2>&1
+# Filter stderr noise (update warnings, etc.) and take the first https URL line.
+$serviceUrl = ($rawUrl | ForEach-Object { "$_" } | Where-Object { $_ -match '^https://' } | Select-Object -First 1)
+if ($serviceUrl) { $serviceUrl = $serviceUrl.Trim() }
 
 if (-not $serviceUrl -or $serviceUrl -notlike 'https://*') {
     Write-Log "Could not capture service URL: $serviceUrl" 'ERROR'

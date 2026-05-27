@@ -31,7 +31,8 @@ if (-not (Test-Path $LogsDir)) { New-Item -ItemType Directory -Path $LogsDir -Fo
 $Timestamp = (Get-Date -Format 'yyyyMMdd-HHmmss')
 $LogFile = Join-Path $LogsDir "tests-$Timestamp.log"
 
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
+try { chcp 65001 | Out-Null } catch { }
 
 $FrontendDir = Join-Path $RepoRoot 'frontend'
 $BackendDir  = Join-Path $RepoRoot 'backend'
@@ -59,12 +60,12 @@ function Run-TestStep {
         [string]$Description,
         [string]$Cwd,
         [string]$Exe,
-        [string[]]$Args
+        [string[]]$CmdArgs
     )
     Write-Log "==> [$Section] $Description" -Level 'INFO'
     Push-Location $Cwd
     try {
-        $out = & $Exe @Args 2>&1
+        $out = & $Exe @CmdArgs 2>&1
         $out | ForEach-Object {
             Add-Content -Path $LogFile -Value $_ -Encoding UTF8
             Write-Host $_
@@ -132,22 +133,33 @@ Write-Host ""
 # ===========================================================================
 Write-Host "--- FRONTEND: Vitest ---" -ForegroundColor Magenta
 if (Test-Path $FrontendDir) {
+    # Clear stale coverage outputs so a re-run can't show old numbers when tests fail
+    $staleFrontCov = Join-Path $FrontendDir 'coverage\coverage-summary.json'
+    if (Test-Path $staleFrontCov) {
+        try { Remove-Item -Force $staleFrontCov -ErrorAction Stop } catch { Write-Log "Could not remove stale $staleFrontCov" -Level 'WARN' }
+    }
+
     # vitest run (without coverage first - faster signal)
-    Run-TestStep -Section 'frontend' -Description 'vitest --run' -Cwd $FrontendDir -Exe 'npm' -Args @('test','--','--run') | Out-Null
+    Run-TestStep -Section 'frontend' -Description 'vitest --run' -Cwd $FrontendDir -Exe 'npm' -CmdArgs @('test','--','--run') | Out-Null
 
     # vitest with coverage (the scorecard needs coverage-summary.json)
-    Run-TestStep -Section 'frontend' -Description 'vitest --run --coverage' -Cwd $FrontendDir -Exe 'npm' -Args @('test','--','--run','--coverage') | Out-Null
+    Run-TestStep -Section 'frontend' -Description 'vitest --run --coverage' -Cwd $FrontendDir -Exe 'npm' -CmdArgs @('test','--','--run','--coverage') | Out-Null
 
-    # Playwright install (idempotent)
+    # Playwright install (idempotent) - --with-deps is Linux-only; on Windows it errors
     Write-Host "--- FRONTEND: Playwright install (idempotent) ---" -ForegroundColor Magenta
-    Run-TestStep -Section 'frontend' -Description 'playwright install chromium' -Cwd $FrontendDir -Exe 'npx' -Args @('playwright','install','--with-deps','chromium') | Out-Null
+    $isWindows = ($PSVersionTable.Platform -eq 'Win32NT') -or ($env:OS -eq 'Windows_NT') -or (-not $PSVersionTable.Platform)
+    if ($isWindows) {
+        Run-TestStep -Section 'frontend' -Description 'playwright install chromium (windows, no --with-deps)' -Cwd $FrontendDir -Exe 'npx' -CmdArgs @('playwright','install','chromium') | Out-Null
+    } else {
+        Run-TestStep -Section 'frontend' -Description 'playwright install chromium' -Cwd $FrontendDir -Exe 'npx' -CmdArgs @('playwright','install','--with-deps','chromium') | Out-Null
+    }
 
     # Playwright smoke - try nav:sweep first, fallback to @smoke tag
     Write-Host "--- FRONTEND: Playwright smoke ---" -ForegroundColor Magenta
-    $sweepOK = Run-TestStep -Section 'frontend' -Description 'npm run nav:sweep' -Cwd $FrontendDir -Exe 'npm' -Args @('run','nav:sweep')
+    $sweepOK = Run-TestStep -Section 'frontend' -Description 'npm run nav:sweep' -Cwd $FrontendDir -Exe 'npm' -CmdArgs @('run','nav:sweep')
     if (-not $sweepOK) {
         Write-Log "nav:sweep failed - trying fallback @smoke" -Level 'WARN'
-        Run-TestStep -Section 'frontend' -Description 'playwright test --grep @smoke (fallback)' -Cwd $FrontendDir -Exe 'npx' -Args @('playwright','test','--grep','@smoke') | Out-Null
+        Run-TestStep -Section 'frontend' -Description 'playwright test --grep @smoke (fallback)' -Cwd $FrontendDir -Exe 'npx' -CmdArgs @('playwright','test','--grep','@smoke') | Out-Null
     }
 } else {
     Write-Log "frontend/ not found - skipping frontend tests" -Level 'ERROR'
@@ -167,16 +179,22 @@ if (Test-Path $BackendDir) {
         Write-Log "venv not found - run 02-install-and-build.ps1 first" -Level 'ERROR'
         $AnyFail = $true
     } else {
+        # Clear stale coverage output so we never report yesterday's numbers
+        $staleBackCov = Join-Path $BackendDir 'coverage.xml'
+        if (Test-Path $staleBackCov) {
+            try { Remove-Item -Force $staleBackCov -ErrorAction Stop } catch { Write-Log "Could not remove stale $staleBackCov" -Level 'WARN' }
+        }
+
         # pytest with coverage
         Run-TestStep -Section 'backend' -Description 'pytest --cov=app --cov-report=xml --cov-report=term' `
             -Cwd $BackendDir -Exe $VenvPython `
-            -Args @('-m','pytest','--cov=app','--cov-report=xml','--cov-report=term') | Out-Null
+            -CmdArgs @('-m','pytest','--cov=app','--cov-report=xml','--cov-report=term') | Out-Null
 
         # smoke import
         Write-Host "--- BACKEND: smoke import ---" -ForegroundColor Magenta
         Run-TestStep -Section 'backend' -Description 'smoke: from app.main import app' `
             -Cwd $BackendDir -Exe $VenvPython `
-            -Args @('-c','from app.main import app; print(f"OK: {len(app.routes)} routes")') | Out-Null
+            -CmdArgs @('-c','from app.main import app; print(f"OK: {len(app.routes)} routes")') | Out-Null
     }
 } else {
     Write-Log "backend/ not found - skipping backend tests" -Level 'ERROR'

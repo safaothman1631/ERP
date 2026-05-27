@@ -9,6 +9,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { LoadingSkeleton } from '../../design-system/LoadingSkeleton';
+import { RelatedDataPanel } from '../../design-system/empty/RelatedDataPanel';
 import { useLoadingState } from '../../hooks/useLoadingState';
 import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
 import { asTranslationKey } from '../../i18n/types';
@@ -206,8 +207,16 @@ const DeviceDetail: React.FC = () => {
  </Card>
 
  <Card title={t('iot.latest_readings', 'Latest Readings')} style={{ marginBottom: 16 }}>
+ <RelatedDataPanel
+ entity="device_reading"
+ data={latestReadings}
+ emptyTitleKey="iot.no_readings_title"
+ emptyTitleFallback="No telemetry data yet"
+ emptyDescriptionKey="iot.no_readings_description"
+ emptyDescriptionFallback="Readings from this device will appear here once it sends data."
+ >
  <Row gutter={16}>
- {latestReadings.length > 0 ? latestReadings.map(reading => (
+ {latestReadings.map(reading => (
  <Col xs={24} sm={12} md={8} key={reading.id} style={{ marginBottom: 8 }}>
  <Card>
  <div style={{ fontSize: 16, fontWeight: 600 }}>
@@ -221,14 +230,9 @@ const DeviceDetail: React.FC = () => {
  </div>
  </Card>
  </Col>
- )) : (
- <Col span={24}>
- <div style={{ textAlign: 'center', color: '#8c8c8c', padding: '20px 0' }}>
- {t('iot.no_readings', 'No telemetry data yet')}
- </div>
- </Col>
- )}
+ ))}
  </Row>
+ </RelatedDataPanel>
  </Card>
 
  <Card 
