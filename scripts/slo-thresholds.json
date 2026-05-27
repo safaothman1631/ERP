@@ -1,0 +1,55 @@
+{
+  "$schema_comment": "SLO thresholds per endpoint class, in milliseconds. Derived from .kiro/specs/world-class-performance/requirements.md §5 Backend Latency & Throughput SLOs.",
+  "$reference": "V-PR.1 (Real User p95 Latency)",
+  "classes": {
+    "read-single": {
+      "p50_ms": 50,
+      "p95_ms": 150,
+      "p99_ms": 400,
+      "error_rate_pct": 0.1,
+      "description": "Read, single document"
+    },
+    "read-list": {
+      "p50_ms": 100,
+      "p95_ms": 300,
+      "p99_ms": 800,
+      "error_rate_pct": 0.1,
+      "description": "Read, paginated list (<=50 rows)"
+    },
+    "write": {
+      "p50_ms": 100,
+      "p95_ms": 350,
+      "p99_ms": 1000,
+      "error_rate_pct": 0.2,
+      "description": "Write, single document"
+    },
+    "bulk": {
+      "p50_ms": 500,
+      "p95_ms": 2000,
+      "p99_ms": 5000,
+      "error_rate_pct": 0.5,
+      "description": "Bulk write (<=500 docs)"
+    },
+    "report": {
+      "p50_ms": 300,
+      "p95_ms": 1500,
+      "p99_ms": 4000,
+      "error_rate_pct": 0.5,
+      "description": "Report query (aggregates)"
+    },
+    "pos-checkout": {
+      "p50_ms": 150,
+      "p95_ms": 400,
+      "p99_ms": 1000,
+      "error_rate_pct": 0.05,
+      "description": "POS checkout (end-to-end)"
+    },
+    "shell": {
+      "p50_ms": 200,
+      "p95_ms": 600,
+      "p99_ms": 1500,
+      "error_rate_pct": 0.1,
+      "description": "Static shell / HTML route (CDN-cached)"
+    }
+  }
+}

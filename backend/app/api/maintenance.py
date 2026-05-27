@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/maintenance", tags=["Maintenance"])
 
@@ -187,8 +188,8 @@ def mttr_metric(eid: str, user: dict = Depends(get_current_user)):
 
 @router.get("/dashboard")
 def maint_dashboard(user: dict = Depends(get_current_user)):
-    eq, _ = EquipmentRepo(user["org_id"]).list(limit=10000)
-    reqs, _ = MaintRequestRepo(user["org_id"]).list(limit=10000)
+    eq = collect_stream(EquipmentRepo(user["org_id"]), max_docs=10000)
+    reqs = collect_stream(MaintRequestRepo(user["org_id"]), max_docs=10000)
     by_status: dict[str, int] = {}
     for r in reqs:
         by_status[r.get("status", "new")] = by_status.get(r.get("status", "new"), 0) + 1

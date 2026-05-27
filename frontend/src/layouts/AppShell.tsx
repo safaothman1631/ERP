@@ -3,10 +3,13 @@ import { Layout, Drawer } from 'antd';
 import { Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store';
+import api from '../api';
 import { useOnboardingStore } from '../onboarding/store';
+import { selectIsPendingModuleApproval } from '../onboarding/selectors';
 import OnboardingWizard from '../onboarding/OnboardingWizard';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { ModuleGuard } from '../components/ModuleGuard';
+import { TwoFactorSetupGuard } from '../components/TwoFactorSetupGuard';
 import SideNav from './SideNav';
 import TopBar from './TopBar';
 import CommandPalette from './CommandPalette';
@@ -27,7 +30,12 @@ import {
   SIDEBAR_HIDDEN_MODES, FORCE_COLLAPSED_MODES, SHOW_TABS_MODES,
 } from './LayoutChrome';
 import { palette, space, radius, motion, shadow } from '../theme/tokens';
+import ImpersonationBanner from '../platform/components/ImpersonationBanner';
+import PlatformAnnouncementBanner from '../platform/components/PlatformAnnouncementBanner';
+import { RoleAccentProvider } from '../components/role/RoleAccentProvider';
+import RoleWelcomeSheet from '../components/role/RoleWelcomeSheet';
 import { useViewport } from '../hooks/useViewport';
+import { usePermission } from '../hooks/usePermission';
 
 /**
  * Sidebar width constants per spec requirements 4.2, 4.3.
@@ -47,6 +55,8 @@ export const AppShell: React.FC = () => {
   const { isMobile, isTablet } = useViewport();
   const orgId = useAuthStore(s => s.orgId);
   const layoutMode = useAuthStore(s => s.layoutMode);
+  const { isTenantOrgAdmin, hasPerm } = usePermission();
+  const canManageSettings = isTenantOrgAdmin || hasPerm('settings.update');
   // Use uiStore.language as reactive source — i18n.language alone doesn't trigger re-render
   const storeLanguage = useUiStore(s => s.language);
   const isRTL = storeLanguage === 'ku' || storeLanguage === 'ar';
@@ -74,22 +84,47 @@ export const AppShell: React.FC = () => {
   const clearForceOpen = useOnboardingStore(s => s.clearForceOpen);
   const storeOrgId = useOnboardingStore(s => s.orgId);
   const hydrateFromStorageEvent = useOnboardingStore(s => s.hydrateFromStorageEvent);
+  const isPendingLocked = useOnboardingStore(selectIsPendingModuleApproval);
+  const loadMyRequest = useOnboardingStore(s => s.loadMyRequest);
   const [wizardOpen, setWizardOpen] = useState(false);
 
   // Re-hydrate onboarding state whenever the active org changes (login/signup/switch).
   useEffect(() => {
     if (orgId && orgId !== storeOrgId) {
-      void loadForOrg(orgId);
+      void loadForOrg(orgId, { canManageSettings });
     }
-  }, [orgId, storeOrgId, loadForOrg]);
+  }, [orgId, storeOrgId, loadForOrg, canManageSettings]);
 
   // Auto-open the wizard whenever the store decides we must (fresh signup or never-onboarded).
+  // Skip while mandatory 2FA setup is pending — user must reach Security settings first.
+  const [needs2faSetup, setNeeds2faSetup] = useState(false);
   useEffect(() => {
-    if (forceOpen) {
+    if (!orgId) return;
+    api.get('/api/auth/me')
+      .then((r) => setNeeds2faSetup(Boolean(r.data?.requires_2fa_setup)))
+      .catch(() => setNeeds2faSetup(false));
+  }, [orgId]);
+
+  useEffect(() => {
+    const on2faDone = () => setNeeds2faSetup(false);
+    window.addEventListener('2fa-setup-complete', on2faDone);
+    return () => window.removeEventListener('2fa-setup-complete', on2faDone);
+  }, []);
+
+  useEffect(() => {
+    if (needs2faSetup) return;
+    if (forceOpen || isPendingLocked) {
       const t = setTimeout(() => setWizardOpen(true), 300);
       return () => clearTimeout(t);
     }
-  }, [forceOpen]);
+  }, [forceOpen, isPendingLocked, needs2faSetup]);
+
+  // Poll for approval status while locked on pending screen.
+  useEffect(() => {
+    if (!isPendingLocked) return;
+    const id = window.setInterval(() => { void loadMyRequest(); }, 30000);
+    return () => window.clearInterval(id);
+  }, [isPendingLocked, loadMyRequest]);
 
   // External "open onboarding" button (Settings page).
   useEffect(() => {
@@ -171,7 +206,30 @@ export const AppShell: React.FC = () => {
     ? `radial-gradient(circle at top ${isRTL ? 'right' : 'left'}, rgba(31, 111, 235, 0.14), transparent 32%), ${palette.darkBg}`
     : `radial-gradient(circle at top ${isRTL ? 'right' : 'left'}, rgba(31, 111, 235, 0.09), transparent 28%), ${palette.bg}`;
 
+  // Pending module approval — hide app chrome; only wizard + account controls.
+  if (isPendingLocked) {
+    return (
+      <Layout
+        className="responsive-shell responsive-shell--pending-lock"
+        style={{
+          minHeight: '100vh',
+          background: shellBg,
+          direction: isRTL ? 'rtl' : 'ltr',
+        }}
+      >
+        <OnboardingWizard
+          open
+          firstTime={false}
+          onClose={() => {}}
+          onComplete={() => setWizardOpen(false)}
+        />
+        {toastHolder}
+      </Layout>
+    );
+  }
+
   return (
+    <RoleAccentProvider>
     <Layout className="responsive-shell" style={{
       minHeight: '100vh',
       background: shellBg,
@@ -182,6 +240,8 @@ export const AppShell: React.FC = () => {
       paddingBlockStart: 'env(safe-area-inset-top, 0px)',
     }}>
       <SkipToContent />
+      <ImpersonationBanner />
+      <PlatformAnnouncementBanner />
 
       {/* Desktop/Tablet: SideNav inline — hidden on mobile */}
       {!sidebarHidden && !isMobile && (
@@ -279,6 +339,7 @@ export const AppShell: React.FC = () => {
           boxSizing: 'border-box',
         }}>
           <ErrorBoundary>
+            <TwoFactorSetupGuard>
             <ModuleGuard>
               {showAppsLauncher && window.location.pathname === '/' ? (
                 <AppsLauncher isDark={isDark} />
@@ -286,6 +347,7 @@ export const AppShell: React.FC = () => {
                 <Outlet />
               )}
             </ModuleGuard>
+            </TwoFactorSetupGuard>
           </ErrorBoundary>
         </Layout.Content>
         {!showBottomNav && <Footer isDark={isDark} isRTL={isRTL} />}
@@ -318,7 +380,9 @@ export const AppShell: React.FC = () => {
       <ShortcutCheatsheet isDark={isDark} />
       <QuickSearch />
       {toastHolder}
+      <RoleWelcomeSheet />
     </Layout>
+    </RoleAccentProvider>
   );
 };
 

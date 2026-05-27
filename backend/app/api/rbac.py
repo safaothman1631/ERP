@@ -3,6 +3,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm, ALL_PERMISSIONS, DEFAULT_ROLES
+from app.services.report_streams import collect_stream
 from app.firestore.base import BaseRepository
 
 
@@ -139,7 +140,7 @@ def list_org_users(user: dict = Depends(get_current_user)):
     r_repo = RoleRepository(user["org_id"])
 
     users, _ = u_repo.list(limit=500)
-    assignments, _ = ur_repo.list(limit=5000)
+    assignments = collect_stream(ur_repo, max_docs=5000)
     custom_roles, _ = r_repo.list(limit=500)
     custom_by_id = {r["id"]: r for r in custom_roles}
 
@@ -214,3 +215,43 @@ def my_permissions(user: dict = Depends(get_current_user)):
     from app.services.permissions import get_user_permissions
     perms = get_user_permissions(user)
     return {"user_id": user["id"], "permissions": sorted(perms), "role": user.get("role")}
+
+
+# Persona hints aligned with frontend roleThemes / rolePersonaRegistry
+_ROLE_PERSONA: dict[str, dict] = {
+    "owner": {"theme_id": "executive", "default_route": "/dashboard", "label_key": "roles.owner"},
+    "admin": {"theme_id": "administrator", "default_route": "/dashboard", "label_key": "roles.admin"},
+    "manager": {"theme_id": "manager", "default_route": "/dashboard", "label_key": "roles.manager"},
+    "accountant": {"theme_id": "finance", "default_route": "/dashboard", "label_key": "roles.accountant"},
+    "sales": {"theme_id": "sales", "default_route": "/crm/leads", "label_key": "roles.sales"},
+    "sales_rep": {"theme_id": "sales", "default_route": "/crm/leads", "label_key": "roles.sales_rep"},
+    "purchaser": {"theme_id": "purchase", "default_route": "/purchase-orders", "label_key": "roles.purchaser"},
+    "inventory": {"theme_id": "inventory", "default_route": "/inventory", "label_key": "roles.inventory"},
+    "inventory_manager": {"theme_id": "inventory", "default_route": "/inventory", "label_key": "roles.inventory"},
+    "cashier": {"theme_id": "pos", "default_route": "/pos", "label_key": "roles.cashier"},
+    "pos_cashier": {"theme_id": "pos", "default_route": "/pos", "label_key": "roles.pos_cashier"},
+    "hr": {"theme_id": "hr", "default_route": "/hr", "label_key": "roles.hr"},
+    "hr_manager": {"theme_id": "hr", "default_route": "/hr", "label_key": "roles.hr_manager"},
+    "viewer": {"theme_id": "readonly", "default_route": "/dashboard", "label_key": "roles.viewer"},
+    "user": {"theme_id": "personal", "default_route": "/dashboard", "label_key": "roles.user"},
+    "super_admin": {"theme_id": "administrator", "default_route": "/platform", "label_key": "roles.platform_admin"},
+}
+
+
+@router.get("/me/summary")
+def my_role_summary(user: dict = Depends(get_current_user)):
+    """Role UX summary for adaptive UI — persona, theme, default route."""
+    from app.services.permissions import get_user_permissions
+    role = (user.get("role") or "user").strip()
+    perms = sorted(get_user_permissions(user))
+    persona = _ROLE_PERSONA.get(role, _ROLE_PERSONA["user"]).copy()
+    if role == "super_admin" or user.get("is_platform_admin"):
+        persona = _ROLE_PERSONA["super_admin"].copy()
+    return {
+        "user_id": user["id"],
+        "org_id": user.get("org_id"),
+        "role": role,
+        "permissions": perms,
+        "persona": persona,
+        "is_platform_admin": bool(user.get("is_platform_admin") or role == "super_admin"),
+    }

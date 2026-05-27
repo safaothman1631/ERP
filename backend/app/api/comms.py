@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/comms", tags=["Comms"])
 
@@ -153,8 +154,8 @@ def end_call(cid: str, body: dict, user: dict = Depends(get_current_user)):
 
 @router.get("/dashboard")
 def comms_dashboard(user: dict = Depends(get_current_user)):
-    sms, _ = SMSMessageRepo(user["org_id"]).list(limit=10000)
-    calls, _ = VoipCallRepo(user["org_id"]).list(limit=10000)
+    sms = collect_stream(SMSMessageRepo(user["org_id"]), max_docs=10000)
+    calls = collect_stream(VoipCallRepo(user["org_id"]), max_docs=10000)
     return {
         "sms_total": len(sms),
         "sms_sent": sum(1 for s in sms if s.get("status") in ("sent", "delivered")),

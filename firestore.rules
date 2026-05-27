@@ -5,7 +5,8 @@ rules_version = '2';
 // داواکاری: ٦.٥، ٦.٨، ٧.١١
 //
 // Strategy:
-//   1. All org data lives under organizations/{orgId}/** — enforced by org_id isolation
+//   1. Nested path: organizations/{orgId}/** (legacy / client subcollections)
+//   2. Root path: flat collections with org_id field (backend Admin SDK — production default)
 //   2. Every read/write requires Firebase Auth (JWT)
 //   3. The user's org_id claim in the JWT must match the orgId path segment
 //   4. Sensitive sub-collections (hr_employees, payroll_runs, audit_logs) have
@@ -707,6 +708,119 @@ service cloud.firestore {
     match /currencies/{currencyId} {
       allow read: if isAuthenticated();
       allow create, update, delete: if false;  // managed by backend seed only
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Root collections (org_id on document — matches Python BaseRepository)
+    // Client SDK realtime must use same shape as backend writes.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    function tenantOrgId() {
+      return request.auth.token.org_id;
+    }
+
+    function tenantDocRead() {
+      return isAuthenticated() && resource.data.org_id == tenantOrgId();
+    }
+
+    function tenantDocCreate() {
+      return isAuthenticated() && request.resource.data.org_id == tenantOrgId();
+    }
+
+    function tenantDocUpdate() {
+      return isAuthenticated()
+        && resource.data.org_id == tenantOrgId()
+        && request.resource.data.org_id == tenantOrgId();
+    }
+
+    function tenantDocDelete() {
+      return isAuthenticated() && resource.data.org_id == tenantOrgId();
+    }
+
+    match /invoices/{docId} {
+      allow read: if tenantDocRead();
+      allow create: if tenantDocCreate();
+      allow update: if tenantDocUpdate();
+      allow delete: if tenantDocDelete() && isManagerOrAbove(tenantOrgId());
+    }
+
+    match /bills/{docId} {
+      allow read: if tenantDocRead();
+      allow create: if tenantDocCreate();
+      allow update: if tenantDocUpdate();
+      allow delete: if tenantDocDelete() && isManagerOrAbove(tenantOrgId());
+    }
+
+    match /payments_received/{docId} {
+      allow read: if tenantDocRead();
+      allow create: if tenantDocCreate();
+      allow update: if tenantDocUpdate() && isAccountantOrAbove(tenantOrgId());
+      allow delete: if tenantDocDelete() && isManagerOrAbove(tenantOrgId());
+    }
+
+    match /payments_made/{docId} {
+      allow read: if tenantDocRead();
+      allow create: if tenantDocCreate();
+      allow update: if tenantDocUpdate() && isAccountantOrAbove(tenantOrgId());
+      allow delete: if tenantDocDelete() && isManagerOrAbove(tenantOrgId());
+    }
+
+    match /items/{docId} {
+      allow read: if tenantDocRead();
+      allow create: if tenantDocCreate();
+      allow update: if tenantDocUpdate();
+      allow delete: if tenantDocDelete() && isManagerOrAbove(tenantOrgId());
+    }
+
+    match /stock_movements/{docId} {
+      allow read: if tenantDocRead();
+      allow create: if tenantDocCreate();
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    match /bank_accounts/{docId} {
+      allow read: if tenantDocRead();
+      allow create: if tenantDocCreate() && isAccountantOrAbove(tenantOrgId());
+      allow update: if tenantDocUpdate() && isAccountantOrAbove(tenantOrgId());
+      allow delete: if tenantDocDelete() && isAdmin(tenantOrgId());
+    }
+
+    match /bank_transactions/{docId} {
+      allow read: if tenantDocRead();
+      allow create: if tenantDocCreate() && isAccountantOrAbove(tenantOrgId());
+      allow update: if tenantDocUpdate() && isAccountantOrAbove(tenantOrgId());
+      allow delete: if tenantDocDelete() && isAdmin(tenantOrgId());
+    }
+
+    match /contacts/{docId} {
+      allow read: if tenantDocRead();
+      allow create: if tenantDocCreate();
+      allow update: if tenantDocUpdate();
+      allow delete: if tenantDocDelete() && isManagerOrAbove(tenantOrgId());
+    }
+
+    match /pos_orders/{docId} {
+      allow read: if tenantDocRead();
+      allow create: if tenantDocCreate();
+      allow update: if tenantDocUpdate();
+      allow delete: if tenantDocDelete() && isManagerOrAbove(tenantOrgId());
+    }
+
+    match /audit_logs/{docId} {
+      allow read: if isAuthenticated() && resource.data.org_id == tenantOrgId() && isAdmin(tenantOrgId());
+      allow create, update, delete: if false;
+    }
+
+    match /org_counters/{docId} {
+      allow read: if tenantDocRead();
+      allow create, update: if tenantDocUpdate() && isAccountantOrAbove(tenantOrgId());
+      allow delete: if false;
+    }
+
+    match /reconcile_runs/{docId} {
+      allow read: if tenantDocRead() && isAdmin(tenantOrgId());
+      allow create, update, delete: if false;
     }
 
     // ─────────────────────────────────────────────────────────────────────────

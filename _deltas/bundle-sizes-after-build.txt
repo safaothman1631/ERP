@@ -1,0 +1,45 @@
+================================================================================
+Bundle Sizes — Critical Fix A
+Date: 2026-05-27
+================================================================================
+
+STATUS: NOT CAPTURED.
+
+Reason
+------
+`npm run build` could not be completed in this sandbox session:
+
+  1. The Linux workspace bash had a 45-second hard timeout cap that
+     could not accommodate npm's package-graph resolution for the newly-
+     added vite-plugin-pwa@^1.3.0 + workbox-build + ~70 transitive deps
+     against a cold cache and a slow upstream registry.
+
+  2. The pre-existing node_modules tree was populated on a Windows host
+     (only @rolldown/binding-win32-x64-msvc present), so even with the
+     plugin missing-or-not, `vite build` invoked from Linux would fail
+     with "Cannot find module '@rolldown/binding-linux-x64-gnu'".
+
+  3. Late in the task the workspace bash sandbox lost its virtiofs
+     mounts (chown EIO error). Every subsequent invocation returned an
+     RPC error, preventing any further build attempts or `du` capture.
+
+When the user runs `npm install` (with network access) and then
+`npm run build` on their Windows host, the size capture command is:
+
+    cd C:\\Users\\SAFA\\zoho\\frontend
+    Get-ChildItem dist\\assets\\*.js |
+        Sort-Object Length |
+        Select-Object -Last 20 |
+        Format-Table @{N='Size(KB)';E={[math]::Round($_.Length/1KB,1)}}, Name
+
+…or in WSL/git-bash:
+    du -sh frontend/dist/assets/*.js | sort -h | tail -20
+
+Expected new artifacts after the build succeeds:
+    dist/sw.js                      (Workbox-built service worker)
+    dist/workbox-*.js               (Workbox precache helper)
+    dist/manifest.webmanifest       (PWA manifest)
+    dist/registerSW.js              (auto-register helper if enabled)
+    dist/assets/*-[hash].js         (vendor-react, vendor-query, vendor-antd*,
+                                     vendor-firebase-*, vendor-charts,
+                                     vendor-i18n, etc.)

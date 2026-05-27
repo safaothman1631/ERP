@@ -25,6 +25,7 @@ import { MailOutlined, LockOutlined, ClockCircleOutlined } from '@ant-design/ico
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../../store';
+import { completeLoginSession } from '../../platform/utils/completeLoginSession';
 import api from '../../api';
 import AuthLayout from '../../layouts/AuthLayout';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
@@ -294,8 +295,8 @@ const LoginPage: React.FC = () => {
         clearAttemptState();
         setAttemptState({ count: 0, lockedUntil: null });
 
-        login(res.data.access_token, res.data.user_id, res.data.org_id, res.data.user_name);
-        navigate('/');
+        const path = completeLoginSession(res.data);
+        navigate(path);
       } catch (err: any) {
         const detail = err?.response?.data?.detail;
         const status = err?.response?.status;
@@ -341,8 +342,8 @@ const LoginPage: React.FC = () => {
         const res = await api.post('/api/auth/firebase-login', { id_token: idToken });
         clearAttemptState();
         setAttemptState({ count: 0, lockedUntil: null });
-        login(res.data.access_token, res.data.user_id, res.data.org_id, res.data.user_name);
-        navigate('/');
+        const path = completeLoginSession(res.data);
+        navigate(path);
       } catch (err: any) {
         const detail = err?.response?.data?.detail;
         if (err?.response?.status === 404) {

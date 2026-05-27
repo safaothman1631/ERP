@@ -1,16 +1,24 @@
 import uuid
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from app.firestore.bills import PurchaseOrderRepository, BillRepository
-from app.firestore.system import SequenceRepository
 from app.firestore.organizations import OrganizationRepository
 from app.services.auth import get_current_user
 from app.services.pdf_generator import generate_purchase_order_pdf
 from app.services import approval_service, settings_service
-from app.schemas.schemas import PurchaseOrderCreate, PurchaseOrderResponse
+from app.services.state_machine import PURCHASE_ORDER_SM
+from app.services.module_gate import require_module
+from app.schemas.schemas import PurchaseOrderCreate, PurchaseOrderUpdate, PurchaseOrderResponse
+from app.services.versioned_update import apply_versioned_update
 
-router = APIRouter(prefix="/api/purchase-orders", tags=["Purchase Orders"])
+router = APIRouter(
+    prefix="/api/purchase-orders",
+    tags=["Purchase Orders"],
+    dependencies=[Depends(require_module("purchase"))],
+)
 
 @router.get("")
 def list_purchase_orders(
@@ -56,6 +64,28 @@ def create_purchase_order(data: PurchaseOrderCreate, user: dict = Depends(get_cu
     if hasattr(data, "lines") and data.lines:
         repo.set_lines(item["id"], [line.model_dump() for line in data.lines])
     return item
+
+
+@router.put("/{purchase_order_id}")
+def update_purchase_order(
+    purchase_order_id: str,
+    data: PurchaseOrderUpdate,
+    user: dict = Depends(get_current_user),
+    if_match: Optional[str] = Header(None, alias="If-Match"),
+):
+    repo = PurchaseOrderRepository(user["org_id"])
+    po = repo.get(purchase_order_id)
+    if not po or po.get("org_id") != user["org_id"]:
+        raise HTTPException(status_code=404, detail="داواکاری کڕین نەدۆزرایەوە")
+    if po.get("status") not in ("draft",):
+        raise HTTPException(status_code=400, detail="تەنیا ڕەشنووس دەتوانرێت دەستکاری بکرێت")
+    update_data = data.model_dump(exclude_unset=True, exclude={"lines"})
+    po = apply_versioned_update(repo, purchase_order_id, update_data, if_match=if_match)
+    if data.lines is not None:
+        repo.set_lines(purchase_order_id, [line.model_dump() for line in data.lines])
+        po = repo.get(purchase_order_id)
+    return po
+
 
 @router.get("/{purchase_order_id}")
 def get_purchase_order(purchase_order_id: str, user: dict = Depends(get_current_user)):
@@ -121,13 +151,14 @@ def send_purchase_order(purchase_order_id: str, user: dict = Depends(get_current
     po = _po_load(repo, purchase_order_id, user["org_id"])
     if po.get("status") not in (None, "", "draft"):
         raise HTTPException(status_code=400, detail=f"تەنیا دۆخی draft دەنێردرێت (دۆخی ئێستا: {po.get('status')})")
-    
+
     # Check if approval workflow is satisfied
     if not approval_service.is_doc_approved(user["org_id"], "purchase_order", purchase_order_id):
         raise HTTPException(400, "Approval workflow not completed")
-    
+
+    PURCHASE_ORDER_SM.transition(po, "sent")
     return repo.update(purchase_order_id, {
-        "status": "sent",
+        "status": po["status"],
         "sent_at": datetime.utcnow().isoformat(),
     })
 
@@ -156,26 +187,65 @@ def submit_purchase_order_for_approval(purchase_order_id: str, user: dict = Depe
 
 
 @router.post("/{purchase_order_id}/receive")
-def receive_purchase_order(purchase_order_id: str, user: dict = Depends(get_current_user)):
+def receive_purchase_order(
+    purchase_order_id: str,
+    body: dict | None = None,
+    user: dict = Depends(get_current_user),
+):
+    from app.services.permissions import user_has_perm
+
     repo = PurchaseOrderRepository(user["org_id"])
     po = _po_load(repo, purchase_order_id, user["org_id"])
-    if po.get("status") not in ("sent", "partially_received", "draft"):
-        raise HTTPException(status_code=400, detail=f"دۆخی پێویست: sent (دۆخی ئێستا: {po.get('status')})")
-    return repo.update(purchase_order_id, {
-        "status": "received",
-        "received_at": datetime.utcnow().isoformat(),
-        "received_by": user.get("id"),
-    })
+    from app.services.settings_service import get_purchases_settings
+
+    payload = body or {}
+    receipts = po.get("goods_receipts") or []
+    has_grn = bool(receipts) or any(
+        float(line.get("qty_received", 0) or 0) > 0
+        for line in (po.get("lines") or [])
+    )
+    require_grn = bool(get_purchases_settings(user["org_id"]).get("require_grn", True))
+    if require_grn and not has_grn:
+        if not payload.get("acknowledge_shortcut"):
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "code": "grn_required",
+                    "message": "Post a goods receipt before marking received, or send acknowledge_shortcut with purchase.receive_shortcut permission.",
+                },
+            )
+        if not user_has_perm(user, "purchase.receive_shortcut"):
+            raise HTTPException(
+                status_code=403,
+                detail={"code": "receive_shortcut_denied", "message": "Missing purchase.receive_shortcut permission"},
+            )
+    PURCHASE_ORDER_SM.transition(po, "received")
+    from app.services.po_receive import mark_po_received_atomic
+
+    try:
+        updated = mark_po_received_atomic(
+            user["org_id"],
+            purchase_order_id,
+            status=po["status"],
+            received_by=user.get("id"),
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=409, detail={"code": "receive_failed", "message": str(exc)}) from exc
+    try:
+        from app.services.webhook_dispatcher import dispatch_event
+        dispatch_event(user["org_id"], "po.received", {"id": purchase_order_id})
+    except Exception:
+        pass
+    return updated
 
 
 @router.post("/{purchase_order_id}/cancel")
 def cancel_purchase_order(purchase_order_id: str, data: dict = None, user: dict = Depends(get_current_user)):
     repo = PurchaseOrderRepository(user["org_id"])
     po = _po_load(repo, purchase_order_id, user["org_id"])
-    if po.get("status") in ("billed", "cancelled"):
-        raise HTTPException(status_code=400, detail=f"ناتوانرێت دۆخی '{po.get('status')}' هەڵبوەشێنرێت")
+    PURCHASE_ORDER_SM.transition(po, "cancelled")
     return repo.update(purchase_order_id, {
-        "status": "cancelled",
+        "status": po["status"],
         "cancelled_at": datetime.utcnow().isoformat(),
         "cancelled_by": user.get("id"),
         "cancellation_reason": (data or {}).get("reason", ""),
@@ -184,40 +254,22 @@ def cancel_purchase_order(purchase_order_id: str, data: dict = None, user: dict 
 
 @router.post("/{purchase_order_id}/convert-to-bill", status_code=201)
 def purchase_order_to_bill(purchase_order_id: str, user: dict = Depends(get_current_user)):
+    from app.services.po_convert_bill_atomic import convert_purchase_order_to_bill_atomic
+
     repo = PurchaseOrderRepository(user["org_id"])
     po = _po_load(repo, purchase_order_id, user["org_id"])
-    if po.get("status") in ("cancelled", "billed"):
-        raise HTTPException(status_code=400, detail=f"ناتوانرێت دۆخی '{po.get('status')}' بکرێتە پسووڵە")
-
-    po_full = repo.get_with_lines(purchase_order_id) if hasattr(repo, "get_with_lines") else po
-    bill_repo = BillRepository(user["org_id"])
-    seq_repo = SequenceRepository(user["org_id"])
-    bill_number = seq_repo.get_next("bill")
-    total = float(po.get("total", 0) or 0)
-    today = datetime.utcnow().isoformat()[:10]
-
-    bill = bill_repo.create({
-        "id": str(uuid.uuid4()),
-        "org_id": user["org_id"],
-        "bill_number": bill_number,
-        "contact_id": po.get("contact_id"),
-        "date": today,
-        "due_date": today,
-        "currency_code": po.get("currency_code") or po.get("currency", "IQD"),
-        "subtotal": po.get("subtotal", 0),
-        "tax_amount": po.get("tax_amount", 0),
-        "total": total,
-        "balance_due": total,
-        "status": "draft",
-        "purchase_order_id": purchase_order_id,
-        "notes": po.get("notes", ""),
-    })
-    lines = (po_full or {}).get("lines") or []
-    if lines:
-        bill_repo.set_lines(bill["id"], [{k: v for k, v in ln.items() if k != "id"} for ln in lines])
-
-    repo.update(purchase_order_id, {"status": "billed", "bill_id": bill["id"]})
-    return {"id": bill["id"], "bill_number": bill_number, "purchase_order_id": purchase_order_id}
+    PURCHASE_ORDER_SM.transition(po, "billed")
+    try:
+        return convert_purchase_order_to_bill_atomic(
+            user["org_id"],
+            purchase_order_id,
+            status=po["status"],
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "po_convert_failed", "message": str(exc)},
+        ) from exc
 
 
 # ------------------------ Sprint 16: Goods Receipt + 3-Way Match (FIX-211..220) ------------------------
@@ -229,52 +281,36 @@ def create_goods_receipt(purchase_order_id: str, data: dict, user: dict = Depend
     Body: { warehouse_id, lines: [{ po_line_id, item_id, qty_received, lot_no?, notes? }] }
     Updates PO status: draft/sent ? partially_received or received based on cumulative qty.
     """
-    repo = PurchaseOrderRepository(user["org_id"])
-    po = _po_load(repo, purchase_order_id, user["org_id"])
-    if po.get("status") in ("cancelled", "billed"):
-        raise HTTPException(400, f"???????? ?????? ?? ???? '{po.get('status')}' ????? ?????")
+    from app.services.grn_receive_atomic import create_goods_receipt_atomic
+
+    _po_load(PurchaseOrderRepository(user["org_id"]), purchase_order_id, user["org_id"])
     lines = data.get("lines") or []
     if not lines:
         raise HTTPException(400, "??? ???? ?????? ????")
-    grn_id = str(uuid.uuid4())
-    grn = {
-        "id": grn_id,
-        "purchase_order_id": purchase_order_id,
-        "warehouse_id": data.get("warehouse_id"),
-        "lines": lines,
-        "status": "received",
-        "received_at": datetime.utcnow().isoformat(),
-        "received_by_id": user["id"],
-        "received_by_name": user.get("name") or user.get("email", ""),
-        "notes": data.get("notes"),
-        "org_id": user["org_id"],
-    }
-    # Persist as a PO sub-record (use a dedicated repo or inline list on PO)
-    grns = po.get("goods_receipts") or []
-    grns.append(grn)
-    # Aggregate received qty per po_line_id
-    received_by_line: dict = {}
-    for g in grns:
-        for ln in g.get("lines") or []:
-            k = ln.get("po_line_id") or ln.get("item_id")
-            if k:
-                received_by_line[k] = received_by_line.get(k, 0.0) + float(ln.get("qty_received") or 0)
-    # Compute cumulative ratio vs ordered
-    ordered_lines = po.get("lines") or []
-    ordered_total = sum(float(l.get("qty") or l.get("quantity") or 0) for l in ordered_lines)
-    received_total = sum(received_by_line.values())
-    new_status = po.get("status")
-    if ordered_total > 0:
-        if received_total >= ordered_total:
-            new_status = "received"
-        elif received_total > 0:
-            new_status = "partially_received"
-    repo.update(purchase_order_id, {
-        "goods_receipts": grns,
-        "received_qty_by_line": received_by_line,
-        "status": new_status,
-    })
-    return grn
+    try:
+        received = create_goods_receipt_atomic(
+            user["org_id"],
+            purchase_order_id,
+            warehouse_id=data.get("warehouse_id"),
+            lines=lines,
+            user_id=user["id"],
+            user_name=user.get("name") or user.get("email", ""),
+            notes=data.get("notes"),
+        )
+    except ValueError as exc:
+        if str(exc).startswith("po_invalid_status:"):
+            status = str(exc).split(":", 1)[1]
+            raise HTTPException(400, f"???????? ?????? ?? ???? '{status}' ????? ?????")
+        raise HTTPException(400, str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=409, detail={"code": "grn_receive_failed", "message": str(exc)}) from exc
+    if received.get("purchase_order_status") == "received":
+        try:
+            from app.services.webhook_dispatcher import dispatch_event
+            dispatch_event(user["org_id"], "po.received", {"id": purchase_order_id})
+        except Exception:
+            pass
+    return received["grn"]
 
 
 @router.get("/{purchase_order_id}/receipts")
@@ -347,10 +383,9 @@ def issue_purchase_order(purchase_order_id: str, user: dict = Depends(get_curren
     """Issue a draft PO: status draft -> sent."""
     repo = PurchaseOrderRepository(user["org_id"])
     po = _po_load(repo, purchase_order_id, user["org_id"])
-    if po.get("status") not in ("draft", None, ""):
-        raise HTTPException(status_code=400, detail=f"تەنها پسووڵەی draft دەتوانرێت دەربچێت (دۆخی ئێستا: {po.get('status')})")
+    PURCHASE_ORDER_SM.transition(po, "sent")
     return repo.update(purchase_order_id, {
-        "status": "sent",
+        "status": po["status"],
         "issued_at": datetime.utcnow().isoformat(),
         "issued_by": user.get("id"),
     })

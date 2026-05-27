@@ -3,6 +3,8 @@ import { Button, Tag, Space, Descriptions, Select, Typography, Switch } from 'an
 import { useTranslation } from 'react-i18next';
 import { EyeOutlined, PrinterOutlined, RollbackOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import api from '../../api';
+import { useListQuery } from '../../api/queries/useListQuery';
+import { listQueryKeys } from '../../api/queries/keys';
 import { message } from '../../utils/message';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../../design-system';
@@ -24,9 +26,6 @@ const statusColors: Record<string, string> = {
 
 const POSOrders: React.FC = () => {
  const { t } = useTranslation();
- const [data, setData] = useState<any[]>([]);
- const [loading, setLoading] = useState(false);
- const [total, setTotal] = useState(0);
  const [page, setPage] = useState(1);
  const [stateFilter, setStateFilter] = useState('');
  const [showQuotationsOnly, setShowQuotationsOnly] = useState(false);
@@ -37,32 +36,26 @@ const POSOrders: React.FC = () => {
  });
  const isDark = useAuthStore((s) => s.theme === 'dark');
 
- const fetchData = async () => {
- setLoading(true);
- try {
- const params: any = { page, page_size: 25 };
- 
- // Sprint 6.3 - Enhanced quotation filtering
- if (showQuotationsOnly) {
- const res = await api.get('/api/pos/orders/quotations', { params });
- setData(res.data.items || []);
- setTotal(res.data.total || 0);
- } else {
- if (stateFilter) params.state = stateFilter;
- const res = await api.get('/api/pos/orders', { params });
- setData(res.data.items || []);
- setTotal(res.data.total || 0);
+ const posOrdersQuery = useListQuery<any, { items?: any[]; total?: number }>({
+ queryKey: listQueryKeys.posOrders({
+ page,
+ page_size: 25,
+ state: showQuotationsOnly ? undefined : stateFilter || undefined,
+ quotations: showQuotationsOnly,
+ }),
+ queryFn: () => {
+ const params: Record<string, unknown> = { page, page_size: 25 };
+ if (!showQuotationsOnly && stateFilter) {
+ params.state = stateFilter;
  }
- } catch {
- message.error(t('error'));
- } finally {
- setLoading(false);
- }
- };
-
- useEffect(() => {
- fetchData();
- }, [page, stateFilter, showQuotationsOnly]);
+ return showQuotationsOnly
+ ? api.get('/api/pos/orders/quotations', { params })
+ : api.get('/api/pos/orders', { params });
+ },
+ });
+ const data = posOrdersQuery.data?.items ?? [];
+ const total = posOrdersQuery.data?.total ?? 0;
+ const loading = posOrdersQuery.isLoading || posOrdersQuery.isFetching;
 
  const viewOrderDetail = async (orderId: string) => {
  try {

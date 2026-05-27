@@ -7,17 +7,23 @@ from app.firestore.system import SettingsRepository, CurrencyRepository, Exchang
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user, hash_password, verify_password
 from app.services import settings_service as _settings_service
-from app.services.permissions import require_perm, user_has_perm
+from app.services.settings_category_gate import (
+    default_write_permission,
+    has_settings_read_access,
+    has_settings_write_access,
+    require_module_for_category,
+)
 from app.firebase_client import get_db
 
 router = APIRouter(prefix="/api/system", tags=["System"])
+settings_router = APIRouter(prefix="/api/settings", tags=["Settings"])
 
 
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
 
-def _require_settings_write(user: dict) -> None:
+def _require_settings_write(user: dict, category: str | None = None) -> None:
     """Raise 403 if the user does not have admin or owner role.
 
     Settings write operations (POST /settings, PUT /organization, etc.) require
@@ -25,12 +31,22 @@ def _require_settings_write(user: dict) -> None:
 
     Requirement 12.4 — Changes SHALL require appropriate permission (admin/owner).
     """
-    role = user.get("role", "")
-    if role not in ("admin", "owner") and not user_has_perm(user, "settings.update"):
-        raise HTTPException(
-            status_code=403,
-            detail="دەسەڵات نییە: تەنها بەڕێوەبەر یان خاوەن دەتوانێت ڕێکخستنەکان بگۆڕێت",
-        )
+    if has_settings_write_access(user, category):
+        return
+    raise HTTPException(
+        status_code=403,
+        detail={"code": "permission_denied", "perm": default_write_permission(category)},
+    )
+
+
+def _require_settings_read(user: dict, category: str | None = None) -> None:
+    """Raise 403 when the caller cannot read organisation settings."""
+    if has_settings_read_access(user, category):
+        return
+    raise HTTPException(
+        status_code=403,
+        detail={"code": "permission_denied", "perm": "settings.read"},
+    )
 
 
 def _log_settings_change(
@@ -400,6 +416,8 @@ def get_settings_bag(category: str, user: dict = Depends(get_current_user)):
     The response is organisation-scoped: two organisations sharing the same
     Firestore project never see each other's settings (Requirement 11.4).
     """
+    _require_settings_read(user, category)
+    require_module_for_category(user["org_id"], category)
     return _settings_service.get_bag(user["org_id"], category)
 
 
@@ -418,7 +436,8 @@ def set_settings_bag(category: str, data: dict, user: dict = Depends(get_current
     Requirement 12.5 — Logs the change to the audit log.
     """
     # Requirement 12.4 — Settings write requires admin/owner role.
-    _require_settings_write(user)
+    _require_settings_write(user, category)
+    require_module_for_category(user["org_id"], category)
 
     if not isinstance(data, dict):
         raise HTTPException(status_code=400, detail="Request body must be a JSON object")
@@ -575,6 +594,15 @@ def list_activity_log(
         order_by="created_at",
     )
     return {"items": items, "total": total}
+
+
+@settings_router.get("/integration-health")
+def get_integration_health(user: dict = Depends(get_current_user)):
+    """Aggregate integration readiness for Settings → Integration health."""
+    _require_settings_read(user)
+    from app.services.integration_health import get_integration_health as _health
+
+    return {"items": _health(user["org_id"])}
 
 
 @router.get("/public-config")

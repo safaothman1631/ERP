@@ -1,0 +1,86 @@
+{
+  "$schema_comment": "Synthetic SLO probe targets. Loaded by scripts/production-reality-probe.mjs (V-PR.1 / V-PR.7).",
+  "$slo_class_values": ["read-single", "read-list", "write", "bulk", "report", "pos-checkout", "shell"],
+  "targets": [
+    {
+      "path": "/api/health",
+      "method": "GET",
+      "requires_auth": false,
+      "slo_class": "read-single",
+      "expected_status": 200,
+      "label": "liveness"
+    },
+    {
+      "path": "/api/version",
+      "method": "GET",
+      "requires_auth": false,
+      "slo_class": "read-single",
+      "expected_status": 200,
+      "label": "version"
+    },
+    {
+      "path": "/api/items?limit=20",
+      "method": "GET",
+      "requires_auth": true,
+      "slo_class": "read-list",
+      "expected_status": 200,
+      "label": "items-list"
+    },
+    {
+      "path": "/api/invoices?limit=20",
+      "method": "GET",
+      "requires_auth": true,
+      "slo_class": "read-list",
+      "expected_status": 200,
+      "label": "invoices-list"
+    },
+    {
+      "path": "/api/contacts?limit=20",
+      "method": "GET",
+      "requires_auth": true,
+      "slo_class": "read-list",
+      "expected_status": 200,
+      "label": "contacts-list"
+    },
+    {
+      "path": "/api/dashboard/summary",
+      "method": "GET",
+      "requires_auth": true,
+      "slo_class": "report",
+      "expected_status": 200,
+      "label": "dashboard-summary"
+    },
+    {
+      "path": "/api/pos/products?limit=50",
+      "method": "GET",
+      "requires_auth": true,
+      "slo_class": "read-list",
+      "expected_status": 200,
+      "label": "pos-products"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "requires_auth": true,
+      "slo_class": "read-single",
+      "expected_status": 200,
+      "label": "auth-me"
+    },
+    {
+      "path": "/",
+      "method": "GET",
+      "requires_auth": false,
+      "slo_class": "shell",
+      "expected_status": 200,
+      "label": "shell-root"
+    },
+    {
+      "path": "/login",
+      "method": "GET",
+      "requires_auth": false,
+      "slo_class": "shell",
+      "expected_status": 200,
+      "label": "shell-login"
+    }
+  ]
+}

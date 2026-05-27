@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.firestore.system import BranchRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/branches", tags=["Branches"])
 
@@ -59,8 +60,8 @@ def branches_comparison(
     branches, _ = BranchRepository(user["org_id"]).list(limit=200)
     from app.firestore.invoices import InvoiceRepository
     from app.firestore.bills import BillRepository
-    invoices, _ = InvoiceRepository(user["org_id"]).list(limit=10000)
-    bills, _ = BillRepository(user["org_id"]).list(limit=10000)
+    invoices = collect_stream(InvoiceRepository(user["org_id"]), max_docs=10000)
+    bills = collect_stream(BillRepository(user["org_id"]), max_docs=10000)
 
     def _in_range(rec: dict) -> bool:
         d = rec.get("date") or rec.get("invoice_date") or rec.get("bill_date")

@@ -93,7 +93,16 @@ def get_bag(org_id: str, category: str, defaults: Optional[Dict[str, Any]] = Non
                     parsed = {}
             elif isinstance(raw, dict):
                 parsed = raw
-    except Exception:
+    except Exception as exc:
+        from app.services.firestore_resilience import is_firestore_quota_error
+
+        if is_firestore_quota_error(exc):
+            with _LOCK:
+                stale = _CACHE.get(key)
+                if stale:
+                    base = dict(defaults or {})
+                    base.update(stale[1])
+                    return base
         parsed = {}
     with _LOCK:
         _CACHE[key] = (now, parsed)
@@ -186,6 +195,7 @@ def get_purchases_settings(org_id: str) -> Dict[str, Any]:
     return get_bag(org_id, "purchases", {
         "rfq_required": False,
         "three_way_match": True,
+        "require_grn": True,
         "approval_threshold": 5000,
         "default_lead_time_days": 7,
         "default_payment_terms_days": 30,
@@ -209,6 +219,7 @@ def get_inventory_settings(org_id: str) -> Dict[str, Any]:
 
 def get_pos_settings(org_id: str) -> Dict[str, Any]:
     return get_bag(org_id, "pos", {
+        "walk_in_contact_id": "",
         "receipt_printer_url": "",
         "cash_drawer_enabled": True,
         "barcode_scanner_enabled": True,
@@ -265,6 +276,14 @@ def get_audit_settings(org_id: str) -> Dict[str, Any]:
         "anomaly_alerts": True,
         "alert_email": "",
         "immutable_log": True,
+    })
+
+
+def get_security_settings(org_id: str) -> Dict[str, Any]:
+    return get_bag(org_id, "security", {
+        "require_2fa_for_admin": True,
+        "session_timeout_minutes": 60,
+        "password_min_length": 8,
     })
 
 

@@ -60,7 +60,13 @@ def _has_org_id_filter(src: str) -> bool:
 def audit_repos() -> list[dict]:
     rows = []
     for py in sorted(REPO_DIR.glob("*.py")):
-        if py.name in ("__init__.py", "base.py"):
+        if py.name in (
+            "__init__.py",
+            "base.py",
+            "encrypted_mixin.py",
+            "references.py",
+            "pii_registry.py",
+        ):
             continue
         src = py.read_text(encoding="utf-8")
         uses_base = _has_base_import(src)
@@ -79,6 +85,21 @@ def audit_repos() -> list[dict]:
 
 
 # ── report ────────────────────────────────────────────────────────────────────
+
+def _infra_notes() -> list[str]:
+    base_py = REPO_DIR / "base.py"
+    src = base_py.read_text(encoding="utf-8") if base_py.exists() else ""
+    notes = [
+        "",
+        "## Infrastructure helpers",
+        "",
+        f"- `base.py` `stream_org_docs`: {'yes' if 'stream_org_docs' in src else 'missing'}",
+        f"- `base.py` `list_page` / USE_FIRESTORE_QUERY: {'yes' if 'list_page' in src else 'missing'}",
+        f"- `query.py` server-side pagination: {'yes' if (ROOT / 'backend/app/firestore/query.py').exists() else 'missing'}",
+        "",
+    ]
+    return notes
+
 
 def render_md(rows: list[dict]) -> str:
     lines: list[str] = [
@@ -105,7 +126,27 @@ def render_md(rows: list[dict]) -> str:
             lines.append(f"- Line {lineno}: `{snippet}`")
         lines.append("")
 
+    lines.extend(_infra_notes())
+    lines.extend(_schema_version_notes())
     return "\n".join(lines)
+
+
+def _schema_version_notes() -> list[str]:
+    """Wave S8 — document migration registry coverage."""
+    try:
+        backend = str(ROOT / "backend")
+        if backend not in sys.path:
+            sys.path.insert(0, backend)
+        from app.firestore.migrations import registered_collections, list_migrations
+
+        lines = ["", "## Schema version registry (S8)", ""]
+        for coll in registered_collections():
+            versions = list_migrations(coll)
+            lines.append(f"- `{coll}`: migrations -> v{max(versions) if versions else 1}")
+        lines.append("")
+        return lines
+    except Exception as exc:
+        return ["", f"## Schema version registry: unavailable ({exc})", ""]
 
 
 def main() -> None:

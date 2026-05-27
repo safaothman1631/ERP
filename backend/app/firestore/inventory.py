@@ -1,5 +1,6 @@
 # Inventory repositories
 from .base import BaseRepository
+from .write_models import StockMovementWriteModel, StockTransferWriteModel
 
 class ItemRepository(BaseRepository):
     """Repository for inventory items"""
@@ -35,6 +36,7 @@ class WarehouseStockRepository(BaseRepository):
 class StockTransferRepository(BaseRepository):
     """Repository for stock transfers"""
     collection_name = "stock_transfers"
+    WRITE_MODEL = StockTransferWriteModel
     
     def get_with_lines(self, doc_id):
         """Get stock transfer with line items"""
@@ -81,6 +83,7 @@ class CompositeComponentRepository(BaseRepository):
 class StockMovementRepository(BaseRepository):
     """Repository for stock movements"""
     collection_name = "stock_movements"
+    WRITE_MODEL = StockMovementWriteModel
 
 
 class BatchRepository(BaseRepository):

@@ -7,19 +7,20 @@ This document provides a comprehensive overview of the settings and configuratio
 ## Table of Contents
 
 1. [Architecture Overview](#architecture-overview)
-2. [Frontend TypeScript Interfaces](#frontend-typescript-interfaces)
-3. [Backend Python Data Models](#backend-python-data-models)
-4. [Theme & Design Tokens](#theme--design-tokens)
-5. [Localization (i18n) Configuration](#localization-i18n-configuration)
-6. [Authentication Configuration](#authentication-configuration)
-7. [Environment Variables](#environment-variables)
-8. [API & CORS Configuration](#api--cors-configuration)
-9. [Rate Limiting](#rate-limiting)
-10. [Layout & Shell Configuration](#layout--shell-configuration)
-11. [Feature Flags](#feature-flags)
-12. [Storage & Persistence](#storage--persistence)
-13. [Testing Frameworks](#testing-frameworks)
-14. [Key File Index](#key-file-index)
+2. [Tenant vs Platform Settings](#tenant-vs-platform-settings)
+3. [Frontend TypeScript Interfaces](#frontend-typescript-interfaces)
+4. [Backend Python Data Models](#backend-python-data-models)
+5. [Theme & Design Tokens](#theme--design-tokens)
+6. [Localization (i18n) Configuration](#localization-i18n-configuration)
+7. [Authentication Configuration](#authentication-configuration)
+8. [Environment Variables](#environment-variables)
+9. [API & CORS Configuration](#api--cors-configuration)
+10. [Rate Limiting](#rate-limiting)
+11. [Layout & Shell Configuration](#layout--shell-configuration)
+12. [Feature Flags](#feature-flags)
+13. [Storage & Persistence](#storage--persistence)
+14. [Testing Frameworks](#testing-frameworks)
+15. [Key File Index](#key-file-index)
 
 ---
 
@@ -60,6 +61,25 @@ The settings system spans two layers:
 ```
 
 **Conflict resolution (Requirement 11.5):** When local and server settings conflict, the server always wins. The merge order is `DEFAULTS < local < server`.
+
+---
+
+## Tenant vs Platform Settings
+
+Tenant org users use **`/settings`** (AppShell). Vendor / super admin operations use **`/platform/*`** (Platform Console). See `.kiro/specs/tenant-user-settings/` for the full spec.
+
+| Concern | Tenant (`/settings`) | Platform (`/platform/*`) |
+|---------|----------------------|---------------------------|
+| Personal profile, security, prefs | ✅ all authenticated users | N/A |
+| Org/module settings bags | ✅ module-gated + RBAC (`settings.update`, etc.) | N/A |
+| Feature flags (rollout %) | ❌ hidden; read-only mirrors only | `/platform/feature-flags` |
+| Infra health (CPU, Firestore, jobs) | ❌ `/settings/system-health` redirects | `/platform/health` |
+| License pool (`allowed_modules`) | ❌ read-only on Modules tab | `/platform/orgs/:id` (License tab) |
+| Cross-org module queue, global users | ❌ | `/platform/module-requests`, `/platform/users` |
+
+**Frontend:** section visibility is driven by `frontend/src/settings/registry/moduleSettingsRegistry.ts` and `useSettingsAccess`. Platform-only keys are listed in `platformOnlySections.ts`.
+
+**Backend:** `GET/PUT /api/system/settings/{category}` enforces module gates via `settings_category_gate.py` and granular read/write permissions in `system.py` (`_require_settings_read`, `_require_settings_write`).
 
 ---
 

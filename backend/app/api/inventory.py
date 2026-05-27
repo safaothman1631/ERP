@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from app.firestore.inventory import (
     WarehouseRepository,
     StockMovementRepository,
@@ -11,8 +11,14 @@ from app.firestore.inventory import (
 )
 from app.services.auth import get_current_user
 from app.services import settings_service
+from app.services.module_gate import require_module
+from app.services.report_streams import collect_stream
 
-router = APIRouter(prefix="/api/inventory", tags=["Inventory"])
+router = APIRouter(
+    prefix="/api/inventory",
+    tags=["Inventory"],
+    dependencies=[Depends(require_module("inventory"))],
+)
 
 
 @router.get("/valuation")
@@ -183,41 +189,47 @@ def create_inventory_adjustment(data: dict, user: dict = Depends(get_current_use
     if not lines and not data.get("item_id"):
         raise HTTPException(status_code=400, detail="item_id یان lines داواکراوە")
     
-    repo = InventoryAdjustmentRepository(user["org_id"])
-    
-    # Multi-line shape: create one adjustment per line for backward compat with single-item repo
+    from app.services.inventory_adjustment_atomic import post_adjustment_atomic
+
+    org_id = user["org_id"]
+
     if lines:
         first = None
         for ln in lines:
             if not ln.get("item_id"):
                 raise HTTPException(status_code=400, detail="هەر هێڵێک item_id پێویستە")
-            adj = repo.create({
-                "id": str(uuid.uuid4()),
-                "item_id": ln["item_id"],
-                "adjustment_account_id": data.get("account_id") or data.get("adjustment_account_id"),
-                "adjustment_type": data.get("adjustment_type", "quantity"),
-                "quantity_adjusted": ln.get("quantity_adjusted", 0),
-                "value_adjusted": ln.get("value_adjusted", 0),
-                "reason": data.get("reason", ""),
-                "date": data.get("date") or datetime.utcnow().date().isoformat(),
-                "status": data.get("status", "posted"),
-                "created_by_id": user["id"],
-            })
+            adj = post_adjustment_atomic(
+                org_id,
+                {
+                    "id": str(uuid.uuid4()),
+                    "item_id": ln["item_id"],
+                    "adjustment_account_id": data.get("account_id")
+                    or data.get("adjustment_account_id"),
+                    "adjustment_type": data.get("adjustment_type", "quantity"),
+                    "quantity_adjusted": ln.get("quantity_adjusted", 0),
+                    "value_adjusted": ln.get("value_adjusted", 0),
+                    "reason": data.get("reason", ""),
+                    "date": data.get("date") or datetime.utcnow().date().isoformat(),
+                    "created_by_id": user["id"],
+                },
+            )
             if first is None:
                 first = adj
         return first
-    
-    # Legacy flat shape
-    return repo.create({
-        "id": str(uuid.uuid4()),
-        "item_id": data["item_id"],
-        "adjustment_account_id": data.get("adjustment_account_id") or data.get("account_id"),
-        "quantity_adjusted": data.get("quantity_adjusted", 0),
-        "reason": data.get("reason", ""),
-        "date": data.get("date") or datetime.utcnow().date().isoformat(),
-        "status": data.get("status", "posted"),
-        "created_by_id": user["id"],
-    })
+
+    return post_adjustment_atomic(
+        org_id,
+        {
+            "id": str(uuid.uuid4()),
+            "item_id": data["item_id"],
+            "adjustment_account_id": data.get("adjustment_account_id")
+            or data.get("account_id"),
+            "quantity_adjusted": data.get("quantity_adjusted", 0),
+            "reason": data.get("reason", ""),
+            "date": data.get("date") or datetime.utcnow().date().isoformat(),
+            "created_by_id": user["id"],
+        },
+    )
 
 
 @router.get("/groups")
@@ -267,7 +279,9 @@ def delete_warehouse(warehouse_id: str, user: dict = Depends(get_current_user)):
     repo = WarehouseRepository(user["org_id"])
     if not repo.get(warehouse_id):
         raise HTTPException(404)
-    repo.delete(warehouse_id)
+    from app.services.http_guards import guarded_delete
+
+    guarded_delete(repo, warehouse_id)
     return {"success": True}
 
 @router.get("/movements")
@@ -335,7 +349,9 @@ def add_component(item_id: str, data: dict, user: dict = Depends(get_current_use
 def remove_component(item_id: str, component_id: str, user: dict = Depends(get_current_user)):
     from app.firestore.inventory import CompositeComponentRepository
     repo = CompositeComponentRepository(user["org_id"])
-    repo.delete(component_id)
+    from app.services.http_guards import guarded_delete
+
+    guarded_delete(repo, component_id)
     return {"success": True}
 
 # ===== STOCK TRANSFERS =====
@@ -375,15 +391,34 @@ def get_transfer(transfer_id: str, user: dict = Depends(get_current_user)):
 @router.post("/transfers/{transfer_id}/complete")
 def complete_transfer(transfer_id: str, user: dict = Depends(get_current_user)):
     from app.firestore.inventory import StockTransferRepository
+    from app.services.stock_transfer_atomic import complete_transfer_atomic
+
     repo = StockTransferRepository(user["org_id"])
-    t = repo.get(transfer_id)
-    if not t: raise HTTPException(404)
-    return repo.update(transfer_id, {"status": "completed"})
+    t = repo.get_with_lines(transfer_id)
+    if not t or t.get("org_id") != user["org_id"]:
+        raise HTTPException(404, detail="گواستنەوە نەدۆزرایەوە")
+    try:
+        return complete_transfer_atomic(
+            user["org_id"],
+            transfer_id,
+            lines=t.get("lines") or [],
+            user_id=user.get("id"),
+        )
+    except ValueError as exc:
+        if str(exc).startswith("insufficient_stock"):
+            raise HTTPException(status_code=400, detail="کاڵای پێویست نییە")
+        if str(exc).startswith("transfer_invalid_status"):
+            raise HTTPException(status_code=400, detail="دۆخی گواستنەوە ناگونجاوە")
+        raise
 
 
 # ===== FIX-72: Transfer Approval Workflow =====
 @router.post("/transfers/{transfer_id}/approve")
-def approve_transfer(transfer_id: str, user: dict = Depends(get_current_user)):
+def approve_transfer(
+    transfer_id: str,
+    user: dict = Depends(get_current_user),
+    if_match: Optional[str] = Header(None, alias="If-Match"),
+):
     """Approve a draft/pending transfer (status -> approved)."""
     from app.firestore.inventory import StockTransferRepository
     repo = StockTransferRepository(user["org_id"])
@@ -392,11 +427,18 @@ def approve_transfer(transfer_id: str, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="گواستنەوە نەدۆزرایەوە")
     if t.get("status") in ("completed", "cancelled", "rejected"):
         raise HTTPException(status_code=400, detail=f"ناتوانرێت گواستنەوەی دۆخی '{t.get('status')}' پەسەند بکرێت")
-    return repo.update(transfer_id, {
-        "status": "approved",
-        "approved_at": datetime.utcnow().isoformat(),
-        "approved_by": user.get("id"),
-    })
+    from app.services.http_guards import versioned_repo_update
+
+    return versioned_repo_update(
+        repo,
+        transfer_id,
+        {
+            "status": "approved",
+            "approved_at": datetime.utcnow().isoformat(),
+            "approved_by": user.get("id"),
+        },
+        if_match=if_match,
+    )
 
 
 @router.post("/transfers/{transfer_id}/reject")
@@ -458,7 +500,9 @@ def update_price_list(price_list_id: str, data: dict, user: dict = Depends(get_c
 def delete_price_list(price_list_id: str, user: dict = Depends(get_current_user)):
     from app.firestore.inventory import PriceListRepository
     repo = PriceListRepository(user["org_id"])
-    repo.delete(price_list_id)
+    from app.services.http_guards import guarded_delete
+
+    guarded_delete(repo, price_list_id)
     return {"success": True}
 
 @router.get("/price-lists/{price_list_id}/items")
@@ -553,9 +597,14 @@ def create_batch(data: dict, user: dict = Depends(get_current_user)):
         "org_id": user["org_id"],
         "item_id": data["item_id"],
         "batch_number": data["batch_number"],
+        "lot_number": data.get("lot_number") or data["batch_number"],
+        "warehouse_id": data.get("warehouse_id"),
         "manufactured_date": data.get("manufactured_date"),
         "expiry_date": data.get("expiry_date"),
+        "received_date": data.get("received_date") or datetime.utcnow().isoformat(),
         "quantity": data.get("quantity", 0),
+        "qty_received": data.get("qty_received", data.get("quantity", 0)),
+        "qty_on_hand": data.get("qty_on_hand", data.get("quantity", 0)),
         "status": data.get("status", "active"),
         "notes": data.get("notes", ""),
         "created_at": datetime.utcnow().isoformat(),
@@ -563,6 +612,25 @@ def create_batch(data: dict, user: dict = Depends(get_current_user)):
         "created_by_id": user["id"]
     }
     return repo.create(batch_data)
+
+
+@router.post("/lots/allocate")
+def allocate_lots(data: dict, user: dict = Depends(get_current_user)):
+    """Allocate lots for an item/qty using FIFO/LIFO/FEFO."""
+    from app.services.lot_allocation import LotAllocationService, STRATEGY_FIFO
+
+    item_id = data.get("item_id")
+    qty = float(data.get("quantity") or data.get("qty") or 0)
+    if not item_id or qty <= 0:
+        raise HTTPException(400, "item_id and quantity required")
+    strategy = (data.get("strategy") or STRATEGY_FIFO).upper()
+    warehouse_id = data.get("warehouse_id")
+    allocations = LotAllocationService.allocate(
+        user["org_id"], item_id, qty, strategy=strategy, warehouse_id=warehouse_id
+    )
+    if data.get("consume"):
+        LotAllocationService.consume(user["org_id"], allocations)
+    return {"allocations": allocations, "strategy": strategy, "consumed": bool(data.get("consume"))}
 
 
 @router.get("/batches/{batch_id}")
@@ -598,7 +666,9 @@ def delete_batch(batch_id: str, user: dict = Depends(get_current_user)):
     if not batch or batch.get("org_id") != user["org_id"]:
         raise HTTPException(status_code=404, detail="باچەکە نەدۆزرایەوە")
     
-    repo.delete(batch_id)
+    from app.services.http_guards import guarded_delete
+
+    guarded_delete(repo, batch_id)
     return {"success": True, "message": "باچ سڕایەوە"}
 
 
@@ -687,7 +757,9 @@ def delete_landed_cost(cost_id: str, user: dict = Depends(get_current_user)):
     if not cost or cost.get("org_id") != user["org_id"]:
         raise HTTPException(status_code=404, detail="تێچووی گەیاندن نەدۆزرایەوە")
     
-    repo.delete(cost_id)
+    from app.services.http_guards import guarded_delete
+
+    guarded_delete(repo, cost_id)
     return {"success": True, "message": "تێچووی گەیاندن سڕایەوە"}
 
 
@@ -787,59 +859,31 @@ def create_stock_move(data: dict, user: dict = Depends(get_current_user)):
 @router.post("/stock-moves/{move_id}/validate")
 def validate_stock_move(move_id: str, user: dict = Depends(get_current_user)):
     """Validate (post) a stock move: draft -> done. Adjusts WarehouseStock if available."""
-    from app.firestore.inventory import StockMovementRepository, WarehouseStockRepository
-    repo = StockMovementRepository(user["org_id"])
-    move = repo.get(move_id)
-    if not move or move.get("org_id") != user["org_id"]:
-        raise HTTPException(status_code=404, detail="جووڵە نەدۆزرایەوە")
-    if move.get("state") == "done":
-        return {"id": move_id, "state": "done", "message": "Already validated"}
-    if move.get("state") == "cancelled":
-        raise HTTPException(status_code=400, detail="ناتوانرێت جووڵەی هەڵوەشاوە پەسەند بکرێت")
+    from app.services.firestore_tx import TenantMismatchError
+    from app.services.warehouse_move_atomic import validate_stock_move_atomic
 
-    qty = float(move.get("quantity", 0) or 0)
-    item_id = move.get("item_id")
-    from_loc = move.get("from_location_id")
-    to_loc = move.get("to_location_id")
     try:
-        ws_repo = WarehouseStockRepository(user["org_id"])
-        if from_loc:
-            stocks, _ = ws_repo.list(filters=[
-                {"field": "warehouse_id", "op": "==", "value": from_loc},
-                {"field": "item_id", "op": "==", "value": item_id},
-            ], limit=1)
-            if stocks:
-                cur = float(stocks[0].get("quantity", 0) or 0)
-                if cur < qty:
-                    raise HTTPException(status_code=400, detail=f"کاڵای پێویست نییە (بەردەست: {cur})")
-                ws_repo.update(stocks[0]["id"], {"quantity": cur - qty})
-        if to_loc:
-            stocks, _ = ws_repo.list(filters=[
-                {"field": "warehouse_id", "op": "==", "value": to_loc},
-                {"field": "item_id", "op": "==", "value": item_id},
-            ], limit=1)
-            if stocks:
-                cur = float(stocks[0].get("quantity", 0) or 0)
-                ws_repo.update(stocks[0]["id"], {"quantity": cur + qty})
-            else:
-                ws_repo.create({
-                    "id": str(uuid.uuid4()),
-                    "org_id": user["org_id"],
-                    "warehouse_id": to_loc,
-                    "item_id": item_id,
-                    "quantity": qty,
-                })
-    except HTTPException:
-        raise
-    except Exception:
-        # Stock-table integration optional; still mark done
-        pass
-
-    return repo.update(move_id, {
-        "state": "done",
-        "validated_at": datetime.utcnow().isoformat(),
-        "validated_by": user.get("id"),
-    })
+        return validate_stock_move_atomic(
+            user["org_id"],
+            move_id,
+            validated_by=user.get("id"),
+        )
+    except TenantMismatchError:
+        raise HTTPException(status_code=404, detail="جووڵە نەدۆزرایەوە")
+    except ValueError as exc:
+        code = str(exc)
+        if code == "stock_move_cancelled":
+            raise HTTPException(
+                status_code=400,
+                detail="ناتوانرێت جووڵەی هەڵوەشاوە پەسەند بکرێت",
+            )
+        if code.startswith("insufficient_stock:"):
+            available = code.split(":", 1)[1]
+            raise HTTPException(
+                status_code=400,
+                detail=f"کاڵای پێویست نییە (بەردەست: {available})",
+            )
+        raise HTTPException(status_code=400, detail=code)
 
 
 @router.post("/stock-moves/{move_id}/cancel")
@@ -906,7 +950,7 @@ def lot_traceability(lot_id: str, user: dict = Depends(get_current_user)):
 @router.get("/valuation/summary")
 def inventory_valuation_summary(user: dict = Depends(get_current_user)):
     """FIX-171: Total inventory value across all items (used in dashboard + balance sheet check)."""
-    items, _ = ItemRepository(user["org_id"]).list(limit=5000)
+    items = collect_stream(ItemRepository(user["org_id"]))
     total_value = 0.0
     total_qty = 0.0
     by_category: dict = {}
@@ -967,31 +1011,22 @@ def confirm_picking(picking_id: str, user: dict = Depends(get_current_user)):
 @router.post("/pickings/{picking_id}/done")
 def done_picking(picking_id: str, user: dict = Depends(get_current_user)):
     """FIX-174: Mark picking as done � decrements warehouse stock per line."""
-    from app.firestore.inventory import StockMovementRepository, WarehouseStockRepository
-    org = user["org_id"]
-    repo = StockMovementRepository(org)
-    pk = repo.get(picking_id)
-    if not pk or pk.get("type") != "picking":
+    from app.services.firestore_tx import TenantMismatchError
+    from app.services.warehouse_move_atomic import done_picking_atomic
+
+    try:
+        return done_picking_atomic(
+            user["org_id"],
+            picking_id,
+            done_by=user.get("id"),
+        )
+    except TenantMismatchError:
         raise HTTPException(404, "picking not found")
-    if pk.get("status") not in ("confirmed", "draft"):
-        raise HTTPException(400, "???????? ??????? ????????/????????? ????? ?????")
-    ws_repo = WarehouseStockRepository(org)
-    warehouse_id = pk.get("warehouse_id")
-    for line in pk.get("lines") or []:
-        item_id = line.get("item_id")
-        qty = float(line.get("qty") or 0)
-        if not item_id or qty <= 0:
-            continue
-        existing, _ = ws_repo.list(filters=[
-            {"field": "item_id", "op": "==", "value": item_id},
-            {"field": "warehouse_id", "op": "==", "value": warehouse_id},
-        ], limit=1)
-        if existing:
-            ws = existing[0]
-            ws_repo.update(ws["id"], {"qty": float(ws.get("qty") or 0) - qty})
-        else:
-            ws_repo.create({"item_id": item_id, "warehouse_id": warehouse_id, "qty": -qty})
-    return repo.update(picking_id, {"status": "done", "done_at": datetime.utcnow().isoformat()})
+    except ValueError as exc:
+        code = str(exc)
+        if code == "picking_invalid_status":
+            raise HTTPException(400, "???????? ??????? ????????/????????? ????? ?????")
+        raise HTTPException(400, code)
 
 
 @router.post("/pickings/{picking_id}/cancel")

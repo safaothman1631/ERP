@@ -7,9 +7,14 @@ from app.firestore.organizations import OrganizationRepository
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
 from app.services.pdf_generator import generate_credit_note_pdf
+from app.services.module_gate import require_module
 from app.schemas.schemas import CreditNoteCreate, CreditNoteResponse
 
-router = APIRouter(prefix="/api/credit-notes", tags=["Credit Notes"])
+router = APIRouter(
+    prefix="/api/credit-notes",
+    tags=["Credit Notes"],
+    dependencies=[Depends(require_module("sales"))],
+)
 
 class CreditNoteApplicationRepository(BaseRepository):
     collection_name = "credit_note_applications"

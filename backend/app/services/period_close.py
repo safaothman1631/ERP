@@ -19,6 +19,7 @@ from app.firestore.accounts import AccountRepository
 from app.firestore.journals import JournalEntryRepository
 from app.firestore.system import SettingsRepository
 from app.services.accounting import AccountingService
+from app.services.report_streams import collect_stream
 
 # Account types treated as Revenue (credit-normal)
 REVENUE_TYPES = {"sales", "income", "other_income", "revenue"}
@@ -63,6 +64,35 @@ class PeriodCloseService:
         return on <= lock_date
 
     @staticmethod
+    def get_lock_status(org_id: str, on_date: datetime) -> dict:
+        """Return lock metadata for a given date."""
+        locked = PeriodCloseService.check_period_locked(org_id, on_date)
+        db = get_db()
+        doc = db.collection("transaction_locks").document(org_id).get()
+        lock_date_raw = doc.to_dict().get("lock_date") if doc.exists else None
+        lock_dt = _to_dt(lock_date_raw)
+        return {
+            "locked": locked,
+            "lock_date": lock_dt.isoformat() if lock_dt else None,
+            "reason": "transaction_lock" if locked else None,
+        }
+
+    @staticmethod
+    def assert_not_locked(org_id: str, on_date: datetime) -> None:
+        """Raise HTTP 409 if the date falls in a locked period."""
+        if PeriodCloseService.check_period_locked(org_id, on_date):
+            from fastapi import HTTPException
+            status = PeriodCloseService.get_lock_status(org_id, on_date)
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "period_locked",
+                    "message": "Period locked: cannot post on or before lock date",
+                    "lock_date": status.get("lock_date"),
+                },
+            )
+
+    @staticmethod
     def compute_period_pnl(
         org_id: str,
         period_start: datetime,
@@ -82,7 +112,7 @@ class PeriodCloseService:
         """
         je_repo = JournalEntryRepository(org_id)
         acc_repo = AccountRepository(org_id)
-        accounts = {a["id"]: a for a in acc_repo.list(limit=10000)[0]}
+        accounts = {a["id"]: a for a in collect_stream(acc_repo)}
 
         entries, _ = je_repo.list(
             filters=[
@@ -142,7 +172,7 @@ class PeriodCloseService:
             pass
 
         acc_repo = AccountRepository(org_id)
-        accs, _ = acc_repo.list(limit=10000)
+        accs = collect_stream(acc_repo)
         for a in accs:
             if a.get("account_type") == "retained_earnings":
                 return a["id"]

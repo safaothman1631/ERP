@@ -18,6 +18,7 @@ from app.firestore.subscriptions import (
     DunningAttemptRepository
 )
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/subscriptions", tags=["Subscriptions"])
 
@@ -639,7 +640,7 @@ def churn_report(user: dict = Depends(get_current_user), period: int = Query(30,
     period_start = (now - timedelta(days=period)).isoformat()
     
     # Get all subscriptions
-    all_subs, _ = sub_repo.list(limit=10000)
+    all_subs = collect_stream(sub_repo, max_docs=10000)
     
     # Count active at period start and cancellations during period
     active_at_start = 0

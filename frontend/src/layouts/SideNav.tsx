@@ -1,5 +1,5 @@
 import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
-import { Drawer, Input, Layout, Tooltip } from 'antd';
+import { Drawer, Input, Layout, Tag, Tooltip } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
@@ -12,10 +12,13 @@ import {
 import { palette, radius, space, motion as motionTk } from '../theme/tokens';
 import { buildNavSections, buildNavZones, flattenRoutes, type FlattenedNavLeaf, type NavSection, type NavZone } from './navigation';
 import { getModuleKeyForPath } from './moduleMap';
+import { getModuleMaturity, getMaturityBadge } from '../onboarding/moduleMaturity';
 import { isModuleEnabled, useOnboardingStore } from '../onboarding/store';
 import { useNavStore, type NavItem } from '../stores/navStore';
 import { useUiStore } from '../stores/uiStore';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useRoleUx } from '../hooks/useRoleUx';
+import { applyNavProfile, getNavProfileConfig } from '../personas/navProfiles';
 
 const { Sider } = Layout;
 
@@ -89,15 +92,27 @@ export const SideNav: React.FC<SideNavProps> = ({
   const zones = useMemo<NavZone[]>(() => buildNavZones(t), [t]);
 
   const enabledModules = useOnboardingStore((s) => s.enabledModules);
+  const { theme } = useRoleUx();
+  const navProfile = getNavProfileConfig(theme.navProfile);
+
   const filteredSections = useMemo<NavSection[]>(() => {
-    if (!enabledModules) return sections;
-    return sections
-      .map((sec) => ({
-        ...sec,
-        items: sec.items.filter((it) => isModuleEnabled(getModuleKeyForPath(it.key) ?? undefined, enabledModules)),
-      }))
-      .filter((sec) => sec.items.length > 0);
-  }, [sections, enabledModules]);
+    let base = sections;
+    if (enabledModules) {
+      base = sections
+        .map((sec) => ({
+          ...sec,
+          items: sec.items.filter((it) => isModuleEnabled(getModuleKeyForPath(it.key) ?? undefined, enabledModules)),
+        }))
+        .filter((sec) => sec.items.length > 0);
+    }
+    return applyNavProfile(base, theme.navProfile);
+  }, [sections, enabledModules, theme.navProfile]);
+
+  useEffect(() => {
+    if (!navProfile.defaultCollapsed) return;
+    setSidebarCollapsed(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- apply POS minimal collapse once per profile
+  }, [theme.navProfile]);
 
   const flattenedRoutes = useMemo(() => flattenRoutes(filteredSections, zones), [filteredSections, zones]);
 
@@ -280,6 +295,8 @@ export const SideNav: React.FC<SideNavProps> = ({
   const renderLeaf = (route: FlattenedNavLeaf) => {
     const isActive = activeLeaf?.key === route.key;
     const isFav = navFavorites.some((f) => f.key === route.key);
+    const modKey = getModuleKeyForPath(route.key);
+    const maturityBadge = modKey ? getMaturityBadge(getModuleMaturity(modKey)) : null;
     return (
       <button
         key={route.key}
@@ -322,8 +339,25 @@ export const SideNav: React.FC<SideNavProps> = ({
             }}
           />
         )}
-        <span style={{ flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {route.label}
+        <span style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
+          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {route.label}
+          </span>
+          {maturityBadge && (
+            <Tag
+              bordered={false}
+              style={{
+                margin: 0,
+                flexShrink: 0,
+                fontSize: 9,
+                lineHeight: '14px',
+                padding: '0 4px',
+                fontWeight: 600,
+              }}
+            >
+              {maturityBadge}
+            </Tag>
+          )}
         </span>
         {route.favoriteEligible && !isMobile && (
           <span

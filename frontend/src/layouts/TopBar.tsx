@@ -1,9 +1,9 @@
 import React from 'react';
-import { Layout, Button, Tooltip, Avatar, Dropdown, Space, Badge } from 'antd';
+import { Layout, Button, Tooltip, Dropdown, Space, Badge } from 'antd';
 import {
   MenuFoldOutlined, MenuUnfoldOutlined, MoonOutlined, SunOutlined,
-  LogoutOutlined, UserOutlined, BellOutlined, SearchOutlined, DownOutlined, PlusOutlined,
-  QuestionCircleOutlined, ColumnHeightOutlined, SettingOutlined, MenuOutlined,
+  BellOutlined, SearchOutlined, PlusOutlined,
+  QuestionCircleOutlined, ColumnHeightOutlined, MenuOutlined,
   StarOutlined, StarFilled,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -16,8 +16,11 @@ import Breadcrumb from './Breadcrumb';
 import { useUnreadCount } from './NotificationsDrawer';
 import OrgSwitcher from './OrgSwitcher';
 import BranchSwitcher from './BranchSwitcher';
+import EntitySwitcher from './EntitySwitcher';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useViewport } from '../hooks/useViewport';
+import RoleIdentityChip from '../components/role/RoleIdentityChip';
+import { useRoleUx } from '../hooks/useRoleUx';
 
 const { Header } = Layout;
 
@@ -46,9 +49,10 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const { userName, logout, toggleTheme } = useAuthStore();
+  const { logout, toggleTheme } = useAuthStore();
   const setNotificationsOpen = useUiStore((s) => s.setNotificationsOpen);
   const setQuickCreateOpen = useUiStore((s) => s.setQuickCreateOpen);
+  const { theme } = useRoleUx();
   const setShortcutsOpen = useUiStore((s) => s.setShortcutsOpen);
   const density = useUiStore((s) => s.density);
   const setDensity = useUiStore((s) => s.setDensity);
@@ -212,15 +216,6 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
 
   // ─── Desktop / Tablet full TopBar ────────────────────────────────────────
 
-  const userMenu = {
-    items: [
-      { key: 'profile',   icon: <UserOutlined />,           label: t('profile', 'Profile') },
-      { key: 'settings',  icon: <SettingOutlined />,        label: t('settings'), onClick: () => navigate('/settings') },
-      { key: 'shortcuts', icon: <QuestionCircleOutlined />, label: `${t('shortcuts.title', 'Keyboard shortcuts')}  ?`, onClick: () => setShortcutsOpen(true) },
-      { type: 'divider' as const },
-      { key: 'logout',    icon: <LogoutOutlined />, danger: true, label: t('logout'), onClick: handleLogout },
-    ],
-  };
   const densityMenu = {
     items: [
       { key: 'compact',     label: t('density.compact', 'Compact'),         onClick: () => setDensity('compact') },
@@ -318,7 +313,18 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
 
       {/* Right: action cluster */}
       <Space size={4} align="center" style={{ flexShrink: 0 }}>
-        {/* Quick create */}
+        {theme.quickActions.slice(0, 2).map((action) => (
+          <Tooltip key={action.id} title={t(action.labelKey, action.fallbackLabel)}>
+            <Button
+              type="default"
+              size="small"
+              onClick={() => navigate(action.route)}
+              style={{ borderColor: theme.accent, color: theme.accent }}
+            >
+              {t(action.labelKey, action.fallbackLabel)}
+            </Button>
+          </Tooltip>
+        ))}
         <Tooltip title={t('topbar.quick_create', 'Quick create')}>
           <Button
             type="primary"
@@ -328,9 +334,9 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
             aria-label={t('topbar.quick_create', 'Quick create')}
             className="tb-cta-btn"
             style={{
-              background: 'linear-gradient(135deg, #1F6FEB 0%, #114393 100%)',
+              background: `linear-gradient(135deg, ${theme.accent} 0%, color-mix(in srgb, ${theme.accent} 70%, #000) 100%)`,
               border: 'none',
-              boxShadow: '0 4px 12px rgba(31,111,235,0.32)',
+              boxShadow: `0 4px 12px color-mix(in srgb, ${theme.accent} 32%, transparent)`,
             }}
           />
         </Tooltip>
@@ -342,6 +348,9 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
 
         {/* BranchSwitcher — Requirement 4.9 */}
         <BranchSwitcher isRTL={isRTL} />
+
+        {/* EntitySwitcher — multi-entity context (Phase 5.2) */}
+        <EntitySwitcher isRTL={isRTL} />
 
         <span className="tb-divider" style={{ background: borderCol }} />
 
@@ -405,70 +414,8 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
 
         <span className="tb-divider" style={{ background: borderCol }} />
 
-        {/* User menu */}
-        <Dropdown
-          menu={userMenu}
-          placement={isRTL ? 'bottomLeft' : 'bottomRight'}
-          trigger={['click']}
-        >
-          <button
-            type="button"
-            className="tb-user-btn"
-            aria-label={t('user_menu', 'User menu')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: space.sm,
-              background: searchBg,
-              border: `1px solid ${searchBorder}`,
-              cursor: 'pointer',
-              padding: `4px 10px 4px 4px`,
-              borderRadius: radius.pill,
-              transition: transitions.base,
-            }}
-          >
-            <span style={{ position: 'relative', display: 'inline-flex' }}>
-              <Avatar
-                size={30}
-                style={{
-                  background: 'linear-gradient(135deg, #5B8DEF 0%, #1F6FEB 60%, #114393 100%)',
-                  fontWeight: 700,
-                  fontSize: 13,
-                  boxShadow: '0 2px 8px rgba(31,111,235,0.32)',
-                }}
-              >
-                {(userName || 'U').slice(0, 1).toUpperCase()}
-              </Avatar>
-              {/* Online presence dot */}
-              <span
-                style={{
-                  position: 'absolute',
-                  bottom: 0,
-                  insetInlineEnd: 0,
-                  width: 9,
-                  height: 9,
-                  borderRadius: '50%',
-                  background: '#16A34A',
-                  border: `2px solid ${isDark ? '#111A2E' : '#fff'}`,
-                }}
-              />
-            </span>
-            <span
-              style={{
-                fontSize: 13,
-                fontWeight: 500,
-                color: userInk,
-                maxWidth: 110,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {userName ?? 'User'}
-            </span>
-            <DownOutlined style={{ fontSize: 9, color: searchInk }} />
-          </button>
-        </Dropdown>
+        {/* Role identity + user menu */}
+        <RoleIdentityChip isDark={isDark} onLogout={handleLogout} />
       </Space>
     </Header>
   );

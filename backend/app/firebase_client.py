@@ -29,15 +29,13 @@ def init_firebase():
             os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "serviceAccountKey.json"))
         gac_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
         bucket_name = os.environ.get("FIREBASE_STORAGE_BUCKET", "")
-        init_options = {"storageBucket": bucket_name} if bucket_name else None
+        firebase_project_id = os.environ.get("FIREBASE_PROJECT_ID", "zoho-83cda")
+        if not bucket_name:
+            bucket_name = f"{firebase_project_id}.appspot.com"
+        init_options = {"storageBucket": bucket_name, "projectId": firebase_project_id}
 
         cred = None
         mode = None
-        # Explicit Firebase project ID — prevents 'aud claim mismatch' on
-        # Cloud Run when ADC project differs from Firebase project.
-        firebase_project_id = os.environ.get("FIREBASE_PROJECT_ID", "zoho-83cda")
-        init_options = init_options or {}
-        init_options["projectId"] = firebase_project_id
 
         if os.path.exists(cred_path):
             cred = credentials.Certificate(cred_path)
@@ -57,10 +55,27 @@ def init_firebase():
 
         _app = firebase_admin.initialize_app(cred, init_options)
         _db = firestore.client()
-        if bucket_name:
+        try:
             _bucket = storage.bucket()
+        except Exception as bucket_err:
+            logger.warning(f"Firebase Storage bucket unavailable ({bucket_name}): {bucket_err}")
+            _bucket = None
         _firebase_available = True
         logger.info(f"Firebase initialized via {mode}")
+    except ValueError as dup_err:
+        if "already exists" not in str(dup_err):
+            raise
+        import firebase_admin
+        from firebase_admin import firestore, storage
+        _app = firebase_admin.get_app()
+        _db = firestore.client()
+        bucket_name = os.environ.get("FIREBASE_STORAGE_BUCKET") or f"{os.environ.get('FIREBASE_PROJECT_ID', 'zoho-83cda')}.appspot.com"
+        try:
+            _bucket = storage.bucket(bucket_name) if bucket_name else None
+        except Exception:
+            _bucket = None
+        _firebase_available = True
+        logger.info("Firebase reusing existing app instance")
     except Exception as e:
         logger.warning(f"Firebase initialization failed: {e}. Running in local mode.")
         _firebase_available = False
@@ -78,13 +93,18 @@ def get_db():
     return _db
 
 def get_bucket():
-    """Get Firebase Storage bucket"""
+    """Get Firebase Storage bucket (optional — returns None when not configured)."""
     global _bucket
     if _bucket is None and _firebase_available:
         init_firebase()
     if _bucket is None:
-        raise RuntimeError("Firebase Storage is not configured. Set FIREBASE_STORAGE_BUCKET env var.")
+        return None
     return _bucket
+
+
+def is_storage_available() -> bool:
+    """True when a Firebase Storage bucket is reachable."""
+    return get_bucket() is not None
 
 
 # Alias used by scheduler.py and other modules

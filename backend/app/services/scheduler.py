@@ -102,8 +102,68 @@ def start_scheduler(app=None):
         replace_existing=True,
     )
 
+    # Phase 2: GDPR hard-delete after grace period
+    _scheduler.add_job(
+        _job_gdpr_hard_delete,
+        trigger=CronTrigger(hour=3, minute=0),
+        id="gdpr_hard_delete_grace",
+        name="GDPR Hard Delete After Grace Period",
+        replace_existing=True,
+    )
+
+    # Phase 4: e-invoice dispatch retries
+    _scheduler.add_job(
+        _job_einvoice_dispatcher,
+        trigger=IntervalTrigger(minutes=5),
+        id="einvoice_dispatcher",
+        name="E-Invoice Submission Dispatcher",
+        replace_existing=True,
+    )
+
+    # Phase 3: lot expiry alerts
+    _scheduler.add_job(
+        _job_lot_expiry_alerts,
+        trigger=CronTrigger(hour=8, minute=0),
+        id="lot_expiry_alerts",
+        name="Inventory Lot Expiry Alerts",
+        replace_existing=True,
+    )
+
+    # Performance wave: hard-delete soft-deleted docs past retention
+    _scheduler.add_job(
+        _job_soft_delete_purge,
+        trigger=CronTrigger(day_of_week="sun", hour=4, minute=0),
+        id="soft_delete_purge",
+        name="Soft-Delete Retention Purge",
+        replace_existing=True,
+    )
+
+    _scheduler.add_job(
+        _job_refresh_org_counters,
+        trigger=CronTrigger(day=1, hour=5, minute=0),
+        id="refresh_org_counters",
+        name="Refresh AR/AP Dashboard Counters",
+        replace_existing=True,
+    )
+
+    _scheduler.add_job(
+        _job_outbox_dispatch,
+        trigger=IntervalTrigger(minutes=1),
+        id="outbox_dispatch",
+        name="Outbox Event Dispatcher",
+        replace_existing=True,
+    )
+
+    _scheduler.add_job(
+        _job_audit_retention,
+        trigger=CronTrigger(day=1, hour=6, minute=0),
+        id="audit_retention",
+        name="Audit Log Retention Purge",
+        replace_existing=True,
+    )
+
     _scheduler.start()
-    logger.info("✅ Scheduler started with 7 jobs")
+    logger.info("✅ Scheduler started with 14 jobs")
 
 
 def shutdown_scheduler():
@@ -426,6 +486,146 @@ def _job_monthly_depreciation():
             finished_at=datetime.utcnow().isoformat(),
             status="failed",
         )
+
+
+def _job_gdpr_hard_delete():
+    """Finalize user deletions whose 30-day grace period has elapsed."""
+    from app.services.gdpr_service import hard_delete_due_users
+
+    try:
+        logger.info("🔒 Running GDPR hard-delete job...")
+        result = hard_delete_due_users()
+        logger.info(
+            "✅ GDPR hard-delete: %s processed, %s errors",
+            result.get("processed", 0),
+            len(result.get("errors") or []),
+        )
+    except Exception as e:
+        logger.error("❌ GDPR hard-delete job failed: %s", e)
+
+
+def _job_einvoice_dispatcher():
+    """Retry pending/failed e-invoice submissions (preview/stub safe)."""
+    from app.firebase_client import get_firestore_client
+    from app.firestore.einvoice import EInvoiceSubmissionRepository
+
+    try:
+        logger.info("📨 Running e-invoice dispatcher...")
+        db = get_firestore_client()
+        processed = 0
+        for org_doc in db.collection("organizations").stream():
+            org_id = org_doc.id
+            repo = EInvoiceSubmissionRepository(org_id)
+            items, _ = repo.list(limit=100)
+            for sub in items:
+                status = sub.get("status") or ""
+                retries = int(sub.get("retry_count") or 0)
+                if status not in ("generated", "failed", "retry") or retries >= 5:
+                    continue
+                try:
+                    from app.services.einvoice_service import submit_to_portal_stub
+                    invoice_id = sub.get("invoice_id")
+                    if not invoice_id:
+                        continue
+                    result = submit_to_portal_stub(org_id, invoice_id, sub)
+                    repo.update(sub["id"], {
+                        "status": result.get("status", "submitted"),
+                        "provider_uuid": result.get("provider_uuid"),
+                        "last_dispatch_at": datetime.utcnow().isoformat(),
+                        "retry_count": retries + 1,
+                    })
+                    processed += 1
+                except Exception as exc:
+                    repo.update(sub["id"], {
+                        "status": "failed",
+                        "last_error": str(exc),
+                        "retry_count": retries + 1,
+                        "last_dispatch_at": datetime.utcnow().isoformat(),
+                    })
+        logger.info("✅ E-invoice dispatcher: %s processed", processed)
+    except Exception as e:
+        logger.error("❌ E-invoice dispatcher failed: %s", e)
+
+
+def _job_lot_expiry_alerts():
+    """Log lots expiring within 30 days (hook for email/notifications)."""
+    from app.firebase_client import get_firestore_client
+    from app.services.lot_allocation import LotAllocationService
+
+    try:
+        alerts = 0
+        db = get_firestore_client()
+        for org_doc in db.collection("organizations").stream():
+            org_id = org_doc.id
+            expiring = LotAllocationService.check_expiring_soon(org_id, days=30)
+            alerts += len(expiring)
+        logger.info("✅ Lot expiry scan: %s lots expiring within 30 days", alerts)
+    except Exception as e:
+        logger.error("❌ Lot expiry alerts job failed: %s", e)
+
+
+def _job_refresh_org_counters():
+    """Reconcile denormalized org_counters from streamed invoices/bills."""
+    try:
+        from app.firebase_client import get_firestore_client
+        from app.services.org_counters import refresh_counters_from_stream
+
+        db = get_firestore_client()
+        count = 0
+        for org_doc in db.collection("organizations").stream():
+            refresh_counters_from_stream(org_doc.id)
+            count += 1
+        logger.info("✅ Org counter refresh: %s organizations", count)
+    except Exception as e:
+        logger.error("❌ Org counter refresh failed: %s", e)
+
+
+def _job_soft_delete_purge():
+    """Hard-delete soft-deleted documents older than retention (stream_org_docs)."""
+    try:
+        from app.services.soft_delete_purge import run_scheduled_purge
+
+        removed = run_scheduled_purge()
+        logger.info("✅ Soft-delete purge: %s documents removed", removed)
+    except Exception as e:
+        logger.error("❌ Soft-delete purge failed: %s", e)
+
+
+def _job_outbox_dispatch():
+    """Deliver pending outbox events (Wave I)."""
+    try:
+        from app.services.outbox_dispatcher import dispatch_pending
+
+        n = dispatch_pending(max_events=100)
+        logger.info("✅ Outbox dispatch: %s events", n)
+    except Exception as e:
+        logger.error("❌ Outbox dispatch failed: %s", e)
+
+
+def _job_audit_retention():
+    """Purge audit logs older than AUDIT_RETENTION_MONTHS (Wave T6)."""
+    try:
+        from app.config import settings
+        from app.firebase_client import get_firestore_client
+
+        months = int(getattr(settings, "AUDIT_RETENTION_MONTHS", 24) or 24)
+        cutoff = datetime.utcnow() - timedelta(days=months * 30)
+        db = get_firestore_client()
+        removed = 0
+        for doc in db.collection("audit_logs").limit(5000).stream():
+            data = doc.to_dict() or {}
+            ts = data.get("created_at") or data.get("timestamp")
+            if isinstance(ts, str):
+                try:
+                    ts = datetime.fromisoformat(ts.replace("Z", "").replace(" ", "T"))
+                except ValueError:
+                    continue
+            if isinstance(ts, datetime) and ts < cutoff:
+                doc.reference.delete()
+                removed += 1
+        logger.info("✅ Audit retention purge: %s logs (>%s mo)", removed, months)
+    except Exception as e:
+        logger.error("❌ Audit retention failed: %s", e)
 
 
 def _job_daily_backup():

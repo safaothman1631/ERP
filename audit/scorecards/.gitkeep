@@ -1,0 +1,4 @@
+# Scorecard JSON history is written here by scripts/world-class-scorecard.mjs.
+# One file per scorecard run: scorecard-YYYY-MM-DD.json
+# scorecard-PREV.json is a rolling pointer to the most recent prior run, used
+# to compute trend deltas.

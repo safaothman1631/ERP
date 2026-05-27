@@ -7,6 +7,7 @@ from app.firestore.budgets import BudgetRepository, BudgetLineRepository
 from app.firestore.journals import JournalEntryRepository
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/budgets", tags=["Budgets"])
 
@@ -163,7 +164,7 @@ def get_budget_variance(
     
     # Get actual from journal entries
     journal_repo = JournalEntryRepository(user["org_id"])
-    all_journals, _ = journal_repo.list(limit=5000)
+    all_journals = collect_stream(journal_repo, max_docs=5000)
     
     # Build variance report
     variances = []

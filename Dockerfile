@@ -47,6 +47,9 @@ COPY --from=frontend-build /web/dist ./frontend/dist
 
 EXPOSE 8080
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/api/health')" || exit 1
+
 # Cloud Run injects $PORT (default 8080). Use shell-form so $PORT expands.
 WORKDIR /app/backend
 CMD exec uvicorn app.main:app \

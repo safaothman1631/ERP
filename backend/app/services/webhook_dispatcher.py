@@ -57,7 +57,31 @@ def _post_one(url: str, payload: bytes, signature: str, event: str, timeout: int
         return 0, str(exc)
 
 
+def _enqueue_inbox(org_id: str, event: str, body: dict[str, Any]) -> str | None:
+    """Persist outbound event to ``webhook_inbox`` for TTL + retry (Wave I/T)."""
+    try:
+        from datetime import datetime
+
+        from app.firebase_client import get_db
+        from app.services.ttl_fields import expires_at_from_hours
+
+        doc_id = hashlib.sha256(f"{org_id}:{event}:{time.time()}".encode()).hexdigest()[:24]
+        get_db().collection("webhook_inbox").document(doc_id).set({
+            "org_id": org_id,
+            "event_type": event,
+            "payload": body,
+            "status": "pending",
+            "created_at": datetime.utcnow(),
+            "expires_at": expires_at_from_hours(24 * 7),
+        })
+        return doc_id
+    except Exception as exc:
+        logger.debug("webhook_inbox_enqueue_failed: %s", exc)
+        return None
+
+
 def _deliver(org_id: str, event: str, body: dict[str, Any]) -> None:
+    _enqueue_inbox(org_id, event, body)
     try:
         cfg = settings_service.get_bag(org_id, "webhooks") or {}
     except Exception:
@@ -102,3 +126,31 @@ def dispatch_event(org_id: str, event: str, body: dict[str, Any]) -> None:
         t.start()
     except Exception as exc:
         logger.error("dispatch_event failed: %s", exc)
+
+
+def test_delivery(
+    url: str,
+    org_id: str,
+    event: str = "webhook.test",
+    secret: str | None = None,
+) -> dict[str, Any]:
+    """Synchronously POST a test payload to *url* and return delivery outcome."""
+    try:
+        cfg = settings_service.get_bag(org_id, "webhooks") or {}
+    except Exception:
+        cfg = {}
+    global_secret = secret if secret is not None else (cfg.get("signing_secret") or "")
+    timeout = int(cfg.get("timeout_seconds") or _DEFAULT_TIMEOUT)
+    payload = json.dumps(
+        {"event": event, "org_id": org_id, "data": {"test": True}, "ts": int(time.time())},
+        default=str,
+    ).encode("utf-8")
+    signature = _sign(payload, global_secret) if global_secret else ""
+    status, msg = _post_one(url, payload, signature, event, timeout)
+    return {
+        "success": 200 <= status < 300,
+        "status": status,
+        "message": msg[:500],
+        "event": event,
+        "url": url,
+    }

@@ -31,6 +31,7 @@ class SetupRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=1, max_length=128)
+    totp_code: Optional[str] = Field(default=None, max_length=8)
 
 
 class RegisterRequest(BaseModel):
@@ -46,7 +47,7 @@ class RegisterRequest(BaseModel):
 
 class FirebaseRegisterRequest(BaseModel):
     id_token: str
-    org_name: str = Field(max_length=200)
+    org_name: str = Field(min_length=1, max_length=200)
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -67,6 +68,9 @@ class TokenResponse(BaseModel):
     user_id: str
     org_id: str
     user_name: str
+    role: Optional[str] = None
+    is_platform_admin: bool = False
+    requires_2fa_setup: bool = False
 
 
 # ===== Contact Schemas =====
@@ -92,6 +96,7 @@ class ContactCreate(ContactBase):
 class ContactUpdate(ContactBase):
     display_name: Optional[str] = Field(default=None, max_length=200)
     contact_type: Optional[str] = Field(default=None, max_length=20)
+    expected_version: Optional[int] = Field(default=None, ge=0)
 
 
 class ContactResponse(ContactBase):
@@ -139,6 +144,7 @@ class ItemUpdate(BaseModel):
     is_trackable: Optional[bool] = None
     reorder_point: Optional[float] = Field(default=None, ge=0, le=999999999)
     image_url: Optional[str] = Field(default=None, max_length=500)  # FIX-73
+    expected_version: Optional[int] = Field(default=None, ge=0)
 
 
 class ItemResponse(ItemBase):
@@ -187,6 +193,7 @@ class InvoiceUpdate(BaseModel):
     notes: Optional[str] = Field(default=None, max_length=2000)
     terms: Optional[str] = Field(default=None, max_length=2000)
     lines: Optional[list[InvoiceLineCreate]] = None
+    expected_version: Optional[int] = Field(default=None, ge=0)
 
 
 class InvoiceLineResponse(BaseModel):
@@ -408,6 +415,15 @@ class BillCreate(BaseModel):
     lines: list[BillLineCreate]
 
 
+class BillUpdate(BaseModel):
+    contact_id: Optional[str] = None
+    date: Optional[datetime] = None
+    due_date: Optional[datetime] = None
+    reference: Optional[str] = Field(default=None, max_length=200)
+    notes: Optional[str] = Field(default=None, max_length=2000)
+    lines: Optional[list[BillLineCreate]] = None
+
+
 class BillResponse(BaseModel):
     id: str
     org_id: str
@@ -582,6 +598,16 @@ class SalesOrderCreate(BaseModel):
     lines: list[SalesOrderLineCreate]
 
 
+class SalesOrderUpdate(BaseModel):
+    contact_id: Optional[str] = None
+    date: Optional[datetime] = None
+    delivery_date: Optional[datetime] = None
+    reference: Optional[str] = Field(default=None, max_length=200)
+    notes: Optional[str] = Field(default=None, max_length=2000)
+    terms: Optional[str] = Field(default=None, max_length=2000)
+    lines: Optional[list[SalesOrderLineCreate]] = None
+
+
 class SalesOrderLineResponse(BaseModel):
     id: str
     item_id: Optional[str] = None
@@ -640,6 +666,16 @@ class PurchaseOrderCreate(BaseModel):
     notes: Optional[str] = Field(default=None, max_length=2000)
     terms: Optional[str] = Field(default=None, max_length=2000)
     lines: list[PurchaseOrderLineCreate]
+
+
+class PurchaseOrderUpdate(BaseModel):
+    contact_id: Optional[str] = None
+    date: Optional[datetime] = None
+    delivery_date: Optional[datetime] = None
+    reference: Optional[str] = Field(default=None, max_length=200)
+    notes: Optional[str] = Field(default=None, max_length=2000)
+    terms: Optional[str] = Field(default=None, max_length=2000)
+    lines: Optional[list[PurchaseOrderLineCreate]] = None
 
 
 class PurchaseOrderLineResponse(BaseModel):

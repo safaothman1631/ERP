@@ -20,8 +20,13 @@ from app.firestore.hr import (
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
 from app.services import settings_service
+from app.services.module_gate import require_module
 
-router = APIRouter(prefix="/api/hr", tags=["HR"])
+router = APIRouter(
+    prefix="/api/hr",
+    tags=["HR"],
+    dependencies=[Depends(require_module("hr"))],
+)
 
 
 # ---------- Schemas ----------
@@ -104,18 +109,18 @@ class TimeOffCreate(BaseModel):
 
 
 # ---------- Departments ----------
-@router.get("/departments")
+@router.get("/departments", dependencies=[Depends(require_perm("hr.read"))])
 def list_departments(user: dict = Depends(get_current_user)):
     items, total = HRDepartmentRepository(user["org_id"]).list(limit=500)
     return {"items": items, "total": total}
 
 
-@router.post("/departments", dependencies=[Depends(require_perm("hr.create"))])
+@router.post("/departments", dependencies=[Depends(require_perm("hr.write"))])
 def create_department(payload: DepartmentCreate, user: dict = Depends(get_current_user)):
     return HRDepartmentRepository(user["org_id"]).create(payload.model_dump())
 
 
-@router.put("/departments/{dept_id}", dependencies=[Depends(require_perm("hr.update"))])
+@router.put("/departments/{dept_id}", dependencies=[Depends(require_perm("hr.write"))])
 def update_department(dept_id: str, payload: DepartmentCreate, user: dict = Depends(get_current_user)):
     return HRDepartmentRepository(user["org_id"]).update(dept_id, payload.model_dump())
 
@@ -127,18 +132,18 @@ def delete_department(dept_id: str, user: dict = Depends(get_current_user)):
 
 
 # ---------- Positions ----------
-@router.get("/positions")
+@router.get("/positions", dependencies=[Depends(require_perm("hr.read"))])
 def list_positions(user: dict = Depends(get_current_user)):
     items, total = HRPositionRepository(user["org_id"]).list(limit=500)
     return {"items": items, "total": total}
 
 
-@router.post("/positions", dependencies=[Depends(require_perm("hr.create"))])
+@router.post("/positions", dependencies=[Depends(require_perm("hr.write"))])
 def create_position(payload: PositionCreate, user: dict = Depends(get_current_user)):
     return HRPositionRepository(user["org_id"]).create(payload.model_dump())
 
 
-@router.put("/positions/{pid}", dependencies=[Depends(require_perm("hr.update"))])
+@router.put("/positions/{pid}", dependencies=[Depends(require_perm("hr.write"))])
 def update_position(pid: str, payload: PositionCreate, user: dict = Depends(get_current_user)):
     return HRPositionRepository(user["org_id"]).update(pid, payload.model_dump())
 
@@ -150,7 +155,7 @@ def delete_position(pid: str, user: dict = Depends(get_current_user)):
 
 
 # ---------- Employees ----------
-@router.get("/employees")
+@router.get("/employees", dependencies=[Depends(require_perm("hr.read"))])
 def list_employees(
     status: Optional[str] = None,
     department_id: Optional[str] = None,
@@ -166,7 +171,7 @@ def list_employees(
     return {"items": items, "total": total}
 
 
-@router.post("/employees", dependencies=[Depends(require_perm("hr.create"))])
+@router.post("/employees", dependencies=[Depends(require_perm("hr.write"))])
 def create_employee(payload: EmployeeCreate, user: dict = Depends(get_current_user)):
     # Apply HR config defaults
     try:
@@ -182,7 +187,7 @@ def create_employee(payload: EmployeeCreate, user: dict = Depends(get_current_us
     return HREmployeeRepository(user["org_id"]).create(data)
 
 
-@router.get("/employees/{emp_id}")
+@router.get("/employees/{emp_id}", dependencies=[Depends(require_perm("hr.read"))])
 def get_employee(emp_id: str, user: dict = Depends(get_current_user)):
     emp = HREmployeeRepository(user["org_id"]).get(emp_id)
     if not emp or emp.get("org_id") != user["org_id"]:
@@ -190,7 +195,7 @@ def get_employee(emp_id: str, user: dict = Depends(get_current_user)):
     return emp
 
 
-@router.put("/employees/{emp_id}", dependencies=[Depends(require_perm("hr.update"))])
+@router.put("/employees/{emp_id}", dependencies=[Depends(require_perm("hr.write"))])
 def update_employee(emp_id: str, payload: EmployeeUpdate, user: dict = Depends(get_current_user)):
     data = {k: v for k, v in payload.model_dump().items() if v is not None}
     return HREmployeeRepository(user["org_id"]).update(emp_id, data)
@@ -202,7 +207,7 @@ def delete_employee(emp_id: str, user: dict = Depends(get_current_user)):
     return {"success": True}
 
 
-@router.get("/employees/{emp_id}/org-chart")
+@router.get("/employees/{emp_id}/org-chart", dependencies=[Depends(require_perm("hr.read"))])
 def org_chart(emp_id: str, user: dict = Depends(get_current_user)):
     repo = HREmployeeRepository(user["org_id"])
     items, _ = repo.list(limit=1000)
@@ -211,7 +216,7 @@ def org_chart(emp_id: str, user: dict = Depends(get_current_user)):
 
 
 # ---------- Contracts ----------
-@router.get("/contracts")
+@router.get("/contracts", dependencies=[Depends(require_perm("hr.read"))])
 def list_contracts(
     employee_id: Optional[str] = None,
     status: Optional[str] = None,
@@ -227,12 +232,12 @@ def list_contracts(
     return {"items": items, "total": total}
 
 
-@router.post("/contracts", dependencies=[Depends(require_perm("hr.create"))])
+@router.post("/contracts", dependencies=[Depends(require_perm("hr.write"))])
 def create_contract(payload: ContractCreate, user: dict = Depends(get_current_user)):
     return HRContractRepository(user["org_id"]).create(payload.model_dump())
 
 
-@router.put("/contracts/{cid}", dependencies=[Depends(require_perm("hr.update"))])
+@router.put("/contracts/{cid}", dependencies=[Depends(require_perm("hr.write"))])
 def update_contract(cid: str, payload: ContractCreate, user: dict = Depends(get_current_user)):
     return HRContractRepository(user["org_id"]).update(cid, payload.model_dump())
 
@@ -284,7 +289,7 @@ def check_out(payload: CheckOutRequest, user: dict = Depends(get_current_user)):
     })
 
 
-@router.get("/attendance")
+@router.get("/attendance", dependencies=[Depends(require_perm("hr.read"))])
 def list_attendance(
     employee_id: Optional[str] = None,
     date_from: Optional[str] = None,
@@ -303,7 +308,7 @@ def list_attendance(
     return {"items": items, "total": len(items)}
 
 
-@router.get("/attendance/summary")
+@router.get("/attendance/summary", dependencies=[Depends(require_perm("hr.read"))])
 def attendance_summary(
     employee_id: Optional[str] = None,
     month: Optional[str] = None,  # YYYY-MM
@@ -328,13 +333,13 @@ def attendance_summary(
 
 
 # ---------- Leave Types ----------
-@router.get("/leave-types")
+@router.get("/leave-types", dependencies=[Depends(require_perm("hr.read"))])
 def list_leave_types(user: dict = Depends(get_current_user)):
     items, total = HRLeaveTypeRepository(user["org_id"]).list(limit=200)
     return {"items": items, "total": total}
 
 
-@router.post("/leave-types", dependencies=[Depends(require_perm("hr.create"))])
+@router.post("/leave-types", dependencies=[Depends(require_perm("hr.write"))])
 def create_leave_type(payload: LeaveTypeCreate, user: dict = Depends(get_current_user)):
     return HRLeaveTypeRepository(user["org_id"]).create(payload.model_dump())
 
@@ -358,7 +363,7 @@ def _calc_days(start: str, end: str) -> int:
     return (e - s).days + 1
 
 
-@router.get("/time-off")
+@router.get("/time-off", dependencies=[Depends(require_perm("hr.read"))])
 def list_time_off(
     employee_id: Optional[str] = None,
     status: Optional[str] = None,
@@ -481,7 +486,7 @@ def delete_time_off(to_id: str, user: dict = Depends(get_current_user)):
 
 
 # ---------- Dashboard ----------
-@router.get("/dashboard")
+@router.get("/dashboard", dependencies=[Depends(require_perm("hr.read"))])
 def hr_dashboard(user: dict = Depends(get_current_user)):
     org = user["org_id"]
     employees, _ = HREmployeeRepository(org).list(limit=2000)
@@ -518,7 +523,7 @@ class LeaveAllocationUpdate(BaseModel):
     notes: Optional[str] = None
 
 
-@router.get("/leave-allocations")
+@router.get("/leave-allocations", dependencies=[Depends(require_perm("hr.read"))])
 def list_leave_allocations(
     employee_id: Optional[str] = None,
     leave_type_id: Optional[str] = None,
@@ -537,7 +542,7 @@ def list_leave_allocations(
     return {"items": items, "total": total}
 
 
-@router.post("/leave-allocations", dependencies=[Depends(require_perm("hr.create"))])
+@router.post("/leave-allocations", dependencies=[Depends(require_perm("hr.write"))])
 def create_leave_allocation(payload: LeaveAllocationCreate, user: dict = Depends(get_current_user)):
     data = payload.model_dump()
     if not data.get("year"):
@@ -545,7 +550,7 @@ def create_leave_allocation(payload: LeaveAllocationCreate, user: dict = Depends
     return HRLeaveAllocationRepository(user["org_id"]).create(data)
 
 
-@router.put("/leave-allocations/{alloc_id}", dependencies=[Depends(require_perm("hr.update"))])
+@router.put("/leave-allocations/{alloc_id}", dependencies=[Depends(require_perm("hr.write"))])
 def update_leave_allocation(alloc_id: str, payload: LeaveAllocationUpdate, user: dict = Depends(get_current_user)):
     repo = HRLeaveAllocationRepository(user["org_id"])
     if not repo.get(alloc_id):
@@ -574,7 +579,7 @@ def _br_class(coll: str):
 
 
 # Job openings
-@router.get("/jobs")
+@router.get("/jobs", dependencies=[Depends(require_perm("hr.read"))])
 def list_jobs(status: str = None, user: dict = Depends(get_current_user)):
     R = _br_class("hr_jobs")
     filters = [{"field": "status", "op": "==", "value": status}] if status else None
@@ -582,7 +587,7 @@ def list_jobs(status: str = None, user: dict = Depends(get_current_user)):
     return {"items": items, "total": total}
 
 
-@router.post("/jobs", status_code=201, dependencies=[Depends(require_perm("hr.create"))])
+@router.post("/jobs", status_code=201, dependencies=[Depends(require_perm("hr.write"))])
 def create_job(data: dict, user: dict = Depends(get_current_user)):
     R = _br_class("hr_jobs")
     payload = {
@@ -596,7 +601,7 @@ def create_job(data: dict, user: dict = Depends(get_current_user)):
     return R(user["org_id"]).create(payload)
 
 
-@router.put("/jobs/{job_id}", dependencies=[Depends(require_perm("hr.update"))])
+@router.put("/jobs/{job_id}", dependencies=[Depends(require_perm("hr.write"))])
 def update_job(job_id: str, data: dict, user: dict = Depends(get_current_user)):
     R = _br_class("hr_jobs")
     repo = R(user["org_id"])
@@ -606,7 +611,7 @@ def update_job(job_id: str, data: dict, user: dict = Depends(get_current_user)):
 
 
 # Applicants
-@router.get("/applicants")
+@router.get("/applicants", dependencies=[Depends(require_perm("hr.read"))])
 def list_applicants(job_id: str = None, stage: str = None,
                     user: dict = Depends(get_current_user)):
     R = _br_class("hr_applicants")
@@ -619,7 +624,7 @@ def list_applicants(job_id: str = None, stage: str = None,
     return {"items": items, "total": total}
 
 
-@router.post("/applicants", status_code=201)
+@router.post("/applicants", status_code=201, dependencies=[Depends(require_perm("hr.write"))])
 def create_applicant(data: dict, user: dict = Depends(get_current_user)):
     R = _br_class("hr_applicants")
     payload = {
@@ -635,7 +640,7 @@ def create_applicant(data: dict, user: dict = Depends(get_current_user)):
 
 
 @router.post("/applicants/{app_id}/move-stage",
-             dependencies=[Depends(require_perm("hr.update"))])
+             dependencies=[Depends(require_perm("hr.write"))])
 def move_applicant_stage(app_id: str, data: dict,
                           user: dict = Depends(get_current_user)):
     R = _br_class("hr_applicants")
@@ -650,7 +655,7 @@ def move_applicant_stage(app_id: str, data: dict,
 
 
 @router.post("/applicants/{app_id}/hire",
-             dependencies=[Depends(require_perm("hr.create"))])
+             dependencies=[Depends(require_perm("hr.write"))])
 def hire_applicant(app_id: str, data: dict = None,
                     user: dict = Depends(get_current_user)):
     """Convert applicant ? Employee record + close stage."""
@@ -676,7 +681,7 @@ def hire_applicant(app_id: str, data: dict = None,
 
 
 # Appraisals
-@router.get("/appraisals")
+@router.get("/appraisals", dependencies=[Depends(require_perm("hr.read"))])
 def list_appraisals(employee_id: str = None, user: dict = Depends(get_current_user)):
     R = _br_class("hr_appraisals")
     filters = [{"field": "employee_id", "op": "==", "value": employee_id}] if employee_id else None
@@ -685,7 +690,7 @@ def list_appraisals(employee_id: str = None, user: dict = Depends(get_current_us
 
 
 @router.post("/appraisals", status_code=201,
-             dependencies=[Depends(require_perm("hr.create"))])
+             dependencies=[Depends(require_perm("hr.write"))])
 def create_appraisal(data: dict, user: dict = Depends(get_current_user)):
     R = _br_class("hr_appraisals")
     payload = {
@@ -700,7 +705,7 @@ def create_appraisal(data: dict, user: dict = Depends(get_current_user)):
 
 
 @router.post("/appraisals/{ap_id}/finalize",
-             dependencies=[Depends(require_perm("hr.update"))])
+             dependencies=[Depends(require_perm("hr.write"))])
 def finalize_appraisal(ap_id: str, user: dict = Depends(get_current_user)):
     from datetime import datetime as _dt
     R = _br_class("hr_appraisals")
@@ -719,7 +724,7 @@ def finalize_appraisal(ap_id: str, user: dict = Depends(get_current_user)):
 
 
 # Self-service
-@router.get("/self/me")
+@router.get("/self/me", dependencies=[Depends(require_perm("hr.read"))])
 def self_me(user: dict = Depends(get_current_user)):
     """Return current user's employee record + recent leave/payroll."""
     emp_repo = HREmployeeRepository(user["org_id"])
@@ -734,7 +739,7 @@ def self_me(user: dict = Depends(get_current_user)):
     return {"user_id": user["id"], "employee": employee}
 
 
-@router.get("/self/payslips")
+@router.get("/self/payslips", dependencies=[Depends(require_perm("hr.read"))])
 def self_payslips(user: dict = Depends(get_current_user)):
     from app.firestore.payroll import PayslipRepository
     emp_repo = HREmployeeRepository(user["org_id"])

@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/quality", tags=["Quality"])
 
@@ -167,9 +168,9 @@ def close_capa(cid: str, user: dict = Depends(get_current_user)):
 
 @router.get("/dashboard")
 def quality_dashboard(user: dict = Depends(get_current_user)):
-    checks, _ = QCCheckRepo(user["org_id"]).list(limit=10000)
-    ncs, _ = QCNonConformityRepo(user["org_id"]).list(limit=10000)
-    capas, _ = QCCAPARepo(user["org_id"]).list(limit=10000)
+    checks = collect_stream(QCCheckRepo(user["org_id"]), max_docs=10000)
+    ncs = collect_stream(QCNonConformityRepo(user["org_id"]), max_docs=10000)
+    capas = collect_stream(QCCAPARepo(user["org_id"]), max_docs=10000)
     return {
         "checks_total": len(checks),
         "checks_passed": sum(1 for c in checks if c.get("status") == "pass"),

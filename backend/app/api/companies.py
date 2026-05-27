@@ -22,6 +22,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.firestore.companies import CompanyRepository, IntercompanyJournalRepository
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/companies", tags=["Companies"])
 
@@ -87,8 +88,8 @@ def consolidated_pl(
     from app.firestore.bills import BillRepository
     inv_repo = InvoiceRepository(user["org_id"])
     bill_repo = BillRepository(user["org_id"])
-    invoices, _ = inv_repo.list(limit=10000)
-    bills, _ = bill_repo.list(limit=10000)
+    invoices = collect_stream(inv_repo, max_docs=10000)
+    bills = collect_stream(bill_repo, max_docs=10000)
 
     def _in_range(rec: dict) -> bool:
         d = rec.get("date") or rec.get("invoice_date") or rec.get("bill_date")
@@ -141,7 +142,7 @@ def consolidated_bs(user: dict = Depends(get_current_user)):
     companies = CompanyRepository(user["org_id"]).list(limit=200)[0]
     from app.firestore.accounts import AccountRepository
     acc_repo = AccountRepository(user["org_id"])
-    accounts, _ = acc_repo.list(limit=10000)
+    accounts = collect_stream(acc_repo, max_docs=10000)
 
     def _kind_total(cid: str, kinds: tuple[str, ...]) -> float:
         return sum(

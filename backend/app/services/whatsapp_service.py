@@ -38,6 +38,17 @@ def merge_config(stored: Optional[dict]) -> dict:
     return cfg
 
 
+def is_whatsapp_production_ready(config: Optional[dict]) -> bool:
+    """True when WhatsApp Cloud API can send live messages."""
+    merged = merge_config(config)
+    return bool(
+        merged.get("enabled")
+        and not merged.get("preview_mode", True)
+        and str(merged.get("api_token") or "").strip()
+        and str(merged.get("phone_number_id") or "").strip()
+    )
+
+
 def mask_config(cfg: dict) -> dict:
     masked = dict(cfg)
     if masked.get("api_token"):

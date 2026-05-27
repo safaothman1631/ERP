@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime, date
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 
 from app.firestore.hr import HRContractRepository, HREmployeeRepository
@@ -12,6 +12,7 @@ from app.firestore.payroll import PayrollRunRepository, PayslipRepository, Salar
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
 from app.services import settings_service
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/payroll", tags=["Payroll"])
 
@@ -39,25 +40,35 @@ class PayslipUpdate(BaseModel):
 
 
 # ---------- Salary Rules ----------
-@router.get("/rules")
+@router.get("/rules", dependencies=[Depends(require_perm("payroll.read"))])
 def list_rules(user: dict = Depends(get_current_user)):
     items, total = SalaryRuleRepository(user["org_id"]).list(limit=200)
     return {"items": items, "total": total}
 
 
-@router.post("/rules", dependencies=[Depends(require_perm("hr.payroll.create"))])
+@router.post("/rules", dependencies=[Depends(require_perm("payroll.write"))])
 def create_rule(payload: SalaryRuleCreate, user: dict = Depends(get_current_user)):
     return SalaryRuleRepository(user["org_id"]).create(payload.model_dump())
 
 
-@router.put("/rules/{rid}", dependencies=[Depends(require_perm("hr.payroll.update"))])
-def update_rule(rid: str, payload: SalaryRuleCreate, user: dict = Depends(get_current_user)):
-    return SalaryRuleRepository(user["org_id"]).update(rid, payload.model_dump())
+@router.put("/rules/{rid}", dependencies=[Depends(require_perm("payroll.write"))])
+def update_rule(
+    rid: str,
+    payload: SalaryRuleCreate,
+    user: dict = Depends(get_current_user),
+    if_match: Optional[str] = Header(None, alias="If-Match"),
+):
+    from app.services.versioned_update import apply_versioned_update
+
+    repo = SalaryRuleRepository(user["org_id"])
+    return apply_versioned_update(repo, rid, payload.model_dump(), if_match=if_match)
 
 
-@router.delete("/rules/{rid}", dependencies=[Depends(require_perm("hr.payroll.delete"))])
+@router.delete("/rules/{rid}", dependencies=[Depends(require_perm("payroll.delete"))])
 def delete_rule(rid: str, user: dict = Depends(get_current_user)):
-    SalaryRuleRepository(user["org_id"]).delete(rid)
+    from app.services.http_guards import guarded_delete
+
+    guarded_delete(SalaryRuleRepository(user["org_id"]), rid)
     return {"success": True}
 
 
@@ -122,13 +133,13 @@ def _compute_payslip(basic: float, rules: list[dict]) -> dict:
 
 
 # ---------- Payroll Runs ----------
-@router.get("/runs")
+@router.get("/runs", dependencies=[Depends(require_perm("payroll.read"))])
 def list_runs(user: dict = Depends(get_current_user)):
     items, total = PayrollRunRepository(user["org_id"]).list(limit=200, order_by="period_end", order_dir="DESCENDING")
     return {"items": items, "total": total}
 
 
-@router.post("/runs", dependencies=[Depends(require_perm("hr.payroll.create"))])
+@router.post("/runs", dependencies=[Depends(require_perm("payroll.write"))])
 def create_run(payload: PayrollRunCreate, user: dict = Depends(get_current_user)):
     # Apply payroll config
     try:
@@ -182,13 +193,54 @@ def create_run(payload: PayrollRunCreate, user: dict = Depends(get_current_user)
         total_gross += comp["gross"]
         total_net += comp["net"]
 
-    return PayrollRunRepository(org).update(run["id"], {
+    run = PayrollRunRepository(org).update(run["id"], {
         "total_gross": round(total_gross, 2),
         "total_net": round(total_net, 2),
     })
+    if cfg.get("iraq_payroll_enabled", cfg.get("country", "").upper() in ("IQ", "IRQ", "IRAQ")):
+        _iraq_compute_slips(org, run["id"])
+        run = PayrollRunRepository(org).get(run["id"])
+    return run
 
 
-@router.get("/runs/{run_id}")
+def _iraq_compute_slips(org: str, run_id: str) -> dict:
+    """Apply Iraq SS + income tax to all payslips in a run."""
+    from app.services.iraq_payroll import (
+        IRAQ_SS_EMPLOYEE_PERCENT,
+        IRAQ_SS_EMPLOYER_PERCENT,
+        compute_iraq_income_tax_monthly,
+    )
+    slips, _ = PayslipRepository(org).list(
+        filters=[{"field": "run_id", "op": "==", "value": run_id}], limit=2000
+    )
+    updated = 0
+    totals = {"ss_employee": 0.0, "ss_employer": 0.0, "income_tax": 0.0}
+    for s in slips:
+        basic = float(s.get("basic_salary") or s.get("gross") or s.get("basic") or 0)
+        ss_emp = round(basic * IRAQ_SS_EMPLOYEE_PERCENT / 100.0, 2)
+        ss_er = round(basic * IRAQ_SS_EMPLOYER_PERCENT / 100.0, 2)
+        taxable = max(0.0, basic - ss_emp)
+        income_tax = compute_iraq_income_tax_monthly(taxable)
+        deductions = round(ss_emp + income_tax, 2)
+        net = round(basic - deductions, 2)
+        PayslipRepository(org).update(s["id"], {
+            "basic_salary": basic,
+            "iraq_ss_employee": ss_emp,
+            "iraq_ss_employer": ss_er,
+            "iraq_income_tax": income_tax,
+            "deductions": deductions,
+            "net_salary": net,
+            "net": net,
+            "iraq_computed_at": datetime.utcnow().isoformat(),
+        })
+        totals["ss_employee"] += ss_emp
+        totals["ss_employer"] += ss_er
+        totals["income_tax"] += income_tax
+        updated += 1
+    return {"payslips_updated": updated, "totals": {k: round(v, 2) for k, v in totals.items()}}
+
+
+@router.get("/runs/{run_id}", dependencies=[Depends(require_perm("payroll.read"))])
 def get_run(run_id: str, user: dict = Depends(get_current_user)):
     run = PayrollRunRepository(user["org_id"]).get(run_id)
     if not run or run.get("org_id") != user["org_id"]:
@@ -197,7 +249,7 @@ def get_run(run_id: str, user: dict = Depends(get_current_user)):
     return {**run, "payslips": slips}
 
 
-@router.post("/runs/{run_id}/confirm", dependencies=[Depends(require_perm("hr.payroll.update"))])
+@router.post("/runs/{run_id}/confirm", dependencies=[Depends(require_perm("payroll.write"))])
 def confirm_run(run_id: str, user: dict = Depends(get_current_user)):
     org = user["org_id"]
     run = PayrollRunRepository(org).get(run_id)
@@ -212,18 +264,20 @@ def confirm_run(run_id: str, user: dict = Depends(get_current_user)):
                                                       "confirmed_by_name": user.get("name") or user.get("email", "")})
 
 
-@router.delete("/runs/{run_id}", dependencies=[Depends(require_perm("hr.payroll.delete"))])
+@router.delete("/runs/{run_id}", dependencies=[Depends(require_perm("payroll.delete"))])
 def delete_run(run_id: str, user: dict = Depends(get_current_user)):
     org = user["org_id"]
     slips, _ = PayslipRepository(org).list(filters=[{"field": "run_id", "op": "==", "value": run_id}], limit=2000)
     for s in slips:
         PayslipRepository(org).delete(s["id"])
-    PayrollRunRepository(org).delete(run_id)
+    from app.services.http_guards import guarded_delete
+
+    guarded_delete(PayrollRunRepository(org), run_id, hard=True)
     return {"success": True}
 
 
 # ---------- Payslips ----------
-@router.get("/payslips")
+@router.get("/payslips", dependencies=[Depends(require_perm("payroll.read"))])
 def list_payslips(
     employee_id: Optional[str] = None,
     status: Optional[str] = None,
@@ -240,7 +294,7 @@ def list_payslips(
     return {"items": items, "total": total}
 
 
-@router.get("/payslips/{ps_id}")
+@router.get("/payslips/{ps_id}", dependencies=[Depends(require_perm("payroll.read"))])
 def get_payslip(ps_id: str, user: dict = Depends(get_current_user)):
     ps = PayslipRepository(user["org_id"]).get(ps_id)
     if not ps:
@@ -248,13 +302,21 @@ def get_payslip(ps_id: str, user: dict = Depends(get_current_user)):
     return ps
 
 
-@router.put("/payslips/{ps_id}", dependencies=[Depends(require_perm("hr.payroll.update"))])
-def update_payslip(ps_id: str, payload: PayslipUpdate, user: dict = Depends(get_current_user)):
+@router.put("/payslips/{ps_id}", dependencies=[Depends(require_perm("payroll.write"))])
+def update_payslip(
+    ps_id: str,
+    payload: PayslipUpdate,
+    user: dict = Depends(get_current_user),
+    if_match: Optional[str] = Header(None, alias="If-Match"),
+):
+    from app.services.versioned_update import apply_versioned_update
+
     data = {k: v for k, v in payload.model_dump().items() if v is not None}
-    return PayslipRepository(user["org_id"]).update(ps_id, data)
+    repo = PayslipRepository(user["org_id"])
+    return apply_versioned_update(repo, ps_id, data, if_match=if_match)
 
 
-@router.post("/payslips/{ps_id}/mark-paid", dependencies=[Depends(require_perm("hr.payroll.update"))])
+@router.post("/payslips/{ps_id}/mark-paid", dependencies=[Depends(require_perm("payroll.write"))])
 def mark_paid(ps_id: str, user: dict = Depends(get_current_user)):
     return PayslipRepository(user["org_id"]).update(ps_id, {
         "status": "paid",
@@ -265,56 +327,17 @@ def mark_paid(ps_id: str, user: dict = Depends(get_current_user)):
 
 
 # ---------- Sprint 11: Iraq Payroll MVP ----------
-@router.post("/runs/{run_id}/iraq-compute", dependencies=[Depends(require_perm("hr.payroll.update"))])
+@router.post("/runs/{run_id}/iraq-compute", dependencies=[Depends(require_perm("payroll.write"))])
 def iraq_compute_run(run_id: str, user: dict = Depends(get_current_user)):
     """FIX-120: Apply Iraq SS (5% EE) + progressive income tax to every payslip in a run."""
-    from app.services.iraq_payroll import (
-        IRAQ_SS_EMPLOYEE_PERCENT,
-        IRAQ_SS_EMPLOYER_PERCENT,
-        compute_iraq_income_tax_monthly,
-    )
     org = user["org_id"]
     run = PayrollRunRepository(org).get(run_id)
     if not run or run.get("org_id") != org:
         raise HTTPException(404, "run not found")
     if run.get("status") == "confirmed":
         raise HTTPException(400, "ناتوانیت ڕانی پشتڕاستکراوە بگۆڕیت")
-    slips, _ = PayslipRepository(org).list(
-        filters=[{"field": "run_id", "op": "==", "value": run_id}], limit=2000
-    )
-    updated = 0
-    total_ss_emp = 0.0
-    total_ss_er = 0.0
-    total_tax = 0.0
-    for s in slips:
-        basic = float(s.get("basic_salary") or s.get("gross") or 0)
-        ss_emp = round(basic * IRAQ_SS_EMPLOYEE_PERCENT / 100.0, 2)
-        ss_er = round(basic * IRAQ_SS_EMPLOYER_PERCENT / 100.0, 2)
-        taxable = max(0.0, basic - ss_emp)
-        income_tax = compute_iraq_income_tax_monthly(taxable)
-        deductions = round(ss_emp + income_tax, 2)
-        net = round(basic - deductions, 2)
-        PayslipRepository(org).update(s["id"], {
-            "iraq_ss_employee": ss_emp,
-            "iraq_ss_employer": ss_er,
-            "iraq_income_tax": income_tax,
-            "deductions": deductions,
-            "net_salary": net,
-            "iraq_computed_at": datetime.utcnow().isoformat(),
-        })
-        total_ss_emp += ss_emp
-        total_ss_er += ss_er
-        total_tax += income_tax
-        updated += 1
-    return {
-        "run_id": run_id,
-        "payslips_updated": updated,
-        "totals": {
-            "ss_employee": round(total_ss_emp, 2),
-            "ss_employer": round(total_ss_er, 2),
-            "income_tax": round(total_tax, 2),
-        },
-    }
+    result = _iraq_compute_slips(org, run_id)
+    return {"run_id": run_id, **result}
 
 
 @router.post("/runs/{run_id}/post-je", dependencies=[Depends(require_perm("journals.create"))])
@@ -323,8 +346,7 @@ def post_payroll_je(run_id: str, data: dict, user: dict = Depends(get_current_us
 
     Body: { salary_expense_account_id, ss_payable_account_id, tax_payable_account_id, cash_account_id }
     """
-    import uuid
-    from app.firestore.journals import JournalEntryRepository
+    from app.services.payroll_post_je_atomic import post_payroll_journal_atomic
     org = user["org_id"]
     run = PayrollRunRepository(org).get(run_id)
     if not run or run.get("org_id") != org:
@@ -344,37 +366,91 @@ def post_payroll_je(run_id: str, data: dict, user: dict = Depends(get_current_us
     )
     total_basic = sum(float(s.get("basic_salary") or s.get("gross") or 0) for s in slips)
     total_ss = sum(float(s.get("iraq_ss_employee") or 0) for s in slips)
+    total_ss_er = sum(float(s.get("iraq_ss_employer") or 0) for s in slips)
     total_tax = sum(float(s.get("iraq_income_tax") or 0) for s in slips)
-    total_net = sum(float(s.get("net_salary") or 0) for s in slips)
+    total_net = sum(float(s.get("net_salary") or s.get("net") or 0) for s in slips)
     if total_basic <= 0:
         raise HTTPException(400, "هیچ موچەیەک نییە")
+    ss_er_exp = data.get("ss_employer_expense_account_id") or salary_acc
+    ss_er_pay = data.get("ss_employer_payable_account_id") or ss_acc
     lines = [
         {"account_id": salary_acc, "debit": round(total_basic, 2), "credit": 0,
          "description": f"Payroll {run_id}"},
+        {"account_id": ss_er_exp, "debit": round(total_ss_er, 2), "credit": 0,
+         "description": "Iraq SS employer expense"},
         {"account_id": ss_acc, "debit": 0, "credit": round(total_ss, 2),
          "description": "Iraq SS payable (employee)"},
+        {"account_id": ss_er_pay, "debit": 0, "credit": round(total_ss_er, 2),
+         "description": "Iraq SS payable (employer)"},
         {"account_id": tax_acc, "debit": 0, "credit": round(total_tax, 2),
          "description": "Iraq income tax payable"},
         {"account_id": cash_acc, "debit": 0, "credit": round(total_net, 2),
          "description": "Net salaries payable"},
     ]
-    je_repo = JournalEntryRepository(org)
-    je = je_repo.create({
-        "id": str(uuid.uuid4()),
-        "date": run.get("period_to") or datetime.utcnow().isoformat(),
-        "reference": f"PAYROLL-{run_id[:8]}",
-        "notes": f"Payroll run {run_id}",
-        "entry_type": "payroll",
-        "status": "posted",
-    })
-    je_repo.set_lines(je["id"], lines)
-    PayrollRunRepository(org).update(run_id, {"journal_entry_id": je["id"]})
-    return {"run_id": run_id, "journal_entry_id": je["id"], "lines": len(lines),
-            "total_debit": round(total_basic, 2),
-            "total_credit": round(total_ss + total_tax + total_net, 2)}
+    try:
+        posted = post_payroll_journal_atomic(
+            org,
+            run_id,
+            posting_date=run.get("period_to") or datetime.utcnow().isoformat(),
+            lines=lines,
+            created_by=user.get("id"),
+            reference=f"PAYROLL-{run_id[:8]}",
+            notes=f"Payroll run {run_id}",
+        )
+    except ValueError as exc:
+        code = str(exc)
+        if code == "run_not_confirmed":
+            raise HTTPException(400, "ڕان پێویستە پشتڕاستکراوبێت")
+        if code == "run_already_posted":
+            raise HTTPException(400, "تۆمارەکە پێشتر تۆمار کراوە")
+        raise HTTPException(400, code)
+    return {"run_id": run_id, "journal_entry_id": posted["journal_entry_id"], "lines": len(lines),
+            "total_debit": round(total_basic + total_ss_er, 2),
+            "total_credit": round(total_ss + total_ss_er + total_tax + total_net, 2)}
 
 
-@router.get("/runs/{run_id}/summary")
+@router.get("/iraq/ss1", dependencies=[Depends(require_perm("payroll.read"))])
+def iraq_ss1_report(month: str, user: dict = Depends(get_current_user)):
+    """Iraq Social Security (SS-1 style) report for a calendar month YYYY-MM."""
+    org = user["org_id"]
+    if len(month) != 7 or month[4] != "-":
+        raise HTTPException(400, "month must be YYYY-MM")
+    period_start = f"{month}-01"
+    slips = collect_stream(PayslipRepository(org), max_docs=5000)
+    slips.sort(key=lambda s: str(s.get("period_end") or ""), reverse=True)
+    employees = collect_stream(HREmployeeRepository(org), max_docs=5000)
+    emp_by_id = {e["id"]: e for e in employees}
+    rows = []
+    for s in slips:
+        ps_month = str(s.get("period_end") or s.get("period_start") or "")[:7]
+        if ps_month != month:
+            continue
+        emp = emp_by_id.get(s.get("employee_id"), {})
+        basic = float(s.get("basic_salary") or s.get("gross") or 0)
+        rows.append({
+            "employee_id": s.get("employee_id"),
+            "employee_name": s.get("employee_name") or emp.get("name"),
+            "national_id": emp.get("national_id"),
+            "basic_salary": basic,
+            "ss_employee": float(s.get("iraq_ss_employee") or 0),
+            "ss_employer": float(s.get("iraq_ss_employer") or 0),
+            "period_start": s.get("period_start"),
+            "period_end": s.get("period_end"),
+        })
+    return {
+        "month": month,
+        "period_start": period_start,
+        "headcount": len(rows),
+        "totals": {
+            "basic": round(sum(r["basic_salary"] for r in rows), 2),
+            "ss_employee": round(sum(r["ss_employee"] for r in rows), 2),
+            "ss_employer": round(sum(r["ss_employer"] for r in rows), 2),
+        },
+        "rows": rows,
+    }
+
+
+@router.get("/runs/{run_id}/summary", dependencies=[Depends(require_perm("payroll.read"))])
 def payroll_run_summary(run_id: str, user: dict = Depends(get_current_user)):
     """FIX-122: Aggregated totals for a run (basic, deductions, net, headcount)."""
     org = user["org_id"]

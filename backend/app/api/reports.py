@@ -1,15 +1,24 @@
-import uuid
 from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor
 from fastapi import APIRouter, Depends, HTTPException, Query
 from datetime import datetime
 from app.firestore.journals import JournalEntryRepository
-from app.firestore.accounts import AccountRepository
 from app.firestore.invoices import InvoiceRepository
-from app.firestore.expenses import ExpenseRepository
 from app.firestore.bills import BillRepository
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
+from app.services.report_queries import (
+    build_account_map,
+    collect_bills,
+    collect_expenses,
+    collect_invoices,
+    collect_journal_entries,
+    collect_payments_made,
+    collect_payments_received,
+    journal_balances,
+    open_bills_for_aging,
+    open_invoices_for_aging,
+    parse_report_date,
+)
 
 router = APIRouter(prefix="/api/reports", tags=["Reports"])
 
@@ -24,71 +33,68 @@ _EXPENSE_TYPES = {"expense", "cost_of_goods_sold", "operating_expense", "other_e
 
 
 def _parse_date(val):
-    if val is None:
-        return None
-    if isinstance(val, datetime):
-        # Normalize to naive UTC so comparisons against parsed-string dates never
-        # raise "can't compare offset-naive and offset-aware datetimes" (FIX-541).
-        if val.tzinfo is not None:
-            return val.replace(tzinfo=None)
-        return val
-    if isinstance(val, str):
-        try:
-            s = val.replace(" ", "T").rstrip("Z")
-            if len(s) == 10:
-                s += "T00:00:00"
-            d = datetime.fromisoformat(s)
-            if d.tzinfo is not None:
-                d = d.replace(tzinfo=None)
-            return d
-        except Exception:
-            return None
-    return None
+    return parse_report_date(val)
 
 
 def _get_journal_balances(org_id: str, start_date: datetime = None, end_date: datetime = None):
-    """Get debit/credit totals per account from journal entries in date range.
-
-    Optimized: filters entries by date BEFORE fetching line sub-collections,
-    then fetches lines in parallel via a thread pool to mitigate N+1 round-trips.
-    """
-    je_repo = JournalEntryRepository(org_id)
-    entries, _ = je_repo.list(limit=10000)
-
-    # Pre-filter entries by date + status to avoid loading lines we will discard.
-    eligible = []
-    for entry in entries:
-        if entry.get("status") == "void":
-            continue
-        entry_date = _parse_date(entry.get("date"))
-        if start_date and entry_date and entry_date < start_date:
-            continue
-        if end_date and entry_date and entry_date > end_date:
-            continue
-        eligible.append(entry)
-
-    balances = defaultdict(lambda: {"debit": 0.0, "credit": 0.0})
-    if not eligible:
-        return balances
-
-    # Parallel-fetch sub-collection 'lines' per entry. Capped pool keeps load bounded.
-    max_workers = min(16, max(4, len(eligible)))
-    with ThreadPoolExecutor(max_workers=max_workers) as pool:
-        results = pool.map(lambda e: (e["id"], je_repo.get_lines(e["id"])), eligible)
-        for _entry_id, lines in results:
-            for line in lines:
-                acc_id = line.get("account_id", "")
-                balances[acc_id]["debit"] += float(line.get("debit", 0) or 0)
-                balances[acc_id]["credit"] += float(line.get("credit", 0) or 0)
-
-    return balances
+    return journal_balances(org_id, start=start_date, end=end_date)
 
 
 def _build_account_map(org_id: str):
-    """Return dict of account_id -> account data."""
-    acc_repo = AccountRepository(org_id)
-    accounts, _ = acc_repo.list(order_by="code", order_dir="ASCENDING", limit=500)
-    return {a["id"]: a for a in accounts}
+    return build_account_map(org_id)
+
+
+def _build_aging_breakdown(
+    docs: list[dict],
+    *,
+    doc_number_field: str,
+    contact_name_field: str,
+    contact_output_key: str,
+    doc_id_key: str,
+    as_of: datetime | None = None,
+) -> dict:
+    now = as_of or datetime.utcnow()
+    buckets = {"current": 0.0, "1_30": 0.0, "31_60": 0.0, "61_90": 0.0, "over_90": 0.0}
+    details = []
+
+    for doc in docs:
+        due = _parse_date(doc.get("due_date"))
+        balance = float(doc.get("balance_due", 0) or 0)
+        if not due or balance <= 0:
+            continue
+
+        days = (now - due).days
+        if days <= 0:
+            bucket = "current"
+        elif days <= 30:
+            bucket = "1_30"
+        elif days <= 60:
+            bucket = "31_60"
+        elif days <= 90:
+            bucket = "61_90"
+        else:
+            bucket = "over_90"
+        buckets[bucket] += balance
+
+        details.append(
+            {
+                doc_id_key: doc["id"],
+                "invoice_number"
+                if doc_id_key == "invoice_id"
+                else "bill_number": doc.get(doc_number_field, ""),
+                contact_output_key: doc.get(contact_name_field) or doc.get("contact_name", ""),
+                "due_date": str(due.date()),
+                "days_overdue": max(days, 0),
+                "balance_due": round(balance, 2),
+                "bucket": bucket,
+            }
+        )
+
+    return {
+        "buckets": {key: round(value, 2) for key, value in buckets.items()},
+        "total": round(sum(buckets.values()), 2),
+        "details": details,
+    }
 
 
 # ===================== TRIAL BALANCE =====================
@@ -253,106 +259,28 @@ def balance_sheet(as_of_date: str = Query(...), user: dict = Depends(get_current
 
 @router.get("/receivable-aging", dependencies=[Depends(require_perm("reports.read"))])
 def receivable_aging(user: dict = Depends(get_current_user)):
-    repo = InvoiceRepository(user["org_id"])
-    invoices, _ = repo.list(
-        filters=[{"field": "status", "op": "in",
-                  "value": ["sent", "partially_paid", "overdue"]}],
-        limit=5000
+    docs = open_invoices_for_aging(user["org_id"])
+    return _build_aging_breakdown(
+        docs,
+        doc_number_field="invoice_number",
+        contact_name_field="contact_name",
+        contact_output_key="contact_name",
+        doc_id_key="invoice_id",
     )
-    now = datetime.utcnow()
-    buckets = {"current": 0, "1_30": 0, "31_60": 0, "61_90": 0, "over_90": 0}
-    details = []
-
-    for inv in invoices:
-        due = _parse_date(inv.get("due_date"))
-        balance = float(inv.get("balance_due", 0))
-        if not due or balance <= 0:
-            continue
-        days = (now - due).days
-        if days <= 0:
-            buckets["current"] += balance
-            bucket = "current"
-        elif days <= 30:
-            buckets["1_30"] += balance
-            bucket = "1_30"
-        elif days <= 60:
-            buckets["31_60"] += balance
-            bucket = "31_60"
-        elif days <= 90:
-            buckets["61_90"] += balance
-            bucket = "61_90"
-        else:
-            buckets["over_90"] += balance
-            bucket = "over_90"
-
-        details.append({
-            "invoice_id": inv["id"],
-            "invoice_number": inv.get("invoice_number", ""),
-            "contact_name": inv.get("contact_name", ""),
-            "due_date": str(due.date()) if due else "",
-            "days_overdue": max(days, 0),
-            "balance_due": round(balance, 2),
-            "bucket": bucket,
-        })
-
-    return {
-        "buckets": {k: round(v, 2) for k, v in buckets.items()},
-        "total": round(sum(buckets.values()), 2),
-        "details": details,
-    }
 
 
 # ===================== PAYABLE AGING =====================
 
 @router.get("/payable-aging", dependencies=[Depends(require_perm("reports.read"))])
 def payable_aging(user: dict = Depends(get_current_user)):
-    repo = BillRepository(user["org_id"])
-    bills, _ = repo.list(
-        filters=[{"field": "status", "op": "in",
-                  "value": ["open", "partially_paid", "overdue"]}],
-        limit=5000
+    docs = open_bills_for_aging(user["org_id"])
+    return _build_aging_breakdown(
+        docs,
+        doc_number_field="bill_number",
+        contact_name_field="vendor_name",
+        contact_output_key="vendor_name",
+        doc_id_key="bill_id",
     )
-    now = datetime.utcnow()
-    buckets = {"current": 0, "1_30": 0, "31_60": 0, "61_90": 0, "over_90": 0}
-    details = []
-
-    for bill in bills:
-        due = _parse_date(bill.get("due_date"))
-        balance = float(bill.get("balance_due", 0))
-        if not due or balance <= 0:
-            continue
-        days = (now - due).days
-        if days <= 0:
-            buckets["current"] += balance
-            bucket = "current"
-        elif days <= 30:
-            buckets["1_30"] += balance
-            bucket = "1_30"
-        elif days <= 60:
-            buckets["31_60"] += balance
-            bucket = "31_60"
-        elif days <= 90:
-            buckets["61_90"] += balance
-            bucket = "61_90"
-        else:
-            buckets["over_90"] += balance
-            bucket = "over_90"
-
-        details.append({
-            "bill_id": bill["id"],
-            "bill_number": bill.get("bill_number", ""),
-            "vendor_name": bill.get("vendor_name", ""),
-            "due_date": str(due.date()) if due else "",
-            "days_overdue": max(days, 0),
-            "balance_due": round(balance, 2),
-            "bucket": bucket,
-        })
-
-    return {
-        "buckets": {k: round(v, 2) for k, v in buckets.items()},
-        "total": round(sum(buckets.values()), 2),
-        "details": details,
-    }
 
 
 # ===================== GENERAL LEDGER =====================
@@ -365,17 +293,11 @@ def general_ledger(account_id: str = Query(None),
     ed = _parse_date(end_date)
     je_repo = JournalEntryRepository(user["org_id"])
     accounts = _build_account_map(user["org_id"])
-    entries, _ = je_repo.list(limit=10000)
+    entries = collect_journal_entries(user["org_id"], start=sd, end=ed)
 
     ledger = defaultdict(list)
     for entry in entries:
         entry_date = _parse_date(entry.get("date"))
-        if sd and entry_date and entry_date < sd:
-            continue
-        if ed and entry_date and entry_date > ed:
-            continue
-        if entry.get("status") == "void":
-            continue
 
         lines = je_repo.get_lines(entry["id"])
         for line in lines:
@@ -430,33 +352,16 @@ def tax_summary(start_date: str = Query(...), end_date: str = Query(...),
     sd = _parse_date(start_date)
     ed = _parse_date(end_date)
 
-    inv_repo = InvoiceRepository(user["org_id"])
-    bill_repo = BillRepository(user["org_id"])
-
-    invoices, _ = inv_repo.list(limit=10000)
-    bills, _ = bill_repo.list(limit=10000)
+    invoices = collect_invoices(user["org_id"], start=sd, end=ed)
+    bills = collect_bills(user["org_id"], start=sd, end=ed)
 
     output_tax = 0.0  # Tax on sales
     input_tax = 0.0   # Tax on purchases
 
     for inv in invoices:
-        inv_date = _parse_date(inv.get("date"))
-        if sd and inv_date and inv_date < sd:
-            continue
-        if ed and inv_date and inv_date > ed:
-            continue
-        if inv.get("status") == "void":
-            continue
         output_tax += float(inv.get("tax_amount", 0) or 0)
 
     for bill in bills:
-        bill_date = _parse_date(bill.get("date"))
-        if sd and bill_date and bill_date < sd:
-            continue
-        if ed and bill_date and bill_date > ed:
-            continue
-        if bill.get("status") == "void":
-            continue
         input_tax += float(bill.get("tax_amount", 0) or 0)
 
     return {
@@ -475,20 +380,11 @@ def sales_by_customer(start_date: str = Query(...), end_date: str = Query(...),
                       user: dict = Depends(get_current_user)):
     sd = _parse_date(start_date)
     ed = _parse_date(end_date)
-    inv_repo = InvoiceRepository(user["org_id"])
-    invoices, _ = inv_repo.list(limit=10000)
+    invoices = collect_invoices(user["org_id"], start=sd, end=ed)
 
     by_customer = defaultdict(lambda: {"total": 0, "paid": 0, "outstanding": 0, "count": 0})
 
     for inv in invoices:
-        inv_date = _parse_date(inv.get("date"))
-        if sd and inv_date and inv_date < sd:
-            continue
-        if ed and inv_date and inv_date > ed:
-            continue
-        if inv.get("status") == "void":
-            continue
-
         name = inv.get("contact_name", "Unknown")
         total = float(inv.get("total", 0) or 0)
         balance = float(inv.get("balance_due", 0) or 0)
@@ -512,20 +408,13 @@ def sales_by_item(start_date: str = Query(...), end_date: str = Query(...),
                   user: dict = Depends(get_current_user)):
     sd = _parse_date(start_date)
     ed = _parse_date(end_date)
+
     inv_repo = InvoiceRepository(user["org_id"])
-    invoices, _ = inv_repo.list(limit=10000)
+    invoices = collect_invoices(user["org_id"], start=sd, end=ed)
 
     by_item = defaultdict(lambda: {"quantity": 0, "revenue": 0, "count": 0})
 
     for inv in invoices:
-        inv_date = _parse_date(inv.get("date"))
-        if sd and inv_date and inv_date < sd:
-            continue
-        if ed and inv_date and inv_date > ed:
-            continue
-        if inv.get("status") == "void":
-            continue
-
         lines = inv_repo.get_lines(inv["id"])
         for line in lines:
             name = line.get("item_name", line.get("description", "Unknown"))
@@ -548,20 +437,11 @@ def expense_by_category(start_date: str = Query(...), end_date: str = Query(...)
                         user: dict = Depends(get_current_user)):
     sd = _parse_date(start_date)
     ed = _parse_date(end_date)
-    exp_repo = ExpenseRepository(user["org_id"])
-    expenses, _ = exp_repo.list(limit=10000)
+    expenses = collect_expenses(user["org_id"], start=sd, end=ed)
 
     by_cat = defaultdict(lambda: {"total": 0, "count": 0})
 
     for exp in expenses:
-        exp_date = _parse_date(exp.get("date"))
-        if sd and exp_date and exp_date < sd:
-            continue
-        if ed and exp_date and exp_date > ed:
-            continue
-        if exp.get("status") == "void":
-            continue
-
         cat = exp.get("account_name", exp.get("category", "Uncategorized"))
         amount = float(exp.get("amount", 0) or 0)
         by_cat[cat]["total"] += amount
@@ -583,62 +463,36 @@ def cash_flow_report(start_date: str = Query(...), end_date: str = Query(...),
     """Cash flow report: inflows vs outflows by month"""
     sd = _parse_date(start_date)
     ed = _parse_date(end_date)
-    
-    from app.firestore.invoices import PaymentReceivedRepository
-    from app.firestore.bills import PaymentMadeRepository
-    
-    payment_received_repo = PaymentReceivedRepository(user["org_id"])
-    payment_made_repo = PaymentMadeRepository(user["org_id"])
-    expense_repo = ExpenseRepository(user["org_id"])
-    
-    # Get all payment transactions
-    payments_received, _ = payment_received_repo.list(limit=10000)
-    payments_made, _ = payment_made_repo.list(limit=10000)
-    expenses, _ = expense_repo.list(limit=10000)
-    
+
+    payments_received = collect_payments_received(user["org_id"], start=sd, end=ed)
+    payments_made = collect_payments_made(user["org_id"], start=sd, end=ed)
+    expenses = collect_expenses(user["org_id"], start=sd, end=ed)
+
     # Group by month
     from collections import defaultdict
     periods = defaultdict(lambda: {"inflows": 0.0, "outflows": 0.0})
-    
+
     for payment in payments_received:
         pdate = _parse_date(payment.get("date"))
         if not pdate:
             continue
-        if sd and pdate < sd:
-            continue
-        if ed and pdate > ed:
-            continue
-        if payment.get("status") == "void":
-            continue
         month_key = pdate.strftime("%Y-%m")
         periods[month_key]["inflows"] += float(payment.get("amount", 0) or 0)
-    
+
     for payment in payments_made:
         pdate = _parse_date(payment.get("date"))
         if not pdate:
             continue
-        if sd and pdate < sd:
-            continue
-        if ed and pdate > ed:
-            continue
-        if payment.get("status") == "void":
-            continue
         month_key = pdate.strftime("%Y-%m")
         periods[month_key]["outflows"] += float(payment.get("amount", 0) or 0)
-    
+
     for expense in expenses:
         edate = _parse_date(expense.get("date"))
         if not edate:
             continue
-        if sd and edate < sd:
-            continue
-        if ed and edate > ed:
-            continue
-        if expense.get("status") == "void":
-            continue
         month_key = edate.strftime("%Y-%m")
         periods[month_key]["outflows"] += float(expense.get("amount", 0) or 0)
-    
+
     # Build period list
     period_list = []
     total_inflows = 0.0
@@ -726,44 +580,44 @@ def budget_vs_actual_report(user: dict = Depends(get_current_user)):
 def project_profitability_report(user: dict = Depends(get_current_user)):
     """Project profitability: revenue vs costs per project"""
     from app.firestore.projects import ProjectRepository
-    
-    project_repo = ProjectRepository(user["org_id"])
-    projects, _ = project_repo.list(limit=1000)
-    
-    inv_repo = InvoiceRepository(user["org_id"])
-    exp_repo = ExpenseRepository(user["org_id"])
-    
+
+    projects = list(ProjectRepository(user["org_id"]).stream_org_docs())
+    invoices = collect_invoices(user["org_id"])
+    expenses = collect_expenses(user["org_id"])
+
+    revenue_by_project: dict[str, float] = defaultdict(float)
+    for invoice in invoices:
+        project_id = invoice.get("project_id")
+        if not project_id:
+            continue
+        revenue_by_project[project_id] += float(invoice.get("total", 0) or 0)
+
+    cost_by_project: dict[str, float] = defaultdict(float)
+    for expense in expenses:
+        project_id = expense.get("project_id")
+        if not project_id:
+            continue
+        cost_by_project[project_id] += float(expense.get("amount", 0) or 0)
+
     items = []
     for project in projects:
         project_id = project["id"]
         project_name = project.get("name", "Unknown")
-        
-        # Get invoices for this project
-        invoices, _ = inv_repo.list(
-            filters=[{"field": "project_id", "op": "==", "value": project_id}],
-            limit=5000
-        )
-        revenue = sum(float(inv.get("total", 0) or 0) for inv in invoices if inv.get("status") != "void")
-        
-        # Get expenses for this project
-        expenses, _ = exp_repo.list(
-            filters=[{"field": "project_id", "op": "==", "value": project_id}],
-            limit=5000
-        )
-        costs = sum(float(exp.get("amount", 0) or 0) for exp in expenses if exp.get("status") != "void")
-        
+        revenue = revenue_by_project.get(project_id, 0.0)
+        costs = cost_by_project.get(project_id, 0.0)
         profit = revenue - costs
         margin_pct = (profit / revenue * 100) if revenue > 0 else 0
-        
-        items.append({
-            "project_id": project_id,
-            "project_name": project_name,
-            "revenue": round(revenue, 2),
-            "costs": round(costs, 2),
-            "profit": round(profit, 2),
-            "margin_pct": round(margin_pct, 2),
-        })
-    
+        items.append(
+            {
+                "project_id": project_id,
+                "project_name": project_name,
+                "revenue": round(revenue, 2),
+                "costs": round(costs, 2),
+                "profit": round(profit, 2),
+                "margin_pct": round(margin_pct, 2),
+            }
+        )
+
     items.sort(key=lambda x: x["profit"], reverse=True)
     return {"items": items}
 
@@ -940,10 +794,9 @@ def partner_ledger(
 @router.get("/top-customers", dependencies=[Depends(require_perm("reports.read"))])
 def top_customers(limit: int = 10, user: dict = Depends(get_current_user)):
     """Sprint 34: top N customers by total invoiced amount (excludes draft/void)."""
-    from app.firestore.invoices import InvoiceRepository
     from app.firestore.contacts import ContactRepository
-    inv_repo = InvoiceRepository(user["org_id"])
-    invs, _ = inv_repo.list(limit=10000)
+
+    invs = collect_invoices(user["org_id"])
     totals: dict = {}
     for inv in invs:
         if (inv.get("status") or "").lower() in {"draft", "void", "cancelled"}:
@@ -965,20 +818,25 @@ def top_items(limit: int = 10, user: dict = Depends(get_current_user)):
     """Sprint 34: top N items by quantity sold across all non-void invoices."""
     from app.firestore.invoices import InvoiceRepository
     from app.firestore.items import ItemRepository
+
     inv_repo = InvoiceRepository(user["org_id"])
-    invs, _ = inv_repo.list(limit=10000)
+    invs = collect_invoices(user["org_id"])
     qtys: dict = {}
     revenue: dict = {}
     for inv in invs:
         if (inv.get("status") or "").lower() in {"draft", "void", "cancelled"}:
             continue
-        for ln in inv.get("lines", []) or []:
+        lines = inv.get("lines") or inv_repo.get_lines(inv["id"])
+        for ln in lines:
             iid = ln.get("item_id")
             if not iid:
                 continue
             q = float(ln.get("quantity") or 0)
+            line_amount = float(ln.get("amount") or 0)
+            if line_amount == 0:
+                line_amount = q * float(ln.get("unit_price") or 0)
             qtys[iid] = qtys.get(iid, 0.0) + q
-            revenue[iid] = revenue.get(iid, 0.0) + q * float(ln.get("unit_price") or 0)
+            revenue[iid] = revenue.get(iid, 0.0) + line_amount
     items_repo = ItemRepository(user["org_id"])
     rows = []
     for iid, q in sorted(qtys.items(), key=lambda kv: kv[1], reverse=True)[: max(1, limit)]:
@@ -994,7 +852,9 @@ def top_items(limit: int = 10, user: dict = Depends(get_current_user)):
 def inventory_valuation(user: dict = Depends(get_current_user)):
     """Sprint 34: snapshot inventory value = on-hand qty * cost_price for each item."""
     from app.firestore.items import ItemRepository
-    items, _ = ItemRepository(user["org_id"]).list(limit=10000)
+    from app.services.report_streams import collect_stream
+
+    items = collect_stream(ItemRepository(user["org_id"]))
     rows = []
     grand = 0.0
     for it in items:
@@ -1012,3 +872,45 @@ def inventory_valuation(user: dict = Depends(get_current_user)):
         })
     rows.sort(key=lambda r: r["value"], reverse=True)
     return {"items": rows, "total": len(rows), "total_value": round(grand, 2)}
+
+
+# ===================== AGED AR / AP (Phase 1) =====================
+
+def _open_invoice_docs(org_id: str) -> list[dict]:
+    return open_invoices_for_aging(org_id)
+
+
+def _open_bill_docs(org_id: str) -> list[dict]:
+    return open_bills_for_aging(org_id)
+
+
+@router.get("/aged-receivable", dependencies=[Depends(require_perm("reports.read"))])
+def aged_receivable(
+    as_of: str = Query(..., description="Report date YYYY-MM-DD"),
+    user: dict = Depends(get_current_user),
+):
+    from app.services.aged_reports import build_aged_buckets
+
+    as_of_dt = _parse_date(as_of)
+    if not as_of_dt:
+        raise HTTPException(400, "بەرواری ڕاپۆرت نادروستە")
+    open_docs = _open_invoice_docs(user["org_id"])
+    buckets = build_aged_buckets(open_docs, as_of_dt.date())
+    items = sorted(buckets.values(), key=lambda x: x["total"], reverse=True)
+    return {"as_of": as_of[:10], "items": items, "total": len(items)}
+
+
+@router.get("/aged-payable", dependencies=[Depends(require_perm("reports.read"))])
+def aged_payable(
+    as_of: str = Query(..., description="Report date YYYY-MM-DD"),
+    user: dict = Depends(get_current_user),
+):
+    from app.services.aged_reports import build_aged_buckets
+
+    as_of_dt = _parse_date(as_of)
+    if not as_of_dt:
+        raise HTTPException(400, "بەرواری ڕاپۆرت نادروستە")
+    open_docs = _open_bill_docs(user["org_id"])
+    buckets = build_aged_buckets(open_docs, as_of_dt.date())
+    items = sorted(buckets.values(), key=lambda x: x["total"], reverse=True)
+    return {"as_of": as_of[:10], "items": items, "total": len(items)}

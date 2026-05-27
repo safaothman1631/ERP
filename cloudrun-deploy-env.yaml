@@ -1,0 +1,15 @@
+﻿ENVIRONMENT: production
+APP_NAME: Zoho ERP
+DATABASE_URL: firestore://default
+CORS_ORIGINS: https://erpiq.systems,https://www.erpiq.systems
+FIREBASE_PROJECT_ID: zoho-83cda
+FIREBASE_STORAGE_BUCKET: zoho-83cda-erp-backups
+BACKUP_GCS_BUCKET: zoho-83cda-erp-backups
+SCHEDULER_ENABLED: "true"
+USE_FIRESTORE_QUERY: "true"
+IDEMPOTENCY_ENABLED: "true"
+FS_METRICS_ENABLED: "true"
+AUDIT_RETENTION_MONTHS: "24"
+RATE_LIMITING_ENABLED: "true"
+# RATE_LIMIT_STORAGE_URI: redis://10.89.110.3:6379/0?socket_connect_timeout=2&socket_timeout=2
+# (VPC connector erpiq-run-connector required; bare redis:// blocks login — see enable_redis_rate_limit_on_cloudrun.sh)

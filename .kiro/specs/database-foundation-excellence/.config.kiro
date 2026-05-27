@@ -1,0 +1,13 @@
+{
+  "name": "database-foundation-excellence",
+  "title": "Database Foundation Excellence",
+  "status": "draft",
+  "owner": "platform-data",
+  "created": "2026-05-26",
+  "predecessors": [
+    "data-integrity-wave",
+    "firestore-performance-resilience",
+    "firestore-depth-remediation"
+  ],
+  "scope": "Database hardening: validation, versioning, concurrency, refs, TTL, observability, PII, backup, naming, tests"
+}

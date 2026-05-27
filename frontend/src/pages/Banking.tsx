@@ -5,6 +5,8 @@ import { UploadOutlined, LinkOutlined, SettingOutlined } from '@ant-design/icons
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
+import { useListQuery } from '../api/queries/useListQuery';
+import { listQueryKeys } from '../api/queries/keys';
 import { PageHeader } from '../design-system';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 
@@ -25,16 +27,23 @@ const Banking: React.FC = () => {
 const BankAccounts: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [accounts, setAccounts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const bankAccountsQuery = useListQuery<any, any>({
+    queryKey: listQueryKeys.banking({ scope: 'accounts' }),
+    queryFn: () => api.get('/api/banking/accounts'),
+    selectList: (raw) => {
+      if (Array.isArray(raw)) return { items: raw, total: raw.length };
+      const list = Array.isArray(raw?.items) ? raw.items : [];
+      return { items: list, total: typeof raw?.total === 'number' ? raw.total : list.length };
+    },
+  });
+  const accounts = bankAccountsQuery.data?.items ?? [];
+  const loading = bankAccountsQuery.isLoading || bankAccountsQuery.isFetching;
 
   useEffect(() => {
-    setLoading(true);
-    api.get('/api/banking/accounts')
-      .then(r => setAccounts(r.data))
-      .catch(() => message.error(t('error')))
-      .finally(() => setLoading(false));
-  }, []);
+    if (bankAccountsQuery.error) {
+      message.error(t('error'));
+    }
+  }, [bankAccountsQuery.error, t]);
 
   const columns = [
     { title: t('name'), dataIndex: 'account_name', key: 'account_name' },
@@ -61,7 +70,16 @@ const BankAccounts: React.FC = () => {
 
 const ImportCSV: React.FC = () => {
   const { t } = useTranslation();
-  const [accounts, setAccounts] = useState<any[]>([]);
+  const bankAccountsQuery = useListQuery<any, any>({
+    queryKey: listQueryKeys.banking({ scope: 'accounts-import' }),
+    queryFn: () => api.get('/api/banking/accounts'),
+    selectList: (raw) => {
+      if (Array.isArray(raw)) return { items: raw, total: raw.length };
+      const list = Array.isArray(raw?.items) ? raw.items : [];
+      return { items: list, total: typeof raw?.total === 'number' ? raw.total : list.length };
+    },
+  });
+  const accounts = bankAccountsQuery.data?.items ?? [];
   const [selectedAccount, setSelectedAccount] = useState<string>('');
   const [fileData, setFileData] = useState<any[]>([]);
   const [csvColumns, setCsvColumns] = useState<string[]>([]);
@@ -70,8 +88,10 @@ const ImportCSV: React.FC = () => {
   const [importing, setImporting] = useState(false);
 
   useEffect(() => {
-    api.get('/api/banking/accounts').then(r => setAccounts(r.data)).catch(() => {});
-  }, []);
+    if (bankAccountsQuery.error) {
+      message.error(t('error'));
+    }
+  }, [bankAccountsQuery.error, t]);
 
   const systemFields = ['date', 'description', 'amount', 'reference'];
 
@@ -169,7 +189,7 @@ const ImportCSV: React.FC = () => {
             rowKey="key"
             pagination={false}
             size="small"
-            scroll={{ x: true }}
+            scroll={{ x: 'max-content' }}
             style={{ marginBottom: 16 }}
           />
           <Button type="primary" onClick={handleImport} loading={importing}>{t('confirm')}</Button>

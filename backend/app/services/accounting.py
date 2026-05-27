@@ -1,10 +1,9 @@
 """Double-Entry Accounting Engine - The core of the system"""
-import uuid
 from datetime import datetime
 from fastapi import HTTPException
 from app.firestore.journals import JournalEntryRepository
 from app.firestore.accounts import AccountRepository
-from app.firestore.system import SequenceRepository
+from app.services.je_validation import validate_je_balance
 
 
 class AccountingService:
@@ -36,67 +35,34 @@ class AccountingService:
         2. At least 2 lines required
         3. Each line must have either debit or credit (not both)
         """
-        # Validate: at least 2 lines
-        if len(lines) < 2:
-            raise HTTPException(status_code=400, detail="پێویستە لانیکەم ٢ هێڵ هەبێت بۆ ژورناڵ")
+        validate_je_balance(lines, currency_code)
 
-        # Calculate totals
-        total_debit = sum(float(line.get("debit", 0)) for line in lines)
-        total_credit = sum(float(line.get("credit", 0)) for line in lines)
+        from app.services.period_close import PeriodCloseService
 
-        # Validate: debits must equal credits
-        if abs(total_debit - total_credit) > 0.01:
+        if PeriodCloseService.check_period_locked(org_id, date):
             raise HTTPException(
-                status_code=400,
-                detail=f"دێبیت ({total_debit}) و کرێدیت ({total_credit}) هاوسەنگ نین!"
+                status_code=409,
+                detail={
+                    "code": "period_locked",
+                    "message": f"Period locked: cannot post on or before lock date",
+                },
             )
 
-        # Get next journal number
-        seq_repo = SequenceRepository(org_id)
-        entry_number = seq_repo.get_next("journal")
+        from app.services.journal_entry_atomic import create_journal_entry_atomic
 
-        # Create journal entry header + lines atomically (single batch)
-        journal_repo = JournalEntryRepository(org_id)
-        journal_data = {
-            "id": str(uuid.uuid4()),
-            "entry_number": entry_number,
-            "date": date,
-            "description": description,
-            "reference": reference,
-            "source_type": source_type,
-            "source_id": source_id,
-            "currency_code": currency_code,
-            "exchange_rate": exchange_rate,
-            "total_debit": total_debit,
-            "total_credit": total_credit,
-            "status": "posted",
-            "is_auto": source_type != "manual",
-            "created_by": created_by,
-        }
-        journal = journal_repo.create_with_lines(journal_data, lines)
-
-        # Update account balances
-        acc_repo = AccountRepository(org_id)
-        for line_data in lines:
-            account = acc_repo.get(line_data["account_id"])
-            if account:
-                debit = float(line_data.get("debit", 0))
-                credit = float(line_data.get("credit", 0))
-
-                # Normal balance rules:
-                # Assets & Expenses: increase with debit
-                # Liabilities, Equity & Income: increase with credit
-                if account.get("account_type") in ("asset", "cash", "bank", "accounts_receivable",
-                                             "inventory", "fixed_asset", "other_current_asset",
-                                             "expense", "operating_expense", "other_expense",
-                                             "cost_of_goods_sold"):
-                    balance_change = debit - credit
-                else:
-                    balance_change = credit - debit
-                
-                acc_repo.increment(line_data["account_id"], "balance", balance_change)
-
-        return journal
+        return create_journal_entry_atomic(
+            org_id,
+            date=date,
+            lines=lines,
+            description=description,
+            reference=reference,
+            source_type=source_type,
+            source_id=source_id,
+            currency_code=currency_code,
+            exchange_rate=exchange_rate,
+            created_by=created_by,
+            status="posted",
+        )
 
     @staticmethod
     def create_invoice_journal(org_id: str, invoice: dict) -> dict:
@@ -390,3 +356,52 @@ class AccountingService:
             source_type="vendor_credit", source_id=vendor_credit["id"],
             currency_code=vendor_credit.get("currency_code", "IQD"),
         )
+
+    @staticmethod
+    def reverse_journal_entry(
+        org_id: str,
+        je_id: str,
+        reversal_date: datetime,
+        user_id: str | None = None,
+        description: str | None = None,
+    ) -> dict:
+        """Create a reversing JE and link it to the original entry."""
+        je_repo = JournalEntryRepository(org_id)
+        original = je_repo.get(je_id)
+        if not original or original.get("org_id") != org_id:
+            raise HTTPException(status_code=404, detail="ژورناڵ نەدۆزرایەوە")
+        if original.get("reversed_by"):
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "je_already_reversed",
+                    "message": "Journal entry already reversed",
+                    "reversed_by": original.get("reversed_by"),
+                },
+            )
+
+        lines = je_repo.get_lines(je_id)
+        reversed_lines = [
+            {
+                "account_id": ln["account_id"],
+                "debit": float(ln.get("credit", 0) or 0),
+                "credit": float(ln.get("debit", 0) or 0),
+                "description": f"Reverse: {ln.get('description', '')}",
+                "contact_id": ln.get("contact_id"),
+            }
+            for ln in lines
+        ]
+
+        rev = AccountingService.create_journal_entry(
+            org_id=org_id,
+            date=reversal_date,
+            lines=reversed_lines,
+            description=description or f"Reverse {original.get('entry_number', je_id)}",
+            reference=f"REV-{original.get('entry_number', je_id)}",
+            source_type="journal_reversal",
+            source_id=je_id,
+            created_by=user_id,
+        )
+        je_repo.update(je_id, {"reversed_by": rev["id"], "status": "reversed"})
+        je_repo.update(rev["id"], {"reverses": je_id})
+        return rev

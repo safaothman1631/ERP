@@ -1,95 +1,56 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { getPOSDB } from './pos/db';
 
-// IndexedDB storage for offline queue
+/**
+ * Zustand-persisted offline-meta rows piggy-back on the `carts` store with a
+ * reserved key prefix (the CRDT helpers ignore it). Heavyweight per-request
+ * queue data now lives in `offline-queue` (see `pos/offline-queue.ts`); this
+ * store retains only the UI-visible flags and a denormalized in-memory
+ * mirror of the queue for read paths that haven't been migrated yet.
+ */
+const ZUSTAND_KEY_PREFIX = 'zustand:offline:';
+
 const indexedDBStorage = {
   getItem: async (name: string): Promise<string | null> => {
-    return new Promise((resolve) => {
-      const request = indexedDB.open('zoho-pos-db', 1);
-      
-      request.onupgradeneeded = (event: any) => {
-        const db = event.target.result;
-        if (!db.objectStoreNames.contains('pos-offline')) {
-          db.createObjectStore('pos-offline');
-        }
-      };
-      
-      request.onsuccess = (event: any) => {
-        const db = event.target.result;
-        const transaction = db.transaction(['pos-offline'], 'readonly');
-        const store = transaction.objectStore('pos-offline');
-        const getRequest = store.get(name);
-        
-        getRequest.onsuccess = () => {
-          resolve(getRequest.result || null);
-        };
-        
-        getRequest.onerror = () => {
-          resolve(null);
-        };
-      };
-      
-      request.onerror = () => {
-        resolve(null);
-      };
-    });
+    try {
+      const db = await getPOSDB();
+      const row = await db.get('carts', `${ZUSTAND_KEY_PREFIX}${name}`);
+      if (!row || typeof row.notes !== 'string' || row.notes.length === 0) return null;
+      return row.notes;
+    } catch {
+      return null;
+    }
   },
-  
+
   setItem: async (name: string, value: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open('zoho-pos-db', 1);
-      
-      request.onupgradeneeded = (event: any) => {
-        const db = event.target.result;
-        if (!db.objectStoreNames.contains('pos-offline')) {
-          db.createObjectStore('pos-offline');
-        }
-      };
-      
-      request.onsuccess = (event: any) => {
-        const db = event.target.result;
-        const transaction = db.transaction(['pos-offline'], 'readwrite');
-        const store = transaction.objectStore('pos-offline');
-        const putRequest = store.put(value, name);
-        
-        putRequest.onsuccess = () => {
-          resolve();
-        };
-        
-        putRequest.onerror = () => {
-          reject(putRequest.error);
-        };
-      };
-      
-      request.onerror = () => {
-        reject(request.error);
-      };
-    });
+    try {
+      const db = await getPOSDB();
+      await db.put('carts', {
+        cartId: `${ZUSTAND_KEY_PREFIX}${name}`,
+        sessionId: null,
+        lines: {},
+        customer: null,
+        table: null,
+        pricelistId: null,
+        presetId: null,
+        discountTotal: 0,
+        notes: value,
+        updatedAt: Date.now(),
+        updatedBy: 'zustand-persist',
+      });
+    } catch {
+      /* noop */
+    }
   },
-  
+
   removeItem: async (name: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open('zoho-pos-db', 1);
-      
-      request.onsuccess = (event: any) => {
-        const db = event.target.result;
-        const transaction = db.transaction(['pos-offline'], 'readwrite');
-        const store = transaction.objectStore('pos-offline');
-        const deleteRequest = store.delete(name);
-        
-        deleteRequest.onsuccess = () => {
-          resolve();
-        };
-        
-        deleteRequest.onerror = () => {
-          reject(deleteRequest.error);
-        };
-      };
-      
-      request.onerror = () => {
-        reject(request.error);
-      };
-    });
+    try {
+      const db = await getPOSDB();
+      await db.delete('carts', `${ZUSTAND_KEY_PREFIX}${name}`);
+    } catch {
+      /* noop */
+    }
   },
 };
 
@@ -103,7 +64,7 @@ interface POSOfflineState {
   isOnline: boolean;
   syncQueue: OfflineOrder[];
   lastSyncAt: string | null;
-  
+
   // Actions
   enqueueOrder: (payload: any) => void;
   syncAll: (apiCall: (orders: OfflineOrder[]) => Promise<any>) => Promise<void>;
@@ -117,7 +78,7 @@ if (typeof window !== 'undefined') {
   window.addEventListener('online', () => {
     usePOSOfflineStore.getState().setOnline(true);
   });
-  
+
   window.addEventListener('offline', () => {
     usePOSOfflineStore.getState().setOnline(false);
   });
@@ -129,7 +90,7 @@ export const usePOSOfflineStore = create<POSOfflineState>()(
       isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
       syncQueue: [],
       lastSyncAt: null,
-      
+
       enqueueOrder: (payload) => {
         const temp_id = `offline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const order: OfflineOrder = {
@@ -137,23 +98,23 @@ export const usePOSOfflineStore = create<POSOfflineState>()(
           payload,
           queued_at: new Date().toISOString(),
         };
-        
+
         set((state) => ({
           syncQueue: [...state.syncQueue, order],
         }));
       },
-      
+
       syncAll: async (apiCall) => {
         const { syncQueue, isOnline } = get();
-        
+
         if (!isOnline || syncQueue.length === 0) {
           return;
         }
-        
+
         try {
           // Call the API with all queued orders
           await apiCall(syncQueue);
-          
+
           // Clear queue on success
           set({
             syncQueue: [],
@@ -164,10 +125,10 @@ export const usePOSOfflineStore = create<POSOfflineState>()(
           throw error;
         }
       },
-      
+
       setOnline: (isOnline) => {
         set({ isOnline });
-        
+
         // Auto-trigger sync when coming back online
         if (isOnline) {
           const { syncQueue } = get();
@@ -176,9 +137,9 @@ export const usePOSOfflineStore = create<POSOfflineState>()(
           }
         }
       },
-      
+
       clearQueue: () => set({ syncQueue: [] }),
-      
+
       removeFromQueue: (tempId) => {
         set((state) => ({
           syncQueue: state.syncQueue.filter((o) => o.temp_id !== tempId),

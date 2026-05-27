@@ -1,12 +1,21 @@
 import uuid
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from app.firestore.invoices import SalesOrderRepository, InvoiceRepository
 from app.firestore.system import SequenceRepository
 from app.services.auth import get_current_user
-from app.schemas.schemas import SalesOrderCreate, SalesOrderResponse
+from app.services.state_machine import SALES_ORDER_SM
+from app.services.module_gate import require_module
+from app.schemas.schemas import SalesOrderCreate, SalesOrderUpdate, SalesOrderResponse
+from app.services.versioned_update import apply_versioned_update
 
-router = APIRouter(prefix="/api/sales-orders", tags=["Sales Orders"])
+router = APIRouter(
+    prefix="/api/sales-orders",
+    tags=["Sales Orders"],
+    dependencies=[Depends(require_module("sales"))],
+)
 
 @router.get("")
 def list_sales_orders(
@@ -49,6 +58,28 @@ def create_sales_order(data: SalesOrderCreate, user: dict = Depends(get_current_
     
     return item
 
+
+@router.put("/{sales_order_id}")
+def update_sales_order(
+    sales_order_id: str,
+    data: SalesOrderUpdate,
+    user: dict = Depends(get_current_user),
+    if_match: Optional[str] = Header(None, alias="If-Match"),
+):
+    repo = SalesOrderRepository(user["org_id"])
+    so = repo.get(sales_order_id)
+    if not so or so.get("org_id") != user["org_id"]:
+        raise HTTPException(status_code=404, detail="داواکاری فرۆشتن نەدۆزرایەوە")
+    if so.get("status") not in ("draft",):
+        raise HTTPException(status_code=400, detail="تەنیا ڕەشنووس دەتوانرێت دەستکاری بکرێت")
+    update_data = data.model_dump(exclude_unset=True, exclude={"lines"})
+    so = apply_versioned_update(repo, sales_order_id, update_data, if_match=if_match)
+    if data.lines is not None:
+        repo.set_lines(sales_order_id, [line.model_dump() for line in data.lines])
+        so = repo.get(sales_order_id)
+    return so
+
+
 # FIX-91: was @router.get("/{{sales_order_id}}") — double-brace bug made route literal
 @router.get("/{sales_order_id}")
 def get_sales_order(sales_order_id: str, user: dict = Depends(get_current_user)):
@@ -75,10 +106,9 @@ def _so_load(repo: SalesOrderRepository, so_id: str, org_id: str) -> dict:
 def confirm_sales_order(sales_order_id: str, user: dict = Depends(get_current_user)):
     repo = SalesOrderRepository(user["org_id"])
     so = _so_load(repo, sales_order_id, user["org_id"])
-    if so.get("status") != "draft":
-        raise HTTPException(status_code=400, detail=f"تەنیا دۆخی draft پەسەند دەکرێت (دۆخی ئێستا: {so.get('status')})")
+    SALES_ORDER_SM.transition(so, "confirmed")
     return repo.update(sales_order_id, {
-        "status": "confirmed",
+        "status": so["status"],
         "confirmed_at": datetime.utcnow().isoformat(),
         "confirmed_by": user.get("id"),
     })
@@ -88,10 +118,9 @@ def confirm_sales_order(sales_order_id: str, user: dict = Depends(get_current_us
 def fulfill_sales_order(sales_order_id: str, user: dict = Depends(get_current_user)):
     repo = SalesOrderRepository(user["org_id"])
     so = _so_load(repo, sales_order_id, user["org_id"])
-    if so.get("status") not in ("confirmed", "partially_fulfilled"):
-        raise HTTPException(status_code=400, detail=f"دۆخی پێویست: confirmed (دۆخی ئێستا: {so.get('status')})")
+    SALES_ORDER_SM.transition(so, "fulfilled")
     return repo.update(sales_order_id, {
-        "status": "fulfilled",
+        "status": so["status"],
         "fulfilled_at": datetime.utcnow().isoformat(),
         "fulfilled_by": user.get("id"),
     })
@@ -101,10 +130,9 @@ def fulfill_sales_order(sales_order_id: str, user: dict = Depends(get_current_us
 def cancel_sales_order(sales_order_id: str, data: dict = None, user: dict = Depends(get_current_user)):
     repo = SalesOrderRepository(user["org_id"])
     so = _so_load(repo, sales_order_id, user["org_id"])
-    if so.get("status") in ("invoiced", "cancelled"):
-        raise HTTPException(status_code=400, detail=f"ناتوانرێت دۆخی '{so.get('status')}' هەڵبوەشێنرێت")
+    SALES_ORDER_SM.transition(so, "cancelled")
     return repo.update(sales_order_id, {
-        "status": "cancelled",
+        "status": so["status"],
         "cancelled_at": datetime.utcnow().isoformat(),
         "cancelled_by": user.get("id"),
         "cancellation_reason": (data or {}).get("reason", ""),
@@ -115,8 +143,7 @@ def cancel_sales_order(sales_order_id: str, data: dict = None, user: dict = Depe
 def sales_order_to_invoice(sales_order_id: str, user: dict = Depends(get_current_user)):
     repo = SalesOrderRepository(user["org_id"])
     so = _so_load(repo, sales_order_id, user["org_id"])
-    if so.get("status") in ("cancelled", "invoiced"):
-        raise HTTPException(status_code=400, detail=f"ناتوانرێت دۆخی '{so.get('status')}' بکرێتە فاکتوور")
+    SALES_ORDER_SM.transition(so, "invoiced")
 
     so_with_lines = repo.get_with_lines(sales_order_id)
     inv_repo = InvoiceRepository(user["org_id"])
@@ -145,5 +172,5 @@ def sales_order_to_invoice(sales_order_id: str, user: dict = Depends(get_current
     if lines:
         inv_repo.set_lines(inv["id"], [{k: v for k, v in ln.items() if k != "id"} for ln in lines])
 
-    repo.update(sales_order_id, {"status": "invoiced", "invoice_id": inv["id"]})
+    repo.update(sales_order_id, {"status": so["status"], "invoice_id": inv["id"]})
     return {"id": inv["id"], "invoice_number": inv_number, "sales_order_id": sales_order_id}

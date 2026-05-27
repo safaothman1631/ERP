@@ -4,6 +4,9 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import api from '../api';
+import { useListQuery } from '../api/queries/useListQuery';
+import { listQueryKeys } from '../api/queries/keys';
+import ChatterWidget from '../components/chatter/ChatterWidget';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 import { HelpIcon } from '../help/HelpIcon';
@@ -16,22 +19,28 @@ interface Department { id: string; name: string; }
 
 export default function HREmployees() {
  const { t } = useTranslation();
- const [list, setList] = useState<Employee[]>([]);
  const [depts, setDepts] = useState<Department[]>([]);
  const [open, setOpen] = useState(false);
  const [editing, setEditing] = useState<Employee | null>(null);
  const [form] = Form.useForm();
- const [loading, setLoading] = useState(false);
+ const employeesQuery = useListQuery<Employee, { items?: Employee[]; total?: number }>({
+ queryKey: listQueryKeys.hrEmployees(),
+ queryFn: () => api.get('/api/hr/employees'),
+ });
+ const list = employeesQuery.data?.items ?? [];
+ const loading = employeesQuery.isLoading || employeesQuery.isFetching;
 
  const load = async () => {
- setLoading(true);
  try {
- const [e, d] = await Promise.all([api.get('/api/hr/employees'), api.get('/api/hr/departments')]);
- setList(e.data.items || []);
+ const d = await api.get('/api/hr/departments');
  setDepts(d.data.items || []);
- } finally { setLoading(false); }
+ } finally {
+ await employeesQuery.refetch();
+ }
  };
- useEffect(() => { load(); }, []);
+ useEffect(() => {
+ void load();
+ }, []);
 
  const onSave = async () => {
  const v = await form.validateFields();
@@ -43,12 +52,12 @@ export default function HREmployees() {
  else await api.post('/api/hr/employees', v);
  message.success(t('saved'));
  setOpen(false); setEditing(null); form.resetFields();
- load();
+ await employeesQuery.refetch();
  } catch { message.error(t('error')); }
  };
 
  const remove = async (id: string) => {
- try { await api.delete(`/api/hr/employees/${id}`); load(); }
+ try { await api.delete(`/api/hr/employees/${id}`); await employeesQuery.refetch(); }
  catch { message.error(t('error')); }
  };
 
@@ -123,6 +132,11 @@ export default function HREmployees() {
  ]} />
  </Form.Item>
  </Form>
+ {editing?.id && (
+ <div style={{ marginTop: 16 }}>
+ <ChatterWidget entityType="employee" entityId={editing.id} />
+ </div>
+ )}
  </FormDialog>
  </div>
  );

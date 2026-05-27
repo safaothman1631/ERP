@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Row, Col, Card, Button, Space, Timeline, Typography } from 'antd';
+import { Row, Col, Card, Button, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import {
   DollarOutlined, TeamOutlined, WarningOutlined,
   RiseOutlined, FallOutlined, PlusOutlined,
   FileTextOutlined, BarChartOutlined, WalletOutlined,
-  ClockCircleOutlined, CheckCircleOutlined, InboxOutlined,
+  CheckCircleOutlined, InboxOutlined,
 } from '@ant-design/icons';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { useNavigate } from 'react-router-dom';
@@ -19,10 +19,23 @@ import { asTranslationKey } from '../i18n/types';
 import { HelpIcon } from '../help/HelpIcon';
 import { InlineError } from '../components/feedback/InlineError';
 import { useLoadingState } from '../hooks/useLoadingState';
+import type { RoleThemeId } from '../personas/types';
+import { getDashboardLayout } from './dashboard/dashboardLayouts';
+import MyActivitiesWidget from '../components/activities/MyActivitiesWidget';
 
 const { Text, Title } = Typography;
 
-const Dashboard: React.FC = () => {
+const Dashboard: React.FC<{
+  embedded?: boolean;
+  hideHero?: boolean;
+  hideExecutiveInvoiceCta?: boolean;
+  layoutId?: RoleThemeId;
+}> = ({
+  embedded = false,
+  hideHero = false,
+  hideExecutiveInvoiceCta = false,
+  layoutId = 'executive',
+}) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [data, setData] = useState<any>(null);
@@ -30,6 +43,10 @@ const Dashboard: React.FC = () => {
   const [backendUnavailable, setBackendUnavailable] = useState(false);
   const initialFetchDoneRef = useRef(false);
   const { showSkeleton } = useLoadingState(loading);
+  const layout = getDashboardLayout(layoutId);
+  const showKpi = (id: string) =>
+    layout.primaryKpis.includes(id as typeof layout.primaryKpis[number])
+    || layout.secondaryKpis.includes(id as typeof layout.secondaryKpis[number]);
 
   const fetchDashboard = async (forceRetry = false) => {
     setLoading(true);
@@ -55,19 +72,21 @@ const Dashboard: React.FC = () => {
 
   const currencySuffix = 'IQD';
 
-  const pageHeader = (
+  const pageHeader = !embedded ? (
     <PageHeader
       title={t('dashboard')}
       subtitle={t('overview_subtitle')}
       helpKey="dashboard"
       sectionId="dashboard.kpis"
       extra={
-        <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => navigate('/invoices/new')}>
-          {t('new_invoice')}
-        </Button>
+        !hideExecutiveInvoiceCta ? (
+          <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => navigate('/invoices/new')}>
+            {t('new_invoice')}
+          </Button>
+        ) : undefined
       }
     />
-  );
+  ) : null;
 
   if (showSkeleton) return (
     <div>
@@ -113,11 +132,12 @@ const Dashboard: React.FC = () => {
     <div>
       {pageHeader}
 
-      {/* Premium greeting hero */}
-      <DashboardHero onCreateInvoice={() => navigate('/invoices/new')} />
+      {/* Premium greeting hero — hidden when role-adaptive shell provides RoleHomeHero */}
+      {!hideHero && <DashboardHero onCreateInvoice={() => navigate('/invoices/new')} />}
 
       {/* KPI cards — 2×2 on mobile/tablet, 4-col on desktop — Requirement 4.5, 4.8, 4.9 */}
       <Row gutter={[space.md, space.md]} data-section-id="dashboard.kpis">
+        {showKpi('receivable') && (
         <Col xs={12} sm={12} lg={6}>
           <KpiCard
             title={t('total_receivable')}
@@ -128,6 +148,8 @@ const Dashboard: React.FC = () => {
             onClick={() => navigate('/invoices?status=open')}
           />
         </Col>
+        )}
+        {showKpi('payable') && (
         <Col xs={12} sm={12} lg={6}>
           <KpiCard
             title={t('total_payable')}
@@ -138,6 +160,8 @@ const Dashboard: React.FC = () => {
             onClick={() => navigate('/bills?status=open')}
           />
         </Col>
+        )}
+        {showKpi('income') && (
         <Col xs={12} sm={12} lg={6}>
           <KpiCard
             title={t('income_this_month')}
@@ -148,6 +172,8 @@ const Dashboard: React.FC = () => {
             onClick={() => navigate('/reports/advanced')}
           />
         </Col>
+        )}
+        {showKpi('expenses') && (
         <Col xs={12} sm={12} lg={6}>
           <KpiCard
             title={t('expenses_this_month')}
@@ -158,10 +184,12 @@ const Dashboard: React.FC = () => {
             onClick={() => navigate('/expenses')}
           />
         </Col>
+        )}
       </Row>
 
-      {/* Secondary KPIs */}
+      {(showKpi('contacts') || showKpi('overdue')) && (
       <Row gutter={[space.md, space.md]} style={{ marginTop: space.md }}>
+        {showKpi('contacts') && (
         <Col xs={24} sm={12}>
           <KpiCard
             title={t('total_contacts')}
@@ -171,6 +199,8 @@ const Dashboard: React.FC = () => {
             onClick={() => navigate('/contacts')}
           />
         </Col>
+        )}
+        {showKpi('overdue') && (
         <Col xs={24} sm={12}>
           <KpiCard
             title={t('overdue_invoices')}
@@ -180,9 +210,12 @@ const Dashboard: React.FC = () => {
             onClick={() => navigate('/invoices?status=overdue')}
           />
         </Col>
+        )}
       </Row>
+      )}
 
       {/* Quick actions */}
+      {layout.showQuickActions && !hideExecutiveInvoiceCta && (
       <Card style={cardStyle} title={<Space align="center"><Title level={5} style={{ margin: 0 }}>{t('quick_actions')}</Title><HelpIcon sectionId="dashboard.quickActions" /></Space>} data-section-id="dashboard.quickActions">
         <Row gutter={[space.sm, space.sm]}>
           {quickActions.map((action, i) => (
@@ -200,8 +233,9 @@ const Dashboard: React.FC = () => {
           ))}
         </Row>
       </Card>
+      )}
 
-      {/* Income vs Expense chart */}
+      {layout.showChart && (
       <Card style={cardStyle} title={<Space align="center"><Title level={5} style={{ margin: 0 }}>{t('income')} / {t('expenses')}</Title><HelpIcon sectionId="dashboard.incomeExpenseChart" /></Space>} data-section-id="dashboard.incomeExpenseChart">
         <ResponsiveChart
           legendItems={[
@@ -223,8 +257,9 @@ const Dashboard: React.FC = () => {
           </BarChart>
         </ResponsiveChart>
       </Card>
+      )}
 
-      {/* Recent invoices */}
+      {layout.showRecentInvoices && (
       <Card
         style={cardStyle}
         title={<Space align="center"><Title level={5} style={{ margin: 0 }}>{t('invoices')}</Title><HelpIcon sectionId="dashboard.recentInvoices" /></Space>}
@@ -238,39 +273,14 @@ const Dashboard: React.FC = () => {
             icon={<InboxOutlined />}
             title={t('no_invoices')}
             description={t('no_invoices_hint')}
-            actionLabel={t('new_invoice')}
-            onAction={() => navigate('/invoices/new')}
+            actionLabel={layout.suppressCreateInEmpty ? undefined : t('new_invoice')}
+            onAction={layout.suppressCreateInEmpty ? undefined : () => navigate('/invoices/new')}
           />
         )}
       </Card>
+      )}
 
-      {/* Activity timeline */}
-      <Card style={cardStyle} title={<Space align="center"><Title level={5} style={{ margin: 0 }}>{t('activities')}</Title><HelpIcon sectionId="dashboard.activities" /></Space>} data-section-id="dashboard.activities">
-        <Timeline
-          items={[
-            { color: 'green', icon: <CheckCircleOutlined />, content: (
-              <Space size="small">
-                <Text type="secondary">{t('today')}</Text>
-                <span>-</span>
-                <span>{t('income_this_month')}: <Text strong style={{ color: palette.success }}>{fmtIQD(data.income_this_month)} {currencySuffix}</Text></span>
-              </Space>
-            )},
-            { color: 'red', icon: <FallOutlined />, content: (
-              <Space size="small">
-                <Text type="secondary">{t('today')}</Text>
-                <span>-</span>
-                <span>{t('expenses_this_month')}: <Text strong style={{ color: palette.danger }}>{fmtIQD(data.expenses_this_month)} {currencySuffix}</Text></span>
-              </Space>
-            )},
-            { color: data.overdue_invoices > 0 ? 'red' : 'green', icon: <ClockCircleOutlined />, content: (
-              <span>{t('overdue_invoices')}: <Text strong>{data.overdue_invoices}</Text></span>
-            )},
-            { color: 'blue', icon: <TeamOutlined />, content: (
-              <span>{t('total_contacts')}: <Text strong>{data.total_contacts}</Text></span>
-            )},
-          ]}
-        />
-      </Card>
+      {layout.showActivity && <MyActivitiesWidget />}
     </div>
   );
 };

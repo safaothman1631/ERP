@@ -4,6 +4,8 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
+from app.services.report_streams import collect_stream
+
 
 def detect_format(filename: str, content: bytes) -> str:
     """Detect file format from filename and content"""
@@ -238,8 +240,10 @@ def dedupe_transactions(org_id: str, bank_account_id: str, txns: list[dict]) -> 
     from app.firestore.banking import BankTransactionRepository
     
     repo = BankTransactionRepository(org_id)
-    filters = [{'field': 'bank_account_id', 'op': '==', 'value': bank_account_id}]
-    existing, _ = repo.list(filters=filters, limit=10000)
+    existing = [
+        txn for txn in collect_stream(repo, max_docs=10000)
+        if txn.get("bank_account_id") == bank_account_id
+    ]
     
     # Build set of existing transaction signatures
     existing_sigs = set()

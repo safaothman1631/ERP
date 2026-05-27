@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import api from '../api';
+import { getPOSDB } from './pos/db';
 
 interface Floor {
   id: string;
@@ -36,12 +37,47 @@ interface POSFloorStore {
   activeFloorId: string | null;
   tableStates: Record<string, string>;
   loading: boolean;
-  
+
   loadFloors: (configId: string) => Promise<void>;
   loadTables: (floorId: string) => Promise<void>;
   setActiveFloor: (floorId: string) => void;
   updateTableLocal: (tableId: string, partial: Partial<Table>) => void;
   refresh: () => Promise<void>;
+}
+
+/**
+ * Best-effort cache helpers — read the last-known floor + tables from
+ * IndexedDB so the UI can render instantly while a fresh network fetch
+ * runs. Failures are silent; the network result is always the source of
+ * truth.
+ */
+async function cacheFloor(floor: Floor, tables: Table[]): Promise<void> {
+  try {
+    const db = await getPOSDB();
+    await db.put('floors', {
+      floorId: floor.id,
+      configId: floor.config_id,
+      name: floor.name,
+      nameKu: floor.name_ku,
+      sequence: floor.sequence,
+      backgroundImageUrl: floor.background_image_url,
+      isActive: floor.is_active,
+      tables,
+      updatedAt: Date.now(),
+    });
+  } catch {
+    /* noop */
+  }
+}
+
+async function readCachedTables(floorId: string): Promise<Table[] | null> {
+  try {
+    const db = await getPOSDB();
+    const row = await db.get('floors', floorId);
+    return (row?.tables as Table[] | undefined) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export const usePOSFloorStore = create<POSFloorStore>((set, get) => ({
@@ -56,7 +92,7 @@ export const usePOSFloorStore = create<POSFloorStore>((set, get) => ({
       set({ loading: true });
       const res = await api.get('/api/pos/floors', { params: { config_id: configId } });
       set({ floors: res.data.items || [], loading: false });
-      
+
       // Set first floor as active if none selected
       const floors = res.data.items || [];
       if (floors.length > 0 && !get().activeFloorId) {
@@ -70,17 +106,35 @@ export const usePOSFloorStore = create<POSFloorStore>((set, get) => ({
   },
 
   loadTables: async (floorId: string) => {
-    try {
-      const res = await api.get(`/api/pos/floors/${floorId}/tables`);
-      const tables = res.data.items || [];
-      set({ tables });
-      
-      // Update table states map
+    // 1. Optimistically render cached tables (if any) — keeps UI snappy on
+    //    cold reload when the network is slow.
+    const cached = await readCachedTables(floorId);
+    if (cached && cached.length > 0) {
+      set({ tables: cached });
       const states: Record<string, string> = {};
-      tables.forEach((t: Table) => {
+      cached.forEach((t) => {
         states[t.id] = t.state;
       });
       set({ tableStates: states });
+    }
+
+    try {
+      const res = await api.get(`/api/pos/floors/${floorId}/tables`);
+      const tables: Table[] = res.data.items || [];
+      set({ tables });
+
+      // Update table states map
+      const states: Record<string, string> = {};
+      tables.forEach((t) => {
+        states[t.id] = t.state;
+      });
+      set({ tableStates: states });
+
+      // Persist for next cold load.
+      const floor = get().floors.find((f) => f.id === floorId);
+      if (floor) {
+        void cacheFloor(floor, tables);
+      }
     } catch (error) {
       console.error('Failed to load tables:', error);
     }
@@ -97,7 +151,7 @@ export const usePOSFloorStore = create<POSFloorStore>((set, get) => ({
         t.id === tableId ? { ...t, ...partial } : t
       ),
     }));
-    
+
     if (partial.state) {
       set((state) => ({
         tableStates: { ...state.tableStates, [tableId]: partial.state as string },

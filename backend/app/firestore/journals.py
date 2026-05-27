@@ -2,11 +2,13 @@
 import uuid
 from datetime import datetime
 from .base import BaseRepository
+from .write_models import JournalEntryWriteModel
 
 
 class JournalEntryRepository(BaseRepository):
     """Repository for journal entries"""
     collection_name = "journal_entries"
+    WRITE_MODEL = JournalEntryWriteModel
 
     def get_with_lines(self, doc_id):
         """Get journal entry with line items"""

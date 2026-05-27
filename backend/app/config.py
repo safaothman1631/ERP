@@ -78,6 +78,12 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES_SHORT: int = 60   # 1 hour for login-issued access tokens
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7            # 7 days for refresh tokens
     ALGORITHM: str = "HS256"
+    # Fernet key (url-safe base64, 32 bytes) for PII field encryption
+    FIELD_ENCRYPTION_KEY: str = ""
+    FIELD_ENCRYPTION_KEY_PREVIOUS: str = ""
+
+    # ── Observability ─────────────────────────────────────────────────────────
+    SENTRY_DSN: str = ""
 
     # ── Database ──────────────────────────────────────────────────────────────
     DATABASE_URL: str = "sqlite:///./zoho_books.db"
@@ -91,6 +97,7 @@ class Settings(BaseSettings):
 
     # ── Firebase ──────────────────────────────────────────────────────────────
     FIREBASE_CREDENTIALS_PATH: str = "serviceAccountKey.json"
+    FIREBASE_PROJECT_ID: str = "zoho-83cda"
     FIREBASE_STORAGE_BUCKET: str = ""
 
     # ── File paths ────────────────────────────────────────────────────────────
@@ -101,12 +108,29 @@ class Settings(BaseSettings):
     CACHE_TTL_SECONDS: int = 300
     CACHE_ENABLED: bool = True
 
+    # Firestore: server-side list_page for hot collections (invoices, bills, items)
+    USE_FIRESTORE_QUERY: bool = False
+
+    # Database foundation excellence
+    RUN_MIGRATIONS_ON_BOOT: bool = False
+    APPLY_MIGRATIONS_ON_BOOT: bool = False
+    FS_METRICS_ENABLED: bool = True
+    IDEMPOTENCY_ENABLED: bool = True
+    GL_MATERIALISATION_ENABLED: bool = False
+    GENERIC_WRITE_VALIDATION: bool = True
+    AUDIT_RETENTION_MONTHS: int = 24
+
+    # P3: prefix search API (/api/search) — off until indexes validated in staging
+    SEARCH_PREFIX_ENABLED: bool = False
+
     # ── Rate Limiting ─────────────────────────────────────────────────────────
     # Requirement 10.3: rate limiting is optional (opt-in via settings)
     RATE_LIMITING_ENABLED: bool = False
     # Requirement 10.2: default rate limit based on IP address
     # Format: "<count>/<period>" e.g. "100/minute", "1000/hour"
     DEFAULT_RATE_LIMIT: str = "100/minute"
+    # H2: Redis URI for cross-instance limits (e.g. redis://10.0.0.3:6379/0)
+    RATE_LIMIT_STORAGE_URI: str = ""
 
     class Config:
         env_file = ".env"
@@ -242,7 +266,14 @@ def validate_env() -> None:
                 "Firebase features may not work"
             )
 
-    # ── 7. DATABASE_URL basic sanity check ───────────────────────────────────
+    # ── 7. Multi-instance rate limiting (Wave Q) ─────────────────────────────
+    if is_prod and not (os.environ.get("RATE_LIMIT_STORAGE_URI") or "").strip():
+        warnings.append(
+            "RATE_LIMIT_STORAGE_URI is unset — per-org rate limits are per-process only; "
+            "set Redis/Memorystore URI for Cloud Run with >1 instance"
+        )
+
+    # ── 8. DATABASE_URL basic sanity check ───────────────────────────────────
     db_url = os.environ.get("DATABASE_URL", "")
     if db_url and not (
         db_url.startswith("sqlite")

@@ -7,6 +7,7 @@ from app.firestore.accounts import AccountRepository
 from app.firestore.invoices import InvoiceRepository
 from app.firestore.payments import PaymentReceivedRepository, PaymentMadeRepository
 from app.seed.chart_of_accounts import CHART_OF_ACCOUNTS
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/l10n/iq", tags=["Iraq Localization"])
 
@@ -92,7 +93,7 @@ def withholding_summary(
     """Total withholding tax withheld from vendor payments in a period."""
     org_id = user["org_id"]
     pm_repo = PaymentMadeRepository(org_id)
-    payments, _ = pm_repo.list(limit=10000)
+    payments = collect_stream(pm_repo)
 
     total_withheld = 0.0
     by_vendor: dict = {}
@@ -135,7 +136,7 @@ def vat_return(
     """VAT return report (output VAT from invoices - input VAT from bills)."""
     org_id = user["org_id"]
     inv_repo = InvoiceRepository(org_id)
-    invoices, _ = inv_repo.list(limit=10000)
+    invoices = collect_stream(inv_repo)
 
     output_vat = 0.0
     taxable_sales = 0.0
@@ -149,7 +150,7 @@ def vat_return(
     # Input VAT from bills
     try:
         from app.firestore.bills import BillRepository
-        bills, _ = BillRepository(org_id).list(limit=10000)
+        bills = collect_stream(BillRepository(org_id))
         input_vat = 0.0
         taxable_purchases = 0.0
         for b in bills:
@@ -317,7 +318,7 @@ def next_tax_invoice_number(year: int = Query(None), user: dict = Depends(get_cu
         year = date.today().year
 
     inv_repo = InvoiceRepository(org_id)
-    invoices, _ = inv_repo.list(limit=10000)
+    invoices = collect_stream(inv_repo)
     prefix = f"IQ-{year}-"
     max_seq = 0
     for inv in invoices:

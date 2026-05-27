@@ -1,10 +1,13 @@
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from app.firestore.items import ItemRepository
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
 from app.services import settings_service
 from app.schemas.schemas import ItemCreate, ItemUpdate, ItemResponse
+from app.services.versioned_update import apply_versioned_update
 
 router = APIRouter(prefix="/api/items", tags=["Items"])
 
@@ -15,20 +18,25 @@ def list_items(
     page_size: int = Query(20, ge=1, le=500),
     search: str = Query("", max_length=200),
     item_type: str = Query("", max_length=20),
+    cursor: str = Query("", max_length=64),
     user: dict = Depends(get_current_user),
 ):
     repo = ItemRepository(user["org_id"])
-    
+
     filters = [{"field": "is_active", "op": "!=", "value": False}]
     if item_type:
         filters.append({"field": "item_type", "op": "==", "value": item_type})
-    
-    items, total = repo.list(
+
+    from app.services.api_list import api_list
+
+    items, total, next_cursor = api_list(
+        repo,
+        page=page,
+        page_size=page_size,
+        cursor=cursor or None,
         filters=filters,
         order_by="name",
         order_dir="ASCENDING",
-        limit=page_size,
-        offset=(page - 1) * page_size
     )
     
     # Client-side text filtering for search
@@ -42,13 +50,11 @@ def list_items(
         ]
         total = len(items)
 
-    return {
-        "items": items,
-        "total": total,
-        "page": page,
-        "page_size": page_size,
-        "total_pages": (total + page_size - 1) // page_size,
-    }
+    from app.services.list_response import paginated_response
+
+    return paginated_response(
+        items, total, page, page_size, repo=repo, next_cursor=next_cursor
+    )
 
 
 @router.post("", status_code=201, dependencies=[Depends(require_perm("items.create"))])
@@ -83,14 +89,19 @@ def get_item(item_id: str, user: dict = Depends(get_current_user)):
 
 
 @router.put("/{item_id}", dependencies=[Depends(require_perm("items.update"))])
-def update_item(item_id: str, data: ItemUpdate, user: dict = Depends(get_current_user)):
+def update_item(
+    item_id: str,
+    data: ItemUpdate,
+    user: dict = Depends(get_current_user),
+    if_match: Optional[str] = Header(None, alias="If-Match"),
+):
     repo = ItemRepository(user["org_id"])
     item = repo.get(item_id)
     if not item or item.get("org_id") != user["org_id"]:
         raise HTTPException(status_code=404, detail="کاڵا نەدۆزرایەوە")
 
     update_data = data.model_dump(exclude_unset=True)
-    item = repo.update(item_id, update_data)
+    item = apply_versioned_update(repo, item_id, update_data, if_match=if_match)
     return item
 
 
@@ -101,7 +112,9 @@ def delete_item(item_id: str, user: dict = Depends(get_current_user)):
     if not item or item.get("org_id") != user["org_id"]:
         raise HTTPException(status_code=404, detail="کاڵا نەدۆزرایەوە")
 
-    repo.update(item_id, {"is_active": False})
+    from app.services.http_guards import guarded_soft_deactivate
+
+    guarded_soft_deactivate(repo, item_id)
     return {"message": "کاڵا سڕایەوە", "success": True}
 
 

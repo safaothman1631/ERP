@@ -171,7 +171,7 @@ interface AuthState {
    * @param orgId    - Organisation ID the user belongs to.
    * @param userName - Display name of the user.
    */
-  login: (token: string, userId: string, orgId: string, userName: string) => void;
+  login: (token: string, userId: string, orgId: string, userName: string, userRole?: string) => void;
 
   /**
    * Secure login — stores access token in memory only (NOT localStorage).
@@ -187,7 +187,7 @@ interface AuthState {
    * @param orgId    - Organisation ID (persisted to localStorage).
    * @param userName - Display name (persisted to localStorage).
    */
-  loginSecure: (token: string, userId: string, orgId: string, userName: string) => void;
+  loginSecure: (token: string, userId: string, orgId: string, userName: string, userRole?: string) => void;
 
   /**
    * Revoke the current session and clear all persisted auth state.
@@ -264,26 +264,22 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   // --- Actions ---
 
-  login: (token, userId, orgId, userName) => {
-    // Persist to localStorage first so the values survive a hard reload even
-    // if the in-memory store update is somehow lost (Req 6.7).
+  login: (token, userId, orgId, userName, userRole) => {
     localStorage.setItem('token', token);
     localStorage.setItem('userId', userId);
     localStorage.setItem('orgId', orgId);
     localStorage.setItem('userName', userName);
+    if (userRole) localStorage.setItem('userRole', userRole);
+    if (userRole === 'super_admin') localStorage.setItem('isPlatformAdmin', 'true');
     set({ token, userId, orgId, userName, isAuthenticated: true });
   },
 
-  loginSecure: (token, userId, orgId, userName) => {
-    // Requirements 2.5: access token stored in memory ONLY (not localStorage).
-    // The refresh token is an httpOnly cookie set by the backend — we never
-    // read or write it client-side.
-    // Non-auth identity data is persisted so the UI can restore user info
-    // after a page reload (the access token will be refreshed via the cookie).
+  loginSecure: (token, userId, orgId, userName, userRole) => {
     localStorage.setItem('userId', userId);
     localStorage.setItem('orgId', orgId);
     localStorage.setItem('userName', userName);
-    // Intentionally NOT calling localStorage.setItem('token', token)
+    if (userRole) localStorage.setItem('userRole', userRole);
+    if (userRole === 'super_admin') localStorage.setItem('isPlatformAdmin', 'true');
     set({ token, userId, orgId, userName, isAuthenticated: true });
   },
 
@@ -312,6 +308,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.removeItem('userId');
     localStorage.removeItem('orgId');
     localStorage.removeItem('userName');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('isPlatformAdmin');
 
     // Step 4 — Reset in-memory store state.
     set({ token: null, userId: null, orgId: null, userName: null, isAuthenticated: false });

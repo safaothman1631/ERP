@@ -22,6 +22,8 @@ from app.api import (
     comments, transaction_locking, reporting_tags,
     # Sprint 15: Universal Chatter
     chatter,
+    # Phase 4: Universal Activities
+    activities,
     # Sprint 18: Privacy / GDPR
     privacy,
     # Sprint 20: Automation
@@ -78,6 +80,7 @@ from app.api import (
     agriculture, ngo, government,
     # Onboarding wizard
     onboarding,
+    platform,
     # Wave B (Accounting Power Features)
     analytic, budgets, cashflow_forecast, customer_statements, email_templates,
     # Wave I: Power-user Features
@@ -94,6 +97,8 @@ from app.api import health as health_api, backup as backup_api
 from app.middleware.audit import audit_middleware
 # Task 8.2: /api/v1/ versioned router with cursor-based pagination + RFC 7807 errors
 from app.api.v1.router import v1_router
+from app.api import webhooks_settings
+from app.api import search as search_api
 from app.api.v1.errors import register_error_handlers
 import os
 
@@ -125,11 +130,26 @@ _ROUTE_STATS: dict = {}
 async def lifespan(app: FastAPI):
     """Manage application lifecycle - startup and shutdown."""
     # Startup
+    if getattr(settings, "SENTRY_DSN", ""):
+        try:
+            import sentry_sdk
+            sentry_sdk.init(dsn=settings.SENTRY_DSN, environment=settings.ENVIRONMENT, traces_sample_rate=0.1)
+        except Exception as e:
+            logging.getLogger(__name__).warning("Sentry not initialized: %s", e)
     try:
         from app.services.scheduler import start_scheduler
         start_scheduler(app)
     except Exception as e:
         logging.getLogger(__name__).warning(f"Scheduler not started: {e}")
+
+    if getattr(settings, "RUN_MIGRATIONS_ON_BOOT", False):
+        try:
+            from app.firestore.migrations import run_pending
+
+            summary = run_pending(dry_run=not getattr(settings, "APPLY_MIGRATIONS_ON_BOOT", False))
+            logging.getLogger(__name__).info("migration_boot_check: %s", summary)
+        except Exception as e:
+            logging.getLogger(__name__).warning("migration_boot failed: %s", e)
     
     yield
     
@@ -153,6 +173,12 @@ app = FastAPI(
         "- **Pydantic v2 validation** بۆ هەموو request/response schemas\n\n"
         "## Authentication\n"
         "هەموو endpoints پێویستی بە `Authorization: Bearer <JWT>` header هەیە.\n\n"
+        "## Optimistic concurrency\n"
+        "For core document PUTs (invoices, bills, quotes, sales/purchase orders, "
+        "contacts, items, POS orders/configs, payroll), send `If-Match: W/\"<version>\"` "
+        "where version matches document `_version`. Conflicts return HTTP 409.\n\n"
+        "## Idempotency\n"
+        "Mutating requests may include `Idempotency-Key` header for safe retries.\n\n"
         "## Pagination\n"
         "بەکارهێنانی cursor-based pagination:\n"
         "```\nGET /api/v1/invoices?limit=20&cursor=<next_cursor>\n```\n"
@@ -172,6 +198,26 @@ app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 # Task 8.2: Register RFC 7807 Problem Details error handlers for /api/v1/
 register_error_handlers(app)
 
+# ── World-class performance spec (.kiro/specs/world-class-performance) ──
+# Phase P0 — mandatory Sentry init + OTel tracing + structured JSON logs.
+# Each wiring step is best-effort so missing dependencies in dev do not
+# prevent the app from booting.
+try:
+    from app.observability import init_observability
+    init_observability(app)
+except Exception as _obs_err:  # noqa: BLE001
+    logging.getLogger(__name__).warning(
+        "Observability not initialized (will retry in production): %s", _obs_err
+    )
+
+# Phase P0 — request-id middleware. Must be added BEFORE auth/tenant/audit
+# middleware so X-Request-Id is available on every downstream log line.
+try:
+    from app.middleware.request_id import RequestIDMiddleware
+    app.add_middleware(RequestIDMiddleware)
+except Exception as _rid_err:  # noqa: BLE001
+    logging.getLogger(__name__).warning("RequestIDMiddleware not registered: %s", _rid_err)
+
 # ── CORS (read origins from settings) ──
 _cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
 app.add_middleware(
@@ -179,7 +225,13 @@ app.add_middleware(
     allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "X-Zoho-Retry"],
+    allow_headers=[
+        "Content-Type",
+        "Authorization",
+        "X-Zoho-Retry",
+        "If-Match",
+        "Idempotency-Key",
+    ],
 )
 
 
@@ -244,10 +296,12 @@ async def add_security_headers(request: Request, call_next):
     return response
 
 # Include routers
-app.include_router(auth.router)
+app.include_router(auth.router, prefix="/api")
+app.include_router(auth.router, prefix="/api/v1")
 app.include_router(trash.router)
 app.include_router(contacts.router)
 app.include_router(items.router)
+app.include_router(search_api.router)
 app.include_router(invoices.router)
 app.include_router(invoices.payments_router)
 app.include_router(expenses.router)
@@ -288,6 +342,7 @@ app.include_router(taxes.router)
 app.include_router(fiscal.router)
 # Phase 6: System (Settings, Audit, Backup, Search)
 app.include_router(system.router)
+app.include_router(system.settings_router)
 app.include_router(health_api.router)
 app.include_router(backup_api.router)
 # Phase 7: Advanced Features (Shipments, Returns, Workflows, Portals)
@@ -311,6 +366,8 @@ app.include_router(transaction_locking.router)
 app.include_router(reporting_tags.router)
 # Sprint 15: Universal Chatter
 app.include_router(chatter.router)
+# Phase 4: Universal Activities
+app.include_router(activities.router)
 # Sprint 18: Privacy / GDPR
 app.include_router(privacy.router)
 # Sprint 20: Automation
@@ -394,16 +451,87 @@ app.include_router(agriculture.router)
 app.include_router(ngo.router)
 app.include_router(government.router)
 app.include_router(onboarding.router)
+app.include_router(platform.router)
 
 # ── Task 8.2: /api/v1/ versioned router (cursor-based pagination + RFC 7807) ──
 app.include_router(v1_router)
+app.include_router(webhooks_settings.router)
+
+from app.middleware.org_context import org_context_middleware
+
+app.middleware("http")(org_context_middleware)
 
 # Rate limit middleware (opt-in via settings bag)
 from app.middleware.rate_limit import RateLimitMiddleware
 app.add_middleware(RateLimitMiddleware)
 
+# Module gate middleware — enforce enabled_modules on mutating API calls
+from app.services.module_gate import module_gate_middleware
+app.middleware("http")(module_gate_middleware)
+
+from app.middleware.fs_observability import fs_observability_middleware
+from app.middleware.idempotency_http import idempotency_middleware
+
+app.middleware("http")(fs_observability_middleware)
+app.middleware("http")(idempotency_middleware)
+
 # Audit middleware - auto-logs mutating requests
 app.middleware("http")(audit_middleware)
+
+
+# ── World-class performance spec routers (P0 + P4 + P6) ──
+# Each include is best-effort so a missing module never blocks startup.
+try:
+    from app.api import rum as _rum_router
+    app.include_router(_rum_router.router)
+    logging.getLogger(__name__).info("Mounted /api/rum/vitals (P0)")
+except Exception as _e:  # noqa: BLE001
+    logging.getLogger(__name__).warning("RUM router not mounted: %s", _e)
+
+try:
+    from app.api import csp_report as _csp_router
+    app.include_router(_csp_router.router)
+    logging.getLogger(__name__).info("Mounted /api/csp-report (P6)")
+except Exception as _e:  # noqa: BLE001
+    logging.getLogger(__name__).warning("CSP report router not mounted: %s", _e)
+
+try:
+    from app.api import health_check as _health_router
+    app.include_router(_health_router.router)
+    logging.getLogger(__name__).info("Mounted /api/health (P4 — enriched)")
+except Exception as _e:  # noqa: BLE001
+    logging.getLogger(__name__).warning("Health-check router not mounted: %s", _e)
+
+try:
+    from app.api.admin import exports as _admin_exports
+    from app.api.admin import pii_delete as _admin_pii
+    app.include_router(_admin_exports.router)
+    app.include_router(_admin_pii.router)
+    logging.getLogger(__name__).info("Mounted /api/admin/tenants/{id}/export + /delete (P4)")
+except Exception as _e:  # noqa: BLE001
+    logging.getLogger(__name__).warning("Admin routers not mounted: %s", _e)
+
+try:
+    from app.observability.metrics import router as _metrics_router
+    app.include_router(_metrics_router)
+    logging.getLogger(__name__).info("Mounted /metrics (P4)")
+except Exception as _e:  # noqa: BLE001
+    logging.getLogger(__name__).warning("Prometheus metrics router not mounted: %s", _e)
+
+# ── Validation framework routers (V-PR.4 + V-PR.7) ──
+try:
+    from app.api import offline_sync_health as _offline_router
+    app.include_router(_offline_router.router)
+    logging.getLogger(__name__).info("Mounted /api/health/offline-sync (V-PR.4)")
+except Exception as _e:  # noqa: BLE001
+    logging.getLogger(__name__).warning("Offline-sync health router not mounted: %s", _e)
+
+try:
+    from app.api import health_offline as _health_offline_router
+    app.include_router(_health_offline_router.router)
+    logging.getLogger(__name__).info("Mounted /api/health/synthetic-summary (V-PR.1)")
+except Exception as _e:  # noqa: BLE001
+    logging.getLogger(__name__).warning("Synthetic-summary router not mounted: %s", _e)
 
 
 @app.get("/")
@@ -414,10 +542,6 @@ def root():
         return FileResponse(dist_index)
     return {"app": settings.APP_NAME, "status": "running", "version": "2.0.0"}
 
-
-@app.get("/api/health")
-def health():
-    return {"status": "ok"}
 
 
 @app.get("/api/live")
@@ -503,14 +627,15 @@ def ready():
 
 
 # ── Serve React SPA (بۆ production) ──
-_frontend_dist = os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist")
-if os.path.exists(_frontend_dist):
-    app.mount("/assets", StaticFiles(directory=os.path.join(_frontend_dist, "assets")), name="static-assets")
+import os as _os_spa
+_frontend_dist = _os_spa.path.join(_os_spa.path.dirname(__file__), "..", "..", "frontend", "dist")
+if _os_spa.path.exists(_frontend_dist):
+    app.mount("/assets", StaticFiles(directory=_os_spa.path.join(_frontend_dist, "assets")), name="static-assets")
 
     @app.get("/{full_path:path}")
     def serve_spa(full_path: str):
         """Catch-all: React Router SPA بۆ هەموو URL"""
-        file_path = os.path.join(_frontend_dist, full_path)
-        if os.path.exists(file_path) and os.path.isfile(file_path):
+        file_path = _os_spa.path.join(_frontend_dist, full_path)
+        if _os_spa.path.exists(file_path) and _os_spa.path.isfile(file_path):
             return FileResponse(file_path)
-        return FileResponse(os.path.join(_frontend_dist, "index.html"))
+        return FileResponse(_os_spa.path.join(_frontend_dist, "index.html"))

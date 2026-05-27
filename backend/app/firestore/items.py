@@ -1,9 +1,11 @@
 # Items repository
 from .base import BaseRepository
+from .write_models import ItemWriteModel
 
 class ItemRepository(BaseRepository):
     """Repository for items (products/services)"""
     collection_name = "items"
+    WRITE_MODEL = ItemWriteModel
     
     def list_by_type(self, item_type: str, limit=25, offset=0):
         """List items by type (product/service)"""

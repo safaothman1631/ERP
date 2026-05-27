@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/hotel", tags=["Hotel"])
 
@@ -186,8 +187,8 @@ def checkout(rid: str, user: dict = Depends(get_current_user)):
 @router.get("/availability")
 def availability(start: str, end: str, user: dict = Depends(get_current_user)):
     org = user["org_id"]
-    rooms, _ = RoomRepo(org).list(limit=10000)
-    res, _ = ReservationRepo(org).list(limit=10000)
+    rooms = collect_stream(RoomRepo(org), max_docs=10000)
+    res = collect_stream(ReservationRepo(org), max_docs=10000)
     busy_room_ids = {r.get("room_id") for r in res if r.get("room_id") and r.get("status") not in ("cancelled", "checked_out")
                      and (r.get("check_in_date") or "") <= end and (r.get("check_out_date") or "") >= start}
     free = [r for r in rooms if r.get("id") not in busy_room_ids and r.get("status") == "available"]

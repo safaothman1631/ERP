@@ -1,0 +1,13 @@
+repos:
+  - repo: local
+    hooks:
+      - id: firestore-naming-lint
+        name: Firestore naming lint
+        entry: python backend/tools/lint_naming.py
+        language: system
+        pass_filenames: false
+      - id: firestore-field-types-lint
+        name: Firestore field types lint
+        entry: python backend/tools/lint_field_types.py
+        language: system
+        pass_filenames: false

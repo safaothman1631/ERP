@@ -3,16 +3,18 @@ import { Form, Input, InputNumber, Button, Select, DatePicker, Space } from 'ant
 import { message } from '../utils/message';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
 import dayjs from 'dayjs';
 import { FormLayout, type FormSection } from '../design-system';
 import { useAuthStore } from '../store';
 import { ResponsiveForm } from '../components/responsive/ResponsiveForm';
+import ChatterWidget from '../components/chatter/ChatterWidget';
 
 const InvoiceForm: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { id } = useParams<{ id?: string }>();
   const [form] = Form.useForm();
   const isDark = useAuthStore((s) => s.theme === 'dark');
   const [contacts, setContacts] = useState<any[]>([]);
@@ -178,6 +180,15 @@ const InvoiceForm: React.FC = () => {
         </Form.Item>
       ),
     },
+    ...(id
+      ? [
+          {
+            key: 'chatter',
+            title: t('chatter.activities'),
+            children: <ChatterWidget entityType="invoice" entityId={id} />,
+          } as FormSection,
+        ]
+      : []),
   ];
 
   return (

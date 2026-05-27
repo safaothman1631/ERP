@@ -462,42 +462,41 @@ class BackupService:
     # ── Retention ─────────────────────────────────────────────────────────
 
     async def _enforce_retention(self) -> None:
-        """Delete backup records and files beyond the retention limit."""
-        import os
+        """Delete backup records and files beyond the retention limit.
+
+        Queries the org's backup records ordered by ``created_at`` descending,
+        keeps the first :attr:`RETENTION_COUNT`, and deletes the rest from both
+        Firestore and Cloud Storage (Requirement 4.7).
+        """
         from app.firebase_client import get_db
 
         db = get_db()
-        docs = db.collection("backups").where("org_id", "==", self.org_id).stream()
-        all_records = sorted(
-            list(docs),
-            key=lambda d: d.to_dict().get("created_at", ""),
-            reverse=True,
-        )
+        try:
+            docs = (
+                db.collection("backups")
+                .where("org_id", "==", self.org_id)
+                .order_by("created_at", direction="DESCENDING")
+                .stream()
+            )
+            all_records = list(docs)
+        except Exception as exc:
+            logger.warning(
+                "backup retention skipped (index may be building) org=%s: %s",
+                self.org_id,
+                exc,
+            )
+            return
 
         if len(all_records) <= self.RETENTION_COUNT:
             return
 
-        bucket_name = os.environ.get("FIREBASE_STORAGE_BUCKET", "")
         to_delete = all_records[self.RETENTION_COUNT:]
         for doc in to_delete:
             data = doc.to_dict()
             storage_path = data.get("storage_path", "")
 
             if storage_path:
-                try:
-                    if bucket_name:
-                        from app.firebase_client import get_bucket
-                        bucket = get_bucket()
-                        blob = bucket.blob(storage_path)
-                        await asyncio.get_event_loop().run_in_executor(
-                            None, lambda b=blob: b.delete() if b.exists() else None
-                        )
-                    else:
-                        local_file = self._local_path(storage_path)
-                        if os.path.exists(local_file):
-                            os.remove(local_file)
-                except Exception as exc:
-                    logger.warning("Failed to delete backup file %s: %s", storage_path, exc)
+                await self._delete_storage_file(storage_path)
 
             try:
                 await asyncio.get_event_loop().run_in_executor(
@@ -506,6 +505,36 @@ class BackupService:
                 )
             except Exception as exc:
                 logger.warning("Failed to delete Firestore backup record %s: %s", doc.id, exc)
+
+    async def _delete_storage_file(self, storage_path: str) -> None:
+        """Delete a backup blob from Cloud Storage with a dev-only local fallback.
+
+        Cloud Storage is the source of truth — we always try ``get_bucket()``
+        first.  If the bucket cannot be obtained (dev environment without
+        ``FIREBASE_STORAGE_BUCKET``) we fall back to the local filesystem so
+        ``backup_service`` remains usable for development and test runs.
+        """
+        import os
+
+        try:
+            from app.firebase_client import get_bucket
+
+            bucket = get_bucket()
+            blob = bucket.blob(storage_path)
+            await asyncio.get_event_loop().run_in_executor(
+                None, lambda b=blob: b.delete() if b.exists() else None
+            )
+        except RuntimeError:
+            local_file = self._local_path(storage_path)
+            try:
+                if os.path.exists(local_file):
+                    os.remove(local_file)
+            except Exception as exc:
+                logger.warning(
+                    "Failed to delete local backup file %s: %s", local_file, exc
+                )
+        except Exception as exc:
+            logger.warning("Failed to delete backup file %s: %s", storage_path, exc)
 
     # ── Failure notification ──────────────────────────────────────────────
 

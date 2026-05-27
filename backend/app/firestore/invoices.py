@@ -1,10 +1,18 @@
 # Invoice and sales document repositories
 from .base import BaseRepository
+from .write_models import (
+    InvoiceWriteModel,
+    PaymentReceivedWriteModel,
+    QuoteWriteModel,
+    SalesOrderWriteModel,
+)
 from datetime import datetime
 
 class InvoiceRepository(BaseRepository):
     """Repository for invoices"""
     collection_name = "invoices"
+    WRITE_MODEL = InvoiceWriteModel
+    SCHEMA_TARGET_VERSION = 2
     
     def list_by_status(self, status, limit=25, offset=0):
         """List invoices by status"""
@@ -43,24 +51,16 @@ class InvoiceRepository(BaseRepository):
         return self.update(doc_id, {"status": status})
     
     def record_payment(self, doc_id, amount):
-        """Record payment against invoice (defensive: missing balance_due treated as total)"""
-        inv = self.get(doc_id)
-        if not inv:
-            return None
-        
-        current_balance = float(inv.get("balance_due") or inv.get("total") or 0)
-        new_balance = current_balance - float(amount or 0)
-        new_status = "paid" if new_balance <= 0 else "partially_paid"
-        
-        return self.update(doc_id, {
-            "balance_due": max(0, new_balance),
-            "status": new_status
-        })
+        """Record payment against invoice (atomic read-write)."""
+        from app.services.invoice_payments import apply_invoice_payment_atomic
+
+        return apply_invoice_payment_atomic(self.org_id, doc_id, float(amount or 0))
 
 
 class QuoteRepository(BaseRepository):
     """Repository for quotes"""
     collection_name = "quotes"
+    WRITE_MODEL = QuoteWriteModel
     
     def get_with_lines(self, doc_id):
         """Get quote with line items"""
@@ -73,6 +73,7 @@ class QuoteRepository(BaseRepository):
 class SalesOrderRepository(BaseRepository):
     """Repository for sales orders"""
     collection_name = "sales_orders"
+    WRITE_MODEL = SalesOrderWriteModel
     
     def get_with_lines(self, doc_id):
         """Get sales order with line items"""
@@ -137,6 +138,7 @@ class RecurringInvoiceRepository(BaseRepository):
 class PaymentReceivedRepository(BaseRepository):
     """Repository for payment received records"""
     collection_name = "payments_received"
+    WRITE_MODEL = PaymentReceivedWriteModel
 
 
 class RetainerApplicationRepository(BaseRepository):

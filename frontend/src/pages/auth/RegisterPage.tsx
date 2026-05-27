@@ -26,7 +26,9 @@ import api from '../../api';
 import AuthLayout from '../../layouts/AuthLayout';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
 import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
+import { FormDialog } from '../../components/responsive/FormDialog';
 import { isRTLLanguage } from '../../utils/language';
+import { useOnboardingStore } from '../../onboarding/store';
 
 // ---------------------------------------------------------------------------
 // Password strength helpers
@@ -136,12 +138,16 @@ const RegisterPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { loginSecure } = useAuthStore();
+  const markFreshSignup = useOnboardingStore(s => s.markFreshSignup);
   const isRTL = isRTLLanguage(i18n.language as 'ku' | 'ar' | 'en');
 
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [passwordValue, setPasswordValue] = useState('');
+  const [googleToken, setGoogleToken] = useState<string | null>(null);
+  const [orgModalOpen, setOrgModalOpen] = useState(false);
+  const [orgNameInput, setOrgNameInput] = useState('');
 
   // Validate password strength for the form rule
   const validatePasswordStrength = useCallback((_: unknown, value: string) => {
@@ -185,7 +191,9 @@ const RegisterPage: React.FC = () => {
         res.data.user_id,
         res.data.org_id,
         res.data.user_name,
+        res.data.role,
       );
+      markFreshSignup();
       navigate('/onboarding');
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
@@ -199,26 +207,55 @@ const RegisterPage: React.FC = () => {
     }
   };
 
-  const handleGoogleSuccess = async (idToken: string) => {
+  const handleGoogleSuccess = (idToken: string) => {
+    setErrorMsg(null);
+    const orgFromForm = (form.getFieldValue('org_name') as string | undefined)?.trim();
+    if (orgFromForm) {
+      setOrgNameInput(orgFromForm);
+      setGoogleToken(idToken);
+      void handleGoogleRegister(idToken, orgFromForm);
+      return;
+    }
+    setGoogleToken(idToken);
+    setOrgModalOpen(true);
+  };
+
+  const handleGoogleRegister = async (token?: string, orgName?: string) => {
+    const idToken = token || googleToken;
+    const name = (orgName || orgNameInput).trim();
+    if (!idToken || !name) {
+      setErrorMsg(t('required_company'));
+      return;
+    }
     setLoading(true);
     setErrorMsg(null);
+    setOrgModalOpen(false);
     try {
       const res = await api.post('/api/v1/auth/firebase-register', {
         id_token: idToken,
-        org_name: form.getFieldValue('org_name') || '',
+        org_name: name,
       });
       loginSecure(
         res.data.access_token,
         res.data.user_id,
         res.data.org_id,
         res.data.user_name,
+        res.data.role,
       );
+      markFreshSignup();
       navigate('/onboarding');
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
-      setErrorMsg(detail || t('error'));
+      if (detail === 'ئەم ئیمەیڵە پێشتر تۆمارکراوە' || detail === 'ئەم ئیمەیڵە پێشتر تۆمار کراوە') {
+        setErrorMsg(t('auth_email_exists'));
+      } else if (err?.response?.status === 405) {
+        setErrorMsg(t('auth_api_unavailable', 'Registration service unavailable. Please try again.'));
+      } else {
+        setErrorMsg(detail || t('error'));
+      }
     } finally {
       setLoading(false);
+      setGoogleToken(null);
     }
   };
 
@@ -229,7 +266,7 @@ const RegisterPage: React.FC = () => {
     >
       {errorMsg && (
         <Alert
-          message={errorMsg}
+          title={errorMsg}
           type="error"
           showIcon
           closable
@@ -374,6 +411,26 @@ const RegisterPage: React.FC = () => {
           }
         }}
       />
+
+      <FormDialog
+        open={orgModalOpen}
+        title={t('auth_org_name')}
+        onOk={() => handleGoogleRegister()}
+        onClose={() => { setOrgModalOpen(false); setGoogleToken(null); }}
+        okText={t('auth_signup')}
+      >
+        <p style={{ marginBottom: 12, color: '#666' }}>
+          {t('auth_org_modal_description')}
+        </p>
+        <Input
+          placeholder={t('auth_org_name')}
+          prefix={<BankOutlined />}
+          value={orgNameInput}
+          onChange={(e) => setOrgNameInput(e.target.value)}
+          onPressEnter={() => handleGoogleRegister()}
+          style={{ borderRadius: 10, height: 46 }}
+        />
+      </FormDialog>
 
       <div style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: '#666' }}>
         {t('auth_has_account')}{' '}

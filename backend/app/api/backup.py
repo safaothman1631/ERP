@@ -164,7 +164,9 @@ def download_backup(
 
     record = doc.to_dict()
 
-    # Org-scoped access check — enforced regardless of role (Requirement 10.3)
+    # Org-scoped access check — enforced regardless of role (Requirement 10.3).
+    # MUST run before any Cloud Storage access so cross-org callers never reach
+    # StorageService.
     if record.get("org_id") != user["org_id"]:
         raise HTTPException(
             status_code=403,
@@ -172,7 +174,6 @@ def download_backup(
         )
 
     storage_path: str = record.get("storage_path", "")
-    filename: str = record.get("filename", "backup.json.gz")
 
     if not storage_path:
         raise HTTPException(
@@ -180,38 +181,15 @@ def download_backup(
             detail="ئەم تۆمارەی پاڵپشتکردن ناونیشانی فایلی نییە",
         )
 
-    # Stream the file — from Cloud Storage (prod) or local filesystem (dev)
-    from fastapi.responses import StreamingResponse
-    import io
-    import os
-
-    from app.services.backup_service import BackupService
-
-    bucket_name = os.environ.get("FIREBASE_STORAGE_BUCKET", "")
-
+    # Generate a 60-minute signed Cloud Storage URL (Requirements 8.3, 8.4).
     try:
-        if bucket_name:
-            # Production: stream from Cloud Storage
-            from app.services.storage_service import StorageService
-            storage_service = StorageService(user["org_id"])
-            file_bytes = storage_service.download_file(storage_path)
-        else:
-            # Development: read from local filesystem
-            local_file = BackupService._local_path(storage_path)
-            if not os.path.exists(local_file):
-                raise HTTPException(status_code=404, detail=f"فایلی باکئەپ نەدۆزرایەوە: {filename}")
-            with open(local_file, "rb") as f:
-                file_bytes = f.read()
+        storage_service = StorageService(user["org_id"])
+        signed_url = storage_service.get_signed_url(storage_path, expires_minutes=60)
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"داونلۆد سەرکەوتوو نەبوو: {exc}")
+        raise HTTPException(
+            status_code=500, detail=f"دروستکردنی بەستەری داونلۆد سەرکەوتوو نەبوو: {exc}"
+        )
 
-    return StreamingResponse(
-        io.BytesIO(file_bytes),
-        media_type="application/gzip",
-        headers={
-            "Content-Disposition": f'attachment; filename="{filename}"',
-            "Content-Length": str(len(file_bytes)),
-        },
-    )
+    return {"url": signed_url, "expires_in_minutes": 60}

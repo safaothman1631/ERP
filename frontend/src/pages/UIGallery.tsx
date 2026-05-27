@@ -4,6 +4,7 @@ import { CheckCircleFilled, EyeOutlined, ThunderboltFilled } from '@ant-design/i
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store';
 import { FormDialog } from '../components/responsive/FormDialog';
+import RolePersonaGallery from '../components/role/RolePersonaGallery';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -558,6 +559,7 @@ const UIGallery: React.FC = () => {
  </div>
  )}
  </FormDialog>
+ <RolePersonaGallery />
  </div>
  );
 };

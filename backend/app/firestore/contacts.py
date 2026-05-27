@@ -1,9 +1,14 @@
 # Contact repository
 from .base import BaseRepository
+from .encrypted_mixin import EncryptedFieldsMixin
+from .write_models import ContactWriteModel
 
-class ContactRepository(BaseRepository):
+class ContactRepository(EncryptedFieldsMixin, BaseRepository):
     """Repository for contacts (customers and vendors)"""
     collection_name = "contacts"
+    WRITE_MODEL = ContactWriteModel
+    SCHEMA_TARGET_VERSION = 2
+    _ENCRYPTED_FIELDS = ("phone", "email", "tax_id", "national_id")
     
     def find_by_email(self, email: str):
         """Find contact by email"""

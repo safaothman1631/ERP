@@ -4,6 +4,8 @@ import { message } from '../utils/message';
 import { PlusOutlined, MoreOutlined, DeleteOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
+import { useListQuery } from '../api/queries/useListQuery';
+import { listQueryKeys } from '../api/queries/keys';
 import dayjs from 'dayjs';
 import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
 import { downloadCsv } from '../utils/exportCsv';
@@ -15,9 +17,6 @@ const statusColors: Record<string, string> = { draft: 'default', approved: 'gree
 
 const CreditNotes: React.FC = () => {
  const { t } = useTranslation();
- const [data, setData] = useState<any[]>([]);
- const [loading, setLoading] = useState(false);
- const [total, setTotal] = useState(0);
  const [page, setPage] = useState(1);
  const [modalOpen, setModalOpen] = useState(false);
  const [contacts, setContacts] = useState<any[]>([]);
@@ -36,13 +35,13 @@ const CreditNotes: React.FC = () => {
  });
  const isDark = useAuthStore((s) => s.theme === 'dark');
 
- const fetchData = async () => {
- setLoading(true);
- try { const r = await api.get('/api/credit-notes', { params: { page, page_size: 20 } }); setData(r.data.items); setTotal(r.data.total); }
- catch { message.error(t('error')); } finally { setLoading(false); }
- };
-
- useEffect(() => { fetchData(); }, [page]);
+ const creditNotesQuery = useListQuery<any, { items?: any[]; total?: number }>({
+ queryKey: listQueryKeys.creditNotes({ page, page_size: 20 }),
+ queryFn: () => api.get('/api/credit-notes', { params: { page, page_size: 20 } }),
+ });
+ const data = creditNotesQuery.data?.items ?? [];
+ const total = creditNotesQuery.data?.total ?? 0;
+ const loading = creditNotesQuery.isLoading || creditNotesQuery.isFetching;
 
  const openNew = async () => {
  const [c, i] = await Promise.all([
@@ -55,7 +54,7 @@ const CreditNotes: React.FC = () => {
  };
 
  const handleAction = async (id: string, action: string) => {
- try { await api.post(`/api/credit-notes/${id}/${action}`); message.success(t('success')); fetchData(); } catch { message.error(t('error')); }
+ try { await api.post(`/api/credit-notes/${id}/${action}`); message.success(t('success')); void creditNotesQuery.refetch(); } catch { message.error(t('error')); }
  };
 
  const handleDownloadPdf = async (id: string) => {
@@ -87,7 +86,7 @@ const CreditNotes: React.FC = () => {
  reference: values.reference || '', currency_code: 'IQD', notes: values.notes || '',
  lines: lines.map(l => ({ item_id: l.item_id || null, description: l.description, quantity: l.quantity, unit_price: l.unit_price, discount_percent: l.discount_percent || 0, tax_id: null, account_id: null })),
  });
- message.success(t('success')); setModalOpen(false); fetchData();
+ message.success(t('success')); setModalOpen(false); void creditNotesQuery.refetch();
  } catch { message.error(t('error')); } finally { setSaving(false); }
  };
 
@@ -122,7 +121,7 @@ const CreditNotes: React.FC = () => {
  setAvailableInvoices(avail.data.items || avail.data);
  setAppliedInvoices(applied.data.items || applied.data);
  applyForm.resetFields();
- fetchData();
+ void creditNotesQuery.refetch();
  } catch { message.error(t('error')); } finally { setApplyingSaving(false); }
  };
 
@@ -137,7 +136,7 @@ const CreditNotes: React.FC = () => {
  ]);
  setAvailableInvoices(avail.data.items || avail.data);
  setAppliedInvoices(applied.data.items || applied.data);
- fetchData();
+ void creditNotesQuery.refetch();
  } catch { message.error(t('error')); }
  };
 

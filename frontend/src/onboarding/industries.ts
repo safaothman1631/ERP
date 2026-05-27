@@ -3,6 +3,11 @@
 // When enabledModules === null  → show everything (legacy users / not yet onboarded)
 // When enabledModules is a Set  → filter sidebar to only those keys + always-on items.
 
+import { MODULE_MATURITY, PRODUCTION_CORE_MODULES, type ModuleMaturityTier } from './moduleMaturity';
+
+export type { ModuleMaturityTier } from './moduleMaturity';
+export { PRODUCTION_CORE_MODULES } from './moduleMaturity';
+
 export type ModuleKey =
   // ── core / ops ──
   | 'sales' | 'purchase' | 'inventory' | 'manufacturing'
@@ -34,9 +39,10 @@ export interface ModuleDef {
   category: 'core' | 'ops' | 'finance' | 'people' | 'system' | 'engagement' | 'platform' | 'vertical';
   icon: string;            // emoji for visual lightness in wizard
   description: string;
+  maturity?: ModuleMaturityTier;
 }
 
-export const MODULES: ModuleDef[] = [
+const MODULES_BASE: Omit<ModuleDef, 'maturity'>[] = [
   // core / ops
   { key: 'sales',         labelKey: 'mod_sales',         title: 'فرۆشتن',         category: 'ops',     icon: '🧾', description: 'فاکتور، quote، Sales Order، گەڕاندنەوە' },
   { key: 'purchase',      labelKey: 'mod_purchase',      title: 'کڕین',           category: 'ops',     icon: '📥', description: 'Bills، PO، Vendor Credits، خەرجی' },
@@ -101,6 +107,14 @@ export const MODULES: ModuleDef[] = [
   { key: 'ext.government',   labelKey: 'mod_government',    title: 'حکومی',              category: 'vertical',   icon: '🏛️', description: 'Citizens + Permits + Tenders' },
 ];
 
+export const MODULES: ModuleDef[] = MODULES_BASE.map((m) => ({
+  ...m,
+  maturity: MODULE_MATURITY[m.key],
+}));
+
+/** Default module set for new tenants (production_core; accounting/banking are ALWAYS_ON). */
+export const DEFAULT_NEW_TENANT_MODULES: ModuleKey[] = [...PRODUCTION_CORE_MODULES];
+
 // Modules always enabled (essential foundation — user can't disable).
 export const ALWAYS_ON: ModuleKey[] = ['accounting', 'banking'];
 
@@ -113,6 +127,11 @@ export interface IndustryPreset {
 }
 
 export const INDUSTRIES: IndustryPreset[] = [
+  {
+    id: 'production_core', title: 'Production Core (Default)', icon: '✅',
+    description: 'Launch-certified modules for new Iraq SMB tenants',
+    modules: [...PRODUCTION_CORE_MODULES],
+  },
   {
     id: 'retail', title: 'بازرگانی گشتی / دوکان', icon: '🛍️',
     description: 'فرۆشگا، کۆگا، POS، ڕاپۆرتی فرۆشتن',

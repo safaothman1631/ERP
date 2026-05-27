@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 from app.services import settings_service
 
 router = APIRouter(prefix="/api/helpdesk", tags=["Helpdesk"])
@@ -387,7 +388,7 @@ def list_csat(user: dict = Depends(get_current_user), limit: int = 100):
 
 @router.get("/csat/summary")
 def csat_summary(user: dict = Depends(get_current_user)):
-    items, _ = HelpdeskCSATRepo(user["org_id"]).list(limit=10000)
+    items = collect_stream(HelpdeskCSATRepo(user["org_id"]), max_docs=10000)
     if not items:
         return {"count": 0, "avg_rating": 0.0, "satisfied_pct": 0.0}
     total = sum(i.get("rating", 0) for i in items)
@@ -422,7 +423,7 @@ def delete_canned(cid: str, user: dict = Depends(get_current_user)):
 @router.get("/stats")
 def helpdesk_stats(user: dict = Depends(get_current_user)):
     repo = HelpdeskTicketRepo(user["org_id"])
-    items, _ = repo.list(limit=10000)
+    items = collect_stream(repo, max_docs=10000)
     by_status: dict[str, int] = {}
     by_priority: dict[str, int] = {}
     sla_breach = 0

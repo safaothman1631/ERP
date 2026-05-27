@@ -1,7 +1,24 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
-import './i18n'
+// i18n bootstrap (P5):
+//
+//   • Prefer the namespaced lazy config (`i18n.config`) — only the active
+//     locale's `common` bundle is loaded on first paint; other namespaces
+//     fetch on demand via HTTP backend from `/locales/<lng>/<ns>.json`.
+//   • Fall back to the legacy monolithic `./i18n` import if the split JSON
+//     files have not been generated yet (e.g. on a fresh dev machine that
+//     hasn't run `npm run i18n:split`).
+//
+// We fire-and-forget so first paint is not blocked; React Suspense is
+// disabled in the config, and components display the key until the
+// translation lands a frame or two later.
+import { initI18n } from './i18n.config'
+initI18n().catch((err) => {
+  // eslint-disable-next-line no-console
+  console.warn('[zoho] lazy i18n init failed, falling back to legacy bundle:', err)
+  return import('./i18n')
+})
 import './global.css'
 import './polish.css'
 import './print.css'
@@ -12,6 +29,45 @@ import './reduced-motion.css'
 // class is available app-wide. Touch-target utility (clickable.css) is
 // imported per-component, not globally (Requirements 2.5, 2.7, 5.1, 5.2).
 import './components/responsive/safeArea.css'
+
+// World-class performance spec (.kiro/specs/world-class-performance):
+//   • P0 — Sentry mandatory in production (R6.4) + web-vitals telemetry (R6.1)
+//   • P3 — Workbox service-worker for PWA/Offline POS (R4.4–4.5)
+// Each block is independently guarded so a missing env var or unbuilt SW
+// does not break the boot path in development.
+import { initSentry } from './observability/sentry'
+import { initWebVitals } from './observability/vitals'
+
+try {
+  initSentry()
+} catch (err) {
+  if (import.meta.env.PROD) throw err
+  // eslint-disable-next-line no-console
+  console.warn('[zoho] Sentry not initialized (dev fallback):', err)
+}
+
+try {
+  initWebVitals()
+} catch (err) {
+  // eslint-disable-next-line no-console
+  console.warn('[zoho] web-vitals init failed:', err)
+}
+
+// Validation framework — offline-sync heartbeat (V-PR.4).
+// Every 5 minutes when online, the POS app reports its offline-queue depth
+// so the team can spot tenants/devices where sync is failing silently.
+import('./observability/offline-sync-heartbeat')
+  .then(({ startOfflineSyncHeartbeat }) => {
+    try {
+      startOfflineSyncHeartbeat()
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn('[zoho] offline-sync heartbeat failed to start:', err)
+    }
+  })
+  .catch(() => {
+    /* Module missing in legacy builds — fine. */
+  })
 
 const STALE_CHUNK_RELOAD_KEY = 'zoho:stale-chunk-reload'
 
@@ -59,6 +115,9 @@ createRoot(document.getElementById('root')!).render(
 )
 
 // Register service worker for PWA / offline support
+// Phase P3 — Workbox-built SW (vite-plugin-pwa) replaces the legacy
+// `/sw.js`. The new SW handles precache, runtime cache by query class,
+// and Background Sync for offline POS POSTs (R4.4–4.5).
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   let refreshing = false
   if (navigator.serviceWorker.controller) {
@@ -69,10 +128,20 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
     })
   }
 
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/sw.js', { updateViaCache: 'none' })
-      .then((registration) => registration.update().catch(() => { /* ignore */ }))
-      .catch(() => { /* ignore */ })
+  window.addEventListener('load', async () => {
+    try {
+      // Dynamic import so dev builds (where the SW hasn't been emitted)
+      // don't fail on missing modules.
+      const { registerSW } = await import('./pwa/register')
+      await registerSW()
+    } catch (err) {
+      // Fallback: legacy registration so we never lose offline coverage.
+      // eslint-disable-next-line no-console
+      console.warn('[zoho] Workbox SW unavailable, using legacy fallback:', err)
+      navigator.serviceWorker
+        .register('/sw.js', { updateViaCache: 'none' })
+        .then((registration) => registration.update().catch(() => { /* ignore */ }))
+        .catch(() => { /* ignore */ })
+    }
   })
 }

@@ -1,0 +1,5 @@
+{
+  "specId": "shopkeeper-production-core-v1",
+  "workflowType": "requirements-first",
+  "specType": "launch-blocker"
+}

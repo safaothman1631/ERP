@@ -5,7 +5,7 @@ import random
 import string
 from datetime import datetime, timedelta
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, Query, Body
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Body
 from pydantic import BaseModel, Field
 
 from app.firestore.pos import (
@@ -25,9 +25,14 @@ from app.services.permissions import require_perm
 from app.services.pos_pricing import apply_pricelist
 from app.services import settings_service
 from app.firebase_client import get_db
+from app.services.module_gate import require_module
 
 
-router = APIRouter(prefix="/api/pos", tags=["POS"])
+router = APIRouter(
+    prefix="/api/pos",
+    tags=["POS"],
+    dependencies=[Depends(require_module("pos"))],
+)
 
 
 # ===== SCHEMAS =====
@@ -224,19 +229,25 @@ def get_config(config_id: str, user: dict = Depends(get_current_user)):
 
 
 @router.put("/configs/{config_id}", dependencies=[Depends(require_perm("pos.manage"))])
-def update_config(config_id: str, data: POSConfigUpdate, user: dict = Depends(get_current_user)):
+def update_config(
+    config_id: str,
+    data: POSConfigUpdate,
+    user: dict = Depends(get_current_user),
+    if_match: Optional[str] = Header(None, alias="If-Match"),
+):
     """Update POS config"""
+    from app.services.http_guards import versioned_repo_update
+
     repo = POSConfigRepository(user["org_id"])
     config = repo.get(config_id)
     if not config:
         raise HTTPException(404, "Config not found")
-    
-    updated = repo.update(config_id, {
+
+    payload = {
         **data.model_dump(),
-        "updated_at": datetime.utcnow().isoformat(),
         "updated_by": user["id"],
-    })
-    return updated
+    }
+    return versioned_repo_update(repo, config_id, payload, if_match=if_match)
 
 
 @router.delete("/configs/{config_id}", dependencies=[Depends(require_perm("pos.manage"))])
@@ -524,11 +535,34 @@ def close_session(
     total_sales = sum(o.get("total", 0) for o in orders if o.get("state") == "paid")
     total_tax = sum(o.get("tax_total", 0) for o in orders if o.get("state") == "paid")
     total_orders = len([o for o in orders if o.get("state") == "paid"])
-    
-    # Create journal entry (basic - non-blocking)
+
+    cash_total = sum(
+        p.get("amount", 0) for p in payments
+        if (p.get("payment_method_name") or "").lower() == "cash"
+    )
+    non_cash_total = max(0, total_sales - cash_total)
+
     journal_entry_id = None
+    sales_journal_id = None
     try:
-        # FIX-82: Create JE for cash short/over
+        from app.services.pos_accounting import post_session_sales_journal
+
+        sales_je = post_session_sales_journal(
+            user["org_id"],
+            session,
+            int(total_sales),
+            int(total_tax),
+            int(cash_total),
+            int(non_cash_total),
+            user.get("id"),
+        )
+        if sales_je:
+            sales_journal_id = sales_je.get("id")
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("POS session sales JE failed: %s", e)
+
+    try:
         if closing_difference != 0:
             # Import JournalEntryRepository if not already imported
             from app.firestore.accounts import JournalEntryRepository
@@ -578,7 +612,8 @@ def close_session(
         "total_sales": total_sales,
         "total_tax": total_tax,
         "total_orders": total_orders,
-        "journal_entry_id": journal_entry_id,
+        "journal_entry_id": journal_entry_id or sales_journal_id,
+        "sales_journal_id": sales_journal_id,
         "updated_at": datetime.utcnow().isoformat(),
     })
     
@@ -966,6 +1001,7 @@ def _calculate_order_totals(lines_data: List[OrderLineCreate], item_repo: ItemRe
             "item_name": item_name,
             "sku": sku,
             "qty": qty,
+            "quantity": qty,
             "unit_price": unit_price,
             "discount_percent": discount_percent,
             "discount_amount": discount_amount,
@@ -1059,7 +1095,12 @@ def create_order(data: OrderCreate, user: dict = Depends(get_current_user)):
 
 
 @router.put("/orders/{order_id}", dependencies=[Depends(require_perm("pos.view"))])
-def update_order(order_id: str, data: OrderUpdate, user: dict = Depends(get_current_user)):
+def update_order(
+    order_id: str,
+    data: OrderUpdate,
+    user: dict = Depends(get_current_user),
+    if_match: Optional[str] = Header(None, alias="If-Match"),
+):
     """Update order (only draft state)"""
     order_repo = POSOrderRepository(user["org_id"])
     order = order_repo.get(order_id)
@@ -1117,100 +1158,66 @@ def update_order(order_id: str, data: OrderUpdate, user: dict = Depends(get_curr
         updates["total"] = total
         updates["amount_due"] = total
     
-    updated = order_repo.update(order_id, updates)
+    from app.services.http_guards import versioned_repo_update
+
+    updated = versioned_repo_update(order_repo, order_id, updates, if_match=if_match)
     return updated
 
 
 @router.post("/orders/{order_id}/pay", dependencies=[Depends(require_perm("pos.view"))])
 def pay_order(order_id: str, data: OrderPayRequest, user: dict = Depends(get_current_user)):
-    """Pay an order"""
+    """Pay an order (atomic: payments + paid state + inventory)."""
+    from app.services.pos_checkout import POSCheckoutError, checkout_order_atomic
+
     order_repo = POSOrderRepository(user["org_id"])
     order = order_repo.get(order_id)
     if not order:
         raise HTTPException(404, "Order not found")
-    
-    if order.get("state") not in ["draft", "paid"]:
+    if order.get("state") == "paid":
+        raise HTTPException(409, detail={"code": "already_paid", "order_id": order_id})
+    if order.get("state") != "draft":
         raise HTTPException(400, "Order cannot be paid")
-    
-    total_amount = order.get("total", 0)
-    payment_sum = sum(p.amount for p in data.payments)
-    
-    if payment_sum < total_amount:
-        raise HTTPException(400, f"Payment sum ({payment_sum}) is less than order total ({total_amount})")
-    
-    # Create payment records
-    payment_repo = POSPaymentRepository(user["org_id"])
+
     payment_method_repo = POSPaymentMethodRepository(user["org_id"])
-    now = datetime.utcnow().isoformat()
-    
+    methods: dict[str, dict] = {}
+    pay_payloads = []
     for payment in data.payments:
         method = payment_method_repo.get(payment.payment_method_id)
         if not method:
             raise HTTPException(404, f"Payment method {payment.payment_method_id} not found")
-        
-        payment_repo.create({
-            "id": str(uuid.uuid4()),
-            "org_id": user["org_id"],
-            "order_id": order_id,
-            "session_id": order.get("session_id", ""),
-            "payment_method_id": payment.payment_method_id,
-            "payment_method_name": method.get("name", ""),
-            "amount": payment.amount,
-            "tendered": payment.tendered or payment.amount,
-            "change": (payment.tendered or payment.amount) - payment.amount if payment.tendered else 0,
-            "reference": payment.reference or "",
-            "created_at": now,
-            "user_id": user["id"],
-        })
-    
-    # Update order state
-    order_repo.update(order_id, {
-        "state": "paid",
-        "amount_paid": payment_sum,
-        "amount_due": 0,
-    })
-    
-    # Deduct inventory (non-blocking — failure must NOT block payment)
+        methods[payment.payment_method_id] = method
+        pay_payloads.append(
+            {
+                "payment_method_id": payment.payment_method_id,
+                "amount": payment.amount,
+                "tendered": payment.tendered,
+                "reference": payment.reference,
+            }
+        )
+
     try:
-        from app.firestore.inventory import ItemRepository, StockMovementRepository
-        line_repo = POSOrderLineRepository(user["org_id"])
-        lines, _ = line_repo.list(
-            filters=[{"field": "order_id", "op": "==", "value": order_id}],
-            limit=1000,
+        return checkout_order_atomic(
+            user["org_id"],
+            order_id,
+            user["id"],
+            pay_payloads,
+            methods,
         )
-        item_repo = ItemRepository(user["org_id"])
-        movement_repo = StockMovementRepository(user["org_id"])
-        ts = datetime.utcnow().isoformat()
-        for line in lines:
-            item_id = line.get("item_id") or line.get("product_id")
-            qty = float(line.get("quantity", 0) or 0)
-            if not item_id or qty <= 0:
-                continue
-            item = item_repo.get(item_id)
-            if not item or not item.get("is_trackable", True):
-                continue
-            current = float(item.get("stock_on_hand", 0) or 0)
-            new_qty = current - qty
-            item_repo.update(item_id, {"stock_on_hand": new_qty})
-            movement_repo.create({
-                "id": str(uuid.uuid4()),
-                "item_id": item_id,
-                "quantity": -qty,
-                "type": "pos_sale",
-                "reference_type": "pos_order",
-                "reference_id": order_id,
-                "balance_after": new_qty,
-                "created_at": ts,
-                "user_id": user["id"],
-            })
-    except Exception as e:
-        # Don't break the checkout if inventory side has issues; log loudly.
-        import logging
-        logging.getLogger(__name__).warning(
-            "POS inventory deduction failed for order %s: %s", order_id, e
-        )
-    
-    return {"message": "Order paid successfully", "change": payment_sum - total_amount}
+    except POSCheckoutError as exc:
+        if exc.code == "already_paid":
+            raise HTTPException(409, detail={"code": "already_paid", "order_id": order_id})
+        if exc.code == "order_not_found":
+            raise HTTPException(404, "Order not found")
+        if exc.code == "insufficient_stock":
+            raise HTTPException(409, detail=exc.extra)
+        if exc.code == "insufficient_payment":
+            raise HTTPException(
+                400,
+                f"Payment sum ({exc.extra.get('payment_sum')}) is less than order total ({exc.extra.get('total')})",
+            )
+        if exc.code == "invalid_state":
+            raise HTTPException(400, "Order cannot be paid")
+        raise HTTPException(400, str(exc))
 
 
 @router.post("/orders/{order_id}/invoice", dependencies=[Depends(require_perm("pos.view"))])
@@ -1227,15 +1234,23 @@ def invoice_order(order_id: str, user: dict = Depends(get_current_user)):
     if order.get("invoice_id"):
         raise HTTPException(400, "Order already invoiced")
     
-    # Create invoice (placeholder - implement when ready)
-    invoice_id = str(uuid.uuid4())
-    
+    line_repo = POSOrderLineRepository(user["org_id"])
+    lines, _ = line_repo.list(
+        filters=[{"field": "order_id", "op": "==", "value": order_id}],
+        limit=1000,
+    )
+    from app.services.pos_accounting import create_invoice_from_pos_order
+
+    invoice = create_invoice_from_pos_order(user["org_id"], order, lines, user["id"])
     order_repo.update(order_id, {
-        "invoice_id": invoice_id,
+        "invoice_id": invoice["id"],
         "state": "invoiced",
     })
-    
-    return {"message": "Invoice created", "invoice_id": invoice_id}
+    return {
+        "message": "Invoice created",
+        "invoice_id": invoice["id"],
+        "invoice_number": invoice.get("invoice_number"),
+    }
 
 
 @router.post("/orders/{order_id}/refund", dependencies=[Depends(require_perm("pos.refund"))])
@@ -1424,31 +1439,45 @@ Paid: {order.get('amount_paid')} IQD
 
 @router.post("/orders/sync", dependencies=[Depends(require_perm("pos.view"))])
 def sync_orders(data: OrderSyncRequest, user: dict = Depends(get_current_user)):
-    """Bulk sync offline orders"""
+    """Bulk sync offline orders with idempotency + stock validation."""
+    from app.services.idempotency import get_cached_response, store_response
+    from app.services.pos_inventory import validate_stock_for_lines
+    from app.services.pos_sync_inventory_atomic import deduct_inventory_for_order_atomic
+
     mapping = {}
-    
+    errors = []
+    org_id = user["org_id"]
+
     for order_data in data.orders:
+        idem_key = order_data.temp_id
+        cached = get_cached_response(org_id, "pos_order_sync", idem_key)
+        if cached:
+            mapping[idem_key] = cached.get("order_id")
+            continue
+
         try:
-            # Create order
-            session_repo = POSSessionRepository(user["org_id"])
+            session_repo = POSSessionRepository(org_id)
             session = session_repo.get(order_data.session_id)
             if not session:
+                errors.append({"temp_id": idem_key, "code": "invalid_session"})
                 continue
-            
-            item_repo = ItemRepository(user["org_id"])
+
+            item_repo = ItemRepository(org_id)
             calculated_lines, subtotal, tax_total, discount_total = _calculate_order_totals(
-                order_data.lines, item_repo, user["org_id"], None
+                order_data.lines, item_repo, org_id, None
             )
-            total = subtotal + tax_total
-            
-            order_number = _generate_order_number(user["org_id"], session.get("config_id", ""))
-            
-            order_repo = POSOrderRepository(user["org_id"])
+            stock_err = validate_stock_for_lines(org_id, calculated_lines)
+            if stock_err and order_data.payments:
+                errors.append({"temp_id": idem_key, **stock_err})
+                continue
+
+            order_number = _generate_order_number(org_id, session.get("config_id", ""))
+            order_repo = POSOrderRepository(org_id)
             now = order_data.date or datetime.utcnow().isoformat()
-            
+
             order = order_repo.create({
                 "id": str(uuid.uuid4()),
-                "org_id": user["org_id"],
+                "org_id": org_id,
                 "session_id": order_data.session_id,
                 "config_id": session.get("config_id", ""),
                 "order_number": order_number,
@@ -1461,37 +1490,36 @@ def sync_orders(data: OrderSyncRequest, user: dict = Depends(get_current_user)):
                 "subtotal": subtotal,
                 "tax_total": tax_total,
                 "discount_total": discount_total,
-                "total": total,
+                "total": subtotal + tax_total,
                 "amount_paid": sum(p.amount for p in order_data.payments) if order_data.payments else 0,
-                "amount_due": 0 if order_data.payments else total,
+                "amount_due": 0 if order_data.payments else subtotal + tax_total,
                 "currency": "IQD",
                 "notes": order_data.notes or "",
                 "is_refund": False,
                 "refund_of_order_id": None,
                 "invoice_id": None,
+                "offline_temp_id": idem_key,
                 "created_at": now,
             })
-            
-            # Create lines
-            line_repo = POSOrderLineRepository(user["org_id"])
+
+            line_repo = POSOrderLineRepository(org_id)
             for line_data in calculated_lines:
                 line_repo.create({
                     "id": str(uuid.uuid4()),
-                    "org_id": user["org_id"],
+                    "org_id": org_id,
                     "order_id": order["id"],
                     **line_data,
                     "created_at": now,
                 })
-            
-            # Create payments if any
+
             if order_data.payments:
-                payment_repo = POSPaymentRepository(user["org_id"])
-                payment_method_repo = POSPaymentMethodRepository(user["org_id"])
+                payment_repo = POSPaymentRepository(org_id)
+                payment_method_repo = POSPaymentMethodRepository(org_id)
                 for payment in order_data.payments:
                     method = payment_method_repo.get(payment.payment_method_id)
                     payment_repo.create({
                         "id": str(uuid.uuid4()),
-                        "org_id": user["org_id"],
+                        "org_id": org_id,
                         "order_id": order["id"],
                         "session_id": order_data.session_id,
                         "payment_method_id": payment.payment_method_id,
@@ -1503,14 +1531,24 @@ def sync_orders(data: OrderSyncRequest, user: dict = Depends(get_current_user)):
                         "created_at": now,
                         "user_id": user["id"],
                     })
-            
-            mapping[order_data.temp_id] = order["id"]
-        
+                try:
+                    deduct_inventory_for_order_atomic(
+                        org_id,
+                        order["id"],
+                        user["id"],
+                        calculated_lines,
+                    )
+                except Exception as e:
+                    import logging
+                    logging.getLogger(__name__).warning("POS sync inventory deduction failed: %s", e)
+
+            mapping[idem_key] = order["id"]
+            store_response(org_id, "pos_order_sync", idem_key, {"order_id": order["id"]})
+
         except Exception as e:
-            print(f"Failed to sync order {order_data.temp_id}: {e}")
-            continue
-    
-    return {"mapping": mapping}
+            errors.append({"temp_id": idem_key, "code": "sync_failed", "detail": str(e)})
+
+    return {"mapping": mapping, "errors": errors}
 
 
 # ===== D. PAYMENT METHODS (5 endpoints) =====
@@ -3095,7 +3133,9 @@ def get_employees(
 ):
     """Get all POS employees"""
     emp_repo = POSEmployeeRepository(user["org_id"])
-    employees, _ = emp_repo.list(limit=10000)
+    from app.services.report_streams import collect_stream
+
+    employees = collect_stream(emp_repo, max_docs=2000)
     
     if config_id:
         employees = [e for e in employees if config_id in e.get("config_ids", [])]
@@ -3281,11 +3321,12 @@ def get_self_order_menu(
     cat_repo = POSCategoryRepository(user["org_id"])
     item_repo = ItemRepository(user["org_id"])
     
-    categories, _ = cat_repo.list(limit=10000)
+    from app.services.report_streams import collect_stream
+
+    categories = collect_stream(cat_repo, max_docs=2000)
     categories = [c for c in categories if config_id in c.get("config_ids", [])]
-    
-    # Get all available items (simplified - should filter by category)
-    items, _ = item_repo.list(limit=10000)
+
+    items = collect_stream(item_repo, max_docs=2000)
     items = [i for i in items if i.get("is_active") and i.get("type") == "product"]
     
     return {
@@ -3477,8 +3518,10 @@ def pay_self_order(
 @router.get("/loyalty/programs")
 def get_loyalty_programs(user: dict = Depends(get_current_user)):
     """Get all loyalty programs"""
+    from app.services.report_streams import collect_stream
+
     lp_repo = POSLoyaltyProgramRepository(user["org_id"])
-    programs, _ = lp_repo.list(limit=10000)
+    programs = collect_stream(lp_repo, max_docs=2000)
     return {"items": programs, "total": len(programs)}
 
 
@@ -3536,8 +3579,10 @@ def get_loyalty_cards(
     user: dict = Depends(get_current_user)
 ):
     """Get loyalty cards"""
+    from app.services.report_streams import collect_stream
+
     lc_repo = POSLoyaltyCardRepository(user["org_id"])
-    cards, _ = lc_repo.list(limit=10000)
+    cards = collect_stream(lc_repo, max_docs=2000)
     
     if partner_id:
         cards = [c for c in cards if c.get("partner_id") == partner_id]
@@ -3555,14 +3600,16 @@ def create_loyalty_card(
     user: dict = Depends(get_current_user)
 ):
     """Issue new loyalty card"""
+    from app.services.report_streams import collect_stream
+
     lc_repo = POSLoyaltyCardRepository(user["org_id"])
-    
+
     # Generate unique 12-char code
     max_attempts = 10
     for _ in range(max_attempts):
         code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=12))
         # Check if code exists
-        existing, _ = lc_repo.list(limit=10000)
+        existing = collect_stream(lc_repo, max_docs=2000)
         if not any(c.get("code") == code for c in existing):
             break
     else:
@@ -3588,11 +3635,12 @@ def redeem_loyalty_points(
     user: dict = Depends(get_current_user)
 ):
     """Redeem loyalty points for reward"""
+    from app.services.report_streams import collect_stream
+
     lc_repo = POSLoyaltyCardRepository(user["org_id"])
     lp_repo = POSLoyaltyProgramRepository(user["org_id"])
-    
-    # Find card by code
-    cards, _ = lc_repo.list(limit=10000)
+
+    cards = collect_stream(lc_repo, max_docs=2000)
     card = next((c for c in cards if c.get("code") == code), None)
     
     if not card:
@@ -3641,12 +3689,13 @@ def earn_loyalty_points(
     user: dict = Depends(get_current_user)
 ):
     """Earn loyalty points from order"""
+    from app.services.report_streams import collect_stream
+
     lc_repo = POSLoyaltyCardRepository(user["org_id"])
     lp_repo = POSLoyaltyProgramRepository(user["org_id"])
     order_repo = POSOrderRepository(user["org_id"])
-    
-    # Find card
-    cards, _ = lc_repo.list(limit=10000)
+
+    cards = collect_stream(lc_repo, max_docs=2000)
     card = next((c for c in cards if c.get("code") == data.card_code), None)
     
     if not card:
@@ -3707,8 +3756,10 @@ def get_gift_card(
     user: dict = Depends(get_current_user)
 ):
     """Get gift card by code"""
+    from app.services.report_streams import collect_stream
+
     gc_repo = POSGiftCardRepository(user["org_id"])
-    cards, _ = gc_repo.list(limit=10000)
+    cards = collect_stream(gc_repo, max_docs=2000)
     card = next((c for c in cards if c.get("code") == code), None)
     
     if not card:
@@ -3723,8 +3774,10 @@ def create_gift_cards(
     user: dict = Depends(get_current_user)
 ):
     """Issue gift card(s)"""
+    from app.services.report_streams import collect_stream
+
     gc_repo = POSGiftCardRepository(user["org_id"])
-    
+
     batch_id = str(uuid.uuid4()) if data.batch_count > 1 else None
     cards = []
     
@@ -3733,7 +3786,7 @@ def create_gift_cards(
         max_attempts = 10
         for _ in range(max_attempts):
             code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=16))
-            existing, _ = gc_repo.list(limit=10000)
+            existing = collect_stream(gc_repo, max_docs=2000)
             if not any(c.get("code") == code for c in existing):
                 break
         else:
@@ -3762,8 +3815,10 @@ def activate_gift_card(
     user: dict = Depends(get_current_user)
 ):
     """Activate gift card"""
+    from app.services.report_streams import collect_stream
+
     gc_repo = POSGiftCardRepository(user["org_id"])
-    cards, _ = gc_repo.list(limit=10000)
+    cards = collect_stream(gc_repo, max_docs=2000)
     card = next((c for c in cards if c.get("code") == code), None)
     
     if not card:
@@ -3787,8 +3842,10 @@ def charge_gift_card(
     user: dict = Depends(get_current_user)
 ):
     """Charge amount from gift card"""
+    from app.services.report_streams import collect_stream
+
     gc_repo = POSGiftCardRepository(user["org_id"])
-    cards, _ = gc_repo.list(limit=10000)
+    cards = collect_stream(gc_repo, max_docs=2000)
     card = next((c for c in cards if c.get("code") == code), None)
     
     if not card:
@@ -4020,7 +4077,9 @@ def reports_dashboard(
     payment_repo = POSPaymentRepository(user["org_id"])
     
     # Get orders in date range
-    orders, _ = order_repo.list(limit=10000)
+    from app.services.report_streams import collect_stream
+
+    orders = collect_stream(order_repo, max_docs=5000)
     filtered_orders = [
         o for o in orders
         if date_from <= (o.get("created_at") or "")[:10] <= date_to
@@ -4037,7 +4096,7 @@ def reports_dashboard(
     total_discount = sum(o.get("discount_total", 0) for o in filtered_orders)
     
     # Top products
-    lines, _ = line_repo.list(limit=10000)
+    lines = collect_stream(line_repo, max_docs=5000)
     order_ids = {o["id"] for o in filtered_orders}
     relevant_lines = [l for l in lines if l.get("order_id") in order_ids]
     
@@ -4057,7 +4116,7 @@ def reports_dashboard(
     )[:5]
     
     # Payment methods
-    payments, _ = payment_repo.list(limit=10000)
+    payments = collect_stream(payment_repo, max_docs=5000)
     relevant_payments = [p for p in payments if p.get("order_id") in order_ids]
     
     payment_by_method = defaultdict(float)
@@ -4134,7 +4193,9 @@ def sales_by_product_report(
     order_repo = POSOrderRepository(user["org_id"])
     line_repo = POSOrderLineRepository(user["org_id"])
     
-    orders, _ = order_repo.list(limit=10000)
+    from app.services.report_streams import collect_stream
+
+    orders = collect_stream(order_repo, max_docs=5000)
     filtered_orders = [
         o for o in orders
         if date_from <= (o.get("created_at") or "")[:10] <= date_to
@@ -4143,7 +4204,7 @@ def sales_by_product_report(
     ]
     
     order_ids = {o["id"] for o in filtered_orders}
-    lines, _ = line_repo.list(limit=10000)
+    lines = collect_stream(line_repo, max_docs=5000)
     relevant_lines = [l for l in lines if l.get("order_id") in order_ids]
     
     from collections import defaultdict
@@ -4187,7 +4248,9 @@ def sales_by_category_report(
     cat_repo = POSCategoryRepository(user["org_id"])
     
     # Get orders in date range
-    orders, _ = order_repo.list(limit=10000)
+    from app.services.report_streams import collect_stream
+
+    orders = collect_stream(order_repo, max_docs=5000)
     filtered_orders = [
         o for o in orders
         if date_from <= (o.get("created_at") or "")[:10] <= date_to
@@ -4198,15 +4261,15 @@ def sales_by_category_report(
     order_ids = {o["id"] for o in filtered_orders}
     
     # Get all relevant order lines
-    lines, _ = line_repo.list(limit=10000)
+    lines = collect_stream(line_repo, max_docs=5000)
     relevant_lines = [l for l in lines if l.get("order_id") in order_ids]
     
     # Get all items to map category_id
-    items, _ = item_repo.list(limit=10000)
+    items = collect_stream(item_repo, max_docs=5000)
     item_category_map = {i["id"]: i.get("pos_category_id") for i in items}
     
     # Get all categories
-    categories, _ = cat_repo.list(limit=10000)
+    categories = collect_stream(cat_repo, max_docs=5000)
     category_map = {c["id"]: c.get("name", "Uncategorized") for c in categories}
     
     # Aggregate by category
@@ -4253,7 +4316,9 @@ def sales_by_cashier_report(
     """Sales by cashier report"""
     order_repo = POSOrderRepository(user["org_id"])
     
-    orders, _ = order_repo.list(limit=10000)
+    from app.services.report_streams import collect_stream
+
+    orders = collect_stream(order_repo, max_docs=5000)
     filtered_orders = [
         o for o in orders
         if date_from <= (o.get("created_at") or "")[:10] <= date_to
@@ -4300,7 +4365,9 @@ def sessions_summary_report(
     ]
     
     # Get orders for each session
-    orders, _ = order_repo.list(limit=10000)
+    from app.services.report_streams import collect_stream
+
+    orders = collect_stream(order_repo, max_docs=5000)
     
     results = []
     for session in filtered_sessions:
@@ -4331,7 +4398,9 @@ def hourly_heatmap_report(
     """Hourly heatmap (7 days × 24 hours)"""
     order_repo = POSOrderRepository(user["org_id"])
     
-    orders, _ = order_repo.list(limit=10000)
+    from app.services.report_streams import collect_stream
+
+    orders = collect_stream(order_repo, max_docs=5000)
     filtered_orders = [
         o for o in orders
         if date_from <= (o.get("created_at") or "")[:10] <= date_to
@@ -4418,23 +4487,42 @@ def post_session_accounting(
     data: PostSessionAccountingRequest,
     user: dict = Depends(get_current_user)
 ):
-    """Create journal entry for session (stub - use existing AccountingService)"""
+    """Re-post session sales journal if close did not create one."""
+    from app.services.pos_accounting import post_session_sales_journal
+
     session_repo = POSSessionRepository(user["org_id"])
-    
     session = session_repo.get(data.session_id)
     if not session:
         raise HTTPException(404, "Session not found")
-    
     if session.get("state") != "closed":
         raise HTTPException(400, "Session must be closed first")
-    
-    # In production, call AccountingService to create journal entry
-    # For now, return stub
+    if session.get("sales_journal_id"):
+        return {
+            "success": True,
+            "session_id": data.session_id,
+            "journal_entry_id": session["sales_journal_id"],
+            "message": "Sales journal already posted",
+        }
+
+    total_sales = int(session.get("total_sales", 0) or 0)
+    total_tax = int(session.get("total_tax", 0) or 0)
+    je = post_session_sales_journal(
+        user["org_id"],
+        session,
+        total_sales,
+        total_tax,
+        total_sales,
+        0,
+        user.get("id"),
+    )
+    if not je:
+        raise HTTPException(400, "No sales to post or chart accounts missing")
+    session_repo.update(data.session_id, {"sales_journal_id": je["id"]})
     return {
         "success": True,
         "session_id": data.session_id,
-        "journal_entry_id": f"JE-{uuid.uuid4().hex[:8].upper()}",
-        "message": "Journal entry created (stub - integrate with AccountingService)"
+        "journal_entry_id": je["id"],
+        "message": "Session sales journal posted",
     }
 
 

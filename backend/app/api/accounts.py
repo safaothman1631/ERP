@@ -1,9 +1,12 @@
 import uuid
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 from app.firestore.accounts import AccountRepository
 from app.firestore.journals import JournalEntryRepository
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
+from app.services.accounting import AccountingService
 from app.schemas.schemas import AccountCreate, AccountResponse, JournalEntryCreate, JournalEntryResponse
 
 router = APIRouter(prefix="/api/accounts", tags=["Chart of Accounts"])
@@ -78,29 +81,55 @@ def create_manual_journal(
     data: JournalEntryCreate,
     user: dict = Depends(get_current_user),
 ):
-    repo = JournalEntryRepository(user["org_id"])
-    
-    lines = []
-    for line in data.lines:
-        lines.append({
+    lines = [
+        {
             "account_id": line.account_id,
             "debit": line.debit,
             "credit": line.credit,
             "description": line.description,
             "contact_id": line.contact_id,
-        })
+        }
+        for line in data.lines
+    ]
 
-    journal = repo.create({
-        "id": str(uuid.uuid4()),
-        "date": data.date,
-        "reference": data.reference,
-        "notes": data.notes,
-        "entry_type": "manual",
-        "status": "posted",
-    })
-    
-    repo.set_lines(journal["id"], lines)
-    return journal
+    journal_date = data.date
+    if isinstance(journal_date, str):
+        journal_date = datetime.fromisoformat(journal_date.replace("Z", "+00:00")[:19])
+
+    return AccountingService.create_journal_entry(
+        org_id=user["org_id"],
+        date=journal_date,
+        lines=lines,
+        description=data.notes or data.reference or "Manual journal entry",
+        reference=data.reference or "",
+        source_type="manual",
+        created_by=user.get("id"),
+    )
+
+
+class ReverseJournalBody(BaseModel):
+    reversal_date: str = Field(..., description="YYYY-MM-DD")
+    description: str | None = Field(default=None, max_length=500)
+
+
+@journal_router.post("/{journal_id}/reverse", status_code=201, dependencies=[Depends(require_perm("journals.create"))])
+def reverse_journal(
+    journal_id: str,
+    body: ReverseJournalBody,
+    user: dict = Depends(get_current_user),
+):
+    try:
+        rev_date = datetime.fromisoformat(body.reversal_date[:10] + "T12:00:00")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="ڕێکەوتی گەڕاندنەوە نادروستە")
+
+    return AccountingService.reverse_journal_entry(
+        org_id=user["org_id"],
+        je_id=journal_id,
+        reversal_date=rev_date,
+        user_id=user.get("id"),
+        description=body.description,
+    )
 
 
 # ===== SUB-ACCOUNTS =====

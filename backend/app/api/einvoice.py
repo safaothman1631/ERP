@@ -10,6 +10,7 @@ from app.firestore.invoices import InvoiceRepository
 from app.firestore.organizations import OrganizationRepository
 from app.firestore.system import SettingsRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 from app.services.einvoice_service import (
     generate_fiscal_id,
     generate_qr_base64,
@@ -282,7 +283,7 @@ def monthly_submission_report(
         period_to = (next_month - timedelta(days=1)).isoformat()
 
     repo = EInvoiceSubmissionRepository(user["org_id"])
-    items, _ = repo.list(limit=5000)
+    items = collect_stream(repo, max_docs=5000)
     filtered = [
         item for item in items
         if period_from <= str(item.get("submitted_at") or item.get("last_generated_at") or "")[:10] <= period_to
@@ -303,7 +304,7 @@ def monthly_submission_report(
 @router.get("/report/errors")
 def submission_errors(limit: int = Query(100, ge=1, le=500), user: dict = Depends(get_current_user)):
     repo = EInvoiceSubmissionRepository(user["org_id"])
-    items, _ = repo.list(limit=5000)
+    items = collect_stream(repo, max_docs=5000)
     errors = [
         item for item in items
         if item.get("status") in {"rejected", "failed"} or item.get("error_message")
@@ -335,6 +336,18 @@ def toggle_auto_submit(data: EInvoiceAutoSubmitRequest, user: dict = Depends(get
         "success": True,
         "auto_submit_on_send": data.enabled,
     }
+
+
+@router.get("/queue")
+def einvoice_queue(user: dict = Depends(get_current_user)):
+    """Pending/failed e-invoice submissions awaiting dispatch."""
+    repo = EInvoiceSubmissionRepository(user["org_id"])
+    items, total = repo.list(limit=500, order_by="created_at", order_dir="ASCENDING")
+    pending = [
+        i for i in items
+        if (i.get("status") or "") in ("generated", "pending", "failed", "retry")
+    ]
+    return {"items": pending, "total": len(pending), "all_submissions": total}
 
 
 @router.post("/webhook")

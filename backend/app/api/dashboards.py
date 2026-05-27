@@ -122,52 +122,45 @@ def _execute_data_source(org_id: str, key: str, params: dict) -> dict:
     pos_repo = POSOrderRepository(org_id)
     
     if key == "total_revenue":
-        payments, _ = payment_repo.list(
-            filters=[
-                {"field": "date", "op": ">=", "value": date_from},
-                {"field": "date", "op": "<=", "value": date_to}
-            ],
-            limit=10000
-        )
+        from app.services.report_streams import collect_stream
+
+        payments = [
+            p
+            for p in collect_stream(payment_repo)
+            if date_from <= (p.get("date") or "")[:10] <= date_to
+        ]
         total = sum(p.get("amount", 0) for p in payments)
         return {"data": {"value": total}}
     
     elif key == "total_expenses":
-        expenses, _ = expense_repo.list(
-            filters=[
-                {"field": "date", "op": ">=", "value": date_from},
-                {"field": "date", "op": "<=", "value": date_to}
-            ],
-            limit=10000
-        )
+        from app.services.report_streams import collect_stream
+
+        expenses = [
+            e
+            for e in collect_stream(expense_repo)
+            if date_from <= (e.get("date") or "")[:10] <= date_to
+        ]
         total = sum(e.get("amount", 0) for e in expenses if e.get("status") != "void")
         return {"data": {"value": total}}
     
     elif key == "ar_balance":
-        invoices, _ = inv_repo.list(
-            filters=[
-                {"field": "status", "op": "in", "value": ["sent", "partially_paid", "overdue"]}
-            ],
-            limit=10000
-        )
-        total = sum(inv.get("balance_due", 0) for inv in invoices)
-        return {"data": {"value": total}}
+        from app.services.org_counters import get_counters
+
+        counters = get_counters(user["org_id"])
+        return {"data": {"value": float(counters.get("invoices_open_balance") or 0)}}
     
     elif key == "ap_balance":
-        bills, _ = bill_repo.list(
-            filters=[
-                {"field": "status", "op": "in", "value": ["open", "partially_paid", "overdue"]}
-            ],
-            limit=10000
-        )
-        total = sum(b.get("balance_due", 0) for b in bills)
-        return {"data": {"value": total}}
-    
+        from app.services.org_counters import get_counters
+
+        counters = get_counters(user["org_id"])
+        return {"data": {"value": float(counters.get("bills_open_balance") or 0)}}
+
     elif key == "cash_position":
-        # Revenue - Expenses
-        payments, _ = payment_repo.list(limit=10000)
-        bill_payments, _ = bill_payment_repo.list(limit=10000)
-        expenses, _ = expense_repo.list(limit=10000)
+        from app.services.report_streams import collect_stream
+
+        payments = collect_stream(payment_repo)
+        bill_payments = collect_stream(bill_payment_repo)
+        expenses = collect_stream(expense_repo)
         
         revenue = sum(p.get("amount", 0) for p in payments)
         paid_bills = sum(bp.get("amount", 0) for bp in bill_payments)
@@ -177,13 +170,10 @@ def _execute_data_source(org_id: str, key: str, params: dict) -> dict:
         return {"data": {"value": cash}}
     
     elif key == "open_invoices_count":
-        invoices, _ = inv_repo.list(
-            filters=[
-                {"field": "status", "op": "in", "value": ["draft", "sent", "partially_paid"]}
-            ],
-            limit=10000
-        )
-        return {"data": {"value": len(invoices)}}
+        from app.services.org_counters import get_counters
+
+        counters = get_counters(user["org_id"])
+        return {"data": {"value": int(counters.get("invoices_open_count") or 0)}}
     
     elif key == "overdue_bills_count":
         bills, _ = bill_repo.list(
@@ -196,7 +186,9 @@ def _execute_data_source(org_id: str, key: str, params: dict) -> dict:
         return {"data": {"value": len(overdue)}}
     
     elif key == "inventory_value":
-        items, _ = item_repo.list(limit=10000)
+        from app.services.report_streams import collect_stream
+
+        items = collect_stream(item_repo)
         total = sum(
             (item.get("stock_on_hand", 0) * item.get("purchase_price", 0))
             for item in items if item.get("type") == "inventory"
@@ -266,11 +258,10 @@ def _execute_data_source(org_id: str, key: str, params: dict) -> dict:
         return {"data": {"items": top}}
     
     elif key == "ar_aging":
-        invoices, _ = inv_repo.list(
-            filters=[
-                {"field": "status", "op": "in", "value": ["sent", "partially_paid", "overdue"]}
-            ],
-            limit=10000
+        from app.services.report_streams import collect_stream
+
+        invoices = collect_stream(
+            inv_repo, status_in={"sent", "partially_paid", "overdue"}
         )
         aging_buckets = {"0-30": 0, "31-60": 0, "61-90": 0, "90+": 0}
         for inv in invoices:
@@ -295,7 +286,9 @@ def _execute_data_source(org_id: str, key: str, params: dict) -> dict:
         return {"data": {"items": items}}
     
     elif key == "stock_alerts":
-        items, _ = item_repo.list(limit=10000)
+        from app.services.report_streams import collect_stream
+
+        items = collect_stream(item_repo)
         low_stock = [
             {
                 "name": item.get("name"),

@@ -9,7 +9,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from app.firestore.chatter import FollowerRepository, UniversalActivityRepository
+from app.firestore.chatter import FollowerRepository, UniversalActivityRepository, ChatterMessageRepository
 from app.services.auth import get_current_user
 
 router = APIRouter(prefix="/api/chatter", tags=["Chatter"])
@@ -170,3 +170,37 @@ def my_due_activities(user: dict = Depends(get_current_user)):
         {"field": "status", "op": "==", "value": "pending"},
     ], limit=200, order_by="due_date")
     return {"items": items, "total": len(items)}
+
+
+# ──────────────────────────── Messages / log notes ────────────────────────────
+
+class MessageCreate(BaseModel):
+    body: str
+    message_type: str = "comment"  # comment | note | notification
+
+
+@router.get("/{entity_type}/{entity_id}/messages")
+def list_messages(entity_type: str, entity_id: str, user: dict = Depends(get_current_user)):
+    repo = ChatterMessageRepository(user["org_id"])
+    items, total = repo.list(filters=[
+        {"field": "entity_type", "op": "==", "value": entity_type},
+        {"field": "entity_id", "op": "==", "value": entity_id},
+    ], order_by="created_at", order_dir="ASCENDING", limit=500)
+    return {"items": items, "total": total}
+
+
+@router.post("/{entity_type}/{entity_id}/messages", status_code=201)
+def create_message(entity_type: str, entity_id: str, data: MessageCreate,
+                   user: dict = Depends(get_current_user)):
+    if not data.body.strip():
+        raise HTTPException(400, "body required")
+    repo = ChatterMessageRepository(user["org_id"])
+    return repo.create({
+        "entity_type": entity_type,
+        "entity_id": entity_id,
+        "body": data.body.strip(),
+        "message_type": data.message_type,
+        "author_id": user["id"],
+        "author_name": user.get("name") or user.get("email", ""),
+        "created_at": datetime.utcnow().isoformat(),
+    })

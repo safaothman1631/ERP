@@ -16,6 +16,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, field_validator
 
+from app.api.platform._guards import require_platform_admin
 from app.services.auth import get_current_user
 from app.services import feature_flag_service as _ff
 
@@ -49,16 +50,15 @@ class FlagResponse(BaseModel):
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-_ADMIN_ROLES = {"admin", "owner"}
-
-
-def _require_admin(user: dict) -> None:
-    """Raise 403 if the user is not an admin or owner."""
-    if user.get("role") not in _ADMIN_ROLES:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="تەنها ئەدمین یان خاوەن دەتوانێت ئەم کارە ئەنجام بدات",
-        )
+def _require_platform_write(user: dict) -> None:
+    """Only vendor/platform operators may mutate flags — not tenant org admins."""
+    if user.get("is_platform_admin") or user.get("role") == "super_admin":
+        require_platform_admin(user)
+        return
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail={"code": "platform_only", "message": "Feature flags are managed in the platform console"},
+    )
 
 
 def _build_response(flag: dict, user: dict) -> FlagResponse:
@@ -124,7 +124,7 @@ def upsert_feature_flag(
 
     Requirements: 7.1, 7.2, 7.3, 7.6
     """
-    _require_admin(user)
+    _require_platform_write(user)
     org_id = user.get("org_id", "")
     flag = _ff.set_flag(
         org_id=org_id,
@@ -144,7 +144,7 @@ def delete_feature_flag(flag_key: str, user: dict = Depends(get_current_user)):
 
     Requirements: 7.1, 7.2, 7.3
     """
-    _require_admin(user)
+    _require_platform_write(user)
     org_id = user.get("org_id", "")
     deleted = _ff.delete_flag(org_id, flag_key)
     if not deleted:

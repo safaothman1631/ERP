@@ -63,7 +63,10 @@ def audit():
         print("-" * 70)
 
         je_repo = JournalEntryRepository(org_id)
-        entries, total = je_repo.list(limit=10000)
+        from app.services.report_streams import collect_stream
+
+        entries = collect_stream(je_repo, max_docs=10000)
+        total = len(entries)
         print(f"  Entries: {len(entries)} (total reported: {total})")
 
         if not entries:

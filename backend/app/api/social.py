@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/social", tags=["Social"])
 
@@ -124,7 +125,7 @@ def post_analytics(pid: str, user: dict = Depends(get_current_user)):
 
 @router.get("/dashboard")
 def social_dashboard(user: dict = Depends(get_current_user)):
-    posts, _ = SocialPostRepo(user["org_id"]).list(limit=10000)
+    posts = collect_stream(SocialPostRepo(user["org_id"]), max_docs=10000)
     accs, _ = SocialAccountRepo(user["org_id"]).list(limit=1000)
     by_status: dict[str, int] = {}
     for p in posts:

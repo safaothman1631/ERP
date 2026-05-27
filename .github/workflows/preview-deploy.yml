@@ -1,0 +1,147 @@
+# =============================================================================
+# Preview deploy — PR branch → Vercel preview
+# پێشبینین — لقی PR → Vercel preview
+# =============================================================================
+#
+# What it does / چی دەکات:
+#   - On every PR (open/sync), build the frontend and deploy a Vercel preview.
+#   - Backend stays on prod — preview frontend talks to the live Cloud Run API
+#     via vercel.json's ${CLOUDRUN_URL} rewrite.
+#   - Posts a sticky PR comment with: preview URL + one-line scorecard delta.
+#
+# Why no backend deploy here:
+#   - Backend changes are risky and gated by deploy-production.yml.
+#   - PR-time feedback comes from CI (ci.yml) + this preview.
+# =============================================================================
+
+name: Preview Deploy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "_deltas/**"
+
+concurrency:
+  # one preview deploy per PR; cancel the in-flight one on push
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  preview:
+    name: Vercel preview
+    runs-on: ubuntu-latest
+    outputs:
+      preview_url: ${{ steps.deploy.outputs.preview-url }}
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install (legacy peer deps)
+        run: npm install --legacy-peer-deps
+
+      - name: i18n split
+        run: npm run i18n:split
+
+      - name: Build
+        env:
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          VITE_APP_VERSION: pr-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+          VITE_APP_ENV: preview
+        run: npm run build
+
+      - name: Bundle budget gate (warn-only on previews)
+        continue-on-error: true
+        run: |
+          npm run audit:shell || echo "::warning::Shell budget exceeded on preview"
+          npm run audit:lazy  || echo "::warning::Lazy chunk audit failed on preview"
+
+      - name: Deploy preview to Vercel
+        id: deploy
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./frontend
+          # no --prod flag → preview deploy
+          alias-domains: |
+            zoho-erp-pr-${{ github.event.pull_request.number }}.vercel.app
+
+  scorecard-blurb:
+    name: One-line scorecard blurb
+    needs: preview
+    runs-on: ubuntu-latest
+    outputs:
+      blurb: ${{ steps.compute.outputs.blurb }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Compute one-liner from latest scorecard
+        id: compute
+        run: |
+          set -e
+          if [[ -f docs/world-class/scorecard.md ]]; then
+            SCORE=$(grep -E "^\*\*Overall|^Overall\s" docs/world-class/scorecard.md | head -n1 || true)
+            if [[ -z "${SCORE}" ]]; then
+              SCORE=$(head -n 5 docs/world-class/scorecard.md | tr -d '\n' | cut -c1-160)
+            fi
+          else
+            SCORE="(no scorecard.md found on main)"
+          fi
+          echo "blurb=${SCORE}" >> "$GITHUB_OUTPUT"
+
+  comment:
+    name: Sticky PR comment
+    needs: [preview, scorecard-blurb]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compose comment body
+        id: body
+        run: |
+          {
+            echo "## Preview deploy ready"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| **Preview URL** | ${{ needs.preview.outputs.preview_url }} |"
+            echo "| **Commit**      | \`${{ github.event.pull_request.head.sha }}\` |"
+            echo "| **Backend**     | production (via vercel.json rewrite) |"
+            echo "| **Scorecard**   | ${{ needs.scorecard-blurb.outputs.blurb }} |"
+            echo ""
+            echo "> Backend changes in this PR are NOT live — they ship via Production Deploy on merge."
+            echo "> گۆڕانکاریەکانی backend هێشتا چالاک نین — پاش merge بە production deploy دێن."
+          } > comment.md
+
+      - uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: comment.md
+          edit-mode: replace
+          # Sticky behaviour: replace the existing bot comment that starts with
+          # "## Preview deploy ready" (peter-evans uses the comment ID it returns
+          # in a previous run — we mark this with a header to recognise it).

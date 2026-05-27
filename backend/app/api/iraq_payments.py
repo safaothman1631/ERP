@@ -7,7 +7,7 @@ configuration concern handled by the deployer.
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from app.firestore.iraq_payments import IraqPaymentRepository, IraqGatewayConfigRepository
@@ -47,7 +47,13 @@ class PaymentCallback(BaseModel):
 @router.get("/gateways", dependencies=[Depends(require_perm("settings.read"))])
 def list_gateways(user: dict = Depends(get_current_user)):
     items, total = IraqGatewayConfigRepository(user["org_id"]).list(limit=50)
-    return {"items": items, "total": total, "supported": list(SUPPORTED_GATEWAYS)}
+    masked = []
+    for g in items:
+        row = dict(g)
+        if row.get("api_key"):
+            row["api_key"] = "****"
+        masked.append(row)
+    return {"items": masked, "total": total, "supported": list(SUPPORTED_GATEWAYS)}
 
 
 @router.post("/gateways", status_code=201,
@@ -74,7 +80,7 @@ def delete_gateway(gw_id: str, user: dict = Depends(get_current_user)):
     return {"deleted": True}
 
 
-@router.post("/initiate", status_code=201)
+@router.post("/initiate", status_code=201, dependencies=[Depends(require_perm("invoices.update"))])
 def initiate_payment(data: PaymentInit, user: dict = Depends(get_current_user)):
     """Create a pending payment intent. Returns provider reference + redirect_url stub."""
     if data.gateway not in SUPPORTED_GATEWAYS:
@@ -109,13 +115,16 @@ def initiate_payment(data: PaymentInit, user: dict = Depends(get_current_user)):
     return {"payment": payment, "provider_reference": provider_ref, "redirect_url": redirect_url_stub}
 
 
-@router.post("/callback/{gateway}", status_code=200)
-def payment_callback(gateway: str, data: PaymentCallback,
-                      user: dict = Depends(get_current_user)):
-    """Provider webhook → mark payment success/failed and stamp the linked invoice."""
-    if gateway not in SUPPORTED_GATEWAYS:
-        raise HTTPException(400, "unsupported gateway")
-    repo = IraqPaymentRepository(user["org_id"])
+def _process_gateway_callback(org_id: str, gateway: str, data: PaymentCallback) -> dict:
+    """Shared callback logic for authenticated and webhook routes."""
+    from app.services.idempotency import get_cached_response, store_response
+
+    idem = f"{gateway}:{data.provider_reference}:{data.status}"
+    cached = get_cached_response(org_id, "iraq_payment_callback", idem)
+    if cached:
+        return cached
+
+    repo = IraqPaymentRepository(org_id)
     items, _ = repo.list(filters=[
         {"field": "provider_reference", "op": "==", "value": data.provider_reference},
         {"field": "gateway", "op": "==", "value": gateway},
@@ -123,6 +132,11 @@ def payment_callback(gateway: str, data: PaymentCallback,
     if not items:
         raise HTTPException(404, "payment not found")
     pmt = items[0]
+    if pmt.get("status") == "success":
+        result = {"payment_id": pmt["id"], "status": "success", "duplicate": True}
+        store_response(org_id, "iraq_payment_callback", idem, result)
+        return result
+
     new_status = data.status if data.status in {"success", "failed", "pending"} else "pending"
     payload = {
         "status": new_status,
@@ -133,7 +147,7 @@ def payment_callback(gateway: str, data: PaymentCallback,
         payload["completed_at"] = datetime.utcnow().isoformat()
         if pmt.get("invoice_id"):
             try:
-                inv_repo = InvoiceRepository(user["org_id"])
+                inv_repo = InvoiceRepository(org_id)
                 inv = inv_repo.get(pmt["invoice_id"])
                 if inv:
                     inv_repo.update(pmt["invoice_id"], {
@@ -143,10 +157,35 @@ def payment_callback(gateway: str, data: PaymentCallback,
                     })
             except Exception:
                 pass
-    return repo.update(pmt["id"], payload)
+    updated = repo.update(pmt["id"], payload)
+    result = {"payment_id": pmt["id"], "status": new_status, "payment": updated}
+    store_response(org_id, "iraq_payment_callback", idem, result)
+    return result
 
 
-@router.get("/payments")
+@router.post("/callback/{gateway}", status_code=200,
+             dependencies=[Depends(require_perm("settings.update"))])
+def payment_callback(gateway: str, data: PaymentCallback,
+                      user: dict = Depends(get_current_user)):
+    """Authenticated provider callback (internal testing)."""
+    if gateway not in SUPPORTED_GATEWAYS:
+        raise HTTPException(400, "unsupported gateway")
+    return _process_gateway_callback(user["org_id"], gateway, data)
+
+
+@router.post("/webhook/fib", status_code=200)
+def fib_webhook(data: PaymentCallback, org_id: str = Query(..., min_length=1)):
+    """Public FIB webhook — org_id query param identifies tenant."""
+    return _process_gateway_callback(org_id, "fib", data)
+
+
+@router.post("/webhook/zain-cash", status_code=200)
+def zain_cash_webhook(data: PaymentCallback, org_id: str = Query(..., min_length=1)):
+    """Public Zain Cash webhook."""
+    return _process_gateway_callback(org_id, "zain_cash", data)
+
+
+@router.get("/payments", dependencies=[Depends(require_perm("invoices.read"))])
 def list_payments(status: Optional[str] = None, gateway: Optional[str] = None,
                    user: dict = Depends(get_current_user)):
     repo = IraqPaymentRepository(user["org_id"])

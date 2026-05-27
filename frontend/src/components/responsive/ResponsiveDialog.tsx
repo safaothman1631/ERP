@@ -54,6 +54,7 @@ import {
   space,
   zIndex,
 } from '../../theme/tokens';
+import { getGlassStyle } from '../../theme/glassStyles';
 import './clickable.css';
 
 /**
@@ -613,6 +614,11 @@ export const ResponsiveDialog: React.FC<ResponsiveDialogProps> = ({
       title={null}
       destroyOnHidden
       width={MODAL_MAX_INLINE_SIZE}
+      modalRender={(node) => (
+        <div style={{ ...getGlassStyle('dialog', true), borderRadius: radius.lg, overflow: 'hidden' }}>
+          {node}
+        </div>
+      )}
       styles={{
         body: desktopBodyStyle,
       }}

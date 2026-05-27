@@ -16,7 +16,13 @@ class OrganizationRepository(BaseRepository):
         if cached:
             return cached
         
-        doc = self.collection.document(doc_id).get()
+        try:
+            doc = self.collection.document(doc_id).get()
+        except Exception as exc:
+            from app.services.firestore_resilience import is_firestore_quota_error
+            if is_firestore_quota_error(exc):
+                return cache.get(cache_key)
+            raise
         if doc.exists:
             data = {"id": doc.id, **doc.to_dict()}
             cache.set(cache_key, data)

@@ -1,0 +1,127 @@
+{
+  "total_queries": 13,
+  "matched": [
+    {
+      "collection": "users",
+      "where_fields": [
+        "email"
+      ],
+      "order_by": null,
+      "order_dir": null,
+      "source": "/sessions/jolly-wizardly-cray/mnt/zoho/backend/app/api/auth.py:261"
+    },
+    {
+      "collection": "password_resets",
+      "where_fields": [
+        "used"
+      ],
+      "order_by": null,
+      "order_dir": null,
+      "source": "/sessions/jolly-wizardly-cray/mnt/zoho/backend/app/api/auth.py:543"
+    },
+    {
+      "collection": "backups",
+      "where_fields": [
+        "org_id"
+      ],
+      "order_by": null,
+      "order_dir": null,
+      "source": "/sessions/jolly-wizardly-cray/mnt/zoho/backend/app/api/backup.py:79"
+    },
+    {
+      "collection": "iot_devices",
+      "where_fields": [
+        "api_key"
+      ],
+      "order_by": null,
+      "order_dir": null,
+      "source": "/sessions/jolly-wizardly-cray/mnt/zoho/backend/app/api/iot.py:168"
+    },
+    {
+      "collection": "org_memberships",
+      "where_fields": [
+        "user_id"
+      ],
+      "order_by": null,
+      "order_dir": null,
+      "source": "/sessions/jolly-wizardly-cray/mnt/zoho/backend/app/api/system.py:224"
+    },
+    {
+      "collection": "withholding_taxes",
+      "where_fields": [
+        "org_id"
+      ],
+      "order_by": null,
+      "order_dir": null,
+      "source": "/sessions/jolly-wizardly-cray/mnt/zoho/backend/app/api/taxes.py:191"
+    },
+    {
+      "collection": "users",
+      "where_fields": [
+        "email"
+      ],
+      "order_by": null,
+      "order_dir": null,
+      "source": "/sessions/jolly-wizardly-cray/mnt/zoho/backend/app/api/users.py:230"
+    },
+    {
+      "collection": "invite_tokens",
+      "where_fields": [
+        "user_id"
+      ],
+      "order_by": null,
+      "order_dir": null,
+      "source": "/sessions/jolly-wizardly-cray/mnt/zoho/backend/app/api/users.py:524"
+    },
+    {
+      "collection": "users",
+      "where_fields": [
+        "org_id"
+      ],
+      "order_by": null,
+      "order_dir": null,
+      "source": "/sessions/jolly-wizardly-cray/mnt/zoho/backend/app/api/platform/orgs.py:33"
+    },
+    {
+      "collection": "users",
+      "where_fields": [
+        "is_active"
+      ],
+      "order_by": null,
+      "order_dir": null,
+      "source": "/sessions/jolly-wizardly-cray/mnt/zoho/backend/app/api/platform/stats.py:40"
+    },
+    {
+      "collection": "module_access_requests",
+      "where_fields": [
+        "status"
+      ],
+      "order_by": null,
+      "order_dir": null,
+      "source": "/sessions/jolly-wizardly-cray/mnt/zoho/backend/app/api/platform/stats.py:44"
+    }
+  ],
+  "unmatched": [
+    {
+      "collection": "org_memberships",
+      "where_fields": [
+        "user_id",
+        "org_id"
+      ],
+      "order_by": null,
+      "order_dir": null,
+      "source": "/sessions/jolly-wizardly-cray/mnt/zoho/backend/app/api/system.py:251"
+    },
+    {
+      "collection": "withholding_taxes",
+      "where_fields": [
+        "org_id",
+        "is_active"
+      ],
+      "order_by": null,
+      "order_dir": null,
+      "source": "/sessions/jolly-wizardly-cray/mnt/zoho/backend/app/api/taxes.py:191"
+    }
+  ],
+  "indexes_count": 25
+}

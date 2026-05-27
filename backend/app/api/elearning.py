@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/elearning", tags=["eLearning"])
 
@@ -167,8 +168,8 @@ def complete_enrollment(eid: str, body: dict, user: dict = Depends(get_current_u
 
 @router.get("/dashboard")
 def el_dashboard(user: dict = Depends(get_current_user)):
-    courses, _ = CourseRepo(user["org_id"]).list(limit=10000)
-    enrolls, _ = EnrollmentRepo(user["org_id"]).list(limit=10000)
+    courses = collect_stream(CourseRepo(user["org_id"]), max_docs=10000)
+    enrolls = collect_stream(EnrollmentRepo(user["org_id"]), max_docs=10000)
     return {
         "courses": len(courses),
         "published": sum(1 for c in courses if c.get("is_published")),

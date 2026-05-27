@@ -1790,5 +1790,23 @@
     "dev": "Dev",
     "staging": "Staging",
     "prod": "Prod"
-  }
+  },
+  "roles.owner": "المالك",
+  "roles.admin": "المسؤول",
+  "roles.manager": "المدير",
+  "roles.accountant": "المحاسب",
+  "roles.sales": "المبيعات",
+  "roles.viewer": "عارض",
+  "roles.platform_admin": "مسؤول المنصة",
+  "role.chip_hint": "دورك وصلاحياتك",
+  "persona.you_can": "يمكنك",
+  "persona.you_cannot": "لا يمكنك",
+  "role.home.welcome": "مرحباً، {{name}}",
+  "role.home.sales_title": "خط المبيعات",
+  "role.home.sales_sub": "عروض الأسعار وCRM والإيرادات",
+  "role.home.viewer_title": "نظرة للقراءة فقط",
+  "role.home.viewer_sub": "عرض التقارير — التعديل يتطلب مسؤولاً",
+  "role.welcome.title": "مرحباً — {{role}}",
+  "role.welcome.skip": "فهمت",
+  "role.welcome.hint": "استخدم شارة الدور في الشريط العلوي لمراجعة صلاحياتك."
 }

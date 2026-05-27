@@ -1,0 +1,153 @@
+name: security-scan
+
+# Security scanning across the repo.
+# Spec: requirements.md §10.1 (R10.1) and §7 (R7).
+#
+# Triggers:
+#   - Every push to main and every PR.
+#   - Weekly cron (Mondays 03:00 UTC) — catches CVEs published since the
+#     last touch of an unchanged dependency.
+#   - Manual dispatch for ad-hoc runs.
+#
+# Jobs fail on:
+#   - npm audit: high / critical vulnerability in non-dev deps.
+#   - pip-audit: any reported vulnerability (we can downgrade with --ignore-vuln).
+#   - CodeQL: any new "error" severity alert.
+#   - Gitleaks: any committed secret pattern.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  security-events: write   # CodeQL upload
+  actions: read
+
+concurrency:
+  group: security-scan-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  npm-audit:
+    name: npm audit (frontend)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install (frontend) without scripts
+        working-directory: frontend
+        run: npm ci --ignore-scripts
+
+      - name: Audit production deps
+        working-directory: frontend
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Audit report (informational)
+        if: always()
+        working-directory: frontend
+        run: npm audit --omit=dev --json > npm-audit.json || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: npm-audit-report
+          path: frontend/npm-audit.json
+          retention-days: 14
+
+  pip-audit:
+    name: pip-audit (backend)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pip-audit
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pip-audit==2.7.3
+
+      - name: Run pip-audit against backend/requirements.txt
+        working-directory: backend
+        run: |
+          pip-audit -r requirements.txt --strict --progress-spinner=off || \
+          pip-audit -r requirements.txt --progress-spinner=off --format=json -o pip-audit.json
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pip-audit-report
+          path: backend/pip-audit.json
+          retention-days: 14
+          if-no-files-found: ignore
+
+  codeql:
+    name: CodeQL — ${{ matrix.language }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript, python]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+
+  gitleaks:
+    name: Gitleaks (secret scan)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: 'true'
+          GITLEAKS_ENABLE_SUMMARY: 'true'
+
+  summary:
+    name: Summary
+    needs: [npm-audit, pip-audit, codeql, gitleaks]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Aggregate
+        run: |
+          echo "### Security scan summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| npm audit | ${{ needs.npm-audit.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| pip-audit | ${{ needs.pip-audit.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| CodeQL | ${{ needs.codeql.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gitleaks | ${{ needs.gitleaks.result }} |" >> $GITHUB_STEP_SUMMARY

@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, date, timedelta
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from app.firestore.invoices import InvoiceRepository, PaymentReceivedRepository, RecurringInvoiceRepository
@@ -11,11 +11,17 @@ from app.firestore.system import SequenceRepository
 from app.firestore.organizations import OrganizationRepository
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
+from app.services.module_gate import require_module
 from app.services.pdf_generator import generate_invoice_pdf
 from app.services import settings_service
 from app.schemas.schemas import InvoiceCreate, InvoiceUpdate, InvoiceResponse, PaymentReceivedCreate
+from app.services.versioned_update import apply_versioned_update
 
-router = APIRouter(prefix="/api/invoices", tags=["Invoices"])
+router = APIRouter(
+    prefix="/api/invoices",
+    tags=["Invoices"],
+    dependencies=[Depends(require_module("sales"))],
+)
 
 
 def _calculate_invoice_totals(lines_data: list, tax_repo: TaxRateRepository):
@@ -66,6 +72,7 @@ def list_invoices(
     page_size: int = Query(20, ge=1, le=500),
     status: str = Query("", max_length=20),
     contact_id: str = Query("", max_length=36),
+    cursor: str = Query("", max_length=64),
     user: dict = Depends(get_current_user),
 ):
     repo = InvoiceRepository(user["org_id"])
@@ -74,21 +81,22 @@ def list_invoices(
         filters.append({"field": "status", "op": "==", "value": status})
     if contact_id:
         filters.append({"field": "contact_id", "op": "==", "value": contact_id})
-    
-    items, total = repo.list(
+
+    from app.services.api_list import api_list
+    from app.services.list_response import paginated_response
+
+    items, total, next_cursor = api_list(
+        repo,
+        page=page,
+        page_size=page_size,
+        cursor=cursor or None,
         filters=filters,
         order_by="date",
         order_dir="DESCENDING",
-        limit=page_size,
-        offset=(page - 1) * page_size
     )
-    return {
-        "items": items,
-        "total": total,
-        "page": page,
-        "page_size": page_size,
-        "total_pages": (total + page_size - 1) // page_size,
-    }
+    return paginated_response(
+        items, total, page, page_size, repo=repo, next_cursor=next_cursor
+    )
 
 
 @router.post("", status_code=201, dependencies=[Depends(require_perm("invoices.create"))])
@@ -166,6 +174,12 @@ def create_invoice(data: InvoiceCreate, user: dict = Depends(get_current_user)):
         dispatch_event(user["org_id"], "invoice.created", {"id": invoice["id"]})
     except Exception:
         pass
+
+    try:
+        from app.services.automation_runner import fire_automated_actions
+        fire_automated_actions(user["org_id"], "invoice", "on_create", invoice)
+    except Exception:
+        pass
     
     return invoice
 
@@ -180,14 +194,19 @@ def get_invoice(invoice_id: str, user: dict = Depends(get_current_user)):
 
 
 @router.put("/{invoice_id}", dependencies=[Depends(require_perm("invoices.update"))])
-def update_invoice(invoice_id: str, data: InvoiceUpdate, user: dict = Depends(get_current_user)):
+def update_invoice(
+    invoice_id: str,
+    data: InvoiceUpdate,
+    user: dict = Depends(get_current_user),
+    if_match: Optional[str] = Header(None, alias="If-Match"),
+):
     repo = InvoiceRepository(user["org_id"])
     invoice = repo.get(invoice_id)
     if not invoice or invoice.get("org_id") != user["org_id"]:
         raise HTTPException(status_code=404, detail="وەسڵ نەدۆزرایەوە")
     
     update_data = data.model_dump(exclude_unset=True, exclude={"lines"})
-    invoice = repo.update(invoice_id, update_data)
+    invoice = apply_versioned_update(repo, invoice_id, update_data, if_match=if_match)
     
     if data.lines:
         tax_repo = TaxRateRepository(user["org_id"])
@@ -443,43 +462,39 @@ def create_payment_received(data: PaymentReceivedCreate, user: dict = Depends(ge
     legacy_invoice_id = raw.get('invoice_id')
     legacy_account_id = raw.get('account_id') or raw.get('deposit_to_account_id')
     
-    repo = PaymentReceivedRepository(user["org_id"])
+    from app.services.invoice_payments import create_payment_received_atomic
+
+    payment_id = str(uuid.uuid4())
     payload = {**raw}
-    payload["id"] = str(uuid.uuid4())
     payload["payment_number"] = payment_number
     payload["auto_numbered"] = auto_numbered
     if legacy_account_id and not payload.get("deposit_to_account_id"):
         payload["deposit_to_account_id"] = legacy_account_id
-    payment = repo.create(payload)
-    
-    # Update invoice balance (legacy single invoice or via allocations)
-    inv_repo = InvoiceRepository(user["org_id"])
+    try:
+        payment = create_payment_received_atomic(user["org_id"], payment_id, payload)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail={"code": "invoice_payment_failed", "message": str(exc)},
+        ) from exc
+
+    inv_ids = []
     if legacy_invoice_id:
-        try:
-            result = inv_repo.record_payment(legacy_invoice_id, float(data.amount))
-            if result and result.get("status") == "paid":
-                try:
-                    from app.services.webhook_dispatcher import dispatch_event
-                    dispatch_event(user["org_id"], "invoice.paid", {"id": legacy_invoice_id})
-                except Exception:
-                    pass
-        except Exception:
-            pass  # Invoice may not exist or balance_due missing — payment still recorded
-    for alloc in (raw.get('allocations') or []):
-        inv_id = alloc.get('invoice_id') if isinstance(alloc, dict) else getattr(alloc, 'invoice_id', None)
-        amt = alloc.get('amount') if isinstance(alloc, dict) else getattr(alloc, 'amount', 0)
-        if inv_id and amt:
+        inv_ids.append(legacy_invoice_id)
+    for alloc in (raw.get("allocations") or []):
+        inv_id = alloc.get("invoice_id") if isinstance(alloc, dict) else getattr(alloc, "invoice_id", None)
+        if inv_id:
+            inv_ids.append(inv_id)
+    for inv_id in inv_ids:
+        inv = InvoiceRepository(user["org_id"]).get(inv_id)
+        if inv and inv.get("status") == "paid":
             try:
-                result = inv_repo.record_payment(inv_id, float(amt))
-                if result and result.get("status") == "paid":
-                    try:
-                        from app.services.webhook_dispatcher import dispatch_event
-                        dispatch_event(user["org_id"], "invoice.paid", {"id": inv_id})
-                    except Exception:
-                        pass
+                from app.services.webhook_dispatcher import dispatch_event
+
+                dispatch_event(user["org_id"], "invoice.paid", {"id": inv_id})
             except Exception:
                 pass
-    
+
     return payment
 
 

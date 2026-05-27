@@ -1,0 +1,203 @@
+================================================================================
+Frontend Build Evidence — Critical Fix A
+Date: 2026-05-27
+================================================================================
+
+ENVIRONMENT STATE
+-----------------
+Working directory: C:\Users\SAFA\zoho\frontend
+Bash sandbox path: /sessions/jolly-wizardly-cray/mnt/zoho/frontend
+Node version: v22.22.0
+NPM version: bundled with node 22
+Vite version installed (existing node_modules): 8.0.8
+
+
+PRE-EXISTING STATE
+------------------
+- node_modules existed (~643 MB, 502 top-level entries, last touched 2026-05-18).
+- node_modules was originally populated on Windows host:
+    @rolldown/binding-win32-x64-msvc  present
+    @rolldown/binding-linux-x64-gnu   ABSENT
+- vite-plugin-pwa, workbox-* packages NOT installed even though
+  vite-plugin-pwa appeared in devDependencies.
+- package.json was being read by `npm` as a TRUNCATED 3041-byte file
+  (last line cut off mid-key at `"workbox-strategies"`).
+  Through the Windows file tool the file appeared complete (105 lines).
+  This matches the "stale mount" warning in the task instructions.
+
+
+ATTEMPT 1 — npm install (full)
+------------------------------
+Command:
+    cd /sessions/jolly-wizardly-cray/mnt/zoho/frontend
+    npm install --no-audit --no-fund --prefer-offline
+
+Result: EJSONPARSE — npm read the truncated package.json:
+    npm error code EJSONPARSE
+    npm error path /sessions/jolly-wizardly-cray/mnt/zoho/frontend/package.json
+    npm error JSON.parse Expected ':' after property name in JSON
+    npm error at position 3041 (line 73 column 25)
+    npm error while parsing near "...workbox-strategies"
+
+
+MITIGATION — Re-materialize package.json
+----------------------------------------
+1) Used the file Write tool to rewrite the full 105-line package.json on
+   Windows. JSON validates client-side.
+2) The Linux bash mount still saw the file at 3041 bytes (stale cache).
+3) Per workspace note ("if file-tool Read shows complete content...
+   append the missing tail via Python"), appended the missing tail with
+   Python to /sessions/jolly-wizardly-cray/mnt/zoho/frontend/package.json.
+4) Verified: file size 3985, `python3 -m json.tool` succeeds.
+
+
+ATTEMPT 2 — npm install (after json fix)
+----------------------------------------
+Command (with ERESOLVE):
+    npm install --no-audit --no-fund --prefer-offline
+
+Result: ERESOLVE — version conflict
+    npm error code ERESOLVE
+    npm error While resolving: frontend@0.0.0
+    npm error Found: vite@8.0.14
+    npm error Could not resolve dependency:
+    npm error peer vite@"^3.1.0 || ^4.0.0 || ^5.0.0" from
+    npm error vite-plugin-pwa@0.20.5
+
+Diagnosis: package.json pinned vite-plugin-pwa@^0.20.5 which only
+supports up to vite v5. Project uses vite v8.
+
+
+FIX — bump vite-plugin-pwa to ^1.3.0
+------------------------------------
+Verified peer-deps:
+    > npm view vite-plugin-pwa@1.3.0 peerDependencies
+    {
+      '@vite-pwa/assets-generator': '^1.0.0',
+      vite: '^3.1.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0',
+      'workbox-build': '^7.4.1',
+      'workbox-window': '^7.4.1'
+    }
+Edited package.json (via bash `sed`):
+    "vite-plugin-pwa": "^0.20.5"  →  "vite-plugin-pwa": "^1.3.0"
+
+
+ATTEMPT 3..N — npm install (after pwa bump)
+-------------------------------------------
+Repeated invocations of:
+    npm install --no-audit --no-fund --prefer-offline --legacy-peer-deps \\
+                --no-package-lock --no-save vite-plugin-pwa@^1.3.0
+
+Each invocation timed out at the workspace bash hard cap of 45 seconds
+WITHOUT writing vite-plugin-pwa into node_modules.  Each run made
+incremental cache progress (visible in
+~/.npm/_logs/<timestamp>-debug-0.log) but the dependency graph for the
+~70 new packages (vite-plugin-pwa + workbox-build + assets-generator +
+deps) could not fully resolve in a single 45-second window with a cold
+npm cache.
+
+Background `nohup npm install &` was tried but the workspace bash
+sandbox does not retain detached child processes — the npm process
+died as soon as the bash invocation returned, leaving the log empty.
+
+NET RESULT: vite-plugin-pwa NOT installed into node_modules in this
+sandbox. The user MUST run `npm install` (or `npm i --legacy-peer-deps`)
+on their Windows host to materialize:
+    - vite-plugin-pwa@^1.3.0
+    - workbox-build (transitively)
+    - workbox-window (already in deps, may still be missing locally)
+    - the new @rolldown/binding for whichever OS they run the build on
+      (npm normally installs the right native binding from optionalDeps).
+
+
+ATTEMPT — npm run build (with existing node_modules)
+----------------------------------------------------
+Output:
+    > frontend@0.0.0 build
+    > vite build
+    Error: Cannot find native binding. npm has a bug related to optional
+    dependencies. Please try `npm i` again after removing both
+    package-lock.json and node_modules directory.
+        at .../rolldown/dist/shared/binding-s-V_wTpj.mjs:507:36
+      [cause]: Error: Cannot find module '@rolldown/binding-linux-x64-gnu'
+        cause: Error: Cannot find module
+               '../rolldown-binding.linux-x64-gnu.node'
+
+Diagnosis: the existing node_modules tree was created on a Windows
+host, so it only contains @rolldown/binding-win32-x64-msvc. The Linux
+sandbox needs @rolldown/binding-linux-x64-gnu, which never gets
+installed because the workspace bash cap doesn't allow npm install to
+finish. Build on the developer's Windows machine should be fine because
+the win32 binding is already present.
+
+CONCLUSION — BUILD WAS NOT EXECUTED TO COMPLETION
+-------------------------------------------------
+- Status: BLOCKED on dependency materialization (network/time-budget).
+- All source-level wiring changes were applied successfully and
+  validated by the file tool. Re-running `npm install` on a host with
+  a full network budget (Windows or Linux) followed by `npm run build`
+  should now succeed without source edits.
+
+
+BASH SANDBOX FAILURE (mid-task)
+-------------------------------
+Late in the task the bash sandbox lost its mount layer with:
+    RPC error -1: failed to mount /mnt/.virtiofs-root/shared/... :
+    failed to chown mnt folder:
+    chown /sessions/jolly-wizardly-cray/mnt: input/output error
+Every subsequent bash invocation returned this error, so no further
+build attempts, no `npm run i18n:split` run, no `npm run audit:lazy`
+run, and no `du -sh dist/assets/*.js` capture was possible.
+
+
+FILES MODIFIED (FILE-TOOL VERIFIED)
+-----------------------------------
+1. frontend/package.json
+     - Reconstructed full JSON (was truncated on disk).
+     - Bumped: "vite-plugin-pwa": "^0.20.5" → "^1.3.0"
+
+2. frontend/vite.config.ts
+     - Added imports:
+         import { VitePWA } from 'vite-plugin-pwa';
+         import { PWA_CONFIG } from './src/pwa/pwa-config';
+     - Inserted plugin entry (after react()):
+         VitePWA(PWA_CONFIG as unknown as Parameters<typeof VitePWA>[0]),
+       (cast bridges the local structural type to the upstream type
+       without importing the upstream type)
+
+3. frontend/eslint.config.js
+     - Added `createRequire` import of the repo-root rules:
+         const localQueryRules = require('../tools/eslint-rules/index.js')
+     - Registered plugin under `local` namespace.
+     - Enabled rules at `warn`:
+         'local/require-query-class': 'warn'
+         'local/precise-invalidation': 'warn'
+
+4. frontend/src/main.tsx
+     - Replaced `import './i18n'` with a lazy-init using i18n.config:
+         import { initI18n } from './i18n.config'
+         initI18n().catch((err) => {
+           console.warn('[zoho] lazy i18n init failed, falling back to legacy bundle:', err)
+           return import('./i18n')
+         })
+       (fire-and-forget; legacy bundle imported only as a runtime
+       fallback if the lazy init throws — e.g. when split JSON
+       hasn't been generated yet.)
+
+
+FILES VERIFIED UNCHANGED
+------------------------
+- backend/* — untouched
+- tools/eslint-rules/* — untouched
+- package.json scripts block — only the version dep was edited
+
+
+REMAINING TASKS THAT REQUIRE NETWORK / DEV-HOST EXECUTION
+---------------------------------------------------------
+[user] $ cd frontend
+[user] $ npm install --legacy-peer-deps      # resolves PWA + workbox-build
+[user] $ npm run i18n:split                  # creates public/locales/<lng>/<ns>.json
+[user] $ npm run build                       # produces dist/sw.js
+[user] $ du -sh dist/assets/*.js | sort -h   # capture bundle sizes
+[user] $ npm run audit:lazy                  # verify zero violations
+[user] $ npm run lint                        # verify new ESLint rules load

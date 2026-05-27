@@ -38,7 +38,19 @@ def _make_response(status_code: int = 201) -> MagicMock:
     return resp
 
 
-# ─── fixtures ────────────────────────────────────────────────────────────────
+def _mock_firestore_db(captured: dict):
+    """Build a mock Firestore db that supports hash-chain lookup + write."""
+    mock_doc_ref = MagicMock()
+    mock_doc_ref.set = lambda data: captured.update(data)
+    mock_collection = MagicMock()
+    mock_collection.document.return_value = mock_doc_ref
+    mock_query = MagicMock()
+    mock_query.limit.return_value.stream.return_value = iter([])
+    mock_collection.where.return_value = mock_query
+    mock_db = MagicMock()
+    mock_db.collection.return_value = mock_collection
+    return mock_db, mock_collection
+
 
 VALID_JWT_PAYLOAD = {"sub": "user-123", "org_id": "org-abc"}
 
@@ -68,31 +80,25 @@ class TestAuditMiddlewareLogsRequiredFields:
         call_next = AsyncMock(return_value=resp)
 
         captured = {}
-
-        def fake_set(data):
-            captured.update(data)
-
-        mock_doc_ref = MagicMock()
-        mock_doc_ref.set = fake_set
-        mock_collection = MagicMock()
-        mock_collection.document.return_value = mock_doc_ref
-        mock_db = MagicMock()
-        mock_db.collection.return_value = mock_collection
+        mock_db, mock_collection = _mock_firestore_db(captured)
 
         with patch("app.middleware.audit.jwt.decode", return_value=VALID_JWT_PAYLOAD), \
              patch("app.middleware.audit.get_db", return_value=mock_db):
             result = await audit_middleware(req, call_next)
 
         assert result is resp
-        # Verify the collection used
-        mock_db.collection.assert_called_once_with("audit_logs")
+        mock_collection.document.assert_called_once()
+        assert mock_db.collection.call_args_list[0] == call("audit_logs")
 
         # Required fields per spec (داواکاری ٦.٦، ١٤.٨)
-        assert captured.get("user_id") == "user-123", "user_id must be logged"
+        assert captured.get("user_id") is None, "raw user_id must not be stored (PII scrub)"
+        assert captured.get("user_id_hash"), "user_id_hash must be logged"
         assert captured.get("action") == expected_action, f"action must be '{expected_action}' for {method}"
         assert "timestamp" in captured, "timestamp field must be present"
         assert isinstance(captured["timestamp"], datetime), "timestamp must be a datetime"
         assert captured["timestamp"] <= datetime.utcnow(), "timestamp must be ≤ now()"
+        assert captured.get("hash")
+        assert captured.get("prev_hash")
 
     @pytest.mark.asyncio
     async def test_log_entry_contains_org_id(self):
@@ -104,12 +110,7 @@ class TestAuditMiddlewareLogsRequiredFields:
         call_next = AsyncMock(return_value=resp)
 
         captured = {}
-        mock_doc_ref = MagicMock()
-        mock_doc_ref.set = lambda data: captured.update(data)
-        mock_collection = MagicMock()
-        mock_collection.document.return_value = mock_doc_ref
-        mock_db = MagicMock()
-        mock_db.collection.return_value = mock_collection
+        mock_db, _ = _mock_firestore_db(captured)
 
         with patch("app.middleware.audit.jwt.decode", return_value=VALID_JWT_PAYLOAD), \
              patch("app.middleware.audit.get_db", return_value=mock_db):
@@ -127,12 +128,7 @@ class TestAuditMiddlewareLogsRequiredFields:
         call_next = AsyncMock(return_value=resp)
 
         captured = {}
-        mock_doc_ref = MagicMock()
-        mock_doc_ref.set = lambda data: captured.update(data)
-        mock_collection = MagicMock()
-        mock_collection.document.return_value = mock_doc_ref
-        mock_db = MagicMock()
-        mock_db.collection.return_value = mock_collection
+        mock_db, _ = _mock_firestore_db(captured)
 
         with patch("app.middleware.audit.jwt.decode", return_value=VALID_JWT_PAYLOAD), \
              patch("app.middleware.audit.get_db", return_value=mock_db):
@@ -151,12 +147,7 @@ class TestAuditMiddlewareLogsRequiredFields:
         call_next = AsyncMock(return_value=resp)
 
         captured = {}
-        mock_doc_ref = MagicMock()
-        mock_doc_ref.set = lambda data: captured.update(data)
-        mock_collection = MagicMock()
-        mock_collection.document.return_value = mock_doc_ref
-        mock_db = MagicMock()
-        mock_db.collection.return_value = mock_collection
+        mock_db, _ = _mock_firestore_db(captured)
 
         with patch("app.middleware.audit.jwt.decode", return_value=VALID_JWT_PAYLOAD), \
              patch("app.middleware.audit.get_db", return_value=mock_db):
@@ -294,12 +285,7 @@ class TestAuditMiddlewareEntityExtraction:
         call_next = AsyncMock(return_value=resp)
 
         captured = {}
-        mock_doc_ref = MagicMock()
-        mock_doc_ref.set = lambda data: captured.update(data)
-        mock_collection = MagicMock()
-        mock_collection.document.return_value = mock_doc_ref
-        mock_db = MagicMock()
-        mock_db.collection.return_value = mock_collection
+        mock_db, mock_collection = _mock_firestore_db(captured)
 
         with patch("app.middleware.audit.jwt.decode", return_value=VALID_JWT_PAYLOAD), \
              patch("app.middleware.audit.get_db", return_value=mock_db):

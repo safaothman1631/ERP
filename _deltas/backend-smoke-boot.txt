@@ -1,0 +1,427 @@
+⚠  ENV WARNING: Missing required environment variable: SECRET_KEY
+⚠  ENV WARNING: Missing required environment variable: DATABASE_URL
+⚠  ENV WARNING: Missing required environment variable: CORS_ORIGINS
+⚠  ENV WARNING: Missing required environment variable: ENVIRONMENT
+⚠  ENV WARNING: SECRET_KEY is using the insecure development default — set a strong random value before deploying
+⚠  ENV WARNING: DATABASE_URL is using the insecure development default ('sqlite:///./zoho_books.db') — override before deploying
+/sessions/jolly-wizardly-cray/.local/lib/python3.10/site-packages/google/api_core/_python_version_support.py:273: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+⚠  ENV WARNING: Missing required environment variable: SECRET_KEY
+⚠  ENV WARNING: Missing required environment variable: DATABASE_URL
+⚠  ENV WARNING: Missing required environment variable: CORS_ORIGINS
+⚠  ENV WARNING: Missing required environment variable: ENVIRONMENT
+⚠  ENV WARNING: SECRET_KEY is using the insecure development default — set a strong random value before deploying
+⚠  ENV WARNING: DATABASE_URL is using the insecure development default ('sqlite:///./zoho_books.db') — override before deploying
+--- Logging error ---
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 440, in format
+    return self._format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 436, in _format
+    return self._fmt % values
+KeyError: 'request_id'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 1100, in emit
+    msg = self.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 943, in format
+    return fmt.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 681, in format
+    s = self.formatMessage(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 650, in formatMessage
+    return self._style.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 442, in format
+    raise ValueError('Formatting field not found in record: %s' % e)
+ValueError: Formatting field not found in record: 'request_id'
+Call stack:
+  File "<string>", line 4, in <module>
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/sessions/jolly-wizardly-cray/mnt/zoho/backend/./app/main.py", line 207, in <module>
+    init_observability(app)
+  File "/sessions/jolly-wizardly-cray/mnt/zoho/backend/./app/observability/__init__.py", line 38, in init_observability
+    sentry_ok = init_sentry()
+  File "/sessions/jolly-wizardly-cray/mnt/zoho/backend/./app/observability/sentry.py", line 47, in init_sentry
+    log.info("sentry.skipped (no DSN in %s)", env)
+Message: 'sentry.skipped (no DSN in %s)'
+Arguments: ('development',)
+--- Logging error ---
+Traceback (most recent call last):
+  File "/sessions/jolly-wizardly-cray/mnt/zoho/backend/./app/observability/tracing.py", line 68, in init_tracing
+    from opentelemetry import trace  # type: ignore
+ModuleNotFoundError: No module named 'opentelemetry'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 440, in format
+    return self._format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 436, in _format
+    return self._fmt % values
+KeyError: 'request_id'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 1100, in emit
+    msg = self.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 943, in format
+    return fmt.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 681, in format
+    s = self.formatMessage(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 650, in formatMessage
+    return self._style.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 442, in format
+    raise ValueError('Formatting field not found in record: %s' % e)
+ValueError: Formatting field not found in record: 'request_id'
+Call stack:
+  File "<string>", line 4, in <module>
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/sessions/jolly-wizardly-cray/mnt/zoho/backend/./app/main.py", line 207, in <module>
+    init_observability(app)
+  File "/sessions/jolly-wizardly-cray/mnt/zoho/backend/./app/observability/__init__.py", line 43, in init_observability
+    otel_ok = init_tracing(app)
+  File "/sessions/jolly-wizardly-cray/mnt/zoho/backend/./app/observability/tracing.py", line 76, in init_tracing
+    log.warning("otel.libs_missing", extra={"err": str(e)})
+Message: 'otel.libs_missing'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 440, in format
+    return self._format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 436, in _format
+    return self._fmt % values
+KeyError: 'request_id'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 1100, in emit
+    msg = self.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 943, in format
+    return fmt.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 681, in format
+    s = self.formatMessage(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 650, in formatMessage
+    return self._style.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 442, in format
+    raise ValueError('Formatting field not found in record: %s' % e)
+ValueError: Formatting field not found in record: 'request_id'
+Call stack:
+  File "<string>", line 4, in <module>
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/sessions/jolly-wizardly-cray/mnt/zoho/backend/./app/main.py", line 207, in <module>
+    init_observability(app)
+  File "/sessions/jolly-wizardly-cray/mnt/zoho/backend/./app/observability/__init__.py", line 50, in init_observability
+    log.info("observability.initialized", extra={"status": status})
+Message: 'observability.initialized'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 440, in format
+    return self._format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 436, in _format
+    return self._fmt % values
+KeyError: 'request_id'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 1100, in emit
+    msg = self.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 943, in format
+    return fmt.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 681, in format
+    s = self.formatMessage(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 650, in formatMessage
+    return self._style.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 442, in format
+    raise ValueError('Formatting field not found in record: %s' % e)
+ValueError: Formatting field not found in record: 'request_id'
+Call stack:
+  File "<string>", line 4, in <module>
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/sessions/jolly-wizardly-cray/mnt/zoho/backend/./app/main.py", line 487, in <module>
+    logging.getLogger(__name__).info("Mounted /api/rum/vitals (P0)")
+Message: 'Mounted /api/rum/vitals (P0)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 440, in format
+    return self._format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 436, in _format
+    return self._fmt % values
+KeyError: 'request_id'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 1100, in emit
+    msg = self.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 943, in format
+    return fmt.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 681, in format
+    s = self.formatMessage(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 650, in formatMessage
+    return self._style.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 442, in format
+    raise ValueError('Formatting field not found in record: %s' % e)
+ValueError: Formatting field not found in record: 'request_id'
+Call stack:
+  File "<string>", line 4, in <module>
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/sessions/jolly-wizardly-cray/mnt/zoho/backend/./app/main.py", line 494, in <module>
+    logging.getLogger(__name__).info("Mounted /api/csp-report (P6)")
+Message: 'Mounted /api/csp-report (P6)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 440, in format
+    return self._format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 436, in _format
+    return self._fmt % values
+KeyError: 'request_id'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 1100, in emit
+    msg = self.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 943, in format
+    return fmt.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 681, in format
+    s = self.formatMessage(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 650, in formatMessage
+    return self._style.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 442, in format
+    raise ValueError('Formatting field not found in record: %s' % e)
+ValueError: Formatting field not found in record: 'request_id'
+Call stack:
+  File "<string>", line 4, in <module>
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/sessions/jolly-wizardly-cray/mnt/zoho/backend/./app/main.py", line 501, in <module>
+    logging.getLogger(__name__).info("Mounted /api/health (P4 — enriched)")
+Message: 'Mounted /api/health (P4 — enriched)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 440, in format
+    return self._format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 436, in _format
+    return self._fmt % values
+KeyError: 'request_id'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 1100, in emit
+    msg = self.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 943, in format
+    return fmt.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 681, in format
+    s = self.formatMessage(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 650, in formatMessage
+    return self._style.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 442, in format
+    raise ValueError('Formatting field not found in record: %s' % e)
+ValueError: Formatting field not found in record: 'request_id'
+Call stack:
+  File "<string>", line 4, in <module>
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/sessions/jolly-wizardly-cray/mnt/zoho/backend/./app/main.py", line 510, in <module>
+    logging.getLogger(__name__).info("Mounted /api/admin/tenants/{id}/export + /delete (P4)")
+Message: 'Mounted /api/admin/tenants/{id}/export + /delete (P4)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "/sessions/jolly-wizardly-cray/mnt/zoho/backend/./app/observability/metrics.py", line 27, in <module>
+    from prometheus_client import (  # type: ignore
+ModuleNotFoundError: No module named 'prometheus_client'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 440, in format
+    return self._format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 436, in _format
+    return self._fmt % values
+KeyError: 'request_id'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 1100, in emit
+    msg = self.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 943, in format
+    return fmt.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 681, in format
+    s = self.formatMessage(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 650, in formatMessage
+    return self._style.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 442, in format
+    raise ValueError('Formatting field not found in record: %s' % e)
+ValueError: Formatting field not found in record: 'request_id'
+Call stack:
+  File "<string>", line 4, in <module>
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/sessions/jolly-wizardly-cray/mnt/zoho/backend/./app/main.py", line 515, in <module>
+    from app.observability.metrics import router as _metrics_router
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/sessions/jolly-wizardly-cray/mnt/zoho/backend/./app/observability/metrics.py", line 38, in <module>
+    log.warning("metrics.prometheus_client_missing", extra={"err": str(e)})
+Message: 'metrics.prometheus_client_missing'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 440, in format
+    return self._format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 436, in _format
+    return self._fmt % values
+KeyError: 'request_id'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 1100, in emit
+    msg = self.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 943, in format
+    return fmt.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 681, in format
+    s = self.formatMessage(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 650, in formatMessage
+    return self._style.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 442, in format
+    raise ValueError('Formatting field not found in record: %s' % e)
+ValueError: Formatting field not found in record: 'request_id'
+Call stack:
+  File "<string>", line 4, in <module>
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/sessions/jolly-wizardly-cray/mnt/zoho/backend/./app/main.py", line 517, in <module>
+    logging.getLogger(__name__).info("Mounted /metrics (P4)")
+Message: 'Mounted /metrics (P4)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 440, in format
+    return self._format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 436, in _format
+    return self._fmt % values
+KeyError: 'request_id'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 1100, in emit
+    msg = self.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 943, in format
+    return fmt.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 681, in format
+    s = self.formatMessage(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 650, in formatMessage
+    return self._style.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 442, in format
+    raise ValueError('Formatting field not found in record: %s' % e)
+ValueError: Formatting field not found in record: 'request_id'
+Call stack:
+  File "<string>", line 4, in <module>
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/sessions/jolly-wizardly-cray/mnt/zoho/backend/./app/main.py", line 525, in <module>
+    logging.getLogger(__name__).info("Mounted /api/health/offline-sync (V-PR.4)")
+Message: 'Mounted /api/health/offline-sync (V-PR.4)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 440, in format
+    return self._format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 436, in _format
+    return self._fmt % values
+KeyError: 'request_id'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 1100, in emit
+    msg = self.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 943, in format
+    return fmt.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 681, in format
+    s = self.formatMessage(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 650, in formatMessage
+    return self._style.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 442, in format
+    raise ValueError('Formatting field not found in record: %s' % e)
+ValueError: Formatting field not found in record: 'request_id'
+Call stack:
+  File "<string>", line 4, in <module>
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/sessions/jolly-wizardly-cray/mnt/zoho/backend/./app/main.py", line 532, in <module>
+    logging.getLogger(__name__).info("Mounted /api/health/synthetic-summary (V-PR.1)")
+Message: 'Mounted /api/health/synthetic-summary (V-PR.1)'
+Arguments: ()
+=== BACKEND SMOKE BOOT ===
+app loaded: True
+total routes: 2235
+
+=== KEY HEALTH/METRICS ROUTES ===
+  /api/health: 1 route(s)
+  /api/metrics: 1 route(s)
+  /metrics: 1 route(s)
+  /api/rum/vitals: 1 route(s)
+  /api/csp-report: 1 route(s)
+  /api/live: 1 route(s)
+  /api/ready: 1 route(s)
+  /api/version: 1 route(s)
+  /api/health/offline-sync: 1 route(s)
+  /api/health/synthetic-summary: 1 route(s)
+
+=== ADMIN ROUTES (P4) ===
+  /api/admin/tenants/{tenant_id}/export
+  /api/admin/tenants/{tenant_id}/delete

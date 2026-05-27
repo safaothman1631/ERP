@@ -436,6 +436,30 @@ export const glass = {
     light: { bg: 'rgba(255,255,255,0.70)', blur: 'blur(20px)', border: 'rgba(15,23,42,0.08)' },
     dark:  { bg: 'rgba(17,26,46,0.86)',    blur: 'blur(20px)', border: 'rgba(255,255,255,0.12)' },
   },
+  sidebar: {
+    light: { bg: 'rgba(255,255,255,0.72)', blur: 'blur(20px) saturate(160%)', border: 'rgba(15,23,42,0.06)' },
+    dark:  { bg: 'rgba(17,26,46,0.88)',    blur: 'blur(20px) saturate(160%)', border: 'rgba(255,255,255,0.10)' },
+  },
+  card: {
+    light: { bg: 'rgba(255,255,255,0.65)', blur: 'blur(16px) saturate(150%)', border: 'rgba(15,23,42,0.06)' },
+    dark:  { bg: 'rgba(17,26,46,0.72)',    blur: 'blur(16px) saturate(150%)', border: 'rgba(255,255,255,0.10)' },
+  },
+  dialog: {
+    light: { bg: 'rgba(255,255,255,0.78)', blur: 'blur(28px) saturate(180%)', border: 'rgba(15,23,42,0.08)' },
+    dark:  { bg: 'rgba(15,23,42,0.88)',    blur: 'blur(28px) saturate(180%)', border: 'rgba(255,255,255,0.12)' },
+  },
+  drawer: {
+    light: { bg: 'rgba(255,255,255,0.82)', blur: 'blur(24px) saturate(170%)', border: 'rgba(15,23,42,0.08)' },
+    dark:  { bg: 'rgba(17,26,46,0.92)',    blur: 'blur(24px) saturate(170%)', border: 'rgba(255,255,255,0.12)' },
+  },
+  popover: {
+    light: { bg: 'rgba(255,255,255,0.88)', blur: 'blur(16px) saturate(160%)', border: 'rgba(15,23,42,0.08)' },
+    dark:  { bg: 'rgba(17,26,46,0.92)',    blur: 'blur(16px) saturate(160%)', border: 'rgba(255,255,255,0.12)' },
+  },
+  toast: {
+    light: { bg: 'rgba(255,255,255,0.92)', blur: 'blur(12px)', border: 'rgba(15,23,42,0.08)' },
+    dark:  { bg: 'rgba(17,26,46,0.94)',    blur: 'blur(12px)', border: 'rgba(255,255,255,0.12)' },
+  },
 } as const;
 
 /**

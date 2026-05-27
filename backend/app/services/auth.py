@@ -198,12 +198,15 @@ def create_refresh_token(data: dict) -> str:
     """
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    jti = str(uuid.uuid4())
     to_encode.update({
         "exp": expire,
-        "jti": str(uuid.uuid4()),
+        "jti": jti,
         "token_type": _TOKEN_TYPE_REFRESH,
     })
-    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    encoded = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    _persist_refresh_session(data.get("org_id"), data.get("sub"), jti, expire)
+    return encoded
 
 
 def verify_refresh_token(token: str) -> dict:
@@ -240,6 +243,25 @@ def verify_refresh_token(token: str) -> dict:
     return payload
 
 
+def _persist_refresh_session(org_id: Optional[str], user_id: Optional[str], jti: str, expire: datetime) -> None:
+    """Track refresh sessions for TTL collection ``sessions`` (Wave T)."""
+    if not org_id or not user_id:
+        return
+    try:
+        from app.services.ttl_fields import expires_at_from_hours
+
+        db = get_db()
+        db.collection("sessions").document(jti).set({
+            "org_id": org_id,
+            "user_id": user_id,
+            "jti": jti,
+            "created_at": datetime.utcnow(),
+            "expires_at": expire if isinstance(expire, datetime) else expires_at_from_hours(24 * 7),
+        })
+    except Exception:
+        pass
+
+
 def revoke_token(jti: str, exp: Optional[datetime] = None) -> None:
     """Add a token's jti to the denylist until its natural expiry.
 
@@ -254,11 +276,19 @@ def revoke_token(jti: str, exp: Optional[datetime] = None) -> None:
     if not jti:
         return
     db = get_db()
+    from app.services.ttl_fields import expires_at_from_hours
+
+    exp_dt = exp or datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     db.collection("revoked_tokens").document(jti).set({
         "jti": jti,
-        "revoked_at": datetime.utcnow().isoformat(),
-        "exp": (exp or datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)).isoformat(),
+        "revoked_at": datetime.utcnow(),
+        "exp": exp_dt.isoformat(),
+        "expires_at": expires_at_from_hours(24 * 8),
     })
+    try:
+        db.collection("sessions").document(jti).delete()
+    except Exception:
+        pass
     cache.set(f"revoked_jti:{jti}", True)
 
 
@@ -280,8 +310,17 @@ def is_token_revoked(jti: str) -> bool:
     if cached is not None:
         return bool(cached)
     db = get_db()
-    doc = db.collection("revoked_tokens").document(jti).get()
-    revoked = doc.exists
+    try:
+        doc = db.collection("revoked_tokens").document(jti).get()
+        revoked = doc.exists
+    except Exception as exc:
+        from app.services.firestore_resilience import is_firestore_quota_error
+
+        if is_firestore_quota_error(exc):
+            # Fail open briefly so auth still works when Firestore quota is hit.
+            cache.set(f"revoked_jti:{jti}", False)
+            return False
+        raise
     cache.set(f"revoked_jti:{jti}", revoked)
     return revoked
 
@@ -356,7 +395,14 @@ def is_ip_blocked(ip: str) -> bool:
         return bool(cached)
 
     db = get_db()
-    doc = db.collection("ip_login_failures").document(ip).get()
+    try:
+        doc = db.collection("ip_login_failures").document(ip).get()
+    except Exception as exc:
+        from app.services.firestore_resilience import is_firestore_quota_error
+        if is_firestore_quota_error(exc):
+            cache.set(f"ip_blocked:{ip}", False)
+            return False
+        raise
     if not doc.exists:
         return False
 
@@ -510,9 +556,33 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     if jti and is_token_revoked(jti):
         raise credentials_exception
 
-    # Get user from Firestore
+    # Get user from Firestore (cached; JWT fallback when quota is exceeded)
     db = get_db()
-    user_doc = db.collection("users").document(user_id).get()
+    user_cache_key = f"user:{user_id}"
+    try:
+        user_doc = db.collection("users").document(user_id).get()
+    except Exception as exc:
+        from app.services.firestore_resilience import is_firestore_quota_error
+
+        if not is_firestore_quota_error(exc):
+            raise
+        cached_user = cache.get(user_cache_key)
+        if cached_user:
+            user_data = dict(cached_user)
+        else:
+            role = payload.get("role") or "viewer"
+            user_data = {
+                "id": user_id,
+                "org_id": org_id,
+                "role": role,
+                "is_active": True,
+                "name": "",
+                "email": "",
+                "is_platform_admin": role == "super_admin",
+            }
+        user_data["_jti"] = jti
+        return user_data
+
     if not user_doc.exists:
         raise credentials_exception
 
@@ -520,6 +590,26 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     if not user_data.get("is_active", False):
         raise credentials_exception
     user_data["_jti"] = jti  # used by /logout endpoint
+    cache.set(user_cache_key, user_data)
+
+    role = user_data.get("role") or payload.get("role") or ""
+    is_platform = bool(user_data.get("is_platform_admin") or role == "super_admin")
+    try:
+        org_doc = db.collection("organizations").document(org_id).get()
+    except Exception as exc:
+        from app.services.firestore_resilience import is_firestore_quota_error
+
+        if is_firestore_quota_error(exc):
+            return user_data
+        raise
+    if org_doc.exists:
+        org_data = org_doc.to_dict() or {}
+        suspended = org_data.get("status") == "suspended" or org_data.get("suspended_at")
+        if suspended and not is_platform and not payload.get("impersonating"):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={"code": "org_suspended", "message": "Organization suspended"},
+            )
 
     return user_data
 

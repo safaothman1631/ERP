@@ -1,12 +1,13 @@
 {
+  "_comment": "T-0.4 / R1.1, R1.2, R1.3, R1.6 — Lighthouse CI configuration. Mobile preset, 3 runs per URL, median aggregation, CWV assertions match the spec's p75 mobile targets.",
   "ci": {
     "collect": {
       "url": [
         "http://localhost:5173/",
         "http://localhost:5173/login",
         "http://localhost:5173/dashboard",
-        "http://localhost:5173/settings",
-        "http://localhost:5173/sales/invoices"
+        "http://localhost:5173/invoices",
+        "http://localhost:5173/pos/terminal"
       ],
       "numberOfRuns": 3,
       "settings": {
@@ -28,39 +29,47 @@
     },
     "assert": {
       "assertions": {
-        "categories:performance": ["error", { "minScore": 0.85, "aggregationMethod": "median-run" }],
-        "categories:accessibility": ["error", { "minScore": 0.95, "aggregationMethod": "median-run" }],
-        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
-        "categories:best-practices": ["warn", { "minScore": 0.85 }],
-        "categories:seo": ["warn", { "minScore": 0.7 }]
-      },
-      "assertMatrix": [
-        {
-          "matchingUrlPattern": "http://localhost:5173/$",
-          "assertions": {
-            "largest-contentful-paint": ["error", { "maxNumericValue": 2500 }]
-          }
-        },
-        {
-          "matchingUrlPattern": "http://localhost:5173/login",
-          "assertions": {
-            "largest-contentful-paint": ["error", { "maxNumericValue": 2500 }]
-          }
-        },
-        {
-          "matchingUrlPattern": "http://localhost:5173/dashboard",
-          "assertions": {
-            "experimental-interaction-to-next-paint": ["error", { "maxNumericValue": 200 }]
-          }
-        },
-        {
-          "matchingUrlPattern": "http://localhost:5173/sales/invoices",
-          "assertions": {
-            "experimental-interaction-to-next-paint": ["error", { "maxNumericValue": 200 }]
-          }
-        }
-      ]
+        "categories:performance": [
+          "error",
+          { "minScore": 0.9, "aggregationMethod": "median-run" }
+        ],
+        "categories:accessibility": [
+          "error",
+          { "minScore": 0.95, "aggregationMethod": "median-run" }
+        ],
+        "categories:best-practices": [
+          "warn",
+          { "minScore": 0.9, "aggregationMethod": "median-run" }
+        ],
+        "categories:seo": [
+          "warn",
+          { "minScore": 0.8, "aggregationMethod": "median-run" }
+        ],
+        "largest-contentful-paint": [
+          "error",
+          { "maxNumericValue": 2500, "aggregationMethod": "median-run" }
+        ],
+        "experimental-interaction-to-next-paint": [
+          "error",
+          { "maxNumericValue": 200, "aggregationMethod": "median-run" }
+        ],
+        "cumulative-layout-shift": [
+          "error",
+          { "maxNumericValue": 0.05, "aggregationMethod": "median-run" }
+        ],
+        "total-blocking-time": [
+          "warn",
+          { "maxNumericValue": 300, "aggregationMethod": "median-run" }
+        ],
+        "first-contentful-paint": [
+          "warn",
+          { "maxNumericValue": 1800, "aggregationMethod": "median-run" }
+        ]
+      }
     },
-    "upload": { "target": "filesystem", "outputDir": ".lighthouseci" }
+    "upload": {
+      "target": "filesystem",
+      "outputDir": ".lighthouseci"
+    }
   }
 }

@@ -4,6 +4,8 @@ import { message } from '../utils/message';
 import { PlusOutlined, MoreOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
+import { useListQuery } from '../api/queries/useListQuery';
+import { listQueryKeys } from '../api/queries/keys';
 import dayjs from 'dayjs';
 import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
 import { downloadCsv } from '../utils/exportCsv';
@@ -16,9 +18,6 @@ const statusColors: Record<string, string> = { draft: 'default', approved: 'gree
 
 const VendorCredits: React.FC = () => {
  const { t } = useTranslation();
- const [data, setData] = useState<any[]>([]);
- const [loading, setLoading] = useState(false);
- const [total, setTotal] = useState(0);
  const [page, setPage] = useState(1);
  const [modalOpen, setModalOpen] = useState(false);
  const [contacts, setContacts] = useState<any[]>([]);
@@ -34,13 +33,13 @@ const VendorCredits: React.FC = () => {
  // AddGate: wire Selective Add for vendor credits section (R9.1, R9.5)
  const addGate = useAddGate('purchases.vendor_credits');
 
- const fetchData = async () => {
- setLoading(true);
- try { const r = await api.get('/api/vendor-credits', { params: { page, page_size: 20 } }); setData(r.data.items); setTotal(r.data.total); }
- catch { message.error(t('error')); } finally { setLoading(false); }
- };
-
- useEffect(() => { fetchData(); }, [page]);
+ const vendorCreditsQuery = useListQuery<any, { items?: any[]; total?: number }>({
+ queryKey: listQueryKeys.vendorCredits({ page, page_size: 20 }),
+ queryFn: () => api.get('/api/vendor-credits', { params: { page, page_size: 20 } }),
+ });
+ const data = vendorCreditsQuery.data?.items ?? [];
+ const total = vendorCreditsQuery.data?.total ?? 0;
+ const loading = vendorCreditsQuery.isLoading || vendorCreditsQuery.isFetching;
 
  // Sync record count into AddGate store (R9.5, R9.6)
  useEffect(() => { addGate.setRecordCount(total); }, [total, addGate.setRecordCount]);
@@ -56,7 +55,7 @@ const VendorCredits: React.FC = () => {
  };
 
  const handleAction = async (id: string, action: string) => {
- try { await api.post(`/api/vendor-credits/${id}/${action}`); message.success(t('success')); fetchData(); } catch { message.error(t('error')); }
+ try { await api.post(`/api/vendor-credits/${id}/${action}`); message.success(t('success')); void vendorCreditsQuery.refetch(); } catch { message.error(t('error')); }
  };
 
  const updateLine = (key: number, field: string, value: any) => {
@@ -76,7 +75,7 @@ const VendorCredits: React.FC = () => {
  reference: values.reference || '', currency_code: 'IQD', notes: values.notes || '',
  lines: lines.map(l => ({ item_id: l.item_id || null, description: l.description, quantity: l.quantity, unit_price: l.unit_price, discount_percent: l.discount_percent || 0, tax_id: null, account_id: null })),
  });
- message.success(t('success')); setModalOpen(false); fetchData();
+ message.success(t('success')); setModalOpen(false); void vendorCreditsQuery.refetch();
  } catch { message.error(t('error')); } finally { setSaving(false); }
  };
 

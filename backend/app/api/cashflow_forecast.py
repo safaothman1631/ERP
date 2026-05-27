@@ -5,6 +5,7 @@ from app.firestore.invoices import InvoiceRepository
 from app.firestore.bills import BillRepository
 from app.firestore.banking import BankAccountRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/cashflow", tags=["Cashflow Forecast"])
 
@@ -44,7 +45,7 @@ def get_cashflow_forecast(
     
     # Get unpaid invoices (inflow)
     invoice_repo = InvoiceRepository(org_id)
-    all_invoices, _ = invoice_repo.list(limit=5000)
+    all_invoices = collect_stream(invoice_repo, max_docs=5000)
     unpaid_invoices = [
         inv for inv in all_invoices
         if inv.get("status") != "paid" and inv.get("status") != "void"
@@ -52,7 +53,7 @@ def get_cashflow_forecast(
     
     # Get unpaid bills (outflow)
     bill_repo = BillRepository(org_id)
-    all_bills, _ = bill_repo.list(limit=5000)
+    all_bills = collect_stream(bill_repo, max_docs=5000)
     unpaid_bills = [
         bill for bill in all_bills
         if bill.get("status") != "paid" and bill.get("status") != "void"
