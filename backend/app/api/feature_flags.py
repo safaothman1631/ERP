@@ -96,16 +96,24 @@ def list_feature_flags(user: dict = Depends(get_current_user)):
 def get_feature_flag(flag_key: str, user: dict = Depends(get_current_user)):
     """Return a single feature flag by key for the current organisation.
 
-    Returns 404 if the flag does not exist.
+    For unknown keys returns a default-off response (HTTP 200) rather than
+    404 — feature-flag callers should treat absence as "off" without
+    having to distinguish error vs disabled, and this keeps the browser
+    console clean for the common "flag not yet provisioned" case.
 
     Requirements: 7.1, 7.3, 7.4, 7.5
     """
     org_id = user.get("org_id", "")
     flag = _ff.get_flag(org_id, flag_key)
     if flag is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"فلاگی '{flag_key}' نەدۆزرایەوە",
+        # Unknown flag — synthesise a default-off response.
+        return FlagResponse(
+            key=flag_key,
+            enabled=False,
+            rollout_pct=0,
+            description="",
+            org_id=org_id,
+            is_active=False,
         )
     return _build_response(flag, user)
 
