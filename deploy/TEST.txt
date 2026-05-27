@@ -1,0 +1,2 @@
+# This file was used as a disk-space probe during deploy-kit generation.
+# Safe to delete. See deploy/_DELIVERY-NOTES.md for context.

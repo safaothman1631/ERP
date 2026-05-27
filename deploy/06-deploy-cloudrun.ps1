@@ -204,7 +204,6 @@ $secrets = @(
     --memory $Memory `
     --cpu $Cpu `
     --concurrency 80 `
-    --cpu-throttling=false `
     --execution-environment gen2 `
     --port 8080 `
     --set-env-vars $envVars `

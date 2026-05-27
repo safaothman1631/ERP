@@ -65,12 +65,12 @@ function Write-Banner {
 }
 
 function Invoke-Gcloud {
-    param([string[]]$Args, [switch]$IgnoreError)
-    Write-Log "gcloud $($Args -join ' ')"
-    $output = & gcloud @Args 2>&1
+    param([string[]]$ArgList, [switch]$IgnoreError)
+    Write-Log "gcloud $($ArgList -join ' ')"
+    $output = & gcloud @ArgList 2>&1
     $output | ForEach-Object { Add-Content -Path $LogFile -Value $_ }
     if (-not $IgnoreError -and $LASTEXITCODE -ne 0) {
-        throw "gcloud failed: $($Args -join ' ')"
+        throw "gcloud failed: $($ArgList -join ' ')"
     }
     return $output
 }
@@ -86,7 +86,7 @@ if (-not (Get-Command gcloud -ErrorAction SilentlyContinue)) {
 }
 
 # Set active project
-Invoke-Gcloud -Args @('config', 'set', 'project', $Project)
+Invoke-Gcloud -ArgList @('config', 'set', 'project', $Project)
 
 $manifest = [ordered]@{
     project       = $Project
@@ -124,7 +124,7 @@ $apis = @(
 
 foreach ($api in $apis) {
     Write-Log "Enabling $api"
-    Invoke-Gcloud -Args @('services', 'enable', $api, "--project=$Project") -IgnoreError
+    Invoke-Gcloud -ArgList @('services', 'enable', $api, "--project=$Project") -IgnoreError
     $manifest.apis += $api
 }
 
@@ -132,10 +132,10 @@ foreach ($api in $apis) {
 # 2. Artifact Registry
 # -----------------------------------------------------------------------------
 Write-Banner -En "Artifact Registry repo" -Ku "تۆمارخانەی Artifact Registry"
-$exists = (Invoke-Gcloud -Args @('artifacts', 'repositories', 'describe', $ArtifactRepo, "--location=$Region", "--project=$Project", '--format=value(name)') -IgnoreError) -join "`n"
+$exists = (Invoke-Gcloud -ArgList @('artifacts', 'repositories', 'describe', $ArtifactRepo, "--location=$Region", "--project=$Project", '--format=value(name)') -IgnoreError) -join "`n"
 if ($LASTEXITCODE -ne 0 -or -not $exists) {
     Write-Log "Creating Artifact Registry repo: $ArtifactRepo"
-    Invoke-Gcloud -Args @('artifacts', 'repositories', 'create', $ArtifactRepo,
+    Invoke-Gcloud -ArgList @('artifacts', 'repositories', 'create', $ArtifactRepo,
         "--repository-format=docker",
         "--location=$Region",
         "--description=Zoho ERP container images",
@@ -149,10 +149,10 @@ $manifest.artifact_repo = "$Region-docker.pkg.dev/$Project/$ArtifactRepo"
 # 3. Firestore (native mode)
 # -----------------------------------------------------------------------------
 Write-Banner -En "Firestore native mode" -Ku "Firestore — native"
-$fsExists = (Invoke-Gcloud -Args @('firestore', 'databases', 'describe', '--database=(default)', "--project=$Project", '--format=value(name)') -IgnoreError) -join "`n"
+$fsExists = (Invoke-Gcloud -ArgList @('firestore', 'databases', 'describe', '--database=(default)', "--project=$Project", '--format=value(name)') -IgnoreError) -join "`n"
 if ($LASTEXITCODE -ne 0 -or -not $fsExists) {
     Write-Log "Creating Firestore database in $Region"
-    Invoke-Gcloud -Args @('firestore', 'databases', 'create',
+    Invoke-Gcloud -ArgList @('firestore', 'databases', 'create',
         "--location=$Region",
         "--type=firestore-native",
         "--project=$Project") -IgnoreError
@@ -165,7 +165,7 @@ $manifest.firestore = @{ location = $Region; type = 'firestore-native'; database
 # 4. Memorystore Redis  (COST WARNING)
 # -----------------------------------------------------------------------------
 Write-Banner -En "Memorystore Redis" -Ku "Redis — Memorystore"
-$redisExists = (Invoke-Gcloud -Args @('redis', 'instances', 'describe', $RedisInstance, "--region=$Region", "--project=$Project", '--format=value(name)') -IgnoreError) -join "`n"
+$redisExists = (Invoke-Gcloud -ArgList @('redis', 'instances', 'describe', $RedisInstance, "--region=$Region", "--project=$Project", '--format=value(name)') -IgnoreError) -join "`n"
 if ($LASTEXITCODE -ne 0 -or -not $redisExists) {
     if (-not $Confirm) {
         Write-Host ""
@@ -175,7 +175,7 @@ if ($LASTEXITCODE -ne 0 -or -not $redisExists) {
         Write-Log "Redis creation skipped (no -Confirm)" 'WARN'
     } else {
         Write-Log "Creating Memorystore Redis instance: $RedisInstance"
-        Invoke-Gcloud -Args @('redis', 'instances', 'create', $RedisInstance,
+        Invoke-Gcloud -ArgList @('redis', 'instances', 'create', $RedisInstance,
             "--size=1",
             "--region=$Region",
             "--tier=basic",
@@ -185,8 +185,8 @@ if ($LASTEXITCODE -ne 0 -or -not $redisExists) {
 }
 
 # Capture connection string (if exists)
-$redisHost = (Invoke-Gcloud -Args @('redis', 'instances', 'describe', $RedisInstance, "--region=$Region", "--project=$Project", '--format=value(host)') -IgnoreError) -join "`n"
-$redisPort = (Invoke-Gcloud -Args @('redis', 'instances', 'describe', $RedisInstance, "--region=$Region", "--project=$Project", '--format=value(port)') -IgnoreError) -join "`n"
+$redisHost = (Invoke-Gcloud -ArgList @('redis', 'instances', 'describe', $RedisInstance, "--region=$Region", "--project=$Project", '--format=value(host)') -IgnoreError) -join "`n"
+$redisPort = (Invoke-Gcloud -ArgList @('redis', 'instances', 'describe', $RedisInstance, "--region=$Region", "--project=$Project", '--format=value(port)') -IgnoreError) -join "`n"
 if ($redisHost -and $redisHost -notlike '*ERROR*') {
     $redisUrl = "redis://${redisHost}:${redisPort}/0"
     Write-Log "Redis URL: $redisUrl"
@@ -210,10 +210,10 @@ if ($redisHost -and $redisHost -notlike '*ERROR*') {
 Write-Banner -En "Secret Manager secrets" -Ku "نهێنیەکانی Secret Manager"
 $secrets = @('zoho-secret-key', 'zoho-sentry-dsn', 'zoho-redis-url')
 foreach ($sec in $secrets) {
-    $exists = (Invoke-Gcloud -Args @('secrets', 'describe', $sec, "--project=$Project", '--format=value(name)') -IgnoreError) -join "`n"
+    $exists = (Invoke-Gcloud -ArgList @('secrets', 'describe', $sec, "--project=$Project", '--format=value(name)') -IgnoreError) -join "`n"
     if ($LASTEXITCODE -ne 0 -or -not $exists) {
         Write-Log "Creating secret: $sec"
-        Invoke-Gcloud -Args @('secrets', 'create', $sec,
+        Invoke-Gcloud -ArgList @('secrets', 'create', $sec,
             '--replication-policy=automatic',
             "--project=$Project") -IgnoreError
     } else {
@@ -288,10 +288,10 @@ Write-Banner -En "Deployer service account" -Ku "ئەکاونتی خزمەتگو
 $saName = 'github-deployer'
 $saEmail = "$saName@$Project.iam.gserviceaccount.com"
 
-$saExists = (Invoke-Gcloud -Args @('iam', 'service-accounts', 'describe', $saEmail, "--project=$Project", '--format=value(email)') -IgnoreError) -join "`n"
+$saExists = (Invoke-Gcloud -ArgList @('iam', 'service-accounts', 'describe', $saEmail, "--project=$Project", '--format=value(email)') -IgnoreError) -join "`n"
 if ($LASTEXITCODE -ne 0 -or -not $saExists) {
     Write-Log "Creating service account: $saEmail"
-    Invoke-Gcloud -Args @('iam', 'service-accounts', 'create', $saName,
+    Invoke-Gcloud -ArgList @('iam', 'service-accounts', 'create', $saName,
         "--display-name=GitHub Actions Deployer",
         "--project=$Project")
 } else {
@@ -308,7 +308,7 @@ $roles = @(
 )
 foreach ($role in $roles) {
     Write-Log "Binding $role to $saEmail"
-    Invoke-Gcloud -Args @('projects', 'add-iam-policy-binding', $Project,
+    Invoke-Gcloud -ArgList @('projects', 'add-iam-policy-binding', $Project,
         "--member=serviceAccount:$saEmail",
         "--role=$role",
         '--condition=None') -IgnoreError | Out-Null
@@ -325,14 +325,14 @@ Write-Banner -En "Workload Identity Federation" -Ku "WIF بۆ GitHub Actions"
 $poolId = 'github-pool'
 $providerId = 'github-provider'
 
-$projectNumber = (Invoke-Gcloud -Args @('projects', 'describe', $Project, '--format=value(projectNumber)') -IgnoreError) -join ""
+$projectNumber = (Invoke-Gcloud -ArgList @('projects', 'describe', $Project, '--format=value(projectNumber)') -IgnoreError) -join ""
 $projectNumber = $projectNumber.Trim()
 
-$poolExists = (Invoke-Gcloud -Args @('iam', 'workload-identity-pools', 'describe', $poolId,
+$poolExists = (Invoke-Gcloud -ArgList @('iam', 'workload-identity-pools', 'describe', $poolId,
     '--location=global', "--project=$Project", '--format=value(name)') -IgnoreError) -join "`n"
 if ($LASTEXITCODE -ne 0 -or -not $poolExists) {
     Write-Log "Creating WIF pool: $poolId"
-    Invoke-Gcloud -Args @('iam', 'workload-identity-pools', 'create', $poolId,
+    Invoke-Gcloud -ArgList @('iam', 'workload-identity-pools', 'create', $poolId,
         '--location=global',
         '--display-name=GitHub Actions Pool',
         "--project=$Project")
@@ -340,7 +340,7 @@ if ($LASTEXITCODE -ne 0 -or -not $poolExists) {
     Write-Log "WIF pool already exists: $poolId"
 }
 
-$providerExists = (Invoke-Gcloud -Args @('iam', 'workload-identity-pools', 'providers', 'describe', $providerId,
+$providerExists = (Invoke-Gcloud -ArgList @('iam', 'workload-identity-pools', 'providers', 'describe', $providerId,
     '--location=global', "--workload-identity-pool=$poolId",
     "--project=$Project", '--format=value(name)') -IgnoreError) -join "`n"
 if ($LASTEXITCODE -ne 0 -or -not $providerExists) {
@@ -350,7 +350,7 @@ if ($LASTEXITCODE -ne 0 -or -not $providerExists) {
     } else {
         "assertion.repository_owner != ''"
     }
-    Invoke-Gcloud -Args @('iam', 'workload-identity-pools', 'providers', 'create-oidc', $providerId,
+    Invoke-Gcloud -ArgList @('iam', 'workload-identity-pools', 'providers', 'create-oidc', $providerId,
         '--location=global',
         "--workload-identity-pool=$poolId",
         '--display-name=GitHub OIDC',
@@ -367,7 +367,7 @@ $wifProvider = "projects/$projectNumber/locations/global/workloadIdentityPools/$
 # Allow GitHub repo principal set to impersonate the SA
 if ($GithubRepo) {
     Write-Log "Binding GitHub repo '$GithubRepo' principal to SA"
-    Invoke-Gcloud -Args @('iam', 'service-accounts', 'add-iam-policy-binding', $saEmail,
+    Invoke-Gcloud -ArgList @('iam', 'service-accounts', 'add-iam-policy-binding', $saEmail,
         "--role=roles/iam.workloadIdentityUser",
         "--member=principalSet://iam.googleapis.com/projects/$projectNumber/locations/global/workloadIdentityPools/$poolId/attribute.repository/$GithubRepo",
         "--project=$Project") -IgnoreError | Out-Null

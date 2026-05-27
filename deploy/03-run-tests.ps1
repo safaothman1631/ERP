@@ -71,11 +71,11 @@ function Run-TestStep {
         }
         $rc = $LASTEXITCODE
         if ($rc -eq 0) {
-            Write-Log "[OK] $Section: $Description" -Level 'OK'
+            Write-Log "[OK] ${Section}: $Description" -Level 'OK'
             $Results.Add([pscustomobject]@{ Section=$Section; Step=$Description; Status='PASS'; ExitCode=$rc })
             return $true
         } else {
-            Write-Log "[X] $Section: $Description (exit $rc)" -Level 'ERROR'
+            Write-Log "[X] ${Section}: $Description (exit $rc)" -Level 'ERROR'
             $Results.Add([pscustomobject]@{ Section=$Section; Step=$Description; Status='FAIL'; ExitCode=$rc })
             $script:AnyFail = $true
             return $false

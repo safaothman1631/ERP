@@ -30,7 +30,12 @@ $Timestamp = (Get-Date -Format 'yyyyMMdd-HHmmss')
 $LogFile = Join-Path $LogsDir "prereqs-$Timestamp.log"
 
 # UTF-8 output for proper rendering of Kurdish/Arabic characters
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+# Wrap in try/catch — fails harmlessly in PowerShell ISE which doesn't have a console handle
+try {
+  [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+} catch {
+  # ISE has no console handle — non-fatal
+}
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 # ===========================================================================
@@ -149,9 +154,10 @@ if (Test-Command 'gh') {
 }
 
 # gcloud auth
+# PowerShell parses unquoted parentheses, so wrap the --format value in quotes.
 if (Test-Command 'gcloud') {
-    $gcloudAuth = & gcloud auth list --format=value(account) 2>&1 | Out-String
-    if ($gcloudAuth.Trim()) {
+    $gcloudAuth = & gcloud auth list "--filter=status:ACTIVE" "--format=value(account)" 2>&1 | Out-String
+    if ($gcloudAuth -and $gcloudAuth.Trim()) {
         Write-Log "[OK] gcloud: logged in as $($gcloudAuth.Trim())" -Level 'OK'
     } else {
         Write-Log "[X] gcloud: NOT logged in -> run 'gcloud auth login'" -Level 'ERROR'
@@ -160,10 +166,17 @@ if (Test-Command 'gcloud') {
 }
 
 # vercel whoami
+# Vercel CLI on Windows wraps node.exe and emits the CLI banner ("Vercel CLI x.y.z") to stderr.
+# Filter to the LAST non-empty line that doesn't start with "Vercel CLI" — that's the username.
 if (Test-Command 'vercel') {
-    $vercelWho = & vercel whoami 2>&1 | Out-String
-    if ($LASTEXITCODE -eq 0 -and $vercelWho.Trim()) {
-        Write-Log "[OK] vercel: logged in as $($vercelWho.Trim())" -Level 'OK'
+    $vercelOut = & vercel whoami 2>&1 | Out-String
+    if ($LASTEXITCODE -eq 0 -and $vercelOut.Trim()) {
+        $vercelUser = ($vercelOut -split "`n" `
+            | ForEach-Object { $_.Trim() } `
+            | Where-Object { $_ -and ($_ -notmatch '^Vercel CLI') -and ($_ -notmatch '^node\.exe') } `
+            | Select-Object -Last 1)
+        if (-not $vercelUser) { $vercelUser = $vercelOut.Trim() }
+        Write-Log "[OK] vercel: logged in as $vercelUser" -Level 'OK'
     } else {
         Write-Log "[!] vercel: not logged in -> run 'vercel login' (or skip if not deploying frontend)" -Level 'WARN'
     }

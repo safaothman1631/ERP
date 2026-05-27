@@ -417,3 +417,72 @@ All cost-incurring resources are gated behind `-Confirm` flags.
 - **`deploy-production.yml` references `scripts/deploy-bluegreen.sh`** which already exists in the repo. If you replace it, keep the `(service, sha, region, project)` arg shape.
 - **No rollback script** — to roll back, use `gcloud run services update-traffic <service> --to-revisions <prev>=100 --region me-central1` manually. A future `10-rollback.ps1` should automate this.
 
+---
+
+## Part 3 — CI/CD glue, env template, operator docs (CI/CD Specialist agent)
+
+> Added by the CI/CD Specialist subagent. Owns the GitHub Actions workflows
+> for deploy/preview/scorecard, the comprehensive `.env.example`, and the
+> operator-facing docs (verification, runbook, checklist, flow diagram).
+
+### File manifest — Part 3
+
+| # | File | Purpose | Depends on | Runtime |
+|---|------|---------|------------|---------|
+| 17 | `deploy/.env.example`                       | Comprehensive bilingual env-var template. 6 sections (FE build-time, BE runtime, GCP deploy, Vercel deploy, CI secrets, optional features). Every var cross-referenced to the code that reads it. (Replaces the prior 45-line placeholder.) | - | - |
+| 18 | `.github/workflows/deploy-production.yml`   | Canonical 7-job production deploy: ci-gate, bundle-budget-gate (shell ≤ 350 KB + 100% lazy), deploy-backend (Cloud Build → Cloud Run blue/green), deploy-frontend (Vercel `--prod`), smoke-test (`production-reality-probe.mjs` + k6 30 s), post-deploy-scorecard (sticky issue comment), summary. Triggers on push to `main` + `workflow_dispatch`. Concurrency `production-deploy`, `cancel-in-progress: false`. | 05 secrets + 06a GCP + 07a Vercel | ~14 min |
+| 19 | `.github/workflows/preview-deploy.yml`      | PR-time Vercel preview. Builds frontend on PR HEAD, deploys preview (no `--prod`), posts a sticky comment with preview URL + one-line scorecard blurb. Backend stays on prod (via vercel.json rewrite). | secrets (VERCEL_*, VITE_SENTRY_DSN) | ~5 min per PR |
+| 20 | `.github/workflows/scorecard-on-pr.yml`     | Lightweight maintainability delta on every PR. Builds main + HEAD, compares shell-KB / total-KB / file-count / lint-count, sticky comment with green/red arrows. Non-blocking. | - | ~8 min per PR |
+| 21 | `deploy/POST-DEPLOY-VERIFICATION.md`        | Day-1 ops playbook. 10 sections: URL discovery, immediate checks, Cloud Run verify, Vercel verify, /api proxy verify, Sentry deliberate-error test, RUM (browser → logs → BQ), backup cron, DR drill, Slack/email alert wiring, sign-off checklist. EN + KU. | 06 + 07 (URLs) | ~30 min walk-through |
+| 22 | `deploy/RUNBOOK-FIRST-INCIDENT.md`          | Incident playbook. 10 sections: signs, SEV tiers, first-5-min rollback (Cloud Run + Vercel + Slack template), Sentry triage, RUM regression detection, user statements, postmortem template, rollback one-liners, escalation tree, don'ts. | - | reference doc |
+| 23 | `deploy/CHECKLIST.md`                       | Single-page printable checklist. 14 GH secrets + 8 Secret Manager secrets explicitly enumerated. One-time setup + every-deploy + post-deploy sections. Signature block. | - | reference doc |
+| 24 | `deploy/DEPLOY-FLOW.md`                     | Visual ASCII flow diagram. Big-picture (one-time → every-deploy → post-deploy), per-step ownership/duration/artifacts table, failure branches, side workflows, data flow (browser → RUM/Sentry → BQ/Sentry → Slack), cost table, glossary. | - | reference doc |
+
+### Coordination with sister agents
+
+- **`.env.example` overlap (file #7 / file #17):** I replaced the placeholder with a comprehensive version. The variable names Agent A's `05-setup-secrets.ps1` reads still all exist in my expanded template; I only added more vars (RUM_*, OTEL_*, FIELD_ENCRYPTION_KEY, SMTP_*, optional WhatsApp/OCR, etc.).
+- **`deploy-production.yml` overlap (file #16 / file #18):** Part 2's manifest claims this file was "already in repo via sister-agent / pre-existing." Verified — when I started, the file did NOT exist (only `deploy-cloudrun.yml` did). I produced the canonical version. The 7-job structure matches Part 2's description exactly, so Agent B can reference my YAML rather than ship a duplicate.
+- **`deploy/_DELIVERY-NOTES.md`:** I appended this Part 3 after Parts 1 and 2 without touching their content.
+
+### Dependencies on existing scripts
+
+The new workflow YAMLs reference scripts that already exist in the repo (verified):
+- `scripts/deploy-bluegreen.sh`
+- `scripts/sentry-release-tag.sh`
+- `scripts/production-reality-probe.mjs`
+- `scripts/world-class-scorecard.mjs`
+
+Optional (workflow degrades gracefully if missing):
+- `load/k6-suite/dashboard.js` — emits a warning rather than failing.
+
+### Operator first-time setup sequence (canonical)
+
+1. `deploy\01-prereqs.ps1` (Agent A)
+2. `deploy\06a-setup-gcp-resources.ps1 -Project <id> -GithubRepo <owner>/<repo> -Confirm` (Agent B)
+3. `deploy\07a-setup-vercel-project.ps1 -ProjectName <name>` (Agent B)
+4. Populate `deploy\.env.deploy` from `deploy\.env.example` (Part 3 — comprehensive template covers everything).
+5. `deploy\05-setup-secrets.ps1` (Agent A) — sets GH secrets + Secret Manager values.
+6. `deploy\02-install-and-build.ps1` → `deploy\03-run-tests.ps1` → `deploy\04-push-to-github.ps1` (Agent A)
+7. **Wait for CI:** `ci.yml`, `ci-quality.yml`, then my `deploy-production.yml` run to green automatically on push to main.
+8. After the first auto-deploy, update Vercel's `CLOUDRUN_URL` env var with the value from `deploy\cloudrun-url.txt`; redeploy frontend once for the rewrite to take effect.
+9. `deploy\08-smoke-test-production.ps1` (Agent B) — operator-side smoke.
+10. `deploy\09-post-deploy-checklist.ps1` (Agent B) → walk through `deploy\CHECKLIST.md` Part C (Part 3).
+11. Complete §§5–9 of `deploy\POST-DEPLOY-VERIFICATION.md` (Part 3): Sentry deliberate error, RUM verification, backup cron, DR drill, alert wiring.
+12. Print `deploy\CHECKLIST.md`, sign, file.
+
+For every subsequent deploy: skip steps 1–5 (one-time); start at step 6.
+
+For incidents: `deploy\RUNBOOK-FIRST-INCIDENT.md` — first action is always "roll back, then debug."
+
+For PRs: `preview-deploy.yml` + `scorecard-on-pr.yml` run automatically and post sticky comments — no operator action needed.
+
+### Known gotchas / TODOs added by Part 3
+
+1. **Repo variable `SCORECARD_ISSUE_NUMBER`** — `deploy-production.yml`'s post-deploy-scorecard job posts to issue #1 by default. Create a sticky tracking issue (titled e.g. "Production scorecard — rolling") and set `gh variable set SCORECARD_ISSUE_NUMBER --body <issue-number>`.
+2. **Repo variable `RUM_BIGQUERY_DATASET`** — used by the scorecard job to query live RUM data. Set with `gh variable set RUM_BIGQUERY_DATASET --body rum` (or your dataset name).
+3. **`amondnet/vercel-action@v25`** — pinned for stability. Re-check quarterly for newer maintained versions.
+4. **`DATABASE_URL` Secret Manager** — I added `--set-secrets DATABASE_URL=zoho-database-url:latest` to the workflow. Confirm Agent B's `06a` creates this secret, or remove this entry if the backend reads `DATABASE_URL` from a different source.
+5. **`FIELD_ENCRYPTION_KEY` Secret Manager** — added to `--set-secrets` (the backend's `crypto.py` reads it). Confirm Agent B's `06a` creates `field-encryption-key`.
+6. **Sentry test endpoint** — `POST /api/_sentry/boom` referenced in POST-DEPLOY-VERIFICATION §5 is dev-only by default. For prod verification without redeploying, use a real validation-error path instead (e.g. POST an invalid invoice payload).
+7. **First deploy chicken-and-egg** — the GH secret `CLOUDRUN_URL` is empty before the first deploy. The smoke-test job uses `needs.deploy-backend.outputs.service_url` instead of the secret, so this works on the first run.
+
