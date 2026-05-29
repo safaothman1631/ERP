@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://zoho-erp-backend-i43i2clqva-ww.a.run.app/api/:path*"
+      "destination": "https://zoho-erp-backend-6plfqh2hiq-ww.a.run.app/api/:path*"
     },
     {
       "source": "/((?!assets|favicon|manifest|icons|_next).*)",
