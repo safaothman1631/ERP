@@ -449,3 +449,15 @@ frontend/src/
 **تاقیکردنەوە:** backend boot ٢٣٣٨ ڕووت؛ pytest **١٣٣٣ سەرکەوتوو / ٢ شکست** (هەردوو pre-existing: firestore_audit/client.py، redis storage_uri)؛ frontend `tsc` 0 + `npm run build` exit 0 (٤٧٥ PWA).
 
 **ماوە (دەرەکی):** hiring، counsel sign-off + LLC + insurance، pen-test/SOC2/bug-bounty، `terraform apply` + PagerDuty/Sentry accounts، WIF cloud apply، pilot ڕاستەقینەکان + hardware + video. (وردەکاری: `_deltas/scale-foundation-tier3-summary.md`.)
+
+### 2026-05-29 — یەکخستنی پڕۆژە: backend گواسترا بۆ `zoho-83cda` (production cutover تەواوبوو)
+
+پێشتر دابەشکراو بوو: **compute** (Cloud Run) لەسەر `erp-system-494716`، **data** (Firestore/Auth) لەسەر `zoho-83cda` — anti-pattern. ئێستا **هەمووی لەسەر `zoho-83cda`** (یەک پڕۆژە بۆ هەموو production). لە کاتی پێش-launch (تەنها demo data) کرا، بۆیە مەترسی نەبوو.
+
+- **Cloud Run** `zoho-erp-backend` لەسەر `zoho-83cda`/me-central1 deploy کرا (`--source .`، multi-stage Dockerfile = frontend+backend). نهێنیە **تازەکان** دروستکران لە Secret Manager-ی `zoho-83cda` (`zoho-secret-key`, `field-encryption-key` — کۆپی نەکران، fresh، چونکە demo data). secretAccessor درا بە runtime SA. URL-ی نوێ: `https://zoho-erp-backend-6plfqh2hiq-ww.a.run.app`.
+- **Frontend repoint:** `vercel.json` + `frontend/vercel.json` `/api/*` → URL-ی نوێ. PR #1 merge کرا بۆ `main` → Vercel production deploy.
+- **پشتڕاستکراوەتەوە:** `erpiq.systems/api/metrics` → `route_count 2338` (backend-ی نوێ)، `/api/live` ok، root HTTP 200. **هەموو سیستەمەکە لەسەر `zoho-83cda` زیندووە.**
+- **F-3 security fix** (firestore.rules: hr_attendance/hr_time_off create binding) deploy کرا بۆ `zoho-83cda`.
+- **سکریپتی گواستنەوە:** `deploy/migrate-backend-to-zoho-83cda.{sh,ps1}` (idempotent، operator runbook). `deploy/cloudrun-url.txt` نوێکرایەوە.
+
+**ماوە (دەرەکی، هی بەکارهێنەر):** (1) service-ە کۆنەکانی `erp-system-494716` (`zoho-erp`, `zoho-erp-backend`) بسڕەوە دوای چەند ڕۆژ fallback؛ (2) بۆ CI auto-deploy-ی backend بۆ `zoho-83cda`: WIF pool/provider + SA لە `zoho-83cda` دروست بکە و GitHub secrets (`GCP_PROJECT_ID`, `GCP_WIF_PROVIDER`, `GCP_SA_EMAIL`) نوێ بکەرەوە (ئێستا → `erp-system-494716`)؛ (3) CI `startup_failure` چارەسەر بکە (لە Actions UI، GitHub-schema issue). تا ئەوکات، backend deploy بە دەستی-بە-سکریپت دەکرێت.
