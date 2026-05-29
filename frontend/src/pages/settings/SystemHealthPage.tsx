@@ -574,17 +574,21 @@ export const BackupHistoryTable: React.FC = () => {
 const SystemHealthPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { hasSettingsAccess } = usePermission();
+  const { hasSettingsAccess, isSuperAdmin } = usePermission();
 
   // Tracks whether the next fetch should bypass the server-side cache (Requirement 2.9, 9.3)
   const [forceRefresh, setForceRefresh] = React.useState(false);
 
-  // Role guard — redirect non-admin/non-owner users (Requirement 2.1)
+  // Role guard — redirect non-admin/non-owner users (Requirement 2.1).
+  // Platform super-admins reach this via /platform/health (PlatformHealthPage
+  // embeds this component) and do NOT hold the tenant-level hasSettingsAccess
+  // permission, so allow them through too — otherwise clicking "Health" in the
+  // platform console bounced them straight to /dashboard.
   React.useEffect(() => {
-    if (!hasSettingsAccess) {
+    if (!hasSettingsAccess && !isSuperAdmin) {
       navigate('/dashboard', { replace: true });
     }
-  }, [hasSettingsAccess, navigate]);
+  }, [hasSettingsAccess, isSuperAdmin, navigate]);
 
   const {
     data,
@@ -616,7 +620,7 @@ const SystemHealthPage: React.FC = () => {
     setForceRefresh(true);
   };
 
-  if (!hasSettingsAccess) {
+  if (!hasSettingsAccess && !isSuperAdmin) {
     return null;
   }
 

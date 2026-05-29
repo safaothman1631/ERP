@@ -6,8 +6,8 @@
 // the same files run locally and in CI:
 //
 //   K6_BASE_URL          (required)  Cloud Run / staging base URL.
-//   K6_USER_EMAIL        (optional)  test user; defaults to the seed user.
-//   K6_USER_PASSWORD     (optional)
+//   K6_USER_EMAIL        (required)  test user that exists in the target env.
+//   K6_USER_PASSWORD     (required)  no default is shipped; login() fails fast if unset.
 //   K6_TENANT_ID         (optional)  X-Tenant-Id header value.
 //   K6_DURATION_OVERRIDE (optional)  e.g. "2m" to shorten a sustained stage.
 
@@ -15,8 +15,10 @@ import http from 'k6/http';
 import { check, fail } from 'k6';
 
 const BASE_URL = __ENV.K6_BASE_URL || 'http://localhost:8000';
-const EMAIL = __ENV.K6_USER_EMAIL || 'loadtest@zoho.kurd.iq';
-const PASSWORD = __ENV.K6_USER_PASSWORD || 'loadtest-please-rotate';
+// No credential defaults are shipped: a hardcoded fallback in a committed file
+// is a known-credential risk. Both are required and validated in login().
+const EMAIL = __ENV.K6_USER_EMAIL || '';
+const PASSWORD = __ENV.K6_USER_PASSWORD || '';
 const TENANT_ID = __ENV.K6_TENANT_ID || '';
 
 export { BASE_URL, EMAIL, PASSWORD, TENANT_ID };
@@ -48,6 +50,9 @@ export const THRESHOLDS = {
 
 /** Login once during `setup()`; return a token reused by VUs. */
 export function login() {
+  if (!EMAIL || !PASSWORD) {
+    fail('K6_USER_EMAIL and K6_USER_PASSWORD are required (no default credential is shipped). Set them in the environment.');
+  }
   const url = `${BASE_URL}/api/auth/login`;
   const res = http.post(url, JSON.stringify({ email: EMAIL, password: PASSWORD }), {
     headers: { 'Content-Type': 'application/json' },

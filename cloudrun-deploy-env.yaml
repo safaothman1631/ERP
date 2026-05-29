@@ -5,11 +5,19 @@ CORS_ORIGINS: https://erpiq.systems,https://www.erpiq.systems
 FIREBASE_PROJECT_ID: zoho-83cda
 FIREBASE_STORAGE_BUCKET: zoho-83cda-erp-backups
 BACKUP_GCS_BUCKET: zoho-83cda-erp-backups
-SCHEDULER_ENABLED: "true"
+# Disabled: the in-process APScheduler jobs (e-Fakhata drain, outbox dispatcher)
+# hung on Firestore and wedged the shared gRPC channel, causing every query
+# (login/signup/me) to time out -> 504. Re-enable only after moving jobs
+# out-of-process (Cloud Run Job / Scheduler trigger). Pre-launch: none are needed yet.
+SCHEDULER_ENABLED: "false"
 USE_FIRESTORE_QUERY: "true"
 IDEMPOTENCY_ENABLED: "true"
 FS_METRICS_ENABLED: "true"
 AUDIT_RETENTION_MONTHS: "24"
 RATE_LIMITING_ENABLED: "true"
+# gRPC fork-safety. The sync Firestore gRPC channel was corrupting (KeyError in
+# grpc channel_spin) -> queries hung -> 504. Root fix is single-process uvicorn
+# (see Dockerfile), but this lets gRPC survive a fork as a safety net.
+GRPC_ENABLE_FORK_SUPPORT: "1"
 # RATE_LIMIT_STORAGE_URI: redis://10.89.110.3:6379/0?socket_connect_timeout=2&socket_timeout=2
 # (VPC connector erpiq-run-connector required; bare redis:// blocks login — see enable_redis_rate_limit_on_cloudrun.sh)

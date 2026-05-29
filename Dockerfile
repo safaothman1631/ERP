@@ -52,9 +52,14 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
 
 # Cloud Run injects $PORT (default 8080). Use shell-form so $PORT expands.
 WORKDIR /app/backend
+# Single process (NO --workers): on Cloud Run you scale by INSTANCES, not by
+# in-container workers. `--workers N` forks child processes, and forking a
+# process that holds a Firestore gRPC channel corrupts the channel (KeyError in
+# grpc channel_spin) -> every Firestore query then hangs -> 504/502. One process
+# per container avoids that entirely; Cloud Run autoscaling (max-instances)
+# provides concurrency instead.
 CMD exec uvicorn app.main:app \
     --host 0.0.0.0 \
     --port ${PORT} \
-    --workers 2 \
     --proxy-headers \
     --forwarded-allow-ips="*"

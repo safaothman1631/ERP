@@ -74,8 +74,28 @@ def list_audit_logs(
         cfg = {}
     retention_days = cfg.get("retention_days", 365)
     from datetime import datetime as dt, timedelta
-    cutoff = (dt.utcnow() - timedelta(days=retention_days)).isoformat()
-    items = [i for i in items if i.get("created_at", "") >= cutoff]
+
+    def _epoch(value):
+        """Coerce created_at (Firestore Timestamp / datetime / ISO str / None)
+        to an epoch float so the retention compare never mixes str and datetime."""
+        if value is None:
+            return 0.0
+        if hasattr(value, "timestamp"):  # datetime / Firestore Timestamp
+            try:
+                return float(value.timestamp())
+            except Exception:
+                return 0.0
+        if isinstance(value, (int, float)):
+            return float(value)
+        if isinstance(value, str):
+            try:
+                return dt.fromisoformat(value.replace("Z", "+00:00")).timestamp()
+            except Exception:
+                return 0.0
+        return 0.0
+
+    cutoff_epoch = (dt.utcnow() - timedelta(days=retention_days)).timestamp()
+    items = [i for i in items if _epoch(i.get("created_at")) >= cutoff_epoch]
 
     # Date range filter in Python
     if date_from or date_to:
