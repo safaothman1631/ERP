@@ -23,6 +23,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
 from app.firebase_client import get_db
 from app.services.auth import get_current_user
+from app.services.permissions import user_has_perm
 from app.services.backup_service import BackupService
 from app.services.storage_service import StorageService
 
@@ -44,10 +45,18 @@ def _require_admin(user: dict) -> None:
 
     Requirements: 10.2, 10.4
     """
-    # super_admin = platform/vendor admin reaching tenant health via the platform
-    # console (PlatformHealthPage embeds this view). They're at least as privileged
-    # as a tenant admin, so allow them through.
-    if user.get("role") not in ("admin", "owner", "super_admin"):
+    # Tenant admin/owner — OR a platform admin reaching this via the platform
+    # console (PlatformHealthPage embeds the tenant health view). Recognise
+    # platform admins by the SAME signal that gates /platform itself
+    # (platform.manage perm) plus role/flags, so the check can't drift.
+    role = user.get("role")
+    is_platform_admin = (
+        role == "super_admin"
+        or user.get("is_super_admin")
+        or user.get("is_platform_admin")
+        or user_has_perm(user, "platform.manage")
+    )
+    if role not in ("admin", "owner") and not is_platform_admin:
         raise HTTPException(
             status_code=403,
             detail="دەسەڵات نییە: تەنها بەڕێوەبەر یان خاوەن دەتوانێت ئەم کارە ئەنجام بدات",
