@@ -23,6 +23,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
 from app.firebase_client import get_db
 from app.services.auth import get_current_user
+from app.services.permissions import user_has_perm
 from app.services.backup_service import BackupService
 from app.services.storage_service import StorageService
 
@@ -44,11 +45,47 @@ def _require_admin(user: dict) -> None:
 
     Requirements: 10.2, 10.4
     """
-    if user.get("role") not in ("admin", "owner"):
+    # Tenant admin/owner — OR a platform admin reaching this via the platform
+    # console (PlatformHealthPage embeds the tenant health view). Recognise
+    # platform admins by the SAME signal that gates /platform itself
+    # (platform.manage perm) plus role/flags, so the check can't drift.
+    role = user.get("role")
+    is_platform_admin = (
+        role == "super_admin"
+        or user.get("is_super_admin")
+        or user.get("is_platform_admin")
+        or user_has_perm(user, "platform.manage")
+    )
+    if role not in ("admin", "owner") and not is_platform_admin:
         raise HTTPException(
             status_code=403,
             detail="دەسەڵات نییە: تەنها بەڕێوەبەر یان خاوەن دەتوانێت ئەم کارە ئەنجام بدات",
         )
+
+
+def _created_at_key(value) -> float:
+    """Type-safe sort key for ``created_at``.
+
+    Backup docs may store created_at as a Firestore Timestamp, a datetime, an ISO
+    string, or omit it. Comparing mixed str/Timestamp with ``<`` raises TypeError,
+    so coerce everything to an epoch float.
+    """
+    if value is None:
+        return 0.0
+    if hasattr(value, "timestamp"):  # datetime / Firestore Timestamp
+        try:
+            return float(value.timestamp())
+        except Exception:
+            return 0.0
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            from datetime import datetime
+            return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
+        except Exception:
+            return 0.0
+    return 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -71,18 +108,24 @@ def list_backups(user: dict = Depends(get_current_user)) -> list[dict]:
     """
     _require_admin(user)
 
+    # A platform super-admin viewing the platform health console may not be scoped
+    # to a tenant org — there are no tenant backups to list in that case.
+    org_id = user.get("org_id")
+    if not org_id:
+        return []
+
     db = get_db()
     # Fetch without order_by to avoid requiring a composite Firestore index
     # (the backups collection is new and may not have the index yet).
     # Sort in Python instead — 30 records is trivially fast.
     docs = (
         db.collection("backups")
-        .where("org_id", "==", user["org_id"])
+        .where("org_id", "==", org_id)
         .limit(30)
         .stream()
     )
     records = [{"id": doc.id, **doc.to_dict()} for doc in docs]
-    records.sort(key=lambda r: r.get("created_at", ""), reverse=True)
+    records.sort(key=lambda r: _created_at_key(r.get("created_at")), reverse=True)
     return records
 
 
