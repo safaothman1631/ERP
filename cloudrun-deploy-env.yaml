@@ -19,5 +19,10 @@ RATE_LIMITING_ENABLED: "true"
 # grpc channel_spin) -> queries hung -> 504. Root fix is single-process uvicorn
 # (see Dockerfile), but this lets gRPC survive a fork as a safety net.
 GRPC_ENABLE_FORK_SUPPORT: "1"
+# Force gRPC's basic poll engine. The default epoll-based engine corrupts the
+# completion queue in Cloud Run's sandbox (KeyError in grpc channel_spin ->
+# next_call_event), wedging the Firestore channel so every query hangs. 'poll'
+# avoids the epoll syscalls that misbehave there.
+GRPC_POLL_STRATEGY: "poll"
 # RATE_LIMIT_STORAGE_URI: redis://10.89.110.3:6379/0?socket_connect_timeout=2&socket_timeout=2
 # (VPC connector erpiq-run-connector required; bare redis:// blocks login — see enable_redis_rate_limit_on_cloudrun.sh)
