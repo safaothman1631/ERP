@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
+// EP-3 — Class B `location` selector.
+import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 
 const { Text } = Typography;
 
@@ -235,13 +237,13 @@ const PutawayRules: React.FC = () => {
  </Form.Item>
 
  <Form.Item name="target_location_id" label={t('target_location')} rules={[{ required: true }]}>
- <Select placeholder={t('select_location')} disabled={!selectedWarehouse}>
- {locations.map(loc => (
- <Select.Option key={loc.id} value={loc.id}>
- {loc.code} - {loc.name}
- </Select.Option>
- ))}
- </Select>
+ {/* EP-3 — Class B location quick-create. */}
+ <SelectWithQuickCreate
+ entity="location"
+ placeholder={t('select_location')}
+ disabled={!selectedWarehouse}
+ options={locations.map((loc) => ({ value: loc.id, label: `${loc.code} - ${loc.name}` }))}
+ />
  </Form.Item>
 
  <Form.Item name="priority" label={t('priority')} rules={[{ required: true }]} extra={t('priority_hint')}>

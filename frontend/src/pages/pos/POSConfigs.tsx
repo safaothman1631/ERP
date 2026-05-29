@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Space, Form, Input, Switch, InputNumber, Select, Tag, Tabs, Modal } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { PlusOutlined, EditOutlined, DeleteOutlined, CopyOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, CopyOutlined, CheckCircleOutlined, ApiOutlined } from '@ant-design/icons';
 import api from '../../api';
 import { message } from '../../utils/message';
 import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../../design-system';
@@ -9,6 +9,8 @@ import { downloadCsv } from '../../utils/exportCsv';
 import { useAuthStore } from '../../store';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
+// growth-to-100 § G3 — ESC/POS hardware pairing wizard (printer/scanner/drawer/display).
+import { HardwarePairingWizard } from '../../components/pos/HardwarePairingWizard';
 
 const POSConfigs: React.FC = () => {
  const { t } = useTranslation();
@@ -19,6 +21,7 @@ const POSConfigs: React.FC = () => {
  const [loading, setLoading] = useState(false);
  const [modalVisible, setModalVisible] = useState(false);
  const [editingId, setEditingId] = useState<string | null>(null);
+ const [hwWizardOpen, setHwWizardOpen] = useState(false);
  const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
  try { return JSON.parse(localStorage.getItem('posConfigs.hiddenCols') || '[]'); } catch { return []; }
  });
@@ -379,6 +382,9 @@ const POSConfigs: React.FC = () => {
  }}
  />
  <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
+ <Button icon={<ApiOutlined />} onClick={() => setHwWizardOpen(true)}>
+ {t('pos.pair_hardware', { defaultValue: 'Pair hardware' })}
+ </Button>
  <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>
  {t('pos.new_config')}
  </Button>
@@ -411,6 +417,21 @@ const POSConfigs: React.FC = () => {
  </Form.Item>
  </Form>
  </FormDialog>
+
+ <Modal
+ title={t('pos.pair_hardware', { defaultValue: 'Pair hardware' })}
+ open={hwWizardOpen}
+ onCancel={() => setHwWizardOpen(false)}
+ footer={null}
+ width={760}
+ destroyOnClose
+ >
+ <HardwarePairingWizard
+ t={(k, fb) => t(k, { defaultValue: fb })}
+ onComplete={() => { setHwWizardOpen(false); message.success(t('success')); }}
+ onCancel={() => setHwWizardOpen(false)}
+ />
+ </Modal>
  </div>
  );
 };

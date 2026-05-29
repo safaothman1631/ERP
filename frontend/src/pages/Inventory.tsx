@@ -7,6 +7,7 @@ import api from '../api';
 import ExportButton from '../components/ExportButton';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
+import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 
 const Inventory: React.FC = () => {
  const { t } = useTranslation();
@@ -123,10 +124,10 @@ const Adjustments: React.FC = () => {
  <FormDialog open={modalOpen} onClose={() => setModalOpen(false)} title={t('new_adjustment')} hideFooter>
  <Form form={form} layout="vertical" onFinish={handleSave}>
  <Form.Item label={t('items')} name="item_id" rules={[{ required: true, message: t('required_item') }]}>
- <Select showSearch optionFilterProp="label" placeholder={t('placeholder_select')} options={items.map(i => ({ label: i.name, value: i.id }))} />
+ <SelectWithQuickCreate entity="item" showSearch placeholder={t('placeholder_select')} allowClear />
  </Form.Item>
  <Form.Item label={t('account')} name="adjustment_account_id" rules={[{ required: true, message: t('required_account') }]}>
- <Select showSearch optionFilterProp="label" placeholder={t('placeholder_select')} options={accounts.map((a: any) => ({ label: `${a.code} - ${a.name}`, value: a.id }))} />
+ <SelectWithQuickCreate entity="account" showSearch placeholder={t('placeholder_select')} allowClear />
  </Form.Item>
  <Form.Item label={t('quantity')} name="quantity_adjusted" rules={[{ required: true, message: t('required_quantity') }]}>
  <InputNumber style={{ width: '100%' }} placeholder={t('placeholder_quantity')} />

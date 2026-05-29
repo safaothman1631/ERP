@@ -1,25 +1,33 @@
 name: Deploy to Cloud Run
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
     branches: [main, master]
   workflow_dispatch:
 
 env:
-  SERVICE: zoho-erp
-  REGION: europe-west1
+  # Canonical production backend: the service the frontend's /api/* rewrite targets
+  # (zoho-erp-backend-i43i2clqva-ww.a.run.app). Was stale (zoho-erp / europe-west1).
+  SERVICE: zoho-erp-backend
+  REGION: me-central1
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       (github.event.workflow_run.head_branch == 'main' ||
+        github.event.workflow_run.head_branch == 'master'))
     permissions:
       contents: read
-      id-token: write   # for keyless auth via Workload Identity Federation
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
 
-      # Workload Identity Federation (keyless — no JSON secret needed)
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -30,14 +38,6 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-
-      - name: Prepare Cloud Run env file
-        run: |
-          cat > cloudrun-env.yaml <<'EOF'
-          ENVIRONMENT: production
-          APP_NAME: Zoho ERP
-          CORS_ORIGINS: https://erpiq.systems,https://www.erpiq.systems
-          EOF
 
       - name: Build & deploy to Cloud Run
         run: |
@@ -51,8 +51,17 @@ jobs:
             --min-instances 0 \
             --max-instances 3 \
             --timeout 300 \
-            --env-vars-file cloudrun-env.yaml \
-            --set-secrets "SECRET_KEY=zoho-secret-key:latest"
+            --env-vars-file cloudrun-deploy-env.yaml \
+            --set-secrets "SECRET_KEY=zoho-secret-key:latest,FIELD_ENCRYPTION_KEY=field-encryption-key:latest"
+      - name: Attach VPC + Redis rate-limit (when secret exists)
+        continue-on-error: true
+        run: |
+          gcloud run services update "$SERVICE" \
+            --region "$REGION" \
+            --project "${{ secrets.GCP_PROJECT_ID }}" \
+            --vpc-connector=erpiq-run-connector \
+            --vpc-egress=private-ranges-only \
+            --update-secrets "RATE_LIMIT_STORAGE_URI=redis-rate-limit-uri:latest"
 
       - name: Show service URL
         run: gcloud run services describe "$SERVICE" --region "$REGION" --format='value(status.url)'

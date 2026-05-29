@@ -1,0 +1,215 @@
+/**
+ * EmptyState design-token CSS.
+ *
+ * Tokens per design.md §1.1:
+ *   - Title:       18px / 600
+ *   - Description: 14px / 400
+ *   - Spacing:     24px between illustration and title, 8px title-description, 24px before button
+ *   - Container:   24px padding, centered, max-width 320px
+ *
+ * Variants:
+ *   - selector — dense, fits in dropdown notFoundContent (max-width 280, padding 16)
+ *   - list     — large illustration (96px), max-width 420
+ *   - drawer   — same as default
+ *   - subform  — minimal, padding 16, no illustration size override
+ *   - search   — same as selector
+ */
+
+/* Theme variables — read these so dark-mode/branding inherits automatically. */
+.empty-state {
+  --empty-illu-fg: var(--text-primary, rgba(0, 0, 0, 0.85));
+  --empty-illu-bg: var(--surface-muted, rgba(31, 111, 235, 0.08));
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  margin: 0 auto;
+  max-width: 320px;
+  gap: 0;
+  color: var(--text-primary, rgba(0, 0, 0, 0.85));
+}
+
+.empty-state__illustration {
+  color: var(--empty-illu-fg);
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+.empty-state__title {
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--text-primary, rgba(0, 0, 0, 0.88));
+  margin: 0;
+}
+
+.empty-state__description {
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--text-secondary, rgba(0, 0, 0, 0.55));
+  margin: 8px 0 0;
+}
+
+.empty-state__actions {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.empty-state__actions .ant-btn {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Variants
+ * ───────────────────────────────────────────────────────────────────────── */
+
+.empty-state--selector,
+.empty-state--search {
+  padding: 16px 12px;
+  max-width: 280px;
+}
+
+.empty-state--selector .empty-state__illustration,
+.empty-state--search .empty-state__illustration {
+  margin-bottom: 12px;
+}
+
+.empty-state--selector .empty-state__title,
+.empty-state--search .empty-state__title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.empty-state--selector .empty-state__description,
+.empty-state--search .empty-state__description {
+  font-size: 12px;
+}
+
+.empty-state--selector .empty-state__actions,
+.empty-state--search .empty-state__actions {
+  margin-top: 12px;
+}
+
+.empty-state--list {
+  padding: 48px 24px;
+  max-width: 420px;
+}
+
+.empty-state--list .empty-state__title {
+  font-size: 20px;
+}
+
+.empty-state--subform {
+  padding: 16px;
+  max-width: 100%;
+  width: 100%;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * RTL — direction-neutral but reaffirm here.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+[dir='rtl'] .empty-state__title,
+[dir='rtl'] .empty-state__description {
+  text-align: center;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Error state shares the same shell.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+.empty-state--error {
+  --empty-illu-fg: var(--error-color, #cf1322);
+  --empty-illu-bg: var(--error-bg, rgba(255, 77, 79, 0.08));
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Loading skeleton wrapper — keeps padding consistent so cross-fades line up.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+.empty-state__loading {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.empty-state__loading--selector {
+  padding: 16px;
+}
+
+.empty-state__loading--list {
+  padding: 48px 24px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Persistent quick-create footer — rendered by SelectWithQuickCreate's
+ * popupRender in every state (empty, populated, loading, search). See
+ * .kiro/specs/persistent-quick-create-cta/design.md.
+ *
+ * Sticks to the bottom of the popup so a tall, virtualized option list never
+ * scrolls past it. RTL-aware via `text-align: start`.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+.qc-select-footer {
+  display: flex;
+  padding: 4px 6px;
+  border-top: 1px solid var(--qc-border-subtle, rgba(0, 0, 0, 0.06));
+  background: var(--qc-surface-elevated, var(--surface-elevated, #fafafa));
+  position: sticky;
+  bottom: 0;
+  /* Keep the footer above the option list shadow on focus. */
+  z-index: 1;
+}
+
+.qc-select-footer__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: var(--ant-color-primary, #1677ff);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  cursor: pointer;
+  border-radius: 6px;
+  /* RTL: `start` flips with the `dir` attribute / ConfigProvider direction. */
+  text-align: start;
+  transition: background-color 120ms ease;
+}
+
+.qc-select-footer__cta:hover {
+  background: var(--ant-color-primary-bg, rgba(22, 119, 255, 0.08));
+}
+
+.qc-select-footer__cta:focus-visible {
+  outline: none;
+  background: var(--ant-color-primary-bg, rgba(22, 119, 255, 0.08));
+  box-shadow: 0 0 0 2px var(--ant-color-primary-border, rgba(22, 119, 255, 0.4));
+}
+
+.qc-select-footer__cta:active {
+  background: var(--ant-color-primary-bg-hover, rgba(22, 119, 255, 0.12));
+}
+
+.qc-select-footer__cta .anticon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* RTL adjustments — the icon stays at the leading edge of the text, which
+ * `start` already handles for the label; the container's flex direction is
+ * `row` and flows in document direction automatically. No extra rule is
+ * needed for `[dir="rtl"]` because all spacing uses `gap` and `start`. */

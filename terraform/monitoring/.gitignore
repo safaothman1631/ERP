@@ -1,0 +1,19 @@
+# Terraform state & local config — never commit these.
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# Variable files that may carry secrets / environment specifics.
+*.tfvars
+*.auto.tfvars
+backend.hcl
+
+# Saved plans.
+*.tfplan
+
+# Allow the example templates through.
+!*.tfvars.example
+!backend.hcl.example

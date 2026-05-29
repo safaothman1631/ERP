@@ -1,0 +1,9 @@
+{
+  "specId": "firestore-depth-remediation-v1",
+  "workflowType": "requirements-first",
+  "specType": "platform-critical",
+  "dependsOn": [
+    "data-integrity-wave-v1",
+    "firestore-performance-resilience"
+  ]
+}

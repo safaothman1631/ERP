@@ -1,0 +1,20 @@
+# Cloud Monitoring alert policies (Wave O7) — import via gcloud or Terraform.
+policies:
+  - displayName: ERP high error rate
+    combiner: OR
+    conditions:
+      - displayName: 5xx ratio > 2%
+        conditionThreshold:
+          filter: 'resource.type="cloud_run_revision" AND metric.type="run.googleapis.com/request_count" AND metric.labels.response_code_class="5xx"'
+          comparison: COMPARISON_GT
+          thresholdValue: 0.02
+          duration: 300s
+  - displayName: Slow Firestore request
+    combiner: OR
+    conditions:
+      - displayName: slow_firestore_query log rate
+        conditionThreshold:
+          filter: 'jsonPayload.event="slow_firestore_query"'
+          comparison: COMPARISON_GT
+          thresholdValue: 10
+          duration: 600s

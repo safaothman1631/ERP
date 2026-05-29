@@ -89,14 +89,108 @@ def update_fiscal_year(year_id: str, payload: FiscalYearIn, user: dict = Depends
 
 @router.post("/years/{year_id}/close")
 def close_fiscal_year(year_id: str, user: dict = Depends(get_current_user)):
+    from app.services.period_close import PeriodCloseService
+    from app.services.fiscal_close_atomic import finalize_fiscal_year_close_atomic
+    from app.services.firestore_tx import TenantMismatchError
+
     repo = FiscalYearRepository(user["org_id"])
     existing = repo.get(year_id)
     if not existing:
         raise HTTPException(404, "ساڵی دارایی نەدۆزرایەوە")
     if existing.get("is_closed"):
         return existing
-    repo.update(year_id, {"is_closed": True, "is_current": False, "closed_at": datetime.utcnow().isoformat()})
+
+    end_raw = existing.get("end_date", f"{year_id}-12-31")
+    start_raw = existing.get("start_date", f"{year_id}-01-01")
+    try:
+        fiscal_end = datetime.fromisoformat(end_raw[:10] + "T23:59:59")
+        period_start = datetime.fromisoformat(start_raw[:10] + "T00:00:00")
+    except ValueError:
+        raise HTTPException(400, "ڕێکەوتەکانی ساڵی دارایی دروست نین")
+
+    result = PeriodCloseService.post_year_end_close(
+        org_id=user["org_id"],
+        fiscal_year_end=fiscal_end,
+        period_start=period_start,
+        created_by=user.get("id"),
+    )
+    try:
+        out = finalize_fiscal_year_close_atomic(
+            user["org_id"],
+            year_id,
+            lock_date=end_raw[:10],
+            closing_journal_id=result.get("journal_id"),
+            closed_by=user.get("id"),
+        )
+    except TenantMismatchError:
+        raise HTTPException(404, "ساڵی دارایی نەدۆزرایەوە")
+
+    out["close_result"] = result
+    return out
+
+
+@router.post("/years/{year_id}/reopen")
+def reopen_fiscal_year(year_id: str, user: dict = Depends(get_current_user)):
+    repo = FiscalYearRepository(user["org_id"])
+    existing = repo.get(year_id)
+    if not existing:
+        raise HTTPException(404, "ساڵی دارایی نەدۆزرایەوە")
+    if not existing.get("is_closed"):
+        return existing
+
+    closing_je_id = existing.get("closing_journal_id")
+    if closing_je_id:
+        from app.services.accounting import AccountingService
+        je_repo = __import__(
+            "app.firestore.journals", fromlist=["JournalEntryRepository"]
+        ).JournalEntryRepository(user["org_id"])
+        original = je_repo.get(closing_je_id)
+        if original and not original.get("reversed_by"):
+            lines = je_repo.get_lines(closing_je_id)
+            reversed_lines = [
+                {
+                    "account_id": ln["account_id"],
+                    "debit": ln.get("credit", 0),
+                    "credit": ln.get("debit", 0),
+                    "description": f"Reopen FY — reverse {closing_je_id}",
+                }
+                for ln in lines
+            ]
+            rev = AccountingService.create_journal_entry(
+                org_id=user["org_id"],
+                date=datetime.utcnow(),
+                lines=reversed_lines,
+                description=f"Reopen fiscal year {existing.get('name', year_id)}",
+                source_type="year_end_reopen",
+                source_id=year_id,
+                created_by=user.get("id"),
+            )
+            je_repo.update(closing_je_id, {"reversed_by": rev["id"]})
+
+    repo.update(year_id, {
+        "is_closed": False,
+        "closed_at": None,
+        "closing_journal_id": None,
+    })
+
+    db = __import__("app.firebase_client", fromlist=["get_db"]).get_db()
+    db.collection("transaction_locks").document(user["org_id"]).delete()
+
     return repo.get(year_id)
+
+
+@router.get("/lock-status")
+def fiscal_lock_status(
+    date: str,
+    user: dict = Depends(get_current_user),
+):
+    from app.services.period_close import PeriodCloseService
+
+    try:
+        on_date = datetime.fromisoformat(date[:10] + "T12:00:00")
+    except ValueError:
+        raise HTTPException(400, "ڕێکەوت دروست نییە (YYYY-MM-DD)")
+    return PeriodCloseService.get_lock_status(user["org_id"], on_date)
 
 
 @router.delete("/years/{year_id}")

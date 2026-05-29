@@ -1,0 +1,247 @@
+{
+  "generated": "2026-05-27T13:37:19.637Z",
+  "rows": {
+    "V-PR.1": {
+      "id": "V-PR.1",
+      "what": "Real User p95 Latency",
+      "target": "per SLO table",
+      "current": "TBD",
+      "trend": "?",
+      "status": "unknown",
+      "first_red_at": null,
+      "runbook": "docs/runbooks/slow-firestore-read.md"
+    },
+    "V-PR.2": {
+      "id": "V-PR.2",
+      "what": "Core Web Vitals p75",
+      "target": "LCP ≤ 2000ms, INP ≤ 150ms, CLS ≤ 0.05",
+      "current": "TBD",
+      "trend": "?",
+      "status": "unknown",
+      "first_red_at": null,
+      "runbook": "docs/runbooks/cwv-regression.md"
+    },
+    "V-PR.3": {
+      "id": "V-PR.3",
+      "what": "Crash-Free Session Rate",
+      "target": "≥ 99.5%",
+      "current": "TBD",
+      "trend": "?",
+      "status": "unknown",
+      "first_red_at": null,
+      "runbook": "docs/runbooks/chunk-load-failure.md"
+    },
+    "V-PR.4": {
+      "id": "V-PR.4",
+      "what": "Offline POS Sync Success",
+      "target": "≥ 99.9%",
+      "current": "TBD",
+      "trend": "?",
+      "status": "unknown",
+      "first_red_at": null,
+      "runbook": "docs/runbooks/pos-offline-drill.md"
+    },
+    "V-PR.5": {
+      "id": "V-PR.5",
+      "what": "Receipt-Print Latency p95",
+      "target": "≤ 200ms",
+      "current": "TBD",
+      "trend": "?",
+      "status": "unknown",
+      "first_red_at": null,
+      "runbook": "docs/runbooks/print-path-triage.md"
+    },
+    "V-PR.6": {
+      "id": "V-PR.6",
+      "what": "Availability (monthly)",
+      "target": "≥ 99.5%",
+      "current": "TBD",
+      "trend": "?",
+      "status": "unknown",
+      "first_red_at": null,
+      "runbook": "DISASTER_RECOVERY.md"
+    },
+    "V-PR.7": {
+      "id": "V-PR.7",
+      "what": "Cold-Start p95",
+      "target": "≤ 2s",
+      "current": "TBD",
+      "trend": "?",
+      "status": "unknown",
+      "first_red_at": null,
+      "runbook": "docs/runbooks/cold-start-spike.md"
+    },
+    "V-PR.8": {
+      "id": "V-PR.8",
+      "what": "Cache Hit Ratio",
+      "target": "≥ 60%",
+      "current": "TBD",
+      "trend": "?",
+      "status": "unknown",
+      "first_red_at": null,
+      "runbook": "docs/runbooks/redis-down.md"
+    },
+    "V-PR.9": {
+      "id": "V-PR.9",
+      "what": "Bundle Size at Production",
+      "target": "shell ≤ 350 KB gz",
+      "current": "TBD",
+      "trend": "?",
+      "status": "unknown",
+      "first_red_at": null,
+      "runbook": "docs/runbooks/bundle-bloat.md"
+    },
+    "V-PR.10": {
+      "id": "V-PR.10",
+      "what": "Chunk-Load Failure Rate",
+      "target": "< 0.5%",
+      "current": "TBD",
+      "trend": "?",
+      "status": "unknown",
+      "first_red_at": null,
+      "runbook": "docs/runbooks/chunk-load-failure.md"
+    },
+    "V-PR.11": {
+      "id": "V-PR.11",
+      "what": "Firestore Read p99",
+      "target": "≤ 400ms",
+      "current": "TBD",
+      "trend": "?",
+      "status": "unknown",
+      "first_red_at": null,
+      "runbook": "docs/runbooks/slow-firestore-read.md"
+    },
+    "V-PR.12": {
+      "id": "V-PR.12",
+      "what": "Backup Freshness",
+      "target": "≤ 24h between backups",
+      "current": "TBD",
+      "trend": "?",
+      "status": "unknown",
+      "first_red_at": null,
+      "runbook": "DISASTER_RECOVERY.md"
+    },
+    "V-LM.1": {
+      "id": "V-LM.1",
+      "what": "File Size Budget",
+      "target": "0 files > 600 LOC",
+      "current": "73 > 400, 33 > 600 LOC",
+      "trend": "up",
+      "status": "red",
+      "first_red_at": "2026-05-27T13:37:19.637Z",
+      "current_value": 33
+    },
+    "V-LM.2": {
+      "id": "V-LM.2",
+      "what": "Cyclomatic Complexity Cap",
+      "target": "0 functions > 15",
+      "current": "0 FE violations / BE skipped",
+      "trend": "flat",
+      "status": "green",
+      "first_red_at": null,
+      "current_value": 0
+    },
+    "V-LM.3": {
+      "id": "V-LM.3",
+      "what": "Cognitive Complexity Cap",
+      "target": "< 10 functions > 15",
+      "current": "TBD (sonarjs not wired)",
+      "trend": "?",
+      "status": "unknown",
+      "first_red_at": null
+    },
+    "V-LM.4": {
+      "id": "V-LM.4",
+      "what": "Dead Code Rate",
+      "target": "< 0.5% dead exports",
+      "current": "0 unused FE, 0 BE (0%)",
+      "trend": "flat",
+      "status": "green",
+      "first_red_at": null,
+      "current_value": 0
+    },
+    "V-LM.5": {
+      "id": "V-LM.5",
+      "what": "Dependency Freshness",
+      "target": "0 deps > 12 months stale",
+      "current": "0 / 28 deps > 12mo stale",
+      "trend": "flat",
+      "status": "green",
+      "first_red_at": null,
+      "current_value": 0
+    },
+    "V-LM.6": {
+      "id": "V-LM.6",
+      "what": "Test Coverage",
+      "target": "FE ≥ 70%, BE ≥ 80%",
+      "current": "FE n/a, BE n/a",
+      "trend": "?",
+      "status": "red",
+      "first_red_at": "2026-05-27T13:30:37.727Z"
+    },
+    "V-LM.7": {
+      "id": "V-LM.7",
+      "what": "Flaky Test Rate",
+      "target": "< 1% flaky",
+      "current": "skipped: GH_TOKEN not set; flake tracking requires GitHub API access",
+      "trend": "?",
+      "status": "unknown",
+      "first_red_at": null
+    },
+    "V-LM.8": {
+      "id": "V-LM.8",
+      "what": "Bundle Size Delta per PR",
+      "target": "90% PRs neutral/negative",
+      "current": "TBD (bundle-diff workflow runs on PR, not here)",
+      "trend": "?",
+      "status": "unknown",
+      "first_red_at": null
+    },
+    "V-LM.9": {
+      "id": "V-LM.9",
+      "what": "Onboarding Time",
+      "target": "≤ 1 working day",
+      "current": "TBD (quarterly exercise)",
+      "trend": "?",
+      "status": "unknown",
+      "first_red_at": null
+    },
+    "V-LM.10": {
+      "id": "V-LM.10",
+      "what": "Feature Velocity",
+      "target": "not declining > 20% QoQ",
+      "current": "skipped: GH_TOKEN not set",
+      "trend": "?",
+      "status": "unknown",
+      "first_red_at": null
+    },
+    "V-LM.11": {
+      "id": "V-LM.11",
+      "what": "Documentation Freshness",
+      "target": "< 20% docs > 90d stale",
+      "current": "0/118 (0%) stale",
+      "trend": "flat",
+      "status": "green",
+      "first_red_at": null,
+      "current_value": 0
+    },
+    "V-LM.12": {
+      "id": "V-LM.12",
+      "what": "ADR Compliance",
+      "target": "≥ 90% on significant PRs",
+      "current": "skipped: GH_TOKEN not set",
+      "trend": "?",
+      "status": "unknown",
+      "first_red_at": null
+    }
+  },
+  "verdict": {
+    "greens_count": 4,
+    "total": 24,
+    "reds_count": 2,
+    "stuck_reds_count": 0,
+    "is_world_class": false,
+    "line": "**NOT YET** — 4/24 green; 0 red metric(s) stuck > 14 days."
+  },
+  "probes_source": null
+}

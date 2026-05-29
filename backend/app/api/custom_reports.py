@@ -11,6 +11,7 @@ from app.firestore.items import ItemRepository
 from app.firestore.journals import JournalEntryRepository
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
+from app.services.report_streams import collect_stream
 import uuid
 
 router = APIRouter(prefix="/api/custom-reports", tags=["CustomReports"])
@@ -282,7 +283,7 @@ def run_custom_report(
 
     # Load data from source
     data_repo = _get_repo_for_source(source, org_id)
-    items, _ = data_repo.list(limit=10000)
+    items = collect_stream(data_repo, max_docs=10000)
 
     # Apply date range if provided
     date_from = _parse_date(request.date_from)

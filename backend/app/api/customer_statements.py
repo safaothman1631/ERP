@@ -12,6 +12,7 @@ from app.services.auth import get_current_user
 from app.services.permissions import require_perm
 from app.services.email_service import send_email
 from app.services.pdf_generator import generate_customer_statement_pdf
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/customer-statements", tags=["Customer Statements"])
 
@@ -47,7 +48,7 @@ def get_customer_statement(
     
     # Get all invoices, payments, credit notes for this contact
     invoice_repo = InvoiceRepository(user["org_id"])
-    all_invoices, _ = invoice_repo.list(limit=5000)
+    all_invoices = collect_stream(invoice_repo, max_docs=5000)
     
     # Filter by contact and date range
     transactions = []

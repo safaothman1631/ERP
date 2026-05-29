@@ -19,8 +19,14 @@ from app.firestore.crm import (
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
 from app.services import settings_service
+from app.services.module_gate import require_module
+from app.services.report_streams import collect_stream
 
-router = APIRouter(prefix="/api/crm", tags=["CRM"])
+router = APIRouter(
+    prefix="/api/crm",
+    tags=["CRM"],
+    dependencies=[Depends(require_module("crm"))],
+)
 
 
 # ──────────────────────────── Schemas ────────────────────────────
@@ -139,20 +145,20 @@ def _ensure_default_stages(repo: CRMStageRepository) -> list[dict]:
 
 # ──────────────────────────── Stages ────────────────────────────
 
-@router.get("/stages")
+@router.get("/stages", dependencies=[Depends(require_perm("crm.read"))])
 def list_stages(user: dict = Depends(get_current_user)):
     repo = CRMStageRepository(user["org_id"])
     stages = _ensure_default_stages(repo)
     return {"items": stages, "total": len(stages)}
 
 
-@router.post("/stages", status_code=201, dependencies=[Depends(require_perm("crm.create"))])
+@router.post("/stages", status_code=201, dependencies=[Depends(require_perm("crm.write"))])
 def create_stage(data: StageCreate, user: dict = Depends(get_current_user)):
     repo = CRMStageRepository(user["org_id"])
     return repo.create(data.model_dump())
 
 
-@router.put("/stages/{stage_id}", dependencies=[Depends(require_perm("crm.update"))])
+@router.put("/stages/{stage_id}", dependencies=[Depends(require_perm("crm.write"))])
 def update_stage(stage_id: str, data: StageUpdate, user: dict = Depends(get_current_user)):
     repo = CRMStageRepository(user["org_id"])
     if not repo.get(stage_id):
@@ -172,7 +178,7 @@ def delete_stage(stage_id: str, user: dict = Depends(get_current_user)):
 
 # ──────────────────────────── Leads ────────────────────────────
 
-@router.get("/leads")
+@router.get("/leads", dependencies=[Depends(require_perm("crm.read"))])
 def list_leads(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=200),
@@ -236,7 +242,7 @@ def create_lead(data: LeadCreate, user: dict = Depends(get_current_user)):
     return repo.create(payload)
 
 
-@router.get("/leads/{lead_id}")
+@router.get("/leads/{lead_id}", dependencies=[Depends(require_perm("crm.read"))])
 def get_lead(lead_id: str, user: dict = Depends(get_current_user)):
     repo = CRMLeadRepository(user["org_id"])
     lead = repo.get(lead_id)
@@ -301,7 +307,7 @@ def convert_lead(lead_id: str, data: LeadConvert, user: dict = Depends(get_curre
 
 # ──────────────────────────── Opportunities ────────────────────────────
 
-@router.get("/opportunities")
+@router.get("/opportunities", dependencies=[Depends(require_perm("crm.read"))])
 def list_opportunities(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=200),
@@ -335,7 +341,7 @@ def list_opportunities(
     }
 
 
-@router.post("/opportunities", status_code=201, dependencies=[Depends(require_perm("crm.create"))])
+@router.post("/opportunities", status_code=201, dependencies=[Depends(require_perm("crm.write"))])
 def create_opportunity(data: OpportunityCreate, user: dict = Depends(get_current_user)):
     repo = CRMOpportunityRepository(user["org_id"])
     payload = data.model_dump()
@@ -343,7 +349,7 @@ def create_opportunity(data: OpportunityCreate, user: dict = Depends(get_current
     return repo.create(payload)
 
 
-@router.get("/opportunities/{opp_id}")
+@router.get("/opportunities/{opp_id}", dependencies=[Depends(require_perm("crm.read"))])
 def get_opportunity(opp_id: str, user: dict = Depends(get_current_user)):
     repo = CRMOpportunityRepository(user["org_id"])
     opp = repo.get(opp_id)
@@ -352,7 +358,7 @@ def get_opportunity(opp_id: str, user: dict = Depends(get_current_user)):
     return opp
 
 
-@router.put("/opportunities/{opp_id}", dependencies=[Depends(require_perm("crm.update"))])
+@router.put("/opportunities/{opp_id}", dependencies=[Depends(require_perm("crm.write"))])
 def update_opportunity(opp_id: str, data: OpportunityUpdate, user: dict = Depends(get_current_user)):
     repo = CRMOpportunityRepository(user["org_id"])
     opp = repo.get(opp_id)
@@ -385,7 +391,7 @@ def delete_opportunity(opp_id: str, user: dict = Depends(get_current_user)):
 
 # ──────────────────────────── Activities ────────────────────────────
 
-@router.get("/activities")
+@router.get("/activities", dependencies=[Depends(require_perm("crm.read"))])
 def list_activities(
     lead_id: str = Query("", max_length=64),
     opportunity_id: str = Query("", max_length=64),
@@ -413,7 +419,7 @@ def list_activities(
     return {"items": items, "total": total}
 
 
-@router.post("/activities", status_code=201, dependencies=[Depends(require_perm("crm.create"))])
+@router.post("/activities", status_code=201, dependencies=[Depends(require_perm("crm.write"))])
 def create_activity(data: ActivityCreate, user: dict = Depends(get_current_user)):
     repo = CRMActivityRepository(user["org_id"])
     payload = data.model_dump()
@@ -422,7 +428,7 @@ def create_activity(data: ActivityCreate, user: dict = Depends(get_current_user)
     return repo.create(payload)
 
 
-@router.put("/activities/{activity_id}/done", dependencies=[Depends(require_perm("crm.update"))])
+@router.put("/activities/{activity_id}/done", dependencies=[Depends(require_perm("crm.write"))])
 def complete_activity(activity_id: str, user: dict = Depends(get_current_user)):
     repo = CRMActivityRepository(user["org_id"])
     activity = repo.get(activity_id)
@@ -455,7 +461,7 @@ def get_due_activities(
     from datetime import timedelta
     
     repo = CRMActivityRepository(user["org_id"])
-    all_activities, _ = repo.list(limit=5000)
+    all_activities = collect_stream(repo, max_docs=5000)
     
     today = datetime.utcnow().date()
     cutoff = today + timedelta(days=days)
@@ -490,11 +496,12 @@ def get_due_activities(
 
 # ──────────────────────────── Reports ────────────────────────────
 
-@router.get("/forecast")
+@router.get("/forecast", dependencies=[Depends(require_perm("crm.read"))])
 def forecast(user: dict = Depends(get_current_user)):
     """Monthly forecast based on amount × probability for open opportunities."""
     repo = CRMOpportunityRepository(user["org_id"])
-    opps, _ = repo.list(filters=[{"field": "status", "op": "==", "value": "open"}], limit=10000)
+    all_opps = collect_stream(repo, max_docs=10000)
+    opps = [o for o in all_opps if o.get("status") == "open"]
     monthly: dict[str, float] = defaultdict(float)
     for o in opps:
         cd = o.get("close_date")
@@ -514,7 +521,7 @@ def forecast(user: dict = Depends(get_current_user)):
     }
 
 
-@router.get("/reports/pipeline")
+@router.get("/reports/pipeline", dependencies=[Depends(require_perm("crm.read"))])
 def pipeline_report(user: dict = Depends(get_current_user)):
     """Aggregate open opportunity value and count by stage."""
     opp_repo = CRMOpportunityRepository(user["org_id"])
@@ -522,7 +529,8 @@ def pipeline_report(user: dict = Depends(get_current_user)):
     stages = _ensure_default_stages(stage_repo)
     stage_by_id = {s["id"]: s for s in stages}
 
-    opps, _ = opp_repo.list(filters=[{"field": "status", "op": "==", "value": "open"}], limit=10000)
+    all_opps = collect_stream(opp_repo, max_docs=10000)
+    opps = [o for o in all_opps if o.get("status") == "open"]
     agg: dict[str, dict] = {s["id"]: {"stage_id": s["id"], "stage_name": s.get("name"),
                                        "color": s.get("color"), "sequence": s.get("sequence", 0),
                                        "count": 0, "value": 0.0} for s in stages}
@@ -538,7 +546,7 @@ def pipeline_report(user: dict = Depends(get_current_user)):
     return {"stages": rows, "total_value": round(sum(r["value"] for r in rows), 2)}
 
 
-@router.get("/reports/won-lost")
+@router.get("/reports/won-lost", dependencies=[Depends(require_perm("crm.read"))])
 def won_lost_report(user: dict = Depends(get_current_user)):
     """Win rate + average deal size."""
     opp_repo = CRMOpportunityRepository(user["org_id"])
@@ -547,7 +555,7 @@ def won_lost_report(user: dict = Depends(get_current_user)):
     won_ids = {s["id"] for s in stages if s.get("is_won")}
     lost_ids = {s["id"] for s in stages if s.get("is_lost")}
 
-    opps, _ = opp_repo.list(limit=10000)
+    opps = collect_stream(opp_repo, max_docs=10000)
     won = [o for o in opps if o.get("stage_id") in won_ids]
     lost = [o for o in opps if o.get("stage_id") in lost_ids]
     won_value = sum(float(o.get("amount") or 0) for o in won)
@@ -565,7 +573,7 @@ def won_lost_report(user: dict = Depends(get_current_user)):
     }
 
 
-@router.get("/reports/leaderboard")
+@router.get("/reports/leaderboard", dependencies=[Depends(require_perm("crm.read"))])
 def leaderboard(user: dict = Depends(get_current_user)):
     """Top owners by closed-won value."""
     opp_repo = CRMOpportunityRepository(user["org_id"])
@@ -599,7 +607,7 @@ class LostReasonUpdate(BaseModel):
     active: Optional[bool] = None
 
 
-@router.get("/lost-reasons")
+@router.get("/lost-reasons", dependencies=[Depends(require_perm("crm.read"))])
 def list_lost_reasons(user: dict = Depends(get_current_user)):
     repo = CRMLostReasonRepository(user["org_id"])
     items, _ = repo.list(limit=200)
@@ -607,13 +615,13 @@ def list_lost_reasons(user: dict = Depends(get_current_user)):
     return {"items": items}
 
 
-@router.post("/lost-reasons", status_code=201, dependencies=[Depends(require_perm("crm.create"))])
+@router.post("/lost-reasons", status_code=201, dependencies=[Depends(require_perm("crm.write"))])
 def create_lost_reason(data: LostReasonCreate, user: dict = Depends(get_current_user)):
     repo = CRMLostReasonRepository(user["org_id"])
     return repo.create({"name": data.name.strip(), "active": data.active})
 
 
-@router.put("/lost-reasons/{reason_id}", dependencies=[Depends(require_perm("crm.update"))])
+@router.put("/lost-reasons/{reason_id}", dependencies=[Depends(require_perm("crm.write"))])
 def update_lost_reason(reason_id: str, data: LostReasonUpdate, user: dict = Depends(get_current_user)):
     repo = CRMLostReasonRepository(user["org_id"])
     if not repo.get(reason_id):
@@ -696,7 +704,7 @@ def merge_leads(req: MergeRequest, user: dict = Depends(get_current_user)):
     return {"merged_into": req.primary_id, "removed": [d["id"] for d in dups]}
 
 
-@router.post("/opportunities/merge", dependencies=[Depends(require_perm("crm.update"))])
+@router.post("/opportunities/merge", dependencies=[Depends(require_perm("crm.write"))])
 def merge_opportunities(req: MergeRequest, user: dict = Depends(get_current_user)):
     repo = CRMOpportunityRepository(user["org_id"])
     primary = repo.get(req.primary_id)
@@ -747,7 +755,7 @@ def bulk_action_leads(req: BulkActionRequest, user: dict = Depends(get_current_u
     return {"action": req.action, "updated": updated}
 
 
-@router.post("/opportunities/bulk-action", dependencies=[Depends(require_perm("crm.update"))])
+@router.post("/opportunities/bulk-action", dependencies=[Depends(require_perm("crm.write"))])
 def bulk_action_opportunities(req: BulkActionRequest, user: dict = Depends(get_current_user)):
     """Bulk archive/unarchive/assign opportunities."""
     repo = CRMOpportunityRepository(user["org_id"])
@@ -791,7 +799,7 @@ class SalesTeamUpdate(BaseModel):
     notes: Optional[str] = None
 
 
-@router.get("/sales-teams")
+@router.get("/sales-teams", dependencies=[Depends(require_perm("crm.read"))])
 def list_sales_teams(active: Optional[bool] = None, user: dict = Depends(get_current_user)):
     repo = CRMSalesTeamRepository(user["org_id"])
     filters = []
@@ -801,13 +809,13 @@ def list_sales_teams(active: Optional[bool] = None, user: dict = Depends(get_cur
     return {"items": items, "total": total}
 
 
-@router.post("/sales-teams", status_code=201, dependencies=[Depends(require_perm("crm.create"))])
+@router.post("/sales-teams", status_code=201, dependencies=[Depends(require_perm("crm.write"))])
 def create_sales_team(data: SalesTeamCreate, user: dict = Depends(get_current_user)):
     repo = CRMSalesTeamRepository(user["org_id"])
     return repo.create(data.model_dump())
 
 
-@router.get("/sales-teams/{team_id}")
+@router.get("/sales-teams/{team_id}", dependencies=[Depends(require_perm("crm.read"))])
 def get_sales_team(team_id: str, user: dict = Depends(get_current_user)):
     repo = CRMSalesTeamRepository(user["org_id"])
     item = repo.get(team_id)
@@ -816,7 +824,7 @@ def get_sales_team(team_id: str, user: dict = Depends(get_current_user)):
     return item
 
 
-@router.put("/sales-teams/{team_id}", dependencies=[Depends(require_perm("crm.update"))])
+@router.put("/sales-teams/{team_id}", dependencies=[Depends(require_perm("crm.write"))])
 def update_sales_team(team_id: str, data: SalesTeamUpdate, user: dict = Depends(get_current_user)):
     repo = CRMSalesTeamRepository(user["org_id"])
     if not repo.get(team_id):
@@ -834,7 +842,7 @@ def delete_sales_team(team_id: str, user: dict = Depends(get_current_user)):
     return {"deleted": True}
 
 
-@router.get("/sales-teams/{team_id}/performance")
+@router.get("/sales-teams/{team_id}/performance", dependencies=[Depends(require_perm("crm.read"))])
 def sales_team_performance(team_id: str, user: dict = Depends(get_current_user)):
     """FIX-135: Aggregated KPIs for a sales team based on opportunities owned by its members."""
     org = user["org_id"]
@@ -867,7 +875,7 @@ def sales_team_performance(team_id: str, user: dict = Depends(get_current_user))
 from app.firestore.crm import CRMSalesTeamRepository as _STR  # noqa
 
 
-@router.get("/activity-types")
+@router.get("/activity-types", dependencies=[Depends(require_perm("crm.read"))])
 def list_activity_types(user: dict = Depends(get_current_user)):
     from app.firestore.base import BaseRepository
     class _ATR(BaseRepository):
@@ -876,7 +884,7 @@ def list_activity_types(user: dict = Depends(get_current_user)):
     return {"items": items, "total": total}
 
 
-@router.post("/activity-types", status_code=201, dependencies=[Depends(require_perm("crm.create"))])
+@router.post("/activity-types", status_code=201, dependencies=[Depends(require_perm("crm.write"))])
 def create_activity_type(data: dict, user: dict = Depends(get_current_user)):
     from app.firestore.base import BaseRepository
     class _ATR(BaseRepository):
@@ -902,7 +910,7 @@ def delete_activity_type(type_id: str, user: dict = Depends(get_current_user)):
     return {"deleted": True}
 
 
-@router.post("/leads/{lead_id}/auto-assign", dependencies=[Depends(require_perm("crm.update"))])
+@router.post("/leads/{lead_id}/auto-assign", dependencies=[Depends(require_perm("crm.write"))])
 def auto_assign_lead(lead_id: str, user: dict = Depends(get_current_user)):
     """FIX-303: Round-robin assign lead to a sales team member based on least open opps."""
     org = user["org_id"]
@@ -935,7 +943,7 @@ def auto_assign_lead(lead_id: str, user: dict = Depends(get_current_user)):
     })
 
 
-@router.post("/sales-teams/{team_id}/distribute-leads", dependencies=[Depends(require_perm("crm.update"))])
+@router.post("/sales-teams/{team_id}/distribute-leads", dependencies=[Depends(require_perm("crm.write"))])
 def distribute_team_leads(team_id: str, user: dict = Depends(get_current_user)):
     """FIX-304: Bulk-assign all unassigned leads of a team using auto-assign rule."""
     org = user["org_id"]

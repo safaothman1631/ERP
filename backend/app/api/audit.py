@@ -5,6 +5,7 @@ from app.firestore.users import UserRepository
 from app.services.auth import get_current_user
 from app.services.permissions import user_has_perm
 from app.services import settings_service
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/audit", tags=["Audit"])
 
@@ -97,7 +98,10 @@ def audit_stats(user: dict = Depends(get_current_user)):
     filters = []
     if not user_has_perm(user, "audit.view_all"):
         filters.append({"field": "user_id", "op": "==", "value": user["id"]})
-    items, _ = repo.list(filters=filters, limit=10000)
+    items = collect_stream(repo, max_docs=10000)
+    for f in filters:
+        if f.get("op") == "==" and f.get("field"):
+            items = [i for i in items if i.get(f["field"]) == f.get("value")]
 
     cutoff = (datetime.utcnow() - timedelta(days=30)).isoformat()
     recent = [i for i in items if str(i.get("created_at", "")) >= cutoff]

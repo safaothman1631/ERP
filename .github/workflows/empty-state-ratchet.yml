@@ -1,0 +1,75 @@
+name: Empty-state migration ratchet
+
+# Runs on every PR. Fails if the number of pending (un-migrated, un-exempted)
+# `<Select>` files grows. The script also writes a human-readable report to
+# `_deltas/empty-state-audit.md` and ratchets the baseline DOWN automatically
+# on successful merges.
+#
+# Spec: `.kiro/specs/empty-state-quick-create/requirements.md` §15.
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/src/**/*.tsx'
+      - 'scripts/audit-empty-states.mjs'
+      - 'audit/empty-state-baseline.json'
+      - 'tools/eslint-rules/empty-state-required.js'
+      - 'tools/eslint-rules/quick-create-select.js'
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/src/**/*.tsx'
+      - 'scripts/audit-empty-states.mjs'
+      - 'audit/empty-state-baseline.json'
+
+jobs:
+  ratchet:
+    name: Audit ratchet (no new `<Select>` without quick-create wrapper)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Need history so the ratchet can compare HEAD to the baseline
+          # committed at the previous merge.
+          fetch-depth: 2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run audit (advisory output)
+        run: node scripts/audit-empty-states.mjs
+
+      - name: Run audit ratchet (fails if pending count increased)
+        run: node scripts/audit-empty-states.mjs --check
+
+      - name: Upload migration report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: empty-state-audit
+          path: _deltas/empty-state-audit.md
+          retention-days: 30
+
+  eslint-rules:
+    name: ESLint — empty-state-required + quick-create-select
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Lint the empty-state surface
+        # `--rule` overrides escalate the two new rules to error severity for
+        # the gate, while leaving them as `warn` in day-to-day editor use.
+        run: |
+          npx eslint \
+            --rule 'local/empty-state-required: error' \
+            --rule 'local/quick-create-select: error' \
+            'src/**/*.tsx'

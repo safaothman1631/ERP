@@ -49,14 +49,26 @@ def _build_limiter() -> Limiter:
     When ``RATE_LIMITING_ENABLED`` is False the limiter is still created but
     the ``enabled`` flag is set to False so slowapi skips all checks.
     This satisfies Requirement 10.3 (opt-in via settings).
+
+    When ``RATE_LIMIT_STORAGE_URI`` is set (H2), limits are shared across
+    Cloud Run instances via Redis.
     """
-    return Limiter(
-        key_func=get_remote_address,
-        # Requirement 10.3: rate limiting is optional — disabled by default
-        enabled=settings.RATE_LIMITING_ENABLED,
-        # Requirement 10.5: default limit is configurable via settings
-        default_limits=[settings.DEFAULT_RATE_LIMIT] if settings.RATE_LIMITING_ENABLED else [],
-    )
+    kwargs: dict = {
+        "key_func": get_remote_address,
+        "enabled": settings.RATE_LIMITING_ENABLED,
+        "default_limits": (
+            [settings.DEFAULT_RATE_LIMIT] if settings.RATE_LIMITING_ENABLED else []
+        ),
+    }
+    raw_uri = getattr(settings, "RATE_LIMIT_STORAGE_URI", "") or ""
+    uri = raw_uri.strip() if isinstance(raw_uri, str) else ""
+    if uri:
+        if "socket_connect_timeout" not in uri:
+            sep = "&" if "?" in uri else "?"
+            uri = f"{uri}{sep}socket_connect_timeout=2&socket_timeout=2"
+        kwargs["storage_uri"] = uri
+        logger.info("rate-limit using shared storage_uri (redis)")
+    return Limiter(**kwargs)
 
 
 # Module-level limiter — imported by main.py and attached to app.state
@@ -128,7 +140,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     - ``exempt_paths``: list[str] (default ["/api/system/health"])
 
     Token bucket per (org_id, ip). In-memory, single-process.
-    For multi-worker production, replace with Redis-backed limiter (TODO).
+    For multi-worker production, set ``RATE_LIMIT_STORAGE_URI`` (see REDIS_RATE_LIMIT.md).
 
     This middleware is independent of the global ``RATE_LIMITING_ENABLED``
     flag — it is always registered but only activates when an org has a
@@ -143,6 +155,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Callable):
         path = request.url.path
+        method = request.method.upper()
         # Resolve org_id from request state if available; otherwise skip.
         org_id = (
             getattr(request.state, "org_id", None)
@@ -158,6 +171,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             cfg = {}
 
         rpm = int(cfg.get("rate_limit_per_minute") or self._default_rpm or 0)
+        if rpm <= 0 and method in {"POST", "PUT", "PATCH", "DELETE"}:
+            if path.startswith("/api/pos/"):
+                rpm = 300
+            elif path.startswith("/api/chatter"):
+                rpm = 120
         if rpm <= 0:
             return await call_next(request)
 
@@ -178,6 +196,12 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             allowed = bucket.consume(1.0)
 
         if not allowed:
+            try:
+                from app.services.rate_limit_firestore import record_hit
+
+                record_hit(org_id, path)
+            except Exception:
+                pass
             logger.warning(
                 "org-rate-limit hit org=%s ip=%s path=%s rpm=%s",
                 org_id, ip, path, rpm,

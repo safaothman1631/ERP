@@ -23,6 +23,7 @@ from app.firestore.accounts import AccountRepository
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
 from app.services.export_service import render
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/export", tags=["Export"])
 
@@ -71,7 +72,7 @@ def export_invoices(
     filters = _date_filters("date", date_from, date_to)
     if status:
         filters.append({"field": "status", "op": "==", "value": status})
-    rows, _ = repo.list(filters=filters, order_by="date", order_dir="DESCENDING", limit=10000)
+    rows = collect_stream(repo, filters=filters)
 
     columns = [
         ("invoice_number", "Invoice #"),
@@ -106,7 +107,7 @@ def export_bills(
     filters = _date_filters("date", date_from, date_to)
     if status:
         filters.append({"field": "status", "op": "==", "value": status})
-    rows, _ = repo.list(filters=filters, order_by="date", order_dir="DESCENDING", limit=10000)
+    rows = collect_stream(repo, filters=filters)
 
     columns = [
         ("bill_number", "Bill #"),
@@ -139,7 +140,7 @@ def export_journal_entries(
     repo = JournalEntryRepository(user["org_id"])
     accounts = {a["id"]: a for a in AccountRepository(user["org_id"]).list(limit=2000)[0]}
     filters = _date_filters("date", date_from, date_to)
-    entries, _ = repo.list(filters=filters, order_by="date", order_dir="DESCENDING", limit=10000)
+    entries = collect_stream(repo, filters=filters)
 
     rows: list[dict[str, Any]] = []
     for entry in entries:
@@ -222,7 +223,7 @@ def export_customers(
     filters: list[dict] = []
     if contact_type and contact_type != "both":
         filters.append({"field": "contact_type", "op": "==", "value": contact_type})
-    rows, _ = repo.list(filters=filters, order_by="name", order_dir="ASCENDING", limit=10000)
+    rows = collect_stream(repo, filters=filters)
 
     columns = [
         ("name", "Name"),
@@ -250,7 +251,7 @@ def export_products(
     user: dict = Depends(get_current_user),
 ):
     repo = ItemRepository(user["org_id"])
-    rows, _ = repo.list(order_by="name", order_dir="ASCENDING", limit=10000)
+    rows = collect_stream(repo)
 
     columns = [
         ("sku", "SKU"),
@@ -282,7 +283,7 @@ def export_pos_sales(
 ):
     repo = POSOrderRepository(user["org_id"])
     filters = _date_filters("date_order", date_from, date_to)
-    rows, _ = repo.list(filters=filters, order_by="date_order", order_dir="DESCENDING", limit=10000)
+    rows = collect_stream(repo, filters=filters)
 
     columns = [
         ("name", "Order #"),
@@ -314,13 +315,13 @@ def export_inventory(
     item_repo = ItemRepository(user["org_id"])
     wh_repo = WarehouseRepository(user["org_id"])
 
-    items_by_id = {i["id"]: i for i in item_repo.list(limit=10000)[0]}
+    items_by_id = {i["id"]: i for i in collect_stream(item_repo)}
     wh_by_id = {w["id"]: w for w in wh_repo.list(limit=200)[0]}
 
     filters: list[dict] = []
     if warehouse_id:
         filters.append({"field": "warehouse_id", "op": "==", "value": warehouse_id})
-    stock_rows, _ = stock_repo.list(filters=filters, limit=10000)
+    stock_rows = collect_stream(stock_repo, filters=filters)
 
     rows = []
     for s in stock_rows:

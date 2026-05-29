@@ -11,6 +11,7 @@ from app.firestore.banking import (
 )
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/banking", tags=["Banking"])
 
@@ -105,14 +106,14 @@ class CompatibilityMatchPayload(BaseModel):
 
 # ==================== BANK ACCOUNTS ====================
 
-@router.get("/accounts")
+@router.get("/accounts", dependencies=[Depends(require_perm("bank.read"))])
 def list_bank_accounts(user: dict = Depends(get_current_user)):
     repo = BankAccountRepository(user["org_id"])
     items, _ = repo.list(limit=500)
     return items
 
 
-@router.post("/accounts", dependencies=[Depends(require_perm("bank.create"))])
+@router.post("/accounts", dependencies=[Depends(require_perm("bank.write"))])
 def create_bank_account(data: BankAccountCreate, user: dict = Depends(get_current_user)):
     repo = BankAccountRepository(user["org_id"])
     account_id = str(uuid.uuid4())
@@ -134,7 +135,7 @@ def create_bank_account(data: BankAccountCreate, user: dict = Depends(get_curren
     return repo.create(account_data)
 
 
-@router.get("/accounts/{account_id}")
+@router.get("/accounts/{account_id}", dependencies=[Depends(require_perm("bank.read"))])
 def get_bank_account(account_id: str, user: dict = Depends(get_current_user)):
     repo = BankAccountRepository(user["org_id"])
     account = repo.get(account_id)
@@ -143,7 +144,7 @@ def get_bank_account(account_id: str, user: dict = Depends(get_current_user)):
     return account
 
 
-@router.put("/accounts/{account_id}", dependencies=[Depends(require_perm("bank.update"))])
+@router.put("/accounts/{account_id}", dependencies=[Depends(require_perm("bank.write"))])
 def update_bank_account(account_id: str, data: BankAccountUpdate, user: dict = Depends(get_current_user)):
     repo = BankAccountRepository(user["org_id"])
     account = repo.get(account_id)
@@ -170,69 +171,60 @@ def delete_bank_account(account_id: str, user: dict = Depends(get_current_user))
 
 # ==================== BANK TRANSACTIONS ====================
 
-@router.get("/transactions")
+@router.get("/transactions", dependencies=[Depends(require_perm("bank.read"))])
 def list_transactions(
     page: int = Query(1),
     page_size: int = Query(20, le=500),
     bank_account_id: Optional[str] = None,
+    cursor: str = Query("", max_length=64),
     user: dict = Depends(get_current_user)
 ):
     repo = BankTransactionRepository(user["org_id"])
-    
+
     filters = []
     if bank_account_id:
         filters = [{"field": "bank_account_id", "op": "==", "value": bank_account_id}]
-    
-    items, total = repo.list(
+
+    from app.services.api_list import api_list
+    from app.services.list_response import paginated_response
+
+    items, total, next_cursor = api_list(
+        repo,
+        page=page,
+        page_size=page_size,
+        cursor=cursor or None,
         filters=filters,
         order_by="date",
         order_dir="DESCENDING",
-        limit=page_size,
-        offset=(page-1)*page_size
     )
-    return {"items": items, "total": total, "page": page, "page_size": page_size}
+    return paginated_response(
+        items, total, page, page_size, repo=repo, next_cursor=next_cursor
+    )
 
 
-@router.post("/transactions", dependencies=[Depends(require_perm("bank.create"))])
+@router.post("/transactions", dependencies=[Depends(require_perm("bank.write"))])
 def create_transaction(data: BankTransactionCreate, user: dict = Depends(get_current_user)):
-    repo = BankTransactionRepository(user["org_id"])
-    transaction_id = str(uuid.uuid4())
-    transaction_data = {
-        "id": transaction_id,
-        "org_id": user["org_id"],
-        "bank_account_id": data.bank_account_id,
-        "date": data.date,
-        "transaction_type": data.transaction_type,
-        "amount": data.amount,
-        "description": data.description,
-        "reference": data.reference,
-        "category": data.category,
-        "matched": data.matched,
-        "reconciled": data.reconciled,
-        "created_at": datetime.utcnow().isoformat(),
-        "updated_at": datetime.utcnow().isoformat(),
-        "created_by_id": user["id"]
-    }
-    created = repo.create(transaction_data)
-    
-    # Update bank account balance
-    account_repo = BankAccountRepository(user["org_id"])
-    account = account_repo.get(data.bank_account_id)
-    if account:
-        new_balance = account.get("current_balance", 0.0)
-        if data.transaction_type == "credit":
-            new_balance += data.amount
-        else:
-            new_balance -= data.amount
-        account_repo.update(data.bank_account_id, {
-            "current_balance": new_balance,
-            "updated_at": datetime.utcnow().isoformat()
-        })
-    
-    return created
+    from app.services.bank_transactions import create_bank_transaction_atomic
+
+    try:
+        return create_bank_transaction_atomic(
+            user["org_id"],
+            user["id"],
+            bank_account_id=data.bank_account_id,
+            date=data.date,
+            transaction_type=data.transaction_type,
+            amount=data.amount,
+            description=data.description or "",
+            reference=data.reference or "",
+            category=data.category or "",
+            matched=data.matched,
+            reconciled=data.reconciled,
+        )
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Bank account not found")
 
 
-@router.get("/transactions/{transaction_id}")
+@router.get("/transactions/{transaction_id}", dependencies=[Depends(require_perm("bank.read"))])
 def get_transaction(transaction_id: str, user: dict = Depends(get_current_user)):
     repo = BankTransactionRepository(user["org_id"])
     transaction = repo.get(transaction_id)
@@ -241,7 +233,7 @@ def get_transaction(transaction_id: str, user: dict = Depends(get_current_user))
     return transaction
 
 
-@router.put("/transactions/{transaction_id}", dependencies=[Depends(require_perm("bank.update"))])
+@router.put("/transactions/{transaction_id}", dependencies=[Depends(require_perm("bank.write"))])
 def update_transaction(transaction_id: str, data: BankTransactionUpdate, user: dict = Depends(get_current_user)):
     repo = BankTransactionRepository(user["org_id"])
     transaction = repo.get(transaction_id)
@@ -283,7 +275,7 @@ def delete_transaction(transaction_id: str, user: dict = Depends(get_current_use
 
 # ==================== BANK RECONCILIATION ====================
 
-@router.get("/accounts/{account_id}/reconciliation-status")
+@router.get("/accounts/{account_id}/reconciliation-status", dependencies=[Depends(require_perm("bank.read"))])
 def get_reconciliation_status(account_id: str, user: dict = Depends(get_current_user)):
     """Get reconciliation status for a bank account"""
     account_repo = BankAccountRepository(user["org_id"])
@@ -318,7 +310,7 @@ def get_reconciliation_status(account_id: str, user: dict = Depends(get_current_
     }
 
 
-@router.get("/accounts/{account_id}/unreconciled")
+@router.get("/accounts/{account_id}/unreconciled", dependencies=[Depends(require_perm("bank.read"))])
 def get_unreconciled_transactions(account_id: str, user: dict = Depends(get_current_user)):
     """Get all unreconciled transactions for a bank account"""
     transaction_repo = BankTransactionRepository(user["org_id"])
@@ -330,7 +322,7 @@ def get_unreconciled_transactions(account_id: str, user: dict = Depends(get_curr
     return {"items": unreconciled, "total": total}
 
 
-@router.get("/accounts/{account_id}/statements")
+@router.get("/accounts/{account_id}/statements", dependencies=[Depends(require_perm("bank.read"))])
 def get_account_statements(
     account_id: str,
     status: Optional[str] = Query(None),
@@ -349,7 +341,7 @@ def get_account_statements(
     return {"items": items, "total": total}
 
 
-@router.get("/accounts/{account_id}/transactions")
+@router.get("/accounts/{account_id}/transactions", dependencies=[Depends(require_perm("bank.read"))])
 def get_account_transactions(
     account_id: str,
     status: Optional[str] = Query(None),
@@ -368,7 +360,7 @@ def get_account_transactions(
     return {"items": items, "total": total}
 
 
-@router.get("/accounts/{account_id}/reconciliation-summary")
+@router.get("/accounts/{account_id}/reconciliation-summary", dependencies=[Depends(require_perm("bank.read"))])
 def get_reconciliation_summary(account_id: str, user: dict = Depends(get_current_user)):
     """Reconciliation summary with REAL difference calculation.
 
@@ -396,7 +388,8 @@ def get_reconciliation_summary(account_id: str, user: dict = Depends(get_current
     reconciled_movement = 0.0
     for t in reconciled_txns:
         amt = float(t.get("amount", 0) or 0)
-        if t.get("type") == "debit":
+        tx_type = t.get("transaction_type") or t.get("type") or "credit"
+        if tx_type == "debit":
             reconciled_movement -= abs(amt)
         else:
             reconciled_movement += abs(amt) if amt > 0 else amt
@@ -430,7 +423,7 @@ def get_reconciliation_summary(account_id: str, user: dict = Depends(get_current
     }
 
 
-@router.post("/accounts/{account_id}/match", dependencies=[Depends(require_perm("bank.update"))])
+@router.post("/accounts/{account_id}/match", dependencies=[Depends(require_perm("bank.write"))])
 def compatibility_match_transactions(
     account_id: str,
     data: CompatibilityMatchPayload,
@@ -455,7 +448,7 @@ def compatibility_match_transactions(
     return {"message": "Transactions matched", "matched_count": matched_count}
 
 
-@router.post("/accounts/{account_id}/complete-reconciliation", dependencies=[Depends(require_perm("bank.update"))])
+@router.post("/accounts/{account_id}/complete-reconciliation", dependencies=[Depends(require_perm("bank.write"))])
 def compatibility_complete_reconciliation(account_id: str, user: dict = Depends(get_current_user)):
     account_repo = BankAccountRepository(user["org_id"])
     account = account_repo.get(account_id)
@@ -486,7 +479,7 @@ def compatibility_complete_reconciliation(account_id: str, user: dict = Depends(
     )
 
 
-@router.post("/accounts/{account_id}/import", dependencies=[Depends(require_perm("bank.create"))])
+@router.post("/accounts/{account_id}/import", dependencies=[Depends(require_perm("bank.write"))])
 def compatibility_import_transactions(
     account_id: str,
     payload: BankingImportPayload,
@@ -522,7 +515,7 @@ def compatibility_import_transactions(
     return {"message": "Import completed", "imported_count": len(imported), "items": imported}
 
 
-@router.post("/accounts/{account_id}/reconcile", dependencies=[Depends(require_perm("bank.update"))])
+@router.post("/accounts/{account_id}/reconcile", dependencies=[Depends(require_perm("bank.write"))])
 def start_reconciliation(account_id: str, user: dict = Depends(get_current_user)):
     """Start a new reconciliation session"""
     account_repo = BankAccountRepository(user["org_id"])
@@ -547,7 +540,7 @@ def start_reconciliation(account_id: str, user: dict = Depends(get_current_user)
     }
 
 
-@router.post("/accounts/{account_id}/reconcile/complete", dependencies=[Depends(require_perm("bank.update"))])
+@router.post("/accounts/{account_id}/reconcile/complete", dependencies=[Depends(require_perm("bank.write"))])
 def complete_reconciliation(
     account_id: str,
     data: ReconciliationComplete,
@@ -589,13 +582,13 @@ def complete_reconciliation(
     }
 
 
-@router.post("/transactions/{transaction_id}/match", dependencies=[Depends(require_perm("bank.update"))])
+@router.post("/transactions/{transaction_id}/match-document", dependencies=[Depends(require_perm("bank.write"))])
 def match_transaction(
     transaction_id: str,
     data: TransactionMatch,
     user: dict = Depends(get_current_user)
 ):
-    """Manually match a bank transaction to a document"""
+    """Link bank transaction to a document (metadata only; no payment JE)."""
     repo = BankTransactionRepository(user["org_id"])
     transaction = repo.get(transaction_id)
     if not transaction:
@@ -611,7 +604,7 @@ def match_transaction(
     return {"message": "Transaction matched successfully"}
 
 
-@router.post("/transactions/{transaction_id}/unmatch", dependencies=[Depends(require_perm("bank.update"))])
+@router.post("/transactions/{transaction_id}/unmatch", dependencies=[Depends(require_perm("bank.write"))])
 def unmatch_transaction(transaction_id: str, user: dict = Depends(get_current_user)):
     """Remove match from a bank transaction"""
     repo = BankTransactionRepository(user["org_id"])
@@ -629,7 +622,7 @@ def unmatch_transaction(transaction_id: str, user: dict = Depends(get_current_us
     return {"message": "Transaction unmatched successfully"}
 
 
-@router.post("/accounts/{account_id}/auto-match", dependencies=[Depends(require_perm("bank.update"))])
+@router.post("/accounts/{account_id}/auto-match", dependencies=[Depends(require_perm("bank.write"))])
 def auto_match_transactions(account_id: str, user: dict = Depends(get_current_user)):
     """Automatically match transactions based on rules and fuzzy matching"""
     transaction_repo = BankTransactionRepository(user["org_id"])
@@ -663,7 +656,7 @@ def auto_match_transactions(account_id: str, user: dict = Depends(get_current_us
 
 # ==================== BANK RULES ====================
 
-@router.get("/rules")
+@router.get("/rules", dependencies=[Depends(require_perm("bank.read"))])
 def list_bank_rules(user: dict = Depends(get_current_user)):
     """List all banking rules"""
     repo = BankRuleRepository(user["org_id"])
@@ -671,7 +664,7 @@ def list_bank_rules(user: dict = Depends(get_current_user)):
     return {"items": rules, "total": total}
 
 
-@router.post("/rules", dependencies=[Depends(require_perm("bank.create"))])
+@router.post("/rules", dependencies=[Depends(require_perm("bank.write"))])
 def create_bank_rule(data: BankRuleCreate, user: dict = Depends(get_current_user)):
     """Create a new banking rule"""
     repo = BankRuleRepository(user["org_id"])
@@ -693,7 +686,7 @@ def create_bank_rule(data: BankRuleCreate, user: dict = Depends(get_current_user
     return repo.create(rule_data)
 
 
-@router.put("/rules/{rule_id}", dependencies=[Depends(require_perm("bank.update"))])
+@router.put("/rules/{rule_id}", dependencies=[Depends(require_perm("bank.write"))])
 def update_bank_rule(rule_id: str, data: BankRuleUpdate, user: dict = Depends(get_current_user)):
     """Update a banking rule"""
     repo = BankRuleRepository(user["org_id"])
@@ -719,7 +712,7 @@ def delete_bank_rule(rule_id: str, user: dict = Depends(get_current_user)):
     return {"message": "Bank rule deleted"}
 
 
-@router.post("/rules/apply", dependencies=[Depends(require_perm("bank.update"))])
+@router.post("/rules/apply", dependencies=[Depends(require_perm("bank.write"))])
 def apply_bank_rules(
     bank_account_id: Optional[str] = None,
     user: dict = Depends(get_current_user)
@@ -784,7 +777,7 @@ def apply_bank_rules(
 
 # ==================== CSV IMPORT ====================
 
-@router.get("/accounts/{account_id}/import/template")
+@router.get("/accounts/{account_id}/import/template", dependencies=[Depends(require_perm("bank.read"))])
 def get_csv_import_template(account_id: str, user: dict = Depends(get_current_user)):
     """Get CSV import template headers and sample row"""
     account_repo = BankAccountRepository(user["org_id"])
@@ -805,7 +798,7 @@ def get_csv_import_template(account_id: str, user: dict = Depends(get_current_us
     }
 
 
-@router.post("/accounts/{account_id}/import/csv", dependencies=[Depends(require_perm("bank.create"))])
+@router.post("/accounts/{account_id}/import/csv", dependencies=[Depends(require_perm("bank.write"))])
 async def import_csv_transactions(
     account_id: str,
     file: UploadFile = File(...),
@@ -837,9 +830,10 @@ async def import_csv_transactions(
     
     # Get existing transactions to check for duplicates
     existing_filters = [{"field": "bank_account_id", "op": "==", "value": account_id}]
-    existing_txs, _ = transaction_repo.list(filters=existing_filters, limit=10000)
+    existing_txs = collect_stream(transaction_repo, filters=existing_filters)
     existing_refs = {(tx.get("date"), tx.get("reference"), tx.get("amount")) for tx in existing_txs}
-    
+    running_balance = float(account.get("current_balance", 0.0) or 0.0)
+
     for row_num, row in enumerate(csv_reader, start=2):
         try:
             # Parse row
@@ -891,23 +885,19 @@ async def import_csv_transactions(
             transaction_repo.create(tx_data)
             imported.append(tx_data)
             existing_refs.add(dup_key)
-            
-            # Update bank account balance
-            new_balance = account.get("current_balance", 0.0)
+
             if tx_type == "credit":
-                new_balance += amount
+                running_balance += amount
             else:
-                new_balance -= amount
-            account.update({"current_balance": new_balance})
-            
+                running_balance -= amount
+
         except Exception as e:
             errors.append(f"Row {row_num}: {str(e)}")
     
-    # Final balance update
     if imported:
         account_repo.update(account_id, {
-            "current_balance": account.get("current_balance", 0.0),
-            "updated_at": datetime.utcnow().isoformat()
+            "current_balance": running_balance,
+            "updated_at": datetime.utcnow().isoformat(),
         })
     
     return {
@@ -925,7 +915,7 @@ class ImportStatementPayload(BaseModel):
     mapping: Optional[dict] = None
 
 
-@router.post("/accounts/{account_id}/import-preview", dependencies=[Depends(require_perm("bank.view"))])
+@router.post("/accounts/{account_id}/import-preview", dependencies=[Depends(require_perm("bank.read"))])
 async def import_statement_preview(
     file: UploadFile = File(...),
     format: Optional[str] = Body(None),
@@ -975,7 +965,7 @@ async def import_statement_preview(
     }
 
 
-@router.post("/accounts/{account_id}/import-statement", dependencies=[Depends(require_perm("bank.create"))])
+@router.post("/accounts/{account_id}/import-statement", dependencies=[Depends(require_perm("bank.write"))])
 async def import_statement(
     file: UploadFile = File(...),
     format: Optional[str] = Body(None),
@@ -1053,7 +1043,7 @@ async def import_statement(
     }
 
 
-@router.get("/transactions/{txn_id}/match-candidates")
+@router.get("/transactions/{txn_id}/match-candidates", dependencies=[Depends(require_perm("bank.read"))])
 def get_match_candidates(txn_id: str, user: dict = Depends(get_current_user)):
     """Get match candidates for a bank transaction"""
     from app.services.bank_matching_service import find_match_candidates
@@ -1074,7 +1064,7 @@ class ApplyMatchPayload(BaseModel):
     notes: Optional[str] = None
 
 
-@router.post("/transactions/{txn_id}/match", dependencies=[Depends(require_perm("bank.update"))])
+@router.post("/transactions/{txn_id}/match", dependencies=[Depends(require_perm("bank.write"))])
 def match_transaction_new(
     data: ApplyMatchPayload,
     txn_id: str = None,
@@ -1104,7 +1094,7 @@ class AutoMatchPayload(BaseModel):
     dry_run: bool = False
 
 
-@router.post("/accounts/{account_id}/auto-match-new", dependencies=[Depends(require_perm("bank.update"))])
+@router.post("/accounts/{account_id}/auto-match-new", dependencies=[Depends(require_perm("bank.write"))])
 def auto_match_transactions_new(
     data: AutoMatchPayload,
     account_id: str = None,
@@ -1122,7 +1112,7 @@ def auto_match_transactions_new(
     return result
 
 
-@router.post("/transactions/{txn_id}/unmatch-new", dependencies=[Depends(require_perm("bank.update"))])
+@router.post("/transactions/{txn_id}/unmatch-new", dependencies=[Depends(require_perm("bank.write"))])
 def unmatch_transaction_new(txn_id: str, user: dict = Depends(get_current_user)):
     """Remove match from a transaction"""
     repo = BankTransactionRepository(user["org_id"])

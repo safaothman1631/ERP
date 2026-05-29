@@ -8,6 +8,7 @@ import { PageHeader } from '../../design-system';
 import { space } from '../../theme/tokens';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
+import { ListWithEmptyState } from '../../design-system/empty/ListWithEmptyState';
 
 const { TextArea } = Input;
 
@@ -165,7 +166,16 @@ const WorkflowsList: React.FC = () => {
  }
  />
  <Card style={{ marginTop: space.md }}>
- <ResponsiveTableAdapter dataSource={workflows} columns={columns} loading={loading} rowKey="id" />
+ <ListWithEmptyState
+ entity="workflow"
+ data={workflows}
+ loading={loading}
+ onCreate={() => { form.resetFields(); setModalOpen(true); }}
+ onRetry={() => void fetchWorkflows()}
+ render={(rows) => (
+ <ResponsiveTableAdapter dataSource={rows} columns={columns} loading={loading} rowKey="id" />
+ )}
+ />
  </Card>
 
  <FormDialog

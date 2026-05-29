@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/field-service", tags=["Field Service"])
 
@@ -180,7 +181,7 @@ def cancel_order(oid: str, body: dict, user: dict = Depends(get_current_user)):
 
 @router.get("/dashboard")
 def fs_dashboard(user: dict = Depends(get_current_user)):
-    items, _ = FSServiceOrderRepo(user["org_id"]).list(limit=10000)
+    items = collect_stream(FSServiceOrderRepo(user["org_id"]), max_docs=10000)
     by_status: dict[str, int] = {}
     for o in items:
         by_status[o.get("status", "draft")] = by_status.get(o.get("status", "draft"), 0) + 1

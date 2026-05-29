@@ -16,6 +16,17 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* Path alias — EP-FINAL reconciliation:
+     * Specs and docs reference `@/...` imports (e.g. `@/design-system/empty`).
+     * Real code uses relative paths; the alias is registered here purely so
+     * future code (or copy-pasted snippets from the spec) compiles without
+     * a refactor pass. The matching Vite resolver lives in `vite.config.ts`.
+     */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
     /* Linting */
     "strict": true,
     "noUnusedLocals": false,

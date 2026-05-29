@@ -1,0 +1,139 @@
+{
+  "$schema": "https://firebase.google.com/docs/test-lab/android/test-types",
+  "_comment": [
+    "Iraqi top-12 device matrix for Firebase Test Lab pre-launch report.",
+    "Spec ref: growth-to-100/design.md §5.6, requirements.md §R5.12.",
+    "Source: GfK Iraq smartphone market share Q1-2026; refreshed annually.",
+    "Phones grouped into Samsung Galaxy A-series + Xiaomi Redmi + Honor X.",
+    "API levels span 30 (Android 11) → 34 (Android 14) for max coverage.",
+    "iPhone 11 included as a reference device for iOS pre-flight smoke (",
+    "Test Lab does NOT run iOS — iOS QA happens via Xcode Cloud or manual TestFlight)."
+  ],
+  "android": [
+    {
+      "model": "a03",
+      "marketing_name": "Samsung Galaxy A03",
+      "version": "30",
+      "locale": "ar",
+      "orientation": "portrait",
+      "_rationale": "Cheapest currently-shipping Samsung in Iraq; baseline RAM 3 GB."
+    },
+    {
+      "model": "a04",
+      "marketing_name": "Samsung Galaxy A04",
+      "version": "30",
+      "locale": "ar",
+      "orientation": "portrait",
+      "_rationale": "Mid-tier entry; tests RAM 4 GB / Android 11."
+    },
+    {
+      "model": "a14",
+      "marketing_name": "Samsung Galaxy A14",
+      "version": "33",
+      "locale": "ar",
+      "orientation": "portrait",
+      "_rationale": "Best-seller 2024; Android 13 baseline."
+    },
+    {
+      "model": "a24",
+      "marketing_name": "Samsung Galaxy A24",
+      "version": "33",
+      "locale": "ku",
+      "orientation": "portrait",
+      "_rationale": "Tests Sorani locale fallback (Kurdish) when not in OS list."
+    },
+    {
+      "model": "a52",
+      "marketing_name": "Samsung Galaxy A52",
+      "version": "33",
+      "locale": "ar",
+      "orientation": "portrait",
+      "_rationale": "Mid-high; tests 90Hz refresh + OLED dark mode."
+    },
+    {
+      "model": "a54",
+      "marketing_name": "Samsung Galaxy A54",
+      "version": "34",
+      "locale": "ar",
+      "orientation": "portrait",
+      "_rationale": "Premium-mid 2024; Android 14 + edge cases for window insets."
+    },
+    {
+      "model": "redmi9a",
+      "marketing_name": "Xiaomi Redmi 9A",
+      "version": "30",
+      "locale": "ar",
+      "orientation": "portrait",
+      "_rationale": "Largest entry-level Xiaomi installed base in Iraq; tests MIUI quirks."
+    },
+    {
+      "model": "redmi10",
+      "marketing_name": "Xiaomi Redmi 10",
+      "version": "31",
+      "locale": "ar",
+      "orientation": "portrait",
+      "_rationale": "Tests 50MP camera + scanner integration."
+    },
+    {
+      "model": "redmi12",
+      "marketing_name": "Xiaomi Redmi 12",
+      "version": "33",
+      "locale": "ar",
+      "orientation": "portrait",
+      "_rationale": "Currently top-3 selling Xiaomi in Baghdad."
+    },
+    {
+      "model": "honorx6",
+      "marketing_name": "Honor X6",
+      "version": "31",
+      "locale": "ar",
+      "orientation": "portrait",
+      "_rationale": "Honor brand surged 2024 in Erbil + Sulaymaniyah."
+    },
+    {
+      "model": "honorx7",
+      "marketing_name": "Honor X7",
+      "version": "33",
+      "locale": "ku",
+      "orientation": "portrait",
+      "_rationale": "Mid-tier Honor; tests MagicUI overlay + Kurdish locale."
+    }
+  ],
+  "ios_reference": [
+    {
+      "model": "iPhone 11",
+      "version": "16.7",
+      "_rationale": "Common in Iraqi second-hand market; iOS reference for manual smoke. Not run by Test Lab."
+    },
+    {
+      "model": "iPhone 13",
+      "version": "17.0",
+      "_rationale": "Current iPhone reference for Display zoom + Dynamic Type."
+    }
+  ],
+  "robo_test_seed_intents": [
+    {
+      "_comment": "Robo crawler enters these screens via deep link to maximize coverage.",
+      "intent": "android.intent.action.VIEW",
+      "uri": "https://app.zoho-kurdish.iq/pos",
+      "package": "com.zoho.kurdishierp"
+    },
+    {
+      "intent": "android.intent.action.VIEW",
+      "uri": "https://app.zoho-kurdish.iq/invoices",
+      "package": "com.zoho.kurdishierp"
+    }
+  ],
+  "robo_test_credentials": {
+    "_comment": "Test Lab cannot complete login on its own; provide a script for the demo tenant.",
+    "username_resource": "@string/test_username",
+    "username": "qa-testlab@zoho-kurdish.iq",
+    "password_resource": "@string/test_password"
+  },
+  "_acceptance_thresholds": {
+    "max_new_crashes": 0,
+    "max_anr_ratio": 0.001,
+    "max_startup_p95_ms": 3500,
+    "max_app_not_responding": 0
+  }
+}

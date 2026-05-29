@@ -22,6 +22,19 @@ const zohoDesignTokens = require('./eslint-plugins/index.cjs')
  */
 const zohoI18n = require('./eslint-rules/index.cjs')
 
+/**
+ * Custom React Query rules — enforce freshness classes on every query and
+ * require precise invalidation targets (world-class-performance R2.1).
+ *
+ * The plugin lives at the repo root in `tools/eslint-rules/` so the same
+ * rules can be reused by other packages later. Loaded via `createRequire`
+ * because the plugin uses CommonJS `module.exports`.
+ *
+ * Both rules are wired as `warn` at first so the migration sweep can land
+ * incrementally; bump to `error` once the codebase is clean.
+ */
+const localQueryRules = require('../tools/eslint-rules/index.js')
+
 export default defineConfig([
   globalIgnores(['dist']),
   {
@@ -39,10 +52,17 @@ export default defineConfig([
     plugins: {
       'zoho-design-tokens': zohoDesignTokens,
       'zoho-i18n': zohoI18n,
+      local: localQueryRules,
     },
     rules: {
       // Flag hardcoded hex/rgb color values outside theme/tokens.ts (Req 1.4)
       'zoho-design-tokens/no-hardcoded-colors': 'warn',
+      // React Query data-layer discipline (world-class-performance R2.1)
+      'local/require-query-class': 'warn',
+      'local/precise-invalidation': 'warn',
+      // Empty-state + quick-create discipline (empty-state-quick-create §1.5)
+      'local/empty-state-required': 'warn',
+      'local/quick-create-select': 'warn',
     },
   },
   // Umbrella runtime layer (system-wide-ux-overhaul) — these directories are

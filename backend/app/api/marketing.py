@@ -6,8 +6,9 @@ Sprint 22 mail templates and Sprint 20 automation.
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+import logging
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel, EmailStr
 
 from app.firestore.marketing import (
     MarketingCampaignRepository,
@@ -24,6 +25,72 @@ from app.services.permissions import require_perm
 from app.services import settings_service
 
 router = APIRouter(prefix="/api/marketing", tags=["Marketing"])
+logger = logging.getLogger(__name__)
+
+# Canonical app limiter (same instance registered as app.state.limiter).
+from app.middleware.rate_limit import limiter
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# growth-to-100 § R1 / T-G.1.11 — public marketing lead capture
+# Posted by the Astro marketing site (contact + email-capture forms). This is a
+# PUBLIC, unauthenticated endpoint: module_gate passes through tokenless
+# requests, and leads land in the top-level ``marketing_leads`` collection for
+# the founder's sales review — they are NOT attached to any tenant CRM.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class MarketingLeadIn(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    company: Optional[str] = None
+    message: Optional[str] = None
+    plan: Optional[str] = None
+    source: Optional[str] = "marketing_site"
+    locale: Optional[str] = "ku"
+    # Honeypot: real visitors never see this field; bots fill it.
+    website: Optional[str] = None
+
+
+@router.post("/leads", status_code=202)
+@limiter.limit("10/minute")
+async def capture_marketing_lead(payload: MarketingLeadIn, request: Request):
+    """Capture a lead from the public marketing site (returns 202 Accepted)."""
+    # Honeypot tripped → pretend success and silently drop.
+    if payload.website:
+        return {"status": "accepted"}
+    if not (payload.email or payload.phone):
+        raise HTTPException(status_code=422, detail="email or phone is required")
+
+    from datetime import timezone
+
+    record = {
+        "name": (payload.name or "").strip()[:200],
+        "email": (str(payload.email) if payload.email else "").strip()[:200],
+        "phone": (payload.phone or "").strip()[:40],
+        "company": (payload.company or "").strip()[:200],
+        "message": (payload.message or "").strip()[:4000],
+        "plan": (payload.plan or "").strip()[:80],
+        "source": (payload.source or "marketing_site").strip()[:80],
+        "locale": (payload.locale or "ku").strip()[:8],
+        "status": "new",
+        "ip": (request.client.host if request.client else "")[:64],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    try:
+        from app.firebase_client import get_db
+
+        get_db().collection("marketing_leads").add(record)
+    except Exception as exc:  # pragma: no cover - persistence is best-effort
+        # Never surface a 5xx to a marketing visitor; log so the lead isn't lost.
+        logger.warning("marketing lead persist failed: %s", exc)
+        logger.info(
+            "marketing_lead_fallback %s",
+            {k: record[k] for k in ("email", "phone", "source")},
+        )
+    # TODO(T-G.1.11): notify sales@ + WhatsApp channel once those are configured.
+    return {"status": "accepted"}
 
 
 class CampaignCreate(BaseModel):

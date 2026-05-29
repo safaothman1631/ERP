@@ -41,6 +41,55 @@ jobs:
           except Exception as e:
               print("Import error (expected without Firebase creds):", e)
           PY
+      - name: Shopkeeper core tests
+        working-directory: backend
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ""
+          ALLOW_UNAUTH_IMPORT: "1"
+        run: |
+          python -m pytest tests/test_pos_inventory_qty.py tests/test_shopkeeper_core_flow.py tests/test_banking_reconciliation_summary.py tests/test_pos_accounting.py tests/test_bank_match_payment.py tests/test_shopkeeper_api_integration.py -q --tb=line
+      - name: Verify Firestore indexes manifest
+        run: python tools/verify_firestore_indexes.py
+      - name: Verify Firestore TTL overrides
+        run: python tools/verify_firestore_ttl.py
+      - name: Firestore repository audit (B5)
+        run: python tools/firestore_audit.py
+      - name: Region alignment (G5)
+        run: python tools/verify_region_alignment.py
+      - name: Firestore naming lint (Wave N)
+        run: python backend/tools/lint_naming.py
+      - name: Firestore field types lint (Wave V)
+        run: python backend/tools/lint_field_types.py
+      - name: PII coverage audit (Wave E)
+        run: python backend/scripts/audit_pii_coverage.py
+      - name: Pytest
+        working-directory: backend
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ""
+          ALLOW_UNAUTH_IMPORT: "1"
+        run: |
+          python -m pytest tests/ -q --tb=line --maxfail=5
+
+  e2e-scenarios:
+    name: E2E Business Scenarios
+    runs-on: ubuntu-latest
+    needs: [frontend]
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install
+        run: npm ci || npm install
+      - name: Install Playwright
+        run: npx playwright install chromium --with-deps
+      - name: Business scenario smoke tests
+        run: npx playwright test e2e/scenarios/ --reporter=line
 
   frontend:
     name: Frontend
@@ -67,6 +116,97 @@ jobs:
         run: npx vitest run src/locales/i18n.integration.test.ts --reporter=verbose
       - name: Build
         run: npm run build
+
+  # ─────────────────────────────────────────────────────────────────────
+  # T-LR.0.3 / 0.4 / 0.5 / 0.8 — Build-quality scripts (warn-only initially).
+  #
+  # These run in parallel and do not block the build until baselines
+  # stabilize. They depend on Node-only built-ins so they do not require
+  # an `npm install` to execute.
+  # ─────────────────────────────────────────────────────────────────────
+
+  typecheck-advisory:
+    name: Frontend typecheck (advisory)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install
+        run: npm ci || npm install
+      - name: tsc --noEmit (record to _deltas/tsc-baseline.txt)
+        run: |
+          mkdir -p ../_deltas
+          npx tsc --noEmit 2>&1 | tee ../_deltas/tsc-baseline.txt || true
+      - name: Upload tsc baseline
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tsc-baseline
+          path: _deltas/tsc-baseline.txt
+
+  orphan-check:
+    name: Orphan files check
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run check-orphans
+        run: node scripts/check-orphans.mjs --check
+      - name: Upload orphans report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orphans
+          path: audit/orphans.json
+
+  alias-verify:
+    name: TS / Vite alias parity
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run verify-aliases
+        run: node scripts/verify-aliases.mjs
+
+  truncation-check:
+    name: Truncation / parse-failure scan
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run detect-truncation
+        run: node scripts/detect-truncation.mjs
+      - name: Upload truncation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: truncation-suspects
+          path: audit/truncation-suspects.json
 
   lighthouse-a11y:
     name: Lighthouse Accessibility (≥ 95)

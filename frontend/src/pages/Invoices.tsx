@@ -8,6 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import ExportButton from '../components/ExportButton';
 import ChatterPanel from '../components/ChatterPanel';
+import { useListQuery } from '../api/queries/useListQuery';
+import { listQueryKeys } from '../api/queries/keys';
 import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
 import { downloadCsv } from '../utils/exportCsv';
 import { palette, space } from '../theme/tokens';
@@ -30,9 +32,6 @@ const noWrap: React.CSSProperties = { whiteSpace: 'nowrap' };
 const Invoices: React.FC = () => {
  const { t } = useTranslation();
  const navigate = useNavigate();
- const [data, setData] = useState<any[]>([]);
- const [loading, setLoading] = useState(false);
- const [total, setTotal] = useState(0);
  const [page, setPage] = useState(1);
  const [statusFilter, setStatusFilter] = useState('');
  const [retainerModal, setRetainerModal] = useState(false);
@@ -55,15 +54,13 @@ const Invoices: React.FC = () => {
 
  // AddGate: wire Selective Add for invoices section (R9.1, R9.5)
  const addGate = useAddGate('sales.invoices');
- const fetchData = async () => {
- setLoading(true);
- try {
- const res = await api.get('/api/invoices', { params: { page, status: statusFilter, page_size: 20 } });
- setData(res.data.items); setTotal(res.data.total);
- } catch { message.error(t('error')); } finally { setLoading(false); }
- };
-
- useEffect(() => { fetchData(); }, [page, statusFilter]);
+ const invoicesQuery = useListQuery<any, { items?: any[]; total?: number }>({
+ queryKey: listQueryKeys.invoices({ page, status: statusFilter, page_size: 20 }),
+ queryFn: () => api.get('/api/invoices', { params: { page, status: statusFilter, page_size: 20 } }),
+ });
+ const data = invoicesQuery.data?.items ?? [];
+ const total = invoicesQuery.data?.total ?? 0;
+ const loading = invoicesQuery.isLoading || invoicesQuery.isFetching;
 
  // Sync record count into AddGate store (R9.5, R9.6)
  useEffect(() => { addGate.setRecordCount(total); }, [total, addGate.setRecordCount]);
@@ -76,7 +73,7 @@ const Invoices: React.FC = () => {
  } else {
  message.success(t('success'));
  }
- fetchData();
+ void invoicesQuery.refetch();
  } catch { message.error(t('error')); }
  };
 
@@ -95,7 +92,7 @@ const Invoices: React.FC = () => {
  data: res.data as Record<string, unknown>,
  });
  if (action !== 'qr') {
- fetchData();
+ void invoicesQuery.refetch();
  }
  } catch {
  message.error(t('error'));
@@ -110,7 +107,7 @@ const Invoices: React.FC = () => {
  await api.post('/api/invoices/retainer', values);
  message.success(t('success'));
  setRetainerModal(false);
- fetchData();
+ void invoicesQuery.refetch();
  } catch { message.error(t('error')); } finally { setRetainerSaving(false); }
  };
 
@@ -133,7 +130,7 @@ const Invoices: React.FC = () => {
  });
  message.success(t('success'));
  setApplyRetainerModal(null);
- fetchData();
+ void invoicesQuery.refetch();
  } catch { message.error(t('error')); } finally { setApplyingSaving(false); }
  };
 
@@ -168,7 +165,7 @@ const Invoices: React.FC = () => {
  try {
  await api.post(`/api/invoices/${id}/send-reminder`);
  message.success(t('reminder_sent'));
- fetchData();
+ void invoicesQuery.refetch();
  } catch { message.error(t('error')); }
  };
 

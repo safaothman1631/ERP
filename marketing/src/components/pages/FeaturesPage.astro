@@ -1,0 +1,111 @@
+---
+import { t, type Locale } from '../../i18n/utils';
+import MarketingLayout from '../../layouts/MarketingLayout.astro';
+import FeaturesSection from '../sections/FeaturesSection.astro';
+import CTABanner from '../CTABanner.astro';
+
+export interface Props { locale: Locale; }
+const { locale } = Astro.props;
+
+const DEEP_DIVES: Record<Locale, Array<{ title: string; body: string; bullets: string[] }>> = {
+  en: [
+    { title: 'POS terminal — offline-first',
+      body: 'Built for Iraqi reality: power blinks, internet drops, the queue keeps moving. The POS runs on IndexedDB so every sale recorded offline syncs automatically when the network returns.',
+      bullets: ['ESC/POS thermal printers — Epson, Xprinter, Bixolon, generic 58mm BT', 'Hardware-pairing wizard for non-technical shopkeepers', 'Cash-drawer kick (pin-2 and pin-5)', 'Barcode scanners (HID + camera fallback via Web Worker)', 'Kitchen display for restaurants', 'IQD denomination breakdown built in'] },
+    { title: 'Accounting & invoicing',
+      body: 'Iraqi-style 5-digit chart of accounts pre-loaded. Dinar primary, USD secondary, CBI daily rate auto-fetched.',
+      bullets: ['Automatic withholding tax (3% / 5% / 2%)', 'VAT register and annual SMB filing', 'Dual-currency invoices', 'Audit-ready export ZIP', 'Recurring invoices and credit notes', 'Bank reconciliation with CSV import'] },
+    { title: 'Inventory & multi-location',
+      body: 'Track items, lots, expiry, and serial numbers across branches.',
+      bullets: ['Multi-warehouse with inter-branch transfers', 'Reorder points and low-stock alerts', 'Expiry alerts (pharmacy & restaurants)', 'Barcode label printing', 'Stocktake on mobile', 'COGS per item, per branch'] },
+    { title: 'Payroll',
+      body: 'Monthly payroll in Iraqi dinars with PDF payslips.',
+      bullets: ['Employee records', 'Payroll runs with overtime, deductions, bonuses', 'PDF payslip distribution', 'Annual summary for income-tax filing'] },
+    { title: 'e-Fakhata',
+      body: 'Ready for the 2026 Iraqi Ministry of Finance mandate.',
+      bullets: ['Full XML schema with signed XAdES envelopes', 'QR code on every invoice', 'Submission queue with retries', 'Audit register exportable for tax inspections'] },
+  ],
+  ku: [
+    { title: 'POS — ئۆفلاین-ـی یەکەم',
+      body: 'بۆ ڕاستی عێراق دروستکراوە: کارەبا دەکوژێتەوە، ئینتەرنێت دەچێت، ڕیزەکە بەردەوامە. POS لەسەر IndexedDB کار دەکات، فرۆشتنە ئۆفلاینەکان خۆکارانە سینک دەبن.',
+      bullets: ['چاپکەری ESC/POS — Epson، Xprinter، Bixolon', 'ویزاردی پەیوەستکردنی هاردوێر', 'کوژاندنەوەی دراوەی پارە', 'سکانەری بارکۆد', 'پەیامی چێشتخانە', 'دابەشکردنی پارە بە دینار'] },
+    { title: 'هەژمارداری و فاکتور',
+      body: 'هەژماری دەستە بە شێوازی عێراقی پێشتر بارکراوە. دینار سەرەکی، دۆلار دووەم.',
+      bullets: ['WHT خۆکار (٣٪/٥٪/٢٪)', 'تۆماری VAT و ڕاپۆرتی ساڵانە', 'فاکتوری دوو-دراوی', 'هەناردەی ZIP بۆ ئۆدیت', 'فاکتوری دووبارە', 'یەکخستنی بانک'] },
+    { title: 'ئەنبار و چەند فرۆشگا',
+      body: 'هەژمارکردنی کاڵا، چەند کۆگا، بەسەرچوون.',
+      bullets: ['ناردن لە نێوان فرۆشگاکان', 'ئاگادارکردنەوەی کەمی کۆگا', 'ئاگادارکردنەوەی بەسەرچوون', 'چاپکردنی لیبڵی بارکۆد', 'هەژمارکردنی کۆگا لە مۆبایل', 'COGS بۆ هەر کاڵا'] },
+    { title: 'مووچە',
+      body: 'مووچەی مانگانە بە دیناری عێراقی + PDF.',
+      bullets: ['تۆماری کارمەند', 'لێبڕاوەکان و بەخشینەکان', 'نموونەی مووچە', 'پوختەی ساڵانە'] },
+    { title: 'e-Fakhata',
+      body: 'ئامادە بۆ پێداگری MoF لە ٢٠٢٦.',
+      bullets: ['شێمای XML بە واژۆی XAdES', 'QR کۆد', 'ڕیزی ناردن', 'تۆماری ئۆدیت'] },
+  ],
+  ar: [
+    { title: 'نقطة بيع تعمل بدون إنترنت',
+      body: 'مصمم لواقع العراق: تنقطع الكهرباء، ينقطع الإنترنت، الطابور يستمر. POS يعمل عبر IndexedDB ويتزامن تلقائياً عند عودة الشبكة.',
+      bullets: ['طابعات ESC/POS الحرارية', 'معالج إقران الأجهزة', 'فتح درج النقود', 'ماسحات الباركود', 'شاشة المطبخ', 'تفصيل فئات الدينار'] },
+    { title: 'محاسبة وفوترة',
+      body: 'دليل حسابات عراقي بـ ٥ أرقام. الدينار أساسي، الدولار ثانوي.',
+      bullets: ['ضريبة الاستقطاع التلقائية (٣٪ / ٥٪ / ٢٪)', 'تقارير VAT والإقرار السنوي', 'فواتير بعملتين', 'تصدير ZIP للمراجعة', 'فواتير متكررة', 'مطابقة بنكية'] },
+    { title: 'المخزون والفروع',
+      body: 'تتبع الأصناف والدفعات والصلاحية.',
+      bullets: ['نقل بين الفروع', 'تنبيهات نفاد المخزون', 'تنبيهات الصلاحية', 'طباعة ملصقات الباركود', 'جرد بالموبايل', 'COGS لكل صنف'] },
+    { title: 'الرواتب',
+      body: 'رواتب شهرية بالدينار العراقي + قسائم PDF.',
+      bullets: ['سجلات الموظفين', 'الاستقطاعات والمكافآت', 'قسائم الرواتب', 'الملخص السنوي'] },
+    { title: 'الفاتورة الإلكترونية',
+      body: 'جاهز للتفويض الحكومي ٢٠٢٦.',
+      bullets: ['XML موقَّع XAdES', 'رمز QR', 'طابور تقديم', 'سجل المراجعة'] },
+  ],
+};
+const items = DEEP_DIVES[locale];
+---
+
+<MarketingLayout
+  locale={locale}
+  title={t('features.title', locale)}
+  description={t('features.sub', locale)}
+>
+  <section class="section pt-16">
+    <div class="container-marketing max-w-3xl text-center">
+      <h1 class="font-display font-bold text-4xl md:text-display-sm text-ink-950 mb-4 text-balance">
+        {t('features.title', locale)}
+      </h1>
+      <p class="text-lg text-ink-600 text-pretty">{t('features.sub', locale)}</p>
+    </div>
+  </section>
+
+  <FeaturesSection locale={locale} />
+
+  <section class="section bg-ink-50">
+    <div class="container-marketing space-y-12 max-w-4xl">
+      {items.map((it, i) => (
+        <article class="card lg:flex lg:gap-8 lg:items-start">
+          <div class="lg:w-1/3 mb-4 lg:mb-0">
+            <span class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-brand-50 text-brand-600 font-display font-bold text-xl mb-3">
+              {i + 1}
+            </span>
+            <h2 class="font-display font-bold text-2xl text-ink-900">{it.title}</h2>
+          </div>
+          <div class="lg:w-2/3">
+            <p class="text-ink-700 mb-4">{it.body}</p>
+            <ul class="space-y-2">
+              {it.bullets.map((b) => (
+                <li class="flex items-start gap-2 text-sm text-ink-700">
+                  <svg width="18" height="18" viewBox="0 0 18 18" class="text-accent-500 mt-0.5 flex-shrink-0" aria-hidden="true">
+                    <path d="M4 9l3.5 3.5L14 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span>{b}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <CTABanner locale={locale} />
+</MarketingLayout>

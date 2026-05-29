@@ -16,12 +16,32 @@ from typing import Any
 # XSS sanitization
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Tags that are never allowed even in rich-text contexts
-_DANGEROUS_TAGS = re.compile(
-    r"<\s*(script|iframe|object|embed|applet|form|input|button|link|meta|base|"
-    r"style|svg|math|template|slot|portal|frame|frameset|noframes|noscript|"
-    r"xss|vbscript)[^>]*>",
+# Tag names that are never allowed even in rich-text contexts.  Stripped by
+# both the paired-tag regex (which removes ``<tag>...</tag>`` plus everything
+# in between) and the orphan-tag regex (which removes self-closing or
+# unmatched dangerous tags).
+_DANGEROUS_TAG_NAMES = (
+    "script", "iframe", "object", "embed", "applet", "form", "input",
+    "button", "link", "meta", "base", "style", "svg", "math", "template",
+    "slot", "portal", "frame", "frameset", "noframes", "noscript",
+    "xss", "vbscript",
+)
+_DANGEROUS_TAG_ALT = "|".join(_DANGEROUS_TAG_NAMES)
+
+# Paired dangerous tags: ``<tag ...>...</tag>`` — the entire block including
+# inner content is removed (this is what stops ``<script>alert()</script>``
+# from leaking the inner ``alert()`` payload).  Lazy ``.*?`` so adjacent
+# blocks are not merged.
+_DANGEROUS_PAIRED_TAGS = re.compile(
+    rf"<\s*({_DANGEROUS_TAG_ALT})\b[^>]*>.*?<\s*/\s*\1\s*>",
     re.IGNORECASE | re.DOTALL,
+)
+
+# Orphan dangerous tags: opening tags without a matching close, void/self-
+# closing tags (``<embed ...>``, ``<input ...>``), and lone closing tags.
+_DANGEROUS_TAGS = re.compile(
+    rf"<\s*/?\s*({_DANGEROUS_TAG_ALT})\b[^>]*/?>",
+    re.IGNORECASE,
 )
 
 # Event handler attributes (onclick, onload, onerror, …)
@@ -45,12 +65,12 @@ def sanitize_html(value: str) -> str:
     data stored in Firestore and later rendered in the UI.
 
     The function:
-    1. Removes dangerous HTML tags (script, iframe, …).
-    2. Removes event-handler attributes (onclick, onload, …).
-    3. Removes javascript:/vbscript:/data: URI schemes.
-    4. Removes HTML comments.
-    5. HTML-encodes any remaining ``<`` and ``>`` characters that are not
-       part of an allowed tag (plain-text fields only).
+    1. Removes HTML comments (which can hide payloads from naive scanners).
+    2. Removes paired dangerous tags AND their inner content
+       (``<script>alert()</script>`` → ``""``).
+    3. Removes orphan/void dangerous tags (``<embed src=...>`` → ``""``).
+    4. Removes event-handler attributes (onclick, onload, …).
+    5. Removes javascript:/vbscript:/data: URI schemes.
 
     For plain-text fields (names, descriptions, etc.) use ``sanitize_text``
     which HTML-escapes everything.
@@ -64,13 +84,22 @@ def sanitize_html(value: str) -> str:
     if not isinstance(value, str):
         return value
 
-    # Step 1: remove HTML comments
+    # Step 1: remove HTML comments first so payloads hidden inside them are
+    # never seen by the tag regexes.
     value = _HTML_COMMENTS.sub("", value)
-    # Step 2: remove dangerous tags
+    # Step 2: remove paired dangerous tags with their inner content
+    # (e.g. <script>alert("xss")</script>).  Run repeatedly to handle nested
+    # or sibling blocks revealed after the first sweep.
+    while True:
+        new_value = _DANGEROUS_PAIRED_TAGS.sub("", value)
+        if new_value == value:
+            break
+        value = new_value
+    # Step 3: remove any remaining orphan/void dangerous tags
     value = _DANGEROUS_TAGS.sub("", value)
-    # Step 3: remove event handler attributes
+    # Step 4: remove event handler attributes
     value = _EVENT_ATTRS.sub("", value)
-    # Step 4: remove dangerous URI schemes
+    # Step 5: remove dangerous URI schemes
     value = _DANGEROUS_SCHEMES.sub("", value)
     return value
 

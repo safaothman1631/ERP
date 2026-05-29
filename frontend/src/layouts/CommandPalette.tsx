@@ -34,6 +34,11 @@ import { glass, palette, radius, shadow, space, zIndex } from '../theme/tokens';
 import { useNavStore } from '../stores/navStore';
 import { useAuthStore } from '../store';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { useOnboardingStore } from '../onboarding/store';
+import { usePermission } from '../hooks/usePermission';
+import { buildSettingsCommandItems } from '../settings/utils/settingsCommandItems';
+import { useRoleUx } from '../hooks/useRoleUx';
+import { applyNavProfile } from '../personas/navProfiles';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CommandItem interface — spec requirement 8 sub-task 3
@@ -110,6 +115,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
   const navigate = useNavigate();
   const { theme: appTheme } = useAuthStore();
   const recents = useNavStore((s) => s.recents);
+  const enabledModules = useOnboardingStore((s) => s.enabledModules);
+  const { role, permissions } = usePermission();
+  const { theme } = useRoleUx();
 
   const isDark = appTheme === 'dark';
   const isRTL = i18n.language === 'ku' || i18n.language === 'ar';
@@ -135,21 +143,28 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
 
   // Build the full search index on mount (and when recents/t changes)
   const allItems: CommandItem[] = useMemo(() => {
-    const sections = buildNavSections(t);
+    const sections = applyNavProfile(buildNavSections(t), theme.navProfile);
     const zones = buildNavZones(t);
     const flatRoutes = flattenRoutes(sections, zones);
 
-    // 1. Page items from navDestinations (via flattenRoutes)
     const pageItems: CommandItem[] = flatRoutes.map((item) => ({
       id: `page:${item.key}`,
       label: item.label,
-      labelEn: item.label, // fallback; ideally would have English label
+      labelEn: item.label,
       category: 'page' as const,
       icon: item.icon,
       action: () => navigate(item.key),
     }));
 
-    // 2. Quick actions
+    const roleActionItems: CommandItem[] = theme.quickActions.map((qa) => ({
+      id: `role:${qa.id}`,
+      label: t(qa.labelKey, qa.fallbackLabel),
+      labelEn: qa.fallbackLabel,
+      category: 'action' as const,
+      icon: <ThunderboltOutlined style={{ color: theme.accent }} />,
+      action: () => navigate(qa.route),
+    }));
+
     const actionItems: CommandItem[] = QUICK_ACTIONS.map((qa) => ({
       id: qa.id,
       label: t(qa.labelKey, qa.labelEn),
@@ -160,7 +175,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
       action: () => navigate(qa.path),
     }));
 
-    // 3. Recent items from navStore
     const recentItems: CommandItem[] = recents.map((r) => ({
       id: `recent:${r.key}`,
       label: r.label,
@@ -170,9 +184,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
       action: () => navigate(r.key),
     }));
 
-    // Order: recents first, then actions, then pages
-    return [...recentItems, ...actionItems, ...pageItems];
-  }, [t, recents, navigate]);
+    const settingsItems = buildSettingsCommandItems(t, navigate, enabledModules, role, permissions);
+
+    return [...recentItems, ...roleActionItems, ...actionItems, ...settingsItems, ...pageItems];
+  }, [t, recents, navigate, enabledModules, role, permissions, theme]);
 
   // Filtered results — synchronous, < 100ms for < 500 items
   const filtered = useMemo(() => searchItems(allItems, query), [allItems, query]);

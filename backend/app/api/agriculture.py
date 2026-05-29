@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/agriculture", tags=["Agriculture"])
 
@@ -152,7 +153,7 @@ def field_yield(fid: str, user: dict = Depends(get_current_user)):
     org = user["org_id"]
     plantings, _ = PlantingRepo(org).list(filters=[{"field": "field_id", "op": "==", "value": fid}], limit=500)
     pids = {p.get("id") for p in plantings}
-    harvests, _ = HarvestRepo(org).list(limit=10000)
+    harvests = collect_stream(HarvestRepo(org), max_docs=10000)
     relevant = [h for h in harvests if h.get("planting_id") in pids]
     total = sum(float(h.get("quantity", 0)) for h in relevant)
     return {"plantings": len(plantings), "harvests": len(relevant), "total_yield": total}

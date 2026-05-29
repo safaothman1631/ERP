@@ -10,6 +10,7 @@ import api from '../../api';
 import { useNavigate } from 'react-router-dom';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { ListWithEmptyState } from '../../design-system/empty/ListWithEmptyState';
 
 interface CustomReport {
  id: string;
@@ -172,12 +173,21 @@ const CustomReportsList: React.FC = () => {
  </Button>
  </div>
 
+ <ListWithEmptyState
+ entity="report"
+ data={data}
+ loading={loading}
+ onCreate={() => navigate('/reports/custom')}
+ onRetry={fetchData}
+ render={(rows) => (
  <ResponsiveTableAdapter
- dataSource={data}
+ dataSource={rows}
  columns={columns}
  loading={loading}
  rowKey="id"
  pagination={{ pageSize: 20 }}
+ />
+ )}
  />
 
  <FormDialog

@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/real-estate", tags=["Real Estate"])
 
@@ -159,8 +160,8 @@ def terminate_lease(lid: str, body: dict, user: dict = Depends(get_current_user)
 @router.get("/dashboard")
 def re_dashboard(user: dict = Depends(get_current_user)):
     org = user["org_id"]
-    units, _ = UnitRepo(org).list(limit=10000)
-    leases, _ = LeaseRepo(org).list(limit=10000)
+    units = collect_stream(UnitRepo(org), max_docs=10000)
+    leases = collect_stream(LeaseRepo(org), max_docs=10000)
     return {
         "total_units": len(units),
         "occupied_units": sum(1 for u in units if not u.get("is_available")),

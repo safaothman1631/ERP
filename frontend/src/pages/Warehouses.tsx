@@ -7,6 +7,7 @@ import api from '../api';
 import dayjs from 'dayjs';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
+import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { useAddGate } from '../components/AddGate/useAddGate';
 import { EmptyState as AddGateEmptyState } from '../components/AddGate/EmptyState';
 import { asTranslationKey } from '../i18n/types';
@@ -286,10 +287,10 @@ const StockTransfers: React.FC = () => {
  <Form form={form} layout="vertical" onFinish={handleSave} initialValues={{ date: dayjs() }}>
  <Space wrap>
  <Form.Item label={t('from')} name="from_warehouse_id" rules={[{ required: true, message: t('required_field') }]} style={{ width: 220 }}>
- <Select placeholder={t('placeholder_select')} options={warehouses.map(w => ({ label: w.name, value: w.id }))} />
+ <SelectWithQuickCreate entity="location" placeholder={t('placeholder_select')} allowClear />
  </Form.Item>
  <Form.Item label={t('to')} name="to_warehouse_id" rules={[{ required: true, message: t('required_field') }]} style={{ width: 220 }}>
- <Select placeholder={t('placeholder_select')} options={warehouses.map(w => ({ label: w.name, value: w.id }))} />
+ <SelectWithQuickCreate entity="location" placeholder={t('placeholder_select')} allowClear />
  </Form.Item>
  <Form.Item label={t('date')} name="date" rules={[{ required: true, message: t('required_date') }]}>
  <DatePicker placeholder={t('placeholder_date')} />

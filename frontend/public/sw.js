@@ -55,6 +55,26 @@ self.addEventListener('fetch', (event) => {
   // If the service worker fetches them, CSP treats them as connect-src.
   if (url.origin !== self.location.origin) return;
 
+  // Cache items catalog for POS offline product grid
+  if (
+    event.request.method === 'GET' &&
+    url.pathname === '/api/items' &&
+    (event.request.referrer || '').includes('/pos')
+  ) {
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(event.request, copy));
+          }
+          return res;
+        })
+        .catch(async () => (await caches.match(event.request)) || offlineResponse('Offline'))
+    );
+    return;
+  }
+
   // Bypass API and non-GET
   if (event.request.method !== 'GET' || url.pathname.startsWith('/api/')) return;
 

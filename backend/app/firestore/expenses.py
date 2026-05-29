@@ -1,9 +1,12 @@
 # Expense repositories
 from .base import BaseRepository
+from .write_models import ExpenseWriteModel
+
 
 class ExpenseRepository(BaseRepository):
     """Repository for expenses"""
     collection_name = "expenses"
+    WRITE_MODEL = ExpenseWriteModel
 
 
 class ExpenseClaimRepository(BaseRepository):

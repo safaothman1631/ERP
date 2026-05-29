@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/pharmacy", tags=["Pharmacy"])
 
@@ -116,7 +117,7 @@ _quick("/controlled-logs", ControlledLogRepo, ControlledLogCreate)
 
 @router.get("/expiring")
 def expiring_batches(days: int = Query(90, ge=1, le=365), user: dict = Depends(get_current_user)):
-    items, _ = DrugBatchRepo(user["org_id"]).list(limit=10000)
+    items = collect_stream(DrugBatchRepo(user["org_id"]), max_docs=10000)
     from datetime import timedelta
     cutoff = (datetime.utcnow() + timedelta(days=days)).date().isoformat()
     expiring = [b for b in items if (b.get("expiry_date") or "9999") <= cutoff]
@@ -126,6 +127,6 @@ def expiring_batches(days: int = Query(90, ge=1, le=365), user: dict = Depends(g
 @router.get("/check-interactions")
 def check_interactions(drug_ids: str, user: dict = Depends(get_current_user)):
     ids = [d.strip() for d in drug_ids.split(",") if d.strip()]
-    items, _ = InteractionRepo(user["org_id"]).list(limit=10000)
+    items = collect_stream(InteractionRepo(user["org_id"]), max_docs=10000)
     matches = [i for i in items if i.get("drug_a_id") in ids and i.get("drug_b_id") in ids]
     return {"items": matches, "total": len(matches)}

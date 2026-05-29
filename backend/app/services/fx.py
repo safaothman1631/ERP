@@ -17,6 +17,7 @@ from typing import Optional
 from decimal import Decimal, ROUND_HALF_UP
 
 from app.firestore.system import ExchangeRateRepository, SettingsRepository
+from app.services.report_streams import collect_stream
 
 BASE_CURRENCY_DEFAULT = "IQD"
 
@@ -76,7 +77,7 @@ class FXService:
             return 1.0
 
         repo = ExchangeRateRepository(org_id)
-        rates, _ = repo.list(limit=10000)
+        rates = collect_stream(repo, max_docs=10000)
 
         on_dt = _to_dt(on_date) or datetime.utcnow()
 

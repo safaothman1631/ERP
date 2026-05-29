@@ -6,6 +6,7 @@ import api from '../api';
 import { HelpIcon } from '../help/HelpIcon';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
+import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 
 interface Item { id: string; name: string; sku?: string; }
 interface Component { item_id: string; item_name?: string; quantity: number; unit?: string; }
@@ -93,7 +94,7 @@ export default function MfgBOMs() {
  <FormDialog open={open} onOk={save} onClose={() => setOpen(false)} title={editing ? t('edit_bom') : t('new_bom')}>
  <Form form={form} layout="vertical">
  <Form.Item name="product_id" label={t('product')} rules={[{ required: true }]}>
- <Select showSearch optionFilterProp="label" options={items.map(i => ({ value: i.id, label: i.name }))} />
+ <SelectWithQuickCreate entity="item" showSearch allowClear />
  </Form.Item>
  <Form.Item name="code" label={t('code')}><Input /></Form.Item>
  <Form.Item name="quantity" label={t('quantity')} initialValue={1}><InputNumber style={{ width: '100%' }} min={0.001} /></Form.Item>

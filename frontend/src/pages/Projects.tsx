@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { PageHeader, StatusTag } from '../design-system';
+import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { space } from '../theme/tokens';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
@@ -86,7 +87,7 @@ const Projects: React.FC = () => {
  <Form.Item label={t('name')} name="name" rules={[{ required: true }]}><Input /></Form.Item>
  <Form.Item label={t('description')} name="description"><Input.TextArea rows={2} /></Form.Item>
  <Form.Item label={t('customer')} name="contact_id">
- <Select allowClear showSearch optionFilterProp="label" options={contacts.map(c => ({ label: c.display_name, value: c.id }))} />
+ <SelectWithQuickCreate entity="customer" showSearch allowClear />
  </Form.Item>
  </Form>
  </FormDialog>

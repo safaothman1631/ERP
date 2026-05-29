@@ -1,0 +1,16 @@
+﻿=== Prereqs Report - 20260527-180341 ===
+Repo: C:\Users\SAFA\zoho
+Hard failures: 0
+
+Tool                      Required   Installed  Version
+--------------------------------------------------------------------------------
+Node.js (>=20)            True       True       v24.11.0
+npm                       True       True       11.6.1
+Python (>=3.11)           True       True       Python 3.13.4
+Git                       True       True       git version 2.51.2.windows.1
+GitHub CLI                True       True       gh version 2.92.0 (2026-04-28)
+Google Cloud SDK          True       True       Google Cloud SDK 566.0.0
+Vercel CLI                True       True       node.exe : Vercel CLI 48.11.0
+Docker Desktop            False      True       Docker version 29.1.2, build 890dcca
+
+See full log at: C:\Users\SAFA\zoho\deploy\logs\prereqs-20260527-180341.log

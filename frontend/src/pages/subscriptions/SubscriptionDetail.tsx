@@ -9,6 +9,7 @@ import { space } from '../../theme/tokens';
 import dayjs from 'dayjs';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
+import { RelatedDataPanel } from '../../design-system/empty/RelatedDataPanel';
 
 interface Subscription {
  id: string;
@@ -263,8 +264,16 @@ const SubscriptionDetail: React.FC = () => {
  </Descriptions>
  </Card>
 
- {dunning.length > 0 && (
  <Card title={t('subscription.dunning_history')} style={{ marginTop: space.md }}>
+ <RelatedDataPanel
+ entity="billing_event"
+ data={dunning}
+ loading={loading}
+ emptyTitleKey="subscription.no_dunning_title"
+ emptyTitleFallback="No dunning events yet"
+ emptyDescriptionKey="subscription.no_dunning_description"
+ emptyDescriptionFallback="Dunning events appear here when an invoice payment fails or retries."
+ >
  <ResponsiveTableAdapter
  columns={dunningColumns}
  dataSource={dunning}
@@ -272,8 +281,8 @@ const SubscriptionDetail: React.FC = () => {
  rowKey="id"
  pagination={false}
  />
+ </RelatedDataPanel>
  </Card>
- )}
 
  <FormDialog
  title={t('subscription.upgrade')}

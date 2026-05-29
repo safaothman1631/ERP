@@ -1,6 +1,8 @@
 import uuid
 from datetime import datetime, date
-from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from app.firestore.invoices import QuoteRepository, SalesOrderRepository, InvoiceRepository
 from app.firestore.taxes import TaxRateRepository
@@ -9,8 +11,16 @@ from app.firestore.organizations import OrganizationRepository
 from app.services.auth import get_current_user
 from app.services.pdf_generator import generate_quote_pdf
 from app.services import settings_service
+from app.services.state_machine import QUOTE_SM
+from app.services.module_gate import require_module
+from app.schemas.schemas import QuoteUpdate
+from app.services.versioned_update import apply_versioned_update
 
-router = APIRouter(prefix="/api/quotes", tags=["Quotes"])
+router = APIRouter(
+    prefix="/api/quotes",
+    tags=["Quotes"],
+    dependencies=[Depends(require_module("sales"))],
+)
 
 @router.get("")
 def list_quotes(page: int = Query(1), page_size: int = Query(20, le=500), status: str = Query(""),
@@ -44,7 +54,38 @@ def create_quote(data: dict, user: dict = Depends(get_current_user)):
     quote_number = seq_repo.get_next("quote")
     repo = QuoteRepository(user["org_id"])
     lines = data.pop("lines", [])
-    quote = repo.create({"id": str(uuid.uuid4()), "quote_number": quote_number, **data})
+
+    # Compute totals server-side so the list view's Total column is populated
+    # even when the client doesn't pre-aggregate. Mirrors invoices.py.
+    from app.api.invoices import _calculate_invoice_totals
+    tax_repo = TaxRateRepository(user["org_id"])
+    subtotal, total_tax = _calculate_invoice_totals(lines, tax_repo)
+    total = (
+        subtotal
+        + total_tax
+        + float(data.get("shipping_charge") or 0)
+        + float(data.get("adjustment") or 0)
+        - float(data.get("discount_amount") or 0)
+    )
+
+    quote_payload = {
+        "id": str(uuid.uuid4()),
+        "quote_number": quote_number,
+        "subtotal": subtotal,
+        "tax_amount": total_tax,
+        "total": total,
+        "status": data.get("status") or "draft",
+        **data,
+    }
+    # Don't let client-supplied total/subtotal/tax_amount silently override
+    # the server-computed ones; re-pin them after the spread.
+    quote_payload["subtotal"] = subtotal
+    quote_payload["tax_amount"] = total_tax
+    quote_payload["total"] = total
+    if not quote_payload.get("status"):
+        quote_payload["status"] = "draft"
+
+    quote = repo.create(quote_payload)
     if lines: repo.set_lines(quote["id"], lines)
     
     # Webhook: quote.created
@@ -53,7 +94,34 @@ def create_quote(data: dict, user: dict = Depends(get_current_user)):
         dispatch_event(user["org_id"], "quote.created", {"id": quote["id"]})
     except Exception:
         pass
+
+    try:
+        from app.services.automation_runner import fire_automated_actions
+        fire_automated_actions(user["org_id"], "quote", "on_create", quote)
+    except Exception:
+        pass
     
+    return quote
+
+
+@router.put("/{quote_id}")
+def update_quote(
+    quote_id: str,
+    data: QuoteUpdate,
+    user: dict = Depends(get_current_user),
+    if_match: Optional[str] = Header(None, alias="If-Match"),
+):
+    repo = QuoteRepository(user["org_id"])
+    quote = repo.get(quote_id)
+    if not quote or quote.get("org_id") != user["org_id"]:
+        raise HTTPException(status_code=404, detail="پێشنیار نەدۆزرایەوە")
+    if quote.get("status") not in ("draft",):
+        raise HTTPException(status_code=400, detail="تەنیا ڕەشنووس دەتوانرێت دەستکاری بکرێت")
+    update_data = data.model_dump(exclude_unset=True, exclude={"lines"})
+    quote = apply_versioned_update(repo, quote_id, update_data, if_match=if_match)
+    if data.lines is not None:
+        repo.set_lines(quote_id, [line.model_dump() for line in data.lines])
+        quote = repo.get(quote_id)
     return quote
 
 
@@ -104,8 +172,10 @@ def send_quote(quote_id: str, user: dict = Depends(get_current_user)):
     q = repo.get(quote_id)
     if not q or q.get("org_id") != user["org_id"]:
         raise HTTPException(status_code=404, detail="پێشنیار نەدۆزرایەوە")
-    if q.get("status") not in (None, "", "draft", "sent"):
-        raise HTTPException(status_code=400, detail=f"ناتوانرێت پێشنیاری دۆخی '{q.get('status')}' بنێردرێت")
+    current = (q.get("status") or "draft").lower()
+    if current == "sent":
+        return {"id": quote_id, "status": "sent"}
+    QUOTE_SM.transition(q, "sent")
     repo.update(quote_id, {"status": "sent", "sent_at": datetime.utcnow().isoformat()})
     return {"id": quote_id, "status": "sent"}
 
@@ -116,8 +186,7 @@ def accept_quote(quote_id: str, user: dict = Depends(get_current_user)):
     q = repo.get(quote_id)
     if not q or q.get("org_id") != user["org_id"]:
         raise HTTPException(status_code=404, detail="پێشنیار نەدۆزرایەوە")
-    if q.get("status") in ("invoiced", "declined", "expired"):
-        raise HTTPException(status_code=400, detail=f"ناتوانرێت پێشنیاری دۆخی '{q.get('status')}' قبوڵ بکرێت")
+    QUOTE_SM.transition(q, "accepted")
     repo.update(quote_id, {"status": "accepted", "accepted_at": datetime.utcnow().isoformat()})
     return {"id": quote_id, "status": "accepted"}
 
@@ -129,7 +198,12 @@ def decline_quote(quote_id: str, data: dict = None, user: dict = Depends(get_cur
     if not q or q.get("org_id") != user["org_id"]:
         raise HTTPException(status_code=404, detail="پێشنیار نەدۆزرایەوە")
     reason = (data or {}).get("reason", "")
-    repo.update(quote_id, {"status": "declined", "declined_at": datetime.utcnow().isoformat(), "decline_reason": reason})
+    QUOTE_SM.transition(q, "declined")
+    repo.update(quote_id, {
+        "status": "declined",
+        "declined_at": datetime.utcnow().isoformat(),
+        "decline_reason": reason,
+    })
     return {"id": quote_id, "status": "declined"}
 
 

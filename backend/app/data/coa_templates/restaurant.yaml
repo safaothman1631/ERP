@@ -1,0 +1,440 @@
+name: restaurant
+display_name_ku: چێشتخانە و کافێ
+display_name_ar: مطعم ومقهى
+display_name_en: Restaurant & Cafe
+recommended_for:
+  - restaurant
+  - cafe
+  - fast_food
+  - food_truck
+accounts:
+  # ===== Assets =====
+  - code: '10000'
+    name_en: Assets
+    name_ku: سامان
+    name_ar: الأصول
+    type: asset
+    parent: null
+    is_header: true
+  - code: '11000'
+    name_en: Current Assets
+    name_ku: سامانی ئێستا
+    name_ar: الأصول المتداولة
+    type: asset
+    parent: '10000'
+    is_header: true
+  - code: '11100'
+    name_en: Cash — Front of House (IQD)
+    name_ku: پارەی نەختی پێشەوە
+    name_ar: نقد — أمام المنزل
+    type: asset
+    parent: '11000'
+    is_cash: true
+    is_default_for: default_cash
+  - code: '11110'
+    name_en: Cash — Drawer Float
+    name_ku: پارەی دەستەی فرۆشتن
+    name_ar: نقدية الصندوق
+    type: asset
+    parent: '11000'
+    is_cash: true
+  - code: '11120'
+    name_en: Petty Cash
+    name_ku: پارەی بچووک
+    name_ar: المصروفات النثرية
+    type: asset
+    parent: '11000'
+    is_cash: true
+  - code: '11200'
+    name_en: Bank — Operating
+    name_ku: بانک — کارکردن
+    name_ar: البنك — التشغيل
+    type: asset
+    parent: '11000'
+    is_bank: true
+    is_default_for: default_bank
+  - code: '11300'
+    name_en: Accounts Receivable — Corporate Tabs
+    name_ku: حسابی وەرگرتن — شرکەت
+    name_ar: ذمم مدينة — حسابات الشركات
+    type: asset
+    parent: '11000'
+    is_default_for: default_accounts_receivable
+  - code: '11310'
+    name_en: Accounts Receivable — Delivery Platforms
+    name_ku: حسابی وەرگرتن — پلاتفۆرمی گەیاندن
+    name_ar: ذمم مدينة — منصات التوصيل
+    type: asset
+    parent: '11000'
+  - code: '11320'
+    name_en: Credit Card Receivable
+    name_ku: کرێدیت کارت
+    name_ar: ذمم بطاقات الائتمان
+    type: asset
+    parent: '11000'
+  # Food/beverage inventory broken out
+  - code: '11400'
+    name_en: Inventory — Food
+    name_ku: مەخزەن — خواردن
+    name_ar: المخزون — الأطعمة
+    type: asset
+    parent: '11000'
+    is_default_for: default_inventory
+  - code: '11410'
+    name_en: Inventory — Beverages (Non-Alcoholic)
+    name_ku: مەخزەن — شەراب
+    name_ar: المخزون — المشروبات
+    type: asset
+    parent: '11000'
+  - code: '11420'
+    name_en: Inventory — Paper & Disposables
+    name_ku: مەخزەن — کاغەز
+    name_ar: المخزون — أوراق ومستلزمات
+    type: asset
+    parent: '11000'
+  - code: '11430'
+    name_en: Inventory — Smallware
+    name_ku: مەخزەن — کەلوپەلی بچووک
+    name_ar: المخزون — أدوات صغيرة
+    type: asset
+    parent: '11000'
+  - code: '11500'
+    name_en: Prepaid Rent
+    name_ku: کرێی پێشدراو
+    name_ar: الإيجار المدفوع مقدمًا
+    type: asset
+    parent: '11000'
+  - code: '11510'
+    name_en: Prepaid Insurance
+    name_ku: بیمەی پێشدراو
+    name_ar: التأمين المدفوع مقدمًا
+    type: asset
+    parent: '11000'
+
+  # Fixed Assets
+  - code: '15000'
+    name_en: Fixed Assets
+    name_ku: سامانی جێگیر
+    name_ar: الأصول الثابتة
+    type: asset
+    parent: '10000'
+    is_header: true
+  - code: '15100'
+    name_en: Kitchen Equipment
+    name_ku: ئامێری چێشتخانە
+    name_ar: معدات المطبخ
+    type: asset
+    parent: '15000'
+  - code: '15110'
+    name_en: Accum. Depreciation — Kitchen
+    name_ku: کۆی خوارەبوون — چێشتخانە
+    name_ar: مجمع إهلاك المطبخ
+    type: asset
+    parent: '15000'
+  - code: '15200'
+    name_en: Furniture & Fixtures
+    name_ku: کەلوپەل
+    name_ar: الأثاث والتجهيزات
+    type: asset
+    parent: '15000'
+  - code: '15300'
+    name_en: POS Hardware
+    name_ku: ئامێری فرۆشگا
+    name_ar: أجهزة نقاط البيع
+    type: asset
+    parent: '15000'
+  - code: '15400'
+    name_en: Leasehold Improvements
+    name_ku: چاککردنەوەی کرێ
+    name_ar: تحسينات على عقار مستأجر
+    type: asset
+    parent: '15000'
+
+  # ===== Liabilities =====
+  - code: '20000'
+    name_en: Liabilities
+    name_ku: قەرزەکان
+    name_ar: الخصوم
+    type: liability
+    parent: null
+    is_header: true
+  - code: '21100'
+    name_en: Accounts Payable
+    name_ku: حسابی دانەوە
+    name_ar: الذمم الدائنة
+    type: liability
+    parent: '20000'
+    is_default_for: default_accounts_payable
+  - code: '21200'
+    name_en: Withholding Tax Payable
+    name_ku: باجی گرتنەوەی دانەوە
+    name_ar: ضريبة الاستقطاع المستحقة
+    type: liability
+    parent: '20000'
+    is_default_for: default_wht_payable
+  - code: '21300'
+    name_en: VAT Payable
+    name_ku: باجی بەرزکراوەی دانەوە
+    name_ar: ضريبة القيمة المضافة المستحقة
+    type: liability
+    parent: '20000'
+    is_default_for: default_vat_payable
+  - code: '21400'
+    name_en: Hospitality Tax Payable (10%)
+    name_ku: باجی خزمەتگوزاری
+    name_ar: ضريبة الضيافة المستحقة
+    type: liability
+    parent: '20000'
+  - code: '21500'
+    name_en: Tips Payable
+    name_ku: بەخشە
+    name_ar: الإكراميات المستحقة
+    type: liability
+    parent: '20000'
+  - code: '21600'
+    name_en: Wages Payable
+    name_ku: مووچەی دانەوە
+    name_ar: الرواتب المستحقة
+    type: liability
+    parent: '20000'
+  - code: '21700'
+    name_en: Gift Card Liability
+    name_ku: کارتی دیاری
+    name_ar: التزامات بطاقات الهدايا
+    type: liability
+    parent: '20000'
+  - code: '21800'
+    name_en: Deferred Revenue (Catering Deposits)
+    name_ku: داهاتی دواخراو
+    name_ar: إيرادات مؤجلة
+    type: liability
+    parent: '20000'
+
+  # ===== Equity =====
+  - code: '30000'
+    name_en: Equity
+    name_ku: سەرمایە
+    name_ar: حقوق الملكية
+    type: equity
+    parent: null
+    is_header: true
+  - code: '31000'
+    name_en: Owner's Capital
+    name_ku: سەرمایەی خاوەنکار
+    name_ar: رأس مال المالك
+    type: equity
+    parent: '30000'
+    is_default_for: default_owner_equity
+  - code: '32000'
+    name_en: Retained Earnings
+    name_ku: قازانجی پاشەکەوت
+    name_ar: الأرباح المحتجزة
+    type: equity
+    parent: '30000'
+    is_default_for: default_retained_earnings
+  - code: '33000'
+    name_en: Opening Balance Equity
+    name_ku: سەرمایەی سەرەتا
+    name_ar: رصيد افتتاحي
+    type: equity
+    parent: '30000'
+
+  # ===== Revenue =====
+  - code: '40000'
+    name_en: Revenue
+    name_ku: داهات
+    name_ar: الإيرادات
+    type: income
+    parent: null
+    is_header: true
+  - code: '41000'
+    name_en: Food Sales — Dine-In
+    name_ku: فرۆشتنی خواردن — لە کافێ
+    name_ar: مبيعات الطعام — داخل المطعم
+    type: income
+    parent: '40000'
+    is_default_for: default_sales_revenue
+  - code: '41100'
+    name_en: Food Sales — Takeout
+    name_ku: فرۆشتنی خواردن — بردنەوە
+    name_ar: مبيعات الطعام — خارجي
+    type: income
+    parent: '40000'
+  - code: '41200'
+    name_en: Food Sales — Delivery
+    name_ku: فرۆشتنی خواردن — گەیاندن
+    name_ar: مبيعات الطعام — توصيل
+    type: income
+    parent: '40000'
+  - code: '42000'
+    name_en: Beverage Sales
+    name_ku: فرۆشتنی شەراب
+    name_ar: مبيعات المشروبات
+    type: income
+    parent: '40000'
+  - code: '43000'
+    name_en: Catering Revenue
+    name_ku: داهاتی کاتەرینگ
+    name_ar: إيرادات الضيافة
+    type: income
+    parent: '40000'
+  - code: '44000'
+    name_en: Service Charge Revenue
+    name_ku: کرێی خزمەتگوزاری
+    name_ar: إيرادات رسوم الخدمة
+    type: income
+    parent: '40000'
+  - code: '45000'
+    name_en: Discounts & Comps
+    name_ku: داشکاندنەکان
+    name_ar: خصومات ومجاملات
+    type: income
+    parent: '40000'
+  - code: '46000'
+    name_en: Other Income
+    name_ku: داهاتی تر
+    name_ar: إيرادات أخرى
+    type: income
+    parent: '40000'
+
+  # ===== Cost of Goods Sold (Food cost) =====
+  - code: '50000'
+    name_en: Cost of Goods Sold
+    name_ku: نرخی کاڵای فرۆشراو
+    name_ar: تكلفة البضاعة المباعة
+    type: expense
+    parent: null
+    is_header: true
+  - code: '51000'
+    name_en: Food Cost
+    name_ku: نرخی خواردن
+    name_ar: تكلفة الطعام
+    type: expense
+    parent: '50000'
+    is_default_for: default_cogs
+  - code: '51100'
+    name_en: Beverage Cost
+    name_ku: نرخی شەراب
+    name_ar: تكلفة المشروبات
+    type: expense
+    parent: '50000'
+  - code: '51200'
+    name_en: Paper & Disposable Cost
+    name_ku: نرخی کاغەز
+    name_ar: تكلفة المستلزمات الورقية
+    type: expense
+    parent: '50000'
+  - code: '51300'
+    name_en: Inventory Waste & Spoilage
+    name_ku: فڕێدراوی مەخزەن
+    name_ar: الفاقد والتلف بالمخزون
+    type: expense
+    parent: '50000'
+
+  # ===== Labor =====
+  - code: '60000'
+    name_en: Labor
+    name_ku: کارکردن
+    name_ar: العمالة
+    type: expense
+    parent: null
+    is_header: true
+  - code: '61000'
+    name_en: Kitchen Wages
+    name_ku: مووچەی چێشتخانە
+    name_ar: رواتب المطبخ
+    type: expense
+    parent: '60000'
+  - code: '61100'
+    name_en: Front of House Wages
+    name_ku: مووچەی پێشەوە
+    name_ar: رواتب الخدمة
+    type: expense
+    parent: '60000'
+  - code: '61200'
+    name_en: Management Salaries
+    name_ku: مووچەی بەڕێوەبەر
+    name_ar: رواتب الإدارة
+    type: expense
+    parent: '60000'
+  - code: '61300'
+    name_en: Tip-Out Expense
+    name_ku: بەخشە
+    name_ar: مصاريف توزيع الإكراميات
+    type: expense
+    parent: '60000'
+  - code: '61400'
+    name_en: Payroll Taxes
+    name_ku: باجی مووچە
+    name_ar: ضرائب الرواتب
+    type: expense
+    parent: '60000'
+
+  # ===== Occupancy & Operating =====
+  - code: '70000'
+    name_en: Operating Expenses
+    name_ku: خەرجی کارکردن
+    name_ar: المصروفات التشغيلية
+    type: expense
+    parent: null
+    is_header: true
+  - code: '71000'
+    name_en: Rent
+    name_ku: کرێ
+    name_ar: الإيجار
+    type: expense
+    parent: '70000'
+  - code: '72000'
+    name_en: Utilities
+    name_ku: کارەبا و ئاو
+    name_ar: المرافق
+    type: expense
+    parent: '70000'
+  - code: '72100'
+    name_en: Gas (Cooking)
+    name_ku: گازی چێشتلێنان
+    name_ar: غاز الطبخ
+    type: expense
+    parent: '70000'
+  - code: '73000'
+    name_en: Marketing & Promotions
+    name_ku: ڕیکلام
+    name_ar: التسويق والترويج
+    type: expense
+    parent: '70000'
+  - code: '74000'
+    name_en: Cleaning & Sanitation
+    name_ku: پاککردنەوە
+    name_ar: التنظيف والصرف
+    type: expense
+    parent: '70000'
+  - code: '75000'
+    name_en: Equipment Maintenance
+    name_ku: چاکسازی ئامێر
+    name_ar: صيانة المعدات
+    type: expense
+    parent: '70000'
+  - code: '76000'
+    name_en: Delivery Platform Commission
+    name_ku: کۆمیشنی گەیاندن
+    name_ar: عمولات منصات التوصيل
+    type: expense
+    parent: '70000'
+  - code: '77000'
+    name_en: Credit Card Fees
+    name_ku: کرێی کرێدیت کارت
+    name_ar: عمولات بطاقات الائتمان
+    type: expense
+    parent: '70000'
+  - code: '78000'
+    name_en: Insurance
+    name_ku: بیمە
+    name_ar: التأمين
+    type: expense
+    parent: '70000'
+  - code: '79000'
+    name_en: Depreciation
+    name_ku: خوارەبوون
+    name_ar: الإهلاك
+    type: expense
+    parent: '70000'

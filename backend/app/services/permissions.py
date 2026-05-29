@@ -11,8 +11,8 @@ _MODULES = [
     "contacts", "items", "inventory", "warehouses",
     "bank", "accounts", "journals", "taxes", "reports",
     "projects", "tasks", "timesheets", "assets",
-    "hr", "hr.payroll", "hr.attendance", "hr.timeoff",
-    "crm", "crm.leads",
+    "hr", "payroll", "hr.payroll", "hr.attendance", "hr.timeoff",
+    "manufacturing", "crm", "crm.leads",
     "pos", "marketing",
     "settings", "rbac", "audit",
 ]
@@ -26,9 +26,25 @@ for m in _MODULES:
 ALL_PERMISSIONS += [
     "rbac.manage",       # create/edit roles
     "audit.view_all",    # see logs of other users
+    "audit.read",
     "reports.export",
+    "reports.write",
     "settings.billing",
+    "settings.numbering",
+    "settings.fiscal",
     "org.manage",
+    "privacy.export",
+    # SF2 GDPR/PDPL data-rights (T-SF.2.22): tenant-admin self-service erasure.
+    # ``privacy.export`` (above) already gates the data-export request; erasure
+    # is a strictly more dangerous action so it carries its own code.
+    "privacy.erasure",
+    # Simplified read/write/delete aliases (Phase 2 RBAC sweep)
+    "bank.write", "hr.write", "payroll.write",
+    "manufacturing.write", "crm.write", "projects.write",
+    # Account workflow permissions
+    "accounts.fx_revalue", "accounts.budget", "accounts.close_fy",
+    "accounts.post_je", "accounts.reverse_je",
+    "inventory.shipment",
     # POS-specific permissions
     "pos.view",          # view POS data
     "pos.manage",        # manage configs and sessions
@@ -36,7 +52,45 @@ ALL_PERMISSIONS += [
     "pos.discount",      # apply discounts
     "pos.force_close",   # force close sessions
     "pos.admin",         # full POS admin
+    "purchase.receive_shortcut",  # mark PO received without GRN
+    # Module licensing
+    "platform.manage",
+    "modules.request",
+    "modules.approve",
+    "modules.view",
+    # Quick-create entities (launch-readiness § R2) — codes match the
+    # frontend quickCreateRegistry so client gating and server enforcement agree.
+    "expenses.create_category",
+    "equipment.create_category",
+    "currencies.create",
+    "tags.create",
+    "payments.create_method",
+    "teams.create",
+    "subscriptions.create_plan",
+    "bank_accounts.create",
+    "locations.create",
+    # SaaS billing (launch-readiness § R5) — tenant-side actions on their own
+    # subscription. ``settings.billing`` already exists above and is the
+    # required code for change_plan/cancel/restart; super-admin endpoints in
+    # ``saas_admin.py`` bypass require_perm via _require_platform_admin.
+    "saas_billing.read",
+    "saas_billing.write",
 ]
+
+# write/create/update and module aliases used by user_has_perm
+_ACTION_ALIASES = {
+    "write": {"write", "create", "update"},
+    "read": {"read"},
+    "delete": {"delete"},
+    "create": {"create", "write"},
+    "update": {"update", "write"},
+}
+_MODULE_ALIASES = {
+    "payroll": {"payroll", "hr.payroll"},
+    "hr.payroll": {"payroll", "hr.payroll"},
+    "manufacturing": {"manufacturing", "inventory"},
+    "inventory": {"manufacturing", "inventory"},
+}
 
 
 # ===== Default roles =====
@@ -49,6 +103,21 @@ DEFAULT_ROLES = {
         "name": "Administrator",
         "name_ku": "بەڕێوەبەر",
         "permissions": ["*"],  # wildcard
+    },
+    "owner": {
+        "name": "Owner",
+        "name_ku": "خاوەن",
+        "permissions": ["*"],
+    },
+    "super_admin": {
+        "name": "Super Administrator",
+        "name_ku": "سوپەر ئادمین",
+        "permissions": ["*"],
+    },
+    "platform_admin": {
+        "name": "Platform Administrator",
+        "name_ku": "بەڕێوەبەری پلاتفۆرم",
+        "permissions": ["platform.manage", "modules.approve", "modules.view"],
     },
     "accountant": {
         "name": "Accountant",
@@ -74,12 +143,12 @@ DEFAULT_ROLES = {
     "inventory": {
         "name": "Inventory Manager",
         "name_ku": "بەڕێوەبەری مەخزەن",
-        "permissions": _all_of("inventory", "warehouses", "items"),
+        "permissions": _all_of("inventory", "warehouses", "items", "manufacturing"),
     },
     "hr_manager": {
         "name": "HR Manager",
         "name_ku": "بەڕێوەبەری HR",
-        "permissions": _all_of("hr", "hr.payroll", "hr.attendance", "hr.timeoff"),
+        "permissions": _all_of("hr", "payroll", "hr.payroll", "hr.attendance", "hr.timeoff"),
     },
     "hr_employee": {
         "name": "Employee (Self-service)",
@@ -121,9 +190,9 @@ DEFAULT_ROLES = {
 
 def get_user_permissions(user: dict) -> Set[str]:
     """Resolve the full permission set of a user, combining legacy `role` and RBAC assignments."""
-    # Legacy: user["role"] == "admin" means everything
+    # Legacy: admin/owner means everything
     legacy_role = user.get("role")
-    if legacy_role == "admin":
+    if legacy_role in ("admin", "owner", "super_admin"):
         return {"*"}
 
     perms: Set[str] = set()
@@ -164,14 +233,26 @@ def get_user_permissions(user: dict) -> Set[str]:
     return perms
 
 
+def _expand_perm_codes(code: str) -> Set[str]:
+    """Return permission codes that satisfy the requested code."""
+    if "." not in code:
+        return {code}
+    module, action = code.rsplit(".", 1)
+    modules = _MODULE_ALIASES.get(module, {module})
+    actions = _ACTION_ALIASES.get(action, {action})
+    return {f"{m}.{a}" for m in modules for a in actions}
+
+
 def user_has_perm(user: dict, code: str) -> bool:
     perms = get_user_permissions(user)
-    if "*" in perms or code in perms:
+    if "*" in perms:
         return True
-    # Wildcard module: "invoices.*"
-    module = code.split(".", 1)[0]
-    if f"{module}.*" in perms:
-        return True
+    for candidate in _expand_perm_codes(code):
+        if candidate in perms:
+            return True
+        module = candidate.split(".", 1)[0]
+        if f"{module}.*" in perms:
+            return True
     return False
 
 

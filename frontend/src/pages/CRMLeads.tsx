@@ -3,7 +3,10 @@ import { Button, Form, Input, InputNumber, Select, Space, Tag, message, Popconfi
 import { PlusOutlined, ReloadOutlined, SwapOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
+import { useListQuery } from '../api/queries/useListQuery';
+import { listQueryKeys } from '../api/queries/keys';
 import ExportButton from '../components/ExportButton';
+import ChatterWidget from '../components/chatter/ChatterWidget';
 import { PageHeader, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
 import { downloadCsv } from '../utils/exportCsv';
 import { space as spaceTk } from '../theme/tokens';
@@ -30,11 +33,10 @@ const SOURCES = ['website', 'referral', 'event', 'cold_call', 'import', 'whatsap
 
 export default function CRMLeads() {
  const { t } = useTranslation();
- const [leads, setLeads] = useState<Lead[]>([]);
  const [stages, setStages] = useState<Stage[]>([]);
- const [loading, setLoading] = useState(false);
  const [createOpen, setCreateOpen] = useState(false);
  const [convertOpen, setConvertOpen] = useState<Lead | null>(null);
+ const [viewLead, setViewLead] = useState<Lead | null>(null);
  const [createForm] = Form.useForm();
  const [convertForm] = Form.useForm();
  const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
@@ -42,23 +44,27 @@ export default function CRMLeads() {
  });
  const isDark = useAuthStore((s) => s.theme === 'dark');
 
- const load = async () => {
- setLoading(true);
+ const leadsQuery = useListQuery<Lead, { items?: Lead[]; total?: number }>({
+ queryKey: listQueryKeys.crmLeads({ page_size: 200 }),
+ queryFn: () => api.get('/api/crm/leads', { params: { page_size: 200 } }),
+ });
+ const leads = leadsQuery.data?.items ?? [];
+ const loading = leadsQuery.isLoading || leadsQuery.isFetching;
+
+ const loadStages = async () => {
  try {
- const [l, s] = await Promise.all([
- api.get('/api/crm/leads', { params: { page_size: 200 } }),
- api.get('/api/crm/stages'),
- ]);
- setLeads(l.data.items || []);
+ const s = await api.get('/api/crm/stages');
  setStages(s.data.items || []);
  } catch {
  message.error(t('error'));
- } finally {
- setLoading(false);
  }
  };
 
- useEffect(() => { load(); }, []);
+ const load = async () => {
+ await Promise.all([leadsQuery.refetch(), loadStages()]);
+ };
+
+ useEffect(() => { void loadStages(); }, []);
 
  const onCreate = async () => {
  const v = await createForm.validateFields();
@@ -67,7 +73,7 @@ export default function CRMLeads() {
  message.success(t('saved'));
  setCreateOpen(false);
  createForm.resetFields();
- load();
+ await leadsQuery.refetch();
  } catch { message.error(t('error')); }
  };
 
@@ -79,14 +85,14 @@ export default function CRMLeads() {
  message.success(t('converted'));
  setConvertOpen(null);
  convertForm.resetFields();
- load();
+ await leadsQuery.refetch();
  } catch { message.error(t('error')); }
  };
 
  const onArchive = async (id: string) => {
  try {
  await api.delete(`/api/crm/leads/${id}`);
- load();
+ await leadsQuery.refetch();
  } catch { message.error(t('error')); }
  };
 
@@ -111,6 +117,7 @@ export default function CRMLeads() {
  key: 'actions',
  render: (_: unknown, r: Lead) => (
  <Space>
+ <Button onClick={() => setViewLead(r)}>{t('view')}</Button>
  <Button
  icon={<SwapOutlined />}
  disabled={r.status === 'converted'}
@@ -166,6 +173,15 @@ export default function CRMLeads() {
  <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
  </div>
  <ResponsiveTableAdapter rowKey="id" loading={loading} dataSource={leads} columns={visibleColumns} pagination={{ pageSize: 20 }} />
+
+ <FormDialog
+ title={viewLead?.name || t('lead')}
+ open={!!viewLead}
+ onClose={() => setViewLead(null)}
+ hideFooter
+ >
+ {viewLead?.id && <ChatterWidget entityType="lead" entityId={viewLead.id} />}
+ </FormDialog>
 
  <FormDialog
  title={t('new_lead')}

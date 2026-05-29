@@ -1,19 +1,42 @@
 /* eslint-disable react-refresh/only-export-components -- This file exports
  * the application's `RouteObject[]` route tree alongside a large number of
- * file-local `lazy()`-wrapped page aliases. The route array is a legitimate
- * non-component export that must coexist with these component bindings, so
- * Fast Refresh's "only-export-components" heuristic does not apply here.
- * Edits to the route tree correctly trigger a full reload.
+ * file-local `lazyWithRetry()`-wrapped page aliases. The route array is a
+ * legitimate non-component export that must coexist with these component
+ * bindings, so Fast Refresh's "only-export-components" heuristic does not
+ * apply here. Edits to the route tree correctly trigger a full reload.
  */
-import React, { lazy as _reactLazy, Suspense } from 'react';
+/**
+ * App route tree
+ * --------------
+ * Every route-level page is dynamically imported via `lazyWithRetry` (see
+ * `src/utils/lazyWithRetry.ts`) instead of `React.lazy`. This is enforced by
+ * `scripts/audit-lazy.mjs` and is required by R3.1, R3.4, R3.5 of the
+ * world-class-performance spec:
+ *
+ *   - **Convention:** `lazyWithRetry(() => import('./pages/Foo'), 'foo')`.
+ *     The second argument is a short, file-unique **kebab-case** chunk name
+ *     used as a Sentry tag when the chunk-load retries are exhausted.
+ *   - **Why retries:** Iraqi mobile networks drop the chunk request often
+ *     enough that a 3-step exponential backoff (500ms / 2s / 8s) recovers
+ *     the page on the second try in the common case.
+ *   - **Failure mode:** if all retries fail, the lazy promise resolves to a
+ *     localized `ChunkLoadErrorFallback` (`components/ChunkLoadErrorFallback`)
+ *     so the surrounding route shell stays mounted and the user sees a
+ *     "Reload page" CTA instead of a blank screen.
+ */
+import React, { Suspense } from 'react';
 import type { RouteObject } from 'react-router-dom';
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from './store';
+import { readSessionClaims } from './platform/utils/sessionClaims';
+import { postLoginPath } from './platform/utils/postLoginPath';
 import AppLayout from './layouts/AppShell';
 import Login from './pages/Login';
 import PageTransition from './components/PageTransition';
 import LandingPage from './pages/LandingPage';
 import { LoadingSkeleton } from './design-system/LoadingSkeleton';
+import { lazyWithRetry } from './utils/lazyWithRetry';
+import { useFeatureFlag } from './hooks/useFeatureFlag';
 
 /**
  * Shared Suspense fallback for all feature routes.
@@ -21,338 +44,324 @@ import { LoadingSkeleton } from './design-system/LoadingSkeleton';
  */
 const FeatureFallback = <LoadingSkeleton variant="table" />;
 
-// Hardened lazy loader: surfaces stringifiable errors so React's error reporter
-// cannot crash with "Cannot convert object to primitive value" when a chunk
-// fails to load or a module has the wrong shape.
-function lazy<T extends React.ComponentType<any>>(
-  loader: () => Promise<{ default: T } | T>
-) {
-  return _reactLazy(async () => {
-    let modulePath = '';
-    try {
-      // Best-effort: extract module path from the loader's source for diagnostics
-      modulePath = (loader.toString().match(/import\(['"`]([^'"`]+)['"`]\)/) || [])[1] || '';
-    } catch { /* noop */ }
-    try {
-      const mod: any = await loader();
-      if (typeof mod === 'function') return { default: mod as T };
-      if (mod && typeof mod === 'object') {
-        // Use `in` check so HMR proxies with getter-defined `default` also pass
-        if ('default' in mod && mod.default) return mod as { default: T };
-        // Heuristic fallback: if there is exactly one named export that looks like a component, use it
-        const keys = Object.keys(mod).filter((k) => k !== '__esModule');
-        if (keys.length === 1 && typeof mod[keys[0]] === 'function') {
-          return { default: mod[keys[0]] as T };
-        }
-        throw new Error(
-          `module "${modulePath || 'unknown'}" has no default export. exports=[${keys.join(',')}]`
-        );
-      }
-      throw new Error(`module "${modulePath || 'unknown'}" returned ${typeof mod}`);
-    } catch (err: any) {
-      let msg = 'unknown error';
-      try {
-        if (err == null) msg = 'null/undefined';
-        else if (typeof err === 'string') msg = err;
-        else if (err.message) msg = String(err.message);
-        else if (typeof err.toString === 'function') msg = err.toString();
-      } catch { msg = 'unstringifiable error'; }
-      // eslint-disable-next-line no-console
-      console.error(`[lazy] failed to load "${modulePath || 'unknown'}": ${msg}`);
-      throw new Error(`Lazy load failed: ${modulePath || 'unknown'} — ${msg}`);
-    }
-  });
-}
-
 // Task 19: Form Pages — feature-sliced form templates (Requirements 15.1–15.7)
-const InvoiceFormRedesign = lazy(() => import('./features/sales/invoices/InvoiceForm'));
-const BillFormRedesign = lazy(() => import('./features/purchases/bills/BillForm'));
-const PurchaseOrderFormRedesign = lazy(() => import('./features/purchases/purchase-orders/PurchaseOrderForm'));
+const InvoiceFormRedesign = lazyWithRetry(() => import('./features/sales/invoices/InvoiceForm'), 'invoice-form');
+const BillFormRedesign = lazyWithRetry(() => import('./features/purchases/bills/BillForm'), 'bill-form');
+const PurchaseOrderFormRedesign = lazyWithRetry(() => import('./features/purchases/purchase-orders/PurchaseOrderForm'), 'purchase-order-form');
 
 // Lazy-loaded pages
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Contacts = lazy(() => import('./pages/Contacts'));
-const Items = lazy(() => import('./pages/Items'));
-const ItemForm = lazy(() => import('./pages/ItemForm'));
-const Invoices = lazy(() => import('./pages/Invoices'));
-const InvoiceForm = lazy(() => import('./pages/InvoiceForm'));
-const Expenses = lazy(() => import('./pages/Expenses'));
-const Accounts = lazy(() => import('./pages/Accounts'));
-const Reports = lazy(() => import('./pages/Reports'));
-const AdvancedReports = lazy(() => import('./pages/AdvancedReports'));
-const ScheduledReports = lazy(() => import('./pages/reports/ScheduledReports'));
-const CustomReportBuilder = lazy(() => import('./pages/reports/CustomReportBuilder'));
-const CustomReportsList = lazy(() => import('./pages/reports/CustomReportsList'));
+const Dashboard = lazyWithRetry(() => import('./pages/dashboard/DashboardRouter'), 'dashboard-router');
+const Contacts = lazyWithRetry(() => import('./pages/Contacts'), 'contacts');
+const Items = lazyWithRetry(() => import('./pages/Items'), 'items');
+const ItemForm = lazyWithRetry(() => import('./pages/ItemForm'), 'item-form');
+const Invoices = lazyWithRetry(() => import('./pages/Invoices'), 'invoices');
+const InvoiceForm = lazyWithRetry(() => import('./pages/InvoiceForm'), 'pages-invoice-form');
+const Expenses = lazyWithRetry(() => import('./pages/Expenses'), 'expenses');
+const Accounts = lazyWithRetry(() => import('./pages/Accounts'), 'accounts');
+const Reports = lazyWithRetry(() => import('./pages/Reports'), 'reports');
+const AdvancedReports = lazyWithRetry(() => import('./pages/AdvancedReports'), 'advanced-reports');
+const ScheduledReports = lazyWithRetry(() => import('./pages/reports/ScheduledReports'), 'scheduled-reports');
+const CustomReportBuilder = lazyWithRetry(() => import('./pages/reports/CustomReportBuilder'), 'custom-report-builder');
+const CustomReportsList = lazyWithRetry(() => import('./pages/reports/CustomReportsList'), 'custom-reports-list');
+const EmbeddedAnalyticsDashboard = lazyWithRetry(() => import('./pages/reports/EmbeddedAnalyticsDashboard'), 'embedded-analytics-dashboard');
 // Wave U: Custom Dashboards
-const MyDashboards = lazy(() => import('./pages/dashboards/MyDashboards'));
-const DashboardView = lazy(() => import('./pages/dashboards/DashboardView'));
-const DashboardEditor = lazy(() => import('./pages/dashboards/DashboardEditor'));
-const SharedDashboards = lazy(() => import('./pages/dashboards/SharedDashboards'));
-const CRMLeads = lazy(() => import('./pages/CRMLeads'));
-const CRMPipeline = lazy(() => import('./pages/CRMPipeline'));
-const CRMActivities = lazy(() => import('./pages/CRMActivities'));
-const CRMInsights = lazy(() => import('./pages/CRMInsights'));
-const MyActivities = lazy(() => import('./pages/activities/MyActivities'));
-const ActivitiesDashboard = lazy(() => import('./pages/activities/ActivitiesDashboard'));
-const EInvoiceDashboard = lazy(() => import('./pages/EInvoiceDashboard'));
-const WhatsApp = lazy(() => import('./pages/WhatsApp'));
-const OCRReceipts = lazy(() => import('./pages/OCRReceipts'));
-const HRDashboard = lazy(() => import('./pages/HRDashboard'));
-const HREmployees = lazy(() => import('./pages/HREmployees'));
-const HRContracts = lazy(() => import('./pages/HRContracts'));
-const HRAttendance = lazy(() => import('./pages/HRAttendance'));
-const HRTimeOff = lazy(() => import('./pages/HRTimeOff'));
-const PayrollRules = lazy(() => import('./pages/PayrollRules'));
-const PayrollRuns = lazy(() => import('./pages/PayrollRuns'));
+const MyDashboards = lazyWithRetry(() => import('./pages/dashboards/MyDashboards'), 'my-dashboards');
+const DashboardView = lazyWithRetry(() => import('./pages/dashboards/DashboardView'), 'dashboard-view');
+const DashboardEditor = lazyWithRetry(() => import('./pages/dashboards/DashboardEditor'), 'dashboard-editor');
+const SharedDashboards = lazyWithRetry(() => import('./pages/dashboards/SharedDashboards'), 'shared-dashboards');
+const CRMLeads = lazyWithRetry(() => import('./pages/CRMLeads'), 'crm-leads');
+const CRMPipeline = lazyWithRetry(() => import('./pages/CRMPipeline'), 'crm-pipeline');
+const CRMActivities = lazyWithRetry(() => import('./pages/CRMActivities'), 'crm-activities');
+const CRMInsights = lazyWithRetry(() => import('./pages/CRMInsights'), 'crm-insights');
+const MyActivities = lazyWithRetry(() => import('./pages/activities/MyActivities'), 'my-activities');
+const ActivitiesDashboard = lazyWithRetry(() => import('./pages/activities/ActivitiesDashboard'), 'activities-dashboard');
+const EInvoiceDashboard = lazyWithRetry(() => import('./pages/EInvoiceDashboard'), 'e-invoice-dashboard');
+const WhatsApp = lazyWithRetry(() => import('./pages/WhatsApp'), 'whats-app');
+const OCRReceipts = lazyWithRetry(() => import('./pages/OCRReceipts'), 'ocr-receipts');
+const HRDashboard = lazyWithRetry(() => import('./pages/HRDashboard'), 'hr-dashboard');
+const HREmployees = lazyWithRetry(() => import('./pages/HREmployees'), 'hr-employees');
+const HRContracts = lazyWithRetry(() => import('./pages/HRContracts'), 'hr-contracts');
+const HRAttendance = lazyWithRetry(() => import('./pages/HRAttendance'), 'hr-attendance');
+const HRTimeOff = lazyWithRetry(() => import('./pages/HRTimeOff'), 'hr-time-off');
+const PayrollRules = lazyWithRetry(() => import('./pages/PayrollRules'), 'payroll-rules');
+const PayrollRuns = lazyWithRetry(() => import('./pages/PayrollRuns'), 'payroll-runs');
 // Wave AE: Onboarding + Mileage
-const OnboardingWizard = lazy(() => import('./pages/onboarding/OnboardingWizard'));
-const OnboardingChecklist = lazy(() => import('./pages/onboarding/OnboardingChecklist'));
-const MileageLog = lazy(() => import('./pages/mileage/MileageLog'));
-const MileageRates = lazy(() => import('./pages/mileage/MileageRates'));
-const MfgBOMs = lazy(() => import('./pages/MfgBOMs'));
-const MfgOrders = lazy(() => import('./pages/MfgOrders'));
-const MfgWorkCenters = lazy(() => import('./pages/MfgWorkCenters'));
-const Companies = lazy(() => import('./pages/Companies'));
-const ConsolidatedReports = lazy(() => import('./pages/ConsolidatedReports'));
-const BranchesComparison = lazy(() => import('./pages/BranchesComparison'));
-const Projects = lazy(() => import('./pages/Projects'));
-const ProjectGantt = lazy(() => import('./pages/ProjectGantt'));
-const Bills = lazy(() => import('./pages/Bills'));
-const Journals = lazy(() => import('./pages/Journals'));
-const Banking = lazy(() => import('./pages/Banking'));
-const Quotes = lazy(() => import('./pages/Quotes'));
-const QuoteForm = lazy(() => import('./pages/QuoteForm'));
-const SalesOrders = lazy(() => import('./pages/SalesOrders'));
-const PurchaseOrders = lazy(() => import('./pages/PurchaseOrders'));
-const CreditNotes = lazy(() => import('./pages/CreditNotes'));
-const VendorCredits = lazy(() => import('./pages/VendorCredits'));
-const RecurringInvoices = lazy(() => import('./pages/RecurringInvoices'));
-const Inventory = lazy(() => import('./pages/Inventory'));
-const TaxSettings = lazy(() => import('./pages/TaxSettings'));
-const Settings = lazy(() => import('./pages/Settings'));
-const Trash = lazy(() => import('./pages/Trash'));
-const DocsHub = lazy(() => import('./pages/DocsHub'));
-const UIGallery = lazy(() => import('./pages/UIGallery'));
+const OnboardingWizard = lazyWithRetry(() => import('./pages/onboarding/OnboardingWizard'), 'onboarding-wizard');
+const OnboardingChecklist = lazyWithRetry(() => import('./pages/onboarding/OnboardingChecklist'), 'onboarding-checklist');
+// growth-to-100 § R3 "first 60 seconds" wizard (distinct from the modal above).
+const GetStartedWizard = lazyWithRetry(() => import('./onboarding/OnboardingShell'), 'get-started-wizard');
+// growth-to-100 § G4a — Iraq e-Fakhata pages.
+const EFakhataDashboard = lazyWithRetry(() => import('./pages/efakhata/EFakhataDashboard'), 'efakhata-dashboard');
+const EFakhataSubmissionDetail = lazyWithRetry(() => import('./pages/efakhata/SubmissionDetail'), 'efakhata-submission-detail');
+const EFakhataCertManagement = lazyWithRetry(() => import('./pages/settings/efakhata/CertManagement'), 'efakhata-cert-management');
+const EFakhataAuditorExport = lazyWithRetry(() => import('./pages/settings/efakhata/AuditorExport'), 'efakhata-auditor-export');
+// growth-to-100 § G2 — super-admin tenant impersonation launcher.
+const ImpersonateTenant = lazyWithRetry(() => import('./pages/admin/ImpersonateTenant'), 'impersonate-tenant');
+const MileageLog = lazyWithRetry(() => import('./pages/mileage/MileageLog'), 'mileage-log');
+const MileageRates = lazyWithRetry(() => import('./pages/mileage/MileageRates'), 'mileage-rates');
+const MfgBOMs = lazyWithRetry(() => import('./pages/MfgBOMs'), 'mfg-bo-ms');
+const MfgOrders = lazyWithRetry(() => import('./pages/MfgOrders'), 'mfg-orders');
+const MfgWorkCenters = lazyWithRetry(() => import('./pages/MfgWorkCenters'), 'mfg-work-centers');
+const Companies = lazyWithRetry(() => import('./pages/Companies'), 'companies');
+const ConsolidatedReports = lazyWithRetry(() => import('./pages/ConsolidatedReports'), 'consolidated-reports');
+const BranchesComparison = lazyWithRetry(() => import('./pages/BranchesComparison'), 'branches-comparison');
+const Projects = lazyWithRetry(() => import('./pages/Projects'), 'projects');
+const ProjectGantt = lazyWithRetry(() => import('./pages/ProjectGantt'), 'project-gantt');
+const Bills = lazyWithRetry(() => import('./pages/Bills'), 'bills');
+const Journals = lazyWithRetry(() => import('./pages/Journals'), 'journals');
+const Banking = lazyWithRetry(() => import('./pages/Banking'), 'banking');
+const Quotes = lazyWithRetry(() => import('./pages/Quotes'), 'quotes');
+const QuoteForm = lazyWithRetry(() => import('./pages/QuoteForm'), 'quote-form');
+const SalesOrders = lazyWithRetry(() => import('./pages/SalesOrders'), 'sales-orders');
+const PurchaseOrders = lazyWithRetry(() => import('./pages/PurchaseOrders'), 'purchase-orders');
+const CreditNotes = lazyWithRetry(() => import('./pages/CreditNotes'), 'credit-notes');
+const VendorCredits = lazyWithRetry(() => import('./pages/VendorCredits'), 'vendor-credits');
+const RecurringInvoices = lazyWithRetry(() => import('./pages/RecurringInvoices'), 'recurring-invoices');
+const Inventory = lazyWithRetry(() => import('./pages/Inventory'), 'inventory');
+const TaxSettings = lazyWithRetry(() => import('./pages/TaxSettings'), 'tax-settings');
+const Settings = lazyWithRetry(() => import('./pages/Settings'), 'settings');
+// New decomposed Settings shell (P5). Currently flag-gated behind
+// `settings.new_shell` — see `SettingsRouter` below.
+const SettingsShellNext = lazyWithRetry(() => import('./pages/settings/SettingsShell'), 'settings-shell-next');
+const Trash = lazyWithRetry(() => import('./pages/Trash'), 'trash');
+const DocsHub = lazyWithRetry(() => import('./pages/DocsHub'), 'docs-hub');
+const UIGallery = lazyWithRetry(() => import('./pages/UIGallery'), 'ui-gallery');
 // Wave N: Fixed Assets
-const AssetCategories = lazy(() => import('./pages/assets/AssetCategories'));
-const FixedAssets = lazy(() => import('./pages/assets/FixedAssets'));
-const AssetDetail = lazy(() => import('./pages/assets/AssetDetail'));
-const DepreciationRun = lazy(() => import('./pages/assets/DepreciationRun'));
-const AssetReports = lazy(() => import('./pages/assets/AssetReports'));
-const BankRules = lazy(() => import('./pages/BankRules'));
-const BankReconciliation = lazy(() => import('./pages/BankReconciliation'));
-const ImportStatement = lazy(() => import('./pages/banking/ImportStatement'));
-const SmartMatch = lazy(() => import('./pages/banking/SmartMatch'));
-const BankImportHistory = lazy(() => import('./pages/banking/BankImportHistory'));
-const Warehouses = lazy(() => import('./pages/Warehouses'));
-const StockLocations = lazy(() => import('./pages/StockLocations'));
-const PutawayRules = lazy(() => import('./pages/PutawayRules'));
-const CycleCounts = lazy(() => import('./pages/CycleCounts'));
-const PriceLists = lazy(() => import('./pages/PriceLists'));
-const SerialNumbers = lazy(() => import('./pages/SerialNumbers'));
-const TaxReturns = lazy(() => import('./pages/TaxReturns'));
-const Shipments = lazy(() => import('./pages/Shipments'));
-const DeliveryChallans = lazy(() => import('./pages/DeliveryChallans'));
-const SalesReturns = lazy(() => import('./pages/SalesReturns'));
-const PurchaseReturns = lazy(() => import('./pages/PurchaseReturns'));
-const CustomFields = lazy(() => import('./pages/CustomFields'));
-const Approvals = lazy(() => import('./pages/Approvals'));
-const ApprovalRules = lazy(() => import('./pages/approvals/ApprovalRules'));
-const MyApprovals = lazy(() => import('./pages/approvals/MyApprovals'));
-const ApprovalDetail = lazy(() => import('./pages/approvals/ApprovalDetail'));
-const ExpenseClaims = lazy(() => import('./pages/ExpenseClaims'));
-const Branches = lazy(() => import('./pages/Branches'));
-const AuditLog = lazy(() => import('./pages/AuditLog'));
-const JobRunsLog = lazy(() => import('./pages/admin/JobRunsLog'));
-const PaymentLinks = lazy(() => import('./pages/PaymentLinks'));
-const IraqLocalization = lazy(() => import('./pages/IraqLocalization'));
-const RbacRoles = lazy(() => import('./pages/RbacRoles'));
-const UserRoles = lazy(() => import('./pages/UserRoles'));
-const Users = lazy(() => import('./pages/Users'));
-const AcceptInvite = lazy(() => import('./pages/AcceptInvite'));
-const SignUp = lazy(() => import('./pages/auth/RegisterPage'));
-const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
-const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const AssetCategories = lazyWithRetry(() => import('./pages/assets/AssetCategories'), 'asset-categories');
+const FixedAssets = lazyWithRetry(() => import('./pages/assets/FixedAssets'), 'fixed-assets');
+const AssetDetail = lazyWithRetry(() => import('./pages/assets/AssetDetail'), 'asset-detail');
+const DepreciationRun = lazyWithRetry(() => import('./pages/assets/DepreciationRun'), 'depreciation-run');
+const AssetReports = lazyWithRetry(() => import('./pages/assets/AssetReports'), 'asset-reports');
+const BankRules = lazyWithRetry(() => import('./pages/BankRules'), 'bank-rules');
+const BankReconciliation = lazyWithRetry(() => import('./pages/BankReconciliation'), 'bank-reconciliation');
+const ImportStatement = lazyWithRetry(() => import('./pages/banking/ImportStatement'), 'import-statement');
+const SmartMatch = lazyWithRetry(() => import('./pages/banking/SmartMatch'), 'smart-match');
+const BankImportHistory = lazyWithRetry(() => import('./pages/banking/BankImportHistory'), 'bank-import-history');
+const Warehouses = lazyWithRetry(() => import('./pages/Warehouses'), 'warehouses');
+const StockLocations = lazyWithRetry(() => import('./pages/StockLocations'), 'stock-locations');
+const PutawayRules = lazyWithRetry(() => import('./pages/PutawayRules'), 'putaway-rules');
+const CycleCounts = lazyWithRetry(() => import('./pages/CycleCounts'), 'cycle-counts');
+const PriceLists = lazyWithRetry(() => import('./pages/PriceLists'), 'price-lists');
+const SerialNumbers = lazyWithRetry(() => import('./pages/SerialNumbers'), 'serial-numbers');
+const TaxReturns = lazyWithRetry(() => import('./pages/TaxReturns'), 'tax-returns');
+const Shipments = lazyWithRetry(() => import('./pages/Shipments'), 'shipments');
+const DeliveryChallans = lazyWithRetry(() => import('./pages/DeliveryChallans'), 'delivery-challans');
+const SalesReturns = lazyWithRetry(() => import('./pages/SalesReturns'), 'sales-returns');
+const PurchaseReturns = lazyWithRetry(() => import('./pages/PurchaseReturns'), 'purchase-returns');
+const CustomFields = lazyWithRetry(() => import('./pages/CustomFields'), 'custom-fields');
+const Approvals = lazyWithRetry(() => import('./pages/Approvals'), 'approvals');
+const ApprovalRules = lazyWithRetry(() => import('./pages/approvals/ApprovalRules'), 'approval-rules');
+const MyApprovals = lazyWithRetry(() => import('./pages/approvals/MyApprovals'), 'my-approvals');
+const ApprovalDetail = lazyWithRetry(() => import('./pages/approvals/ApprovalDetail'), 'approval-detail');
+const ExpenseClaims = lazyWithRetry(() => import('./pages/ExpenseClaims'), 'expense-claims');
+const Branches = lazyWithRetry(() => import('./pages/Branches'), 'branches');
+const AuditLog = lazyWithRetry(() => import('./pages/AuditLog'), 'audit-log');
+const JobRunsLog = lazyWithRetry(() => import('./pages/admin/JobRunsLog'), 'job-runs-log');
+const PaymentLinks = lazyWithRetry(() => import('./pages/PaymentLinks'), 'payment-links');
+const IraqLocalization = lazyWithRetry(() => import('./pages/IraqLocalization'), 'iraq-localization');
+const RbacRoles = lazyWithRetry(() => import('./pages/RbacRoles'), 'rbac-roles');
+const UserRoles = lazyWithRetry(() => import('./pages/UserRoles'), 'user-roles');
+const Users = lazyWithRetry(() => import('./pages/Users'), 'users');
+const AcceptInvite = lazyWithRetry(() => import('./pages/AcceptInvite'), 'accept-invite');
+const SignUp = lazyWithRetry(() => import('./pages/auth/RegisterPage'), 'register-page');
+const ForgotPassword = lazyWithRetry(() => import('./pages/ForgotPassword'), 'forgot-password');
+const ResetPassword = lazyWithRetry(() => import('./pages/ResetPassword'), 'reset-password');
 // Auth module pages (Task 3.3)
-const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
-const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
+const RegisterPage = lazyWithRetry(() => import('./pages/auth/RegisterPage'), 'register-page');
+const LoginPage = lazyWithRetry(() => import('./pages/auth/LoginPage'), 'login-page');
 // Task 16: Login Page Redesign — features/auth/LoginPage with split-screen, Particles, glass morphism
-const LoginPageRedesign = lazy(() => import('./features/auth/LoginPage'));
-const MFAPage = lazy(() => import('./pages/auth/MFAPage'));
-const NotFound = lazy(() => import('./pages/NotFound'));
-const ServerError = lazy(() => import('./pages/ServerError'));
+const LoginPageRedesign = lazyWithRetry(() => import('./features/auth/LoginPage'), 'auth-login-page');
+const MFAPage = lazyWithRetry(() => import('./pages/auth/MFAPage'), 'mfa-page');
+const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'not-found');
+const ServerError = lazyWithRetry(() => import('./pages/ServerError'), 'server-error');
 // POS Pages
-const POSHub = lazy(() => import('./pages/pos/POSHub'));
-const POSTerminal = lazy(() => import('./pages/pos/POSTerminal'));
-const POSSessions = lazy(() => import('./pages/pos/POSSessions'));
-const POSSessionDetail = lazy(() => import('./pages/pos/POSSessionDetail'));
-const POSOrders = lazy(() => import('./pages/pos/POSOrders'));
-const POSConfigs = lazy(() => import('./pages/pos/POSConfigs'));
-const POSCategories = lazy(() => import('./pages/pos/POSCategories'));
-const POSProducts = lazy(() => import('./pages/pos/POSProducts'));
-const POSPricelists = lazy(() => import('./pages/pos/POSPricelists'));
-const POSFloors = lazy(() => import('./pages/pos/POSFloors'));
+const POSHub = lazyWithRetry(() => import('./pages/pos/POSHub'), 'pos-hub');
+const POSTerminal = lazyWithRetry(() => import('./pages/pos/POSTerminal'), 'pos-terminal');
+const POSSessions = lazyWithRetry(() => import('./pages/pos/POSSessions'), 'pos-sessions');
+const POSSessionDetail = lazyWithRetry(() => import('./pages/pos/POSSessionDetail'), 'pos-session-detail');
+const POSOrders = lazyWithRetry(() => import('./pages/pos/POSOrders'), 'pos-orders');
+const POSConfigs = lazyWithRetry(() => import('./pages/pos/POSConfigs'), 'pos-configs');
+const POSCategories = lazyWithRetry(() => import('./pages/pos/POSCategories'), 'pos-categories');
+const POSProducts = lazyWithRetry(() => import('./pages/pos/POSProducts'), 'pos-products');
+const POSPricelists = lazyWithRetry(() => import('./pages/pos/POSPricelists'), 'pos-pricelists');
+const POSFloors = lazyWithRetry(() => import('./pages/pos/POSFloors'), 'pos-floors');
 // Marketing Pages
-const MarketingDashboard = lazy(() => import('./pages/marketing/MarketingDashboard'));
-const EmailCampaigns = lazy(() => import('./pages/marketing/EmailCampaigns'));
-const SmsCampaigns = lazy(() => import('./pages/marketing/SmsCampaigns'));
-const Segments = lazy(() => import('./pages/marketing/Segments'));
-const Automations = lazy(() => import('./pages/marketing/Automations'));
-const POSFloorPlan = lazy(() => import('./pages/pos/POSFloorPlan'));
-const POSKitchen = lazy(() => import('./pages/pos/POSKitchen'));
-const POSEmployees = lazy(() => import('./pages/pos/POSEmployees'));
-const POSLoyalty = lazy(() => import('./pages/pos/POSLoyalty'));
-const POSGiftCards = lazy(() => import('./pages/pos/POSGiftCards'));
-const POSSelfOrder = lazy(() => import('./pages/pos/POSSelfOrder'));
-const POSReports = lazy(() => import('./pages/pos/POSReports'));
-const POSCustomerDisplay = lazy(() => import('./pages/pos/POSCustomerDisplay'));
-const ModuleHub = lazy(() => import('./pages/modules/ModuleHub'));
+const MarketingDashboard = lazyWithRetry(() => import('./pages/marketing/MarketingDashboard'), 'marketing-dashboard');
+const EmailCampaigns = lazyWithRetry(() => import('./pages/marketing/EmailCampaigns'), 'email-campaigns');
+const SmsCampaigns = lazyWithRetry(() => import('./pages/marketing/SmsCampaigns'), 'sms-campaigns');
+const Segments = lazyWithRetry(() => import('./pages/marketing/Segments'), 'segments');
+const Automations = lazyWithRetry(() => import('./pages/marketing/Automations'), 'automations');
+const POSFloorPlan = lazyWithRetry(() => import('./pages/pos/POSFloorPlan'), 'pos-floor-plan');
+const POSKitchen = lazyWithRetry(() => import('./pages/pos/POSKitchen'), 'pos-kitchen');
+const POSEmployees = lazyWithRetry(() => import('./pages/pos/POSEmployees'), 'pos-employees');
+const POSLoyalty = lazyWithRetry(() => import('./pages/pos/POSLoyalty'), 'pos-loyalty');
+const POSGiftCards = lazyWithRetry(() => import('./pages/pos/POSGiftCards'), 'pos-gift-cards');
+const POSSelfOrder = lazyWithRetry(() => import('./pages/pos/POSSelfOrder'), 'pos-self-order');
+const POSReports = lazyWithRetry(() => import('./pages/pos/POSReports'), 'pos-reports');
+const POSCustomerDisplay = lazyWithRetry(() => import('./pages/pos/POSCustomerDisplay'), 'pos-customer-display');
+const ModuleHub = lazyWithRetry(() => import('./pages/modules/ModuleHub'), 'module-hub');
 // Wave-A Pages
-const Helpdesk = lazy(() => import('./pages/wave-a/Helpdesk'));
-const FieldService = lazy(() => import('./pages/wave-a/FieldService'));
-const Subscriptions = lazy(() => import('./pages/wave-a/Subscriptions'));
-const Documents = lazy(() => import('./pages/wave-a/Documents'));
-const Knowledge = lazy(() => import('./pages/wave-a/Knowledge'));
-const Quality = lazy(() => import('./pages/wave-a/Quality'));
-const Maintenance = lazy(() => import('./pages/wave-a/Maintenance'));
-const PLM = lazy(() => import('./pages/wave-a/PLM'));
-const Repairs = lazy(() => import('./pages/wave-a/Repairs'));
-const HRExtended = lazy(() => import('./pages/wave-a/HRExtended'));
-const Studio = lazy(() => import('./pages/wave-a/Studio'));
+const Helpdesk = lazyWithRetry(() => import('./pages/wave-a/Helpdesk'), 'helpdesk');
+const FieldService = lazyWithRetry(() => import('./pages/wave-a/FieldService'), 'field-service');
+const Subscriptions = lazyWithRetry(() => import('./pages/wave-a/Subscriptions'), 'subscriptions');
+const Documents = lazyWithRetry(() => import('./pages/wave-a/Documents'), 'documents');
+const Knowledge = lazyWithRetry(() => import('./pages/wave-a/Knowledge'), 'knowledge');
+const Quality = lazyWithRetry(() => import('./pages/wave-a/Quality'), 'quality');
+const Maintenance = lazyWithRetry(() => import('./pages/wave-a/Maintenance'), 'maintenance');
+const PLM = lazyWithRetry(() => import('./pages/wave-a/PLM'), 'plm');
+const Repairs = lazyWithRetry(() => import('./pages/wave-a/Repairs'), 'repairs');
+const HRExtended = lazyWithRetry(() => import('./pages/wave-a/HRExtended'), 'hr-extended');
+const Studio = lazyWithRetry(() => import('./pages/wave-a/Studio'), 'studio');
 // Wave AD: Studio (No-Code)
-const StudioHome = lazy(() => import('./pages/studio/StudioHome'));
-const CustomFieldsBuilder = lazy(() => import('./pages/studio/CustomFieldsBuilder'));
-const ViewLayoutEditor = lazy(() => import('./pages/studio/ViewLayoutEditor'));
-const AutomationFromStudio = lazy(() => import('./pages/studio/AutomationFromStudio'));
+const StudioHome = lazyWithRetry(() => import('./pages/studio/StudioHome'), 'studio-home');
+const CustomFieldsBuilder = lazyWithRetry(() => import('./pages/studio/CustomFieldsBuilder'), 'custom-fields-builder');
+const ViewLayoutEditor = lazyWithRetry(() => import('./pages/studio/ViewLayoutEditor'), 'view-layout-editor');
+const AutomationFromStudio = lazyWithRetry(() => import('./pages/studio/AutomationFromStudio'), 'automation-from-studio');
 // Wave R: Maintenance Module (Full)
-const MaintenanceDashboard = lazy(() => import('./pages/maintenance/MaintenanceDashboard'));
-const Equipment = lazy(() => import('./pages/maintenance/Equipment'));
-const EquipmentDetail = lazy(() => import('./pages/maintenance/EquipmentDetail'));
-const EquipmentCategories = lazy(() => import('./pages/maintenance/EquipmentCategories'));
-const MaintenanceRequests = lazy(() => import('./pages/maintenance/MaintenanceRequests'));
-const MaintenanceSchedules = lazy(() => import('./pages/maintenance/MaintenanceSchedules'));
+const MaintenanceDashboard = lazyWithRetry(() => import('./pages/maintenance/MaintenanceDashboard'), 'maintenance-dashboard');
+const Equipment = lazyWithRetry(() => import('./pages/maintenance/Equipment'), 'equipment');
+const EquipmentDetail = lazyWithRetry(() => import('./pages/maintenance/EquipmentDetail'), 'equipment-detail');
+const EquipmentCategories = lazyWithRetry(() => import('./pages/maintenance/EquipmentCategories'), 'equipment-categories');
+const MaintenanceRequests = lazyWithRetry(() => import('./pages/maintenance/MaintenanceRequests'), 'maintenance-requests');
+const MaintenanceSchedules = lazyWithRetry(() => import('./pages/maintenance/MaintenanceSchedules'), 'maintenance-schedules');
 // Subscription Billing (Wave G)
-const SubscriptionPlans = lazy(() => import('./pages/subscriptions/SubscriptionPlans'));
-const SubscriptionsList = lazy(() => import('./pages/subscriptions/SubscriptionsList'));
-const SubscriptionDetail = lazy(() => import('./pages/subscriptions/SubscriptionDetail'));
-const SubscriptionDunning = lazy(() => import('./pages/subscriptions/SubscriptionDunning'));
-const SubscriptionReports = lazy(() => import('./pages/subscriptions/SubscriptionReports'));
+const SubscriptionPlans = lazyWithRetry(() => import('./pages/subscriptions/SubscriptionPlans'), 'subscription-plans');
+const SubscriptionsList = lazyWithRetry(() => import('./pages/subscriptions/SubscriptionsList'), 'subscriptions-list');
+const SubscriptionDetail = lazyWithRetry(() => import('./pages/subscriptions/SubscriptionDetail'), 'subscription-detail');
+const SubscriptionDunning = lazyWithRetry(() => import('./pages/subscriptions/SubscriptionDunning'), 'subscription-dunning');
+const SubscriptionReports = lazyWithRetry(() => import('./pages/subscriptions/SubscriptionReports'), 'subscription-reports');
 // Additional Pages
-const AuditLogViewer = lazy(() => import('./pages/AuditLogViewer'));
-const AutomationRules = lazy(() => import('./pages/AutomationRules'));
+const AuditLogViewer = lazyWithRetry(() => import('./pages/AuditLogViewer'), 'audit-log-viewer');
+const AutomationRules = lazyWithRetry(() => import('./pages/AutomationRules'), 'automation-rules');
 // Wave T: Visual Workflow Automation
-const WorkflowsList = lazy(() => import('./pages/automation/WorkflowsList'));
-const WorkflowBuilder = lazy(() => import('./pages/automation/WorkflowBuilder'));
-const WorkflowRunHistory = lazy(() => import('./pages/automation/WorkflowRunHistory'));
-const AutomationLogs = lazy(() => import('./pages/automation/AutomationLogs'));
+const WorkflowsList = lazyWithRetry(() => import('./pages/automation/WorkflowsList'), 'workflows-list');
+const WorkflowBuilder = lazyWithRetry(() => import('./pages/automation/WorkflowBuilder'), 'workflow-builder');
+const WorkflowRunHistory = lazyWithRetry(() => import('./pages/automation/WorkflowRunHistory'), 'workflow-run-history');
+const AutomationLogs = lazyWithRetry(() => import('./pages/automation/AutomationLogs'), 'automation-logs');
 // Wave B: Accounting Power Features
-const AnalyticAccounts = lazy(() => import('./pages/AnalyticAccounts'));
-const AnalyticReport = lazy(() => import('./pages/AnalyticReport'));
-const Budgets = lazy(() => import('./pages/Budgets'));
-const BudgetVariance = lazy(() => import('./pages/BudgetVariance'));
-const CashflowForecast = lazy(() => import('./pages/CashflowForecast'));
-const CustomerStatements = lazy(() => import('./pages/CustomerStatements'));
-const EmailTemplates = lazy(() => import('./pages/EmailTemplates'));
+const AnalyticAccounts = lazyWithRetry(() => import('./pages/AnalyticAccounts'), 'analytic-accounts');
+const AnalyticReport = lazyWithRetry(() => import('./pages/AnalyticReport'), 'analytic-report');
+const Budgets = lazyWithRetry(() => import('./pages/Budgets'), 'budgets');
+const BudgetVariance = lazyWithRetry(() => import('./pages/BudgetVariance'), 'budget-variance');
+const CashflowForecast = lazyWithRetry(() => import('./pages/CashflowForecast'), 'cashflow-forecast');
+const CustomerStatements = lazyWithRetry(() => import('./pages/CustomerStatements'), 'customer-statements');
+const EmailTemplates = lazyWithRetry(() => import('./pages/EmailTemplates'), 'email-templates');
 // Wave E: Storefront + Customer Portal
-const StoreHome = lazy(() => import('./pages/storefront/StoreHome'));
+const StoreHome = lazyWithRetry(() => import('./pages/storefront/StoreHome'), 'store-home');
 // Wave O: Multi-Currency Revaluation
-const CurrencyRates = lazy(() => import('./pages/fx/CurrencyRates'));
-const FXExposure = lazy(() => import('./pages/fx/FXExposure'));
-const RevaluationRuns = lazy(() => import('./pages/fx/RevaluationRuns'));
-const StoreProduct = lazy(() => import('./pages/storefront/StoreProduct'));
-const SalesReturnsRefund = lazy(() => import('./pages/returns/SalesReturns'));
-const VendorReturnsRefund = lazy(() => import('./pages/returns/VendorReturns'));
-const NumberingSequences = lazy(() => import('./pages/settings/NumberingSequences'));
-const SystemHealthPage = lazy(() => import('./pages/settings/SystemHealthPage'));
-const StoreCart = lazy(() => import('./pages/storefront/StoreCart'));
-const StoreCheckout = lazy(() => import('./pages/storefront/StoreCheckout'));
-const StoreOrderConfirm = lazy(() => import('./pages/storefront/StoreOrderConfirm'));
-const PortalLogin = lazy(() => import('./pages/portal/PortalLogin'));
-const PortalDashboard = lazy(() => import('./pages/portal/PortalDashboard'));
-const PortalInvoices = lazy(() => import('./pages/portal/PortalInvoices'));
-const PortalOrders = lazy(() => import('./pages/portal/PortalOrders'));
-const PortalStatements = lazy(() => import('./pages/portal/PortalStatements'));
+const CurrencyRates = lazyWithRetry(() => import('./pages/fx/CurrencyRates'), 'currency-rates');
+const FXExposure = lazyWithRetry(() => import('./pages/fx/FXExposure'), 'fx-exposure');
+const RevaluationRuns = lazyWithRetry(() => import('./pages/fx/RevaluationRuns'), 'revaluation-runs');
+const StoreProduct = lazyWithRetry(() => import('./pages/storefront/StoreProduct'), 'store-product');
+const SalesReturnsRefund = lazyWithRetry(() => import('./pages/returns/SalesReturns'), 'returns-sales-returns');
+const VendorReturnsRefund = lazyWithRetry(() => import('./pages/returns/VendorReturns'), 'vendor-returns');
+const NumberingSequences = lazyWithRetry(() => import('./pages/settings/NumberingSequences'), 'numbering-sequences');
+const TenantSystemHealthRedirect = lazyWithRetry(() => import('./pages/settings/TenantSystemHealthRedirect'), 'tenant-system-health-redirect');
+const ModuleRequestsPage = lazyWithRetry(() => import('./pages/settings/ModuleRequestsPage'), 'module-requests-page');
+const PlatformShell = lazyWithRetry(() => import('./platform/layout/PlatformShell'), 'platform-shell');
+const PlatformDashboard = lazyWithRetry(() => import('./platform/pages/PlatformDashboard'), 'platform-dashboard');
+const OrgListPage = lazyWithRetry(() => import('./platform/pages/OrgListPage'), 'org-list-page');
+const OrgDetailPage = lazyWithRetry(() => import('./platform/pages/OrgDetailPage'), 'org-detail-page');
+const LicenseEditorPage = lazyWithRetry(() => import('./platform/pages/LicenseEditorPage'), 'license-editor-page');
+const GlobalModuleRequestsPage = lazyWithRetry(() => import('./platform/pages/GlobalModuleRequestsPage'), 'global-module-requests-page');
+const GlobalUsersPage = lazyWithRetry(() => import('./platform/pages/GlobalUsersPage'), 'global-users-page');
+const PlatformAuditPage = lazyWithRetry(() => import('./platform/pages/PlatformAuditPage'), 'platform-audit-page');
+const PlatformHealthPage = lazyWithRetry(() => import('./platform/pages/PlatformHealthPage'), 'platform-health-page');
+// scale-foundation (Tier 3 § SF3): super-admin DR restore console (4-eyes + diff preview).
+const DrRestorePage = lazyWithRetry(() => import('./platform/pages/DrRestorePage'), 'dr-restore-page');
+const FeatureFlagsPage = lazyWithRetry(() => import('./platform/pages/FeatureFlagsPage'), 'feature-flags-page');
+const AnnouncementsPage = lazyWithRetry(() => import('./platform/pages/AnnouncementsPage'), 'announcements-page');
+const PlatformRoute = lazyWithRetry(() => import('./platform/guards/PlatformRoute'), 'platform-route');
+const TenantRoute = lazyWithRetry(() => import('./platform/guards/TenantRoute'), 'tenant-route');
+const StoreCart = lazyWithRetry(() => import('./pages/storefront/StoreCart'), 'store-cart');
+const StoreCheckout = lazyWithRetry(() => import('./pages/storefront/StoreCheckout'), 'store-checkout');
+const StoreOrderConfirm = lazyWithRetry(() => import('./pages/storefront/StoreOrderConfirm'), 'store-order-confirm');
+const PortalLogin = lazyWithRetry(() => import('./pages/portal/PortalLogin'), 'portal-login');
+const PortalDashboard = lazyWithRetry(() => import('./pages/portal/PortalDashboard'), 'portal-dashboard');
+const PortalInvoices = lazyWithRetry(() => import('./pages/portal/PortalInvoices'), 'portal-invoices');
+const PortalOrders = lazyWithRetry(() => import('./pages/portal/PortalOrders'), 'portal-orders');
+const PortalStatements = lazyWithRetry(() => import('./pages/portal/PortalStatements'), 'portal-statements');
 // Wave J: Vendor Portal
-const VendorPortalLogin = lazy(() => import('./pages/vendor-portal/VendorPortalLogin'));
-const VendorPortalDashboard = lazy(() => import('./pages/vendor-portal/VendorPortalDashboard'));
-const VendorPortalPOs = lazy(() => import('./pages/vendor-portal/VendorPortalPOs'));
-const VendorPortalSubmitBill = lazy(() => import('./pages/vendor-portal/VendorPortalSubmitBill'));
-const VendorPortalBills = lazy(() => import('./pages/vendor-portal/VendorPortalBills'));
-const VendorPortalPayments = lazy(() => import('./pages/vendor-portal/VendorPortalPayments'));
+const VendorPortalLogin = lazyWithRetry(() => import('./pages/vendor-portal/VendorPortalLogin'), 'vendor-portal-login');
+const VendorPortalDashboard = lazyWithRetry(() => import('./pages/vendor-portal/VendorPortalDashboard'), 'vendor-portal-dashboard');
+const VendorPortalPOs = lazyWithRetry(() => import('./pages/vendor-portal/VendorPortalPOs'), 'vendor-portal-p-os');
+const VendorPortalSubmitBill = lazyWithRetry(() => import('./pages/vendor-portal/VendorPortalSubmitBill'), 'vendor-portal-submit-bill');
+const VendorPortalBills = lazyWithRetry(() => import('./pages/vendor-portal/VendorPortalBills'), 'vendor-portal-bills');
+const VendorPortalPayments = lazyWithRetry(() => import('./pages/vendor-portal/VendorPortalPayments'), 'vendor-portal-payments');
 // Wave S: DMS / Document Vault
-const DocumentVault = lazy(() => import('./pages/dms/DocumentVault'));
-const DocumentDetail = lazy(() => import('./pages/dms/DocumentDetail'));
-const SignatureRequests = lazy(() => import('./pages/dms/SignatureRequests'));
+const DocumentVault = lazyWithRetry(() => import('./pages/dms/DocumentVault'), 'document-vault');
+const DocumentDetail = lazyWithRetry(() => import('./pages/dms/DocumentDetail'), 'document-detail');
+const SignatureRequests = lazyWithRetry(() => import('./pages/dms/SignatureRequests'), 'signature-requests');
 // Wave V: IoT Telemetry & Device Management
-const IoTDashboard = lazy(() => import('./pages/iot/IoTDashboard'));
-const IoTDevices = lazy(() => import('./pages/iot/IoTDevices'));
-const DeviceDetail = lazy(() => import('./pages/iot/DeviceDetail'));
-const AlertRules = lazy(() => import('./pages/iot/AlertRules'));
-const AlertHistory = lazy(() => import('./pages/iot/AlertHistory'));
+const IoTDashboard = lazyWithRetry(() => import('./pages/iot/IoTDashboard'), 'io-t-dashboard');
+const IoTDevices = lazyWithRetry(() => import('./pages/iot/IoTDevices'), 'io-t-devices');
+const DeviceDetail = lazyWithRetry(() => import('./pages/iot/DeviceDetail'), 'device-detail');
+const AlertRules = lazyWithRetry(() => import('./pages/iot/AlertRules'), 'alert-rules');
+const AlertHistory = lazyWithRetry(() => import('./pages/iot/AlertHistory'), 'alert-history');
 // Wave X: Quality Management
-const QualityDashboard = lazy(() => import('./pages/quality/QualityDashboard'));
-const QCPlans = lazy(() => import('./pages/quality/QCPlans'));
-const QCChecks = lazy(() => import('./pages/quality/QCChecks'));
-const NonConformances = lazy(() => import('./pages/quality/NonConformances'));
-const CAPAList = lazy(() => import('./pages/quality/CAPAList'));
+const QualityDashboard = lazyWithRetry(() => import('./pages/quality/QualityDashboard'), 'quality-dashboard');
+const QCPlans = lazyWithRetry(() => import('./pages/quality/QCPlans'), 'qc-plans');
+const QCChecks = lazyWithRetry(() => import('./pages/quality/QCChecks'), 'qc-checks');
+const NonConformances = lazyWithRetry(() => import('./pages/quality/NonConformances'), 'non-conformances');
+const CAPAList = lazyWithRetry(() => import('./pages/quality/CAPAList'), 'capa-list');
 // Wave Y: Field Service Management
-const FieldServiceDashboard = lazy(() => import('./pages/field-service/FieldServiceDashboard'));
-const ServiceOrders = lazy(() => import('./pages/field-service/ServiceOrders'));
-const ServiceOrderDetail = lazy(() => import('./pages/field-service/ServiceOrderDetail'));
-const Technicians = lazy(() => import('./pages/field-service/Technicians'));
-const DispatchBoard = lazy(() => import('./pages/field-service/DispatchBoard'));
+const FieldServiceDashboard = lazyWithRetry(() => import('./pages/field-service/FieldServiceDashboard'), 'field-service-dashboard');
+const ServiceOrders = lazyWithRetry(() => import('./pages/field-service/ServiceOrders'), 'service-orders');
+const ServiceOrderDetail = lazyWithRetry(() => import('./pages/field-service/ServiceOrderDetail'), 'service-order-detail');
+const Technicians = lazyWithRetry(() => import('./pages/field-service/Technicians'), 'technicians');
+const DispatchBoard = lazyWithRetry(() => import('./pages/field-service/DispatchBoard'), 'dispatch-board');
 // Wave W: Helpdesk & Knowledge Base
-const HelpdeskDashboard = lazy(() => import('./pages/helpdesk/HelpdeskDashboard'));
-const TicketsList = lazy(() => import('./pages/helpdesk/TicketsList'));
-const TicketDetail = lazy(() => import('./pages/helpdesk/TicketDetail'));
-const HelpdeskSettings = lazy(() => import('./pages/helpdesk/HelpdeskSettings'));
-const KnowledgeBase = lazy(() => import('./pages/kb/KnowledgeBase'));
-const ArticleEditor = lazy(() => import('./pages/kb/ArticleEditor'));
-const ArticleView = lazy(() => import('./pages/kb/ArticleView'));
+const HelpdeskDashboard = lazyWithRetry(() => import('./pages/helpdesk/HelpdeskDashboard'), 'helpdesk-dashboard');
+const TicketsList = lazyWithRetry(() => import('./pages/helpdesk/TicketsList'), 'tickets-list');
+const TicketDetail = lazyWithRetry(() => import('./pages/helpdesk/TicketDetail'), 'ticket-detail');
+const HelpdeskSettings = lazyWithRetry(() => import('./pages/helpdesk/HelpdeskSettings'), 'helpdesk-settings');
+const KnowledgeBase = lazyWithRetry(() => import('./pages/kb/KnowledgeBase'), 'knowledge-base');
+const ArticleEditor = lazyWithRetry(() => import('./pages/kb/ArticleEditor'), 'article-editor');
+const ArticleView = lazyWithRetry(() => import('./pages/kb/ArticleView'), 'article-view');
 // Wave Z: Rental & Repairs
-const RentalProducts = lazy(() => import('./pages/rental/RentalProducts'));
-const RentalContracts = lazy(() => import('./pages/rental/RentalContracts'));
-const RentalContractDetail = lazy(() => import('./pages/rental/RentalContractDetail'));
-const RepairOrders = lazy(() => import('./pages/repairs/RepairOrders'));
-const RepairOrderDetail = lazy(() => import('./pages/repairs/RepairOrderDetail'));
-const WarrantyCheck = lazy(() => import('./pages/repairs/WarrantyCheck'));
+const RentalProducts = lazyWithRetry(() => import('./pages/rental/RentalProducts'), 'rental-products');
+const RentalContracts = lazyWithRetry(() => import('./pages/rental/RentalContracts'), 'rental-contracts');
+const RentalContractDetail = lazyWithRetry(() => import('./pages/rental/RentalContractDetail'), 'rental-contract-detail');
+const RepairOrders = lazyWithRetry(() => import('./pages/repairs/RepairOrders'), 'repair-orders');
+const RepairOrderDetail = lazyWithRetry(() => import('./pages/repairs/RepairOrderDetail'), 'repair-order-detail');
+const WarrantyCheck = lazyWithRetry(() => import('./pages/repairs/WarrantyCheck'), 'warranty-check');
 // Wave AB: AI Assist
-const AIAssistDashboard = lazy(() => import('./pages/ai/AIAssistDashboard'));
-const AnomaliesList = lazy(() => import('./pages/ai/AnomaliesList'));
-const SuggestionsInbox = lazy(() => import('./pages/ai/SuggestionsInbox'));
-const OCRReceiptsAdvanced = lazy(() => import('./pages/ai/OCRReceiptsAdvanced'));
-const PredictionsExplorer = lazy(() => import('./pages/ai/PredictionsExplorer'));
+const AIAssistDashboard = lazyWithRetry(() => import('./pages/ai/AIAssistDashboard'), 'ai-assist-dashboard');
+const AnomaliesList = lazyWithRetry(() => import('./pages/ai/AnomaliesList'), 'anomalies-list');
+const SuggestionsInbox = lazyWithRetry(() => import('./pages/ai/SuggestionsInbox'), 'suggestions-inbox');
+const OCRReceiptsAdvanced = lazyWithRetry(() => import('./pages/ai/OCRReceiptsAdvanced'), 'ocr-receipts-advanced');
+const PredictionsExplorer = lazyWithRetry(() => import('./pages/ai/PredictionsExplorer'), 'predictions-explorer');
 // Wave AA: Multi-Entity Management
-const CompaniesList = lazy(() => import('./pages/multi-entity/CompaniesList'));
-const IntercompanyTransactions = lazy(() => import('./pages/multi-entity/IntercompanyTransactions'));
-const ConsolidatedPL = lazy(() => import('./pages/multi-entity/ConsolidatedPL'));
-const ConsolidatedBS = lazy(() => import('./pages/multi-entity/ConsolidatedBS'));
-const EliminationsWorkbench = lazy(() => import('./pages/multi-entity/EliminationsWorkbench'));
+const CompaniesList = lazyWithRetry(() => import('./pages/multi-entity/CompaniesList'), 'companies-list');
+const IntercompanyTransactions = lazyWithRetry(() => import('./pages/multi-entity/IntercompanyTransactions'), 'intercompany-transactions');
+const ConsolidatedPL = lazyWithRetry(() => import('./pages/multi-entity/ConsolidatedPL'), 'consolidated-pl');
+const ConsolidatedBS = lazyWithRetry(() => import('./pages/multi-entity/ConsolidatedBS'), 'consolidated-bs');
+const EliminationsWorkbench = lazyWithRetry(() => import('./pages/multi-entity/EliminationsWorkbench'), 'eliminations-workbench');
 // Wave AF: Hotel & Restaurant
-const HotelDashboard = lazy(() => import('./pages/hotel/HotelDashboard'));
-const RoomsBookings = lazy(() => import('./pages/hotel/RoomsBookings'));
-const TablesView = lazy(() => import('./pages/restaurant/TablesView'));
-const KitchenDisplay = lazy(() => import('./pages/restaurant/KitchenDisplay'));
-const MenuManager = lazy(() => import('./pages/restaurant/MenuManager'));
+const HotelDashboard = lazyWithRetry(() => import('./pages/hotel/HotelDashboard'), 'hotel-dashboard');
+const RoomsBookings = lazyWithRetry(() => import('./pages/hotel/RoomsBookings'), 'rooms-bookings');
+const TablesView = lazyWithRetry(() => import('./pages/restaurant/TablesView'), 'tables-view');
+const KitchenDisplay = lazyWithRetry(() => import('./pages/restaurant/KitchenDisplay'), 'kitchen-display');
+const MenuManager = lazyWithRetry(() => import('./pages/restaurant/MenuManager'), 'menu-manager');
 // Wave AG: Healthcare, Hospital, Pharmacy
-const ClinicDashboard = lazy(() => import('./pages/healthcare/ClinicDashboard'));
-const PatientsList = lazy(() => import('./pages/healthcare/PatientsList'));
-const AppointmentsCalendar = lazy(() => import('./pages/healthcare/AppointmentsCalendar'));
-const WardsAdmissions = lazy(() => import('./pages/hospital/WardsAdmissions'));
-const PharmacyDispense = lazy(() => import('./pages/pharmacy/PharmacyDispense'));
+const ClinicDashboard = lazyWithRetry(() => import('./pages/healthcare/ClinicDashboard'), 'clinic-dashboard');
+const PatientsList = lazyWithRetry(() => import('./pages/healthcare/PatientsList'), 'patients-list');
+const AppointmentsCalendar = lazyWithRetry(() => import('./pages/healthcare/AppointmentsCalendar'), 'appointments-calendar');
+const WardsAdmissions = lazyWithRetry(() => import('./pages/hospital/WardsAdmissions'), 'wards-admissions');
+const PharmacyDispense = lazyWithRetry(() => import('./pages/pharmacy/PharmacyDispense'), 'pharmacy-dispense');
 // Wave AH: Industry Modules (Real Estate, Construction, Agriculture, PLM)
-const PropertiesAndLeases = lazy(() => import('./pages/real-estate/PropertiesAndLeases'));
-const ConstructionProjects = lazy(() => import('./pages/construction/ConstructionProjects'));
-const BOQEditor = lazy(() => import('./pages/construction/BOQEditor'));
-const FieldsAndYield = lazy(() => import('./pages/agriculture/FieldsAndYield'));
-const PLMEngineeringChanges = lazy(() => import('./pages/plm/PLMEngineeringChanges'));
+const PropertiesAndLeases = lazyWithRetry(() => import('./pages/real-estate/PropertiesAndLeases'), 'properties-and-leases');
+const ConstructionProjects = lazyWithRetry(() => import('./pages/construction/ConstructionProjects'), 'construction-projects');
+const BOQEditor = lazyWithRetry(() => import('./pages/construction/BOQEditor'), 'boq-editor');
+const FieldsAndYield = lazyWithRetry(() => import('./pages/agriculture/FieldsAndYield'), 'fields-and-yield');
+const PLMEngineeringChanges = lazyWithRetry(() => import('./pages/plm/PLMEngineeringChanges'), 'plm-engineering-changes');
 // Task 18: List Pages — modern redesigned list page templates (Requirements 14.1–14.9)
-const InvoicesListModern = lazy(() => import('./features/sales/invoices/InvoicesList'));
-const CustomersListModern = lazy(() => import('./features/sales/customers/CustomersList'));
-const ItemsListModern = lazy(() => import('./features/inventory/items/ItemsList'));
-const BillsListModern = lazy(() => import('./features/purchases/bills/BillsList'));
-const PurchaseOrdersListModern = lazy(() => import('./features/purchases/purchase-orders/PurchaseOrdersList'));
-const PaymentsListModern = lazy(() => import('./features/banking/payments/PaymentsList'));
+const InvoicesListModern = lazyWithRetry(() => import('./features/sales/invoices/InvoicesList'), 'invoices-list');
+const CustomersListModern = lazyWithRetry(() => import('./features/sales/customers/CustomersList'), 'customers-list');
+const ItemsListModern = lazyWithRetry(() => import('./features/inventory/items/ItemsList'), 'items-list');
+const BillsListModern = lazyWithRetry(() => import('./features/purchases/bills/BillsList'), 'bills-list');
+const PurchaseOrdersListModern = lazyWithRetry(() => import('./features/purchases/purchase-orders/PurchaseOrdersList'), 'purchase-orders-list');
+const PaymentsListModern = lazyWithRetry(() => import('./features/banking/payments/PaymentsList'), 'payments-list');
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
@@ -370,8 +379,42 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
  */
 const LandingRoute: React.FC = () => {
   const { isAuthenticated } = useAuthStore();
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  if (isAuthenticated) {
+    const claims = readSessionClaims();
+    return <Navigate to={postLoginPath(claims.role || undefined, claims.isPlatformAdmin)} replace />;
+  }
   return <PageTransition><LandingPage /></PageTransition>;
+};
+
+/**
+ * SettingsRouter — feature-flagged toggle between the legacy settings
+ * shell (`src/settings/shell/SettingsShell.tsx`, currently the prod
+ * default with 50+ sections wired up) and the new decomposed shell
+ * (`src/pages/settings/SettingsShell.tsx`, P5).
+ *
+ * Flag key:  `settings.new_shell`
+ *   - OFF (default): legacy shell is rendered. Behaviour is byte-equivalent
+ *     to the route as it existed before the migration started.
+ *   - ON: new shell is rendered. Only the sections registered in
+ *     `pages/settings/sections.registry.ts` will be reachable from the
+ *     sidebar; the rest of the migration is tracked in
+ *     `docs/settings/migration-plan.md`.
+ *
+ * While the flag is being fetched (`isLoading === true`), we render the
+ * LEGACY shell so the first paint is unchanged for everyone. Once the
+ * flag resolves, the user is opted in if their org has the flag on.
+ *
+ * Parallel route `/settings/next` always renders the new shell so the
+ * team can dogfood it without flipping the flag organisation-wide.
+ */
+const SettingsRouter: React.FC = () => {
+  const { isEnabled, isLoading } = useFeatureFlag('settings.new_shell');
+  // Until the flag resolves, default to the legacy shell — this keeps the
+  // first paint identical for every user and avoids flicker on cold start.
+  if (isLoading || !isEnabled) {
+    return <PageTransition><Settings /></PageTransition>;
+  }
+  return <PageTransition><SettingsShellNext /></PageTransition>;
 };
 
 /**
@@ -405,6 +448,31 @@ export const routes: RouteObject[] = [
   { path: '/register', element: <Suspense fallback={FeatureFallback}><PageTransition><RegisterPage /></PageTransition></Suspense> },
   { path: '/auth/login', element: <Suspense fallback={FeatureFallback}><PageTransition><LoginPage /></PageTransition></Suspense> },
   { path: '/mfa', element: <Suspense fallback={FeatureFallback}><PageTransition><MFAPage /></PageTransition></Suspense> },
+  {
+    path: '/platform',
+    element: (
+      <ProtectedRoute>
+        <Suspense fallback={FeatureFallback}>
+          <PlatformRoute>
+            <PlatformShell />
+          </PlatformRoute>
+        </Suspense>
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <Suspense fallback={FeatureFallback}><PlatformDashboard /></Suspense> },
+      { path: 'orgs', element: <Suspense fallback={FeatureFallback}><OrgListPage /></Suspense> },
+      { path: 'orgs/:orgId', element: <Suspense fallback={FeatureFallback}><OrgDetailPage /></Suspense> },
+      { path: 'licenses', element: <Suspense fallback={FeatureFallback}><LicenseEditorPage /></Suspense> },
+      { path: 'requests', element: <Suspense fallback={FeatureFallback}><GlobalModuleRequestsPage /></Suspense> },
+      { path: 'users', element: <Suspense fallback={FeatureFallback}><GlobalUsersPage /></Suspense> },
+      { path: 'audit', element: <Suspense fallback={FeatureFallback}><PlatformAuditPage /></Suspense> },
+      { path: 'health', element: <Suspense fallback={FeatureFallback}><PlatformHealthPage /></Suspense> },
+      { path: 'dr-restore', element: <Suspense fallback={FeatureFallback}><DrRestorePage /></Suspense> },
+      { path: 'flags', element: <Suspense fallback={FeatureFallback}><FeatureFlagsPage /></Suspense> },
+      { path: 'announcements', element: <Suspense fallback={FeatureFallback}><AnnouncementsPage /></Suspense> },
+    ],
+  },
   // Wave E: Public Storefront Routes
   { path: '/store', element: <Suspense fallback={FeatureFallback}><PageTransition><StoreHome /></PageTransition></Suspense> },
   { path: '/store/product/:id', element: <Suspense fallback={FeatureFallback}><PageTransition><StoreProduct /></PageTransition></Suspense> },
@@ -428,10 +496,13 @@ export const routes: RouteObject[] = [
     path: '/',
     element: (
       <ProtectedRoute>
-        <AppLayout />
+        <Suspense fallback={FeatureFallback}>
+          <TenantRoute />
+        </Suspense>
       </ProtectedRoute>
     ),
     children: [
+      { element: <AppLayout />, children: [
       { index: true, element: <PageTransition><Dashboard /></PageTransition> },
       { path: 'contacts', element: <PageTransition><Contacts /></PageTransition> },
       // Task 18: Modern Customers List Page (PageHeader + FilterBar + BulkActionBar + DataTable + Pagination)
@@ -499,6 +570,7 @@ export const routes: RouteObject[] = [
       { path: 'reports/scheduled', element: <PageTransition><ScheduledReports /></PageTransition> },
       { path: 'reports/custom', element: <PageTransition><CustomReportBuilder /></PageTransition> },
       { path: 'reports/custom-list', element: <PageTransition><CustomReportsList /></PageTransition> },
+      { path: 'reports/analytics', element: <PageTransition><EmbeddedAnalyticsDashboard /></PageTransition> },
       // Wave U: Custom Dashboards
       { path: 'dashboards', element: <PageTransition><MyDashboards /></PageTransition> },
       { path: 'dashboards/shared', element: <PageTransition><SharedDashboards /></PageTransition> },
@@ -511,6 +583,15 @@ export const routes: RouteObject[] = [
       { path: 'activities/my', element: <PageTransition><MyActivities /></PageTransition> },
       { path: 'activities', element: <PageTransition><ActivitiesDashboard /></PageTransition> },
       { path: 'einvoice/dashboard', element: <PageTransition><EInvoiceDashboard /></PageTransition> },
+      // growth-to-100 § G4a — Iraq e-Fakhata
+      { path: 'efakhata', element: <PageTransition><EFakhataDashboard /></PageTransition> },
+      { path: 'efakhata/submissions/:sid', element: <PageTransition><EFakhataSubmissionDetail /></PageTransition> },
+      { path: 'settings/efakhata/cert', element: <PageTransition><EFakhataCertManagement /></PageTransition> },
+      { path: 'settings/efakhata/export', element: <PageTransition><EFakhataAuditorExport /></PageTransition> },
+      // growth-to-100 § G2 — super-admin tenant impersonation launcher
+      { path: 'admin/impersonate', element: <PageTransition><ImpersonateTenant /></PageTransition> },
+      // growth-to-100 § R3 — "first 60 seconds" onboarding wizard
+      { path: 'get-started', element: <PageTransition><GetStartedWizard /></PageTransition> },
       { path: 'whatsapp', element: <PageTransition><WhatsApp /></PageTransition> },
       { path: 'ocr/receipts', element: <PageTransition><OCRReceipts /></PageTransition> },
       { path: 'hr', element: <PageTransition><HRDashboard /></PageTransition> },
@@ -537,9 +618,22 @@ export const routes: RouteObject[] = [
       { path: 'projects', element: <PageTransition><Projects /></PageTransition> },
       { path: 'projects/:projectId/gantt', element: <PageTransition><ProjectGantt /></PageTransition> },
       { path: 'tax-settings', element: <PageTransition><TaxSettings /></PageTransition> },
-      { path: 'settings', element: <PageTransition><Settings /></PageTransition> },
+      // ------------------------------------------------------------------
+      // Settings — P5 migration in progress (see docs/settings/migration-plan.md)
+      // ------------------------------------------------------------------
+      // The default `/settings` route is routed through `SettingsRouter`
+      // which renders the new decomposed shell when the
+      // `settings.new_shell` feature flag is ON, and the legacy shell
+      // otherwise. The parallel `/settings/next` route ALWAYS renders the
+      // new shell so the team can dogfood it without flipping the flag.
+      // Only 3/56 sections are migrated today (CompanyInfo, Localization,
+      // Branding) — keep the flag OFF in prod until the rest land.
+      { path: 'settings', element: <SettingsRouter /> },
+      { path: 'settings/next', element: <Suspense fallback={FeatureFallback}><PageTransition><SettingsShellNext /></PageTransition></Suspense> },
       { path: 'settings/numbering', element: <PageTransition><NumberingSequences /></PageTransition> },
-      { path: 'settings/system-health', element: <PageTransition><SystemHealthPage /></PageTransition> },
+      { path: 'settings/module-requests', element: <PageTransition><ModuleRequestsPage /></PageTransition> },
+      { path: 'settings/system-health', element: <PageTransition><TenantSystemHealthRedirect /></PageTransition> },
+      { path: 'platform/orgs', element: <Navigate to="/platform/orgs" replace /> },
       { path: 'trash', element: <PageTransition><Trash /></PageTransition> },
       { path: 'docs', element: <PageTransition><DocsHub /></PageTransition> },
       { path: 'ui-gallery', element: <PageTransition><UIGallery /></PageTransition> },
@@ -713,6 +807,7 @@ export const routes: RouteObject[] = [
       // - /timesheets: cited by RouteTitleSync.tsx::TITLES and Settings copy;
       //   timesheets are tracked under the projects module.
       { path: 'timesheets', element: <Navigate to="/projects" replace /> },
+      ]},
     ],
   },
   // navigation-404-fix: public storefront aliases for in-page-link surfaces

@@ -1,4 +1,37 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+/** Load `frontend/.env.e2e` or `.env.e2e.local` into process.env (no extra deps). */
+function loadE2eEnv(): void {
+  const root = resolve(__dirname);
+  for (const name of ['.env.e2e.local', '.env.e2e']) {
+    const filePath = resolve(root, name);
+    if (!existsSync(filePath)) continue;
+    for (const line of readFileSync(filePath, 'utf8').split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const eq = trimmed.indexOf('=');
+      if (eq <= 0) continue;
+      const key = trimmed.slice(0, eq).trim();
+      let value = trimmed.slice(eq + 1).trim();
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+      if (key && process.env[key] === undefined) {
+        process.env[key] = value;
+      }
+    }
+  }
+}
+
+loadE2eEnv();
 
 /**
  * Playwright config — Sprint 10 — smoke E2E + a11y axe scans.

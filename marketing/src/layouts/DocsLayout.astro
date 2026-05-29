@@ -1,0 +1,66 @@
+---
+/**
+ * DocsLayout — sidebar nav + content area.
+ *
+ * Used for legal pages, in-marketing-site doc pages.
+ * (The full docs site lives at docs.zoho-kurdish.iq on Docusaurus — see growth-to-100/design.md.)
+ */
+import BaseLayout from './BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { localeFromPath, t, localizedPath, type Locale } from '../i18n/utils';
+
+export interface Props {
+  title: string;
+  description?: string;
+  locale?: Locale;
+  path?: string;
+  ogImage?: string;
+  schemaType?: 'WebPage' | 'Article' | 'FAQPage' | 'Product';
+  noindex?: boolean;
+  sidebar?: Array<{ title: string; href: string; active?: boolean }>;
+}
+
+const { sidebar = [], ...rest } = Astro.props;
+const pathname = rest.path ?? new URL(Astro.request.url).pathname;
+const locale: Locale = rest.locale ?? localeFromPath(pathname);
+
+const defaultSidebar = [
+  { title: t('footer.terms', locale), href: localizedPath(locale, '/legal/terms') },
+  { title: t('footer.privacy', locale), href: localizedPath(locale, '/legal/privacy') },
+  { title: t('footer.dpa', locale), href: localizedPath(locale, '/legal/dpa') },
+];
+
+const items = sidebar.length > 0 ? sidebar : defaultSidebar;
+---
+
+<BaseLayout {...rest}>
+  <Header />
+  <main id="main" role="main" class="container-marketing py-12">
+    <div class="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-10">
+      <aside aria-label="Sidebar" class="lg:sticky lg:top-24 self-start">
+        <nav class="space-y-1">
+          {
+            items.map((it) => (
+              <a
+                href={it.href}
+                class:list={[
+                  'block px-3 py-2 rounded-md text-sm transition-colors',
+                  it.active
+                    ? 'bg-brand-50 text-brand-700 font-semibold'
+                    : 'text-ink-600 hover:bg-ink-50 hover:text-ink-900',
+                ]}
+              >
+                {it.title}
+              </a>
+            ))
+          }
+        </nav>
+      </aside>
+      <article class="prose-marketing">
+        <slot />
+      </article>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>

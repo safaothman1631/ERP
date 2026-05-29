@@ -25,7 +25,9 @@ dist-ssr
 
 playwright-report/
 test-results/
+e2e/reports/
 .lighthouseci/
 .vercel
 .env*.local
+.env.e2e
 release-readiness-report.md

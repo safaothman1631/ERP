@@ -35,6 +35,8 @@ interface LanguageSwitcherProps {
   className?: string;
   /** Button type */
   type?: 'text' | 'default' | 'primary' | 'dashed' | 'link';
+  /** Dropdown z-index for overlays inside modals */
+  dropdownZIndex?: number;
 }
 
 /** All supported languages with their display labels */
@@ -80,6 +82,7 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
   showLabel = true,
   className,
   type = 'text',
+  dropdownZIndex,
 }) => {
   const { i18n, t } = useTranslation();
   const setLanguage = useUiStore((s) => s.setLanguage);
@@ -162,6 +165,8 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
         menu={{ items: menuItems, selectedKeys: [currentLang] }}
         trigger={['click']}
         placement="bottomRight"
+        getPopupContainer={() => document.body}
+        styles={dropdownZIndex ? { root: { zIndex: dropdownZIndex } } : undefined}
       >
         {trigger}
       </Dropdown>
@@ -170,3 +175,4 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
 };
 
 export default LanguageSwitcher;
+export { LanguageSwitcher };

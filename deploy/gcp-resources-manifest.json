@@ -1,0 +1,63 @@
+{
+  "project": "erp-system-494716",
+  "region": "me-central1",
+  "created_at": "2026-05-27T18:39:24.7446054+03:00",
+  "apis": [
+    "run.googleapis.com",
+    "cloudbuild.googleapis.com",
+    "artifactregistry.googleapis.com",
+    "firestore.googleapis.com",
+    "cloudtrace.googleapis.com",
+    "secretmanager.googleapis.com",
+    "logging.googleapis.com",
+    "monitoring.googleapis.com",
+    "bigquery.googleapis.com",
+    "redis.googleapis.com",
+    "iam.googleapis.com",
+    "iamcredentials.googleapis.com",
+    "sts.googleapis.com"
+  ],
+  "artifact_repo": "me-central1-docker.pkg.dev/erp-system-494716/zoho-images",
+  "firestore": {
+    "type": "firestore-native",
+    "database": "(default)",
+    "location": "me-central1"
+  },
+  "redis": null,
+  "secrets": [
+    {
+      "created": true,
+      "name": "zoho-secret-key"
+    },
+    {
+      "created": true,
+      "name": "zoho-sentry-dsn"
+    },
+    {
+      "created": true,
+      "name": "zoho-redis-url"
+    }
+  ],
+  "bigquery": {
+    "dataset": "rum",
+    "table": "vitals_raw",
+    "location": "me-central1"
+  },
+  "wif": {
+    "project_number": "271150392549",
+    "provider_id": "github-provider",
+    "pool_id": "github-pool",
+    "provider_resource": "projects/271150392549/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
+  },
+  "service_account": {
+    "email": "github-deployer@erp-system-494716.iam.gserviceaccount.com",
+    "roles": [
+      "roles/run.admin",
+      "roles/iam.serviceAccountUser",
+      "roles/artifactregistry.writer",
+      "roles/secretmanager.secretAccessor",
+      "roles/cloudbuild.builds.editor",
+      "roles/storage.admin"
+    ]
+  }
+}

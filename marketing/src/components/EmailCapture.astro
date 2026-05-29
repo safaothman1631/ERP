@@ -1,0 +1,131 @@
+---
+/**
+ * EmailCapture — newsletter / trial-signup email form.
+ *
+ * POSTs JSON to `PUBLIC_LEADS_ENDPOINT` (default: `https://app.zoho-kurdish.iq/api/marketing/leads`).
+ *
+ * API expectation (documented for the backend team):
+ *   POST {endpoint}
+ *   Content-Type: application/json
+ *   { email: string, locale: 'ku'|'en'|'ar', source: string, consent: true, ts: ISO8601 }
+ *
+ *   201 → { ok: true, double_opt_in_sent: boolean }
+ *   400 → { error: 'invalid_email' }
+ *   429 → rate-limited
+ *
+ * Newsletter is double-opt-in per R1.8.
+ */
+import { t, localeFromPath, type Locale } from '../i18n/utils';
+
+export interface Props {
+  /** Render in compact (single-row) mode for the footer. */
+  compact?: boolean;
+  /** Render with white-on-brand for use on dark/brand backgrounds. */
+  variant?: 'light' | 'dark';
+}
+const { compact = false, variant = 'light' } = Astro.props;
+
+const pathname = new URL(Astro.request.url).pathname;
+const locale: Locale = localeFromPath(pathname);
+
+const formId = `email-capture-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<form
+  id={formId}
+  class:list={[
+    'email-capture',
+    compact ? 'flex gap-2' : 'space-y-2',
+    variant === 'dark' ? 'is-dark' : '',
+  ]}
+  data-locale={locale}
+  data-source={pathname}
+  novalidate
+>
+  <label for={`${formId}-input`} class="sr-only">
+    {t('cta.banner.email_placeholder', locale)}
+  </label>
+  <input
+    type="email"
+    name="email"
+    id={`${formId}-input`}
+    placeholder={t('cta.banner.email_placeholder', locale)}
+    required
+    autocomplete="email"
+    class:list={[
+      'flex-1 px-4 py-2.5 rounded-md border text-sm',
+      variant === 'dark'
+        ? 'bg-white/95 border-transparent text-ink-900 placeholder:text-ink-500'
+        : 'bg-white border-ink-200 text-ink-900 placeholder:text-ink-400',
+    ]}
+  />
+  <button
+    type="submit"
+    class:list={[
+      'btn whitespace-nowrap',
+      variant === 'dark' ? 'bg-ink-950 text-white hover:bg-ink-900' : 'btn-primary',
+    ]}
+    data-cta="email-capture"
+  >
+    {t('cta.banner.button', locale)}
+  </button>
+  <p class="email-capture-status text-xs hidden" role="status" aria-live="polite"></p>
+</form>
+
+<script>
+  const LEADS_ENDPOINT =
+    (window as Window & { PUBLIC_LEADS_ENDPOINT?: string }).PUBLIC_LEADS_ENDPOINT ??
+    'https://app.zoho-kurdish.iq/api/marketing/leads';
+
+  document.querySelectorAll<HTMLFormElement>('form.email-capture').forEach((form: HTMLFormElement) => {
+    const status = form.querySelector<HTMLParagraphElement>('.email-capture-status');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = form.querySelector<HTMLInputElement>('input[type="email"]');
+      const email = input?.value.trim();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        if (status) {
+          status.textContent = 'Please enter a valid email address.';
+          status.classList.remove('hidden');
+        }
+        return;
+      }
+
+      const payload = {
+        email,
+        locale: form.dataset.locale ?? 'ku',
+        source: form.dataset.source ?? '/',
+        consent: true,
+        ts: new Date().toISOString(),
+      };
+
+      // Plausible
+      (window as Window & { plausible?: (e: string, o?: { props: Record<string, string> }) => void })
+        .plausible?.('signup_started', { props: { source: payload.source } });
+
+      try {
+        const res = await fetch(LEADS_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          if (status) {
+            status.textContent = '✓ Thanks! Check your inbox to confirm.';
+            status.classList.remove('hidden');
+          }
+          form.reset();
+          (window as Window & { plausible?: (e: string) => void }).plausible?.('signup_completed');
+        } else {
+          throw new Error(`status ${res.status}`);
+        }
+      } catch {
+        if (status) {
+          status.textContent = 'Something went wrong. Please try again.';
+          status.classList.remove('hidden');
+        }
+        (window as Window & { plausible?: (e: string) => void }).plausible?.('signup_failed');
+      }
+    });
+  });
+</script>

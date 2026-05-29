@@ -1,0 +1,43 @@
+---
+/**
+ * FeatureCard — single feature card.
+ */
+export interface Props {
+  title: string;
+  body: string;
+  icon?: string; // emoji or single-char glyph (no JS-image)
+  href?: string;
+  color?: 'brand' | 'accent' | 'ink';
+}
+
+const { title, body, icon = '✦', href, color = 'brand' } = Astro.props;
+
+const colorClass = {
+  brand: 'bg-brand-50 text-brand-600 border-brand-100',
+  accent: 'bg-accent-50 text-accent-600 border-accent-100',
+  ink: 'bg-ink-50 text-ink-700 border-ink-100',
+}[color];
+
+const Wrapper = href ? 'a' : 'div';
+---
+
+<Wrapper
+  href={href}
+  class={`card group ${href ? 'hover:-translate-y-0.5' : ''} no-underline block`}
+>
+  <div class={`inline-flex items-center justify-center w-12 h-12 rounded-xl text-2xl border mb-4 ${colorClass}`} aria-hidden="true">
+    {icon}
+  </div>
+  <h3 class="font-display font-semibold text-lg text-ink-900 mb-2">{title}</h3>
+  <p class="text-ink-600 text-sm leading-relaxed">{body}</p>
+  {
+    href && (
+      <span class="inline-flex items-center gap-1 mt-4 text-sm font-medium text-brand-600 group-hover:text-brand-700">
+        <slot name="cta">Learn more</slot>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="rtl:rotate-180"/>
+        </svg>
+      </span>
+    )
+  }
+</Wrapper>

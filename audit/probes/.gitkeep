@@ -1,0 +1,4 @@
+# Production-reality probe results (V-PR.1 .. V-PR.12) written by
+# scripts/production-reality-probe.mjs (T-V.2 — separate workstream).
+# Files: probes-YYYY-MM-DD.json
+# Consumed by scripts/world-class-scorecard.mjs to fill the V-PR rows.

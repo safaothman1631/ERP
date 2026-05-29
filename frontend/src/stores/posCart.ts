@@ -1,97 +1,64 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { getPOSDB } from './pos/db';
 
-// IndexedDB storage using localforage-like implementation
+/**
+ * IndexedDB storage adapter for Zustand persistence.
+ *
+ * Uses the shared `getPOSDB()` connection (schema v4, store `carts`).
+ * Zustand-persisted rows share that object store with CRDT-merged carts
+ * but live under a reserved `zustand:` key prefix so the CRDT helpers
+ * (`mergeCart`, sync code) skip them. The serialized blob is packed into
+ * `notes`; the other CartRow fields are zero-valued and `updatedAt` is
+ * stamped so the row still satisfies the typed schema.
+ */
+const ZUSTAND_KEY_PREFIX = 'zustand:';
+
 const indexedDBStorage = {
   getItem: async (name: string): Promise<string | null> => {
-    return new Promise((resolve) => {
-      const request = indexedDB.open('zoho-pos-db', 1);
-      
-      request.onupgradeneeded = (event: any) => {
-        const db = event.target.result;
-        if (!db.objectStoreNames.contains('pos-cart')) {
-          db.createObjectStore('pos-cart');
-        }
-      };
-      
-      request.onsuccess = (event: any) => {
-        const db = event.target.result;
-        const transaction = db.transaction(['pos-cart'], 'readonly');
-        const store = transaction.objectStore('pos-cart');
-        const getRequest = store.get(name);
-        
-        getRequest.onsuccess = () => {
-          resolve(getRequest.result || null);
-        };
-        
-        getRequest.onerror = () => {
-          resolve(null);
-        };
-      };
-      
-      request.onerror = () => {
-        resolve(null);
-      };
-    });
+    try {
+      const db = await getPOSDB();
+      const row = await db.get('carts', `${ZUSTAND_KEY_PREFIX}${name}`);
+      // Stored blob is in `notes`. Treat empty as missing.
+      if (!row || typeof row.notes !== 'string' || row.notes.length === 0) return null;
+      return row.notes;
+    } catch {
+      return null;
+    }
   },
-  
+
   setItem: async (name: string, value: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open('zoho-pos-db', 1);
-      
-      request.onupgradeneeded = (event: any) => {
-        const db = event.target.result;
-        if (!db.objectStoreNames.contains('pos-cart')) {
-          db.createObjectStore('pos-cart');
-        }
-      };
-      
-      request.onsuccess = (event: any) => {
-        const db = event.target.result;
-        const transaction = db.transaction(['pos-cart'], 'readwrite');
-        const store = transaction.objectStore('pos-cart');
-        const putRequest = store.put(value, name);
-        
-        putRequest.onsuccess = () => {
-          resolve();
-        };
-        
-        putRequest.onerror = () => {
-          reject(putRequest.error);
-        };
-      };
-      
-      request.onerror = () => {
-        reject(request.error);
-      };
-    });
+    try {
+      const db = await getPOSDB();
+      await db.put('carts', {
+        cartId: `${ZUSTAND_KEY_PREFIX}${name}`,
+        sessionId: null,
+        lines: {},
+        customer: null,
+        table: null,
+        pricelistId: null,
+        presetId: null,
+        discountTotal: 0,
+        notes: value,
+        updatedAt: Date.now(),
+        updatedBy: 'zustand-persist',
+      });
+    } catch {
+      /* persistence is best-effort; never throw from a setItem */
+    }
   },
-  
+
   removeItem: async (name: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open('zoho-pos-db', 1);
-      
-      request.onsuccess = (event: any) => {
-        const db = event.target.result;
-        const transaction = db.transaction(['pos-cart'], 'readwrite');
-        const store = transaction.objectStore('pos-cart');
-        const deleteRequest = store.delete(name);
-        
-        deleteRequest.onsuccess = () => {
-          resolve();
-        };
-        
-        deleteRequest.onerror = () => {
-          reject(deleteRequest.error);
-        };
-      };
-      
-      request.onerror = () => {
-        reject(request.error);
-      };
-    });
+    try {
+      const db = await getPOSDB();
+      await db.delete('carts', `${ZUSTAND_KEY_PREFIX}${name}`);
+    } catch {
+      /* noop */
+    }
   },
 };
+
+export { ZUSTAND_KEY_PREFIX as _ZUSTAND_CART_KEY_PREFIX };
 
 interface POSCartLine {
   id: string;
@@ -116,7 +83,7 @@ interface POSCartState {
   presetId: string | null;
   discountTotal: number;
   notes: string;
-  
+
   // Actions
   setOrder: (orderId: string | null, sessionId: string | null) => void;
   addLine: (line: Omit<POSCartLine, 'id'>) => void;
@@ -143,15 +110,15 @@ export const usePOSCartStore = create<POSCartState>()(
       presetId: null,
       discountTotal: 0,
       notes: '',
-      
+
       setOrder: (orderId, sessionId) => set({ orderId, sessionId }),
-      
+
       addLine: (lineData) => {
         const id = `line_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const line: POSCartLine = { id, ...lineData };
         set((state) => ({ lines: [...state.lines, line] }));
       },
-      
+
       updateLine: (id, partial) => {
         set((state) => ({
           lines: state.lines.map((line) =>
@@ -159,13 +126,13 @@ export const usePOSCartStore = create<POSCartState>()(
           ),
         }));
       },
-      
+
       removeLine: (id) => {
         set((state) => ({
           lines: state.lines.filter((line) => line.id !== id),
         }));
       },
-      
+
       setQty: (id, qty) => {
         if (qty <= 0) {
           get().removeLine(id);
@@ -173,15 +140,15 @@ export const usePOSCartStore = create<POSCartState>()(
           get().updateLine(id, { qty });
         }
       },
-      
+
       setCustomer: (customer) => set({ customer }),
-      
+
       setTable: (table) => set({ table }),
-      
+
       setPricelist: (pricelistId) => set({ pricelistId }),
-      
+
       setPreset: (presetId) => set({ presetId }),
-      
+
       clearCart: () => set({
         orderId: null,
         lines: [],
@@ -192,28 +159,28 @@ export const usePOSCartStore = create<POSCartState>()(
         discountTotal: 0,
         notes: '',
       }),
-      
+
       getTotals: () => {
         const { lines, discountTotal } = get();
         let subtotal = 0;
         let tax = 0;
-        
+
         for (const line of lines) {
           const lineSubtotal = line.qty * line.unit_price;
           const lineDiscount = lineSubtotal * (line.discount_percent / 100);
           const lineAfterDiscount = lineSubtotal - lineDiscount;
           const lineTax = lineAfterDiscount * (line.tax_rate / 100);
-          
+
           subtotal += lineAfterDiscount;
           tax += lineTax;
         }
-        
+
         const total = subtotal + tax;
         const discount = lines.reduce(
           (sum, line) => sum + (line.qty * line.unit_price * line.discount_percent / 100),
           0
         );
-        
+
         return {
           subtotal: Math.round(subtotal),
           tax: Math.round(tax),

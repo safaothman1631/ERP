@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/education", tags=["Education"])
 
@@ -177,7 +178,7 @@ def student_balance(sid: str, user: dict = Depends(get_current_user)):
     org = user["org_id"]
     fees, _ = FeeRepo(org).list(filters=[{"field": "student_id", "op": "==", "value": sid}], limit=1000)
     fee_ids = [f.get("id") for f in fees]
-    pays, _ = FeePaymentRepo(org).list(limit=10000)
+    pays = collect_stream(FeePaymentRepo(org), max_docs=10000)
     relevant = [p for p in pays if p.get("fee_id") in fee_ids]
     total_fees = sum(float(f.get("amount", 0)) for f in fees)
     total_paid = sum(float(p.get("amount", 0)) for p in relevant)

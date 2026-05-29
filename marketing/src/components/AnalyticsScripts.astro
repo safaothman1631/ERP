@@ -1,0 +1,72 @@
+---
+/**
+ * AnalyticsScripts — Plausible + GA4, both gated by env and cookie consent.
+ *
+ * Plausible (preferred, privacy-friendly, cookie-less) loads immediately when
+ * PUBLIC_PLAUSIBLE_DOMAIN is set. GA4 is gated behind `document.cookie._consent=1`
+ * (set by the cookie banner) AND PUBLIC_GA4_ID being present.
+ *
+ * Plausible's data model is cookie-less and lawful in EEA without consent banner;
+ * GA4 collects identifiers and requires consent.
+ */
+
+const PLAUSIBLE_DOMAIN = import.meta.env.PUBLIC_PLAUSIBLE_DOMAIN ?? '';
+const PLAUSIBLE_SRC =
+  import.meta.env.PUBLIC_PLAUSIBLE_SRC ?? 'https://plausible.io/js/script.js';
+const GA4_ID = import.meta.env.PUBLIC_GA4_ID ?? '';
+---
+
+{/* Plausible — no consent required (cookie-less) */}
+{
+  PLAUSIBLE_DOMAIN && (
+    <>
+      <script
+        is:inline
+        defer
+        data-domain={PLAUSIBLE_DOMAIN}
+        src={PLAUSIBLE_SRC}
+      ></script>
+      <script is:inline>
+        {`window.plausible = window.plausible || function() {
+          (window.plausible.q = window.plausible.q || []).push(arguments);
+        };`}
+      </script>
+    </>
+  )
+}
+
+{/* GA4 — requires consent */}
+{
+  GA4_ID && (
+    <script is:inline define:vars={{ GA4_ID }}>
+      {`
+        (function() {
+          function hasConsent() {
+            return document.cookie.split('; ').some(function(c){
+              return c.indexOf('_consent=1') === 0;
+            });
+          }
+          function loadGA() {
+            if (window.__ga4_loaded) return;
+            window.__ga4_loaded = true;
+            var s = document.createElement('script');
+            s.async = true;
+            s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA4_ID;
+            document.head.appendChild(s);
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function() { window.dataLayer.push(arguments); };
+            window.gtag('js', new Date());
+            window.gtag('config', GA4_ID, { anonymize_ip: true });
+          }
+          if (hasConsent()) loadGA();
+          window.addEventListener('consent:granted', loadGA);
+        })();
+      `}
+    </script>
+  )
+}
+
+{/* Pass leads endpoint to client scripts */}
+<script is:inline define:vars={{ leadsEndpoint: import.meta.env.PUBLIC_LEADS_ENDPOINT ?? '' }}>
+  if (leadsEndpoint) window.PUBLIC_LEADS_ENDPOINT = leadsEndpoint;
+</script>

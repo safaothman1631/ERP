@@ -39,29 +39,24 @@ def get_dashboard(user: dict = Depends(get_current_user)):
     cached = _cache.get(_cache_key)
     if cached is not None:
         return cached
+    from app.services.org_counters import get_counters, refresh_counters_from_stream
+
+    counters = get_counters(org_id)
+    if not counters.get("updated_at"):
+        try:
+            counters = refresh_counters_from_stream(org_id)
+        except Exception:
+            counters = get_counters(org_id)
+
     inv_repo = InvoiceRepository(org_id)
     bill_repo = BillRepository(org_id)
     payment_repo = PaymentReceivedRepository(org_id)
     expense_repo = ExpenseRepository(org_id)
     contact_repo = ContactRepository(org_id)
 
-    # Total receivable (aggregate invoices)
-    invoices, _ = inv_repo.list(
-        filters=[
-            {"field": "status", "op": "in", "value": ["sent", "partially_paid", "overdue"]}
-        ],
-        limit=1000
-    )
-    total_receivable = sum(inv.get("balance_due", 0) for inv in invoices)
+    total_receivable = float(counters.get("invoices_open_balance") or 0)
 
-    # Total payable (aggregate bills)
-    bills, _ = bill_repo.list(
-        filters=[
-            {"field": "status", "op": "in", "value": ["open", "partially_paid", "overdue"]}
-        ],
-        limit=1000
-    )
-    total_payable = sum(bill.get("balance_due", 0) for bill in bills)
+    total_payable = float(counters.get("bills_open_balance") or 0)
 
     # This month income (payments received)
     now = datetime.utcnow()
@@ -83,23 +78,19 @@ def get_dashboard(user: dict = Depends(get_current_user)):
     )
     expenses_this_month = sum(e.get("amount", 0) for e in expenses_month if e.get("status") != "void")
 
-    # Total contacts
-    contacts, total_contacts = contact_repo.list(
-        filters=[{"field": "is_active", "op": "!=", "value": False}],
-        limit=1
-    )
+    # Total contacts (avoid != composite index — filter in Python)
+    all_contacts, _ = contact_repo.list(limit=500)
+    total_contacts = sum(1 for c in all_contacts if c.get("is_active", True) is not False)
 
-    # Overdue invoices — filter due_date in Python to avoid composite index requirement
-    overdue_candidates, _ = inv_repo.list(
-        filters=[
-            {"field": "status", "op": "in", "value": ["sent", "partially_paid"]},
-        ],
-        limit=1000
-    )
-    overdue_invoices = sum(
-        1 for inv in overdue_candidates
-        if _parse_date(inv.get("due_date")) and _parse_date(inv.get("due_date")) < now
-    )
+    from app.services.report_streams import stream_org_filtered
+
+    overdue_invoices = 0
+    for inv in stream_org_filtered(
+        inv_repo, status_in={"sent", "partially_paid", "overdue"}
+    ):
+        due = _parse_date(inv.get("due_date"))
+        if due and due < now and float(inv.get("balance_due", 0) or 0) > 0:
+            overdue_invoices += 1
 
     # Recent invoices and expenses
     recent_invoices, _ = inv_repo.list(order_by="created_at", order_dir="DESCENDING", limit=5)

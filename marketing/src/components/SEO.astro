@@ -1,0 +1,32 @@
+---
+/**
+ * SEO — extra meta-tag bundle for pages that need to override BaseLayout defaults.
+ *
+ * BaseLayout already emits the core SEO bundle (title, description, OG, Twitter, hreflang).
+ * Use this component inside the <slot> of a page only when you need to inject
+ * additional/overriding tags (e.g., a Product page with rich-result markup).
+ */
+export interface Props {
+  /** Override the default robots directive. */
+  robots?: string;
+  /** Override Twitter handle for the page. */
+  twitterCreator?: string;
+  /** Add extra <meta> tag pairs. */
+  extras?: Array<{ name?: string; property?: string; content: string }>;
+}
+
+const { robots, twitterCreator = '@kurdisherp', extras = [] } = Astro.props;
+---
+
+{robots && <meta name="robots" content={robots} />}
+<meta name="twitter:site" content={twitterCreator} />
+<meta name="twitter:creator" content={twitterCreator} />
+{
+  extras.map((tag) =>
+    tag.property ? (
+      <meta property={tag.property} content={tag.content} />
+    ) : (
+      <meta name={tag.name} content={tag.content} />
+    )
+  )
+}

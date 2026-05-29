@@ -4,9 +4,12 @@ import { message } from '../utils/message';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
+import { useListQuery } from '../api/queries/useListQuery';
+import { listQueryKeys } from '../api/queries/keys';
 import ExportButton from '../components/ExportButton';
 import dayjs from 'dayjs';
 import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { downloadCsv } from '../utils/exportCsv';
 import { space } from '../theme/tokens';
 import { useAuthStore } from '../store';
@@ -22,9 +25,6 @@ const statusColors: Record<string, string> = {
 
 const Bills: React.FC = () => {
  const { t } = useTranslation();
- const [data, setData] = useState<any[]>([]);
- const [loading, setLoading] = useState(false);
- const [total, setTotal] = useState(0);
  const [page, setPage] = useState(1);
  const [statusFilter, setStatusFilter] = useState('');
  const [modal, setModal] = useState(false);
@@ -40,16 +40,13 @@ const Bills: React.FC = () => {
  // AddGate: wire Selective Add for bills section (R9.1, R9.5)
  const addGate = useAddGate('purchases.bills');
 
- const fetchData = async () => {
- setLoading(true);
- try {
- const res = await api.get('/api/bills', { params: { page, status: statusFilter, page_size: 20 } });
- setData(res.data.items); setTotal(res.data.total);
- } catch { message.error(t('error')); }
- finally { setLoading(false); }
- };
-
- useEffect(() => { fetchData(); }, [page, statusFilter]);
+ const billsQuery = useListQuery<any, { items?: any[]; total?: number }>({
+ queryKey: listQueryKeys.bills({ page, status: statusFilter, page_size: 20 }),
+ queryFn: () => api.get('/api/bills', { params: { page, status: statusFilter, page_size: 20 } }),
+ });
+ const data = billsQuery.data?.items ?? [];
+ const total = billsQuery.data?.total ?? 0;
+ const loading = billsQuery.isLoading || billsQuery.isFetching;
 
  // Sync record count into AddGate store (R9.5, R9.6)
  useEffect(() => { addGate.setRecordCount(total); }, [total, addGate.setRecordCount]);
@@ -91,7 +88,7 @@ const Bills: React.FC = () => {
  setModal(false);
  form.resetFields();
  setLines([{ description: '', quantity: 1, rate: 0, amount: 0 }]);
- fetchData();
+ void billsQuery.refetch();
  } catch { message.error(t('error')); }
  };
 
@@ -99,7 +96,7 @@ const Bills: React.FC = () => {
  try {
  await api.post(`/api/bills/${id}/approve`);
  message.success(t('success'));
- fetchData();
+ void billsQuery.refetch();
  } catch { message.error(t('error')); }
  };
 
@@ -201,12 +198,7 @@ const Bills: React.FC = () => {
  <Form form={form} layout="vertical" onFinish={handleSave} initialValues={{ date: dayjs(), currency_code: 'IQD' }}>
  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
  <Form.Item label={t('vendor')} name="contact_id" rules={[{ required: true, message: t('required_contact') }]}>
- <Select
- showSearch
- optionFilterProp="label"
- options={vendors.map((v: any) => ({ label: v.display_name, value: v.id }))}
- placeholder={t('placeholder_vendor')}
- />
+ <SelectWithQuickCreate entity="vendor" showSearch placeholder={t('placeholder_vendor')} allowClear />
  </Form.Item>
  <Form.Item label={t('date')} name="date" rules={[{ required: true, message: t('required_date') }]}>
  <DatePicker style={{ width: '100%' }} placeholder={t('placeholder_date')} />
@@ -215,13 +207,7 @@ const Bills: React.FC = () => {
  <DatePicker style={{ width: '100%' }} placeholder={t('placeholder_due_date')} />
  </Form.Item>
  <Form.Item label={t('account')} name="account_id">
- <Select
- showSearch
- optionFilterProp="label"
- options={accounts.map((a: any) => ({ label: `${a.code} - ${a.name}`, value: a.id }))}
- placeholder={t('placeholder_select')}
- allowClear
- />
+ <SelectWithQuickCreate entity="account" showSearch placeholder={t('placeholder_select')} allowClear />
  </Form.Item>
  </div>
  <Form.Item label={t('notes')} name="notes"><Input.TextArea rows={2} placeholder={t('placeholder_notes')} /></Form.Item>

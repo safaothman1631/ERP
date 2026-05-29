@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "capturedAt": "2026-05-28T00:00:00.000Z",
+  "comment": "Initial baseline captured by EP-6 finalization. Run `node scripts/audit-empty-states.mjs --write-baseline` to refresh from a live AST sweep. The values below reflect a grep-level static survey (counts of `<Select(\\s|>|/)` minus `<Select.Option>` occurrences vs `<SelectWithQuickCreate>` wrappers) across `frontend/src/**/*.tsx`. The CI `--check` mode treats `pendingFiles` as the ratchet: every PR must keep this number at or below the baseline.",
+  "totalSelectFiles": 155,
+  "totalSelectOccurrences": 373,
+  "wrappedFiles": 11,
+  "wrappedOccurrences": 16,
+  "exemptFiles": 0,
+  "pendingFiles": 144,
+  "pendingSelects": 357,
+  "migrationPercent": 4.3,
+  "phaseAtCapture": "EP-1 partial (top-7 selectors migrated)"
+}

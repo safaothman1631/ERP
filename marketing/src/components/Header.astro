@@ -1,0 +1,113 @@
+---
+/**
+ * Header — top navigation bar.
+ */
+import { localeFromPath, t, localizedPath, type Locale } from '../i18n/utils';
+import LanguageSwitcher from './LanguageSwitcher.astro';
+
+const pathname = new URL(Astro.request.url).pathname;
+const locale: Locale = localeFromPath(pathname);
+const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.zoho-kurdish.iq';
+
+const nav = [
+  { label: t('nav.features', locale), href: localizedPath(locale, '/features') },
+  { label: t('nav.pricing', locale), href: localizedPath(locale, '/pricing') },
+  { label: t('nav.blog', locale), href: localizedPath(locale, '/blog') },
+  { label: t('nav.about', locale), href: localizedPath(locale, '/about') },
+  { label: t('nav.contact', locale), href: localizedPath(locale, '/contact') },
+];
+---
+
+<header
+  class="sticky top-0 z-40 bg-white/85 backdrop-blur border-b border-ink-100"
+  role="banner"
+>
+  <div class="container-marketing flex items-center gap-4 h-16">
+    <a
+      href={localizedPath(locale, '/')}
+      class="flex items-center gap-2 font-display font-bold text-lg text-ink-900 no-underline"
+      aria-label={t('site.name', locale)}
+    >
+      <span
+        class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-brand-500 text-white font-bold"
+        aria-hidden="true"
+      >K</span>
+      <span class="hidden sm:inline">{t('site.name', locale)}</span>
+    </a>
+
+    <nav
+      class="hidden md:flex items-center gap-1 ms-4 flex-1"
+      aria-label="Primary"
+    >
+      {
+        nav.map((item) => (
+          <a
+            href={item.href}
+            class="px-3 py-2 rounded-md text-sm font-medium text-ink-700 hover:bg-ink-50 hover:text-ink-900 transition-colors"
+          >
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="flex items-center gap-2 ms-auto">
+      <LanguageSwitcher />
+      <a
+        href={`${APP_URL}/login`}
+        class="hidden sm:inline-flex btn btn-ghost"
+      >{t('nav.login', locale)}</a>
+      <a
+        href={`${APP_URL}/signup`}
+        class="btn btn-primary"
+        data-cta="header-signup"
+      >{t('nav.try_free', locale)}</a>
+
+      <button
+        type="button"
+        class="md:hidden btn btn-ghost p-2"
+        aria-label="Open menu"
+        data-mobile-menu-toggle
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  {/* Mobile menu drawer */}
+  <div
+    id="mobile-menu"
+    class="md:hidden hidden border-t border-ink-100 bg-white"
+    role="dialog"
+    aria-modal="true"
+  >
+    <nav class="container-marketing py-4 flex flex-col gap-1" aria-label="Mobile primary">
+      {
+        nav.map((item) => (
+          <a
+            href={item.href}
+            class="px-3 py-3 rounded-md text-base font-medium text-ink-700 hover:bg-ink-50"
+          >
+            {item.label}
+          </a>
+        ))
+      }
+      <a
+        href={`${APP_URL}/login`}
+        class="px-3 py-3 rounded-md text-base font-medium text-ink-700 hover:bg-ink-50"
+      >{t('nav.login', locale)}</a>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const toggle = document.querySelector('[data-mobile-menu-toggle]');
+  const menu = document.getElementById('mobile-menu');
+  toggle?.addEventListener('click', () => {
+    menu?.classList.toggle('hidden');
+  });
+</script>

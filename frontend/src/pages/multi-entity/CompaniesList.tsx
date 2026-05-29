@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Form, Input, Select, Space, Tag, Popconfirm, Card } from 'antd';
+import { Button, Form, Input, Space, Tag, Popconfirm, Card } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SwapOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { ColumnsType } from 'antd/es/table';
@@ -8,6 +8,8 @@ import api from '../../api';
 import { message } from '../../utils/message';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
+import { SelectWithQuickCreate } from '../../design-system/empty/SelectWithQuickCreate';
+import { ListWithEmptyState } from '../../design-system/empty/ListWithEmptyState';
 
 interface Company {
  id: string;
@@ -175,12 +177,21 @@ const CompaniesList = () => {
  }
  />
  <Card>
+ <ListWithEmptyState
+ entity="company"
+ data={companies}
+ loading={loading}
+ onCreate={handleCreate}
+ onRetry={fetchCompanies}
+ render={(rows) => (
  <ResponsiveTableAdapter
  columns={columns}
- dataSource={companies}
+ dataSource={rows}
  rowKey="id"
  loading={loading}
  pagination={{ pageSize: 20 }}
+ />
+ )}
  />
  </Card>
 
@@ -217,11 +228,7 @@ const CompaniesList = () => {
  label={t('multi_entity.currency')}
  rules={[{ required: true, message: t('multi_entity.currency_required') }]}
  >
- <Select>
- <Select.Option value="IQD">IQD</Select.Option>
- <Select.Option value="USD">USD</Select.Option>
- <Select.Option value="EUR">EUR</Select.Option>
- </Select>
+ <SelectWithQuickCreate entity="currency" />
  </Form.Item>
  <Form.Item name="tax_id" label={t('multi_entity.tax_id')}>
  <Input />

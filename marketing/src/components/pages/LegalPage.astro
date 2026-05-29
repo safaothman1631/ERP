@@ -1,0 +1,86 @@
+---
+/**
+ * LegalPage — terms / privacy / DPA placeholder.
+ * Real legal copy pending counsel review (TODO).
+ */
+import { t, type Locale } from '../../i18n/utils';
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+export interface Props {
+  locale: Locale;
+  kind: 'terms' | 'privacy' | 'dpa';
+}
+const { locale, kind } = Astro.props;
+
+const titleKey =
+  kind === 'terms' ? 'legal.terms.title' :
+  kind === 'privacy' ? 'legal.privacy.title' :
+  'legal.dpa.title';
+
+const lastUpdated = '2026-05-29';
+---
+
+<DocsLayout
+  locale={locale}
+  title={t(titleKey, locale)}
+  description={t('legal.placeholder', locale)}
+  noindex={true}
+>
+  {/* TODO: legal review — replace placeholder copy with counsel-reviewed text before launch */}
+  <h1>{t(titleKey, locale)}</h1>
+  <p><em>Last updated: {lastUpdated}</em></p>
+
+  <blockquote>
+    <strong>Placeholder.</strong> {t('legal.placeholder', locale)}
+  </blockquote>
+
+  {kind === 'terms' && (
+    <>
+      <h2>1. Acceptance of Terms</h2>
+      <p>By accessing or using the Kurdish ERP service, you agree to be bound by these Terms of Service. If you do not agree to these terms, you may not use the service.</p>
+      <h2>2. Description of Service</h2>
+      <p>Kurdish ERP provides a software-as-a-service business management platform tailored for Iraqi small and medium businesses, including accounting, invoicing, point-of-sale, inventory, payroll, and related modules.</p>
+      <h2>3. Subscription and Billing</h2>
+      <p>Plans, pricing, and billing cycles are described on the pricing page. We bill in Iraqi Dinars (IQD) or US Dollars (USD) at your election. Annual prepayments are non-refundable after the 30-day trial.</p>
+      <h2>4. Acceptable Use</h2>
+      <p>You agree not to use the service for any unlawful purpose, including but not limited to tax evasion, money laundering, or activities prohibited by Iraqi law or the laws of the Kurdistan Region.</p>
+      <h2>5. Limitation of Liability</h2>
+      <p>The service is provided "as is" without warranties. To the maximum extent permitted by law, our liability is limited to the amount you paid in the 12 months preceding the claim.</p>
+      <h2>6. Governing Law</h2>
+      <p>These terms are governed by the laws of the Republic of Iraq and the applicable laws of the Kurdistan Region.</p>
+    </>
+  )}
+
+  {kind === 'privacy' && (
+    <>
+      <h2>1. Data We Collect</h2>
+      <p>We collect data you provide when signing up (name, email, business name, phone), data you enter into the application (customers, items, transactions), and technical data (IP address, browser type, usage events) needed to operate the service.</p>
+      <h2>2. How We Use Data</h2>
+      <p>We use your data to operate, secure, and improve the service, to bill you, and to communicate with you about the service. We do not sell your data.</p>
+      <h2>3. Data Hosting</h2>
+      <p>Operational data is stored on Google Cloud Firestore in the EU/Middle East region as a default. Customers requiring in-country hosting should contact us.</p>
+      <h2>4. Your Rights</h2>
+      <p>You have the right to access, correct, export, and delete your data. Contact privacy@zoho-kurdish.iq.</p>
+      <h2>5. Cookies and Analytics</h2>
+      <p>We use cookie-less analytics (Plausible) by default. With your consent, we may also load Google Analytics 4 for marketing-funnel measurement.</p>
+    </>
+  )}
+
+  {kind === 'dpa' && (
+    <>
+      <h2>1. Scope</h2>
+      <p>This Data Processing Agreement (DPA) applies to all customers (Controllers) for whom Kurdish ERP (Processor) processes personal data in the operation of the service.</p>
+      <h2>2. Subject and Duration</h2>
+      <p>Processing covers the data the Controller enters into the service and persists for the duration of the subscription plus the deletion grace period (90 days).</p>
+      <h2>3. Sub-processors</h2>
+      <p>We maintain a current list of sub-processors at /legal/sub-processors. Sub-processors include Google Cloud Platform (hosting) and Stripe (payments).</p>
+      <h2>4. Security</h2>
+      <p>We maintain commercially reasonable technical and organizational measures including encryption in transit and at rest, role-based access controls, audit logging, and regular vulnerability scans.</p>
+      <h2>5. Incident Notification</h2>
+      <p>We will notify Controllers of confirmed personal-data breaches affecting their data within 72 hours of discovery.</p>
+    </>
+  )}
+
+  <hr/>
+  <p><small>This page is a placeholder pending review by qualified Iraqi legal counsel. Final wording will reference applicable Iraqi data-protection statutes and KRG-specific rules.</small></p>
+</DocsLayout>

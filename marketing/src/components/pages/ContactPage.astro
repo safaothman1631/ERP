@@ -1,0 +1,168 @@
+---
+import { t, type Locale } from '../../i18n/utils';
+import MarketingLayout from '../../layouts/MarketingLayout.astro';
+
+export interface Props { locale: Locale; }
+const { locale } = Astro.props;
+
+const GOVERNORATES = [
+  'Erbil', 'Sulaymaniyah', 'Duhok', 'Halabja',
+  'Baghdad', 'Basra', 'Mosul (Nineveh)', 'Najaf', 'Karbala', 'Babil',
+  'Wasit', 'Maysan', 'Dhi Qar', 'Muthanna', 'Qadisiyyah',
+  'Diyala', 'Saladin', 'Anbar', 'Kirkuk',
+];
+
+const WHATSAPP = 'https://wa.me/9647500000000?text=' + encodeURIComponent(
+  locale === 'ku' ? 'سڵاو! دەمەوێت زانیاری دەربارەی ERP کوردی بزانم' :
+  locale === 'ar' ? 'مرحباً، أرغب بمعرفة المزيد عن ERP الكردي' :
+  'Hi! I would like to learn more about the Kurdish ERP'
+);
+---
+
+<MarketingLayout
+  locale={locale}
+  title={t('contact.title', locale)}
+  description={t('contact.sub', locale)}
+>
+  <section class="section pt-16">
+    <div class="container-marketing max-w-3xl">
+      <h1 class="font-display font-bold text-4xl md:text-display-sm text-ink-950 mb-3 text-balance">
+        {t('contact.title', locale)}
+      </h1>
+      <p class="text-lg text-ink-600 mb-10 text-pretty">{t('contact.sub', locale)}</p>
+
+      <div class="grid lg:grid-cols-[1fr_280px] gap-10">
+        <form id="contact-form" class="card space-y-4" novalidate>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label for="name" class="block text-sm font-medium text-ink-800 mb-1">{t('contact.field.name', locale)} <span class="text-brand-500">*</span></label>
+              <input id="name" name="name" type="text" required class="w-full px-3 py-2 rounded-md border border-ink-200 text-sm"/>
+            </div>
+            <div>
+              <label for="business" class="block text-sm font-medium text-ink-800 mb-1">{t('contact.field.business', locale)} <span class="text-brand-500">*</span></label>
+              <input id="business" name="business" type="text" required class="w-full px-3 py-2 rounded-md border border-ink-200 text-sm"/>
+            </div>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label for="governorate" class="block text-sm font-medium text-ink-800 mb-1">{t('contact.field.governorate', locale)} <span class="text-brand-500">*</span></label>
+              <select id="governorate" name="governorate" required class="w-full px-3 py-2 rounded-md border border-ink-200 text-sm bg-white">
+                <option value="">{t('contact.field.governorate_placeholder', locale)}</option>
+                {GOVERNORATES.map((g) => <option value={g}>{g}</option>)}
+              </select>
+            </div>
+            <div>
+              <label for="usecase" class="block text-sm font-medium text-ink-800 mb-1">{t('contact.field.usecase', locale)} <span class="text-brand-500">*</span></label>
+              <select id="usecase" name="usecase" required class="w-full px-3 py-2 rounded-md border border-ink-200 text-sm bg-white">
+                <option value="pos">{t('contact.field.usecase.pos', locale)}</option>
+                <option value="accounting">{t('contact.field.usecase.accounting', locale)}</option>
+                <option value="payroll">{t('contact.field.usecase.payroll', locale)}</option>
+                <option value="multi">{t('contact.field.usecase.multi', locale)}</option>
+                <option value="einvoice">{t('contact.field.usecase.einvoice', locale)}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label for="users" class="block text-sm font-medium text-ink-800 mb-1">{t('contact.field.users', locale)}</label>
+              <input id="users" name="users" type="number" min="1" max="9999" class="w-full px-3 py-2 rounded-md border border-ink-200 text-sm"/>
+            </div>
+            <div>
+              <label for="phone" class="block text-sm font-medium text-ink-800 mb-1">{t('contact.field.phone', locale)} <span class="text-brand-500">*</span></label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                required
+                placeholder="+964 7XX XXX XXXX"
+                pattern="^\+?9647[0-9]{8,9}$|^07[0-9]{8,9}$"
+                inputmode="tel"
+                class="w-full px-3 py-2 rounded-md border border-ink-200 text-sm"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label for="email" class="block text-sm font-medium text-ink-800 mb-1">{t('contact.field.email', locale)} <span class="text-brand-500">*</span></label>
+            <input id="email" name="email" type="email" required class="w-full px-3 py-2 rounded-md border border-ink-200 text-sm"/>
+          </div>
+
+          <div>
+            <label for="message" class="block text-sm font-medium text-ink-800 mb-1">{t('contact.field.message', locale)}</label>
+            <textarea id="message" name="message" rows="4" class="w-full px-3 py-2 rounded-md border border-ink-200 text-sm"></textarea>
+          </div>
+
+          <input type="hidden" name="locale" value={locale}/>
+          {/* hCaptcha invisible mode would attach here — TODO: integrate */}
+
+          <button type="submit" class="btn btn-primary w-full justify-center btn-lg">
+            {t('contact.submit', locale)}
+          </button>
+          <p id="contact-status" class="hidden text-sm" role="status" aria-live="polite"></p>
+        </form>
+
+        <aside class="space-y-4">
+          <a href={WHATSAPP} class="card flex items-center gap-3 hover:border-accent-300 no-underline" target="_blank" rel="noopener noreferrer">
+            <div class="w-10 h-10 rounded-full bg-accent-50 flex items-center justify-center text-2xl" aria-hidden="true">💬</div>
+            <div>
+              <p class="font-semibold text-ink-900 text-sm">{t('contact.whatsapp', locale)}</p>
+              <p class="text-xs text-ink-500">+964 750 000 0000</p>
+            </div>
+          </a>
+
+          <div class="card">
+            <p class="font-semibold text-ink-900 text-sm mb-2">📧 Email</p>
+            <a href="mailto:sales@zoho-kurdish.iq" class="text-sm">sales@zoho-kurdish.iq</a>
+          </div>
+
+          <div class="card">
+            <p class="font-semibold text-ink-900 text-sm mb-2">📍 Office</p>
+            <p class="text-sm text-ink-600">Sulaymaniyah, Kurdistan Region<br/>Iraq</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</MarketingLayout>
+
+<script>
+  const form = document.getElementById('contact-form') as HTMLFormElement | null;
+  const status = document.getElementById('contact-status');
+  const LEADS_ENDPOINT =
+    (window as Window & { PUBLIC_LEADS_ENDPOINT?: string }).PUBLIC_LEADS_ENDPOINT ??
+    'https://app.zoho-kurdish.iq/api/marketing/leads';
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+    const fd = new FormData(form);
+    const payload: Record<string, FormDataEntryValue> = {};
+    fd.forEach((v, k) => (payload[k] = v));
+    payload.consent = 'true';
+    payload.ts = new Date().toISOString();
+    payload.source = '/contact';
+
+    (window as Window & { plausible?: (e: string) => void }).plausible?.('contact_submit_started');
+    try {
+      const res = await fetch(LEADS_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      if (status) {
+        status.className = 'text-sm text-accent-700';
+        status.textContent = '✓ Thanks! Our team will reach out within 24 hours.';
+      }
+      form.reset();
+      (window as Window & { plausible?: (e: string) => void }).plausible?.('contact_submit_completed');
+    } catch {
+      if (status) {
+        status.className = 'text-sm text-brand-700';
+        status.textContent = 'Something went wrong. Please email sales@zoho-kurdish.iq.';
+      }
+    }
+  });
+</script>

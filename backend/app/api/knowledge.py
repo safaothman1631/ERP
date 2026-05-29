@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/knowledge", tags=["Knowledge"])
 
@@ -238,7 +239,7 @@ def search_kb(
     user: dict = Depends(get_current_user),
     limit: int = Query(20, ge=1, le=100),
 ):
-    items, _ = KBArticleRepo(user["org_id"]).list(limit=10000)
+    items = collect_stream(KBArticleRepo(user["org_id"]), max_docs=10000)
     qlow = q.lower()
     matches = []
     for a in items:
@@ -258,6 +259,6 @@ def search_kb(
 
 @router.get("/popular")
 def popular_articles(user: dict = Depends(get_current_user), limit: int = 10):
-    items, _ = KBArticleRepo(user["org_id"]).list(limit=10000)
+    items = collect_stream(KBArticleRepo(user["org_id"]), max_docs=10000)
     items.sort(key=lambda a: int(a.get("view_count", 0)), reverse=True)
     return {"items": items[:limit]}

@@ -1,0 +1,31 @@
+---
+/**
+ * HomePage — landing template, locale-agnostic.
+ * Locale routes pass in `locale` and the template renders the right strings.
+ */
+import { t, type Locale } from '../../i18n/utils';
+import MarketingLayout from '../../layouts/MarketingLayout.astro';
+import Hero from '../Hero.astro';
+import CTABanner from '../CTABanner.astro';
+import ProblemsSection from '../sections/ProblemsSection.astro';
+import FeaturesSection from '../sections/FeaturesSection.astro';
+import PricingSection from '../sections/PricingSection.astro';
+import TestimonialsSection from '../sections/TestimonialsSection.astro';
+
+export interface Props { locale: Locale; }
+const { locale } = Astro.props;
+---
+
+<MarketingLayout
+  locale={locale}
+  title={t('site.name', locale)}
+  description={t('site.description', locale)}
+  schemaType="WebPage"
+>
+  <Hero locale={locale} />
+  <ProblemsSection locale={locale} />
+  <FeaturesSection locale={locale} />
+  <PricingSection locale={locale} teaser={true} />
+  <TestimonialsSection locale={locale} />
+  <CTABanner locale={locale} />
+</MarketingLayout>

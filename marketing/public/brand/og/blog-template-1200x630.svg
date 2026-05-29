@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Kurdish ERP blog">
+  <rect width="1200" height="630" fill="#ffffff"/>
+  <rect x="0" y="0" width="1200" height="12" fill="#e5495d"/>
+  <rect x="60" y="60" width="60" height="60" rx="14" fill="#e5495d"/>
+  <text x="90" y="103" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="32" fill="#ffffff">K</text>
+  <text x="140" y="100" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="30" fill="#28282d">Kurdish ERP</text>
+  <text x="140" y="130" font-family="system-ui, -apple-system, sans-serif" font-weight="500" font-size="20" fill="#71717f">Blog</text>
+
+  <text x="60" y="320" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="56" fill="#0c0c0f">Guides for Iraqi</text>
+  <text x="60" y="390" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="56" fill="#0c0c0f">businesses.</text>
+
+  <rect x="60" y="500" width="1080" height="2" fill="#eeeef1"/>
+  <text x="60" y="550" font-family="system-ui, -apple-system, sans-serif" font-weight="500" font-size="22" fill="#71717f">zoho-kurdish.iq/blog</text>
+</svg>

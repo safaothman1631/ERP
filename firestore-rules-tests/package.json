@@ -1,0 +1,22 @@
+{
+  "name": "firestore-rules-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Security-rules unit tests for the Kurdish ERP Firestore database (SF4 / T-SF.4.1). Proves cross-tenant denial, role gating, and append-only audit logs against the Firebase emulator.",
+  "type": "module",
+  "scripts": {
+    "test": "firebase emulators:exec --only firestore --project zoho-83cda \"vitest run\"",
+    "test:watch": "firebase emulators:exec --only firestore --project zoho-83cda \"vitest\"",
+    "test:nostart": "vitest run",
+    "emulator": "firebase emulators:start --only firestore --project zoho-83cda"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^11.0.0",
+    "firebase-tools": "^14.0.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

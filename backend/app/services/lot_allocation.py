@@ -25,6 +25,7 @@ from typing import Optional
 
 from app.firebase_client import get_db
 from app.firestore.inventory import BatchRepository
+from app.services.report_streams import collect_stream
 
 # Allocation strategy constants
 STRATEGY_FIFO = "FIFO"
@@ -60,7 +61,7 @@ class LotAllocationService:
     ) -> list[dict]:
         """Return lots for an item with qty_on_hand > 0."""
         repo = BatchRepository(org_id)
-        items, _ = repo.list(limit=10000)
+        items = collect_stream(repo)
         out = []
         for b in items:
             if b.get("item_id") != item_id:
@@ -206,7 +207,7 @@ class LotAllocationService:
         as_of = as_of or datetime.utcnow()
         cutoff = as_of + timedelta(days=days)
         repo = BatchRepository(org_id)
-        items, _ = repo.list(limit=10000)
+        items = collect_stream(repo)
         out = []
         for b in items:
             if float(b.get("qty_on_hand", 0) or 0) <= ALLOCATION_TOLERANCE:

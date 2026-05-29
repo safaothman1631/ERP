@@ -4,8 +4,11 @@ import { message } from '../utils/message';
 import { PlusOutlined, MoreOutlined, DeleteOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
+import { useListQuery } from '../api/queries/useListQuery';
+import { listQueryKeys } from '../api/queries/keys';
 import dayjs from 'dayjs';
 import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { downloadCsv } from '../utils/exportCsv';
 import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
@@ -17,9 +20,6 @@ const statusColors: Record<string, string> = { draft: 'default', issued: 'blue',
 
 const PurchaseOrders: React.FC = () => {
  const { t } = useTranslation();
- const [data, setData] = useState<any[]>([]);
- const [loading, setLoading] = useState(false);
- const [total, setTotal] = useState(0);
  const [page, setPage] = useState(1);
  const [modalOpen, setModalOpen] = useState(false);
  const [contacts, setContacts] = useState<any[]>([]);
@@ -35,13 +35,13 @@ const PurchaseOrders: React.FC = () => {
  // AddGate: wire Selective Add for purchase orders section (R9.1, R9.5)
  const addGate = useAddGate('purchases.purchase_orders');
 
- const fetchData = async () => {
- setLoading(true);
- try { const r = await api.get('/api/purchase-orders', { params: { page, page_size: 20 } }); setData(r.data.items); setTotal(r.data.total); }
- catch { message.error(t('error')); } finally { setLoading(false); }
- };
-
- useEffect(() => { fetchData(); }, [page]);
+ const purchaseOrdersQuery = useListQuery<any, { items?: any[]; total?: number }>({
+ queryKey: listQueryKeys.purchaseOrders({ page, page_size: 20 }),
+ queryFn: () => api.get('/api/purchase-orders', { params: { page, page_size: 20 } }),
+ });
+ const data = purchaseOrdersQuery.data?.items ?? [];
+ const total = purchaseOrdersQuery.data?.total ?? 0;
+ const loading = purchaseOrdersQuery.isLoading || purchaseOrdersQuery.isFetching;
 
  // Sync record count into AddGate store (R9.5, R9.6)
  useEffect(() => { addGate.setRecordCount(total); }, [total, addGate.setRecordCount]);
@@ -57,7 +57,7 @@ const PurchaseOrders: React.FC = () => {
  };
 
  const handleAction = async (id: string, action: string) => {
- try { await api.post(`/api/purchase-orders/${id}/${action}`); message.success(t('success')); fetchData(); } catch { message.error(t('error')); }
+ try { await api.post(`/api/purchase-orders/${id}/${action}`); message.success(t('success')); void purchaseOrdersQuery.refetch(); } catch { message.error(t('error')); }
  };
 
  const handleDownloadPdf = async (id: string) => {
@@ -90,7 +90,7 @@ const PurchaseOrders: React.FC = () => {
  reference: values.reference || '', currency_code: 'IQD', notes: values.notes || '',
  lines: lines.map(l => ({ item_id: l.item_id || null, description: l.description, quantity: l.quantity, unit_price: l.unit_price, discount_percent: l.discount_percent || 0, tax_id: null, account_id: null })),
  });
- message.success(t('success')); setModalOpen(false); fetchData();
+ message.success(t('success')); setModalOpen(false); void purchaseOrdersQuery.refetch();
  } catch { message.error(t('error')); } finally { setSaving(false); }
  };
 
@@ -142,7 +142,7 @@ const PurchaseOrders: React.FC = () => {
  <Form form={form} layout="vertical" onFinish={handleSave} initialValues={{ date: dayjs() }}>
  <Space wrap>
  <Form.Item label={t('vendor')} name="contact_id" rules={[{ required: true, message: t('required_contact') }]} style={{ width: 250 }}>
- <Select showSearch optionFilterProp="label" placeholder={t('placeholder_vendor')} options={contacts.map(c => ({ label: c.display_name, value: c.id }))} />
+ <SelectWithQuickCreate entity="vendor" showSearch placeholder={t('placeholder_vendor')} allowClear />
  </Form.Item>
  <Form.Item label={t('date')} name="date" rules={[{ required: true, message: t('required_date') }]}><DatePicker placeholder={t('placeholder_date')} /></Form.Item>
  <Form.Item label={t('expected_delivery')} name="expected_delivery_date"><DatePicker placeholder={t('placeholder_date')} /></Form.Item>
@@ -153,7 +153,7 @@ const PurchaseOrders: React.FC = () => {
  <thead><tr><th>{t('items')}</th><th>{t('description')}</th><th>{t('quantity')}</th><th>{t('unit_price')}</th><th>{t('discount')}%</th><th>{t('total')}</th><th></th></tr></thead>
  <tbody>{lines.map(l => (
  <tr key={l.key}>
- <td style={{ padding: 4 }}><Select style={{ width: 180 }} value={l.item_id || undefined} onChange={v => updateLine(l.key, 'item_id', v)} options={items.map(i => ({ label: i.name, value: i.id }))} showSearch optionFilterProp="label" allowClear /></td>
+ <td style={{ padding: 4 }}><SelectWithQuickCreate entity="item" style={{ width: 180 }} value={l.item_id || undefined} onChange={(v: any) => updateLine(l.key, 'item_id', v)} allowClear /></td>
  <td style={{ padding: 4 }}><Input value={l.description} onChange={e => updateLine(l.key, 'description', e.target.value)} /></td>
  <td style={{ padding: 4 }}><InputNumber min={1} value={l.quantity} onChange={v => updateLine(l.key, 'quantity', v || 1)} style={{ width: 80 }} /></td>
  <td style={{ padding: 4 }}><InputNumber min={0} value={l.unit_price} onChange={v => updateLine(l.key, 'unit_price', v || 0)} style={{ width: 120 }} /></td>

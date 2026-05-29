@@ -89,7 +89,7 @@ const SignUp: React.FC = () => {
  >
  {errorMsg && (
  <Alert
- message={errorMsg}
+ title={errorMsg}
  type="error"
  showIcon
  closable

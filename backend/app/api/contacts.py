@@ -1,9 +1,13 @@
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from app.firestore.contacts import ContactRepository
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
 from app.schemas.schemas import ContactCreate, ContactUpdate, ContactResponse
+from app.firestore.references import ReferenceConflict
+from app.services.versioned_update import apply_versioned_update
 
 router = APIRouter(prefix="/api/contacts", tags=["Contacts"])
 
@@ -84,6 +88,7 @@ def update_contact(
     contact_id: str,
     data: ContactUpdate,
     user: dict = Depends(get_current_user),
+    if_match: Optional[str] = Header(None, alias="If-Match"),
 ):
     repo = ContactRepository(user["org_id"])
     contact = repo.get(contact_id)
@@ -91,7 +96,7 @@ def update_contact(
         raise HTTPException(status_code=404, detail="پەیوەندی نەدۆزرایەوە")
     
     update_data = data.model_dump(exclude_unset=True)
-    contact = repo.update(contact_id, update_data)
+    contact = apply_versioned_update(repo, contact_id, update_data, if_match=if_match)
     return contact
 
 
@@ -105,7 +110,9 @@ def delete_contact(
     if not contact or contact.get("org_id") != user["org_id"]:
         raise HTTPException(status_code=404, detail="پەیوەندی نەدۆزرایەوە")
     
-    repo.update(contact_id, {"is_active": False})
+    from app.services.http_guards import guarded_soft_deactivate
+
+    guarded_soft_deactivate(repo, contact_id)
     return {"message": "پەیوەندی سڕایەوە", "success": True}
 
 

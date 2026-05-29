@@ -1,0 +1,426 @@
+# =============================================================================
+# Production deploy — backend (Cloud Run) + frontend (Vercel)
+# جێبەجێکردنی production — backend (Cloud Run) + frontend (Vercel)
+# =============================================================================
+#
+# Flow / ڕێچکە:
+#   1. ci-gate              — ensure ci.yml + ci-quality.yml passed for this SHA
+#   2. bundle-budget-gate   — shell ≤ 350 KB, 100% lazy chunks
+#   3. deploy-backend       — Cloud Build → Artifact Registry → Cloud Run
+#                             (deploys to `candidate` tag with no traffic, then
+#                              scripts/deploy-bluegreen.sh shifts traffic.)
+#   4. deploy-frontend      — i18n:split → vite build → Vercel --prod
+#   5. smoke-test           — production-reality-probe.mjs + k6 30s smoke
+#   6. post-deploy-scorecard— regenerate scorecard.md, post sticky comment
+#
+# Triggers / دەستپێکار:
+#   - push to main (auto)
+#   - workflow_dispatch (manual; supports skip-tests)
+#
+# Concurrency: one production deploy at a time (cancel-in-progress: false —
+#              never abort an in-flight deploy).
+# =============================================================================
+
+name: Production Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      skip-tests:
+        description: "Skip smoke + scorecard (emergency only)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+permissions:
+  id-token: write   # required for google-github-actions/auth@v2 (WIF)
+  contents: read
+  pull-requests: write   # for sticky scorecard comment
+
+env:
+  NODE_VERSION: "20"
+  PYTHON_VERSION: "3.11"
+  REGION: me-central1
+  SERVICE_NAME: zoho-erp-backend
+  ARTIFACT_REPO: zoho-images
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOB 1 — CI GATE
+  # Ensure the existing CI workflows (ci.yml, ci-quality.yml) succeeded
+  # for this exact commit. Refuses to deploy if either is missing/red.
+  # ─────────────────────────────────────────────────────────────────────────
+  ci-gate:
+    name: CI gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify ci.yml succeeded for ${{ github.sha }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          for wf in "ci.yml" "ci-quality.yml"; do
+            echo "── Checking ${wf} for ${{ github.sha }} ──"
+            conclusion=$(gh run list \
+              --commit "${{ github.sha }}" \
+              --workflow "${wf}" \
+              --json conclusion,status \
+              --jq '.[0] | "\(.status):\(.conclusion)"' \
+              || echo "missing:missing")
+            echo "  → ${conclusion}"
+            if [[ "${conclusion}" != "completed:success" ]]; then
+              echo "::error::${wf} is not green for this SHA (got ${conclusion})"
+              exit 1
+            fi
+          done
+          echo "All CI gates green."
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOB 2 — BUNDLE BUDGET GATE
+  # Build the frontend and enforce shell-size + lazy-chunk policy.
+  # Hard-fails if the entry shell exceeds 350 KB gzip, or if any eager
+  # import would force a non-route chunk into the shell.
+  # ─────────────────────────────────────────────────────────────────────────
+  bundle-budget-gate:
+    name: Bundle budget gate (shell ≤ 350 KB, 100% lazy)
+    needs: ci-gate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install (legacy peer deps for vite v8)
+        run: npm install --legacy-peer-deps
+
+      - name: i18n split
+        run: npm run i18n:split
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_APP_VERSION: ${{ github.sha }}
+
+      - name: Audit shell (≤ 350 KB)
+        run: npm run audit:shell
+
+      - name: Audit lazy chunks (100% non-route routes lazy)
+        run: npm run audit:lazy
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-dist-${{ github.sha }}
+          path: frontend/dist
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOB 3 — DEPLOY BACKEND (Cloud Run blue/green)
+  # Build container → push to Artifact Registry → deploy `candidate` tag
+  # with no traffic → run deploy-bluegreen.sh to shift traffic incrementally
+  # (1% → 10% → 100% with health gates).
+  # ─────────────────────────────────────────────────────────────────────────
+  deploy-backend:
+    name: Deploy backend (Cloud Run)
+    needs: [ci-gate, bundle-budget-gate]
+    runs-on: ubuntu-latest
+    outputs:
+      service_url: ${{ steps.capture-url.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build container with Cloud Build
+        run: |
+          IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REPO }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
+          echo "Building ${IMAGE}"
+          gcloud builds submit \
+            --tag "${IMAGE}" \
+            --timeout 20m \
+            --project ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Deploy candidate (no traffic, tag=candidate)
+        run: |
+          IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REPO }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image "${IMAGE}" \
+            --region ${{ env.REGION }} \
+            --project ${{ secrets.GCP_PROJECT_ID }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --no-traffic \
+            --tag candidate \
+            --min-instances 1 \
+            --max-instances 20 \
+            --memory 1Gi \
+            --cpu 2 \
+            --concurrency 80 \
+            --execution-environment gen2 \
+            --cpu-throttling=false \
+            --port 8080 \
+            --set-env-vars "ENVIRONMENT=production,APP_VERSION=${{ github.sha }},APP_NAME=zoho-erp-backend,RATE_LIMITING_ENABLED=true,RUN_MIGRATIONS_ON_BOOT=true,LOG_LEVEL=INFO,OTEL_SERVICE_NAME=zoho-backend,FIREBASE_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}" \
+            --set-secrets "SECRET_KEY=zoho-secret-key:latest,SENTRY_DSN=zoho-sentry-dsn:latest,REDIS_URL=zoho-redis-url:latest,FIELD_ENCRYPTION_KEY=field-encryption-key:latest,DATABASE_URL=zoho-database-url:latest"
+
+      - name: Blue/green soak — shift 1% → 10% → 100%
+        run: |
+          chmod +x scripts/deploy-bluegreen.sh
+          bash scripts/deploy-bluegreen.sh \
+            ${{ env.SERVICE_NAME }} \
+            ${{ github.sha }} \
+            ${{ env.REGION }} \
+            ${{ secrets.GCP_PROJECT_ID }}
+        env:
+          CANDIDATE_TAG: candidate
+
+      - name: Capture final service URL
+        id: capture-url
+        run: |
+          URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region ${{ env.REGION }} \
+            --project ${{ secrets.GCP_PROJECT_ID }} \
+            --format='value(status.url)')
+          echo "url=${URL}" >> "$GITHUB_OUTPUT"
+          echo "Service URL: ${URL}"
+
+      - name: Tag Sentry release (backend)
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: zoho-backend
+          SENTRY_ENVIRONMENT: production
+          APP_VERSION: ${{ github.sha }}
+          GIT_SHA: ${{ github.sha }}
+        run: |
+          chmod +x scripts/sentry-release-tag.sh
+          bash scripts/sentry-release-tag.sh
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOB 4 — DEPLOY FRONTEND (Vercel)
+  # Build the frontend with VITE_APP_VERSION baked in, then push to Vercel
+  # production. vercel.json's ${CLOUDRUN_URL} rewrite is set in the Vercel
+  # project env (one-time, by 07a-setup-vercel-project.ps1).
+  # ─────────────────────────────────────────────────────────────────────────
+  deploy-frontend:
+    name: Deploy frontend (Vercel)
+    needs: deploy-backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install (legacy peer deps for vite v8)
+        run: npm install --legacy-peer-deps
+
+      - name: i18n split (namespaced JSON)
+        run: npm run i18n:split
+
+      - name: Build
+        env:
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          VITE_APP_VERSION: ${{ github.sha }}
+          VITE_APP_ENV: production
+        run: npm run build
+
+      - name: Deploy to Vercel (--prod)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: "--prod"
+          working-directory: ./frontend
+
+      - name: Tag Sentry release (frontend)
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: zoho-frontend
+          SENTRY_ENVIRONMENT: production
+          APP_VERSION: ${{ github.sha }}
+          GIT_SHA: ${{ github.sha }}
+          SOURCEMAP_DIR: frontend/dist
+          URL_PREFIX: "~/"
+        run: |
+          cd ..
+          chmod +x scripts/sentry-release-tag.sh
+          bash scripts/sentry-release-tag.sh
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOB 5 — SMOKE TEST
+  # Hit /api/health, walk a handful of critical routes via the reality
+  # probe, then run a 30-second k6 smoke against the live Cloud Run URL.
+  # ─────────────────────────────────────────────────────────────────────────
+  smoke-test:
+    name: Smoke + k6 30s
+    needs: [deploy-backend, deploy-frontend]
+    if: ${{ !inputs.skip-tests }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install probe deps
+        run: npm install --no-save node-fetch@3
+
+      - name: Production reality probe
+        env:
+          PROBE_TARGET_URL: ${{ needs.deploy-backend.outputs.service_url }}
+        run: node scripts/production-reality-probe.mjs
+
+      - name: Set up k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: k6 30s smoke (5 VU)
+        env:
+          LOAD_TEST_TARGET_URL: ${{ needs.deploy-backend.outputs.service_url }}
+          LOAD_TEST_USER_EMAIL: ${{ secrets.LOAD_TEST_USER_EMAIL }}
+          LOAD_TEST_USER_PASSWORD: ${{ secrets.LOAD_TEST_USER_PASSWORD }}
+          LOAD_TEST_TENANT_ID: ${{ secrets.LOAD_TEST_TENANT_ID }}
+        run: |
+          if [[ -f load/k6-suite/dashboard.js ]]; then
+            k6 run --vus 5 --duration 30s load/k6-suite/dashboard.js
+          else
+            echo "::warning::load/k6-suite/dashboard.js not found — skipping k6 smoke"
+          fi
+
+      - name: Upload probe evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-evidence-${{ github.sha }}
+          path: |
+            scripts/probe-evidence-*.json
+            scripts/probe-evidence-*.log
+          retention-days: 30
+          if-no-files-found: ignore
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOB 6 — POST-DEPLOY SCORECARD
+  # Regenerate the world-class scorecard against the freshly deployed
+  # production and post the diff into the sticky tracking issue.
+  # ─────────────────────────────────────────────────────────────────────────
+  post-deploy-scorecard:
+    name: Post-deploy scorecard
+    needs: smoke-test
+    if: ${{ !inputs.skip-tests }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install root npm deps (if any)
+        run: |
+          if [[ -f package.json ]]; then npm install --no-save; fi
+
+      - name: Generate scorecard
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROBE_TARGET_URL: ${{ needs.deploy-backend.outputs.service_url }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT_SLUG: zoho-backend
+          RUM_BIGQUERY_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+          RUM_BIGQUERY_DATASET: ${{ vars.RUM_BIGQUERY_DATASET }}
+          RUM_BIGQUERY_TABLE: vitals_raw
+        run: node scripts/world-class-scorecard.mjs || true
+
+      - name: Locate scorecard report
+        id: locate
+        run: |
+          if [[ -f docs/world-class/scorecard.md ]]; then
+            echo "path=docs/world-class/scorecard.md" >> "$GITHUB_OUTPUT"
+          elif [[ -f scorecard.md ]]; then
+            echo "path=scorecard.md" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=" >> "$GITHUB_OUTPUT"
+            echo "::warning::No scorecard.md generated."
+          fi
+
+      - name: Post sticky comment to scorecard issue
+        if: steps.locate.outputs.path != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ vars.SCORECARD_ISSUE_NUMBER || 1 }}
+          body-path: ${{ steps.locate.outputs.path }}
+          edit-mode: replace
+
+      - name: Upload scorecard artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: scorecard-${{ github.sha }}
+          path: |
+            docs/world-class/scorecard.md
+            scorecard.md
+          if-no-files-found: ignore
+          retention-days: 90
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOB 7 — DEPLOY SUMMARY (always runs)
+  # ─────────────────────────────────────────────────────────────────────────
+  summary:
+    name: Deploy summary
+    needs: [deploy-backend, deploy-frontend, smoke-test, post-deploy-scorecard]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write summary
+        run: |
+          {
+            echo "## Production deploy — ${{ github.sha }}"
+            echo ""
+            echo "| Stage | Result |"
+            echo "|---|---|"
+            echo "| ci-gate              | ${{ needs.ci-gate.result || 'n/a' }} |"
+            echo "| bundle-budget-gate   | ${{ needs.bundle-budget-gate.result || 'n/a' }} |"
+            echo "| deploy-backend       | ${{ needs.deploy-backend.result }} |"
+            echo "| deploy-frontend      | ${{ needs.deploy-frontend.result }} |"
+            echo "| smoke-test           | ${{ needs.smoke-test.result }} |"
+            echo "| post-deploy-scorecard| ${{ needs.post-deploy-scorecard.result }} |"
+            echo ""
+            echo "**Backend URL:** ${{ needs.deploy-backend.outputs.service_url }}"
+          } >> "$GITHUB_STEP_SUMMARY"

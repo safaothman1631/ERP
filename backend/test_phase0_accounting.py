@@ -18,6 +18,7 @@ from app.firestore.system import SequenceRepository
 from app.firestore.journals import JournalEntryRepository
 from app.firestore.accounts import AccountRepository
 from app.services.accounting import AccountingService
+from app.services.report_streams import collect_stream
 from fastapi import HTTPException
 
 init_firebase()
@@ -48,7 +49,7 @@ def t1_sequence_atomic():
 def t2_balanced_journal_posts():
     """Balanced journal posts with proper number and matching totals"""
     print("\nT2 - balanced journal post")
-    accs = AccountRepository(ORG).list(limit=10000)[0]
+    accs = collect_stream(AccountRepository(ORG), max_docs=10000)
     if len(accs) < 2:
         _assert("need 2+ accounts", False, f"only {len(accs)} accounts")
         return
@@ -89,7 +90,7 @@ def t2_balanced_journal_posts():
 def t3_unbalanced_rejected():
     """Unbalanced journal raises HTTPException 400"""
     print("\nT3 - unbalanced journal rejected")
-    accs = AccountRepository(ORG).list(limit=10000)[0]
+    accs = collect_stream(AccountRepository(ORG), max_docs=10000)
     if len(accs) < 2:
         _assert("need 2+ accounts", False)
         return
@@ -111,7 +112,7 @@ def t3_unbalanced_rejected():
 def t4_single_line_rejected():
     """Less than 2 lines raises HTTPException 400"""
     print("\nT4 - <2 lines rejected")
-    accs = AccountRepository(ORG).list(limit=10000)[0]
+    accs = collect_stream(AccountRepository(ORG), max_docs=10000)
     if not accs:
         _assert("need 1+ account", False)
         return

@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import dayjs from 'dayjs';
 import { FormLayout, type FormSection } from '../design-system';
+import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { useAuthStore } from '../store';
 
 const ExpenseForm: React.FC = () => {
@@ -83,11 +84,7 @@ const ExpenseForm: React.FC = () => {
       children: (
         <Space size="large" wrap>
           <Form.Item label={t('vendor')} name="contact_id" style={{ width: 320 }}>
-            <Select
-              showSearch optionFilterProp="label" allowClear
-              options={vendors.map((v: any) => ({ label: v.display_name, value: v.id }))}
-              placeholder={t('placeholder_vendor')}
-            />
+            <SelectWithQuickCreate entity="vendor" showSearch allowClear placeholder={t('placeholder_vendor')} />
           </Form.Item>
           <Form.Item label={t('project', 'Project')} name="project_id" style={{ width: 320 }}>
             <Select

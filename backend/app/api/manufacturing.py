@@ -1,10 +1,11 @@
 """Manufacturing API: BOM, Work Centers, Manufacturing Orders, Work Orders."""
 from __future__ import annotations
 
+import uuid
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from app.firestore.manufacturing import (
@@ -16,8 +17,13 @@ from app.firestore.manufacturing import (
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
 from app.services import settings_service
+from app.services.module_gate import require_module
 
-router = APIRouter(prefix="/api/manufacturing", tags=["Manufacturing"])
+router = APIRouter(
+    prefix="/api/manufacturing",
+    tags=["Manufacturing"],
+    dependencies=[Depends(require_module("manufacturing"))],
+)
 
 
 # ---------- Schemas ----------
@@ -56,19 +62,19 @@ class MOCreate(BaseModel):
 
 
 # ---------- BOM ----------
-@router.get("/boms")
+@router.get("/boms", dependencies=[Depends(require_perm("manufacturing.read"))])
 def list_boms(product_id: Optional[str] = None, user: dict = Depends(get_current_user)):
     filters = [{"field": "product_id", "op": "==", "value": product_id}] if product_id else None
     items, total = BOMRepository(user["org_id"]).list(filters=filters, limit=500)
     return {"items": items, "total": total}
 
 
-@router.post("/boms", dependencies=[Depends(require_perm("inventory.create"))])
+@router.post("/boms", dependencies=[Depends(require_perm("manufacturing.write"))])
 def create_bom(payload: BOMCreate, user: dict = Depends(get_current_user)):
     return BOMRepository(user["org_id"]).create(payload.model_dump())
 
 
-@router.get("/boms/{bid}")
+@router.get("/boms/{bid}", dependencies=[Depends(require_perm("manufacturing.read"))])
 def get_bom(bid: str, user: dict = Depends(get_current_user)):
     bom = BOMRepository(user["org_id"]).get(bid)
     if not bom or bom.get("org_id") != user["org_id"]:
@@ -76,35 +82,35 @@ def get_bom(bid: str, user: dict = Depends(get_current_user)):
     return bom
 
 
-@router.put("/boms/{bid}", dependencies=[Depends(require_perm("inventory.update"))])
+@router.put("/boms/{bid}", dependencies=[Depends(require_perm("manufacturing.write"))])
 def update_bom(bid: str, payload: BOMCreate, user: dict = Depends(get_current_user)):
     return BOMRepository(user["org_id"]).update(bid, payload.model_dump())
 
 
-@router.delete("/boms/{bid}", dependencies=[Depends(require_perm("inventory.delete"))])
+@router.delete("/boms/{bid}", dependencies=[Depends(require_perm("manufacturing.delete"))])
 def delete_bom(bid: str, user: dict = Depends(get_current_user)):
     BOMRepository(user["org_id"]).delete(bid)
     return {"success": True}
 
 
 # ---------- Work Centers ----------
-@router.get("/work-centers")
+@router.get("/work-centers", dependencies=[Depends(require_perm("manufacturing.read"))])
 def list_wc(user: dict = Depends(get_current_user)):
     items, total = WorkCenterRepository(user["org_id"]).list(limit=200)
     return {"items": items, "total": total}
 
 
-@router.post("/work-centers", dependencies=[Depends(require_perm("inventory.create"))])
+@router.post("/work-centers", dependencies=[Depends(require_perm("manufacturing.write"))])
 def create_wc(payload: WorkCenterCreate, user: dict = Depends(get_current_user)):
     return WorkCenterRepository(user["org_id"]).create(payload.model_dump())
 
 
-@router.put("/work-centers/{wcid}", dependencies=[Depends(require_perm("inventory.update"))])
+@router.put("/work-centers/{wcid}", dependencies=[Depends(require_perm("manufacturing.write"))])
 def update_wc(wcid: str, payload: WorkCenterCreate, user: dict = Depends(get_current_user)):
     return WorkCenterRepository(user["org_id"]).update(wcid, payload.model_dump())
 
 
-@router.delete("/work-centers/{wcid}", dependencies=[Depends(require_perm("inventory.delete"))])
+@router.delete("/work-centers/{wcid}", dependencies=[Depends(require_perm("manufacturing.delete"))])
 def delete_wc(wcid: str, user: dict = Depends(get_current_user)):
     WorkCenterRepository(user["org_id"]).delete(wcid)
     return {"success": True}
@@ -123,7 +129,7 @@ def _generate_mo_number(repo: ManufacturingOrderRepository) -> str:
     return f"MO-{seq:04d}"
 
 
-@router.get("/orders")
+@router.get("/orders", dependencies=[Depends(require_perm("manufacturing.read"))])
 def list_orders(status: Optional[str] = None, user: dict = Depends(get_current_user)):
     repo = ManufacturingOrderRepository(user["org_id"])
     filters = [{"field": "status", "op": "==", "value": status}] if status else None
@@ -131,7 +137,7 @@ def list_orders(status: Optional[str] = None, user: dict = Depends(get_current_u
     return {"items": items, "total": total}
 
 
-@router.post("/orders", dependencies=[Depends(require_perm("inventory.create"))])
+@router.post("/orders", dependencies=[Depends(require_perm("manufacturing.write"))])
 def create_order(payload: MOCreate, user: dict = Depends(get_current_user)):
     # Apply MRP config defaults
     try:
@@ -193,7 +199,7 @@ def create_order(payload: MOCreate, user: dict = Depends(get_current_user)):
     return mo
 
 
-@router.get("/orders/{mo_id}")
+@router.get("/orders/{mo_id}", dependencies=[Depends(require_perm("manufacturing.read"))])
 def get_order(mo_id: str, user: dict = Depends(get_current_user)):
     org = user["org_id"]
     mo = ManufacturingOrderRepository(org).get(mo_id)
@@ -203,7 +209,7 @@ def get_order(mo_id: str, user: dict = Depends(get_current_user)):
     return {**mo, "work_orders": wos}
 
 
-@router.post("/orders/{mo_id}/confirm", dependencies=[Depends(require_perm("inventory.update"))])
+@router.post("/orders/{mo_id}/confirm", dependencies=[Depends(require_perm("manufacturing.write"))])
 def confirm_order(mo_id: str, user: dict = Depends(get_current_user)):
     return ManufacturingOrderRepository(user["org_id"]).update(mo_id, {
         "status": "confirmed",
@@ -211,8 +217,13 @@ def confirm_order(mo_id: str, user: dict = Depends(get_current_user)):
     })
 
 
-@router.post("/orders/{mo_id}/done", dependencies=[Depends(require_perm("inventory.update"))])
-def done_order(mo_id: str, produced_qty: Optional[float] = None, user: dict = Depends(get_current_user)):
+@router.post("/orders/{mo_id}/done", dependencies=[Depends(require_perm("manufacturing.write"))])
+def done_order(
+    mo_id: str,
+    produced_qty: Optional[float] = None,
+    warehouse_id: Optional[str] = Query(None, description="Warehouse for component consumption / finished goods"),
+    user: dict = Depends(get_current_user),
+):
     org = user["org_id"]
     mo_repo = ManufacturingOrderRepository(org)
     mo = mo_repo.get(mo_id)
@@ -223,17 +234,14 @@ def done_order(mo_id: str, produced_qty: Optional[float] = None, user: dict = De
     if qty < 0:
         raise HTTPException(400, "produced_qty must be >= 0")
 
-    update = {
-        "status": "done",
-        "produced_qty": qty,
-        "done_at": datetime.utcnow().isoformat(),
-    }
-    backorder_id = None
-    # FIX-74: auto-create backorder MO when produced < planned
+    backorder_payload = None
     shortfall = round(planned - qty, 3)
     if shortfall > 0:
         bo_number = _generate_mo_number(mo_repo)
-        bo = mo_repo.create({
+        bo_id = str(uuid.uuid4())
+        backorder_payload = {
+            "id": bo_id,
+            "org_id": org,
             "number": bo_number,
             "bom_id": mo.get("bom_id"),
             "product_id": mo.get("product_id"),
@@ -245,17 +253,29 @@ def done_order(mo_id: str, produced_qty: Optional[float] = None, user: dict = De
             "backorder_of": mo_id,
             "created_at": datetime.utcnow().isoformat(),
             "produced_qty": 0,
-        })
-        backorder_id = bo["id"]
-        update["backorder_id"] = backorder_id
-        update["backorder_qty"] = shortfall
-    result = mo_repo.update(mo_id, update)
-    if backorder_id:
-        result["backorder_id"] = backorder_id
+        }
+
+    from app.services.mo_complete_atomic import complete_manufacturing_order_atomic
+
+    try:
+        result = complete_manufacturing_order_atomic(
+            org,
+            mo_id,
+            produced_qty=qty,
+            warehouse_id=warehouse_id,
+            backorder_payload=backorder_payload,
+        )
+    except ValueError as exc:
+        msg = str(exc)
+        if msg == "mo_already_done":
+            raise HTTPException(400, "MO already done") from exc
+        if msg.startswith("insufficient_stock"):
+            raise HTTPException(400, detail="کاڵای پێویست نییە بۆ تەواوکردنی MO") from exc
+        raise HTTPException(400, detail=msg) from exc
     return result
 
 
-@router.delete("/orders/{mo_id}", dependencies=[Depends(require_perm("inventory.delete"))])
+@router.delete("/orders/{mo_id}", dependencies=[Depends(require_perm("manufacturing.delete"))])
 def delete_order(mo_id: str, user: dict = Depends(get_current_user)):
     org = user["org_id"]
     wos, _ = WorkOrderRepository(org).list(filters=[{"field": "mo_id", "op": "==", "value": mo_id}], limit=200)
@@ -266,7 +286,7 @@ def delete_order(mo_id: str, user: dict = Depends(get_current_user)):
 
 
 # ---------- Work Orders ----------
-@router.get("/work-orders")
+@router.get("/work-orders", dependencies=[Depends(require_perm("manufacturing.read"))])
 def list_work_orders(mo_id: Optional[str] = None, status: Optional[str] = None,
                      user: dict = Depends(get_current_user)):
     repo = WorkOrderRepository(user["org_id"])
@@ -279,7 +299,7 @@ def list_work_orders(mo_id: Optional[str] = None, status: Optional[str] = None,
     return {"items": items, "total": total}
 
 
-@router.post("/work-orders/{wo_id}/start", dependencies=[Depends(require_perm("inventory.update"))])
+@router.post("/work-orders/{wo_id}/start", dependencies=[Depends(require_perm("manufacturing.write"))])
 def start_wo(wo_id: str, user: dict = Depends(get_current_user)):
     return WorkOrderRepository(user["org_id"]).update(wo_id, {
         "status": "in_progress",
@@ -287,7 +307,7 @@ def start_wo(wo_id: str, user: dict = Depends(get_current_user)):
     })
 
 
-@router.post("/work-orders/{wo_id}/finish", dependencies=[Depends(require_perm("inventory.update"))])
+@router.post("/work-orders/{wo_id}/finish", dependencies=[Depends(require_perm("manufacturing.write"))])
 def finish_wo(wo_id: str, user: dict = Depends(get_current_user)):
     repo = WorkOrderRepository(user["org_id"])
     wo = repo.get(wo_id)
@@ -309,7 +329,7 @@ def finish_wo(wo_id: str, user: dict = Depends(get_current_user)):
 
 
 # ---------- Dashboard ----------
-@router.get("/dashboard")
+@router.get("/dashboard", dependencies=[Depends(require_perm("manufacturing.read"))])
 def mfg_dashboard(user: dict = Depends(get_current_user)):
     org = user["org_id"]
     boms, _ = BOMRepository(org).list(limit=500)
@@ -328,7 +348,7 @@ def mfg_dashboard(user: dict = Depends(get_current_user)):
 
 # ---------------- Sprint 26: MRP Scheduler + Quality Checks (FIX-401..420) ----------------
 
-@router.get("/mrp/suggestions", dependencies=[Depends(require_perm("inventory.read"))])
+@router.get("/mrp/suggestions", dependencies=[Depends(require_perm("manufacturing.read"))])
 def mrp_suggestions(user: dict = Depends(get_current_user)):
     """Suggest MOs to plan based on items with stock < reorder_level (and which have a BOM)."""
     from app.firestore.items import ItemRepository
@@ -359,7 +379,7 @@ def mrp_suggestions(user: dict = Depends(get_current_user)):
     return {"suggestions": suggestions, "total": len(suggestions)}
 
 
-@router.post("/mrp/run", dependencies=[Depends(require_perm("inventory.create"))])
+@router.post("/mrp/run", dependencies=[Depends(require_perm("manufacturing.write"))])
 def mrp_run(user: dict = Depends(get_current_user)):
     """Materialize MRP suggestions into draft MOs."""
     sugg = mrp_suggestions(user=user)
@@ -377,7 +397,7 @@ def mrp_run(user: dict = Depends(get_current_user)):
     return {"created_mos": created, "count": len(created)}
 
 
-@router.get("/quality/checks", dependencies=[Depends(require_perm("inventory.read"))])
+@router.get("/quality/checks", dependencies=[Depends(require_perm("manufacturing.read"))])
 def list_quality_checks(mo_id: str = None, status: str = None,
                          user: dict = Depends(get_current_user)):
     from app.firestore.base import BaseRepository as _BR
@@ -393,7 +413,7 @@ def list_quality_checks(mo_id: str = None, status: str = None,
     return {"items": items, "total": total}
 
 
-@router.post("/quality/checks", dependencies=[Depends(require_perm("inventory.create"))])
+@router.post("/quality/checks", dependencies=[Depends(require_perm("manufacturing.write"))])
 def create_quality_check(data: dict, user: dict = Depends(get_current_user)):
     from app.firestore.base import BaseRepository as _BR
     class _QC(_BR):
@@ -412,7 +432,7 @@ def create_quality_check(data: dict, user: dict = Depends(get_current_user)):
 
 
 @router.post("/quality/checks/{check_id}/pass",
-             dependencies=[Depends(require_perm("inventory.update"))])
+             dependencies=[Depends(require_perm("manufacturing.write"))])
 def pass_quality_check(check_id: str, data: dict = None,
                        user: dict = Depends(get_current_user)):
     from datetime import datetime as _dt
@@ -432,7 +452,7 @@ def pass_quality_check(check_id: str, data: dict = None,
 
 
 @router.post("/quality/checks/{check_id}/fail",
-             dependencies=[Depends(require_perm("inventory.update"))])
+             dependencies=[Depends(require_perm("manufacturing.write"))])
 def fail_quality_check(check_id: str, data: dict = None,
                        user: dict = Depends(get_current_user)):
     from datetime import datetime as _dt

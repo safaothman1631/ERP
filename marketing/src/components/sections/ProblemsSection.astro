@@ -1,0 +1,26 @@
+---
+import { t, type Locale } from '../../i18n/utils';
+export interface Props { locale: Locale; }
+const { locale } = Astro.props;
+const problems = [
+  { icon: '🇮🇶', title: t('problem.1.title', locale), body: t('problem.1.body', locale) },
+  { icon: '⚡', title: t('problem.2.title', locale), body: t('problem.2.body', locale) },
+  { icon: '📜', title: t('problem.3.title', locale), body: t('problem.3.body', locale) },
+];
+---
+<section class="section bg-ink-50">
+  <div class="container-marketing">
+    <h2 class="font-display font-bold text-3xl md:text-4xl text-ink-950 text-center mb-12 text-balance">
+      {t('problems.title', locale)}
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {problems.map((p) => (
+        <div class="card">
+          <div class="text-3xl mb-3" aria-hidden="true">{p.icon}</div>
+          <h3 class="font-display font-semibold text-xl text-ink-900 mb-2">{p.title}</h3>
+          <p class="text-ink-600 text-pretty">{p.body}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

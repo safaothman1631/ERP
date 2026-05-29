@@ -625,12 +625,12 @@ describe('Property 33: Custom components have correct ARIA roles', () => {
 // **Validates: Requirements 18.2**
 // =============================================================================
 
-describe('Property 34: All feature routes use React.lazy', () => {
+describe('Property 34: All feature routes use lazyWithRetry', () => {
   /**
    * For any feature route in App.routes.tsx, the component must be loaded
-   * via React.lazy (not a static import).
+   * via `lazyWithRetry` (not `React.lazy` and not a static import).
    *
-   * **Validates: Requirements 18.2**
+   * **Validates: Requirements 18.2, world-class-performance R3.1/R3.4/R3.5**
    */
   it('App.routes.tsx module exports a routes array', () => {
     expect(AppRoutesModule.routes).toBeDefined();
@@ -644,20 +644,24 @@ describe('Property 34: All feature routes use React.lazy', () => {
     expect(routes.length).toBeGreaterThanOrEqual(10);
   });
 
-  it('feature routes source uses React.lazy pattern (static analysis)', async () => {
-    // Read the App.routes.tsx source file to verify lazy() usage
+  it('feature routes source uses lazyWithRetry pattern (static analysis)', async () => {
+    // Read the App.routes.tsx source file to verify lazyWithRetry() usage
     const fs = await import('fs');
     const path = await import('path');
     const routesPath = path.resolve(__dirname, 'App.routes.tsx');
     const source = fs.readFileSync(routesPath, 'utf-8');
 
-    // Verify the file uses the lazy() wrapper function
-    expect(source).toContain('lazy(');
+    // Verify the file uses the lazyWithRetry() wrapper function
+    expect(source).toContain('lazyWithRetry(');
     expect(source).toContain('import(');
 
-    // Count the number of lazy() calls — should be many (≥ 50 feature pages)
-    const lazyMatches = source.match(/= lazy\(/g) || [];
+    // Count the number of lazyWithRetry() calls — should be many (≥ 50 feature pages)
+    const lazyMatches = source.match(/= lazyWithRetry\(/g) || [];
     expect(lazyMatches.length).toBeGreaterThanOrEqual(50);
+
+    // And there must be NO bare `React.lazy(...)` or `= lazy(...)` calls left.
+    expect(source).not.toMatch(/\bReact\.lazy\s*\(/);
+    expect(source).not.toMatch(/=\s*lazy\s*\(\s*\(\s*\)\s*=>/);
   });
 
   /**

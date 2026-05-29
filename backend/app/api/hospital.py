@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/hospital", tags=["Hospital"])
 
@@ -166,8 +167,8 @@ def discharge_patient(aid: str, body: dict, user: dict = Depends(get_current_use
 @router.get("/dashboard")
 def hosp_dashboard(user: dict = Depends(get_current_user)):
     org = user["org_id"]
-    beds, _ = BedRepo(org).list(limit=10000)
-    adms, _ = AdmissionRepo(org).list(limit=10000)
+    beds = collect_stream(BedRepo(org), max_docs=10000)
+    adms = collect_stream(AdmissionRepo(org), max_docs=10000)
     return {
         "total_beds": len(beds),
         "occupied_beds": sum(1 for b in beds if b.get("is_occupied")),

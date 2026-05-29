@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Space, Input, Form, InputNumber, Modal } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined, WarningOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api, { backendRetryConfig, isBackendUnavailableError } from '../api';
+import { useListQuery } from '../api/queries/useListQuery';
+import { listQueryKeys } from '../api/queries/keys';
 import ExportButton from '../components/ExportButton';
 import { EmptyState, PageHeader, BulkActionBar, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
 import { downloadCsv } from '../utils/exportCsv';
@@ -15,13 +17,11 @@ import { FormDialog } from '../components/responsive/FormDialog';
 import { useAddGate } from '../components/AddGate/useAddGate';
 import { EmptyState as AddGateEmptyState } from '../components/AddGate/EmptyState';
 import { asTranslationKey } from '../i18n/types';
+import ChatterWidget from '../components/chatter/ChatterWidget';
 
 const Items: React.FC = () => {
  const { t } = useTranslation();
  const navigate = useNavigate();
- const [data, setData] = useState<any[]>([]);
- const [loading, setLoading] = useState(false);
- const [total, setTotal] = useState(0);
  const [page, setPage] = useState(1);
  const [search, setSearch] = useState('');
  const [modal, setModal] = useState(false);
@@ -36,29 +36,37 @@ const Items: React.FC = () => {
 
  // AddGate: wire Selective Add for items section (R9.1, R9.5)
  const addGate = useAddGate('inventory.items');
+ const forceRetryRef = useRef(false);
 
- const fetchData = async (forceRetry = false) => {
- setLoading(true);
- try {
- const res = await api.get('/api/items', {
+ const itemsQuery = useListQuery<any, { items?: any[]; total?: number }, unknown>({
+ queryKey: listQueryKeys.items({ page, search, page_size: 20 }),
+ queryFn: async () => {
+ const shouldForceRetry = forceRetryRef.current;
+ forceRetryRef.current = false;
+ return api.get('/api/items', {
  params: { page, search, page_size: 20 },
- ...(forceRetry ? backendRetryConfig : {}),
+ ...(shouldForceRetry ? backendRetryConfig : {}),
  });
- setData(res.data.items);
- setTotal(res.data.total);
+ },
+ retry: false,
+ });
+ const queryData = itemsQuery.data?.items ?? [];
+ const queryTotal = itemsQuery.data?.total ?? 0;
+ const loading = itemsQuery.isLoading || itemsQuery.isFetching;
+ const data = backendUnavailable ? [] : queryData;
+ const total = backendUnavailable ? 0 : queryTotal;
+
+ useEffect(() => {
+ if (!itemsQuery.error) {
  setBackendUnavailable(false);
- } catch (error) {
- if (isBackendUnavailableError(error)) {
+ return;
+ }
+ if (isBackendUnavailableError(itemsQuery.error)) {
  setBackendUnavailable(true);
- setData([]);
- setTotal(0);
  } else {
  message.error(t('error'));
  }
- } finally { setLoading(false); }
- };
-
- useEffect(() => { void fetchData(); }, [page, search]);
+ }, [itemsQuery.error, t]);
 
  // Sync record count into AddGate store (R9.5, R9.6)
  useEffect(() => { addGate.setRecordCount(total); }, [total, addGate.setRecordCount]);
@@ -71,14 +79,14 @@ const Items: React.FC = () => {
  await api.post('/api/items', values);
  }
  message.success(t('success'));
- setModal(false); form.resetFields(); setEditing(null); fetchData();
+ setModal(false); form.resetFields(); setEditing(null); void itemsQuery.refetch();
  } catch { message.error(t('error')); }
  };
 
  const handleDelete = async (id: string) => {
  Modal.confirm({
  title: t('are_you_sure'),
- onOk: async () => { await api.delete(`/api/items/${id}`); message.success(t('success')); fetchData(); },
+ onOk: async () => { await api.delete(`/api/items/${id}`); message.success(t('success')); void itemsQuery.refetch(); },
  });
  };
 
@@ -91,7 +99,7 @@ const Items: React.FC = () => {
  await Promise.all(selectedIds.map((id) => api.delete(`/api/items/${id}`)));
  message.success(t('success'));
  setSelectedIds([]);
- fetchData();
+ void itemsQuery.refetch();
  },
  });
  };
@@ -144,7 +152,10 @@ const Items: React.FC = () => {
  title={t('backend_unavailable_title')}
  description={t('backend_unavailable_description')}
  actionLabel={t('retry')}
- onAction={() => void fetchData(true)}
+ onAction={() => {
+ forceRetryRef.current = true;
+ void itemsQuery.refetch();
+ }}
  />
  ) : (
  <>
@@ -172,7 +183,7 @@ const Items: React.FC = () => {
  pagination={{ current: page, total, pageSize: 20, onChange: setPage }}
  rowSelection={{
  selectedRowKeys: selectedIds,
- onChange: (keys) => setSelectedIds(keys),
+ onChange: (keys: React.Key[]) => setSelectedIds(keys),
  }}
  />
  <BulkActionBar
@@ -195,6 +206,7 @@ const Items: React.FC = () => {
  <Form.Item label={t('selling_price')} name="selling_price"><InputNumber min={0} style={{ width: 200 }} placeholder={t('placeholder_amount')} /></Form.Item>
  <Form.Item label={t('cost_price')} name="cost_price"><InputNumber min={0} style={{ width: 200 }} placeholder={t('placeholder_amount')} /></Form.Item>
  </Space>
+ {editing?.id && <ChatterWidget entityType="item" entityId={editing.id} />}
  </Form>
  </FormDialog>
  </div>

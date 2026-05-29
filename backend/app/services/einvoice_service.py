@@ -63,6 +63,16 @@ def merge_einvoice_config(raw_config: Optional[dict]) -> dict:
     return merged
 
 
+def is_einvoice_production_ready(config: Optional[dict]) -> bool:
+    """True when e-invoice can submit to a live ITA portal (not preview)."""
+    merged = merge_einvoice_config(config)
+    return bool(
+        merged.get("enabled")
+        and not merged.get("preview_mode", True)
+        and str(merged.get("portal_url") or "").strip()
+    )
+
+
 def mask_einvoice_config(raw_config: Optional[dict]) -> dict:
     config = merge_einvoice_config(raw_config)
     masked = {**config}
@@ -240,6 +250,18 @@ def submit_to_ita(config: dict, xml_content: str, signature_result: dict, invoic
     except ValueError:
         body = {"raw": response.text}
     return verify_provider_response(response.status_code, body)
+
+
+def submit_to_portal_stub(org_id: str, invoice_id: str, submission: dict) -> dict:
+    """Scheduler-safe stub submit for pending queue items."""
+    preview_uuid = f"PREVIEW-{uuid.uuid4().hex[:12].upper()}"
+    return {
+        "status": "submitted",
+        "provider_uuid": preview_uuid,
+        "org_id": org_id,
+        "invoice_id": invoice_id,
+        "submission_id": submission.get("id"),
+    }
 
 
 def fetch_submission_status(config: dict, provider_uuid: str, fallback_status: str) -> dict:

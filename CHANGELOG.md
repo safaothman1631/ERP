@@ -88,21 +88,57 @@ CI gates that observe this pattern:
 ## [Unreleased]
 
 ### Added
-- _Pending_ — system-wide UX overhaul (`useViewport`, `useHelp`, `useAddGate`,
-  `Responsive*` wrappers). See `.kiro/specs/system-wide-ux-overhaul/`.
+- Tenant user settings v2: module-gated settings nav, role-limited sections, platform-only
+  feature flags / system health removed from tenant `/settings`. See
+  `.kiro/specs/tenant-user-settings/`.
+- `VITE_TENANT_SETTINGS_V2` feature flag (default `true` in `.env.example`).
+
+### Changed
+- Settings page open to all authenticated users; personal sections for standard users;
+  org/module sections filtered by `enabled_modules` and RBAC.
+- Command palette includes visible settings sections from the settings registry.
+- `/settings/system-health` redirects tenant users; full dashboard at `/platform/health`.
 
 ### i18n Keys
 
 #### Added
-- _None yet._
+- `settings.gate.*` — view-only, module disabled, platform-only gate messages.
+- `settings.open_module_settings`, `settings.request_module_access`, `license_pool_readonly`.
+- `settings.empty_modules_title`, `settings.empty_modules_desc`.
 
 #### Removed
 - _None yet._
+
+---
+
+## [Unreleased] — Role-Adaptive Glass UX
+
+### Added
+- Role-adaptive dashboard homes (12 personas), `DashboardRouter`, `RoleHomeHero`, `RoleIdentityChip`, `RoleWelcomeSheet`.
+- Glass component library: `GlassDialog`, `GlassDrawer`, `GlassPopover`, `GlassConfirm`, `GlassSaveButton`.
+- Nav profiles (`navProfiles.ts`) filtering SideNav and Command palette by role.
+- `GET /api/rbac/me/summary` — role UX persona hints for the signed-in user.
+- Global modal/drawer glass CSS; `npm run audit:glass-modals`.
+- E2E: `role-ux.spec.ts`, `role-ux-visual.spec.ts`.
+- Docs: `docs/ux/ROLES.md`, `docs/ux/GLASS.md`.
+- UIGallery `RolePersonaGallery` section.
+
+### Changed
+- TopBar: role chip, quick actions, role-accent primary CTA.
+- Settings SaveBar: glass strip + morph save button.
+- Post-login redirect uses `getPostLoginPath()` per role.
+- Platform top bar: Platform Admin identity chip.
+
+### i18n Keys
+
+#### Added
+- `roles.*`, `persona.*`, `role.home.*`, `role.welcome.*`, `roles.platform_admin` — en, ku, ar (core).
 
 ### Help Registry (sectionId)
 
 #### Added
-- _None yet._
+- _None._
 
 #### Removed
 - _None yet._
+

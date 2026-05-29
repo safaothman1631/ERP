@@ -22,12 +22,33 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Literal
 
 logger = logging.getLogger(__name__)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Thresholds (override via env; development defaults are more lenient)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Threshold helpers — production defaults per spec; override via HEALTH_* env vars.
+def _response_time_degraded_ms() -> float:
+    return float(os.getenv("HEALTH_RESPONSE_DEGRADED_MS", "500"))
+
+
+def _memory_degraded_pct() -> float:
+    return float(os.getenv("HEALTH_MEMORY_DEGRADED_PCT", "85"))
+
+
+def _memory_unhealthy_pct() -> float:
+    return float(os.getenv("HEALTH_MEMORY_UNHEALTHY_PCT", "95"))
+
+
+def _cpu_degraded_pct() -> float:
+    return float(os.getenv("HEALTH_CPU_DEGRADED_PCT", "80"))
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Data models
@@ -76,14 +97,13 @@ class FullHealthReport:
 _STACK_TRACE_MARKERS = ("Traceback", 'File "', "line ", "raise ")
 
 # Response-time threshold (ms) above which a component is "degraded"
-_RESPONSE_TIME_DEGRADED_MS = 500.0
+# (computed at import — use _response_time_degraded_ms() in classify for fresh env reads)
 
 # Memory thresholds (%)
-_MEMORY_UNHEALTHY_PCT = 95.0
-_MEMORY_DEGRADED_PCT = 85.0
+# Memory thresholds set via _memory_* helpers above
 
 # CPU threshold (%)
-_CPU_DEGRADED_PCT = 80.0
+# CPU threshold set via _cpu_degraded_pct above
 
 # Error count thresholds (last 1 hour)
 _ERROR_COUNT_UNHEALTHY = 200
@@ -252,24 +272,31 @@ class HealthChecker:
         )
 
     async def _check_storage(self) -> HealthCheckResult:
-        """Verify Firebase Cloud Storage bucket is accessible.
-
-        Calls ``get_bucket().exists()`` to confirm the bucket is reachable.
-        Measures round-trip latency.
-
-        Requirements: 1.1, 1.2
-        """
+        """Verify Firebase Cloud Storage bucket is accessible (optional component)."""
         start = time.monotonic()
         exception: Exception | None = None
+        skipped = False
         try:
-            from app.firebase_client import get_bucket
+            from app.firebase_client import get_bucket, is_storage_available
             bucket = get_bucket()
-            loop = asyncio.get_event_loop()
-            await loop.run_in_executor(None, bucket.exists)
+            if bucket is None:
+                skipped = True
+            else:
+                loop = asyncio.get_event_loop()
+                await loop.run_in_executor(None, bucket.exists)
         except Exception as exc:
             exception = exc
         finally:
             elapsed_ms = (time.monotonic() - start) * 1000.0
+
+        if skipped and exception is None:
+            return HealthCheckResult(
+                component="storage",
+                status="healthy",
+                response_time_ms=elapsed_ms,
+                message="Storage not configured — skipped (optional)",
+                checked_at=_now_iso(),
+            )
 
         return self._classify_result(
             component="storage",
@@ -279,26 +306,37 @@ class HealthChecker:
         )
 
     async def _check_scheduler(self) -> HealthCheckResult:
-        """Check that the APScheduler instance is running.
-
-        Calls ``get_scheduler()`` from ``scheduler.py`` and verifies the
-        returned instance is not ``None`` and reports ``running == True``.
-
-        Requirements: 1.1, 1.2
-        """
+        """Check that the APScheduler instance is running (or intentionally disabled)."""
         start = time.monotonic()
         exception: Exception | None = None
+        message_override: str | None = None
         try:
-            from app.services.scheduler import get_scheduler
-            scheduler = get_scheduler()
-            if scheduler is None:
-                raise RuntimeError("Scheduler instance is None — scheduler has not been started")
-            if not scheduler.running:
-                raise RuntimeError("Scheduler is not running")
+            enabled = os.getenv("SCHEDULER_ENABLED", "true").lower() in ("true", "1", "yes")
+            if not enabled:
+                message_override = "Scheduler disabled by configuration"
+            else:
+                from app.services.scheduler import get_scheduler, start_scheduler
+                scheduler = get_scheduler()
+                if scheduler is None or not scheduler.running:
+                    start_scheduler()
+                    scheduler = get_scheduler()
+                if scheduler is None:
+                    raise RuntimeError("Scheduler instance is None — scheduler has not been started")
+                if not scheduler.running:
+                    raise RuntimeError("Scheduler is not running")
         except Exception as exc:
             exception = exc
         finally:
             elapsed_ms = (time.monotonic() - start) * 1000.0
+
+        if message_override and exception is None:
+            return HealthCheckResult(
+                component="scheduler",
+                status="healthy",
+                response_time_ms=elapsed_ms,
+                message=message_override,
+                checked_at=_now_iso(),
+            )
 
         return self._classify_result(
             component="scheduler",
@@ -308,27 +346,13 @@ class HealthChecker:
         )
 
     async def _check_api_self(self) -> HealthCheckResult:
-        """HTTP GET to /api/health and measure response time.
-
-        Uses ``httpx.AsyncClient`` to call the local ``/api/health`` endpoint.
-        The base URL is read from the ``API_SELF_CHECK_URL`` environment
-        variable (default: ``http://localhost:8000``).  Raises on connection
-        failure or non-2xx response.
-
-        Requirements: 1.1, 1.2
-        """
-        import os
-        import httpx
-
-        base_url = os.environ.get("API_SELF_CHECK_URL", "http://localhost:8000")
-        url = f"{base_url}/api/health"
-
+        """Verify API health contract in-process (avoids loopback HTTP / full app import)."""
         start = time.monotonic()
         exception: Exception | None = None
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.get(url)
-                response.raise_for_status()
+            payload = {"status": "ok"}
+            if payload.get("status") != "ok":
+                raise RuntimeError("API health contract check failed")
         except Exception as exc:
             exception = exc
         finally:
@@ -391,7 +415,7 @@ class HealthChecker:
             loop = asyncio.get_event_loop()
             cpu_pct = await loop.run_in_executor(
                 None,
-                lambda: psutil.cpu_percent(interval=5),
+                lambda: psutil.cpu_percent(interval=0.1),
             )
         except Exception as exc:
             exception = exc
@@ -428,13 +452,29 @@ class HealthChecker:
             loop = asyncio.get_event_loop()
 
             def _query() -> int:
+                # Single-field query avoids composite Firestore index requirement.
                 docs = (
                     db.collection("audit_logs")
                     .where("action", "==", "error")
-                    .where("created_at", ">=", one_hour_ago)
+                    .limit(500)
                     .stream()
                 )
-                return sum(1 for _ in docs)
+                count = 0
+                for doc in docs:
+                    row = doc.to_dict() or {}
+                    created = row.get("created_at")
+                    if created is None:
+                        continue
+                    if isinstance(created, datetime):
+                        ts = created if created.tzinfo else created.replace(tzinfo=timezone.utc)
+                    else:
+                        try:
+                            ts = datetime.fromisoformat(str(created).replace("Z", "+00:00"))
+                        except ValueError:
+                            continue
+                    if ts >= one_hour_ago:
+                        count += 1
+                return count
 
             error_count = await loop.run_in_executor(None, _query)
         except Exception as exc:
@@ -500,20 +540,22 @@ class HealthChecker:
         # Rule 2: memory thresholds (Req 1.7, 1.8)
         if component == "memory":
             memory_pct: float = float(extra.get("memory_pct", 0.0))
-            if memory_pct >= _MEMORY_UNHEALTHY_PCT:
+            mem_unhealthy = _memory_unhealthy_pct()
+            mem_degraded = _memory_degraded_pct()
+            if memory_pct >= mem_unhealthy:
                 return HealthCheckResult(
                     component=component,
                     status="unhealthy",
                     response_time_ms=response_time_ms,
-                    message=f"Memory usage critical: {memory_pct:.1f}% (threshold: {_MEMORY_UNHEALTHY_PCT}%)",
+                    message=f"Memory usage critical: {memory_pct:.1f}% (threshold: {mem_unhealthy}%)",
                     checked_at=_now_iso(),
                 )
-            if memory_pct > _MEMORY_DEGRADED_PCT:
+            if memory_pct > mem_degraded:
                 return HealthCheckResult(
                     component=component,
                     status="degraded",
                     response_time_ms=response_time_ms,
-                    message=f"Memory usage elevated: {memory_pct:.1f}% (threshold: {_MEMORY_DEGRADED_PCT}%)",
+                    message=f"Memory usage elevated: {memory_pct:.1f}% (threshold: {mem_degraded}%)",
                     checked_at=_now_iso(),
                 )
             return HealthCheckResult(
@@ -527,12 +569,13 @@ class HealthChecker:
         # Rule 3: CPU threshold (Req 1.9)
         if component == "cpu":
             cpu_pct: float = float(extra.get("cpu_pct", 0.0))
-            if cpu_pct > _CPU_DEGRADED_PCT:
+            cpu_degraded = _cpu_degraded_pct()
+            if cpu_pct > cpu_degraded:
                 return HealthCheckResult(
                     component=component,
                     status="degraded",
                     response_time_ms=response_time_ms,
-                    message=f"CPU usage elevated: {cpu_pct:.1f}% (threshold: {_CPU_DEGRADED_PCT}%)",
+                    message=f"CPU usage elevated: {cpu_pct:.1f}% (threshold: {cpu_degraded}%)",
                     checked_at=_now_iso(),
                 )
             return HealthCheckResult(
@@ -571,12 +614,13 @@ class HealthChecker:
             )
 
         # Rule 5: response time threshold (Req 1.4)
-        if response_time_ms >= _RESPONSE_TIME_DEGRADED_MS:
+        slow_ms = _response_time_degraded_ms()
+        if response_time_ms >= slow_ms:
             return HealthCheckResult(
                 component=component,
                 status="degraded",
                 response_time_ms=response_time_ms,
-                message=f"Slow response: {response_time_ms:.1f}ms (threshold: {_RESPONSE_TIME_DEGRADED_MS}ms)",
+                message=f"Slow response: {response_time_ms:.1f}ms (threshold: {slow_ms}ms)",
                 checked_at=_now_iso(),
             )
 

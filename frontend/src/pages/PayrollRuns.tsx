@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { HelpIcon } from '../help/HelpIcon';
 import api from '../api';
+import { useListQuery } from '../api/queries/useListQuery';
+import { listQueryKeys } from '../api/queries/keys';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 
@@ -20,15 +22,18 @@ interface Payslip {
 
 export default function PayrollRuns() {
  const { t } = useTranslation();
- const [list, setList] = useState<Run[]>([]);
  const [open, setOpen] = useState(false);
  const [form] = Form.useForm();
  const [drawer, setDrawer] = useState<{ run: Run; payslips: Payslip[] } | null>(null);
  const [active, setActive] = useState<Payslip | null>(null);
+ const payrollRunsQuery = useListQuery<Run, { items?: Run[]; total?: number }>({
+ queryKey: listQueryKeys.payrollRuns(),
+ queryFn: () => api.get('/api/payroll/runs'),
+ });
+ const list = payrollRunsQuery.data?.items ?? [];
 
  const load = async () => {
- const r = await api.get('/api/payroll/runs');
- setList(r.data.items || []);
+ await payrollRunsQuery.refetch();
  };
  useEffect(() => { load(); }, []);
 
@@ -41,7 +46,7 @@ export default function PayrollRuns() {
  await api.post('/api/payroll/runs', v);
  message.success(t('saved'));
  setOpen(false); form.resetFields();
- load();
+ await payrollRunsQuery.refetch();
  } catch { message.error(t('error')); }
  };
 
@@ -51,11 +56,11 @@ export default function PayrollRuns() {
  };
 
  const confirmRun = async (id: string) => {
- try { await api.post(`/api/payroll/runs/${id}/confirm`); message.success(t('confirmed')); load(); setDrawer(null); }
+ try { await api.post(`/api/payroll/runs/${id}/confirm`); message.success(t('confirmed')); await payrollRunsQuery.refetch(); setDrawer(null); }
  catch { message.error(t('error')); }
  };
  const removeRun = async (id: string) => {
- try { await api.delete(`/api/payroll/runs/${id}`); load(); }
+ try { await api.delete(`/api/payroll/runs/${id}`); await payrollRunsQuery.refetch(); }
  catch { message.error(t('error')); }
  };
  const markPaid = async (id: string) => {
@@ -131,15 +136,17 @@ export default function PayrollRuns() {
  <FormDialog
  open={!!drawer}
  onClose={() => setDrawer(null)}
- title={drawer?.run.name}
- extra={drawer && drawer.run.status !== 'confirmed' ? (
- <Button type="primary" icon={<CheckOutlined />} onClick={() => confirmRun(drawer.run.id)}>
- {t('confirm_run')}
- </Button>
- ) : null}
+ title={drawer?.run.name || ''}
  >
  {drawer && (
  <>
+ {drawer.run.status !== 'confirmed' && (
+ <div style={{ marginBottom: 12 }}>
+ <Button type="primary" icon={<CheckOutlined />} onClick={() => confirmRun(drawer.run.id)}>
+ {t('confirm_run')}
+ </Button>
+ </div>
+ )}
  <Descriptions column={2} bordered style={{ marginBottom: 12 }}>
  <Descriptions.Item label={t('period')}>{drawer.run.period_start} → {drawer.run.period_end}</Descriptions.Item>
  <Descriptions.Item label={t('status')}>{drawer.run.status}</Descriptions.Item>
@@ -151,7 +158,7 @@ export default function PayrollRuns() {
  )}
  </FormDialog>
 
- <FormDialog open={!!active} onClose={() => setActive(null)} hideFooter title={active?.employee_name}>
+ <FormDialog open={!!active} onClose={() => setActive(null)} hideFooter title={active?.employee_name || ''}>
  {active && (
  <ResponsiveTableAdapter
  rowKey={(r, i) => `${i}`}

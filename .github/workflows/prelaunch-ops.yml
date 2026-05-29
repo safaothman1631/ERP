@@ -1,0 +1,119 @@
+name: Pre-launch ops (Firestore + drill + Redis check)
+
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: Phase to run
+        required: true
+        default: all
+        type: choice
+        options:
+          - firestore
+          - staging
+          - redis
+          - all
+      org_id:
+        description: Staging org_id for reconcile/drill
+        required: false
+        type: string
+      base_url:
+        description: Staging Cloud Run URL for HTTP smoke
+        required: false
+        type: string
+      skip_firestore_deploy:
+        description: Only verify indexes/TTL JSON (no firebase deploy)
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  firestore:
+    if: >-
+      inputs.phase == 'firestore' || inputs.phase == 'all'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify indexes + TTL manifest
+        run: |
+          python tools/verify_firestore_indexes.py
+          python tools/verify_firestore_ttl.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Deploy Firestore rules + indexes (zoho-83cda)
+        if: inputs.skip_firestore_deploy != true
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          npm install -g firebase-tools
+          firebase deploy --only firestore:rules,firestore:indexes --project zoho-83cda --non-interactive
+      - uses: google-github-actions/auth@v2
+        if: inputs.skip_firestore_deploy != true
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+      - uses: google-github-actions/setup-gcloud@v2
+        if: inputs.skip_firestore_deploy != true
+        with:
+          project_id: zoho-83cda
+      - name: Verify live TTL policies (gcloud)
+        if: inputs.skip_firestore_deploy != true
+        run: python tools/verify_firestore_ttl_gcloud.py --project zoho-83cda
+        continue-on-error: true
+
+  staging-drill:
+    if: >-
+      (inputs.phase == 'staging' || inputs.phase == 'all') &&
+      inputs.org_id != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Install backend deps
+        run: pip install -r backend/requirements.txt httpx
+      - name: Backup verify + reconcile + smoke
+        env:
+          BACKUP_GCS_BUCKET: ${{ secrets.BACKUP_GCS_BUCKET }}
+        run: |
+          ARGS=(--org-id "${{ inputs.org_id }}")
+          if [[ -n "${{ inputs.base_url }}" && -n "${{ secrets.STAGING_SMOKE_EMAIL }}" ]]; then
+            ARGS+=(--base-url "${{ inputs.base_url }}" --email "${{ secrets.STAGING_SMOKE_EMAIL }}" --password "${{ secrets.STAGING_SMOKE_PASSWORD }}")
+          else
+            ARGS+=(--skip-smoke)
+          fi
+          python backend/scripts/backup_restore_drill.py "${ARGS[@]}"
+
+  redis-check:
+    if: inputs.phase == 'redis' || inputs.phase == 'all'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: erp-system-494716
+      - name: Check RATE_LIMIT_STORAGE_URI on Cloud Run
+        run: |
+          ENV_JSON=$(gcloud run services describe zoho-erp \
+            --region europe-west1 \
+            --project erp-system-494716 \
+            --format=json)
+          if echo "$ENV_JSON" | grep -q 'RATE_LIMIT_STORAGE_URI'; then
+            echo "OK: RATE_LIMIT_STORAGE_URI is configured"
+          else
+            echo "::warning::RATE_LIMIT_STORAGE_URI missing — required when max-instances > 1"
+            echo "Create Secret Manager secret redis-rate-limit-uri and redeploy with deploy-cloudrun.yml"
+          fi

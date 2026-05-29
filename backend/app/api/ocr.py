@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 
 from app.firestore.base import BaseRepository
@@ -40,6 +41,24 @@ async def scan_receipt(
     if len(content) > 10 * 1024 * 1024:
         raise HTTPException(413, "file too large (max 10MB)")
     result = extract_from_image(content)
+
+    try:
+        import hashlib
+        from app.firebase_client import get_db
+        from app.services.ttl_fields import expires_at_from_hours
+
+        cache_id = hashlib.sha256(content).hexdigest()[:32]
+        await run_in_threadpool(
+            lambda: get_db().collection("ocr_cache").document(cache_id).set({
+                "org_id": user["org_id"],
+                "filename": file.filename or "receipt.jpg",
+                "status": result.get("status"),
+                "created_at": datetime.utcnow(),
+                "expires_at": expires_at_from_hours(24),
+            }, merge=True)
+        )
+    except Exception:
+        pass
 
     repo = ReceiptScanRepository(user["org_id"])
     saved = repo.create({
@@ -111,5 +130,7 @@ def delete_scan(scan_id: str, user: dict = Depends(get_current_user)):
     repo = ReceiptScanRepository(user["org_id"])
     if not repo.get(scan_id):
         raise HTTPException(404, "scan not found")
-    repo.delete(scan_id)
+    from app.services.http_guards import guarded_delete
+
+    guarded_delete(repo, scan_id)
     return {"success": True}

@@ -1,5 +1,6 @@
 """HR repositories: departments, positions, employees, contracts, attendance, time off."""
 from app.firestore.base import BaseRepository
+from app.firestore.encrypted_mixin import EncryptedFieldsMixin
 
 
 class HRDepartmentRepository(BaseRepository):
@@ -10,12 +11,22 @@ class HRPositionRepository(BaseRepository):
     collection_name = "hr_positions"
 
 
-class HREmployeeRepository(BaseRepository):
+class HREmployeeRepository(EncryptedFieldsMixin, BaseRepository):
     collection_name = "hr_employees"
+    _ENCRYPTED_FIELDS = (
+        "national_id",
+        "passport_no",
+        "bank_account",
+        "social_security_number",
+        "phone",
+        "emergency_phone",
+        "address",
+    )
 
 
-class HRContractRepository(BaseRepository):
+class HRContractRepository(EncryptedFieldsMixin, BaseRepository):
     collection_name = "hr_contracts"
+    _ENCRYPTED_FIELDS = ("wage",)
 
 
 class HRAttendanceRepository(BaseRepository):

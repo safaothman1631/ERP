@@ -1,5 +1,6 @@
 """Bank transaction matching service — intelligent matching engine"""
 import re
+import uuid
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Optional
@@ -363,40 +364,65 @@ def apply_match(org_id: str, txn_id: str, match_type: str, target_id: str, actio
         'action': action
     }
     
-    # Create payment if requested
-    if action == 'create_payment':
-        if match_type == 'invoice':
+    if action == "create_payment":
+        if match_type == "invoice":
             inv_repo = InvoiceRepository(org_id)
             invoice = inv_repo.get(target_id)
-            if invoice:
-                payment_amount = min(
-                    float(txn.get('amount', 0)),
-                    float(invoice.get('balance_due', invoice.get('total', 0)))
-                )
-                # Update invoice payment status
-                inv_repo.update(target_id, {
-                    'payment_status': 'paid' if payment_amount >= float(invoice.get('balance_due', 0)) else 'partial',
-                    'paid_amount': float(invoice.get('paid_amount', 0)) + payment_amount,
-                    'balance_due': float(invoice.get('balance_due', invoice.get('total', 0))) - payment_amount,
-                    'updated_at': datetime.utcnow().isoformat()
-                })
-                result['payment_created'] = True
-        
-        elif match_type == 'bill':
+            if not invoice:
+                raise ValueError(f"Invoice {target_id} not found")
+            payment_amount = min(
+                float(txn.get("amount", 0)),
+                float(invoice.get("balance_due", invoice.get("total", 0)) or 0),
+            )
+            if payment_amount <= 0:
+                raise ValueError("Payment amount must be positive")
+
+            from app.firestore.invoices import PaymentReceivedRepository
+            from app.services.numbering_service import get_next_number
+            from app.services.accounting import AccountingService
+
+            from app.services.invoice_payments import create_payment_received_atomic
+
+            pay_number = get_next_number(org_id, None, "payment_received", "RCP")
+            today = datetime.utcnow().isoformat()[:10]
+            deposit = txn.get("bank_account_id") or invoice.get("deposit_to_account_id")
+            payment_id = str(uuid.uuid4())
+            payment = create_payment_received_atomic(
+                org_id,
+                payment_id,
+                {
+                    "contact_id": invoice.get("contact_id"),
+                    "payment_number": pay_number,
+                    "date": today,
+                    "amount": payment_amount,
+                    "payment_mode": "bank",
+                    "reference": txn.get("reference") or txn_id,
+                    "deposit_to_account_id": deposit,
+                    "currency_code": invoice.get("currency_code", "IQD"),
+                    "allocations": [{"invoice_id": target_id, "amount": payment_amount}],
+                },
+            )
+            try:
+                AccountingService.create_payment_received_journal(org_id, payment)
+            except Exception:
+                pass
+            result["payment_created"] = True
+            result["payment_id"] = payment["id"]
+
+        elif match_type == "bill":
             bill_repo = BillRepository(org_id)
             bill = bill_repo.get(target_id)
             if bill:
                 payment_amount = min(
-                    float(txn.get('amount', 0)),
-                    float(bill.get('balance_due', bill.get('total', 0)))
+                    float(txn.get("amount", 0)),
+                    float(bill.get("balance_due", bill.get("total", 0)) or 0),
                 )
-                # Update bill payment status
                 bill_repo.update(target_id, {
-                    'payment_status': 'paid' if payment_amount >= float(bill.get('balance_due', 0)) else 'partial',
-                    'paid_amount': float(bill.get('paid_amount', 0)) + payment_amount,
-                    'balance_due': float(bill.get('balance_due', bill.get('total', 0))) - payment_amount,
-                    'updated_at': datetime.utcnow().isoformat()
+                    "payment_status": "paid" if payment_amount >= float(bill.get("balance_due", 0) or 0) else "partial",
+                    "paid_amount": float(bill.get("paid_amount", 0) or 0) + payment_amount,
+                    "balance_due": max(0.0, float(bill.get("balance_due", bill.get("total", 0) or 0)) - payment_amount),
+                    "updated_at": datetime.utcnow().isoformat(),
                 })
-                result['payment_created'] = True
-    
+                result["payment_created"] = True
+
     return result

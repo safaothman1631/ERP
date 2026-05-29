@@ -14,3 +14,8 @@ class FollowerRepository(BaseRepository):
 class UniversalActivityRepository(BaseRepository):
     """Universal activities (call, meeting, email, todo) on any entity."""
     collection_name = "universal_activities"
+
+
+class ChatterMessageRepository(BaseRepository):
+    """Thread messages / log notes on any entity."""
+    collection_name = "chatter_messages"

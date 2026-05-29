@@ -211,35 +211,31 @@ test.describe('Settings — permission-based access control', () => {
     await expect(page.locator('.ant-result-403')).not.toBeVisible();
   });
 
-  test('non-admin (viewer) user sees access denied message', async ({ page }) => {
+  test('viewer user can access personal settings sections', async ({ page }) => {
     await injectAuthState(page, { role: 'viewer' });
     await mockSettingsApis(page);
     await page.goto('/settings');
 
-    // The 403 Result component should be rendered
-    const result403 = page.locator('.ant-result-403');
-    await expect(result403).toBeVisible();
+    await expect(page.locator('.st-shell')).toBeVisible();
+    await expect(page.locator('.ant-result-403')).not.toBeVisible();
+    await expect(page.locator('button.st-nav-item').filter({ hasText: /Profile|پرۆفایل/i })).toBeVisible();
   });
 
-  test('non-admin (viewer) access denied message contains expected text', async ({ page }) => {
+  test('viewer user does not see admin-only sections like Users', async ({ page }) => {
     await injectAuthState(page, { role: 'viewer' });
     await mockSettingsApis(page);
     await page.goto('/settings');
 
-    // The Result subTitle should mention admin/owner privileges
-    const subTitle = page.locator('.ant-result-subtitle');
-    await expect(subTitle).toBeVisible();
-    // The message should be non-empty (either English fallback or Kurdish translation)
-    await expect(subTitle).not.toBeEmpty();
+    await expect(page.locator('button.st-nav-item').filter({ hasText: /^Users$|بەکارهێنەران/i })).toHaveCount(0);
   });
 
-  test('non-admin (member) user sees access denied message', async ({ page }) => {
-    await injectAuthState(page, { role: 'member' });
+  test('viewer redirected from admin section deep link', async ({ page }) => {
+    await injectAuthState(page, { role: 'viewer' });
     await mockSettingsApis(page);
-    await page.goto('/settings');
+    await page.goto('/settings?s=users');
 
-    const result403 = page.locator('.ant-result-403');
-    await expect(result403).toBeVisible();
+    await expect(page).not.toHaveURL(/[?&]s=users/);
+    await expect(page.locator('.st-shell')).toBeVisible();
   });
 
   test('unauthenticated user is redirected away from settings', async ({ page }) => {
@@ -403,5 +399,68 @@ test.describe('Settings — setting modification', () => {
     await expect(page).toHaveURL(/[?&]s=general/);
     // The content area should be visible, confirming the section loaded
     await expect(page.locator('.st-content')).toBeVisible();
+  });
+});
+
+test.describe('Settings — tenant module gating & platform removal', () => {
+  test('admin user does not see feature_flags in settings nav', async ({ page }) => {
+    await injectAuthState(page, { role: 'admin' });
+    await mockSettingsApis(page);
+    await page.goto('/settings');
+    await expect(page.locator('button.st-nav-item, a.st-nav-item').filter({ hasText: /Feature flags|فлаگ/i })).toHaveCount(0);
+  });
+
+  test('system-health redirects away from tenant dashboard', async ({ page }) => {
+    await injectAuthState(page, { role: 'admin' });
+    await mockSettingsApis(page);
+    await page.goto('/settings/system-health');
+    await expect(page).toHaveURL(/\/settings(\?s=system)?/);
+  });
+
+  test('admin with sales module sees sales in nav but not crm', async ({ page }) => {
+    await injectAuthState(page, { role: 'admin' });
+    await page.evaluate(() => {
+      localStorage.setItem(
+        'zoho_onboarding_cache_v1:org-001',
+        JSON.stringify({
+          industryId: 'retail',
+          enabledModules: ['sales', 'accounting', 'banking'],
+          completed: true,
+          requireModuleApproval: false,
+        }),
+      );
+    });
+    await mockSettingsApis(page);
+    await page.goto('/settings');
+    await expect(page.locator('button.st-nav-item').filter({ hasText: /Sales|فرۆشتن/i })).toBeVisible();
+    await expect(page.locator('button.st-nav-item').filter({ hasText: /^CRM$/i })).toHaveCount(0);
+  });
+
+  test('sales role sees sales settings read-only, not org general', async ({ page }) => {
+    await injectAuthState(page, { role: 'sales' });
+    await page.evaluate(() => {
+      localStorage.setItem(
+        'zoho_onboarding_cache_v1:org-001',
+        JSON.stringify({
+          industryId: 'retail',
+          enabledModules: ['sales', 'crm', 'accounting', 'banking'],
+          completed: true,
+          requireModuleApproval: false,
+        }),
+      );
+    });
+    await mockSettingsApis(page);
+    await page.goto('/settings');
+    await expect(page.locator('button.st-nav-item').filter({ hasText: /Sales|فرۆشتن/i })).toBeVisible();
+    await expect(page.locator('button.st-nav-item').filter({ hasText: /^CRM$/i })).toHaveCount(0);
+    await expect(page.locator('button.st-nav-item').filter({ hasText: /General|گشتی/i })).toHaveCount(0);
+  });
+
+  test('admin on activity section does not show save bar', async ({ page }) => {
+    await injectAuthState(page, { role: 'admin' });
+    await mockSettingsApis(page);
+    await page.goto('/settings?s=activity');
+    await expect(page.locator('.st-content')).toBeVisible();
+    await expect(page.locator('button').filter({ hasText: /Save|پاشەکەوت/i })).toHaveCount(0);
   });
 });

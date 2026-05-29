@@ -8,13 +8,13 @@ from app.services import settings_service
 
 router = APIRouter(prefix="/api/projects", tags=["Projects"])
 
-@router.get("")
+@router.get("", dependencies=[Depends(require_perm("projects.read"))])
 def list_projects(page: int = Query(1), page_size: int = Query(20, le=500), user: dict = Depends(get_current_user)):
     repo = ProjectRepository(user["org_id"])
     items, total = repo.list(order_by="name", limit=page_size, offset=(page-1)*page_size)
     return {"items": items, "total": total, "page": page, "page_size": page_size}
 
-@router.post("", status_code=201, dependencies=[Depends(require_perm("projects.create"))])
+@router.post("", status_code=201, dependencies=[Depends(require_perm("projects.write"))])
 def create_project(data: dict, user: dict = Depends(get_current_user)):
     # Apply projects config defaults
     try:
@@ -29,7 +29,7 @@ def create_project(data: dict, user: dict = Depends(get_current_user)):
     project = repo.create({"id": str(uuid.uuid4()), **data})
     return project
 
-@router.get("/{project_id}")
+@router.get("/{project_id}", dependencies=[Depends(require_perm("projects.read"))])
 def get_project(project_id: str, user: dict = Depends(get_current_user)):
     """Get single project"""
     repo = ProjectRepository(user["org_id"])
@@ -38,7 +38,7 @@ def get_project(project_id: str, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Project not found")
     return project
 
-@router.put("/{project_id}", dependencies=[Depends(require_perm("projects.update"))])
+@router.put("/{project_id}", dependencies=[Depends(require_perm("projects.write"))])
 def update_project(project_id: str, data: dict, user: dict = Depends(get_current_user)):
     """Update project"""
     repo = ProjectRepository(user["org_id"])
@@ -58,7 +58,7 @@ def delete_project(project_id: str, user: dict = Depends(get_current_user)):
 
 # ===================== TASKS =====================
 
-@router.get("/{project_id}/tasks")
+@router.get("/{project_id}/tasks", dependencies=[Depends(require_perm("projects.read"))])
 def list_tasks(project_id: str, user: dict = Depends(get_current_user)):
     """List project tasks"""
     repo = ProjectRepository(user["org_id"])
@@ -116,7 +116,7 @@ def delete_task(project_id: str, task_id: str, user: dict = Depends(get_current_
 
 # ===================== TIME ENTRIES =====================
 
-@router.get("/{project_id}/time-entries")
+@router.get("/{project_id}/time-entries", dependencies=[Depends(require_perm("projects.read"))])
 def list_time_entries(project_id: str, user: dict = Depends(get_current_user)):
     """List project time entries"""
     repo = ProjectRepository(user["org_id"])
@@ -182,7 +182,7 @@ def approve_time_entry(project_id: str, entry_id: str, user: dict = Depends(get_
 
 # ===================== PROJECT BUDGET =====================
 
-@router.get("/{project_id}/budget")
+@router.get("/{project_id}/budget", dependencies=[Depends(require_perm("projects.read"))])
 def get_project_budget(project_id: str, user: dict = Depends(get_current_user)):
     """Get project budget"""
     repo = ProjectRepository(user["org_id"])
@@ -202,7 +202,7 @@ def get_project_budget(project_id: str, user: dict = Depends(get_current_user)):
         return budgets[0]
     return {"project_id": project_id, "budget": 0}
 
-@router.post("/{project_id}/budget", dependencies=[Depends(require_perm("projects.update"))])
+@router.post("/{project_id}/budget", dependencies=[Depends(require_perm("projects.write"))])
 def set_project_budget(project_id: str, data: dict, user: dict = Depends(get_current_user)):
     """Set/update project budget"""
     repo = ProjectRepository(user["org_id"])
@@ -236,7 +236,7 @@ def set_project_budget(project_id: str, data: dict, user: dict = Depends(get_cur
 
 # ---------------- Sprint 25: Project KPIs + Weekly Timesheet Aggregation (FIX-381..390) ----------------
 
-@router.get("/{project_id}/kpis")
+@router.get("/{project_id}/kpis", dependencies=[Depends(require_perm("projects.read"))])
 def project_kpis(project_id: str, user: dict = Depends(get_current_user)):
     """Aggregate project KPIs: tasks open/done, total hours, billable hours, budget burn."""
     repo = ProjectRepository(user["org_id"])
@@ -264,7 +264,7 @@ def project_kpis(project_id: str, user: dict = Depends(get_current_user)):
     }
 
 
-@router.get("/timesheets/weekly")
+@router.get("/timesheets/weekly", dependencies=[Depends(require_perm("projects.read"))])
 def weekly_timesheet(week_start: str, user_id: str = None,
                       user: dict = Depends(get_current_user)):
     """Aggregate one user's time entries for a week (Mon-Sun) across all projects."""
@@ -371,7 +371,7 @@ def invoice_billable(project_id: str, user: dict = Depends(get_current_user)):
 # ===================== DEPENDENCIES (Wave C-1) =====================
 
 @router.post("/{project_id}/dependencies", status_code=201, 
-             dependencies=[Depends(require_perm("projects.update"))])
+             dependencies=[Depends(require_perm("projects.write"))])
 def create_dependency(project_id: str, data: dict, user: dict = Depends(get_current_user)):
     """Create task dependency. Body: {predecessor_task_id, successor_task_id, type='finish_to_start'}"""
     from app.firestore.task_dependencies import TaskDependencyRepository
@@ -391,7 +391,7 @@ def create_dependency(project_id: str, data: dict, user: dict = Depends(get_curr
     return dep
 
 
-@router.get("/{project_id}/dependencies")
+@router.get("/{project_id}/dependencies", dependencies=[Depends(require_perm("projects.read"))])
 def list_dependencies(project_id: str, user: dict = Depends(get_current_user)):
     """List all task dependencies for a project"""
     from app.firestore.task_dependencies import TaskDependencyRepository
@@ -406,7 +406,7 @@ def list_dependencies(project_id: str, user: dict = Depends(get_current_user)):
     return {"items": deps, "total": total}
 
 
-@router.delete("/dependencies/{dep_id}", dependencies=[Depends(require_perm("projects.update"))])
+@router.delete("/dependencies/{dep_id}", dependencies=[Depends(require_perm("projects.write"))])
 def delete_dependency(dep_id: str, user: dict = Depends(get_current_user)):
     """Delete a task dependency"""
     from app.firestore.task_dependencies import TaskDependencyRepository
@@ -421,7 +421,7 @@ def delete_dependency(dep_id: str, user: dict = Depends(get_current_user)):
 # ===================== MILESTONES (Wave C-1) =====================
 
 @router.post("/{project_id}/milestones", status_code=201,
-             dependencies=[Depends(require_perm("projects.update"))])
+             dependencies=[Depends(require_perm("projects.write"))])
 def create_milestone(project_id: str, data: dict, user: dict = Depends(get_current_user)):
     """Create milestone. Body: {name, due_date, task_ids:[]}"""
     from app.firestore.project_milestones import ProjectMilestoneRepository
@@ -442,7 +442,7 @@ def create_milestone(project_id: str, data: dict, user: dict = Depends(get_curre
     return ms
 
 
-@router.get("/{project_id}/milestones")
+@router.get("/{project_id}/milestones", dependencies=[Depends(require_perm("projects.read"))])
 def list_milestones(project_id: str, user: dict = Depends(get_current_user)):
     """List all milestones for a project"""
     from app.firestore.project_milestones import ProjectMilestoneRepository
@@ -459,7 +459,7 @@ def list_milestones(project_id: str, user: dict = Depends(get_current_user)):
 
 
 @router.put("/milestones/{milestone_id}/complete",
-            dependencies=[Depends(require_perm("projects.update"))])
+            dependencies=[Depends(require_perm("projects.write"))])
 def complete_milestone(milestone_id: str, user: dict = Depends(get_current_user)):
     """Mark milestone as done"""
     from app.firestore.project_milestones import ProjectMilestoneRepository
@@ -474,7 +474,7 @@ def complete_milestone(milestone_id: str, user: dict = Depends(get_current_user)
 
 # ===================== GANTT DATA (Wave C-1) =====================
 
-@router.get("/{project_id}/gantt")
+@router.get("/{project_id}/gantt", dependencies=[Depends(require_perm("projects.read"))])
 def get_gantt_data(project_id: str, user: dict = Depends(get_current_user)):
     """Get Gantt chart data: tasks + dependencies + milestones"""
     from app.firestore.task_dependencies import TaskDependencyRepository

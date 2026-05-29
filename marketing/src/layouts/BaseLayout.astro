@@ -1,0 +1,178 @@
+---
+/**
+ * BaseLayout — HTML shell.
+ *
+ * Responsibilities:
+ *  - <html lang> + <html dir> from locale
+ *  - <title>, meta description, canonical
+ *  - Open Graph, Twitter Card
+ *  - hreflang alternates for the three locales
+ *  - JSON-LD slot
+ *  - Brand CSS, font preload
+ *  - Analytics + cookie consent
+ *
+ * Pages SHOULD use MarketingLayout for visible chrome (header + footer);
+ * BaseLayout is also reused by DocsLayout and minimal pages.
+ */
+
+import '../styles/brand.css';
+import {
+  type Locale,
+  DEFAULT_LOCALE,
+  dir,
+  langAttr,
+  localeFromPath,
+  alternateUrls,
+  t,
+} from '../i18n/utils';
+import AnalyticsScripts from '../components/AnalyticsScripts.astro';
+import StructuredData from '../components/StructuredData.astro';
+
+export interface Props {
+  /** Localized page title — used in <title> and og:title. */
+  title: string;
+  /** Localized meta description (≤160 chars). */
+  description?: string;
+  /** Override locale (defaults to the one detected from the URL). */
+  locale?: Locale;
+  /** Path used to build hreflang alternate URLs (defaults to current path). */
+  path?: string;
+  /** OG image URL (absolute path under public/). */
+  ogImage?: string;
+  /** Schema.org type (default: WebPage). */
+  schemaType?: 'WebPage' | 'Article' | 'FAQPage' | 'Product';
+  /** Optional extra JSON-LD payload to merge. */
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  /** Disable robots indexing (legal/draft pages). */
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description,
+  locale: localeProp,
+  path: pathProp,
+  ogImage = '/brand/og/hero-1200x630.svg',
+  schemaType = 'WebPage',
+  jsonLd,
+  noindex = false,
+} = Astro.props;
+
+const SITE_URL = import.meta.env.PUBLIC_SITE_URL || 'https://zoho-kurdish.iq';
+
+const pathname = pathProp ?? new URL(Astro.request.url).pathname;
+const locale: Locale = localeProp ?? localeFromPath(pathname);
+const direction = dir(locale);
+const htmlLang = langAttr(locale);
+
+const fullTitle = title.includes(t('site.name', locale))
+  ? title
+  : `${title} — ${t('site.name', locale)}`;
+
+const desc = description ?? t('site.description', locale);
+const canonical = new URL(pathname, SITE_URL).toString();
+const ogImageAbs = ogImage.startsWith('http')
+  ? ogImage
+  : new URL(ogImage, SITE_URL).toString();
+
+const alternates = alternateUrls(pathname, SITE_URL);
+---
+
+<!doctype html>
+<html lang={htmlLang} dir={direction} data-locale={locale}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#e5495d" />
+
+    <title>{fullTitle}</title>
+    <meta name="description" content={desc} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <link rel="canonical" href={canonical} />
+
+    {/* hreflang alternates */}
+    {
+      alternates.map((alt) => (
+        <link rel="alternate" hreflang={alt.hreflang} href={alt.href} />
+      ))
+    }
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href={alternates.find((a) => a.locale === DEFAULT_LOCALE)?.href ?? canonical}
+    />
+
+    {/* Open Graph */}
+    <meta property="og:type" content={schemaType === 'Article' ? 'article' : 'website'} />
+    <meta property="og:site_name" content={t('site.name', locale)} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:image" content={ogImageAbs} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={htmlLang.replace('-', '_')} />
+    {
+      alternates
+        .filter((a) => a.locale !== locale)
+        .map((a) => (
+          <meta property="og:locale:alternate" content={a.hreflang.replace('-', '_')} />
+        ))
+    }
+
+    {/* Twitter card */}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={desc} />
+    <meta name="twitter:image" content={ogImageAbs} />
+
+    {/* Favicons */}
+    <link rel="icon" type="image/svg+xml" href="/brand/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/brand/favicon-180.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    {/* Font preload — Vazirmatn subset for Kurdish + Arabic + Latin */}
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap"
+    />
+
+    {/* Performance hints */}
+    <link rel="dns-prefetch" href="https://app.zoho-kurdish.iq" />
+
+    {/* Structured data */}
+    <StructuredData
+      locale={locale}
+      type={schemaType}
+      title={fullTitle}
+      description={desc}
+      url={canonical}
+      image={ogImageAbs}
+      extra={jsonLd}
+    />
+
+    {/* Analytics (gated by env + consent) */}
+    <AnalyticsScripts />
+  </head>
+
+  <body>
+    <a href="#main" class="skip-link">
+      {locale === 'en' ? 'Skip to content' : locale === 'ar' ? 'تخطّى إلى المحتوى' : 'پەڕینەوە بۆ ناوەڕۆک'}
+    </a>
+    <slot />
+  </body>
+</html>
+
+<style>
+  /* Prevent flash of unstyled content for fonts */
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+</style>

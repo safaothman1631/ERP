@@ -230,9 +230,11 @@ class TestRateLimitExceededResponse:
         mock_exc = MagicMock(spec=RateLimitExceeded)
         mock_exc.detail = "1 per 1 minute"
 
-        result = asyncio.get_event_loop().run_until_complete(
-            rate_limit_exceeded_handler(mock_request, mock_exc)
-        )
+        # Python 3.13 removed the implicit event-loop fallback that
+        # ``asyncio.get_event_loop()`` used to provide on the main thread.
+        # ``asyncio.run`` creates and tears down a fresh loop, which is the
+        # supported way to drive a coroutine from synchronous test code.
+        result = asyncio.run(rate_limit_exceeded_handler(mock_request, mock_exc))
         assert isinstance(result, JSONResponse)
         assert result.status_code == 429
 

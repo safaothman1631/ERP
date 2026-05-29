@@ -1,0 +1,88 @@
+name: Bundle Size Diff
+
+# T-0.3 / R3.7
+# Runs on every PR. Builds the frontend on both the base branch and the head
+# of the PR, runs `audit-bundle-size.mjs` on each, then posts a sticky
+# comment with the diff. Never fails the build — this is signal, not a gate.
+
+on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/bundle-diff.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: bundle-diff-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  diff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install (head)
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build (head)
+        working-directory: frontend
+        run: npm run build --if-present
+        env:
+          CI: 'true'
+
+      - name: Audit head bundle
+        working-directory: frontend
+        run: node scripts/audit-bundle-size.mjs > ../bundle-head.json
+
+      - name: Checkout base
+        run: git checkout ${{ github.event.pull_request.base.sha }} -- frontend
+
+      - name: Install (base)
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build (base)
+        working-directory: frontend
+        run: npm run build --if-present
+        env:
+          CI: 'true'
+        continue-on-error: true
+
+      - name: Audit base bundle
+        working-directory: frontend
+        run: node scripts/audit-bundle-size.mjs > ../bundle-base.json
+        continue-on-error: true
+
+      - name: Restore PR head files for diff script
+        run: git checkout ${{ github.event.pull_request.head.sha }} -- frontend/scripts
+
+      - name: Generate diff
+        run: |
+          node frontend/scripts/post-bundle-diff.mjs \
+            --base bundle-base.json \
+            --head bundle-head.json > bundle-diff.md
+          cat bundle-diff.md
+
+      - name: Post sticky comment
+        if: always()
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: bundle-diff
+          path: bundle-diff.md

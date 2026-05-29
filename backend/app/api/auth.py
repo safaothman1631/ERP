@@ -19,7 +19,36 @@ from app.seed.currencies import CURRENCIES
 from app.seed.tax_rates import TAX_RATES, SEQUENCES
 
 limiter = Limiter(key_func=get_remote_address)
-router = APIRouter(prefix="/api/auth", tags=["Auth"])
+router = APIRouter(prefix="/auth", tags=["Auth"])
+
+import os as _os
+
+# Relaxed in non-production so demo/E2E role sweeps are not blocked after a few logins.
+_LOGIN_RATE_LIMIT = "5/minute" if _os.environ.get("ENVIRONMENT", "development").lower() == "production" else "120/minute"
+
+
+def _issue_tokens(user_data: dict) -> TokenResponse:
+    """Create access/refresh JWT pair and include role for frontend gating."""
+    from app.services.two_factor_policy import user_requires_2fa_setup
+
+    role = user_data.get("role") or "viewer"
+    token_data = {"sub": user_data["id"], "org_id": user_data["org_id"], "role": role}
+    if user_data.get("impersonating"):
+        token_data["impersonating"] = True
+        if user_data.get("impersonated_by"):
+            token_data["impersonated_by"] = user_data["impersonated_by"]
+    access_token = create_access_token(data=token_data, expires_delta=timedelta(hours=1))
+    refresh_token = create_refresh_token(data=token_data)
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        user_id=user_data["id"],
+        org_id=user_data["org_id"],
+        user_name=user_data.get("name") or "",
+        role=role,
+        is_platform_admin=bool(user_data.get("is_platform_admin") or role == "super_admin"),
+        requires_2fa_setup=user_requires_2fa_setup(user_data),
+    )
 
 
 @router.get("/status")
@@ -93,7 +122,7 @@ def initial_setup(request: Request, data: SetupRequest):
 
 
 @router.post("/login", response_model=TokenResponse)
-@limiter.limit("5/minute")
+@limiter.limit(_LOGIN_RATE_LIMIT)
 def login(request: Request, data: LoginRequest):
     """User login with brute-force lockout (5 failed attempts -> 15 min lock)
     and IP-based brute-force blocking (Requirement 6.11: 24h block).
@@ -114,12 +143,20 @@ def login(request: Request, data: LoginRequest):
 
     from app.firebase_client import get_db
     db = get_db()
-    users_ref = db.collection("users").where("email", "==", data.email).limit(1).stream()
-    
     user_data = None
-    for doc in users_ref:
-        user_data = {"id": doc.id, **doc.to_dict()}
-        break
+    try:
+        users_ref = db.collection("users").where("email", "==", data.email).limit(1).stream()
+        for doc in users_ref:
+            user_data = {"id": doc.id, **doc.to_dict()}
+            break
+    except Exception as exc:
+        from app.services.firestore_resilience import is_firestore_quota_error
+        if is_firestore_quota_error(exc):
+            raise HTTPException(
+                status_code=503,
+                detail="Database temporarily unavailable (quota). Please wait a minute and try again.",
+            )
+        raise
     
     if not user_data:
         # Record IP failure even for non-existent users (prevents user enumeration timing)
@@ -158,29 +195,41 @@ def login(request: Request, data: LoginRequest):
 
     # Success: reset counters + update last_login
     _now = datetime.utcnow()
-    user_repo.update(user_data["id"], {
-        "last_login": _now,
-        "last_login_at": _now,
-        "last_login_ip": client_ip,
-        "failed_login_attempts": 0,
-        "locked_until": None,
-    })
+    try:
+        user_repo.update(user_data["id"], {
+            "last_login": _now,
+            "last_login_at": _now,
+            "last_login_ip": client_ip,
+            "failed_login_attempts": 0,
+            "locked_until": None,
+        })
+    except Exception as exc:
+        from app.services.firestore_resilience import is_firestore_quota_error
+        if not is_firestore_quota_error(exc):
+            raise
     # Reset IP failure counter on successful login
     if client_ip:
-        reset_ip_failures(client_ip)
+        try:
+            reset_ip_failures(client_ip)
+        except Exception:
+            pass
 
-    # Requirement 2.8: access token = 1 hour, refresh token = 7 days
-    token_data = {"sub": user_data["id"], "org_id": user_data["org_id"]}
-    access_token = create_access_token(data=token_data, expires_delta=timedelta(hours=1))
-    refresh_token = create_refresh_token(data=token_data)
+    # When 2FA is already enabled, require TOTP at login.
+    # Mandatory setup for privileged roles is enforced in-app after login (not here).
+    is_2fa = bool(user_data.get("is_2fa_enabled"))
+    if is_2fa:
+        if not data.totp_code:
+            raise HTTPException(
+                status_code=401,
+                detail={"code": "2fa_code_required", "message": "TOTP code required"},
+            )
+        import pyotp
+        full_user = user_repo.get(user_data["id"]) or user_data
+        secret = full_user.get("totp_secret")
+        if not secret or not pyotp.TOTP(secret).verify(str(data.totp_code), valid_window=1):
+            raise HTTPException(status_code=401, detail={"code": "2fa_invalid", "message": "Invalid TOTP code"})
 
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        user_id=user_data["id"],
-        org_id=user_data["org_id"],
-        user_name=user_data["name"],
-    )
+    return _issue_tokens(user_data)
 
 
 @router.post("/firebase-login", response_model=TokenResponse)
@@ -225,18 +274,7 @@ def firebase_login(request: Request, body: dict):
         "firebase_uid": decoded.get("uid"),
     })
 
-    # Requirement 2.8: access token = 1 hour, refresh token = 7 days
-    token_data = {"sub": user_data["id"], "org_id": user_data["org_id"]}
-    access_token = create_access_token(data=token_data, expires_delta=timedelta(hours=1))
-    refresh_token = create_refresh_token(data=token_data)
-
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        user_id=user_data["id"],
-        org_id=user_data["org_id"],
-        user_name=user_data.get("name", email),
-    )
+    return _issue_tokens(user_data)
 
 
 @router.post("/logout")
@@ -325,36 +363,42 @@ def refresh_token_endpoint(request: Request):
     if old_jti:
         _revoke(old_jti, exp_dt)
 
-    # Issue new 1-hour access token + new 7-day refresh token
-    token_data = {"sub": user_id, "org_id": org_id}
-    new_access_token = create_access_token(data=token_data, expires_delta=timedelta(hours=1))
-    new_refresh_token = create_refresh_token(data=token_data)
-
-    return TokenResponse(
-        access_token=new_access_token,
-        refresh_token=new_refresh_token,
-        user_id=user_id,
-        org_id=org_id,
-        user_name=user_data.get("name", ""),
-    )
+    return _issue_tokens(user_data)
 
 
 @router.get("/me")
 def get_me(user: dict = Depends(get_current_user)):
     """Get current user info"""
     from app.firebase_client import get_db
+    from app.services.two_factor_policy import (
+        user_requires_2fa_setup,
+        user_must_keep_2fa,
+        user_should_remind_2fa,
+    )
+
     db = get_db()
-    org_doc = db.collection("organizations").document(user["org_id"]).get()
-    org_name = org_doc.to_dict().get("name", "") if org_doc.exists else ""
+    org_name = ""
+    try:
+        org_doc = db.collection("organizations").document(user["org_id"]).get()
+        org_name = org_doc.to_dict().get("name", "") if org_doc.exists else ""
+    except Exception as exc:
+        from app.services.firestore_resilience import is_firestore_quota_error
+        if not is_firestore_quota_error(exc):
+            raise
     return {
         "id": user["id"],
         "name": user["name"],
         "email": user["email"],
         "role": user["role"],
+        "is_platform_admin": bool(user.get("is_platform_admin") or user.get("role") == "super_admin"),
+        "is_super_admin": bool(user.get("is_super_admin") or user.get("role") == "super_admin"),
         "org_id": user["org_id"],
         "org_name": org_name,
         "auth_provider": user.get("auth_provider", "email"),
         "is_2fa_enabled": bool(user.get("is_2fa_enabled", False)),
+        "requires_2fa_setup": user_requires_2fa_setup(user),
+        "must_keep_2fa": user_must_keep_2fa(user),
+        "should_remind_2fa": user_should_remind_2fa(user),
     }
 
 
@@ -397,18 +441,7 @@ def register(request: Request, data: RegisterRequest):
         "created_at": datetime.utcnow(),
     })
 
-    # Requirement 2.8: access token = 1 hour, refresh token = 7 days
-    token_data = {"sub": user["id"], "org_id": org_id}
-    access_token = create_access_token(data=token_data, expires_delta=timedelta(hours=1))
-    refresh_token = create_refresh_token(data=token_data)
-
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        user_id=user["id"],
-        org_id=org_id,
-        user_name=user["name"],
-    )
+    return _issue_tokens({**user, "id": user["id"], "org_id": org_id})
 
 
 @router.post("/firebase-register", response_model=TokenResponse)
@@ -417,6 +450,10 @@ def firebase_register(request: Request, data: FirebaseRegisterRequest):
     from firebase_admin import auth as firebase_auth
     from app.firebase_client import get_db
     from datetime import timedelta
+
+    org_name = (data.org_name or "").strip()
+    if not org_name:
+        raise HTTPException(status_code=400, detail="ناوی ڕێکخراو پێویستە")
 
     try:
         decoded = firebase_auth.verify_id_token(data.id_token)
@@ -436,7 +473,7 @@ def firebase_register(request: Request, data: FirebaseRegisterRequest):
     user_id = str(uuid.uuid4())
     display_name = decoded.get("name") or email.split("@")[0]
 
-    _seed_org(org_id, data.org_name, "IQD", "ku")
+    _seed_org(org_id, org_name, "IQD", "ku")
 
     user_repo = UserRepository(org_id)
     user = user_repo.create({
@@ -451,18 +488,7 @@ def firebase_register(request: Request, data: FirebaseRegisterRequest):
         "created_at": datetime.utcnow(),
     })
 
-    # Requirement 2.8: access token = 1 hour, refresh token = 7 days
-    token_data = {"sub": user["id"], "org_id": org_id}
-    access_token = create_access_token(data=token_data, expires_delta=timedelta(hours=1))
-    refresh_token = create_refresh_token(data=token_data)
-
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        user_id=user["id"],
-        org_id=org_id,
-        user_name=user["name"],
-    )
+    return _issue_tokens({**user, "id": user["id"]})
 
 
 @router.post("/forgot-password")
@@ -694,13 +720,21 @@ def verify_2fa(data: dict, user: dict = Depends(get_current_user)):
 def disable_2fa(data: dict, user: dict = Depends(get_current_user)):
     """Disable 2FA with password verification"""
     import pyotp
-    
+
     from app.firestore.users import UserRepository
+    from app.services.two_factor_policy import user_must_keep_2fa
+
     user_repo = UserRepository(user["org_id"])
     user_data = user_repo.get(user["id"])
     if not user_data or not user_data.get("is_2fa_enabled"):
         raise HTTPException(400, "2FA not enabled")
-    
+
+    if user_must_keep_2fa(user_data):
+        raise HTTPException(
+            status_code=403,
+            detail={"code": "2fa_required_by_policy", "message": "2FA is required for your role and cannot be disabled"},
+        )
+
     totp = pyotp.TOTP(user_data["totp_secret"])
     if totp.verify(data.get("code", "")):
         user_repo.update(user["id"], {"is_2fa_enabled": False, "totp_secret": None})

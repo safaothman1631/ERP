@@ -1,0 +1,236 @@
+name: small_smb
+display_name_ku: شرکەت بچووک
+display_name_ar: شركة صغيرة
+display_name_en: Small business
+recommended_for:
+  - sole_proprietor
+  - kiosk
+  - corner_shop
+accounts:
+  # Assets (10000-19999)
+  - code: '10000'
+    name_en: Assets
+    name_ku: سامان
+    name_ar: الأصول
+    type: asset
+    parent: null
+    is_header: true
+  - code: '11000'
+    name_en: Current Assets
+    name_ku: سامانی ئێستا
+    name_ar: الأصول المتداولة
+    type: asset
+    parent: '10000'
+    is_header: true
+  - code: '11100'
+    name_en: Cash on Hand (IQD)
+    name_ku: پارەی نەختی (دینار)
+    name_ar: النقدية في الصندوق (دينار)
+    type: asset
+    parent: '11000'
+    is_cash: true
+    is_default_for: default_cash
+    currency_code: IQD
+  - code: '11110'
+    name_en: Cash on Hand (USD)
+    name_ku: پارەی نەختی (دۆلار)
+    name_ar: النقدية في الصندوق (دولار)
+    type: asset
+    parent: '11000'
+    is_cash: true
+    currency_code: USD
+  - code: '11120'
+    name_en: Petty Cash
+    name_ku: پارەی بچووک
+    name_ar: المصروفات النثرية
+    type: asset
+    parent: '11000'
+    is_cash: true
+  - code: '11200'
+    name_en: Bank — Main
+    name_ku: بانک — سەرەکی
+    name_ar: البنك — الرئيسي
+    type: asset
+    parent: '11000'
+    is_bank: true
+    is_default_for: default_bank
+  - code: '11300'
+    name_en: Accounts Receivable
+    name_ku: حسابی وەرگرتن
+    name_ar: الذمم المدينة
+    type: asset
+    parent: '11000'
+    is_default_for: default_accounts_receivable
+  - code: '11400'
+    name_en: Inventory
+    name_ku: مەخزەن
+    name_ar: المخزون
+    type: asset
+    parent: '11000'
+    is_default_for: default_inventory
+  - code: '11500'
+    name_en: Prepaid Expenses
+    name_ku: خەرجی پێشدراو
+    name_ar: المصروفات المدفوعة مقدمًا
+    type: asset
+    parent: '11000'
+  # Fixed assets
+  - code: '15000'
+    name_en: Fixed Assets
+    name_ku: سامانی جێگیر
+    name_ar: الأصول الثابتة
+    type: asset
+    parent: '10000'
+    is_header: true
+  - code: '15100'
+    name_en: Equipment
+    name_ku: ئامێر
+    name_ar: المعدات
+    type: asset
+    parent: '15000'
+  - code: '15200'
+    name_en: Accumulated Depreciation
+    name_ku: کۆی خوارەبوون
+    name_ar: مجمع الإهلاك
+    type: asset
+    parent: '15000'
+
+  # Liabilities (20000-29999)
+  - code: '20000'
+    name_en: Liabilities
+    name_ku: قەرزەکان
+    name_ar: الخصوم
+    type: liability
+    parent: null
+    is_header: true
+  - code: '21000'
+    name_en: Current Liabilities
+    name_ku: قەرزی ئێستا
+    name_ar: الخصوم المتداولة
+    type: liability
+    parent: '20000'
+    is_header: true
+  - code: '21100'
+    name_en: Accounts Payable
+    name_ku: حسابی دانەوە
+    name_ar: الذمم الدائنة
+    type: liability
+    parent: '21000'
+    is_default_for: default_accounts_payable
+  - code: '21200'
+    name_en: Withholding Tax Payable
+    name_ku: باجی گرتنەوەی دانەوە
+    name_ar: ضريبة الاستقطاع المستحقة
+    type: liability
+    parent: '21000'
+    is_default_for: default_wht_payable
+  - code: '21300'
+    name_en: VAT Payable
+    name_ku: باجی بەرزکراوەی دانەوە
+    name_ar: ضريبة القيمة المضافة المستحقة
+    type: liability
+    parent: '21000'
+    is_default_for: default_vat_payable
+  - code: '21400'
+    name_en: Income Tax Payable
+    name_ku: باجی داهات
+    name_ar: ضريبة الدخل المستحقة
+    type: liability
+    parent: '21000'
+
+  # Equity (30000-39999)
+  - code: '30000'
+    name_en: Equity
+    name_ku: سەرمایە
+    name_ar: حقوق الملكية
+    type: equity
+    parent: null
+    is_header: true
+  - code: '31000'
+    name_en: Owner's Equity
+    name_ku: سەرمایەی خاوەنکار
+    name_ar: حقوق المالك
+    type: equity
+    parent: '30000'
+    is_default_for: default_owner_equity
+  - code: '32000'
+    name_en: Retained Earnings
+    name_ku: قازانجی پاشەکەوت
+    name_ar: الأرباح المحتجزة
+    type: equity
+    parent: '30000'
+    is_default_for: default_retained_earnings
+  - code: '33000'
+    name_en: Opening Balance Equity
+    name_ku: سەرمایەی سەرەتا
+    name_ar: رصيد افتتاحي
+    type: equity
+    parent: '30000'
+
+  # Revenue (40000-49999)
+  - code: '40000'
+    name_en: Revenue
+    name_ku: داهات
+    name_ar: الإيرادات
+    type: income
+    parent: null
+    is_header: true
+  - code: '41000'
+    name_en: Sales Revenue
+    name_ku: داهاتی فرۆشتن
+    name_ar: إيرادات المبيعات
+    type: income
+    parent: '40000'
+    is_default_for: default_sales_revenue
+  - code: '42000'
+    name_en: Service Revenue
+    name_ku: داهاتی خزمەتگوزاری
+    name_ar: إيرادات الخدمات
+    type: income
+    parent: '40000'
+
+  # Expenses (50000-59999)
+  - code: '50000'
+    name_en: Expenses
+    name_ku: خەرجی
+    name_ar: المصروفات
+    type: expense
+    parent: null
+    is_header: true
+  - code: '51000'
+    name_en: Cost of Goods Sold
+    name_ku: نرخی کاڵای فرۆشراو
+    name_ar: تكلفة البضاعة المباعة
+    type: expense
+    parent: '50000'
+    is_default_for: default_cogs
+  - code: '52000'
+    name_en: Rent
+    name_ku: کرێ
+    name_ar: الإيجار
+    type: expense
+    parent: '50000'
+  - code: '53000'
+    name_en: Utilities
+    name_ku: کارەبا و ئاو
+    name_ar: المرافق
+    type: expense
+    parent: '50000'
+  - code: '54000'
+    name_en: Salaries
+    name_ku: مووچە
+    name_ar: الرواتب
+    type: expense
+    parent: '50000'
+  - code: '55000'
+    name_en: Marketing
+    name_ku: بازاڕکاری
+    name_ar: التسويق
+    type: expense
+    parent: '50000'
+  - code: '56000'
+    name_en: Maintenance
+    name_ku: چاکسازی
+    name_ar: الصيانة
+    type: expense
+    parent: '50000'

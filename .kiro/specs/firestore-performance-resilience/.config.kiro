@@ -1,0 +1,6 @@
+{
+  "specId": "firestore-performance-resilience-v1",
+  "workflowType": "requirements-first",
+  "specType": "platform-critical",
+  "dependsOn": ["data-integrity-wave-v1", "shopkeeper-production-core"]
+}

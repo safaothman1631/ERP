@@ -27,6 +27,7 @@ import { EntitySelect, type EntityOption } from '../../../design-system/EntitySe
 import { useAutoSave } from '../../../hooks/useAutoSave';
 import { useAuthStore } from '../../../stores/authStore';
 import api from '../../../api';
+import ChatterWidget from '../../../components/chatter/ChatterWidget';
 
 const { Text } = Typography;
 
@@ -456,7 +457,12 @@ const PurchaseOrderFormPage: React.FC = () => {
     >
       <FormLayout
         sections={sections}
-        summaryPanel={<SummaryPanel lines={lines} isDark={isDark} />}
+        summaryPanel={
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <SummaryPanel lines={lines} isDark={isDark} />
+            {id && <ChatterWidget entityType="purchase_order" entityId={id} />}
+          </div>
+        }
         saving={saving}
         saved={saved}
         isDirty={isDirty}

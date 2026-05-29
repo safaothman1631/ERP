@@ -20,6 +20,7 @@ import api from '../../api';
 import AuthLayout from '../../components/AuthLayout';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
 import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
+import { getPostLoginPath } from '../../personas/resolveRoleUx';
 
 // ---------------------------------------------------------------------------
 // LoginPage
@@ -59,8 +60,9 @@ const LoginPage: React.FC = () => {
         res.data.user_id,
         res.data.org_id,
         res.data.user_name,
+        res.data.role,
       );
-      navigate('/dashboard');
+      navigate(getPostLoginPath(res.data.role ?? null, res.data.permissions ?? []));
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
       const status = err?.response?.status;
@@ -97,8 +99,9 @@ const LoginPage: React.FC = () => {
         res.data.user_id,
         res.data.org_id,
         res.data.user_name,
+        res.data.role,
       );
-      navigate('/dashboard');
+      navigate(getPostLoginPath(res.data.role ?? null, res.data.permissions ?? []));
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
       if (err?.response?.status === 404) {
@@ -118,7 +121,7 @@ const LoginPage: React.FC = () => {
     >
       {errorMsg && (
         <Alert
-          message={errorMsg}
+          title={errorMsg}
           type="error"
           showIcon
           closable

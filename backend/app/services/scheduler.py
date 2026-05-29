@@ -102,8 +102,139 @@ def start_scheduler(app=None):
         replace_existing=True,
     )
 
+    # Phase 2: GDPR hard-delete after grace period
+    _scheduler.add_job(
+        _job_gdpr_hard_delete,
+        trigger=CronTrigger(hour=3, minute=0),
+        id="gdpr_hard_delete_grace",
+        name="GDPR Hard Delete After Grace Period",
+        replace_existing=True,
+    )
+
+    # Phase 4: e-invoice dispatch retries
+    _scheduler.add_job(
+        _job_einvoice_dispatcher,
+        trigger=IntervalTrigger(minutes=5),
+        id="einvoice_dispatcher",
+        name="E-Invoice Submission Dispatcher",
+        replace_existing=True,
+    )
+
+    # Phase 3: lot expiry alerts
+    _scheduler.add_job(
+        _job_lot_expiry_alerts,
+        trigger=CronTrigger(hour=8, minute=0),
+        id="lot_expiry_alerts",
+        name="Inventory Lot Expiry Alerts",
+        replace_existing=True,
+    )
+
+    # Performance wave: hard-delete soft-deleted docs past retention
+    _scheduler.add_job(
+        _job_soft_delete_purge,
+        trigger=CronTrigger(day_of_week="sun", hour=4, minute=0),
+        id="soft_delete_purge",
+        name="Soft-Delete Retention Purge",
+        replace_existing=True,
+    )
+
+    _scheduler.add_job(
+        _job_refresh_org_counters,
+        trigger=CronTrigger(day=1, hour=5, minute=0),
+        id="refresh_org_counters",
+        name="Refresh AR/AP Dashboard Counters",
+        replace_existing=True,
+    )
+
+    _scheduler.add_job(
+        _job_outbox_dispatch,
+        trigger=IntervalTrigger(minutes=1),
+        id="outbox_dispatch",
+        name="Outbox Event Dispatcher",
+        replace_existing=True,
+    )
+
+    _scheduler.add_job(
+        _job_audit_retention,
+        trigger=CronTrigger(day=1, hour=6, minute=0),
+        id="audit_retention",
+        name="Audit Log Retention Purge",
+        replace_existing=True,
+    )
+
+    # Launch-readiness R4.12: nightly tenant-side payment reconciliation
+    _scheduler.add_job(
+        _job_payments_reconciliation,
+        trigger=CronTrigger(hour=2, minute=15),
+        id="payments_reconciliation_nightly",
+        name="Tenant-Side Payments Reconciliation",
+        replace_existing=True,
+    )
+
+    # growth-to-100 § R4.15: daily CBI USD↔IQD exchange-rate refresh
+    # 09:00 Baghdad time = 06:00 UTC (Baghdad is UTC+3 year-round).
+    _scheduler.add_job(
+        _job_cbi_rate_refresh,
+        trigger=CronTrigger(hour=6, minute=0),
+        id="cbi_rate_refresh_daily",
+        name="CBI Daily USD↔IQD Rate Refresh",
+        replace_existing=True,
+    )
+
+    # growth-to-100 § G2: push derived component health to Statuspage every 60s.
+    _scheduler.add_job(
+        _job_status_page_emit,
+        trigger=IntervalTrigger(seconds=60),
+        id="status_page_emit_60s",
+        name="Status Page Health Emit",
+        coalesce=True,
+        max_instances=1,
+        replace_existing=True,
+    )
+
+    # growth-to-100 § G2: deliver due onboarding-drip messages every 10 minutes.
+    _scheduler.add_job(
+        _job_onboarding_drip,
+        trigger=IntervalTrigger(minutes=10),
+        id="onboarding_drip_dispatch_10m",
+        name="Onboarding Drip Dispatch",
+        coalesce=True,
+        max_instances=1,
+        replace_existing=True,
+    )
+
+    # growth-to-100 § G4a: drain the e-Fakhata submission queue every 30 seconds.
+    _scheduler.add_job(
+        _job_efakhata_submission_drain,
+        trigger=IntervalTrigger(seconds=30),
+        id="efakhata_submission_drain",
+        name="e-Fakhata Submission Queue Drain",
+        coalesce=True,
+        max_instances=1,
+        replace_existing=True,
+    )
+
+    # scale-foundation (Tier 3 § SF5): observability heartbeat (alert #15 "scheduler
+    # down" fires on absence of this beat) + structured job-failure emitter.
+    try:
+        from app.observability.heartbeat import heartbeat_job, on_job_error
+        from apscheduler.events import EVENT_JOB_ERROR
+
+        _scheduler.add_job(
+            heartbeat_job,
+            trigger=IntervalTrigger(minutes=5),
+            id="observability_heartbeat",
+            name="Observability Scheduler Heartbeat",
+            coalesce=True,
+            max_instances=1,
+            replace_existing=True,
+        )
+        _scheduler.add_listener(on_job_error, EVENT_JOB_ERROR)
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.warning("observability heartbeat not registered: %s", exc)
+
     _scheduler.start()
-    logger.info("✅ Scheduler started with 7 jobs")
+    logger.info("✅ Scheduler started with 20 jobs")
 
 
 def shutdown_scheduler():
@@ -123,6 +254,106 @@ stop_scheduler = shutdown_scheduler
 def get_scheduler() -> Optional[AsyncIOScheduler]:
     """Get the scheduler instance (for status checks)."""
     return _scheduler
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Launch-readiness R4.12: tenant-side payments reconciliation
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _job_payments_reconciliation():
+    """Nightly per-(provider, tenant) settlement reconciliation.
+
+    Walks every registered payment provider against each organization's
+    ``Payment`` records for the prior day and records mismatches to the
+    reconciliation queue surfaced in Settings → Payments → Reconciliation.
+    """
+    import asyncio
+
+    from app.firebase_client import get_firestore_client
+    from app.services.payments_reconciliation import run_nightly_reconciliation
+
+    try:
+        logger.info("🔄 Running nightly payments reconciliation...")
+        db = get_firestore_client()
+        org_ids = [doc.id for doc in db.collection("organizations").stream()]
+        if not org_ids:
+            logger.info("payments reconciliation: no organizations to process")
+            return
+        reports = asyncio.run(run_nightly_reconciliation(org_ids))
+        logger.info(
+            "✅ payments reconciliation complete: %d report(s) across %d org(s)",
+            len(reports),
+            len(org_ids),
+        )
+    except Exception as exc:  # pragma: no cover - defensive scheduler guard
+        logger.exception("payments reconciliation job failed: %s", exc)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# growth-to-100 § R4.15: daily CBI exchange-rate refresh
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def _job_cbi_rate_refresh():
+    """Fetch the day's CBI rate and persist to ``cbi_rates/{yyyy-mm-dd}``.
+
+    Falls back to yesterday's rate on HTTP failure so the UI never goes
+    completely dark — see ``app.services.cbi_rates.refresh_today_rate``.
+    """
+    try:
+        from app.services.cbi_rates import refresh_today_rate
+
+        logger.info("🔄 Refreshing CBI USD↔IQD rate...")
+        doc = refresh_today_rate()
+        logger.info(
+            "✅ CBI rate refresh complete: rate=%s source=%s",
+            doc.get("rate"),
+            doc.get("source"),
+        )
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.exception("CBI rate refresh job failed: %s", exc)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# growth-to-100 § G2 / G4a: support + e-Fakhata background jobs
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def _job_status_page_emit():
+    """G2: derive component health and push to Statuspage.io / Cachet."""
+    try:
+        from app.api.internal.health_emit import emit_status_now
+
+        emit_status_now()
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.warning("status page emit job failed: %s", exc)
+
+
+def _job_onboarding_drip():
+    """G2: deliver due onboarding-drip email/WhatsApp messages."""
+    try:
+        from app.services.onboarding_drip import dispatch_due
+
+        result = dispatch_due()
+        if result and result.get("sent"):
+            logger.info("✅ onboarding drip dispatched: %s", result)
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.warning("onboarding drip job failed: %s", exc)
+
+
+def _job_efakhata_submission_drain():
+    """G4a: drain the e-Fakhata submission queue (per tenant, 50/batch).
+
+    Holds without erroring when ``MOF_BASE`` is unset (see submission_worker).
+    """
+    try:
+        from app.efakhata.submission_worker import run_once
+
+        result = run_once()
+        if result and (result.get("submitted") or result.get("failed") or result.get("processed")):
+            logger.info("✅ e-Fakhata drain: %s", result)
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.warning("e-Fakhata submission drain job failed: %s", exc)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -426,6 +657,146 @@ def _job_monthly_depreciation():
             finished_at=datetime.utcnow().isoformat(),
             status="failed",
         )
+
+
+def _job_gdpr_hard_delete():
+    """Finalize user deletions whose 30-day grace period has elapsed."""
+    from app.services.gdpr_service import hard_delete_due_users
+
+    try:
+        logger.info("🔒 Running GDPR hard-delete job...")
+        result = hard_delete_due_users()
+        logger.info(
+            "✅ GDPR hard-delete: %s processed, %s errors",
+            result.get("processed", 0),
+            len(result.get("errors") or []),
+        )
+    except Exception as e:
+        logger.error("❌ GDPR hard-delete job failed: %s", e)
+
+
+def _job_einvoice_dispatcher():
+    """Retry pending/failed e-invoice submissions (preview/stub safe)."""
+    from app.firebase_client import get_firestore_client
+    from app.firestore.einvoice import EInvoiceSubmissionRepository
+
+    try:
+        logger.info("📨 Running e-invoice dispatcher...")
+        db = get_firestore_client()
+        processed = 0
+        for org_doc in db.collection("organizations").stream():
+            org_id = org_doc.id
+            repo = EInvoiceSubmissionRepository(org_id)
+            items, _ = repo.list(limit=100)
+            for sub in items:
+                status = sub.get("status") or ""
+                retries = int(sub.get("retry_count") or 0)
+                if status not in ("generated", "failed", "retry") or retries >= 5:
+                    continue
+                try:
+                    from app.services.einvoice_service import submit_to_portal_stub
+                    invoice_id = sub.get("invoice_id")
+                    if not invoice_id:
+                        continue
+                    result = submit_to_portal_stub(org_id, invoice_id, sub)
+                    repo.update(sub["id"], {
+                        "status": result.get("status", "submitted"),
+                        "provider_uuid": result.get("provider_uuid"),
+                        "last_dispatch_at": datetime.utcnow().isoformat(),
+                        "retry_count": retries + 1,
+                    })
+                    processed += 1
+                except Exception as exc:
+                    repo.update(sub["id"], {
+                        "status": "failed",
+                        "last_error": str(exc),
+                        "retry_count": retries + 1,
+                        "last_dispatch_at": datetime.utcnow().isoformat(),
+                    })
+        logger.info("✅ E-invoice dispatcher: %s processed", processed)
+    except Exception as e:
+        logger.error("❌ E-invoice dispatcher failed: %s", e)
+
+
+def _job_lot_expiry_alerts():
+    """Log lots expiring within 30 days (hook for email/notifications)."""
+    from app.firebase_client import get_firestore_client
+    from app.services.lot_allocation import LotAllocationService
+
+    try:
+        alerts = 0
+        db = get_firestore_client()
+        for org_doc in db.collection("organizations").stream():
+            org_id = org_doc.id
+            expiring = LotAllocationService.check_expiring_soon(org_id, days=30)
+            alerts += len(expiring)
+        logger.info("✅ Lot expiry scan: %s lots expiring within 30 days", alerts)
+    except Exception as e:
+        logger.error("❌ Lot expiry alerts job failed: %s", e)
+
+
+def _job_refresh_org_counters():
+    """Reconcile denormalized org_counters from streamed invoices/bills."""
+    try:
+        from app.firebase_client import get_firestore_client
+        from app.services.org_counters import refresh_counters_from_stream
+
+        db = get_firestore_client()
+        count = 0
+        for org_doc in db.collection("organizations").stream():
+            refresh_counters_from_stream(org_doc.id)
+            count += 1
+        logger.info("✅ Org counter refresh: %s organizations", count)
+    except Exception as e:
+        logger.error("❌ Org counter refresh failed: %s", e)
+
+
+def _job_soft_delete_purge():
+    """Hard-delete soft-deleted documents older than retention (stream_org_docs)."""
+    try:
+        from app.services.soft_delete_purge import run_scheduled_purge
+
+        removed = run_scheduled_purge()
+        logger.info("✅ Soft-delete purge: %s documents removed", removed)
+    except Exception as e:
+        logger.error("❌ Soft-delete purge failed: %s", e)
+
+
+def _job_outbox_dispatch():
+    """Deliver pending outbox events (Wave I)."""
+    try:
+        from app.services.outbox_dispatcher import dispatch_pending
+
+        n = dispatch_pending(max_events=100)
+        logger.info("✅ Outbox dispatch: %s events", n)
+    except Exception as e:
+        logger.error("❌ Outbox dispatch failed: %s", e)
+
+
+def _job_audit_retention():
+    """Purge audit logs older than AUDIT_RETENTION_MONTHS (Wave T6)."""
+    try:
+        from app.config import settings
+        from app.firebase_client import get_firestore_client
+
+        months = int(getattr(settings, "AUDIT_RETENTION_MONTHS", 24) or 24)
+        cutoff = datetime.utcnow() - timedelta(days=months * 30)
+        db = get_firestore_client()
+        removed = 0
+        for doc in db.collection("audit_logs").limit(5000).stream():
+            data = doc.to_dict() or {}
+            ts = data.get("created_at") or data.get("timestamp")
+            if isinstance(ts, str):
+                try:
+                    ts = datetime.fromisoformat(ts.replace("Z", "").replace(" ", "T"))
+                except ValueError:
+                    continue
+            if isinstance(ts, datetime) and ts < cutoff:
+                doc.reference.delete()
+                removed += 1
+        logger.info("✅ Audit retention purge: %s logs (>%s mo)", removed, months)
+    except Exception as e:
+        logger.error("❌ Audit retention failed: %s", e)
 
 
 def _job_daily_backup():

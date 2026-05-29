@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/livechat", tags=["Live Chat"])
 
@@ -151,8 +152,8 @@ def assign_conv(cid: str, body: dict, user: dict = Depends(get_current_user)):
 
 @router.get("/dashboard")
 def lc_dashboard(user: dict = Depends(get_current_user)):
-    convs, _ = LCConversationRepo(user["org_id"]).list(limit=10000)
-    msgs, _ = LCMessageRepo(user["org_id"]).list(limit=10000)
+    convs = collect_stream(LCConversationRepo(user["org_id"]), max_docs=10000)
+    msgs = collect_stream(LCMessageRepo(user["org_id"]), max_docs=10000)
     return {
         "conversations": len(convs),
         "open": sum(1 for c in convs if c.get("status") not in ("closed",)),

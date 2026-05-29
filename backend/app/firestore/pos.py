@@ -1,5 +1,6 @@
 """POS Firestore repositories for Sprint 6.1"""
 from app.firestore.base import BaseRepository
+from app.firestore.write_models import POSOrderWriteModel, POSSessionWriteModel
 
 
 class POSConfigRepository(BaseRepository):
@@ -15,11 +16,13 @@ class POSPaymentMethodRepository(BaseRepository):
 class POSSessionRepository(BaseRepository):
     """POS sessions repository"""
     collection_name = "pos_sessions"
+    WRITE_MODEL = POSSessionWriteModel
 
 
 class POSOrderRepository(BaseRepository):
     """POS orders repository"""
     collection_name = "pos_orders"
+    WRITE_MODEL = POSOrderWriteModel
 
 
 class POSOrderLineRepository(BaseRepository):

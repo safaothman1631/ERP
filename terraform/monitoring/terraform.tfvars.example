@@ -1,0 +1,36 @@
+# Copy to terraform.tfvars (git-ignored) and edit. Secrets (PagerDuty/Slack)
+# should be passed via TF_VAR_* env, NOT committed here.
+
+project_id        = "zoho-83cda"
+region            = "me-central1"
+environment       = "production"
+
+frontend_base_url = "https://app.zoho-kurdish.iq"
+api_base_url      = "https://api.zoho-kurdish.iq"
+
+# ---- RUM / BigQuery ----
+rum_dataset_id    = "rum"
+bigquery_location = "EU"
+rum_table_expiration_days     = 90
+rum_agg_table_expiration_days = 730
+
+# ---- Notifications ----
+# Email is the awareness channel; PagerDuty (via TF_VAR_pagerduty_service_key)
+# is the page channel. Slack is optional.
+notification_email = "oncall@zoho-kurdish.iq"
+slack_channel      = "#alerts-prod"
+# slack_auth_token  -> set via TF_VAR_slack_auth_token
+# pagerduty_service_key -> set via TF_VAR_pagerduty_service_key
+
+# ---- SLO targets (mirror scripts/slo-thresholds.json) ----
+slo_api_latency_p95_ms  = 300
+slo_pos_checkout_p95_ms = 400
+slo_5xx_error_rate      = 0.01
+slo_availability_target = 0.999
+rum_lcp_p75_regression_ms = 2500
+rum_inp_p75_regression_ms = 200
+cert_expiry_warning_days  = 20
+
+# ---- Cost attribution (optional; needs a BigQuery billing export) ----
+# billing_export_dataset_id = "billing"
+# billing_export_table      = "gcp_billing_export_resource_v1_0123AB_4567CD_89EF01"

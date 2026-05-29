@@ -1,0 +1,164 @@
+---
+/**
+ * Hero — full-bleed landing hero.
+ *
+ * Above-the-fold spec (per R1.2):
+ *  - Value-prop headline (Kurdish primary)
+ *  - Sub-line
+ *  - One primary CTA + secondary CTA
+ *  - Hero illustration (inline SVG, no network round-trip)
+ *  - Credibility row (customer count / press)
+ *
+ * Hosts the `landing-hero-cta` A/B experiment (A = "Try free for 30 days", B = "See 90-sec demo").
+ */
+import { t, type Locale } from '../i18n/utils';
+
+export interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.zoho-kurdish.iq';
+---
+
+<section
+  class="relative overflow-hidden bg-gradient-to-b from-brand-50/30 to-white"
+  aria-labelledby="hero-headline"
+>
+  <div class="container-marketing pt-12 pb-16 md:pt-20 md:pb-24">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <div class="max-w-xl">
+        <p class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-semibold uppercase tracking-wider mb-5">
+          <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+          {t('hero.eyebrow', locale)}
+        </p>
+
+        <h1
+          id="hero-headline"
+          class="font-display font-bold text-4xl md:text-5xl lg:text-display-md text-ink-950 text-balance mb-5 leading-tight"
+        >
+          {t('hero.headline', locale)}
+        </h1>
+
+        <p class="text-lg md:text-xl text-ink-600 text-pretty mb-8 max-w-lg">
+          {t('hero.sub', locale)}
+        </p>
+
+        <div class="flex flex-wrap items-center gap-3 mb-6">
+          <a
+            href={`${APP_URL}/signup`}
+            class="btn btn-primary btn-lg"
+            data-cta="hero-primary"
+            data-experiment="landing-hero-cta"
+            id="hero-cta-primary"
+          >
+            <span data-variant="A">{t('hero.cta_primary_a', locale)}</span>
+            <span data-variant="B" hidden>{t('hero.cta_primary_b', locale)}</span>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="rtl:rotate-180"/>
+            </svg>
+          </a>
+          <a
+            href="/pricing"
+            class="btn btn-secondary btn-lg"
+            data-cta="hero-secondary"
+          >
+            {t('hero.cta_secondary', locale)}
+          </a>
+        </div>
+
+        <p class="text-sm text-ink-500 flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 16 16" class="text-accent-500" aria-hidden="true">
+            <path d="M3 8l3 3 7-7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          {t('hero.credibility', locale)}
+        </p>
+      </div>
+
+      {/* Hero illustration — inline SVG, no LCP penalty */}
+      <div class="relative" aria-hidden="true">
+        <div class="aspect-[4/3] rounded-3xl bg-gradient-to-br from-brand-100 via-white to-accent-100 p-6 shadow-lift border border-ink-100">
+          <svg
+            viewBox="0 0 400 300"
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-full h-full"
+            role="img"
+            aria-label="POS terminal showing a Kurdish-language invoice"
+          >
+            {/* POS device frame */}
+            <rect x="40" y="20" width="320" height="220" rx="14" fill="white" stroke="#d8d8de" stroke-width="2"/>
+            <rect x="50" y="30" width="300" height="180" rx="6" fill="#f7f7f8"/>
+
+            {/* Title bar */}
+            <rect x="50" y="30" width="300" height="28" rx="6" fill="#28282d"/>
+            <circle cx="64" cy="44" r="3" fill="#e5495d"/>
+            <circle cx="76" cy="44" r="3" fill="#2fa356"/>
+            <circle cx="88" cy="44" r="3" fill="#71717f"/>
+
+            {/* Invoice rows */}
+            <rect x="64" y="74" width="160" height="10" rx="2" fill="#28282d"/>
+            <rect x="64" y="92" width="120" height="6" rx="2" fill="#8e8e9c"/>
+
+            <rect x="64" y="118" width="272" height="1" fill="#d8d8de"/>
+            <rect x="64" y="128" width="80" height="6" rx="2" fill="#5b5b67"/>
+            <rect x="264" y="128" width="72" height="6" rx="2" fill="#28282d"/>
+            <rect x="64" y="146" width="100" height="6" rx="2" fill="#5b5b67"/>
+            <rect x="264" y="146" width="72" height="6" rx="2" fill="#28282d"/>
+            <rect x="64" y="164" width="90" height="6" rx="2" fill="#5b5b67"/>
+            <rect x="264" y="164" width="72" height="6" rx="2" fill="#28282d"/>
+
+            <rect x="64" y="186" width="272" height="1" fill="#d8d8de"/>
+            <rect x="200" y="194" width="60" height="8" rx="2" fill="#71717f"/>
+            <rect x="280" y="192" width="56" height="12" rx="2" fill="#e5495d"/>
+
+            {/* Charge button */}
+            <rect x="50" y="220" width="300" height="0" fill="none"/>
+
+            {/* Receipt printer */}
+            <rect x="100" y="248" width="200" height="36" rx="6" fill="#28282d"/>
+            <rect x="120" y="256" width="160" height="20" rx="3" fill="#f7f7f8"/>
+            <rect x="130" y="260" width="40" height="3" rx="1" fill="#71717f"/>
+            <rect x="130" y="266" width="60" height="3" rx="1" fill="#71717f"/>
+            <rect x="220" y="260" width="30" height="3" rx="1" fill="#71717f"/>
+            <rect x="220" y="266" width="40" height="3" rx="1" fill="#71717f"/>
+
+            {/* Cash drawer + IQD coins floating */}
+            <circle cx="370" cy="60" r="14" fill="#2fa356" opacity="0.15"/>
+            <text x="370" y="65" text-anchor="middle" font-size="11" fill="#218144" font-weight="700">IQD</text>
+
+            <circle cx="32" cy="180" r="12" fill="#e5495d" opacity="0.15"/>
+            <text x="32" y="184" text-anchor="middle" font-size="9" fill="#b01b3a" font-weight="700">e-Fak</text>
+          </svg>
+        </div>
+
+        {/* Decorative blob behind hero */}
+        <div class="absolute -z-10 -top-10 end-0 w-72 h-72 rounded-full bg-brand-100/40 blur-3xl" aria-hidden="true"></div>
+        <div class="absolute -z-10 -bottom-10 start-0 w-60 h-60 rounded-full bg-accent-100/30 blur-3xl" aria-hidden="true"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{/* A/B experiment client script */}
+<script>
+  import { getVariant, trackExposure, trackConversion } from '../lib/ab.ts';
+
+  const SLUG = 'landing-hero-cta';
+  const variant = getVariant(SLUG, ['A', 'B']);
+
+  // Show/hide variant labels on the primary CTA
+  document.querySelectorAll<HTMLElement>('[data-experiment="landing-hero-cta"] [data-variant]').forEach((el) => {
+    el.hidden = el.dataset.variant !== variant;
+  });
+
+  // Track exposure on first paint
+  if ('requestIdleCallback' in window) {
+    (window as Window & { requestIdleCallback?: (cb: () => void) => void }).requestIdleCallback?.(() => trackExposure(SLUG, variant));
+  } else {
+    setTimeout(() => trackExposure(SLUG, variant), 100);
+  }
+
+  // Track conversion on click
+  document.getElementById('hero-cta-primary')?.addEventListener('click', () => {
+    trackConversion(SLUG, variant);
+  });
+</script>

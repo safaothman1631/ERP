@@ -17,8 +17,10 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 import pytest
+from fastapi import FastAPI, HTTPException
+from fastapi.testclient import TestClient
 
 # ---------------------------------------------------------------------------
 # Make the backend package importable
@@ -51,28 +53,28 @@ def _make_user(role: str = "admin", perms: list | None = None) -> dict:
 class TestRequireSettingsWrite:
     """Tests for _require_settings_write() — Requirement 12.4."""
 
-    def _call(self, user: dict):
+    def _call(self, user: dict, category: str | None = None):
         from app.api.system import _require_settings_write
-        _require_settings_write(user)
+        _require_settings_write(user, category)
 
     def test_admin_role_is_allowed(self):
         """Admin role must pass without raising (Req 12.4)."""
         user = _make_user(role="admin")
         # Should not raise
-        with patch("app.api.system.user_has_perm", return_value=False):
+        with patch("app.services.settings_category_gate.user_has_perm", return_value=False):
             self._call(user)  # no exception
 
     def test_owner_role_is_allowed(self):
         """Owner role must pass without raising (Req 12.4)."""
         user = _make_user(role="owner")
-        with patch("app.api.system.user_has_perm", return_value=False):
+        with patch("app.services.settings_category_gate.user_has_perm", return_value=False):
             self._call(user)  # no exception
 
     def test_viewer_role_is_denied(self):
         """Viewer role must raise 403 (Req 12.4)."""
         from fastapi import HTTPException
         user = _make_user(role="viewer")
-        with patch("app.api.system.user_has_perm", return_value=False):
+        with patch("app.services.settings_category_gate.user_has_perm", return_value=False):
             with pytest.raises(HTTPException) as exc_info:
                 self._call(user)
         assert exc_info.value.status_code == 403
@@ -81,7 +83,7 @@ class TestRequireSettingsWrite:
         """Accountant role must raise 403 (Req 12.4)."""
         from fastapi import HTTPException
         user = _make_user(role="accountant")
-        with patch("app.api.system.user_has_perm", return_value=False):
+        with patch("app.services.settings_category_gate.user_has_perm", return_value=False):
             with pytest.raises(HTTPException) as exc_info:
                 self._call(user)
         assert exc_info.value.status_code == 403
@@ -90,7 +92,7 @@ class TestRequireSettingsWrite:
         """Sales role must raise 403 (Req 12.4)."""
         from fastapi import HTTPException
         user = _make_user(role="sales")
-        with patch("app.api.system.user_has_perm", return_value=False):
+        with patch("app.services.settings_category_gate.user_has_perm", return_value=False):
             with pytest.raises(HTTPException) as exc_info:
                 self._call(user)
         assert exc_info.value.status_code == 403
@@ -99,7 +101,7 @@ class TestRequireSettingsWrite:
         """Generic member role must raise 403 (Req 12.4)."""
         from fastapi import HTTPException
         user = _make_user(role="member")
-        with patch("app.api.system.user_has_perm", return_value=False):
+        with patch("app.services.settings_category_gate.user_has_perm", return_value=False):
             with pytest.raises(HTTPException) as exc_info:
                 self._call(user)
         assert exc_info.value.status_code == 403
@@ -107,17 +109,56 @@ class TestRequireSettingsWrite:
     def test_settings_update_permission_grants_access(self):
         """A user with settings.update permission must pass even without admin role (Req 12.4)."""
         user = _make_user(role="custom")
-        with patch("app.api.system.user_has_perm", return_value=True):
+        with patch("app.services.settings_category_gate.user_has_perm", return_value=True):
             self._call(user)  # no exception
 
     def test_403_detail_is_informative(self):
         """The 403 response must include a meaningful detail message."""
         from fastapi import HTTPException
         user = _make_user(role="viewer")
-        with patch("app.api.system.user_has_perm", return_value=False):
+        with patch("app.services.settings_category_gate.user_has_perm", return_value=False):
             with pytest.raises(HTTPException) as exc_info:
                 self._call(user)
         assert exc_info.value.detail  # non-empty detail
+
+    def test_category_specific_permission_grants_access(self):
+        """A user with a category-specific write permission must pass."""
+        user = _make_user(role="custom")
+        with patch(
+            "app.services.settings_category_gate.user_has_perm",
+            side_effect=lambda _user, code: code == "settings.fiscal",
+        ):
+            self._call(user, "fiscal")  # no exception
+
+
+class TestRequireSettingsRead:
+    """Tests for _require_settings_read() read-tier behavior."""
+
+    def _call(self, user: dict, category: str | None = None):
+        from app.api.system import _require_settings_read
+
+        _require_settings_read(user, category)
+
+    def test_manager_role_is_allowed(self):
+        user = _make_user(role="manager")
+        with patch("app.services.settings_category_gate.user_has_perm", return_value=False):
+            self._call(user, "sales")
+
+    def test_settings_read_permission_is_allowed(self):
+        user = _make_user(role="custom")
+        with patch(
+            "app.services.settings_category_gate.user_has_perm",
+            side_effect=lambda _user, code: code == "settings.read",
+        ):
+            self._call(user, "sales")
+
+    def test_viewer_without_permissions_is_denied(self):
+        user = _make_user(role="viewer")
+        with patch("app.services.settings_category_gate.user_has_perm", return_value=False):
+            with pytest.raises(HTTPException) as exc_info:
+                self._call(user, "sales")
+        assert exc_info.value.status_code == 403
+        assert exc_info.value.detail["code"] == "permission_denied"
 
 
 # ===========================================================================
@@ -218,3 +259,29 @@ class TestLogSettingsChange:
         payload = mock_repo.create.call_args[0][0]
         assert payload["changes"]["old_value"] is None
         assert payload["changes"]["new_value"] == "first-value"
+
+
+class TestSettingsCategoryEndpointModuleGate:
+    """GET /settings/{category} should enforce module gate as well."""
+
+    def test_standard_get_sales_returns_403_when_module_is_disabled(self):
+        from app.api.system import router as system_router
+        from app.services.auth import get_current_user
+
+        app = FastAPI()
+        app.include_router(system_router)
+        app.dependency_overrides[get_current_user] = lambda: _make_user(role="manager")
+
+        with patch(
+            "app.api.system.require_module_for_category",
+            side_effect=HTTPException(
+                status_code=403,
+                detail={"code": "module_disabled", "module": "sales"},
+            ),
+        ), patch("app.api.system._settings_service.get_bag") as mock_get_bag:
+            client = TestClient(app, raise_server_exceptions=False)
+            response = client.get("/api/system/settings/sales")
+
+        assert response.status_code == 403
+        assert response.json()["detail"]["code"] == "module_disabled"
+        mock_get_bag.assert_not_called()

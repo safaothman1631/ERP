@@ -1,9 +1,13 @@
 # Bill and purchase document repositories
 from .base import BaseRepository
+from .write_models import BillWriteModel, PurchaseOrderWriteModel
+from .write_models.transactions import PaymentMadeWriteModel
 
 class BillRepository(BaseRepository):
     """Repository for bills"""
     collection_name = "bills"
+    WRITE_MODEL = BillWriteModel
+    SCHEMA_TARGET_VERSION = 2
     
     def get_with_lines(self, doc_id):
         """Get bill with line items"""
@@ -16,6 +20,7 @@ class BillRepository(BaseRepository):
 class PurchaseOrderRepository(BaseRepository):
     """Repository for purchase orders"""
     collection_name = "purchase_orders"
+    WRITE_MODEL = PurchaseOrderWriteModel
     
     def get_with_lines(self, doc_id):
         """Get purchase order with line items"""
@@ -38,27 +43,16 @@ class VendorCreditRepository(BaseRepository):
 
 
 class PaymentMadeRepository(BaseRepository):
+    WRITE_MODEL = PaymentMadeWriteModel
     """Repository for payment made records"""
     collection_name = "payments_made"
 
 
-# Add record_payment helper to BillRepository for AP closure
 def _record_bill_payment(self, doc_id, amount):
-    """Record payment against a bill: reduce balance_due + flip status."""
-    bill = self.get(doc_id)
-    if not bill:
-        return None
-    current_balance = float(bill.get("balance_due", bill.get("total", 0)) or 0)
-    new_balance = current_balance - float(amount or 0)
-    if new_balance <= 0.01:
-        new_status = "paid"
-        new_balance = 0
-    else:
-        new_status = "partially_paid"
-    return self.update(doc_id, {
-        "balance_due": max(0, round(new_balance, 2)),
-        "status": new_status,
-    })
+    """Record payment against a bill (atomic read-write)."""
+    from app.services.bill_payments import apply_bill_payment_atomic
+
+    return apply_bill_payment_atomic(self.org_id, doc_id, float(amount or 0))
 
 
 BillRepository.record_payment = _record_bill_payment

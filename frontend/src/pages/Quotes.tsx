@@ -5,6 +5,8 @@ import { PlusOutlined, MoreOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
+import { useListQuery } from '../api/queries/useListQuery';
+import { listQueryKeys } from '../api/queries/keys';
 import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
 import { downloadCsv } from '../utils/exportCsv';
 import { space } from '../theme/tokens';
@@ -19,9 +21,6 @@ const statusColors: Record<string, string> = {
 const Quotes: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
   const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
@@ -32,15 +31,13 @@ const Quotes: React.FC = () => {
   // AddGate: wire Selective Add for quotes section (R9.1, R9.5)
   const addGate = useAddGate('sales.quotes');
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get('/api/quotes', { params: { page, status: statusFilter, page_size: 20 } });
-      setData(res.data.items); setTotal(res.data.total);
-    } catch { message.error(t('error')); } finally { setLoading(false); }
-  };
-
-  useEffect(() => { fetchData(); }, [page, statusFilter]);
+  const quotesQuery = useListQuery<any, { items?: any[]; total?: number }>({
+    queryKey: listQueryKeys.quotes({ page, status: statusFilter, page_size: 20 }),
+    queryFn: () => api.get('/api/quotes', { params: { page, status: statusFilter, page_size: 20 } }),
+  });
+  const data = quotesQuery.data?.items ?? [];
+  const total = quotesQuery.data?.total ?? 0;
+  const loading = quotesQuery.isLoading || quotesQuery.isFetching;
 
   // Sync record count into AddGate store (R9.5, R9.6)
   useEffect(() => { addGate.setRecordCount(total); }, [total, addGate.setRecordCount]);
@@ -49,7 +46,7 @@ const Quotes: React.FC = () => {
     try {
       await api.post(`/api/quotes/${id}/${action}`);
       message.success(t('success'));
-      fetchData();
+      void quotesQuery.refetch();
     } catch { message.error(t('error')); }
   };
 

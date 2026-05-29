@@ -1,0 +1,211 @@
+name: load-test
+
+# Nightly k6 load tests against staging Cloud Run.
+# Spec: requirements.md §5 (R5 SLOs), §13.4 (R13.4), tasks.md T-6.7.
+#
+# Runs:
+#   - Nightly at 02:00 UTC (05:00 Baghdad), when staging is idle.
+#   - On manual dispatch (pick a script + a duration override).
+#
+# Results:
+#   - Each script's summary is uploaded as an artifact (JSON + HTML).
+#   - A sticky issue ("k6 load-test nightly results") is updated with the
+#     latest run table.
+#   - On threshold breach: the workflow fails, which raises a PagerDuty
+#     alert via the org's default repo-failure policy.
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Target base URL (defaults to staging secret).'
+        required: false
+        default: ''
+      scripts:
+        description: 'Comma-separated subset of scripts to run.'
+        required: false
+        default: 'pos-checkout,invoice-list,contacts-search,dashboard'
+      duration_override:
+        description: 'k6 duration override (e.g. 2m). Empty = use script default.'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  issues: write    # to update the sticky issue
+  id-token: write  # WIF for any cloud-side auth
+
+concurrency:
+  group: load-test
+  cancel-in-progress: false
+
+jobs:
+  k6:
+    name: k6 — ${{ matrix.script }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        script:
+          - pos-checkout
+          - invoice-list
+          - contacts-search
+          - dashboard
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Filter by --scripts input (dispatch only)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          set -e
+          SEL='${{ github.event.inputs.scripts }}'
+          if [ -z "$SEL" ]; then exit 0; fi
+          if ! echo ",$SEL," | grep -q ",${{ matrix.script }},"; then
+            echo "skipping ${{ matrix.script }} (not in dispatch list)"
+            echo "SKIP=1" >> "$GITHUB_ENV"
+          fi
+
+      - uses: grafana/setup-k6-action@v1
+        if: env.SKIP != '1'
+        with:
+          k6-version: '0.49.0'
+
+      - name: Compute target URL
+        if: env.SKIP != '1'
+        run: |
+          set -e
+          URL="${{ github.event.inputs.target_url }}"
+          if [ -z "$URL" ]; then
+            URL="${{ secrets.LOAD_TEST_TARGET_URL }}"
+          fi
+          if [ -z "$URL" ]; then
+            echo "::error::no LOAD_TEST_TARGET_URL secret and no dispatch input"; exit 1
+          fi
+          echo "K6_BASE_URL=$URL" >> "$GITHUB_ENV"
+
+      - name: Run k6
+        if: env.SKIP != '1'
+        env:
+          K6_BASE_URL: ${{ env.K6_BASE_URL }}
+          K6_USER_EMAIL: ${{ secrets.LOAD_TEST_USER_EMAIL }}
+          K6_USER_PASSWORD: ${{ secrets.LOAD_TEST_USER_PASSWORD }}
+          K6_TENANT_ID: ${{ secrets.LOAD_TEST_TENANT_ID }}
+          K6_DURATION_OVERRIDE: ${{ github.event.inputs.duration_override }}
+        run: |
+          mkdir -p reports
+          k6 run \
+            --summary-export reports/${{ matrix.script }}.summary.json \
+            --out json=reports/${{ matrix.script }}.raw.json \
+            load/k6-suite/${{ matrix.script }}.js
+
+      - name: Render HTML report
+        if: env.SKIP != '1' && always()
+        run: |
+          set -e
+          python3 - <<'PY'
+          import json, os, html, pathlib
+          name = "${{ matrix.script }}"
+          src = pathlib.Path(f"reports/{name}.summary.json")
+          if not src.exists():
+              raise SystemExit(0)
+          data = json.loads(src.read_text())
+          rows = []
+          for k, v in (data.get("metrics") or {}).items():
+              if isinstance(v, dict):
+                  rows.append(f"<tr><td>{html.escape(k)}</td><td><pre>{html.escape(json.dumps(v, indent=2))}</pre></td></tr>")
+          out = f"""<!doctype html><meta charset=utf-8>
+          <title>k6 — {name}</title>
+          <style>body{{font-family:system-ui;max-width:900px;margin:2rem auto;padding:0 1rem}}
+          table{{border-collapse:collapse;width:100%}}td{{border-bottom:1px solid #ddd;padding:.5rem;vertical-align:top}}
+          pre{{margin:0;font-size:.8rem;white-space:pre-wrap}}</style>
+          <h1>k6 — {name}</h1>
+          <table>{"".join(rows)}</table>"""
+          pathlib.Path(f"reports/{name}.html").write_text(out)
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: env.SKIP != '1' && always()
+        with:
+          name: k6-report-${{ matrix.script }}
+          path: reports/
+          retention-days: 30
+
+  publish-summary:
+    name: Update sticky issue
+    needs: k6
+    if: always() && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: all-reports/
+
+      - name: Compose issue body
+        id: body
+        run: |
+          set -e
+          {
+            echo "## k6 nightly — $(date -u +%FT%TZ)"
+            echo
+            echo "Commit: ${{ github.sha }}"
+            echo
+            echo "| Script | Result | p95 | Failed rate |"
+            echo "|---|---|---|---|"
+            for d in all-reports/k6-report-*; do
+              name="${d#all-reports/k6-report-}"
+              f="$d/$name.summary.json"
+              if [ -f "$f" ]; then
+                p95=$(jq -r '.metrics.http_req_duration["p(95)"] // empty' "$f")
+                rate=$(jq -r '.metrics.http_req_failed.rate // empty' "$f")
+                echo "| $name | ok | ${p95:-?} ms | ${rate:-?} |"
+              else
+                echo "| $name | missing | - | - |"
+              fi
+            done
+          } > body.md
+          {
+            echo "body<<EOF"
+            cat body.md
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('body.md', 'utf8');
+            const title = 'k6 load-test nightly results';
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'perf,k6'
+            });
+            const existing = issues.find(i => i.title === title);
+            if (existing) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body
+              });
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body: `Updated ${new Date().toISOString()} by ${context.workflow}.`
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['perf', 'k6']
+              });
+            }

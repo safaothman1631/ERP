@@ -1,10 +1,13 @@
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from app.firestore.items import ItemRepository
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
 from app.services import settings_service
 from app.schemas.schemas import ItemCreate, ItemUpdate, ItemResponse
+from app.services.versioned_update import apply_versioned_update
 
 router = APIRouter(prefix="/api/items", tags=["Items"])
 
@@ -12,23 +15,30 @@ router = APIRouter(prefix="/api/items", tags=["Items"])
 @router.get("")
 def list_items(
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=500),
+    # POS terminal pulls the full catalog in one shot for offline-first
+    # operation — raise the cap from the global default (500) to 2000.
+    page_size: int = Query(20, ge=1, le=2000),
     search: str = Query("", max_length=200),
     item_type: str = Query("", max_length=20),
+    cursor: str = Query("", max_length=64),
     user: dict = Depends(get_current_user),
 ):
     repo = ItemRepository(user["org_id"])
-    
+
     filters = [{"field": "is_active", "op": "!=", "value": False}]
     if item_type:
         filters.append({"field": "item_type", "op": "==", "value": item_type})
-    
-    items, total = repo.list(
+
+    from app.services.api_list import api_list
+
+    items, total, next_cursor = api_list(
+        repo,
+        page=page,
+        page_size=page_size,
+        cursor=cursor or None,
         filters=filters,
         order_by="name",
         order_dir="ASCENDING",
-        limit=page_size,
-        offset=(page - 1) * page_size
     )
     
     # Client-side text filtering for search
@@ -42,13 +52,45 @@ def list_items(
         ]
         total = len(items)
 
-    return {
-        "items": items,
-        "total": total,
-        "page": page,
-        "page_size": page_size,
-        "total_pages": (total + page_size - 1) // page_size,
-    }
+    from app.services.list_response import paginated_response
+
+    return paginated_response(
+        items, total, page, page_size, repo=repo, next_cursor=next_cursor
+    )
+
+
+def _next_item_sku(repo: ItemRepository) -> str:
+    """Generate the next ``ITM-######`` SKU for the tenant (hardening § R2.2).
+
+    Per-tenant zero-padded incrementing sequence. We list the most recent
+    items and look for SKUs that match the ``ITM-<digits>`` pattern; the
+    highest seen value is incremented. Falls back to ``ITM-000001`` if none
+    are found. This is fine for the quick-create scale (≤ a few thousand
+    items per tenant); a Firestore counter document can be wired later
+    without touching callers.
+    """
+    import re
+
+    pattern = re.compile(r"^ITM-(\d{1,9})$")
+    max_seen = 0
+    try:
+        # Pull a wide slice — the cap keeps the read cost bounded while
+        # being large enough to capture realistic catalogs.
+        items, _ = repo.list(limit=2000)
+        for it in items:
+            sku = (it or {}).get("sku") or ""
+            m = pattern.match(sku)
+            if m:
+                try:
+                    n = int(m.group(1))
+                    if n > max_seen:
+                        max_seen = n
+                except ValueError:
+                    continue
+    except Exception:
+        # If the repo is unavailable (cold tenant, first item), start at 1.
+        max_seen = 0
+    return f"ITM-{max_seen + 1:06d}"
 
 
 @router.post("", status_code=201, dependencies=[Depends(require_perm("items.create"))])
@@ -61,14 +103,28 @@ def create_item(
         cfg = settings_service.get_bag(user["org_id"], "inventory")
     except Exception:
         cfg = {}
-    
+
     payload = data.model_dump()
     if not payload.get("uom"):
         payload["uom"] = cfg.get("default_uom", "Unit")
     if not payload.get("valuation_method"):
         payload["valuation_method"] = cfg.get("valuation_method", "FIFO")
-    
+
     repo = ItemRepository(user["org_id"])
+
+    # R2.2 — Auto-generate SKU if not provided (ITM-000001, per-tenant).
+    if not (payload.get("sku") or "").strip():
+        payload["sku"] = _next_item_sku(repo)
+    else:
+        payload["sku"] = payload["sku"].strip()
+
+    # R2.2 — Accept ``income_account_id`` / ``expense_account_id`` aliases that
+    # the frontend quickCreateRegistry sends, and map onto the storage fields.
+    if payload.get("income_account_id") and not payload.get("sales_account_id"):
+        payload["sales_account_id"] = payload["income_account_id"]
+    if payload.get("expense_account_id") and not payload.get("purchase_account_id"):
+        payload["purchase_account_id"] = payload["expense_account_id"]
+
     item = repo.create({"id": str(uuid.uuid4()), **payload})
     return item
 
@@ -83,14 +139,19 @@ def get_item(item_id: str, user: dict = Depends(get_current_user)):
 
 
 @router.put("/{item_id}", dependencies=[Depends(require_perm("items.update"))])
-def update_item(item_id: str, data: ItemUpdate, user: dict = Depends(get_current_user)):
+def update_item(
+    item_id: str,
+    data: ItemUpdate,
+    user: dict = Depends(get_current_user),
+    if_match: Optional[str] = Header(None, alias="If-Match"),
+):
     repo = ItemRepository(user["org_id"])
     item = repo.get(item_id)
     if not item or item.get("org_id") != user["org_id"]:
         raise HTTPException(status_code=404, detail="کاڵا نەدۆزرایەوە")
 
     update_data = data.model_dump(exclude_unset=True)
-    item = repo.update(item_id, update_data)
+    item = apply_versioned_update(repo, item_id, update_data, if_match=if_match)
     return item
 
 
@@ -101,7 +162,9 @@ def delete_item(item_id: str, user: dict = Depends(get_current_user)):
     if not item or item.get("org_id") != user["org_id"]:
         raise HTTPException(status_code=404, detail="کاڵا نەدۆزرایەوە")
 
-    repo.update(item_id, {"is_active": False})
+    from app.services.http_guards import guarded_soft_deactivate
+
+    guarded_soft_deactivate(repo, item_id)
     return {"message": "کاڵا سڕایەوە", "success": True}
 
 

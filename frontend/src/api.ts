@@ -1,6 +1,8 @@
 import axios, { type AxiosRequestConfig } from 'axios';
 import { message } from './utils/message';
 import i18n from './i18n';
+// scale-foundation (Tier 3 § SF5): W3C traceparent propagation for end-to-end tracing.
+import { axiosTraceparentInterceptor } from './observability/traceparent';
 
 const api = axios.create({
   baseURL: '',
@@ -18,14 +20,35 @@ export const isBackendUnavailableError = (error: unknown): boolean => {
   return !error.response || error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK';
 };
 
+const ORG_STORE_KEY = 'org.store.v1';
+
+/** Read active company id from zustand persist (orgStore). */
+export function getPersistedCompanyId(): string | null {
+  try {
+    const raw = localStorage.getItem(ORG_STORE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { state?: { currentCompany?: { id?: string } } };
+    return parsed?.state?.currentCompany?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // Attach JWT token to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  const companyId = getPersistedCompanyId();
+  if (companyId) {
+    config.headers['X-Company-Id'] = companyId;
+  }
   return config;
 });
+
+// scale-foundation (Tier 3 § SF5): start/propagate a W3C trace on each request (10% sampled).
+api.interceptors.request.use(axiosTraceparentInterceptor);
 
 // Dispatch mutation events for real-time UI updates
 api.interceptors.response.use(

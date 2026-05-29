@@ -1,0 +1,254 @@
+{
+  "title": "مرحبًا — لنُعِدّ حسابك",
+  "progress": {
+    "label": "الخطوة {{current}} من {{total}}"
+  },
+  "cta": {
+    "next": "التالي",
+    "back": "السابق",
+    "skip": "تخطّي",
+    "finish": "إنهاء الإعداد"
+  },
+  "step": {
+    "1": {
+      "label": "الشركة",
+      "title": "أخبرنا عن شركتك",
+      "description": "البيانات الأساسية — الاسم والعنوان ونوع النشاط."
+    },
+    "2": {
+      "label": "المحافظة",
+      "title": "اختر محافظتك في العراق",
+      "description": "حدد محافظتك — ستُعبَّأ معدلات الضريبة والإعدادات المحلية تلقائيًا."
+    },
+    "3": {
+      "label": "دليل الحسابات",
+      "title": "اختر دليل الحسابات",
+      "description": "ابدأ بقالب يناسب نشاطك — يمكنك التخصيص لاحقًا."
+    },
+    "4": {
+      "label": "أجهزة نقاط البيع",
+      "title": "أجهزة نقاط البيع (POS)",
+      "description": "اقرن طابعة بلوتوث حرارية — يمكنك تخطّي هذه الخطوة والقيام بها لاحقًا."
+    },
+    "5": {
+      "label": "أول عملية بيع",
+      "title": "نفّذ أول عملية بيع",
+      "description": "أضف منتجًا، أضف عميلًا، أتمم البيع، واطبع الإيصال."
+    }
+  },
+  "company": {
+    "name": {
+      "label": "اسم الشركة",
+      "placeholder": "مثال: شركة هاوار للتجارة",
+      "required": "اسم الشركة مطلوب",
+      "too_short": "يجب أن يكون الاسم حرفين على الأقل",
+      "too_long": "الاسم طويل جدًا"
+    },
+    "legal_name": {
+      "label": "الاسم القانوني",
+      "placeholder": "الاسم المسجّل",
+      "help": "فقط إذا كان مختلفًا عن الاسم التجاري"
+    },
+    "governorate": {
+      "label": "المحافظة",
+      "placeholder": "اختر المحافظة"
+    },
+    "city": { "label": "المدينة" },
+    "district": { "label": "المنطقة" },
+    "address": { "label": "العنوان التفصيلي" },
+    "phone": {
+      "label": "الهاتف",
+      "help": "رقم عراقي — يبدأ بـ +964",
+      "invalid": "رقم هاتف غير صالح",
+      "normalized": "تم تطبيع الرقم إلى: {{value}}"
+    },
+    "email": { "label": "البريد الإلكتروني", "invalid": "بريد إلكتروني غير صالح" },
+    "tax_id": {
+      "label": "رقم السجل التجاري",
+      "placeholder": "مثال: 123456",
+      "help": "رقم السجل التجاري الرسمي العراقي"
+    },
+    "vat_status": {
+      "label": "حالة ضريبة القيمة المضافة",
+      "required": "يرجى اختيار حالة الضريبة",
+      "registered": "مسجّل",
+      "not_registered": "غير مسجّل",
+      "pending": "قيد التسجيل"
+    },
+    "business_type": {
+      "label": "نوع النشاط",
+      "required": "نوع النشاط مطلوب",
+      "options": {
+        "retail": "تجزئة",
+        "restaurant": "مطعم",
+        "pharmacy": "صيدلية",
+        "services": "خدمات",
+        "manufacturing": "تصنيع",
+        "wholesale": "جملة",
+        "ngo": "منظمة غير ربحية"
+      }
+    },
+    "intended_use": {
+      "label": "ما الذي ستستخدم النظام له؟",
+      "help": "اختر كل ما ينطبق — سيساعدنا على اقتراح إعدادات أفضل.",
+      "options": {
+        "retail": "تجزئة",
+        "restaurant": "مطعم",
+        "pharmacy": "صيدلية",
+        "services": "خدمات",
+        "manufacturing": "تصنيع",
+        "wholesale": "جملة",
+        "ngo": "منظمة غير ربحية"
+      }
+    },
+    "privacy_notice": "تُستخدم بياناتك فقط لإعداد حسابك."
+  },
+  "region": {
+    "map_aria": "خريطة محافظات العراق",
+    "list_aria": "قائمة المحافظات",
+    "toggle_list_view": "عرض كقائمة",
+    "krg_tag": "إقليم كردستان",
+    "preview": {
+      "empty_title": "اختر محافظة",
+      "empty_hint": "ستظهر هنا معدلات الضريبة والإعدادات المحلية بعد الاختيار.",
+      "capital": "العاصمة",
+      "currency": "العملة",
+      "timezone": "المنطقة الزمنية",
+      "tax_rates": "معدلات الضرائب",
+      "no_taxes": "لا توجد ضرائب مُعدّة",
+      "withholding": "ضريبة الاستقطاع",
+      "wh_services": "خدمات",
+      "wh_rent": "إيجار",
+      "wh_materials": "مواد",
+      "placeholder_notice": "المعدلات مبدئية — في انتظار مراجعة المحاسب"
+    }
+  },
+  "coa": {
+    "preview_title": "معاينة دليل الحسابات",
+    "apply_cta": "تطبيق القالب",
+    "applied_success": "تم إنشاء {{count}} حساب",
+    "applied_error": "تعذّر تطبيق القالب — حاول مرة أخرى",
+    "accounts_count": "{{count}} حساب",
+    "success_title": "تم تطبيق القالب",
+    "success_detail": "تم إنشاء {{count}} حساب في النظام",
+    "templates": {
+      "small_general_trade": { "name": "نشاط صغير", "description": "تجزئة بسيطة — 40 حسابًا" },
+      "medium_general_trade": { "name": "نشاط متوسط", "description": "تجزئة متعددة الفروع — 80 حسابًا" },
+      "restaurant_cafe": { "name": "مطعم / مقهى", "description": "خاص بالأطعمة والمشروبات — 60 حسابًا" },
+      "pharmacy": { "name": "صيدلية", "description": "خاص بالصيدليات — 70 حسابًا" },
+      "construction_contractor": { "name": "مقاولات إنشاء", "description": "مقاولات مع أعمال جارية — 120 حسابًا" }
+    },
+    "accounts": {
+      "assets": "الأصول",
+      "liabilities": "الخصوم",
+      "equity": "حقوق الملكية",
+      "revenue": "الإيرادات",
+      "expenses": "المصروفات",
+      "cash": "نقدية في الصندوق",
+      "petty_cash": "العهدة النقدية",
+      "bank_main": "بنك — رئيسي",
+      "bank_secondary": "بنك — ثانوي",
+      "ar": "ذمم مدينة",
+      "ap": "ذمم دائنة",
+      "inventory": "المخزون",
+      "food_inventory": "مخزون الأطعمة",
+      "beverage_inventory": "مخزون المشروبات",
+      "controlled_inventory": "مخزون مواد مراقبة",
+      "insurance_receivable": "مستحق من شركات التأمين",
+      "sales_revenue": "إيرادات المبيعات",
+      "food_revenue": "إيرادات الأطعمة",
+      "beverage_revenue": "إيرادات المشروبات",
+      "delivery_revenue": "إيرادات التوصيل",
+      "cogs": "تكلفة البضاعة المباعة",
+      "food_cost": "تكلفة الأطعمة",
+      "beverage_cost": "تكلفة المشروبات",
+      "tips_payable": "إكراميات مستحقة",
+      "rent": "إيجار",
+      "wip": "أعمال جارية",
+      "retention_receivable": "ضمانات محتجزة — مدينة",
+      "retention_payable": "ضمانات محتجزة — دائنة",
+      "subcontractor_payable": "مستحقات مقاولين الباطن"
+    }
+  },
+  "pos": {
+    "intro_title": "أجهزة نقاط البيع",
+    "intro_body": "اقرن طابعة بلوتوث حرارية لطباعة الإيصالات. هذه الخطوة اختيارية — يمكنك القيام بها لاحقًا من الإعدادات.",
+    "skip_for_now": "تخطّي الآن",
+    "bluetooth": {
+      "unavailable_title": "Web Bluetooth غير متاح",
+      "unavailable_body": "متصفحك لا يدعم Web Bluetooth. استخدم Chrome أو Edge، أو فعّل بديل الطباعة عبر المتصفح."
+    },
+    "printer": {
+      "title": "طابعة حرارية",
+      "pair_cta": "اقتران الطابعة",
+      "unpair": "فصل الاقتران",
+      "unknown_name": "جهاز بدون اسم",
+      "paired": "تم اقتران الطابعة",
+      "paired_title": "تم الاقتران بنجاح",
+      "pair_cancelled": "تم إلغاء الاقتران",
+      "paper_width": { "label": "عرض الورق" },
+      "fallback_on": "الطباعة عبر المتصفح مفعّلة",
+      "fallback_off": "الطباعة عبر المتصفح غير مفعّلة",
+      "fallback_help": "إذا لم تكن لديك طابعة حرارية، يمكنك الاعتماد على طباعة المتصفح.",
+      "test_cta": "طباعة تجريبية",
+      "test_sent": "تم إرسال الاختبار",
+      "test_ok": "نجح اختبار الطباعة",
+      "test_failed": "فشل اختبار الطباعة"
+    },
+    "drawer": {
+      "title": "درج النقدية",
+      "help": "إذا كانت طابعتك متصلة بدرج نقدية، فعّله هنا.",
+      "pin2": "Pin 2",
+      "pin5": "Pin 5"
+    }
+  },
+  "first_sale": {
+    "steps": {
+      "product": "إضافة منتج",
+      "customer": "إضافة عميل",
+      "sale": "البيع",
+      "receipt": "الإيصال"
+    },
+    "product_title": "أضف أول منتج",
+    "product_hint": "أنشئ منتجًا بسيطًا للاختبار — يمكنك إضافة المزيد لاحقًا.",
+    "product_name_label": "اسم المنتج",
+    "product_name_placeholder": "مثال: شاي أسود",
+    "product_name_required": "اسم المنتج مطلوب",
+    "product_price_label": "سعر الوحدة",
+    "add_product_cta": "إضافة المنتج",
+    "product_created": "تمت إضافة المنتج",
+    "product_error": "تعذّرت إضافة المنتج",
+    "customer_title": "أضف أول عميل",
+    "customer_name_label": "اسم العميل",
+    "customer_name_placeholder": "مثال: سوران أحمد",
+    "customer_name_required": "اسم العميل مطلوب",
+    "customer_phone_label": "الهاتف",
+    "add_customer_cta": "إضافة العميل",
+    "customer_created": "تمت إضافة العميل",
+    "customer_error": "تعذّرت إضافة العميل",
+    "sale_title": "نفّذ عملية بيع تجريبية",
+    "sale_hint": "بيعة تجريبية صغيرة بقيمة 1,000 دينار للتأكد من أن كل شيء يعمل.",
+    "product_label": "المنتج",
+    "customer_label": "العميل",
+    "total_label": "الإجمالي",
+    "charge_cta": "تحصيل",
+    "sale_created": "تم تسجيل البيع",
+    "sale_error": "تعذّر إتمام البيع",
+    "receipt_title": "اطبع الإيصال",
+    "receipt_hint": "اطبع إيصال البيع — أو تخطَّ هذه الخطوة.",
+    "print_receipt_cta": "طباعة الإيصال",
+    "skip_print": "تخطّي",
+    "receipt_printed": "تمت طباعة الإيصال",
+    "receipt_done_title": "تمت طباعة الإيصال",
+    "receipt_done_body": "أصبحت جاهزًا لبدء أعمالك الحقيقية!"
+  },
+  "complete": {
+    "title": "تهانينا! تمّ الإعداد",
+    "message": "نظامك جاهز للعمل. ابدأ البيع وانمُ بشركتك مع Zoho-Kurdish.",
+    "go_to_dashboard": "اذهب إلى لوحة التحكم"
+  },
+  "common": {
+    "on": "تشغيل",
+    "off": "إيقاف"
+  }
+}

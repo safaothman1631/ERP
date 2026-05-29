@@ -14,17 +14,27 @@
  * Requirements: 12.4, 12.5
  */
 import { useAuthStore } from '../store';
+import { readSessionClaims } from '../platform/utils/sessionClaims';
 
 /** Roles that are allowed to view and modify application settings. */
-export const SETTINGS_ALLOWED_ROLES: ReadonlyArray<string> = ['admin', 'owner'];
+export const SETTINGS_ALLOWED_ROLES: ReadonlyArray<string> = ['admin', 'owner', 'super_admin'];
 
 export interface UsePermissionReturn {
   /** The raw role string from the auth store (e.g. "admin", "viewer"). */
   role: string | null;
   /** True when the user holds the "admin" role. */
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   /** True when the user holds the "owner" role. */
   isOwner: boolean;
+  /** True when role is admin/owner inside tenant, or super_admin while impersonating. */
+  isTenantOrgAdmin: boolean;
+  /** True when JWT indicates platform impersonation session. */
+  isImpersonating: boolean;
+  /** Flat permissions list resolved from localStorage or token claims. */
+  permissions: string[];
+  /** Checks exact and wildcard permissions (e.g. settings.*). */
+  hasPerm: (permission: string) => boolean;
   /**
    * True when the user is allowed to access the Settings page.
    * Requires admin or owner role (Requirement 12.4).
@@ -45,20 +55,46 @@ export interface UsePermissionReturn {
 export function usePermission(): UsePermissionReturn {
   // Select only the fields we need to avoid unnecessary re-renders.
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const userId = useAuthStore((s) => s.userId);
+  const claims = _extractSessionClaims();
+  const platformClaims = readSessionClaims();
 
-  // The role is not currently stored in the AuthStore state directly.
-  // We derive it from the JWT stored in localStorage so we don't need an
-  // extra API call. The JWT payload is base64url-encoded and safe to decode
-  // client-side (we are not trusting it for security — the backend validates
-  // the signature on every request).
-  const role = _extractRoleFromToken();
+  // The role is derived from localStorage and JWT claims without extra API calls.
+  const role = claims.role;
+  const permissions = claims.permissions;
+  const permissionSet = new Set(permissions);
+  const isImpersonating = platformClaims.isImpersonating;
 
-  const isAdmin = role === 'admin';
+  const isAdmin = role === 'admin' || (role === 'super_admin' && isImpersonating);
+  const isSuperAdmin = role === 'super_admin';
   const isOwner = role === 'owner';
-  const hasSettingsAccess = isAuthenticated && (isAdmin || isOwner);
+  const isTenantOrgAdmin =
+    role === 'admin' ||
+    role === 'owner' ||
+    (role === 'super_admin' && isImpersonating);
+  const hasSettingsAccess = isAuthenticated && (isTenantOrgAdmin || isImpersonating);
+  const hasPerm = (permission: string): boolean => {
+    if (!isAuthenticated) return false;
+    if (!permission) return true;
+    // Platform permissions never granted via tenant org admin or wildcard *.
+    if (permission.startsWith('platform.') && !isSuperAdmin) return false;
+    if (isTenantOrgAdmin) return true;
+    if (permissionSet.has('*') || permissionSet.has(permission)) return true;
+    const [prefix] = permission.split('.');
+    return permissionSet.has(`${prefix}.*`);
+  };
 
-  return { role, isAdmin, isOwner, hasSettingsAccess, isAuthenticated };
+  return {
+    role,
+    isAdmin,
+    isSuperAdmin,
+    isOwner,
+    isTenantOrgAdmin,
+    isImpersonating,
+    permissions,
+    hasPerm,
+    hasSettingsAccess,
+    isAuthenticated,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -72,19 +108,78 @@ export function usePermission(): UsePermissionReturn {
  * This is a client-side decode only — the backend always re-validates the
  * signature, so this is safe to use for UI gating.
  */
-function _extractRoleFromToken(): string | null {
+interface SessionClaims {
+  role: string | null;
+  permissions: string[];
+}
+
+function _readPermissionArray(raw: string | null): string[] {
+  if (!raw) return [];
   try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed.filter((value): value is string => typeof value === 'string' && value.length > 0);
+    }
+  } catch {
+    // Fall through to plain text parsing.
+  }
+  return raw
+    .split(/[,\s]+/)
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
+function _extractSessionClaims(): SessionClaims {
+  try {
+    const storedRole = localStorage.getItem('userRole');
+    const storedPermissions = [
+      ..._readPermissionArray(localStorage.getItem('userPermissions')),
+      ..._readPermissionArray(localStorage.getItem('permissions')),
+    ];
+
     const token = localStorage.getItem('token');
-    if (!token) return null;
+    if (!token) {
+      return {
+        role: storedRole || null,
+        permissions: Array.from(new Set(storedPermissions)),
+      };
+    }
 
     const parts = token.split('.');
-    if (parts.length !== 3) return null;
+    if (parts.length !== 3) {
+      return {
+        role: storedRole || null,
+        permissions: Array.from(new Set(storedPermissions)),
+      };
+    }
 
     // Base64url → base64 → JSON
     const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
     const decoded = JSON.parse(atob(payload));
-    return typeof decoded.role === 'string' ? decoded.role : null;
+
+    const role = typeof decoded.role === 'string' ? decoded.role : (storedRole || null);
+
+    const tokenPerms: string[] = [];
+    if (Array.isArray(decoded.permissions)) {
+      tokenPerms.push(...decoded.permissions.filter((value: unknown): value is string => typeof value === 'string'));
+    }
+    if (Array.isArray(decoded.perms)) {
+      tokenPerms.push(...decoded.perms.filter((value: unknown): value is string => typeof value === 'string'));
+    }
+    if (typeof decoded.scope === 'string') {
+      tokenPerms.push(
+        ...decoded.scope
+          .split(/\s+/)
+          .map((value: string) => value.trim())
+          .filter(Boolean),
+      );
+    }
+
+    return {
+      role,
+      permissions: Array.from(new Set([...storedPermissions, ...tokenPerms])),
+    };
   } catch {
-    return null;
+    return { role: null, permissions: [] };
   }
 }

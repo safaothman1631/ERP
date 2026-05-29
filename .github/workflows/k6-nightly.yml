@@ -1,0 +1,114 @@
+name: k6 synthetic (nightly)
+
+# Nightly synthetic user-journey probe against PRODUCTION (T-SF.5.10).
+# Distinct from load-test.yml (which load-tests STAGING): this is a single-VU
+# golden-path probe that asserts production SLOs and pages on breach.
+#
+# Schedule: 03:30 UTC (06:30 Baghdad) — off-peak, after the load-test window.
+#
+# Results:
+#   - JSON summary uploaded as an artifact.
+#   - On threshold breach the job FAILS; the repo's default failure policy
+#     raises a PagerDuty page (see externalBlockers re: PagerDuty wiring).
+#
+# Required GitHub config:
+#   secrets.SYNTHETIC_API_URL     production API base URL
+#   secrets.SYNTHETIC_EMAIL       dedicated synthetic-monitoring user
+#   secrets.SYNTHETIC_PASSWORD    its password
+#   vars.SYNTHETIC_TENANT_ID      (optional) tenant to scope reads
+# The probe is READ-ONLY unless SYNTHETIC_ALLOW_WRITES=1 is set on dispatch.
+
+on:
+  schedule:
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "Override production API base URL."
+        required: false
+        default: ""
+      allow_writes:
+        description: "Set to '1' to enable the gated create+delete write probe."
+        required: false
+        default: "0"
+      vus:
+        description: "Virtual users (default 1)."
+        required: false
+        default: "1"
+      duration:
+        description: "Total duration (default 1m)."
+        required: false
+        default: "1m"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: k6-synthetic
+  cancel-in-progress: false
+
+jobs:
+  synthetic:
+    name: k6 synthetic journey
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: grafana/setup-k6-action@v1
+        with:
+          k6-version: "0.49.0"
+
+      - name: Resolve target URL
+        id: target
+        env:
+          DISPATCH_URL: ${{ github.event.inputs.target_url }}
+          SECRET_URL: ${{ secrets.SYNTHETIC_API_URL }}
+        run: |
+          set -euo pipefail
+          URL="${DISPATCH_URL:-$SECRET_URL}"
+          if [ -z "$URL" ]; then
+            echo "::error::No target URL. Set secrets.SYNTHETIC_API_URL or pass target_url on dispatch."
+            exit 1
+          fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Guard — credentials present
+        env:
+          EMAIL: ${{ secrets.SYNTHETIC_EMAIL }}
+          PASSWORD: ${{ secrets.SYNTHETIC_PASSWORD }}
+        run: |
+          if [ -z "${EMAIL}" ] || [ -z "${PASSWORD}" ]; then
+            echo "::error::SYNTHETIC_EMAIL / SYNTHETIC_PASSWORD secrets are required."
+            exit 1
+          fi
+
+      - name: Run synthetic journey
+        env:
+          K6_BASE_URL: ${{ steps.target.outputs.url }}
+          SYNTHETIC_EMAIL: ${{ secrets.SYNTHETIC_EMAIL }}
+          SYNTHETIC_PASSWORD: ${{ secrets.SYNTHETIC_PASSWORD }}
+          SYNTHETIC_TENANT_ID: ${{ vars.SYNTHETIC_TENANT_ID }}
+          SYNTHETIC_ALLOW_WRITES: ${{ github.event.inputs.allow_writes || '0' }}
+          K6_VUS: ${{ github.event.inputs.vus || '1' }}
+          K6_DURATION: ${{ github.event.inputs.duration || '1m' }}
+        run: k6 run scripts/observability/k6-synthetic.js
+
+      - name: Upload summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-synthetic-${{ github.run_id }}
+          path: k6-synthetic-summary.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Annotate failure
+        if: failure()
+        run: |
+          {
+            echo "## k6 synthetic FAILED"
+            echo ""
+            echo "Production golden-path probe breached an SLO or could not log in."
+            echo "Check the run logs + dashboards D1/D3. This failure pages on-call."
+          } >> "$GITHUB_STEP_SUMMARY"

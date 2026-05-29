@@ -1,0 +1,120 @@
+---
+import { t, type Locale } from '../../i18n/utils';
+import MarketingLayout from '../../layouts/MarketingLayout.astro';
+import PricingSection from '../sections/PricingSection.astro';
+import CTABanner from '../CTABanner.astro';
+
+export interface Props { locale: Locale; }
+const { locale } = Astro.props;
+
+const FAQ: Record<Locale, Array<{ q: string; a: string }>> = {
+  en: [
+    { q: 'Can I switch plans later?', a: 'Yes. You can upgrade or downgrade any time from the Billing settings inside the app. The change takes effect at the next billing cycle (proration applies on upgrades).' },
+    { q: 'Do you charge in IQD or USD?', a: 'Both. You pick. Iraqi Dinar is the primary currency. USD is offered for cross-border buyers.' },
+    { q: 'Is there a free trial?', a: 'Yes — every plan starts with a 30-day free trial. No credit card required.' },
+    { q: 'What payment methods do you accept?', a: 'FastPay, Qi, Zain Cash, Asia Pay, Visa/Mastercard via Stripe, and cash-on-delivery in supported governorates.' },
+    { q: 'Is e-Fakhata included?', a: 'It is ready on Growth and Pro. Pro includes end-to-end submission and audit-ready exports.' },
+  ],
+  ku: [
+    { q: 'دەتوانم پلانەکەم بگۆڕم؟', a: 'بەڵێ. لە ڕێگەی هەژماری بەکارهێنەرتەوە دەتوانیت بەرز یان نزم بکەیتەوە. گۆڕانکاری لە سایکڵی داهاتوو دەستپێدەکات.' },
+    { q: 'بە دینار یان دۆلار حساب دەکرێم؟', a: 'هەردووکیان. تۆ هەڵدەبژێریت. دینار سەرەکیە.' },
+    { q: 'تاقیکردنەوەی بەخۆڕایی هەیە؟', a: 'بەڵێ — هەموو پلانەکان ٣٠ ڕۆژ بەخۆڕاییە. بێ کرێدت کارد.' },
+    { q: 'چ ڕێگەکانی پارەدان قبووڵ دەکەن؟', a: 'FastPay، Qi، Zain Cash، Asia Pay، Visa/Mastercard لە ڕێگەی Stripe، و پارەدان لە ماڵ.' },
+    { q: 'e-Fakhata لەگەڵدایە؟', a: 'لە Growth و Pro ئامادەیە. Pro ناردنی تەواو و هەناردەی ئۆدیت لەگەڵدایە.' },
+  ],
+  ar: [
+    { q: 'هل يمكنني تغيير الخطة لاحقاً؟', a: 'نعم. يمكنك الترقية أو التخفيض في أي وقت من إعدادات الفوترة داخل التطبيق. يسري التغيير في الدورة التالية.' },
+    { q: 'هل تحاسبون بالدينار أم الدولار؟', a: 'كلاهما. أنت تختار. الدينار العراقي هو العملة الأساسية.' },
+    { q: 'هل توجد تجربة مجانية؟', a: 'نعم — كل خطة تبدأ بـ ٣٠ يوماً مجاناً. بدون بطاقة ائتمان.' },
+    { q: 'ما طرق الدفع المقبولة؟', a: 'FastPay، Qi، Zain Cash، Asia Pay، Visa/Mastercard عبر Stripe، والدفع عند الاستلام.' },
+    { q: 'هل الفاتورة الإلكترونية مشمولة؟', a: 'جاهزة في خطتي Growth و Pro. وخطة Pro تشمل التقديم الكامل والتصدير للمراجعة.' },
+  ],
+};
+const faq = FAQ[locale];
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faq.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+};
+---
+
+<MarketingLayout
+  locale={locale}
+  title={t('pricing.title', locale)}
+  description={t('pricing.sub', locale)}
+  schemaType="FAQPage"
+  jsonLd={faqJsonLd}
+>
+  <PricingSection locale={locale} teaser={false} />
+
+  {/* Comparison table */}
+  <section class="section bg-ink-50">
+    <div class="container-marketing max-w-5xl">
+      <h2 class="font-display font-bold text-2xl md:text-3xl text-ink-950 text-center mb-8">
+        {t('pricing.compare', locale)}
+      </h2>
+      <div class="overflow-x-auto rounded-2xl border border-ink-200 bg-white">
+        <table class="w-full text-sm">
+          <thead class="bg-ink-100/60">
+            <tr>
+              <th class="text-start p-4 font-semibold text-ink-800">Feature</th>
+              <th class="p-4 font-semibold text-ink-800">{t('pricing.starter.name', locale)}</th>
+              <th class="p-4 font-semibold text-brand-700">{t('pricing.growth.name', locale)}</th>
+              <th class="p-4 font-semibold text-ink-800">{t('pricing.pro.name', locale)}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              ['Users', '1', '5', 'Unlimited'],
+              ['Locations', '1', '5', 'Unlimited'],
+              ['POS terminal', '✓', '✓', '✓'],
+              ['Invoicing', '✓', '✓', '✓'],
+              ['Accounting (basic)', '✓', '✓', '✓'],
+              ['Inventory & multi-location', '—', '✓', '✓'],
+              ['HR & payroll', '—', '✓', '✓'],
+              ['CRM', '—', '✓', '✓'],
+              ['Withholding tax', '—', '✓', '✓'],
+              ['e-Fakhata (preview)', '—', '✓', '✓'],
+              ['e-Fakhata (full submission + audit)', '—', '—', '✓'],
+              ['Projects, assets, manufacturing', '—', '—', '✓'],
+              ['Public API', '—', '—', '✓'],
+              ['SLA', '24 h', '8 h', '2 h'],
+            ].map((row, i) => (
+              <tr class={i % 2 === 0 ? 'bg-white' : 'bg-ink-50/40'}>
+                <td class="p-4 font-medium text-ink-800">{row[0]}</td>
+                <td class="p-4 text-center text-ink-700">{row[1]}</td>
+                <td class="p-4 text-center text-brand-700 font-medium">{row[2]}</td>
+                <td class="p-4 text-center text-ink-700">{row[3]}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  {/* FAQ */}
+  <section class="section">
+    <div class="container-marketing max-w-3xl">
+      <h2 class="font-display font-bold text-2xl md:text-3xl text-ink-950 text-center mb-8">FAQ</h2>
+      <div class="space-y-4">
+        {faq.map((f) => (
+          <details class="card cursor-pointer group">
+            <summary class="font-semibold text-ink-900 list-none flex items-center justify-between">
+              <span>{f.q}</span>
+              <span aria-hidden="true" class="text-2xl text-ink-400 group-open:rotate-45 transition-transform">+</span>
+            </summary>
+            <p class="mt-3 text-ink-600">{f.a}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <CTABanner locale={locale} />
+</MarketingLayout>

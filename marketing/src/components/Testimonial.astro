@@ -1,0 +1,41 @@
+---
+/**
+ * Testimonial — single quote card.
+ */
+export interface Props {
+  quote: string;
+  author: string;
+  role?: string;
+  company?: string;
+  city?: string;
+  avatar?: string;
+}
+
+const { quote, author, role, company, city, avatar } = Astro.props;
+---
+
+<figure class="card">
+  <svg width="32" height="24" viewBox="0 0 32 24" class="text-brand-300 mb-3" aria-hidden="true">
+    <path d="M6 24V14c0-5.523 4.477-10 10-10v4c-3.314 0-6 2.686-6 6h6v10H6zm14 0V14c0-5.523 4.477-10 10-10v4c-3.314 0-6 2.686-6 6h6v10H20z" fill="currentColor"/>
+  </svg>
+  <blockquote class="text-lg text-ink-800 leading-relaxed text-pretty mb-5">
+    {quote}
+  </blockquote>
+  <figcaption class="flex items-center gap-3">
+    {
+      avatar ? (
+        <img src={avatar} alt={author} class="w-10 h-10 rounded-full" loading="lazy" decoding="async"/>
+      ) : (
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-200 to-accent-200 flex items-center justify-center font-display font-semibold text-ink-700">
+          {author.charAt(0)}
+        </div>
+      )
+    }
+    <div>
+      <p class="font-semibold text-ink-900 text-sm">{author}</p>
+      <p class="text-xs text-ink-500">
+        {[role, company, city].filter(Boolean).join(' · ')}
+      </p>
+    </div>
+  </figcaption>
+</figure>

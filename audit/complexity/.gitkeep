@@ -1,0 +1,3 @@
+# Complexity reports written by scripts/complexity-radon.sh and the frontend
+# ESLint complexity pass invoked by scripts/maintainability-report.mjs.
+# One file per run: python-YYYY-MM-DD.txt (radon), eslint-YYYY-MM-DD.json (frontend).

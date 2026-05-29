@@ -1,0 +1,167 @@
+name: DR backup restore verify
+
+# SF3 / T-SF.3.11 — Weekly automated proof that our backups are RESTORABLE,
+# not merely present. This goes beyond the existing `backup-verify.yml` (which
+# only checks that the latest backup object exists + hashes): here we pick a
+# RANDOM recent Firestore export, restore it into a throwaway SANDBOX database,
+# run an integrity sample against the restored data, and tear the sandbox down.
+#
+# A restore that has never been exercised is not a backup. This job is the
+# recurring fire-drill for the GCS-export fall-back path (DISASTER_RECOVERY.md
+# §4.4) and for the per-tenant restore tooling in scripts/dr/.
+#
+# AUTH: uses Workload Identity Federation (keyless) when configured. If the
+# WIF / project repo-variables are absent (e.g. on a fork), the job SKIPS its
+# cloud steps cleanly rather than failing — so the workflow stays green for
+# contributors who don't have prod access.
+
+on:
+  schedule:
+    # Sundays 03:30 UTC — offset from the existing backup-verify.yml (Mon 04:00)
+    # and from nightly backups (02:00) so we sample a settled, complete export.
+    - cron: "30 3 * * 0"
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "Explicit export prefix (e.g. firestore/2026-05-26/). Blank = random recent."
+        required: false
+        default: ""
+      project:
+        description: "GCP project id override"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  id-token: write   # required for Workload Identity Federation
+
+concurrency:
+  group: dr-restore-verify
+  cancel-in-progress: false
+
+jobs:
+  restore-to-sandbox:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      # Repo variables (Settings → Variables). Secrets hold WIF wiring.
+      GCP_PROJECT: ${{ github.event.inputs.project || vars.DR_GCP_PROJECT || 'erp-system-494716' }}
+      BACKUP_GCS_BUCKET: ${{ vars.BACKUP_GCS_BUCKET || 'zoho-83cda-erp-backups' }}
+      FIRESTORE_LOCATION: ${{ vars.DR_FIRESTORE_LOCATION || 'me-central1' }}
+      WIF_PROVIDER: ${{ secrets.GCP_WIF_PROVIDER }}
+      WIF_SERVICE_ACCOUNT: ${{ secrets.GCP_DR_SERVICE_ACCOUNT }}
+      SOURCE_INPUT: ${{ github.event.inputs.source }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Gate — is cloud auth configured?
+        id: gate
+        run: |
+          if [ -n "$WIF_PROVIDER" ] && [ -n "$WIF_SERVICE_ACCOUNT" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::WIF not configured (GCP_WIF_PROVIDER / GCP_DR_SERVICE_ACCOUNT secrets missing) — skipping cloud restore. This is expected on forks."
+          fi
+
+      - name: Authenticate to Google Cloud (WIF, keyless)
+        if: steps.gate.outputs.configured == 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud
+        if: steps.gate.outputs.configured == 'true'
+        uses: google-github-actions/setup-gcloud@v2
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install GCS client (for integrity sampler)
+        if: steps.gate.outputs.configured == 'true'
+        run: pip install --quiet google-cloud-firestore google-cloud-storage
+
+      - name: Pick a random recent export
+        if: steps.gate.outputs.configured == 'true'
+        id: pick
+        run: |
+          set -Eeuo pipefail
+          BASE="gs://${BACKUP_GCS_BUCKET}/firestore/"
+          if [ -n "${SOURCE_INPUT}" ]; then
+            SRC="gs://${BACKUP_GCS_BUCKET}/${SOURCE_INPUT#/}"
+            SRC="${SRC%/}/"
+          else
+            # List the last ~14 dated exports and pick one at random.
+            mapfile -t EXPORTS < <(gsutil ls "$BASE" 2>/dev/null | grep -E '/[0-9]{4}-[0-9]{2}-[0-9]{2}/$' | sort | tail -n 14)
+            if [ "${#EXPORTS[@]}" -eq 0 ]; then
+              echo "::error::no dated exports under $BASE"; exit 1
+            fi
+            IDX=$(( RANDOM % ${#EXPORTS[@]} ))
+            SRC="${EXPORTS[$IDX]}"
+          fi
+          echo "Selected export: $SRC"
+          echo "source=$SRC" >> "$GITHUB_OUTPUT"
+
+      - name: Restore into a throwaway sandbox database (dry-run plan first)
+        if: steps.gate.outputs.configured == 'true'
+        id: restore
+        run: |
+          set -Eeuo pipefail
+          SANDBOX="dr-verify-$(date -u +%Y%m%d-%H%M%S)"
+          echo "sandbox=$SANDBOX" >> "$GITHUB_OUTPUT"
+          chmod +x scripts/dr/restore-full.sh
+
+          # 1) Dry-run to validate the export + plan (no mutations).
+          scripts/dr/restore-full.sh \
+            --project "$GCP_PROJECT" \
+            --bucket  "$BACKUP_GCS_BUCKET" \
+            --source  "${{ steps.pick.outputs.source }}" \
+            --destination "$SANDBOX" \
+            --location "$FIRESTORE_LOCATION" \
+            --dry-run --yes --no-color
+
+          # 2) Real restore into the sandbox DB (non-interactive).
+          scripts/dr/restore-full.sh \
+            --project "$GCP_PROJECT" \
+            --bucket  "$BACKUP_GCS_BUCKET" \
+            --source  "${{ steps.pick.outputs.source }}" \
+            --destination "$SANDBOX" \
+            --location "$FIRESTORE_LOCATION" \
+            --yes --no-color
+
+      - name: Integrity sample the restored sandbox
+        if: steps.gate.outputs.configured == 'true'
+        run: |
+          set -Eeuo pipefail
+          python backend/scripts/verify_restore_sample.py \
+            --project "$GCP_PROJECT" \
+            --database "${{ steps.restore.outputs.sandbox }}" \
+            --collections "invoices,contacts,accounts,organizations,journal_entries" \
+            --min-per-collection 0 \
+            --sample 25
+
+      - name: Tear down sandbox database (always)
+        if: always() && steps.gate.outputs.configured == 'true' && steps.restore.outputs.sandbox != ''
+        run: |
+          set +e
+          echo "Deleting sandbox database ${{ steps.restore.outputs.sandbox }}"
+          gcloud firestore databases delete \
+            --database="${{ steps.restore.outputs.sandbox }}" \
+            --project="$GCP_PROJECT" --quiet \
+            || echo "::warning::failed to delete sandbox DB — delete it manually to avoid cost"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## DR restore-to-sandbox verify"
+            if [ "${{ steps.gate.outputs.configured }}" = "true" ]; then
+              echo "- Source export: \`${{ steps.pick.outputs.source }}\`"
+              echo "- Sandbox DB: \`${{ steps.restore.outputs.sandbox }}\` (torn down)"
+              echo "- Result: see job logs for the integrity sample."
+            else
+              echo "- Skipped: Workload Identity Federation not configured (expected on forks)."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,21 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { Form, Input, InputNumber, Button, Select, DatePicker, Space } from 'antd';
+import { Form, Input, InputNumber, Button, DatePicker, Space } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
 import dayjs from 'dayjs';
 import { FormLayout, type FormSection } from '../design-system';
 import { useAuthStore } from '../store';
 import { ResponsiveForm } from '../components/responsive/ResponsiveForm';
+import ChatterWidget from '../components/chatter/ChatterWidget';
+import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 
 const QuoteForm: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { id } = useParams<{ id?: string }>();
   const [form] = Form.useForm();
   const isDark = useAuthStore((s) => s.theme === 'dark');
-  const [contacts, setContacts] = useState<any[]>([]);
+  // NOTE: items kept locally to autofill description/unit_price when a line item is selected.
+  // SelectWithQuickCreate handles its own option loading from the registry.
   const [items, setItems] = useState<any[]>([]);
   const [lines, setLines] = useState<any[]>([{ key: 0, item_id: '', description: '', quantity: 1, unit_price: 0, discount_percent: 0 }]);
   const [loading, setLoading] = useState(false);
@@ -23,7 +27,6 @@ const QuoteForm: React.FC = () => {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    api.get('/api/contacts', { params: { page_size: 100, contact_type: 'customer' } }).then(r => setContacts(r.data.items || []));
     api.get('/api/items', { params: { page_size: 100 } }).then(r => setItems(r.data.items || []));
   }, []);
 
@@ -71,7 +74,12 @@ const QuoteForm: React.FC = () => {
       children: (
         <Space size="large" wrap>
           <Form.Item label={t('customer')} name="contact_id" rules={[{ required: true, message: t('required_contact') }]} style={{ width: 300 }}>
-            <Select showSearch optionFilterProp="label" placeholder={t('placeholder_customer')} options={contacts.map(c => ({ label: c.display_name, value: c.id }))} />
+            <SelectWithQuickCreate
+              entity="customer"
+              showSearch
+              optionFilterProp="label"
+              placeholder={t('placeholder_customer')}
+            />
           </Form.Item>
           <Form.Item label={t('date')} name="date" rules={[{ required: true, message: t('required_date') }]}><DatePicker placeholder={t('placeholder_date')} /></Form.Item>
           <Form.Item label={t('expiry_date')} name="expiry_date" rules={[{ required: true, message: t('required_date') }]}><DatePicker placeholder={t('placeholder_end_date')} /></Form.Item>
@@ -98,7 +106,15 @@ const QuoteForm: React.FC = () => {
               <Space size="middle" wrap style={{ width: '100%' }}>
                 <div style={{ minWidth: 200, flex: 1 }}>
                   <label>{t('items')}</label>
-                  <Select style={{ width: '100%' }} value={line.item_id || undefined} onChange={v => updateLine(line.key, 'item_id', v)} options={items.map(i => ({ label: i.name, value: i.id }))} showSearch optionFilterProp="label" allowClear />
+                  <SelectWithQuickCreate
+                    entity="item"
+                    style={{ width: '100%' }}
+                    value={line.item_id || undefined}
+                    onChange={v => updateLine(line.key, 'item_id', v)}
+                    showSearch
+                    optionFilterProp="label"
+                    allowClear
+                  />
                 </div>
                 <div style={{ minWidth: 200, flex: 1 }}>
                   <label>{t('description')}</label>
@@ -138,6 +154,15 @@ const QuoteForm: React.FC = () => {
         </Form.Item>
       ),
     },
+    ...(id
+      ? [
+          {
+            key: 'chatter',
+            title: t('chatter.activities'),
+            children: <ChatterWidget entityType="quote" entityId={id} />,
+          } as FormSection,
+        ]
+      : []),
   ];
 
   return (

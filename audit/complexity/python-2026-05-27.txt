@@ -1,0 +1,5 @@
+# Python complexity report — 2026-05-27
+
+_Skipped: radon not installed._
+
+To enable: `pip install radon` then re-run.

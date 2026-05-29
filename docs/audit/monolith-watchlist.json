@@ -1,0 +1,448 @@
+{
+  "generatedAt": "2026-05-27T13:33:51.554Z",
+  "thresholds": {
+    "watchlist": 400,
+    "hardLimit": 600
+  },
+  "totalFilesScanned": 1060,
+  "watchlist": [
+    {
+      "path": "frontend/src/settings/sections/bodies.tsx",
+      "loc": 4441,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "backend/app/api/pos.py",
+      "loc": 3778,
+      "exempt": false,
+      "owner": "@pos"
+    },
+    {
+      "path": "frontend/src/system-wide-ux-overhaul.pbt.test.ts",
+      "loc": 2223,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/pbt.properties-31-43.test.ts",
+      "loc": 1424,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "backend/app/schemas/schemas.py",
+      "loc": 1110,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "frontend/src/theme/pbt.properties.21-30.test.ts",
+      "loc": 941,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "backend/app/api/banking.py",
+      "loc": 938,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "frontend/src/layouts/SideNav.tsx",
+      "loc": 914,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "backend/app/api/inventory.py",
+      "loc": 911,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "backend/app/api/crm.py",
+      "loc": 816,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "backend/app/services/pdf_generator.py",
+      "loc": 813,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "frontend/src/data/page-help.ts",
+      "loc": 808,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/features/dashboard/DashboardPage.tsx",
+      "loc": 796,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/layouts/LayoutChrome.tsx",
+      "loc": 781,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/ui-redesign-modern.pbt.test.ts",
+      "loc": 773,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "backend/app/api/reports.py",
+      "loc": 772,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "frontend/src/App.routes.tsx",
+      "loc": 754,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/help/registry.ts",
+      "loc": 754,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "backend/app/api/invoices.py",
+      "loc": 712,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "frontend/src/help/HelpPanel.tsx",
+      "loc": 688,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "backend/app/services/health_checker.py",
+      "loc": 682,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "backend/app/api/dashboards.py",
+      "loc": 676,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "backend/app/services/scheduler.py",
+      "loc": 676,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "frontend/src/pages/settings/__tests__/SystemHealthPage.test.tsx",
+      "loc": 674,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/pages/settings/SystemHealthPage.tsx",
+      "loc": 659,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/features/auth/LoginPage.tsx",
+      "loc": 627,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "backend/app/api/hr.py",
+      "loc": 622,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "backend/app/api/storefront.py",
+      "loc": 622,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "backend/app/firestore/schema.py",
+      "loc": 620,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "frontend/src/components/responsive/ResponsiveTable.tsx",
+      "loc": 609,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/layouts/CommandPalette.tsx",
+      "loc": 609,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/components/responsive/ResponsiveDialog.tsx",
+      "loc": 606,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "backend/app/api/auth.py",
+      "loc": 606,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "frontend/src/theme/tokens.ts",
+      "loc": 591,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/components/AddGate/AddGateProvider.tsx",
+      "loc": 562,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "backend/app/api/users.py",
+      "loc": 562,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "frontend/src/layouts/AuthLayout.tsx",
+      "loc": 556,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/pages/fx/RevaluationRuns.tsx",
+      "loc": 546,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/pages/UIGallery.tsx",
+      "loc": 544,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/locales/i18n.integration.test.ts",
+      "loc": 543,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/pages/Users.tsx",
+      "loc": 529,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "backend/app/api/subscriptions.py",
+      "loc": 527,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "frontend/src/layouts/navigation.tsx",
+      "loc": 526,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "backend/app/api/exports.py",
+      "loc": 521,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "backend/app/api/system.py",
+      "loc": 517,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "frontend/src/theme/pbt.properties.test.ts",
+      "loc": 513,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "backend/app/services/backup_service.py",
+      "loc": 513,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "backend/app/main.py",
+      "loc": 503,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "backend/app/services/auth.py",
+      "loc": 501,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "frontend/src/theme/tokens.test.ts",
+      "loc": 489,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/pages/settings/__tests__/BackupHistoryTable.test.tsx",
+      "loc": 483,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/layouts/TopBar.tsx",
+      "loc": 462,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "backend/app/api/projects.py",
+      "loc": 461,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "frontend/src/pages/dms/DocumentVault.tsx",
+      "loc": 456,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "backend/app/api/returns.py",
+      "loc": 455,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "frontend/src/pages/settings/sections.registry.ts",
+      "loc": 450,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/components/AuthLayout.tsx",
+      "loc": 447,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/design-system/EditableLineItems.tsx",
+      "loc": 447,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "backend/app/api/expenses.py",
+      "loc": 447,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "frontend/src/features/purchases/purchase-orders/PurchaseOrderForm.tsx",
+      "loc": 440,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "backend/app/api/fixed_assets.py",
+      "loc": 440,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "backend/app/firestore/base.py",
+      "loc": 434,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "frontend/src/design-system/DataTable.tsx",
+      "loc": 432,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/pages/onboarding/OnboardingWizard.tsx",
+      "loc": 432,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "backend/app/api/automation.py",
+      "loc": 423,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "frontend/src/pages/pos/POSSessionDetail.tsx",
+      "loc": 420,
+      "exempt": false,
+      "owner": "@pos"
+    },
+    {
+      "path": "frontend/src/pages/automation/WorkflowBuilder.tsx",
+      "loc": 416,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "backend/app/api/payroll.py",
+      "loc": 412,
+      "exempt": false,
+      "owner": "@backend"
+    },
+    {
+      "path": "frontend/src/pages/auth/RegisterPage.tsx",
+      "loc": 411,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/utils/settingsInventoryScanner.test.ts",
+      "loc": 409,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/pages/Assets.tsx",
+      "loc": 405,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/hooks/usePOSTerminal.ts",
+      "loc": 402,
+      "exempt": false,
+      "owner": "@frontend"
+    },
+    {
+      "path": "frontend/src/pages/pos/POSSelfOrder.tsx",
+      "loc": 401,
+      "exempt": false,
+      "owner": "@pos"
+    }
+  ]
+}

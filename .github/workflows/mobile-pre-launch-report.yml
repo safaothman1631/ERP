@@ -1,0 +1,113 @@
+name: Mobile Pre-Launch Report (Firebase Test Lab)
+
+# Spec ref: requirements.md §R5.12, design.md §5.6, tasks.md T-G.5.16.
+# Runs on every push of a `mobile-v*` tag (after AAB upload). Runs an
+# Android Robo crawler on each device in `mobile/firebase-test-lab/devices.json`
+# and fails the workflow if any new crashes are detected.
+#
+# Test Lab does NOT run iOS — iOS pre-flight relies on TestFlight + manual
+# QA on the iPhone reference devices in `devices.json#ios_reference`.
+
+on:
+  push:
+    tags:
+      - "mobile-v*"
+  workflow_dispatch:
+    inputs:
+      apk_artifact_name:
+        description: "Name of the artifact containing the AAB/APK"
+        required: false
+        default: "android-release-aab"
+
+permissions:
+  contents: read
+  id-token: write   # for google-github-actions/auth via OIDC
+
+jobs:
+  firebase-test-lab:
+    name: Robo crawler on Iraqi top-12
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: mobile-production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Auth to GCP via Workload Identity
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_TESTLAB_SA }}
+
+      - name: Install gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Download release AAB
+        uses: actions/download-artifact@v4
+        with:
+          name: android-release-aab-${{ github.ref_name }}
+          path: ./build
+
+      - name: Build the gcloud test-lab command from devices.json
+        id: devices
+        run: |
+          python3 - <<'PY'
+          import json, sys, os
+          spec = json.load(open("mobile/firebase-test-lab/devices.json"))
+          flags = []
+          for d in spec["android"]:
+              # --device=model=…,version=…,locale=…,orientation=…
+              flags.append(
+                  f"--device=model={d['model']},version={d['version']},"
+                  f"locale={d['locale']},orientation={d['orientation']}"
+              )
+          out = " ".join(flags)
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"flags={out}\n")
+          PY
+
+      - name: Run Robo test
+        env:
+          DEVICES: ${{ steps.devices.outputs.flags }}
+        run: |
+          set -e
+          gcloud firebase test android run \
+            --type=robo \
+            --app=./build/app-release.aab \
+            $DEVICES \
+            --robo-script=mobile/firebase-test-lab/robo-script.json \
+            --timeout=10m \
+            --results-bucket=${{ secrets.TESTLAB_RESULTS_BUCKET }} \
+            --results-dir=prelaunch-${{ github.ref_name }} \
+            --client-details=matrixId=${{ github.run_id }},commit=${{ github.sha }}
+
+      - name: Download and parse test results
+        if: always()
+        run: |
+          gcloud storage cp -r \
+            gs://${{ secrets.TESTLAB_RESULTS_BUCKET }}/prelaunch-${{ github.ref_name }} \
+            ./testlab-results
+
+      - name: Enforce zero-new-crashes
+        if: success()
+        run: |
+          python3 - <<'PY'
+          import json, glob, sys
+          new_crashes = 0
+          for f in glob.glob("./testlab-results/**/instrumentation.results", recursive=True):
+              with open(f, "r", errors="ignore") as fh:
+                  txt = fh.read()
+                  if "FATAL EXCEPTION" in txt:
+                      new_crashes += 1
+          if new_crashes:
+              print(f"::error::Found {new_crashes} new crashes in pre-launch report")
+              sys.exit(1)
+          print("Zero new crashes — promotion gate cleared.")
+          PY
+
+      - name: Upload results bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testlab-prelaunch-${{ github.ref_name }}
+          path: ./testlab-results
+          retention-days: 30

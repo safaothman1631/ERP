@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/hr-extended", tags=["HR Extended"])
 
@@ -234,11 +235,11 @@ def decline_offer(oid: str, body: dict, user: dict = Depends(get_current_user)):
 # Recruitment dashboard
 @router.get("/recruitment/dashboard")
 def recruit_dashboard(user: dict = Depends(get_current_user)):
-    apps, _ = ApplicationRepo(user["org_id"]).list(limit=10000)
+    apps = collect_stream(ApplicationRepo(user["org_id"]), max_docs=10000)
     by_stage: dict[str, int] = {}
     for a in apps:
         by_stage[a.get("stage", "applied")] = by_stage.get(a.get("stage", "applied"), 0) + 1
-    pos, _ = JobPositionRepo(user["org_id"]).list(limit=10000)
+    pos = collect_stream(JobPositionRepo(user["org_id"]), max_docs=10000)
     open_positions = sum(1 for p in pos if p.get("is_active"))
     return {
         "applications_total": len(apps),

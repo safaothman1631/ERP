@@ -1,0 +1,71 @@
+name: Mobile Android Debug Build
+
+# Spec ref: design.md §5.1, tasks.md T-G.5.5. Runs on every PR that touches
+# the mobile or frontend tree to catch build breakage early. Produces an
+# unsigned debug APK as an artifact for ad-hoc smoke tests on real devices.
+
+on:
+  pull_request:
+    paths:
+      - "mobile/**"
+      - "frontend/**"
+      - ".github/workflows/mobile-android-debug.yml"
+  workflow_dispatch:
+
+jobs:
+  android-debug:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            mobile/package-lock.json
+
+      - name: Set up JDK 17 (required by AGP 8.x)
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: temurin
+
+      - name: Set up Ruby for Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: mobile/android
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci --legacy-peer-deps
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Install mobile deps
+        working-directory: mobile
+        run: npm ci --legacy-peer-deps
+
+      - name: Capacitor sync
+        working-directory: mobile
+        run: npx cap sync android
+
+      - name: Fastlane debug lane
+        working-directory: mobile/android
+        run: bundle exec fastlane debug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-debug-apk
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
+          if-no-files-found: error

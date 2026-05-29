@@ -1,5 +1,5 @@
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from app.firestore.taxes import TaxRateRepository, TaxGroupRepository, TaxReturnRepository
 from app.services.auth import get_current_user
 from app.schemas.schemas import TaxRateCreate, TaxRateResponse, TaxReturnCreate, TaxReturnResponse
@@ -7,8 +7,54 @@ from app.schemas.schemas import TaxRateCreate, TaxRateResponse, TaxReturnCreate,
 router = APIRouter(prefix="/api/taxes", tags=["Taxes"])
 
 
+def _build_tax_rate_record(data: TaxRateCreate, org_id: str) -> dict:
+    """Build a tax rate record payload from a validated create body."""
+    rec = {
+        "id": str(uuid.uuid4()),
+        "name": data.name,
+        "name_ku": data.name_ku,
+        "rate": data.rate,
+        "tax_type": data.tax_type,
+        "is_compound": data.is_compound,
+    }
+    repo = TaxRateRepository(org_id)
+    return repo.create(rec)
+
+
+# ── Canonical: GET/POST /api/taxes (launch-readiness § R2.3) ──────────────
+# The frontend quickCreateRegistry now points at /api/taxes. The legacy
+# /api/taxes/rates path below remains for back-compat and emits a
+# `Deprecation: true` response header that points at the canonical route.
+
+
+@router.get("")
+def list_tax_rates_canonical(user: dict = Depends(get_current_user)):
+    """Canonical list of tax rates — same repo as ``/api/taxes/rates``."""
+    repo = TaxRateRepository(user["org_id"])
+    rates, _ = repo.list(
+        filters=[{"field": "is_active", "op": "!=", "value": False}],
+        limit=100,
+    )
+    return rates
+
+
+@router.post("", status_code=201)
+def create_tax_rate_canonical(
+    data: TaxRateCreate,
+    response: Response,
+    user: dict = Depends(get_current_user),
+):
+    """Canonical create — POST /api/taxes (preferred over /api/taxes/rates)."""
+    rate = _build_tax_rate_record(data, user["org_id"])
+    response.headers["Location"] = f"/api/taxes/{rate['id']}"
+    return rate
+
+
 @router.get("/rates")
-def list_tax_rates(user: dict = Depends(get_current_user)):
+def list_tax_rates(response: Response, user: dict = Depends(get_current_user)):
+    # Deprecated alias — clients SHOULD move to GET /api/taxes.
+    response.headers["Deprecation"] = "true"
+    response.headers["Link"] = '</api/taxes>; rel="successor-version"'
     repo = TaxRateRepository(user["org_id"])
     rates, _ = repo.list(
         filters=[{"field": "is_active", "op": "!=", "value": False}],
@@ -18,16 +64,17 @@ def list_tax_rates(user: dict = Depends(get_current_user)):
 
 
 @router.post("/rates", status_code=201)
-def create_tax_rate(data: TaxRateCreate, user: dict = Depends(get_current_user)):
-    repo = TaxRateRepository(user["org_id"])
-    rate = repo.create({
-        "id": str(uuid.uuid4()),
-        "name": data.name,
-        "name_ku": data.name_ku,
-        "rate": data.rate,
-        "tax_type": data.tax_type,
-        "is_compound": data.is_compound,
-    })
+def create_tax_rate(
+    data: TaxRateCreate,
+    response: Response,
+    user: dict = Depends(get_current_user),
+):
+    # Deprecated alias — same repo as POST /api/taxes. The Deprecation
+    # header signals clients to migrate; the Link header advertises the
+    # successor. Removing this alias is gated on a usage check (Phase R2+).
+    response.headers["Deprecation"] = "true"
+    response.headers["Link"] = '</api/taxes>; rel="successor-version"'
+    rate = _build_tax_rate_record(data, user["org_id"])
     return rate
 
 

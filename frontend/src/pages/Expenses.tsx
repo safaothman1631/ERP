@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import api from '../api';
 import dayjs from 'dayjs';
 import { PageHeader, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { downloadCsv } from '../utils/exportCsv';
 import { space } from '../theme/tokens';
 import { useAuthStore } from '../store';
@@ -117,7 +118,7 @@ const Expenses: React.FC = () => {
  <Form.Item label={t('date')} name="date" rules={[{ required: true, message: t('required_date') }]}><DatePicker style={{ width: '100%' }} placeholder={t('placeholder_date')} /></Form.Item>
  <Form.Item label={t('amount')} name="amount" rules={[{ required: true, message: t('required_amount') }]}><InputNumber min={0} style={{ width: '100%' }} placeholder={t('placeholder_amount')} /></Form.Item>
  <Form.Item label={t('account')} name="account_id" rules={[{ required: true, message: t('required_account') }]}>
- <Select placeholder={t('placeholder_select')} options={accounts.map((a: any) => ({ label: a.name, value: a.id }))} showSearch optionFilterProp="label" />
+ <SelectWithQuickCreate entity="account" showSearch placeholder={t('placeholder_select')} allowClear />
  </Form.Item>
  <Form.Item label={t('description')} name="description"><Input.TextArea rows={2} placeholder={t('placeholder_description')} /></Form.Item>
  <Form.Item name="currency_code" hidden><Input /></Form.Item>

@@ -4,8 +4,9 @@
 داواکاری ٧.٢، ٧.٣، ٧.٥، ٧.٦، ٧.٩، ٧.١٢
 """
 
-from fastapi import APIRouter, Depends, Query
 from typing import Optional
+
+from fastapi import APIRouter, Depends, Header, Query
 
 from app.api.v1.pagination import PaginationParams, paginate_list
 from app.api.v1.filtering import FilterParams, SortParams, build_filters
@@ -15,6 +16,7 @@ from app.firestore.contacts import ContactRepository
 from app.schemas.schemas import ContactCreate, ContactUpdate, ContactResponse
 from app.services.auth import get_current_user
 from app.services.permissions import require_perm
+from app.services.versioned_update import apply_versioned_update
 
 router = APIRouter(prefix="/contacts", tags=["v1 / Contacts"])
 
@@ -106,13 +108,16 @@ def update_contact_v1(
     contact_id: str,
     data: ContactUpdate,
     user: dict = Depends(get_current_user),
+    if_match: Optional[str] = Header(None, alias="If-Match"),
 ):
     """**PUT /api/v1/contacts/{contact_id}**"""
     repo = ContactRepository(user["org_id"])
     existing = repo.get(contact_id)
     if not existing or existing.get("org_id") != user["org_id"]:
         return not_found("Contact", contact_id, f"/api/v1/contacts/{contact_id}")
-    return repo.update(contact_id, data.model_dump(exclude_unset=True))
+    return apply_versioned_update(
+        repo, contact_id, data.model_dump(exclude_unset=True), if_match=if_match
+    )
 
 
 @router.delete(
@@ -131,5 +136,7 @@ def delete_contact_v1(
     existing = repo.get(contact_id)
     if not existing or existing.get("org_id") != user["org_id"]:
         return not_found("Contact", contact_id, f"/api/v1/contacts/{contact_id}")
-    repo.delete(contact_id)
+    from app.services.http_guards import guarded_soft_deactivate
+
+    guarded_soft_deactivate(repo, contact_id)
     return {"message": "پەیوەندی سڕایەوە", "success": True}

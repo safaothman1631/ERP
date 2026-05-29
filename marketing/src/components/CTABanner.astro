@@ -1,0 +1,24 @@
+---
+/**
+ * CTABanner — bottom-of-page call to action with email capture.
+ */
+import { t, type Locale } from '../i18n/utils';
+import EmailCapture from './EmailCapture.astro';
+
+export interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+---
+
+<section class="section bg-gradient-to-br from-brand-500 to-brand-700 text-white">
+  <div class="container-marketing text-center max-w-2xl mx-auto">
+    <h2 class="font-display font-bold text-3xl md:text-4xl mb-3 text-balance">
+      {t('cta.banner.title', locale)}
+    </h2>
+    <p class="text-lg text-brand-100 mb-8 text-pretty">{t('cta.banner.sub', locale)}</p>
+    <div class="max-w-md mx-auto">
+      <EmailCapture variant="dark" />
+    </div>
+  </div>
+</section>

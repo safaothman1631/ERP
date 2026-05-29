@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from app.firestore.whatsapp import WhatsAppMessageRepository, WhatsAppTemplateRepository
 from app.services.auth import get_current_user
+from app.services.report_streams import collect_stream
 from app.services.whatsapp_service import (
     handle_status_webhook,
     load_config,
@@ -164,7 +165,7 @@ def list_messages(
 @router.get("/messages/stats")
 def message_stats(user: dict = Depends(get_current_user)):
     repo = WhatsAppMessageRepository(user["org_id"])
-    items, _ = repo.list(limit=10000)
+    items = collect_stream(repo, max_docs=10000)
     summary = {"queued": 0, "sending": 0, "sent": 0, "delivered": 0, "read": 0,
                "failed": 0, "skipped": 0, "previewed": 0}
     for item in items:
