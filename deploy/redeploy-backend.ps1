@@ -21,7 +21,7 @@ Write-Host "repo root: $(Get-Location)`n"
 
 gcloud run deploy zoho-erp-backend `
   --source . `
-  --region me-central1 `
+  --region europe-west1 `
   --project zoho-83cda `
   --allow-unauthenticated `
   --execution-environment gen2 `
@@ -31,7 +31,7 @@ gcloud run deploy zoho-erp-backend `
 
 if ($LASTEXITCODE -ne 0) { Write-Host "`nDEPLOY FAILED (exit $LASTEXITCODE)" -ForegroundColor Red; exit 1 }
 
-$URL = (gcloud run services describe zoho-erp-backend --region me-central1 --project zoho-83cda --format='value(status.url)').Trim()
+$URL = (gcloud run services describe zoho-erp-backend --region europe-west1 --project zoho-83cda --format='value(status.url)').Trim()
 Write-Host "`n=============================================================================" -ForegroundColor Green
 Write-Host "DEPLOYED. New revision is live at: $URL" -ForegroundColor Green
 Write-Host "  /api/live : $(curl.exe -s -m 25 `"$URL/api/live`")"
