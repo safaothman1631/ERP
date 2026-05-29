@@ -131,6 +131,5 @@
     }
   ],
   "regions": ["fra1"],
-  "trailingSlash": false,
-  "cleanUrls": true
+  "trailingSlash": false
 }
