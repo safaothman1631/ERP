@@ -8,8 +8,10 @@ on:
   workflow_dispatch:
 
 env:
-  SERVICE: zoho-erp
-  REGION: europe-west1
+  # Canonical production backend: the service the frontend's /api/* rewrite targets
+  # (zoho-erp-backend-i43i2clqva-ww.a.run.app). Was stale (zoho-erp / europe-west1).
+  SERVICE: zoho-erp-backend
+  REGION: me-central1
 
 jobs:
   deploy:

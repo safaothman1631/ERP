@@ -408,7 +408,10 @@ service cloud.firestore {
       match /hr_attendance/{recordId} {
         allow read: if isHROrAbove(orgId)
           || (belongsToOrg(orgId) && resource.data.employee_user_id == request.auth.uid);
-        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        // SF4 finding F-3: a non-HR member may only create a record attributed to
+        // themselves; HR-or-above may create on behalf of any employee.
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId)
+          && (isHROrAbove(orgId) || request.resource.data.employee_user_id == request.auth.uid);
         allow update: if isHROrAbove(orgId);
         allow delete: if isAdmin(orgId);
       }
@@ -416,7 +419,10 @@ service cloud.firestore {
       match /hr_time_off/{recordId} {
         allow read: if isHROrAbove(orgId)
           || (belongsToOrg(orgId) && resource.data.employee_user_id == request.auth.uid);
-        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId);
+        // SF4 finding F-3: a non-HR member may only create a time-off request for
+        // themselves; HR-or-above may create on behalf of any employee.
+        allow create: if belongsToOrg(orgId) && hasCorrectOrgId(orgId)
+          && (isHROrAbove(orgId) || request.resource.data.employee_user_id == request.auth.uid);
         allow update: if isHROrAbove(orgId);
         allow delete: if isAdmin(orgId);
       }

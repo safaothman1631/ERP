@@ -57,6 +57,45 @@ describe("HR & payroll require HR-or-above role (same org)", () => {
   });
 });
 
+describe("HR self-service create binding (SF4 finding F-3)", () => {
+  // A non-HR member may only create attendance/time-off attributed to THEMSELVES;
+  // HR-or-above may create on behalf of any employee.
+  it("a non-HR member CAN create their OWN hr_attendance record", async () => {
+    const emp = await authedDb({ uid: "emp1", orgId: ORG_A, role: "sales" });
+    await assertSucceeds(
+      emp.doc(`organizations/${ORG_A}/hr_attendance/a1`).set({ org_id: ORG_A, employee_user_id: "emp1" })
+    );
+  });
+
+  it("a non-HR member CANNOT create an hr_attendance record for ANOTHER employee", async () => {
+    const emp = await authedDb({ uid: "emp1", orgId: ORG_A, role: "sales" });
+    await assertFails(
+      emp.doc(`organizations/${ORG_A}/hr_attendance/a2`).set({ org_id: ORG_A, employee_user_id: "emp2" })
+    );
+  });
+
+  it("an HR user CAN create an hr_attendance record on behalf of another employee", async () => {
+    const hr = await authedDb({ uid: "hr1", orgId: ORG_A, role: "hr" });
+    await assertSucceeds(
+      hr.doc(`organizations/${ORG_A}/hr_attendance/a3`).set({ org_id: ORG_A, employee_user_id: "emp2" })
+    );
+  });
+
+  it("a non-HR member CAN create their OWN hr_time_off request", async () => {
+    const emp = await authedDb({ uid: "emp1", orgId: ORG_A, role: "sales" });
+    await assertSucceeds(
+      emp.doc(`organizations/${ORG_A}/hr_time_off/t1`).set({ org_id: ORG_A, employee_user_id: "emp1" })
+    );
+  });
+
+  it("a non-HR member CANNOT create an hr_time_off request for ANOTHER employee", async () => {
+    const emp = await authedDb({ uid: "emp1", orgId: ORG_A, role: "sales" });
+    await assertFails(
+      emp.doc(`organizations/${ORG_A}/hr_time_off/t2`).set({ org_id: ORG_A, employee_user_id: "emp2" })
+    );
+  });
+});
+
 describe("Audit logs are append-only", () => {
   it("admin can READ audit logs", async () => {
     await seedDoc(`organizations/${ORG_A}/audit_logs`, "l1", { org_id: ORG_A, action: "x" });

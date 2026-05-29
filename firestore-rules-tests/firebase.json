@@ -1,8 +1,5 @@
 {
-  "firestore": {
-    "rules": "../firestore.rules",
-    "indexes": "../firestore.indexes.json"
-  },
+  "_note": "Rules are NOT referenced here on purpose: helpers.js loads ../firestore.rules directly via initializeTestEnvironment (fs.readFileSync). Referencing ../firestore.rules made `emulators:exec` fail with 'outside of project directory'. Rule DEPLOYS use the repo-root firebase.json.",
   "emulators": {
     "firestore": {
       "port": 8080
