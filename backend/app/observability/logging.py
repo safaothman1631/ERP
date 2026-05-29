@@ -84,11 +84,14 @@ def _make_formatter() -> logging.Formatter:
             super().add_fields(log_record, record, message_dict)
             # Severity from levelname; Cloud Logging recognizes this key.
             log_record["severity"] = record.levelname
-            # Standard ISO-8601 timestamp.
-            log_record.setdefault(
-                "timestamp",
-                self.formatTime(record, datefmt="%Y-%m-%dT%H:%M:%S.%fZ"),
-            )
+            # Standard ISO-8601 timestamp. NOTE: logging.Formatter.formatTime
+            # uses time.strftime, which does NOT support %f (microseconds) and
+            # raises "Invalid format string" on every record. datetime.strftime
+            # does support %f, so format from record.created directly.
+            from datetime import datetime as _dt, timezone as _tz
+            log_record["timestamp"] = _dt.fromtimestamp(
+                record.created, tz=_tz.utc
+            ).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             # Ensure all fixed fields exist (null if not set).
             for k in _FIXED_FIELDS:
                 log_record.setdefault(k, None)
