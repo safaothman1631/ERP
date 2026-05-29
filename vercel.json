@@ -13,7 +13,7 @@
       "destination": "https://zoho-erp-backend-6plfqh2hiq-ww.a.run.app/api/:path*"
     },
     {
-      "source": "/((?!api/).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
@@ -23,7 +23,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy-Report-Only",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://*.firebaseapp.com https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.gstatic.com https://*.googleusercontent.com https://firebasestorage.googleapis.com https://storage.googleapis.com; font-src 'self' data:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com wss://*.firebaseio.com wss://*; worker-src 'self' blob:; manifest-src 'self'; media-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests; report-uri /api/csp-report; report-to csp-endpoint"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://*.firebaseapp.com https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.gstatic.com https://*.googleusercontent.com https://firebasestorage.googleapis.com https://storage.googleapis.com; font-src 'self' data:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com wss://*.firebaseio.com wss://*; worker-src 'self' blob:; manifest-src 'self'; media-src 'self' blob:; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://apis.google.com https://*.googleapis.com; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests; report-uri /api/csp-report; report-to csp-endpoint"
         },
         {
           "key": "Reporting-Endpoints",
