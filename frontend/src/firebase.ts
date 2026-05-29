@@ -132,6 +132,9 @@ export const db = getFirestore(app);
  * await signInWithPopup(auth, googleProvider);
  */
 export const googleProvider = new GoogleAuthProvider();
+// Always show the Google account chooser (list ALL signed-in Google accounts)
+// on every sign-in, instead of silently reusing the last account (prompt=none).
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 /**
  * Firebase Analytics instance (browser-only).
