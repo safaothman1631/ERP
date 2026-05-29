@@ -13,7 +13,7 @@
       "destination": "https://zoho-erp-backend-6plfqh2hiq-ww.a.run.app/api/:path*"
     },
     {
-      "source": "/((?!api/|assets|locales|favicon|manifest|icons|sw|robots|_next).*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ],
