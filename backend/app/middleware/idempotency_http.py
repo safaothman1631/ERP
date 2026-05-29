@@ -26,6 +26,25 @@ _IDEMPOTENCY_PREFIXES = (
     "/api/payroll/runs",
     "/api/banking/",
     "/api/chatter",
+    # Quick-create endpoints (launch-readiness § R2)
+    "/api/expense-categories",
+    "/api/equipment-categories",
+    "/api/currencies",
+    "/api/tags",
+    "/api/payment-methods",
+    "/api/teams",
+    "/api/subscription-plans",
+    "/api/bank-accounts",
+    "/api/locations",
+    # Onboarding (R3) + tenant-side payments (R4)
+    "/api/onboarding/coa/",
+    "/api/payments/",
+    # growth-to-100 § R4 (Iraq compliance)
+    "/api/tax/wht/",
+    "/api/cbi-rates",
+    # growth-to-100 § G2 (support stack): NPS submit + impersonation start/end
+    "/api/nps/",
+    "/api/admin/impersonate/",
 )
 
 

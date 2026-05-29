@@ -35,7 +35,18 @@
     "e2e:report": "playwright show-report",
     "lhci": "lhci autorun",
     "lhci:no-regression": "node scripts/lighthouse-no-regression.mjs",
-    "release:readiness": "node scripts/release-readiness.mjs"
+    "release:readiness": "node scripts/release-readiness.mjs",
+    "prepare": "cd .. && husky frontend/.husky || true"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "tsc-files --noEmit",
+      "eslint --fix --max-warnings 0"
+    ],
+    "*.{js,jsx,mjs}": [
+      "eslint --fix --max-warnings 0"
+    ],
+    "*.{json,md,yml,yaml}": []
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.1",

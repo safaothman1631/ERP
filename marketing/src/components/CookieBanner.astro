@@ -1,0 +1,90 @@
+---
+/**
+ * CookieBanner — first-time consent banner for non-essential analytics.
+ *
+ * Per R1.14: shown to first-time EU/EEA visitors. Implementation pragmatic:
+ * - Default-hidden; revealed only when no `_consent` cookie exists.
+ * - "Accept" sets `_consent=1` (180 days), emits `consent:granted` event.
+ * - "Reject" sets `_consent=0`, suppresses GA4 + non-essential pixels.
+ * - "Customize" links to /legal/privacy.
+ *
+ * Plausible (cookieless) does NOT depend on this; it loads always.
+ */
+import { localeFromPath, type Locale } from '../i18n/utils';
+const pathname = new URL(Astro.request.url).pathname;
+const locale: Locale = localeFromPath(pathname);
+
+const COPY: Record<Locale, { title: string; body: string; accept: string; reject: string; customize: string }> = {
+  ku: {
+    title: 'بەکارهێنانی کوکی',
+    body: 'ئێمە بۆ شیکاری و باشترکردنی ئەزموونەکەت کوکی بەکاردێنین. شیکاری بنچینەییمان بێ کوکی کار دەکات.',
+    accept: 'قبووڵە',
+    reject: 'ڕەتکردنەوە',
+    customize: 'وردەکاری',
+  },
+  en: {
+    title: 'Cookies',
+    body: 'We use cookies for analytics and to improve your experience. Our core analytics is cookie-less.',
+    accept: 'Accept',
+    reject: 'Reject',
+    customize: 'Customize',
+  },
+  ar: {
+    title: 'ملفات تعريف الارتباط',
+    body: 'نستخدم ملفات تعريف الارتباط للتحليلات وتحسين تجربتك. تحليلاتنا الأساسية تعمل بدون ملفات تعريف الارتباط.',
+    accept: 'موافق',
+    reject: 'رفض',
+    customize: 'تخصيص',
+  },
+};
+const t = COPY[locale];
+---
+
+<div
+  id="cookie-banner"
+  class="fixed inset-x-0 bottom-0 z-50 hidden p-4 sm:p-6"
+  role="region"
+  aria-label={t.title}
+>
+  <div class="container-marketing mx-auto max-w-3xl bg-white border border-ink-200 rounded-2xl shadow-lift p-5 sm:p-6 flex flex-col sm:flex-row items-start gap-4">
+    <div class="flex-1">
+      <p class="font-semibold text-ink-900 mb-1">{t.title}</p>
+      <p class="text-sm text-ink-600">{t.body}</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2 shrink-0">
+      <a href="/legal/privacy" class="btn btn-ghost text-sm">{t.customize}</a>
+      <button type="button" class="btn btn-secondary text-sm" data-consent="reject">{t.reject}</button>
+      <button type="button" class="btn btn-primary text-sm" data-consent="accept">{t.accept}</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const banner = document.getElementById('cookie-banner');
+    if (!banner) return;
+
+    function hasCookie() {
+      return document.cookie.split('; ').some((c) => c.startsWith('_consent='));
+    }
+    function setCookie(value: '0' | '1') {
+      const maxAge = 60 * 60 * 24 * 180; // 180 days
+      const secure = location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = `_consent=${value}; Max-Age=${maxAge}; Path=/; SameSite=Lax${secure}`;
+    }
+
+    if (!hasCookie()) {
+      banner.classList.remove('hidden');
+    }
+
+    banner.querySelector('[data-consent="accept"]')?.addEventListener('click', () => {
+      setCookie('1');
+      window.dispatchEvent(new CustomEvent('consent:granted'));
+      banner.classList.add('hidden');
+    });
+    banner.querySelector('[data-consent="reject"]')?.addEventListener('click', () => {
+      setCookie('0');
+      banner.classList.add('hidden');
+    });
+  })();
+</script>

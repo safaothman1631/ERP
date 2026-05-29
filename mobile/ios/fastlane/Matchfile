@@ -1,0 +1,23 @@
+# Matchfile — Fastlane Match configuration.
+#
+# Spec ref: design.md §5.3 — "private GitHub repo, encrypted with a
+# passphrase shared via 1Password". Match clones this repo at the start
+# of every signing operation and decrypts certificates into the local
+# keychain.
+#
+# The git URL below should point at YOUR org's private repo. The default
+# placeholder must be replaced before the first CI run. See
+# docs/mobile/ios-fastlane-match.md.
+
+# IMPORTANT: this is a private repo. Access is granted via a fine-grained
+# PAT scoped to ONLY this repo, exposed in CI as MATCH_GIT_BASIC_AUTH_BASE64.
+git_url(ENV["MATCH_GIT_URL"] || "https://github.com/zoho-kurd/ios-match-certs.git")
+
+storage_mode("git")
+type(ENV["MATCH_TYPE"] || "development") # development / appstore / adhoc
+
+app_identifier(["com.zoho.kurdishierp"])
+username(ENV["APPLE_ID"]) # set in Appfile / env
+
+# Encrypt with this branch's passphrase; rotate by re-encrypting.
+git_branch("main")

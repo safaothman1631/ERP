@@ -1,0 +1,532 @@
+name: retail
+display_name_ku: فرۆشگای پێشکەوتوو
+display_name_ar: بيع بالتجزئة
+display_name_en: Multi-Category Retail
+recommended_for:
+  - retail
+  - department_store
+  - electronics
+  - clothing
+  - mall_outlet
+accounts:
+  # ===== Assets =====
+  - code: '10000'
+    name_en: Assets
+    name_ku: سامان
+    name_ar: الأصول
+    type: asset
+    parent: null
+    is_header: true
+  - code: '11000'
+    name_en: Current Assets
+    name_ku: سامانی ئێستا
+    name_ar: الأصول المتداولة
+    type: asset
+    parent: '10000'
+    is_header: true
+  - code: '11100'
+    name_en: Cash on Hand (IQD)
+    name_ku: پارەی نەختی (دینار)
+    name_ar: النقدية (دينار)
+    type: asset
+    parent: '11000'
+    is_cash: true
+    is_default_for: default_cash
+  - code: '11110'
+    name_en: Cash on Hand (USD)
+    name_ku: پارەی نەختی (دۆلار)
+    name_ar: النقدية (دولار)
+    type: asset
+    parent: '11000'
+    is_cash: true
+    currency_code: USD
+  - code: '11120'
+    name_en: Cash — Drawer Float
+    name_ku: پارەی فرۆشیار
+    name_ar: نقدية الصندوق
+    type: asset
+    parent: '11000'
+    is_cash: true
+  - code: '11130'
+    name_en: Petty Cash
+    name_ku: پارەی بچووک
+    name_ar: المصروفات النثرية
+    type: asset
+    parent: '11000'
+    is_cash: true
+  - code: '11200'
+    name_en: Bank — Operating
+    name_ku: بانک — کارکردن
+    name_ar: البنك — التشغيل
+    type: asset
+    parent: '11000'
+    is_bank: true
+    is_default_for: default_bank
+  - code: '11210'
+    name_en: Bank — Payroll
+    name_ku: بانک — مووچە
+    name_ar: البنك — الرواتب
+    type: asset
+    parent: '11000'
+    is_bank: true
+  - code: '11300'
+    name_en: Accounts Receivable
+    name_ku: حسابی وەرگرتن
+    name_ar: ذمم مدينة
+    type: asset
+    parent: '11000'
+    is_default_for: default_accounts_receivable
+  - code: '11310'
+    name_en: Credit Card Receivable
+    name_ku: کرێدیت کارت
+    name_ar: ذمم بطاقات ائتمان
+    type: asset
+    parent: '11000'
+  - code: '11320'
+    name_en: Layaway Receivable
+    name_ku: کاڵای پاراستراو
+    name_ar: ذمم مبيعات بالتقسيط
+    type: asset
+    parent: '11000'
+  # Retail-specific inventory categories
+  - code: '11400'
+    name_en: Inventory — Electronics
+    name_ku: مەخزەن — ئەلیکترۆنی
+    name_ar: المخزون — إلكترونيات
+    type: asset
+    parent: '11000'
+    is_default_for: default_inventory
+  - code: '11410'
+    name_en: Inventory — Clothing
+    name_ku: مەخزەن — جل
+    name_ar: المخزون — ملابس
+    type: asset
+    parent: '11000'
+  - code: '11420'
+    name_en: Inventory — Home Goods
+    name_ku: مەخزەن — کاڵای ماڵ
+    name_ar: المخزون — مستلزمات منزلية
+    type: asset
+    parent: '11000'
+  - code: '11430'
+    name_en: Inventory — Groceries
+    name_ku: مەخزەن — خواردنەمەنی
+    name_ar: المخزون — مواد غذائية
+    type: asset
+    parent: '11000'
+  - code: '11440'
+    name_en: Inventory — General Merchandise
+    name_ku: مەخزەن — گشتی
+    name_ar: المخزون — عام
+    type: asset
+    parent: '11000'
+  - code: '11450'
+    name_en: Inventory on Consignment (At Other Parties)
+    name_ku: مەخزەن — لای دیکە
+    name_ar: مخزون أمانة لدى الآخرين
+    type: asset
+    parent: '11000'
+  - code: '11460'
+    name_en: Inventory — Consignment (Received from Suppliers)
+    name_ku: مەخزەن — وەرگیراو
+    name_ar: مخزون أمانة من موردين
+    type: asset
+    parent: '11000'
+  - code: '11470'
+    name_en: Inventory Reserve — Obsolescence
+    name_ku: ذخیرە — کۆن
+    name_ar: مخصص تقادم المخزون
+    type: asset
+    parent: '11000'
+  - code: '11500'
+    name_en: Prepaid Rent
+    name_ku: کرێی پێشدراو
+    name_ar: إيجار مدفوع مقدمًا
+    type: asset
+    parent: '11000'
+  - code: '11510'
+    name_en: Prepaid Insurance
+    name_ku: بیمەی پێشدراو
+    name_ar: تأمين مدفوع مقدمًا
+    type: asset
+    parent: '11000'
+  - code: '11600'
+    name_en: VAT Receivable
+    name_ku: باجی وەرگیراو
+    name_ar: ضريبة قابلة للاسترداد
+    type: asset
+    parent: '11000'
+
+  # Fixed Assets
+  - code: '15000'
+    name_en: Fixed Assets
+    name_ku: سامانی جێگیر
+    name_ar: الأصول الثابتة
+    type: asset
+    parent: '10000'
+    is_header: true
+  - code: '15100'
+    name_en: Store Fixtures & Displays
+    name_ku: ڕەفە و نیشاندان
+    name_ar: تجهيزات وعرض المتجر
+    type: asset
+    parent: '15000'
+  - code: '15200'
+    name_en: POS Hardware
+    name_ku: ئامێری فرۆشگا
+    name_ar: أجهزة نقاط البيع
+    type: asset
+    parent: '15000'
+  - code: '15300'
+    name_en: Computer Equipment
+    name_ku: کۆمپیوتەر
+    name_ar: معدات الكمبيوتر
+    type: asset
+    parent: '15000'
+  - code: '15400'
+    name_en: Vehicles (Delivery)
+    name_ku: ئۆتۆمبێل
+    name_ar: مركبات التوصيل
+    type: asset
+    parent: '15000'
+  - code: '15500'
+    name_en: Leasehold Improvements
+    name_ku: چاککردنەوەی کرێ
+    name_ar: تحسينات مستأجر
+    type: asset
+    parent: '15000'
+  - code: '15900'
+    name_en: Accumulated Depreciation
+    name_ku: کۆی خوارەبوون
+    name_ar: مجمع الإهلاك
+    type: asset
+    parent: '15000'
+
+  # ===== Liabilities =====
+  - code: '20000'
+    name_en: Liabilities
+    name_ku: قەرزەکان
+    name_ar: الخصوم
+    type: liability
+    parent: null
+    is_header: true
+  - code: '21100'
+    name_en: Accounts Payable
+    name_ku: حسابی دانەوە
+    name_ar: ذمم دائنة
+    type: liability
+    parent: '20000'
+    is_default_for: default_accounts_payable
+  - code: '21200'
+    name_en: Withholding Tax Payable
+    name_ku: باجی گرتنەوەی دانەوە
+    name_ar: ضريبة الاستقطاع المستحقة
+    type: liability
+    parent: '20000'
+    is_default_for: default_wht_payable
+  - code: '21300'
+    name_en: VAT Payable
+    name_ku: باجی بەرزکراوەی دانەوە
+    name_ar: ضريبة القيمة المضافة المستحقة
+    type: liability
+    parent: '20000'
+    is_default_for: default_vat_payable
+  - code: '21400'
+    name_en: Income Tax Payable
+    name_ku: باجی داهات
+    name_ar: ضريبة الدخل المستحقة
+    type: liability
+    parent: '20000'
+  - code: '21500'
+    name_en: Wages Payable
+    name_ku: مووچەی دانەوە
+    name_ar: الرواتب المستحقة
+    type: liability
+    parent: '20000'
+  - code: '21600'
+    name_en: Sales Tax Payable
+    name_ku: باجی فرۆشتنی دانەوە
+    name_ar: ضريبة المبيعات المستحقة
+    type: liability
+    parent: '20000'
+  - code: '21700'
+    name_en: Gift Card Liability
+    name_ku: کارتی دیاری
+    name_ar: التزامات بطاقات الهدايا
+    type: liability
+    parent: '20000'
+  - code: '21800'
+    name_en: Customer Deposits
+    name_ku: داپۆشینی کڕیار
+    name_ar: ودائع العملاء
+    type: liability
+    parent: '20000'
+  - code: '21900'
+    name_en: Loyalty Points Liability
+    name_ku: خاڵی پابەندی
+    name_ar: التزامات نقاط الولاء
+    type: liability
+    parent: '20000'
+  - code: '22000'
+    name_en: Consignor Payable (Inventory on Consignment)
+    name_ku: قەرزی خاوەنی کاڵای وەرگیراو
+    name_ar: ذمم أصحاب البضاعة أمانة
+    type: liability
+    parent: '20000'
+  - code: '22100'
+    name_en: Returns Reserve
+    name_ku: ذخیرەی گەڕاندنەوە
+    name_ar: مخصص المرتجعات
+    type: liability
+    parent: '20000'
+  - code: '25000'
+    name_en: Long-Term Liabilities
+    name_ku: قەرزی درێژخایەن
+    name_ar: الخصوم طويلة الأجل
+    type: liability
+    parent: '20000'
+    is_header: true
+  - code: '25100'
+    name_en: Bank Loans
+    name_ku: قەرزی بانک
+    name_ar: قروض بنكية
+    type: liability
+    parent: '25000'
+
+  # ===== Equity =====
+  - code: '30000'
+    name_en: Equity
+    name_ku: سەرمایە
+    name_ar: حقوق الملكية
+    type: equity
+    parent: null
+    is_header: true
+  - code: '31000'
+    name_en: Owner's Capital
+    name_ku: سەرمایەی خاوەنکار
+    name_ar: رأس مال المالك
+    type: equity
+    parent: '30000'
+    is_default_for: default_owner_equity
+  - code: '32000'
+    name_en: Retained Earnings
+    name_ku: قازانجی پاشەکەوت
+    name_ar: الأرباح المحتجزة
+    type: equity
+    parent: '30000'
+    is_default_for: default_retained_earnings
+  - code: '33000'
+    name_en: Owner's Drawings
+    name_ku: بردنەوەی خاوەنکار
+    name_ar: مسحوبات المالك
+    type: equity
+    parent: '30000'
+  - code: '34000'
+    name_en: Opening Balance Equity
+    name_ku: سەرمایەی سەرەتا
+    name_ar: رصيد افتتاحي
+    type: equity
+    parent: '30000'
+
+  # ===== Revenue =====
+  - code: '40000'
+    name_en: Revenue
+    name_ku: داهات
+    name_ar: الإيرادات
+    type: income
+    parent: null
+    is_header: true
+  - code: '41000'
+    name_en: Sales — Electronics
+    name_ku: فرۆشتنی ئەلیکترۆنی
+    name_ar: مبيعات الإلكترونيات
+    type: income
+    parent: '40000'
+    is_default_for: default_sales_revenue
+  - code: '41100'
+    name_en: Sales — Clothing
+    name_ku: فرۆشتنی جل
+    name_ar: مبيعات الملابس
+    type: income
+    parent: '40000'
+  - code: '41200'
+    name_en: Sales — Home Goods
+    name_ku: فرۆشتنی کاڵای ماڵ
+    name_ar: مبيعات مستلزمات منزلية
+    type: income
+    parent: '40000'
+  - code: '41300'
+    name_en: Sales — Groceries
+    name_ku: فرۆشتنی خواردنەمەنی
+    name_ar: مبيعات المواد الغذائية
+    type: income
+    parent: '40000'
+  - code: '41400'
+    name_en: Sales — General Merchandise
+    name_ku: فرۆشتنی گشتی
+    name_ar: مبيعات عامة
+    type: income
+    parent: '40000'
+  - code: '41500'
+    name_en: Sales — Consignment Goods
+    name_ku: فرۆشتنی کاڵای وەرگیراو
+    name_ar: مبيعات بضاعة أمانة
+    type: income
+    parent: '40000'
+  - code: '42000'
+    name_en: Online/E-commerce Sales
+    name_ku: فرۆشتنی ئۆنلاین
+    name_ar: مبيعات إلكترونية
+    type: income
+    parent: '40000'
+  - code: '43000'
+    name_en: Service & Repair Revenue
+    name_ku: خزمەتگوزاری
+    name_ar: إيرادات الخدمة والإصلاح
+    type: income
+    parent: '40000'
+  - code: '44000'
+    name_en: Shipping & Handling Revenue
+    name_ku: کرێی بارگوزاری
+    name_ar: إيرادات الشحن
+    type: income
+    parent: '40000'
+  - code: '45000'
+    name_en: Sales Returns & Allowances
+    name_ku: گەڕاندنەوەی فرۆشتن
+    name_ar: مرتجعات المبيعات
+    type: income
+    parent: '40000'
+  - code: '46000'
+    name_en: Sales Discounts
+    name_ku: داشکاندنی فرۆشتن
+    name_ar: خصومات المبيعات
+    type: income
+    parent: '40000'
+  - code: '49000'
+    name_en: Other Income
+    name_ku: داهاتی تر
+    name_ar: إيرادات أخرى
+    type: income
+    parent: '40000'
+
+  # ===== COGS =====
+  - code: '50000'
+    name_en: Cost of Goods Sold
+    name_ku: نرخی کاڵای فرۆشراو
+    name_ar: تكلفة البضاعة المباعة
+    type: expense
+    parent: null
+    is_header: true
+  - code: '51000'
+    name_en: COGS — Merchandise
+    name_ku: نرخی کاڵا
+    name_ar: تكلفة البضاعة
+    type: expense
+    parent: '50000'
+    is_default_for: default_cogs
+  - code: '51100'
+    name_en: COGS — Consignment Settlement
+    name_ku: نرخی کاڵای وەرگیراو
+    name_ar: تكلفة بضاعة أمانة
+    type: expense
+    parent: '50000'
+  - code: '51200'
+    name_en: Freight In
+    name_ku: بارگوزاری کڕین
+    name_ar: شحن داخلي
+    type: expense
+    parent: '50000'
+  - code: '51300'
+    name_en: Inventory Shrinkage
+    name_ku: کەمبوونی مەخزەن
+    name_ar: عجز المخزون
+    type: expense
+    parent: '50000'
+  - code: '51400'
+    name_en: Inventory Write-Off — Obsolete
+    name_ku: لابردنی کۆن
+    name_ar: شطب المخزون التالف
+    type: expense
+    parent: '50000'
+
+  # ===== Operating Expenses =====
+  - code: '60000'
+    name_en: Operating Expenses
+    name_ku: خەرجی کارکردن
+    name_ar: المصروفات التشغيلية
+    type: expense
+    parent: null
+    is_header: true
+  - code: '61000'
+    name_en: Salaries & Wages
+    name_ku: مووچە
+    name_ar: الرواتب
+    type: expense
+    parent: '60000'
+  - code: '61100'
+    name_en: Sales Commissions
+    name_ku: کۆمیشنی فرۆشیار
+    name_ar: عمولات المبيعات
+    type: expense
+    parent: '60000'
+  - code: '62000'
+    name_en: Rent
+    name_ku: کرێ
+    name_ar: الإيجار
+    type: expense
+    parent: '60000'
+  - code: '62100'
+    name_en: Mall CAM Charges
+    name_ku: کرێی پاککردنەوەی گشتی
+    name_ar: رسوم مشتركة بالمول
+    type: expense
+    parent: '60000'
+  - code: '63000'
+    name_en: Utilities
+    name_ku: کارەبا و ئاو
+    name_ar: المرافق
+    type: expense
+    parent: '60000'
+  - code: '64000'
+    name_en: Marketing & Advertising
+    name_ku: ڕیکلام
+    name_ar: التسويق والإعلان
+    type: expense
+    parent: '60000'
+  - code: '65000'
+    name_en: Credit Card Processing Fees
+    name_ku: کرێی کرێدیت کارت
+    name_ar: عمولات بطاقات الائتمان
+    type: expense
+    parent: '60000'
+  - code: '66000'
+    name_en: Maintenance & Cleaning
+    name_ku: چاکسازی و پاککردنەوە
+    name_ar: الصيانة والتنظيف
+    type: expense
+    parent: '60000'
+  - code: '67000'
+    name_en: Security & Loss Prevention
+    name_ku: ئاسایش
+    name_ar: الأمن
+    type: expense
+    parent: '60000'
+  - code: '68000'
+    name_en: Insurance
+    name_ku: بیمە
+    name_ar: التأمين
+    type: expense
+    parent: '60000'
+  - code: '69000'
+    name_en: Depreciation
+    name_ku: خوارەبوون
+    name_ar: الإهلاك
+    type: expense
+    parent: '60000'
+  - code: '69900'
+    name_en: Miscellaneous Expense
+    name_ku: هاوبەش
+    name_ar: مصروفات متنوعة
+    type: expense
+    parent: '60000'

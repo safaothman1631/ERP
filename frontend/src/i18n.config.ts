@@ -59,6 +59,10 @@ export const NAMESPACES = [
   'errors',
   'validation',
   'iraq',
+  // Launch-readiness onboarding wizard (T-LR.3.13)
+  'onboarding',
+  // Iraq e-Fakhata (growth-to-100 § R4 / G4a)
+  'efakhata',
   // Ext modules — each gets its own namespace, prefixed `ext.<slug>`.
   'ext',
 ] as const;

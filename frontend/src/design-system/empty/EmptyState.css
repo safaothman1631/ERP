@@ -150,3 +150,66 @@
 .empty-state__loading--list {
   padding: 48px 24px;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Persistent quick-create footer — rendered by SelectWithQuickCreate's
+ * popupRender in every state (empty, populated, loading, search). See
+ * .kiro/specs/persistent-quick-create-cta/design.md.
+ *
+ * Sticks to the bottom of the popup so a tall, virtualized option list never
+ * scrolls past it. RTL-aware via `text-align: start`.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+.qc-select-footer {
+  display: flex;
+  padding: 4px 6px;
+  border-top: 1px solid var(--qc-border-subtle, rgba(0, 0, 0, 0.06));
+  background: var(--qc-surface-elevated, var(--surface-elevated, #fafafa));
+  position: sticky;
+  bottom: 0;
+  /* Keep the footer above the option list shadow on focus. */
+  z-index: 1;
+}
+
+.qc-select-footer__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: var(--ant-color-primary, #1677ff);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  cursor: pointer;
+  border-radius: 6px;
+  /* RTL: `start` flips with the `dir` attribute / ConfigProvider direction. */
+  text-align: start;
+  transition: background-color 120ms ease;
+}
+
+.qc-select-footer__cta:hover {
+  background: var(--ant-color-primary-bg, rgba(22, 119, 255, 0.08));
+}
+
+.qc-select-footer__cta:focus-visible {
+  outline: none;
+  background: var(--ant-color-primary-bg, rgba(22, 119, 255, 0.08));
+  box-shadow: 0 0 0 2px var(--ant-color-primary-border, rgba(22, 119, 255, 0.4));
+}
+
+.qc-select-footer__cta:active {
+  background: var(--ant-color-primary-bg-hover, rgba(22, 119, 255, 0.12));
+}
+
+.qc-select-footer__cta .anticon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* RTL adjustments — the icon stays at the leading edge of the text, which
+ * `start` already handles for the label; the container's flex direction is
+ * `row` and flows in document direction automatically. No extra rule is
+ * needed for `[dir="rtl"]` because all spacing uses `gap` and `start`. */

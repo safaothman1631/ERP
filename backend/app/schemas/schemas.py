@@ -74,6 +74,41 @@ class TokenResponse(BaseModel):
 
 
 # ===== Contact Schemas =====
+def _normalize_iraqi_phone(raw: Optional[str]) -> Optional[str]:
+    """Normalize an Iraqi mobile to E.164 form (+9647XXXXXXXXX).
+
+    Hardening per launch-readiness § R2.1. Rules:
+      * Strip whitespace, dashes, parentheses.
+      * Accept ``+9647XXXXXXXXX`` (already E.164), ``009647XXXXXXXXX``,
+        ``9647XXXXXXXXX``, ``07XXXXXXXXX`` and ``7XXXXXXXXX``.
+      * Empty / None / strings that do not match any rule are passed through
+        unchanged (downstream may store free-form landline / international
+        numbers — we don't reject those).
+    """
+    if raw is None:
+        return None
+    s = "".join(ch for ch in str(raw) if ch not in " -()\t")
+    if not s:
+        return None
+    # Already E.164 Iraqi mobile
+    if s.startswith("+964") and len(s) == 14 and s[4] == "7" and s[1:].isdigit():
+        return s
+    # International access prefix
+    if s.startswith("00964") and len(s) == 15 and s[5] == "7" and s[2:].isdigit():
+        return "+" + s[2:]
+    # Country code without +
+    if s.startswith("964") and len(s) == 13 and s[3] == "7" and s.isdigit():
+        return "+" + s
+    # Local with leading zero: 07XXXXXXXXX (11 digits)
+    if s.startswith("07") and len(s) == 11 and s.isdigit():
+        return "+964" + s[1:]
+    # Local without leading zero: 7XXXXXXXXX (10 digits)
+    if s.startswith("7") and len(s) == 10 and s.isdigit():
+        return "+964" + s
+    # Not a recognised Iraqi mobile — return the cleaned form (no spaces/dashes)
+    return s
+
+
 class ContactBase(BaseModel):
     contact_type: str = Field(default="customer", max_length=20)
     display_name: str = Field(max_length=200)
@@ -90,7 +125,19 @@ class ContactBase(BaseModel):
 
 
 class ContactCreate(ContactBase):
-    pass
+    # Hardening (launch-readiness § R2.1):
+    #   * ``display_name`` is the only required field (already enforced by base).
+    #   * ``email`` and ``phone`` are explicitly Optional — no 400/422 on
+    #     missing values.
+    #   * ``display_name`` minimum length is relaxed to 1 char so quick-create
+    #     from a search bar with the typed query works on the first keystroke;
+    #     the legacy max_length=200 is kept.
+    display_name: str = Field(min_length=1, max_length=200)
+
+    @field_validator("phone", "mobile", mode="before")
+    @classmethod
+    def _normalize_phone(cls, v):
+        return _normalize_iraqi_phone(v) if v is not None else v
 
 
 class ContactUpdate(ContactBase):
@@ -113,7 +160,9 @@ class ContactResponse(ContactBase):
 # ===== Item Schemas =====
 class ItemBase(BaseModel):
     name: str = Field(max_length=200)
+    name_ku: Optional[str] = Field(default=None, max_length=200)
     sku: Optional[str] = Field(default=None, max_length=50)
+    barcode: Optional[str] = Field(default=None, max_length=100)
     item_type: str = Field(default="goods", max_length=20)
     unit: Optional[str] = Field(default=None, max_length=30)
     description: Optional[str] = Field(default=None, max_length=2000)
@@ -126,15 +175,48 @@ class ItemBase(BaseModel):
     reorder_point: Optional[float] = Field(default=None, ge=0, le=999999999)
     group_id: Optional[str] = None
     image_url: Optional[str] = Field(default=None, max_length=500)  # FIX-73
+    # POS visibility — when true, the item appears on /pos/products and
+    # the POS Terminal. Defaults to False so items created from the regular
+    # /items/new form are NOT auto-exposed to POS; the POS Products page
+    # explicitly flips this on via the "Add from inventory" flow.
+    available_in_pos: bool = False
+    pos_category_id: Optional[str] = Field(default=None, max_length=64)
 
 
 class ItemCreate(ItemBase):
-    pass
+    # Hardening (launch-readiness § R2.2):
+    #   * Empty-string / null FK fields are coerced to ``None`` so the quick-create
+    #     modal can POST `""` for an unselected select without tripping 422.
+    #   * Accept ``income_account_id`` / ``expense_account_id`` aliases (matches the
+    #     frontend quickCreateRegistry naming) and map them onto the legacy
+    #     ``sales_account_id`` / ``purchase_account_id`` storage fields.
+    income_account_id: Optional[str] = Field(default=None, max_length=64)
+    expense_account_id: Optional[str] = Field(default=None, max_length=64)
+
+    @field_validator(
+        "tax_id",
+        "sales_account_id",
+        "purchase_account_id",
+        "income_account_id",
+        "expense_account_id",
+        "group_id",
+        "pos_category_id",
+        mode="before",
+    )
+    @classmethod
+    def _empty_fk_to_none(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, str) and v.strip() == "":
+            return None
+        return v
 
 
 class ItemUpdate(BaseModel):
     name: Optional[str] = Field(default=None, max_length=200)
+    name_ku: Optional[str] = Field(default=None, max_length=200)
     sku: Optional[str] = Field(default=None, max_length=50)
+    barcode: Optional[str] = Field(default=None, max_length=100)
     item_type: Optional[str] = Field(default=None, max_length=20)
     unit: Optional[str] = Field(default=None, max_length=30)
     description: Optional[str] = Field(default=None, max_length=2000)
@@ -142,8 +224,16 @@ class ItemUpdate(BaseModel):
     cost_price: Optional[float] = Field(default=None, ge=0, le=999999999)
     tax_id: Optional[str] = None
     is_trackable: Optional[bool] = None
+    is_active: Optional[bool] = None
     reorder_point: Optional[float] = Field(default=None, ge=0, le=999999999)
     image_url: Optional[str] = Field(default=None, max_length=500)  # FIX-73
+    # POS visibility — controls whether the item appears on /pos/products
+    # and the POS Terminal. Defaults to None so partial updates don't
+    # accidentally toggle visibility.
+    available_in_pos: Optional[bool] = None
+    pos_category_id: Optional[str] = Field(default=None, max_length=64)
+    income_account_id: Optional[str] = Field(default=None, max_length=64)
+    expense_account_id: Optional[str] = Field(default=None, max_length=64)
     expected_version: Optional[int] = Field(default=None, ge=0)
 
 

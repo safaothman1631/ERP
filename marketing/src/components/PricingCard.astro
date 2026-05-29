@@ -1,0 +1,114 @@
+---
+/**
+ * PricingCard — single pricing tier card.
+ *
+ * Uses the active currency mode and billing cycle (monthly | annual) toggled by the
+ * parent pricing page. Shipped feature list and CTA come from props.
+ */
+import { fmtIQD, fmtUSD, t, type Locale } from '../i18n/utils';
+
+export interface Props {
+  locale: Locale;
+  id: 'starter' | 'growth' | 'pro';
+  name: string;
+  sub: string;
+  priceIqdMonthly: number;
+  priceIqdAnnual: number;
+  priceUsdMonthly: number;
+  priceUsdAnnual: number;
+  features: string[];
+  popular?: boolean;
+  ctaLabel?: string;
+  ctaHref?: string;
+}
+
+const {
+  locale,
+  id,
+  name,
+  sub,
+  priceIqdMonthly,
+  priceIqdAnnual,
+  priceUsdMonthly,
+  priceUsdAnnual,
+  features,
+  popular = false,
+  ctaLabel,
+  ctaHref = 'https://app.zoho-kurdish.iq/signup',
+} = Astro.props;
+
+const monthlyIqd = fmtIQD(priceIqdMonthly, locale);
+const annualMonthIqd = fmtIQD(Math.round(priceIqdAnnual / 12), locale);
+const monthlyUsd = fmtUSD(priceUsdMonthly, locale);
+const annualMonthUsd = fmtUSD(Math.round((priceUsdAnnual / 12) * 100) / 100, locale);
+
+const ctaText = ctaLabel ?? t('pricing.cta.start', locale);
+---
+
+<article
+  data-pricing-tier={id}
+  class:list={[
+    'relative card flex flex-col h-full',
+    popular ? 'border-brand-300 ring-2 ring-brand-100 shadow-lift' : '',
+  ]}
+>
+  {
+    popular && (
+      <span class="absolute -top-3 start-1/2 -translate-x-1/2 rtl:translate-x-1/2 px-3 py-1 bg-brand-500 text-white text-xs font-semibold uppercase rounded-full">
+        {t('pricing.popular', locale)}
+      </span>
+    )
+  }
+
+  <header class="mb-5">
+    <h3 class="font-display font-bold text-2xl text-ink-900 mb-1">{name}</h3>
+    <p class="text-sm text-ink-600">{sub}</p>
+  </header>
+
+  <div class="mb-6">
+    <div data-currency="iqd">
+      <p data-cycle="monthly">
+        <span class="font-display font-bold text-3xl text-ink-950">{monthlyIqd}</span>
+        <span class="text-sm text-ink-500">/{t('pricing.monthly', locale)}</span>
+      </p>
+      <p data-cycle="annual" hidden>
+        <span class="font-display font-bold text-3xl text-ink-950">{annualMonthIqd}</span>
+        <span class="text-sm text-ink-500">/{t('pricing.monthly', locale)}</span>
+        <span class="block text-xs text-accent-600 mt-1">{t('pricing.annual_discount', locale)}</span>
+      </p>
+    </div>
+    <div data-currency="usd" hidden>
+      <p data-cycle="monthly">
+        <span class="font-display font-bold text-3xl text-ink-950">{monthlyUsd}</span>
+        <span class="text-sm text-ink-500">/{t('pricing.monthly', locale)}</span>
+      </p>
+      <p data-cycle="annual" hidden>
+        <span class="font-display font-bold text-3xl text-ink-950">{annualMonthUsd}</span>
+        <span class="text-sm text-ink-500">/{t('pricing.monthly', locale)}</span>
+        <span class="block text-xs text-accent-600 mt-1">{t('pricing.annual_discount', locale)}</span>
+      </p>
+    </div>
+  </div>
+
+  <ul class="space-y-2.5 mb-6 flex-1">
+    {
+      features.map((f) => (
+        <li class="flex items-start gap-2 text-sm text-ink-700">
+          <svg width="18" height="18" viewBox="0 0 18 18" class="text-accent-500 mt-0.5 flex-shrink-0" aria-hidden="true">
+            <path d="M4 9l3.5 3.5L14 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>{f}</span>
+        </li>
+      ))
+    }
+  </ul>
+
+  <a
+    href={ctaHref}
+    class:list={[
+      'btn w-full justify-center',
+      popular ? 'btn-primary' : 'btn-secondary',
+    ]}
+    data-cta={`pricing-${id}`}
+  >{ctaText}</a>
+</article>

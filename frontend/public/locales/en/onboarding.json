@@ -1,0 +1,254 @@
+{
+  "title": "Welcome — let's get you set up",
+  "progress": {
+    "label": "Step {{current}} of {{total}}"
+  },
+  "cta": {
+    "next": "Next",
+    "back": "Back",
+    "skip": "Skip",
+    "finish": "Finish setup"
+  },
+  "step": {
+    "1": {
+      "label": "Company",
+      "title": "Tell us about your business",
+      "description": "Basic profile — name, address, and business type."
+    },
+    "2": {
+      "label": "Region",
+      "title": "Choose your Iraq region",
+      "description": "Pick your governorate — we'll auto-populate tax rates and local defaults."
+    },
+    "3": {
+      "label": "Chart of Accounts",
+      "title": "Pick a chart of accounts",
+      "description": "Start with a template that fits your business — you can customize later."
+    },
+    "4": {
+      "label": "POS Hardware",
+      "title": "POS hardware",
+      "description": "Pair a Bluetooth thermal printer — you can skip this and set it up later."
+    },
+    "5": {
+      "label": "First sale",
+      "title": "Make your first sale",
+      "description": "Add a product, add a customer, ring it up, and print a receipt."
+    }
+  },
+  "company": {
+    "name": {
+      "label": "Company name",
+      "placeholder": "e.g. Hawar Trading",
+      "required": "Company name is required",
+      "too_short": "Name must be at least 2 characters",
+      "too_long": "Name is too long"
+    },
+    "legal_name": {
+      "label": "Legal name",
+      "placeholder": "Registered name",
+      "help": "Only if different from the trading name"
+    },
+    "governorate": {
+      "label": "Governorate",
+      "placeholder": "Select governorate"
+    },
+    "city": { "label": "City" },
+    "district": { "label": "District" },
+    "address": { "label": "Street address" },
+    "phone": {
+      "label": "Phone",
+      "help": "Iraqi number — starts with +964",
+      "invalid": "Invalid phone number",
+      "normalized": "Normalized to: {{value}}"
+    },
+    "email": { "label": "Email", "invalid": "Invalid email" },
+    "tax_id": {
+      "label": "Commercial registration number",
+      "placeholder": "e.g. 123456",
+      "help": "Your Iraqi commercial registration ID"
+    },
+    "vat_status": {
+      "label": "VAT status",
+      "required": "Please pick a VAT status",
+      "registered": "Registered",
+      "not_registered": "Not registered",
+      "pending": "Registration pending"
+    },
+    "business_type": {
+      "label": "Business type",
+      "required": "Business type is required",
+      "options": {
+        "retail": "Retail",
+        "restaurant": "Restaurant",
+        "pharmacy": "Pharmacy",
+        "services": "Services",
+        "manufacturing": "Manufacturing",
+        "wholesale": "Wholesale",
+        "ngo": "Non-profit / NGO"
+      }
+    },
+    "intended_use": {
+      "label": "What will you use this for?",
+      "help": "Check everything that applies — helps us recommend better defaults.",
+      "options": {
+        "retail": "Retail",
+        "restaurant": "Restaurant",
+        "pharmacy": "Pharmacy",
+        "services": "Services",
+        "manufacturing": "Manufacturing",
+        "wholesale": "Wholesale",
+        "ngo": "Non-profit / NGO"
+      }
+    },
+    "privacy_notice": "Your data is only used to configure your account."
+  },
+  "region": {
+    "map_aria": "Map of Iraqi governorates",
+    "list_aria": "List of governorates",
+    "toggle_list_view": "Show as list",
+    "krg_tag": "Kurdistan Region",
+    "preview": {
+      "empty_title": "Select a governorate",
+      "empty_hint": "Tax rates and regional defaults will appear here after you pick one.",
+      "capital": "Capital",
+      "currency": "Currency",
+      "timezone": "Time zone",
+      "tax_rates": "Tax rates",
+      "no_taxes": "No taxes configured yet",
+      "withholding": "Withholding rates",
+      "wh_services": "Services",
+      "wh_rent": "Rent",
+      "wh_materials": "Materials",
+      "placeholder_notice": "Rates are placeholders — pending accountant review"
+    }
+  },
+  "coa": {
+    "preview_title": "Chart of accounts preview",
+    "apply_cta": "Apply this template",
+    "applied_success": "{{count}} accounts created",
+    "applied_error": "Could not apply the template — please retry",
+    "accounts_count": "{{count}} accounts",
+    "success_title": "Template applied",
+    "success_detail": "{{count}} accounts created in your system",
+    "templates": {
+      "small_general_trade": { "name": "Small business", "description": "Simple retail — 40 accounts" },
+      "medium_general_trade": { "name": "Medium business", "description": "Multi-location retail — 80 accounts" },
+      "restaurant_cafe": { "name": "Restaurant / café", "description": "F&B specific — 60 accounts" },
+      "pharmacy": { "name": "Pharmacy", "description": "Pharmacy specific — 70 accounts" },
+      "construction_contractor": { "name": "Construction", "description": "Contractor with WIP — 120 accounts" }
+    },
+    "accounts": {
+      "assets": "Assets",
+      "liabilities": "Liabilities",
+      "equity": "Equity",
+      "revenue": "Revenue",
+      "expenses": "Expenses",
+      "cash": "Cash on hand",
+      "petty_cash": "Petty cash",
+      "bank_main": "Bank — Main",
+      "bank_secondary": "Bank — Secondary",
+      "ar": "Accounts receivable",
+      "ap": "Accounts payable",
+      "inventory": "Inventory",
+      "food_inventory": "Food inventory",
+      "beverage_inventory": "Beverage inventory",
+      "controlled_inventory": "Controlled substances inventory",
+      "insurance_receivable": "Insurance receivable",
+      "sales_revenue": "Sales revenue",
+      "food_revenue": "Food revenue",
+      "beverage_revenue": "Beverage revenue",
+      "delivery_revenue": "Delivery revenue",
+      "cogs": "Cost of goods sold",
+      "food_cost": "Food cost",
+      "beverage_cost": "Beverage cost",
+      "tips_payable": "Tips payable",
+      "rent": "Rent",
+      "wip": "Work in progress",
+      "retention_receivable": "Retention receivable",
+      "retention_payable": "Retention payable",
+      "subcontractor_payable": "Subcontractor payable"
+    }
+  },
+  "pos": {
+    "intro_title": "POS hardware",
+    "intro_body": "Pair a Bluetooth thermal printer to print receipts. This step is optional — you can do it later in Settings.",
+    "skip_for_now": "Skip for now",
+    "bluetooth": {
+      "unavailable_title": "Web Bluetooth not available",
+      "unavailable_body": "Your browser doesn't support Web Bluetooth. Use Chrome or Edge, or enable the browser-print fallback."
+    },
+    "printer": {
+      "title": "Thermal printer",
+      "pair_cta": "Pair printer",
+      "unpair": "Unpair",
+      "unknown_name": "Unnamed device",
+      "paired": "Printer paired",
+      "paired_title": "Successfully paired",
+      "pair_cancelled": "Pairing cancelled",
+      "paper_width": { "label": "Paper width" },
+      "fallback_on": "Browser print enabled",
+      "fallback_off": "Browser print disabled",
+      "fallback_help": "If you don't have a thermal printer, you can fall back to browser printing.",
+      "test_cta": "Test print",
+      "test_sent": "Test print sent",
+      "test_ok": "Test print succeeded",
+      "test_failed": "Test print failed"
+    },
+    "drawer": {
+      "title": "Cash drawer",
+      "help": "If your printer has a cash drawer connected, enable it here.",
+      "pin2": "Pin 2",
+      "pin5": "Pin 5"
+    }
+  },
+  "first_sale": {
+    "steps": {
+      "product": "Add product",
+      "customer": "Add customer",
+      "sale": "Make sale",
+      "receipt": "Receipt"
+    },
+    "product_title": "Add your first product",
+    "product_hint": "Create a simple item for testing — you can add more later.",
+    "product_name_label": "Product name",
+    "product_name_placeholder": "e.g. Black tea",
+    "product_name_required": "Product name is required",
+    "product_price_label": "Unit price",
+    "add_product_cta": "Add product",
+    "product_created": "Product added",
+    "product_error": "Could not add product",
+    "customer_title": "Add your first customer",
+    "customer_name_label": "Customer name",
+    "customer_name_placeholder": "e.g. Soran Ahmad",
+    "customer_name_required": "Customer name is required",
+    "customer_phone_label": "Phone",
+    "add_customer_cta": "Add customer",
+    "customer_created": "Customer added",
+    "customer_error": "Could not add customer",
+    "sale_title": "Ring up the test sale",
+    "sale_hint": "A small IQD 1,000 test sale to verify everything works.",
+    "product_label": "Product",
+    "customer_label": "Customer",
+    "total_label": "Total",
+    "charge_cta": "Charge",
+    "sale_created": "Sale recorded",
+    "sale_error": "Could not complete the sale",
+    "receipt_title": "Print the receipt",
+    "receipt_hint": "Print the sale receipt — or skip this step.",
+    "print_receipt_cta": "Print receipt",
+    "skip_print": "Skip",
+    "receipt_printed": "Receipt printed",
+    "receipt_done_title": "Receipt printed",
+    "receipt_done_body": "You're ready for real business!"
+  },
+  "complete": {
+    "title": "Congratulations! Setup is complete",
+    "message": "Your system is ready for business. Start selling and grow your company with Zoho-Kurdish.",
+    "go_to_dashboard": "Go to dashboard"
+  },
+  "common": {
+    "on": "On",
+    "off": "Off"
+  }
+}

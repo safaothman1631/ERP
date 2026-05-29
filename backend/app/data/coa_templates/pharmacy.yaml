@@ -1,0 +1,499 @@
+name: pharmacy
+display_name_ku: دەرمانخانە
+display_name_ar: صيدلية
+display_name_en: Pharmacy
+recommended_for:
+  - pharmacy
+  - drug_store
+  - medical_supplies
+accounts:
+  # ===== Assets =====
+  - code: '10000'
+    name_en: Assets
+    name_ku: سامان
+    name_ar: الأصول
+    type: asset
+    parent: null
+    is_header: true
+  - code: '11000'
+    name_en: Current Assets
+    name_ku: سامانی ئێستا
+    name_ar: الأصول المتداولة
+    type: asset
+    parent: '10000'
+    is_header: true
+  - code: '11100'
+    name_en: Cash on Hand (IQD)
+    name_ku: پارەی نەختی (دینار)
+    name_ar: النقدية في الصندوق (دينار)
+    type: asset
+    parent: '11000'
+    is_cash: true
+    is_default_for: default_cash
+  - code: '11110'
+    name_en: Cash on Hand (USD)
+    name_ku: پارەی نەختی (دۆلار)
+    name_ar: النقدية في الصندوق (دولار)
+    type: asset
+    parent: '11000'
+    is_cash: true
+    currency_code: USD
+  - code: '11120'
+    name_en: Petty Cash
+    name_ku: پارەی بچووک
+    name_ar: المصروفات النثرية
+    type: asset
+    parent: '11000'
+    is_cash: true
+  - code: '11200'
+    name_en: Bank — Operating
+    name_ku: بانک — کارکردن
+    name_ar: البنك — التشغيل
+    type: asset
+    parent: '11000'
+    is_bank: true
+    is_default_for: default_bank
+  # Pharmacy-specific receivables
+  - code: '11300'
+    name_en: Accounts Receivable — Walk-In
+    name_ku: حسابی وەرگرتن — هاتوچۆ
+    name_ar: ذمم — عملاء عابرون
+    type: asset
+    parent: '11000'
+    is_default_for: default_accounts_receivable
+  - code: '11310'
+    name_en: Insurance Receivable — Government
+    name_ku: حسابی بیمە — حکومەت
+    name_ar: ذمم تأمين حكومي
+    type: asset
+    parent: '11000'
+  - code: '11320'
+    name_en: Insurance Receivable — Private
+    name_ku: حسابی بیمە — تایبەت
+    name_ar: ذمم تأمين خاص
+    type: asset
+    parent: '11000'
+  - code: '11330'
+    name_en: Hospital/Clinic Receivable
+    name_ku: حسابی نەخۆشخانە
+    name_ar: ذمم المستشفيات
+    type: asset
+    parent: '11000'
+  - code: '11340'
+    name_en: AR — Allowance for Doubtful Accounts
+    name_ku: ڕێگەدان بۆ گومانلێکراو
+    name_ar: مخصص الديون المشكوك فيها
+    type: asset
+    parent: '11000'
+  # Pharmacy-specific inventory (with expiry/batch tracking conceptually)
+  - code: '11400'
+    name_en: Inventory — Prescription Drugs
+    name_ku: مەخزەن — دەرمانی ڕەسەتە
+    name_ar: المخزون — أدوية وصفة طبية
+    type: asset
+    parent: '11000'
+    is_default_for: default_inventory
+  - code: '11410'
+    name_en: Inventory — OTC Drugs
+    name_ku: مەخزەن — دەرمانی بێ ڕەسەتە
+    name_ar: المخزون — أدوية بدون وصفة
+    type: asset
+    parent: '11000'
+  - code: '11420'
+    name_en: Inventory — Controlled Substances
+    name_ku: مەخزەن — دەرمانی کۆنترۆڵکراو
+    name_ar: المخزون — مواد مراقبة
+    type: asset
+    parent: '11000'
+  - code: '11430'
+    name_en: Inventory — Cosmetics & Personal Care
+    name_ku: مەخزەن — جوانی
+    name_ar: المخزون — مستحضرات تجميل
+    type: asset
+    parent: '11000'
+  - code: '11440'
+    name_en: Inventory — Medical Devices
+    name_ku: مەخزەن — ئامێری پزیشکی
+    name_ar: المخزون — أجهزة طبية
+    type: asset
+    parent: '11000'
+  - code: '11450'
+    name_en: Inventory — Refrigerated Drugs
+    name_ku: مەخزەن — دەرمانی سارد
+    name_ar: المخزون — أدوية مبردة
+    type: asset
+    parent: '11000'
+  - code: '11460'
+    name_en: Inventory Reserve — Near Expiry
+    name_ku: ذخیرە — نزیک بەسەرچوون
+    name_ar: مخصص — قرب انتهاء الصلاحية
+    type: asset
+    parent: '11000'
+  - code: '11470'
+    name_en: Inventory Write-Off — Expired
+    name_ku: لابردنی بەسەرچوو
+    name_ar: شطب أدوية منتهية
+    type: asset
+    parent: '11000'
+  - code: '11500'
+    name_en: Prepaid Expenses
+    name_ku: خەرجی پێشدراو
+    name_ar: المصروفات المدفوعة مقدمًا
+    type: asset
+    parent: '11000'
+  - code: '11510'
+    name_en: Prepaid License & Permits
+    name_ku: مۆڵەتی پێشدراو
+    name_ar: تراخيص مدفوعة مقدمًا
+    type: asset
+    parent: '11000'
+  - code: '11600'
+    name_en: VAT Receivable
+    name_ku: باجی وەرگیراو
+    name_ar: ضريبة قابلة للاسترداد
+    type: asset
+    parent: '11000'
+
+  # Fixed Assets
+  - code: '15000'
+    name_en: Fixed Assets
+    name_ku: سامانی جێگیر
+    name_ar: الأصول الثابتة
+    type: asset
+    parent: '10000'
+    is_header: true
+  - code: '15100'
+    name_en: Refrigeration Equipment
+    name_ku: ئامێری ساردکەرەوە
+    name_ar: معدات التبريد
+    type: asset
+    parent: '15000'
+  - code: '15200'
+    name_en: Shelving & Display
+    name_ku: ڕەفە و نیشاندان
+    name_ar: الرفوف والعرض
+    type: asset
+    parent: '15000'
+  - code: '15300'
+    name_en: POS & Computer Equipment
+    name_ku: ئامێری فرۆشگا
+    name_ar: نقاط البيع والكمبيوتر
+    type: asset
+    parent: '15000'
+  - code: '15400'
+    name_en: Accumulated Depreciation
+    name_ku: کۆی خوارەبوون
+    name_ar: مجمع الإهلاك
+    type: asset
+    parent: '15000'
+
+  # ===== Liabilities =====
+  - code: '20000'
+    name_en: Liabilities
+    name_ku: قەرزەکان
+    name_ar: الخصوم
+    type: liability
+    parent: null
+    is_header: true
+  - code: '21100'
+    name_en: Accounts Payable — Drug Wholesalers
+    name_ku: حسابی دانەوە — کۆفرۆش
+    name_ar: ذمم دائنة — موزعو الأدوية
+    type: liability
+    parent: '20000'
+    is_default_for: default_accounts_payable
+  - code: '21110'
+    name_en: Accounts Payable — Other Suppliers
+    name_ku: حسابی دانەوە — دابینکەرانی تر
+    name_ar: ذمم دائنة — موردون آخرون
+    type: liability
+    parent: '20000'
+  - code: '21200'
+    name_en: Withholding Tax Payable
+    name_ku: باجی گرتنەوەی دانەوە
+    name_ar: ضريبة الاستقطاع المستحقة
+    type: liability
+    parent: '20000'
+    is_default_for: default_wht_payable
+  - code: '21300'
+    name_en: VAT Payable
+    name_ku: باجی بەرزکراوەی دانەوە
+    name_ar: ضريبة القيمة المضافة المستحقة
+    type: liability
+    parent: '20000'
+    is_default_for: default_vat_payable
+  - code: '21400'
+    name_en: Income Tax Payable
+    name_ku: باجی داهات
+    name_ar: ضريبة الدخل المستحقة
+    type: liability
+    parent: '20000'
+  - code: '21500'
+    name_en: Wages Payable
+    name_ku: مووچەی دانەوە
+    name_ar: الرواتب المستحقة
+    type: liability
+    parent: '20000'
+  - code: '21600'
+    name_en: Pharmacist License Fees Payable
+    name_ku: کرێی مۆڵەتی دەرمانساز
+    name_ar: رسوم ترخيص الصيدلي
+    type: liability
+    parent: '20000'
+  - code: '21700'
+    name_en: Customer Deposits
+    name_ku: داپۆشینی کڕیار
+    name_ar: ودائع العملاء
+    type: liability
+    parent: '20000'
+  - code: '25000'
+    name_en: Long-Term Liabilities
+    name_ku: قەرزی درێژخایەن
+    name_ar: الخصوم طويلة الأجل
+    type: liability
+    parent: '20000'
+    is_header: true
+  - code: '25100'
+    name_en: Bank Loans
+    name_ku: قەرزی بانک
+    name_ar: قروض بنكية
+    type: liability
+    parent: '25000'
+
+  # ===== Equity =====
+  - code: '30000'
+    name_en: Equity
+    name_ku: سەرمایە
+    name_ar: حقوق الملكية
+    type: equity
+    parent: null
+    is_header: true
+  - code: '31000'
+    name_en: Owner's Capital
+    name_ku: سەرمایەی خاوەنکار
+    name_ar: رأس مال المالك
+    type: equity
+    parent: '30000'
+    is_default_for: default_owner_equity
+  - code: '32000'
+    name_en: Retained Earnings
+    name_ku: قازانجی پاشەکەوت
+    name_ar: الأرباح المحتجزة
+    type: equity
+    parent: '30000'
+    is_default_for: default_retained_earnings
+  - code: '33000'
+    name_en: Owner's Drawings
+    name_ku: بردنەوەی خاوەنکار
+    name_ar: مسحوبات المالك
+    type: equity
+    parent: '30000'
+  - code: '34000'
+    name_en: Opening Balance Equity
+    name_ku: سەرمایەی سەرەتا
+    name_ar: رصيد افتتاحي
+    type: equity
+    parent: '30000'
+
+  # ===== Revenue =====
+  - code: '40000'
+    name_en: Revenue
+    name_ku: داهات
+    name_ar: الإيرادات
+    type: income
+    parent: null
+    is_header: true
+  - code: '41000'
+    name_en: Sales — Prescription Drugs
+    name_ku: فرۆشتنی دەرمانی ڕەسەتە
+    name_ar: مبيعات أدوية الوصفة
+    type: income
+    parent: '40000'
+    is_default_for: default_sales_revenue
+  - code: '41100'
+    name_en: Sales — OTC Drugs
+    name_ku: فرۆشتنی دەرمانی بێ ڕەسەتە
+    name_ar: مبيعات أدوية بدون وصفة
+    type: income
+    parent: '40000'
+  - code: '41200'
+    name_en: Sales — Cosmetics
+    name_ku: فرۆشتنی جوانی
+    name_ar: مبيعات مستحضرات تجميل
+    type: income
+    parent: '40000'
+  - code: '41300'
+    name_en: Sales — Medical Devices
+    name_ku: فرۆشتنی ئامێری پزیشکی
+    name_ar: مبيعات أجهزة طبية
+    type: income
+    parent: '40000'
+  - code: '41400'
+    name_en: Sales — Personal Care
+    name_ku: فرۆشتنی پاراستنی کەسی
+    name_ar: مبيعات العناية الشخصية
+    type: income
+    parent: '40000'
+  - code: '42000'
+    name_en: Insurance Claim Revenue
+    name_ku: داهاتی بیمە
+    name_ar: إيرادات مطالبات التأمين
+    type: income
+    parent: '40000'
+  - code: '43000'
+    name_en: Consultation Fees
+    name_ku: کرێی ڕاوێژکاری
+    name_ar: أتعاب الاستشارة
+    type: income
+    parent: '40000'
+  - code: '44000'
+    name_en: Sales Returns
+    name_ku: گەڕاندنەوەی فرۆشتن
+    name_ar: مردودات المبيعات
+    type: income
+    parent: '40000'
+  - code: '49000'
+    name_en: Other Income
+    name_ku: داهاتی تر
+    name_ar: إيرادات أخرى
+    type: income
+    parent: '40000'
+
+  # ===== Cost of Goods Sold =====
+  - code: '50000'
+    name_en: Cost of Goods Sold
+    name_ku: نرخی کاڵای فرۆشراو
+    name_ar: تكلفة البضاعة المباعة
+    type: expense
+    parent: null
+    is_header: true
+  - code: '51000'
+    name_en: COGS — Prescription Drugs
+    name_ku: نرخی دەرمانی ڕەسەتە
+    name_ar: تكلفة أدوية الوصفة
+    type: expense
+    parent: '50000'
+    is_default_for: default_cogs
+  - code: '51100'
+    name_en: COGS — OTC Drugs
+    name_ku: نرخی دەرمانی بێ ڕەسەتە
+    name_ar: تكلفة أدوية بدون وصفة
+    type: expense
+    parent: '50000'
+  - code: '51200'
+    name_en: COGS — Cosmetics & Personal Care
+    name_ku: نرخی جوانی
+    name_ar: تكلفة مستحضرات
+    type: expense
+    parent: '50000'
+  - code: '51300'
+    name_en: COGS — Medical Devices
+    name_ku: نرخی ئامێری پزیشکی
+    name_ar: تكلفة أجهزة طبية
+    type: expense
+    parent: '50000'
+  - code: '51400'
+    name_en: Expired Inventory Write-Off
+    name_ku: لابردنی بەسەرچوو
+    name_ar: شطب أدوية منتهية
+    type: expense
+    parent: '50000'
+  - code: '51500'
+    name_en: Damaged Inventory Write-Off
+    name_ku: لابردنی زیانلێکەوتوو
+    name_ar: شطب التالف
+    type: expense
+    parent: '50000'
+  - code: '51600'
+    name_en: Freight & Cold-Chain Logistics
+    name_ku: بارگوزاری ساردکەرەوە
+    name_ar: شحن وسلسلة التبريد
+    type: expense
+    parent: '50000'
+
+  # ===== Operating Expenses =====
+  - code: '60000'
+    name_en: Operating Expenses
+    name_ku: خەرجی کارکردن
+    name_ar: المصروفات التشغيلية
+    type: expense
+    parent: null
+    is_header: true
+  - code: '61000'
+    name_en: Salaries — Pharmacists
+    name_ku: مووچەی دەرمانساز
+    name_ar: رواتب الصيادلة
+    type: expense
+    parent: '60000'
+  - code: '61100'
+    name_en: Salaries — Pharmacy Technicians
+    name_ku: مووچەی یاریدەدەر
+    name_ar: رواتب فنيي الصيدلة
+    type: expense
+    parent: '60000'
+  - code: '61200'
+    name_en: Salaries — Cashiers
+    name_ku: مووچەی فرۆشیار
+    name_ar: رواتب أمناء الصندوق
+    type: expense
+    parent: '60000'
+  - code: '62000'
+    name_en: Rent
+    name_ku: کرێ
+    name_ar: الإيجار
+    type: expense
+    parent: '60000'
+  - code: '63000'
+    name_en: Utilities
+    name_ku: کارەبا و ئاو
+    name_ar: المرافق
+    type: expense
+    parent: '60000'
+  - code: '64000'
+    name_en: License & Regulatory Fees
+    name_ku: کرێی مۆڵەت
+    name_ar: رسوم التراخيص
+    type: expense
+    parent: '60000'
+  - code: '65000'
+    name_en: Refrigeration Maintenance
+    name_ku: چاکسازی ساردکەرەوە
+    name_ar: صيانة التبريد
+    type: expense
+    parent: '60000'
+  - code: '66000'
+    name_en: Marketing
+    name_ku: ڕیکلام
+    name_ar: التسويق
+    type: expense
+    parent: '60000'
+  - code: '67000'
+    name_en: Insurance — Liability & Property
+    name_ku: بیمە
+    name_ar: التأمين
+    type: expense
+    parent: '60000'
+  - code: '68000'
+    name_en: Bank & Card Fees
+    name_ku: کرێی بانک
+    name_ar: عمولات البنك
+    type: expense
+    parent: '60000'
+  - code: '69000'
+    name_en: Depreciation
+    name_ku: خوارەبوون
+    name_ar: الإهلاك
+    type: expense
+    parent: '60000'
+  - code: '69100'
+    name_en: Bad Debt Expense
+    name_ku: خەرجی قەرزی خراپ
+    name_ar: مصروف الديون المعدومة
+    type: expense
+    parent: '60000'
+  - code: '69900'
+    name_en: Miscellaneous
+    name_ku: هاوبەش
+    name_ar: متنوعة
+    type: expense
+    parent: '60000'

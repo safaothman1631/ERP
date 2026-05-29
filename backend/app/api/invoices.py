@@ -141,14 +141,19 @@ def create_invoice(data: InvoiceCreate, user: dict = Depends(get_current_user)):
     total_raw = subtotal + total_tax + float(data.shipping_charge or 0) + float(data.adjustment or 0) - float(data.discount_amount or 0)
     total = float(Decimal(str(total_raw)).quantize(Decimal(10) ** -decimal_places, rounding=round_func))
     
+    # InvoiceWriteModel stores dates as ISO strings; serialise datetime/date here
+    # so callers can pass either type without hitting the write-model validator.
+    def _iso(d):
+        return d.isoformat() if hasattr(d, "isoformat") else d
+
     repo = InvoiceRepository(user["org_id"])
     invoice = repo.create({
         "id": str(uuid.uuid4()),
         "contact_id": data.contact_id,
         "invoice_number": invoice_number,
         "auto_numbered": auto_numbered,
-        "date": data.date,
-        "due_date": data.due_date,
+        "date": _iso(data.date),
+        "due_date": _iso(data.due_date),
         "reference": data.reference,
         "currency_code": data.currency_code,
         "payment_terms": payment_terms,

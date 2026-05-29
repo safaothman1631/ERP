@@ -90,6 +90,7 @@ class BaseRepository:
     @classmethod
     def _validate_payload(cls, data: dict) -> dict:
         from app.config import settings
+        import datetime as _dt
 
         model = cls.WRITE_MODEL
         if model is None and getattr(settings, "GENERIC_WRITE_VALIDATION", True):
@@ -98,7 +99,20 @@ class BaseRepository:
             model = GenericWriteModel
         if model is None:
             return data
-        cleaned = {k: v for k, v in data.items() if k not in {"id", "org_id", "_version", "schema_version", "created_at", "updated_at"}}
+
+        # Pre-coerce datetime/date → ISO string so callers can pass either type
+        # without each endpoint needing to call .isoformat() before repo.create.
+        # Write-models declare these fields as `str`, so we feed them strings.
+        def _coerce(v):
+            if isinstance(v, (_dt.datetime, _dt.date)):
+                return v.isoformat()
+            return v
+
+        cleaned = {
+            k: _coerce(v)
+            for k, v in data.items()
+            if k not in {"id", "org_id", "_version", "schema_version", "created_at", "updated_at"}
+        }
         validated = model.model_validate(cleaned)
         out = validated.model_dump(exclude_unset=True)
         for k, v in data.items():

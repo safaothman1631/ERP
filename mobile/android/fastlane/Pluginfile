@@ -1,0 +1,8 @@
+# Fastlane plugins for Android pipeline.
+#
+# These are installed in CI via `bundle install` before any lane runs.
+# Keep this list minimal — every plugin slows down CI cold start.
+
+# Crashlytics symbol upload (used after the production lane to upload mapping
+# files so stack traces resolve symbols).
+gem "fastlane-plugin-firebase_app_distribution"

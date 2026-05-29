@@ -5,6 +5,7 @@ import { PlusOutlined, DeleteOutlined, ThunderboltOutlined, InboxOutlined } from
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { PageHeader, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { downloadCsv } from '../utils/exportCsv';
 import { space as spaceTk } from '../theme/tokens';
 import { useAuthStore } from '../store';
@@ -248,11 +249,11 @@ const BankRules: React.FC = () => {
  </Space>
 
  <Form.Item label={t('account')} name="target_account_id" rules={[{ required: true, message: t('required_account') }]}>
- <Select showSearch optionFilterProp="label" placeholder={t('placeholder_select')} options={accounts.map(a => ({ label: `${a.code} - ${a.name}`, value: a.id }))} />
+ <SelectWithQuickCreate entity="account" showSearch placeholder={t('placeholder_select')} allowClear />
  </Form.Item>
 
  <Form.Item label={t('contact')} name="target_contact_id">
- <Select showSearch optionFilterProp="label" placeholder={t('placeholder_contact')} allowClear options={contacts.map(c => ({ label: c.display_name, value: c.id }))} />
+ <SelectWithQuickCreate entity="customer" showSearch placeholder={t('placeholder_contact')} allowClear />
  </Form.Item>
 
  <Form.Item label={t('type')} name="rule_type" rules={[{ required: true, message: t('required_field') }]}>

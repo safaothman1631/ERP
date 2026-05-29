@@ -1,0 +1,163 @@
+---
+/**
+ * PricingSection — full three-tier pricing with monthly/annual toggle and IQD/USD toggle.
+ * Used on /pricing and (teaser variant) on the landing page.
+ */
+import { t, type Locale } from '../../i18n/utils';
+import PricingCard from '../PricingCard.astro';
+
+export interface Props {
+  locale: Locale;
+  /** If true, hide the comparison table (teaser mode). */
+  teaser?: boolean;
+}
+const { locale, teaser = false } = Astro.props;
+
+const APP_URL = import.meta.env.PUBLIC_APP_URL || 'https://app.zoho-kurdish.iq';
+
+const FEATURE_KEYS_BY_TIER = {
+  starter: [
+    locale === 'ku' ? '١ بەکارهێنەر، ١ فرۆشگا' : locale === 'ar' ? '١ مستخدم، ١ فرع' : '1 user, 1 location',
+    locale === 'ku' ? 'POS و فاکتور' : locale === 'ar' ? 'نقطة البيع والفوترة' : 'POS and invoicing',
+    locale === 'ku' ? 'هەژمارداری بنچینەیی' : locale === 'ar' ? 'محاسبة أساسية' : 'Basic accounting',
+    locale === 'ku' ? 'ڕاپۆرتی فرۆشتن' : locale === 'ar' ? 'تقارير المبيعات' : 'Sales reports',
+    locale === 'ku' ? 'پشتیوانی ئیمەیل' : locale === 'ar' ? 'دعم بريد إلكتروني' : 'Email support',
+    locale === 'ku' ? '٢ گیگابایت ستۆرج' : locale === 'ar' ? '٢ جيجابايت تخزين' : '2 GB storage',
+  ],
+  growth: [
+    locale === 'ku' ? 'تا ٥ بەکارهێنەر، چەند فرۆشگا' : locale === 'ar' ? 'حتى ٥ مستخدمين، فروع متعددة' : 'Up to 5 users, multi-location',
+    locale === 'ku' ? 'هەموو مۆدیوولی Wave A' : locale === 'ar' ? 'كل وحدات Wave A' : 'All Wave-A modules',
+    locale === 'ku' ? 'هەژمارداری پێشکەوتوو + WHT' : locale === 'ar' ? 'محاسبة متقدمة + ضريبة الاستقطاع' : 'Advanced accounting + WHT',
+    locale === 'ku' ? 'ئەنبار و چەند فرۆشگا' : locale === 'ar' ? 'مخزون وفروع متعددة' : 'Inventory & multi-location',
+    locale === 'ku' ? 'کارمەند و مووچە' : locale === 'ar' ? 'موارد بشرية ورواتب' : 'HR & payroll',
+    locale === 'ku' ? 'پشتیوانی واتسئاپ' : locale === 'ar' ? 'دعم واتساب' : 'WhatsApp support',
+    locale === 'ku' ? '20 گیگابایت ستۆرج' : locale === 'ar' ? '٢٠ جيجابايت تخزين' : '20 GB storage',
+  ],
+  pro: [
+    locale === 'ku' ? 'بەکارهێنەرانی بێسنوور' : locale === 'ar' ? 'مستخدمون غير محدودين' : 'Unlimited users',
+    locale === 'ku' ? 'هەموو مۆدیوولی Wave A/B/C' : locale === 'ar' ? 'كل وحدات Wave A/B/C' : 'All Wave-A/B/C modules',
+    locale === 'ku' ? 'e-Fakhata تەواو' : locale === 'ar' ? 'فاتورة إلكترونية كاملة' : 'Full e-Fakhata integration',
+    locale === 'ku' ? 'CRM، پڕۆژە، دارایی' : locale === 'ar' ? 'CRM، مشاريع، أصول' : 'CRM, projects, assets',
+    locale === 'ku' ? 'API و یەکگرتنەکان' : locale === 'ar' ? 'API والتكاملات' : 'API and integrations',
+    locale === 'ku' ? 'پشتیوانی پێشینە (٢ کاتژمێر)' : locale === 'ar' ? 'دعم متقدم (ساعتان)' : 'Priority support (2-hour SLA)',
+    locale === 'ku' ? '200 گیگابایت ستۆرج' : locale === 'ar' ? '٢٠٠ جيجابايت تخزين' : '200 GB storage',
+  ],
+};
+---
+
+<section class="section">
+  <div class="container-marketing">
+    <div class="max-w-2xl mx-auto text-center mb-10">
+      <h2 class="font-display font-bold text-3xl md:text-4xl text-ink-950 mb-4 text-balance">
+        {t('pricing.title', locale)}
+      </h2>
+      <p class="text-lg text-ink-600 text-pretty">{t('pricing.sub', locale)}</p>
+    </div>
+
+    {/* Cycle + currency toggle */}
+    <div class="flex flex-wrap justify-center gap-6 mb-10">
+      <div class="inline-flex bg-ink-100 rounded-full p-1" role="group" aria-label="Billing cycle">
+        <button type="button" data-cycle-toggle="monthly" class="px-4 py-1.5 rounded-full text-sm font-medium bg-white shadow-soft text-ink-900" aria-pressed="true">
+          {t('pricing.monthly', locale)}
+        </button>
+        <button type="button" data-cycle-toggle="annual" class="px-4 py-1.5 rounded-full text-sm font-medium text-ink-600" aria-pressed="false">
+          {t('pricing.annual', locale)} <span class="ms-1 text-xs text-accent-600">−15%</span>
+        </button>
+      </div>
+      <div class="inline-flex bg-ink-100 rounded-full p-1" role="group" aria-label="Currency">
+        <button type="button" data-currency-toggle="iqd" class="px-4 py-1.5 rounded-full text-sm font-medium bg-white shadow-soft text-ink-900" aria-pressed="true">
+          {t('pricing.currency.iqd', locale)}
+        </button>
+        <button type="button" data-currency-toggle="usd" class="px-4 py-1.5 rounded-full text-sm font-medium text-ink-600" aria-pressed="false">
+          {t('pricing.currency.usd', locale)}
+        </button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto items-stretch">
+      <PricingCard
+        locale={locale}
+        id="starter"
+        name={t('pricing.starter.name', locale)}
+        sub={t('pricing.starter.sub', locale)}
+        priceIqdMonthly={35000}
+        priceIqdAnnual={357000}
+        priceUsdMonthly={25}
+        priceUsdAnnual={255}
+        features={FEATURE_KEYS_BY_TIER.starter}
+        ctaHref={`${APP_URL}/signup?plan=starter`}
+      />
+      <PricingCard
+        locale={locale}
+        id="growth"
+        name={t('pricing.growth.name', locale)}
+        sub={t('pricing.growth.sub', locale)}
+        priceIqdMonthly={135000}
+        priceIqdAnnual={1377000}
+        priceUsdMonthly={95}
+        priceUsdAnnual={969}
+        features={FEATURE_KEYS_BY_TIER.growth}
+        popular={true}
+        ctaHref={`${APP_URL}/signup?plan=growth`}
+      />
+      <PricingCard
+        locale={locale}
+        id="pro"
+        name={t('pricing.pro.name', locale)}
+        sub={t('pricing.pro.sub', locale)}
+        priceIqdMonthly={450000}
+        priceIqdAnnual={4590000}
+        priceUsdMonthly={320}
+        priceUsdAnnual={3264}
+        features={FEATURE_KEYS_BY_TIER.pro}
+        ctaHref={`${APP_URL}/signup?plan=pro`}
+      />
+    </div>
+
+    {
+      teaser && (
+        <div class="text-center mt-10">
+          <a href="/pricing" class="btn btn-secondary btn-lg">{t('pricing.compare', locale)}</a>
+        </div>
+      )
+    }
+  </div>
+</section>
+
+<script>
+  // Cycle toggle
+  document.querySelectorAll<HTMLButtonElement>('[data-cycle-toggle]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const cycle = btn.dataset.cycleToggle;
+      document.querySelectorAll<HTMLButtonElement>('[data-cycle-toggle]').forEach((b) => {
+        const active = b.dataset.cycleToggle === cycle;
+        b.setAttribute('aria-pressed', String(active));
+        b.classList.toggle('bg-white', active);
+        b.classList.toggle('shadow-soft', active);
+        b.classList.toggle('text-ink-900', active);
+        b.classList.toggle('text-ink-600', !active);
+      });
+      document.querySelectorAll<HTMLElement>('[data-cycle]').forEach((el) => {
+        el.hidden = el.dataset.cycle !== cycle;
+      });
+    });
+  });
+
+  // Currency toggle
+  document.querySelectorAll<HTMLButtonElement>('[data-currency-toggle]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const cur = btn.dataset.currencyToggle;
+      document.querySelectorAll<HTMLButtonElement>('[data-currency-toggle]').forEach((b) => {
+        const active = b.dataset.currencyToggle === cur;
+        b.setAttribute('aria-pressed', String(active));
+        b.classList.toggle('bg-white', active);
+        b.classList.toggle('shadow-soft', active);
+        b.classList.toggle('text-ink-900', active);
+        b.classList.toggle('text-ink-600', !active);
+      });
+      document.querySelectorAll<HTMLElement>('[data-currency]').forEach((el) => {
+        el.hidden = el.dataset.currency !== cur;
+      });
+    });
+  });
+</script>

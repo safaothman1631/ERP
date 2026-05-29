@@ -99,6 +99,28 @@ from app.middleware.audit import audit_middleware
 from app.api.v1.router import v1_router
 from app.api import webhooks_settings
 from app.api import search as search_api
+from app.api import quick_create as quick_create_api
+from app.api import onboarding_wizard as onboarding_wizard_api
+from app.api import payments as payments_api
+from app.api import invoices_payments as invoices_payments_api
+from app.api import saas_billing as saas_billing_api
+from app.api import saas_admin as saas_admin_api
+# growth-to-100 § R4 (Iraq compliance): WHT engine + CBI exchange rates.
+from app.api import wht as wht_api
+from app.api import cbi_rates as cbi_rates_api
+# growth-to-100 § G5 (mobile distribution): device registration, public
+# version-check, and super-admin version-config endpoints.
+from app.api import devices as devices_api
+from app.api import mobile_version as mobile_version_api
+from app.api.admin import mobile_version_admin as mobile_version_admin_api
+# growth-to-100 § G2 (support stack): admin impersonation (RFC 8693), per-tenant
+# feature-flag overrides, NPS surveys, and status-page health emit.
+from app.api.admin import impersonate as impersonate_api
+from app.api.admin import tenant_flags as tenant_flags_api
+from app.api import nps as nps_api
+from app.api.internal import health_emit as health_emit_api
+# growth-to-100 § G3 (hardware): per-tenant printer/scanner/drawer/display config.
+from app.api import tenant_hardware as tenant_hardware_api
 from app.api.v1.errors import register_error_handlers
 import os
 
@@ -457,6 +479,65 @@ app.include_router(platform.router)
 app.include_router(v1_router)
 app.include_router(webhooks_settings.router)
 
+# ── Launch-readiness § R2: quick-create endpoints ──
+for _qc_router in quick_create_api.ALL_ROUTERS:
+    app.include_router(_qc_router)
+
+# ── Launch-readiness § R3/R4/R5: onboarding wizard, payments, SaaS billing ──
+for _ob_router in onboarding_wizard_api.ALL_ROUTERS:
+    app.include_router(_ob_router)
+for _pay_router in payments_api.ALL_ROUTERS:
+    app.include_router(_pay_router)
+app.include_router(invoices_payments_api.router)
+app.include_router(saas_billing_api.router)
+for _saas_admin_router in saas_admin_api.ALL_ROUTERS:
+    app.include_router(_saas_admin_router)
+
+# ── growth-to-100 § R4: WHT + CBI rates ──
+for _wht_router in wht_api.ALL_ROUTERS:
+    app.include_router(_wht_router)
+for _cbi_router in cbi_rates_api.ALL_ROUTERS:
+    app.include_router(_cbi_router)
+
+# ── growth-to-100 § G5 (mobile distribution) ──────────────────────────────
+app.include_router(devices_api.router)
+app.include_router(mobile_version_api.router)
+app.include_router(mobile_version_admin_api.router)
+
+# ── growth-to-100 § G2 (customer support stack) ────────────────────────────
+for _imp_router in impersonate_api.ALL_ROUTERS:
+    app.include_router(_imp_router)
+for _tf_router in tenant_flags_api.ALL_ROUTERS:
+    app.include_router(_tf_router)
+app.include_router(nps_api.router)
+for _he_router in health_emit_api.ALL_ROUTERS:
+    app.include_router(_he_router)
+
+# ── growth-to-100 § G3 (hardware compatibility) ────────────────────────────
+for _hw_router in tenant_hardware_api.ALL_ROUTERS:
+    app.include_router(_hw_router)
+
+# ── growth-to-100 § G4a (Iraq e-Fakhata) — guarded: needs lxml + signxml ──
+try:
+    from app.api import efakhata as efakhata_api
+    from app.api import efakhata_export as efakhata_export_api
+    for _efk_router in efakhata_api.ALL_ROUTERS:
+        app.include_router(_efk_router)
+    for _efk_exp_router in efakhata_export_api.ALL_ROUTERS:
+        app.include_router(_efk_exp_router)
+    logging.getLogger(__name__).info("Mounted e-Fakhata routers (G4a)")
+except Exception as _efk_err:  # noqa: BLE001
+    logging.getLogger(__name__).warning("e-Fakhata routers not mounted: %s", _efk_err)
+
+# Register the seven tenant-side payment gateway adapters at startup (R4).
+try:
+    from app.payments.bootstrap import register_default_providers
+    register_default_providers()
+except Exception as _pay_boot_err:  # pragma: no cover - defensive
+    logging.getLogger(__name__).warning(
+        "payment provider bootstrap failed: %s", _pay_boot_err
+    )
+
 from app.middleware.org_context import org_context_middleware
 
 app.middleware("http")(org_context_middleware)
@@ -475,8 +556,28 @@ from app.middleware.idempotency_http import idempotency_middleware
 app.middleware("http")(fs_observability_middleware)
 app.middleware("http")(idempotency_middleware)
 
+# growth-to-100 § G5: mobile minimum-version gate. Mounted after rate-limit
+# + module-gate so a forced-upgrade still respects RL counters but never
+# blocks the upgrade itself (exemption list inside the middleware).
+try:
+    from app.middleware.min_app_version import MinAppVersionMiddleware
+    app.add_middleware(MinAppVersionMiddleware)
+except Exception as _mav_err:  # noqa: BLE001
+    logging.getLogger(__name__).warning(
+        "MinAppVersionMiddleware not registered: %s", _mav_err
+    )
+
 # Audit middleware - auto-logs mutating requests
 app.middleware("http")(audit_middleware)
+
+# growth-to-100 § G2: impersonation read-only enforcement + per-request audit.
+# Added after audit_middleware so on the request path read-only runs first and
+# rejects mutations on an impersonation token before they reach the audit/route
+# layer; the impersonation audit row is still written for the blocked attempt.
+from app.middleware.read_only_mode import read_only_mode_middleware
+from app.middleware.impersonation_audit import impersonation_audit_middleware
+app.middleware("http")(read_only_mode_middleware)
+app.middleware("http")(impersonation_audit_middleware)
 
 
 # ── World-class performance spec routers (P0 + P4 + P6) ──
@@ -630,7 +731,13 @@ def ready():
 import os as _os_spa
 _frontend_dist = _os_spa.path.join(_os_spa.path.dirname(__file__), "..", "..", "frontend", "dist")
 if _os_spa.path.exists(_frontend_dist):
-    app.mount("/assets", StaticFiles(directory=_os_spa.path.join(_frontend_dist, "assets")), name="static-assets")
+    # Only mount /assets when the built asset dir actually exists. A partial or
+    # failed `npm run build` can leave `dist/` without `dist/assets/`, and
+    # StaticFiles raises at construction time — which would crash app import
+    # (and every test that imports it). Guard so a bad build can't take the API down.
+    _assets_dir = _os_spa.path.join(_frontend_dist, "assets")
+    if _os_spa.path.isdir(_assets_dir):
+        app.mount("/assets", StaticFiles(directory=_assets_dir), name="static-assets")
 
     @app.get("/{full_path:path}")
     def serve_spa(full_path: str):

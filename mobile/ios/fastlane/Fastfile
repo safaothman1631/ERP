@@ -1,0 +1,134 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Zoho Kurdish ERP — iOS Fastfile
+#
+# Spec ref: design.md §5.3 (Fastlane Match for reproducible provisioning),
+# requirements.md §R5.4, tasks.md T-G.5.4, T-G.5.6, T-G.5.11, T-G.5.22.
+#
+# Match certificate repo: see Matchfile. The repo URL points at a private
+# GitHub repo that holds the encrypted signing material; the passphrase is
+# in 1Password (`mobile/ios/match-passphrase`) and is exposed to CI via
+# the `MATCH_PASSWORD` secret.
+#
+# Secrets expected (set via GitHub Actions Secrets):
+#   MATCH_PASSWORD                # decryption passphrase for Match repo
+#   MATCH_GIT_BASIC_AUTH_BASE64   # `username:PAT` base64 for cloning repo
+#   APPLE_ID                      # founder Apple ID used for App Store Connect
+#   APPLE_TEAM_ID                 # 10-char dev team id
+#   APP_STORE_CONNECT_API_KEY_ID  # for the App Store Connect API
+#   APP_STORE_CONNECT_API_ISSUER  # issuer id
+#   APP_STORE_CONNECT_API_KEY_B64 # .p8 file, base64-encoded
+# ─────────────────────────────────────────────────────────────────────────────
+
+default_platform(:ios)
+
+platform :ios do
+  before_all do
+    UI.user_error!("Run from mobile/ios/") unless File.exist?("../../capacitor.config.ts")
+  end
+
+  desc "Refresh / fetch all signing certs + provisioning profiles via Match"
+  lane :setup_match do
+    setup_ci if ENV["CI"]
+    _restore_match_basic_auth
+    match(
+      type: "development",
+      readonly: ENV["MATCH_READONLY"] == "true",
+      app_identifier: ["com.zoho.kurdishierp"],
+    )
+    match(
+      type: "appstore",
+      readonly: ENV["MATCH_READONLY"] == "true",
+      app_identifier: ["com.zoho.kurdishierp"],
+    )
+  end
+
+  desc "Build a debug .app (development cert) — fast iteration"
+  lane :debug do
+    setup_match
+    build_app(
+      workspace: "App/App.xcworkspace",
+      scheme: "App",
+      configuration: "Debug",
+      export_method: "development",
+      skip_archive: true,
+      destination: "generic/platform=iOS Simulator",
+    )
+  end
+
+  desc "Build a signed IPA and upload to TestFlight via Pilot"
+  lane :testflight do
+    ENV["MATCH_READONLY"] = "true"
+    setup_match
+    _restore_app_store_connect_api_key
+    increment_build_number(
+      xcodeproj: "App/App.xcodeproj",
+      build_number: ENV["TF_BUILD_NUMBER"] || latest_testflight_build_number(
+        app_identifier: "com.zoho.kurdishierp",
+        initial_build_number: 1,
+      ).to_i + 1,
+    )
+    build_app(
+      workspace: "App/App.xcworkspace",
+      scheme: "App",
+      configuration: "Release",
+      export_method: "app-store",
+      export_options: {
+        signingStyle: "manual",
+        provisioningProfiles: {
+          "com.zoho.kurdishierp" => "match AppStore com.zoho.kurdishierp",
+        },
+      },
+    )
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true,
+      apple_id: ENV["APPLE_ID"],
+      api_key_path: ENV["APP_STORE_CONNECT_API_KEY_PATH"],
+    )
+    UI.success("Uploaded to TestFlight.")
+  end
+
+  desc "Promote a built IPA to the App Store (manual review submission)"
+  lane :appstore do
+    ENV["MATCH_READONLY"] = "true"
+    setup_match
+    _restore_app_store_connect_api_key
+    build_app(
+      workspace: "App/App.xcworkspace",
+      scheme: "App",
+      configuration: "Release",
+      export_method: "app-store",
+      export_options: {
+        signingStyle: "manual",
+        provisioningProfiles: {
+          "com.zoho.kurdishierp" => "match AppStore com.zoho.kurdishierp",
+        },
+      },
+    )
+    upload_to_app_store(
+      api_key_path: ENV["APP_STORE_CONNECT_API_KEY_PATH"],
+      skip_screenshots: true,
+      skip_metadata: false,
+      precheck_include_in_app_purchases: false,
+      submit_for_review: false,   # founder reviews + clicks submit in App Store Connect
+      automatic_release: false,
+    )
+    UI.success("Uploaded to App Store Connect. Submit for review manually.")
+  end
+
+  # ── Helpers ──────────────────────────────────────────────────────────────
+  private_lane :_restore_match_basic_auth do
+    auth = ENV["MATCH_GIT_BASIC_AUTH_BASE64"]
+    UI.user_error!("MATCH_GIT_BASIC_AUTH_BASE64 not set") if auth.nil? || auth.empty?
+    ENV["MATCH_GIT_BASIC_AUTHORIZATION"] = auth
+  end
+
+  private_lane :_restore_app_store_connect_api_key do
+    b64 = ENV["APP_STORE_CONNECT_API_KEY_B64"]
+    UI.user_error!("APP_STORE_CONNECT_API_KEY_B64 not set") if b64.nil? || b64.empty?
+    p8_path = File.expand_path("appstoreconnect.p8")
+    File.write(p8_path, Base64.decode64(b64))
+    ENV["APP_STORE_CONNECT_API_KEY_PATH"] = p8_path
+    # The api_key_path action handles ID + issuer via the JSON envelope; we
+    # also export them so Pilot can read directly.
+  end
+end

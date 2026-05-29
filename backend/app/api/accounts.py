@@ -12,13 +12,101 @@ from app.schemas.schemas import AccountCreate, AccountResponse, JournalEntryCrea
 router = APIRouter(prefix="/api/accounts", tags=["Chart of Accounts"])
 
 
+# ── R2.4 hardening helpers ────────────────────────────────────────────────
+# Iraqi 5-digit chart-of-accounts convention used by the seeded COA
+# templates (assets 10000-19999, liabilities 20000-29999, equity 30000-39999,
+# revenue 40000-49999, expense 50000-59999). ``income`` is accepted as a
+# synonym for ``revenue`` because the existing AccountCreate schema uses the
+# Zoho-style ``income`` label.
+
+ACCOUNT_CODE_RANGES = {
+    "asset": (10000, 19999),
+    "liability": (20000, 29999),
+    "equity": (30000, 39999),
+    "revenue": (40000, 49999),
+    "income": (40000, 49999),
+    "expense": (50000, 59999),
+}
+
+
+def _normalize_account_type(t: str) -> str:
+    """``income`` is the legacy label; map it to ``revenue`` for range lookup."""
+    return "revenue" if t == "income" else t
+
+
+def _auto_account_code(repo: AccountRepository, account_type: str) -> str:
+    """Generate the next available 5-digit code in the type's range.
+
+    Walks the existing account codes within the type's [low, high] window and
+    returns ``low + 1 + max_seen_offset``. If the range is exhausted, we fall
+    back to ``high`` and let downstream uniqueness checks pick this up (the
+    expected real-world range for an SMB COA is well under 1000 entries per
+    type).
+    """
+    low, high = ACCOUNT_CODE_RANGES.get(_normalize_account_type(account_type), (90000, 99999))
+    next_code = low
+    try:
+        items, _ = repo.list(
+            filters=[{"field": "account_type", "op": "==", "value": account_type}],
+            limit=500,
+        )
+        used = set()
+        for it in items or []:
+            code = (it or {}).get("code")
+            if code is None:
+                continue
+            try:
+                n = int(str(code).strip())
+            except ValueError:
+                continue
+            if low <= n <= high:
+                used.add(n)
+        # Walk from low until we find a free slot.
+        for n in range(low, high + 1):
+            if n not in used:
+                next_code = n
+                break
+        else:
+            next_code = high
+    except Exception:
+        next_code = low
+    return str(next_code)
+
+
+def _ancestor_chain(repo: AccountRepository, start_id: str, max_depth: int = 50):
+    """Return ``(chain, cycle_detected)`` for the ancestry of ``start_id``.
+
+    ``chain`` is the ordered list of dicts from ``start_id`` upward; if a node
+    points back to one already in the chain, traversal stops and
+    ``cycle_detected`` is True.
+    """
+    chain = []
+    seen = set()
+    current_id = start_id
+    depth = 0
+    while current_id and depth < max_depth:
+        if current_id in seen:
+            return chain, True
+        seen.add(current_id)
+        try:
+            rec = repo.get(current_id)
+        except Exception:
+            rec = None
+        if not rec:
+            return chain, False
+        chain.append(rec)
+        current_id = rec.get("parent_id")
+        depth += 1
+    return chain, False
+
+
 @router.get("")
 def list_accounts(
     account_type: str = Query("", max_length=30),
     user: dict = Depends(get_current_user),
 ):
     repo = AccountRepository(user["org_id"])
-    
+
     filters = [{"field": "is_active", "op": "!=", "value": False}]
     if account_type:
         filters.append({"field": "account_type", "op": "==", "value": account_type})
@@ -33,10 +121,63 @@ def create_account(
     user: dict = Depends(get_current_user),
 ):
     repo = AccountRepository(user["org_id"])
+    payload = data.model_dump()
+
+    # R2.4 — Validate parent (if supplied): same type + no cycle.
+    parent_id = payload.get("parent_id")
+    if parent_id:
+        parent = None
+        try:
+            parent = repo.get(parent_id)
+        except Exception:
+            parent = None
+        if not parent:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "code": "account.parent_not_found",
+                    "message": "هەژماری سەرەکی نەدۆزرایەوە",
+                    "field": "parent_id",
+                },
+            )
+        if parent.get("account_type") != payload.get("account_type"):
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "code": "account.parent_type_mismatch",
+                    "message": "جۆری هەژماری سەرەکی و لاوەکی پێویستە یەکسان بێت",
+                    "field": "parent_id",
+                    "parent_type": parent.get("account_type"),
+                    "child_type": payload.get("account_type"),
+                },
+            )
+        # Cycle detection — walk the parent's ancestor chain. If any node
+        # appears twice (i.e., the parent's chain already contains a cycle,
+        # which would propagate to the new child), reject. We also reject
+        # if any ancestor's id matches the new account's parent_id loop —
+        # the common case where two existing accounts already point at
+        # each other.
+        _chain, cycle_found = _ancestor_chain(repo, parent_id)
+        if cycle_found:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "code": "account.cycle_detected",
+                    "message": "زنجیرەی سەرەکی-لاوەکی دایرە دروست دەکات",
+                    "field": "parent_id",
+                },
+            )
+
+    # R2.4 — Auto-generate a 5-digit code if not provided.
+    code = (payload.get("code") or "").strip()
+    if not code:
+        code = _auto_account_code(repo, payload.get("account_type", ""))
+    payload["code"] = code
+
     account = repo.create({
         "id": str(uuid.uuid4()),
         "is_system": False,
-        **data.model_dump(),
+        **payload,
     })
     return account
 

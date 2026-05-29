@@ -1,0 +1,7 @@
+# Android Appfile — referenced by Fastlane's `upload_to_play_store` action.
+#
+# json_key_file is supplied at runtime via ENV["PLAY_JSON_KEY_PATH"]
+# (see Fastfile _restore_play_creds_from_env) so this file just declares
+# the package name.
+
+package_name("com.zoho.kurdishierp")

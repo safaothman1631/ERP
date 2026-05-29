@@ -1,7 +1,7 @@
 /**
  * @file SelectWithQuickCreate.tsx
  * @description The universal `<Select>` replacement for entities with a
- * quick-create flow. Drop-in for any of the 42+ selectors in the app.
+ * quick-create flow. Drop-in for any of the 58+ selectors in the app.
  *
  *   <SelectWithQuickCreate
  *     entity="customer"
@@ -10,10 +10,18 @@
  *     placeholder="Choose a customer…"
  *   />
  *
- * On empty (zero options + no search query): renders an `<EmptyState>` with
- * the registry's CTA inside the dropdown's `notFoundContent`. On search-empty
- * (zero options + non-empty search): renders the search-empty variant with a
- * "Clear search" CTA (Requirement 14).
+ * **Persistent footer CTA** (spec: `persistent-quick-create-cta`):
+ *   Every open dropdown — empty, populated, loading, searching, or in
+ *   error — renders a single "+ Add <entity>" footer below the option
+ *   list. The footer is the canonical create entry point; the empty-state
+ *   body no longer renders its own inline primary action. The footer is
+ *   hidden when the parent select is `disabled`, when the current role
+ *   lacks the registry's create permission, or when the entity is not
+ *   registered.
+ *
+ *   The footer uses Antd's `popupRender` (Antd 6 — `dropdownRender` is
+ *   deprecated). It coexists with the StateSwitch body, which still
+ *   renders loading / error / empty / search-empty illustrations.
  *
  * Optimistic merge:
  *   On successful quick-create, the new record is prepended to the local
@@ -21,10 +29,10 @@
  *   the originating selector's value is set to the new record's id.
  *   A highlight pulse plays on the new option (Requirement 6.4).
  *
- * @see design.md §4.1
+ * @see .kiro/specs/persistent-quick-create-cta/design.md
  */
 
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Select, Spin } from 'antd';
 import type { SelectProps } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
@@ -36,8 +44,9 @@ import { StateSwitch } from './StateSwitch';
 import { LoadingState } from './LoadingState';
 import { ErrorState } from './ErrorState';
 import { highlightPulse } from './motion';
-import { useFeatureFlag } from '../../hooks/useFeatureFlag';
 import { isEmptyStateV2Enabled } from '../../api/featureFlags';
+import { usePermission } from '../../hooks/usePermission';
+import { useEmptyStateTelemetry } from './useEmptyStateTelemetry';
 import type {
   EntitySlug,
   LoadOptionsResult,
@@ -72,6 +81,58 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 }
 
 /* ---------------------------------------------------------------------------
+ * QuickCreateFooter — the always-visible "+ Add <entity>" row.
+ *
+ * Plain <button> (not Antd <Button>) on purpose: Antd's Select traps
+ * keyboard inside the popup and a vanilla button keeps focus management
+ * predictable. Styling lives in `EmptyState.css` under `.qc-select-footer`.
+ * ---------------------------------------------------------------------------
+ */
+
+interface QuickCreateFooterProps {
+  entity: string;
+  labelKey: string;
+  context?: Record<string, unknown>;
+  onActivate: () => void;
+}
+
+function QuickCreateFooter({ entity, labelKey, context, onActivate }: QuickCreateFooterProps): JSX.Element {
+  const { t } = useTranslation();
+  const label = t(labelKey, context as never);
+  const onKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
+        onActivate();
+      }
+    },
+    [onActivate],
+  );
+  const onMouseDown = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    // Prevent the Select's blur-on-mousedown handler from closing the popup
+    // before our click registers.
+    e.preventDefault();
+  }, []);
+  return (
+    <div className="qc-select-footer" role="presentation">
+      <button
+        type="button"
+        className="qc-select-footer__cta"
+        onMouseDown={onMouseDown}
+        onClick={onActivate}
+        onKeyDown={onKeyDown}
+        aria-label={label}
+        data-testid={`select-quick-create-footer-${entity}`}
+      >
+        <PlusOutlined aria-hidden="true" />
+        <span>{label}</span>
+      </button>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------------
  * Component
  * ---------------------------------------------------------------------------
  */
@@ -94,9 +155,27 @@ export function SelectWithQuickCreate({
   const reduce = useReducedMotion();
   const config = QUICK_CREATE_REGISTRY[entity];
 
-  // Feature-flag gate per Requirement 15.1.
-  const parentFlag = useFeatureFlag('ui.empty_state_v2');
-  const v2Enabled = parentFlag.isEnabled && isEmptyStateV2Enabled(entity);
+  // Empty-state v2 is now the default and only UI path; the parent feature
+  // flag was used during rollout and is no longer consulted here. Per-entity
+  // disable is still honoured via `isEmptyStateV2Enabled` which defaults true
+  // — kept as an emergency kill switch for the footer + body experience.
+  const v2Enabled = isEmptyStateV2Enabled(entity);
+
+  // Permission gate: hide the footer when the role can't create this entity.
+  // The body's permissionGate prop already handles the empty-state inline
+  // version (now removed); we re-apply the same check at the popup level.
+  const { hasPerm } = usePermission();
+  const canCreate = config ? hasPerm(config.permission) : false;
+
+  // Telemetry: footer clicks fire `empty_state.cta_clicked` with a
+  // `source: 'footer'` discriminator. The hook is mounted unconditionally so
+  // the events queue alongside the body's events (when the search-empty
+  // body's "Clear search" CTA fires its own event).
+  const telemetry = useEmptyStateTelemetry({
+    variant: 'selector',
+    entity,
+    context: { surface: 'selector' },
+  });
 
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search, 300);
@@ -116,12 +195,18 @@ export function SelectWithQuickCreate({
   // When `staticOptions` is provided, the consumer owns the option source
   // (back-compat for migrated pages that already had local state). Skip the
   // registry's loadOptions fetch entirely.
-  const fetcher = loadOptions ?? config.loadOptions;
+  const fetcher = loadOptions ?? config?.loadOptions;
   const useStatic = Array.isArray(staticOptions);
 
   useEffect(() => {
     if (useStatic) {
       setOptions(staticOptions!);
+      setLoadingOptions(false);
+      setLoadError(null);
+      return;
+    }
+    if (!fetcher) {
+      setOptions([]);
       setLoadingOptions(false);
       setLoadError(null);
       return;
@@ -160,31 +245,49 @@ export function SelectWithQuickCreate({
   );
 
   /* ── CTA: open modal / drawer / navigate ───────────────────────── */
-  const handleCtaClick = useCallback(() => {
-    if (config.class === 'C') {
-      // Class C: navigate with return-token (sister agents will wire this fully).
-      if (typeof window !== 'undefined') {
-        const url = config.fullFormHref;
-        window.location.href = url;
+  const handleCtaClick = useCallback(
+    (source: 'footer' | 'body' = 'footer') => {
+      // Fire telemetry with the entry-point discriminator.
+      try {
+        telemetry.fireCtaClicked({ source });
+      } catch {
+        // Telemetry must never break the user action.
       }
-      return;
-    }
-    setQcOpen(true);
-  }, [config]);
+      if (!config) return;
+      if (config.class === 'C') {
+        // Class C: navigate with return-token (sister agents will wire this fully).
+        if (typeof window !== 'undefined') {
+          const url = config.fullFormHref;
+          window.location.href = url;
+        }
+        return;
+      }
+      setQcOpen(true);
+    },
+    [config, telemetry],
+  );
 
-  /* ── Render notFoundContent (the empty/loading/error inside dropdown) ── */
+  /* ── Render flags ─────────────────────────────────────────────── */
   const empty = options.length === 0;
   const isSearching = debouncedSearch.length > 0;
 
   const ctaAction = ctaOverride ?? {
     labelKey: `qc.${entity}.cta`,
-    onClick: handleCtaClick,
+    onClick: () => handleCtaClick('body'),
     icon: <PlusOutlined />,
   };
 
-  const notFoundContent = useMemo(() => {
+  /** True when the persistent footer should render inside the popup. */
+  const footerVisible = Boolean(
+    v2Enabled &&
+      config &&
+      canCreate &&
+      !disabled,
+  );
+
+  /* ── State-switch body (no inline CTA in the non-search empty body) ── */
+  const stateBody = useMemo<ReactNode>(() => {
     if (!v2Enabled) {
-      // Legacy path — render a small spinner / no-data with no CTA.
       return loadingOptions ? <Spin size="small" /> : null;
     }
     return (
@@ -210,24 +313,47 @@ export function SelectWithQuickCreate({
               }}
             />
           ) : (
+            // Non-search empty state: footer owns the CTA; we no longer
+            // render the inline primaryAction here. Permission gating still
+            // applies inside <EmptyState> if a future variant restores it.
             <EmptyState
               variant="selector"
-              illustration={config.illustration}
-              titleKey={config.emptyTitleKey ?? `qc.${entity}.empty_title`}
-              descriptionKey={config.descriptionKey}
+              illustration={config?.illustration ?? 'inbox'}
+              titleKey={config?.emptyTitleKey ?? `qc.${entity}.empty_title`}
+              descriptionKey={config?.descriptionKey}
               entity={entity}
               context={{ surface: 'selector' }}
-              permissionGate={{
-                resource: config.permission.split('.')[0],
-                verb: config.permission.split('.')[1] ?? 'create',
-              }}
-              primaryAction={ctaAction}
             />
           )
         }
       />
     );
-  }, [v2Enabled, loadingOptions, loadError, empty, isSearching, debouncedSearch, ctaAction, config, entity]);
+  }, [v2Enabled, loadingOptions, loadError, empty, isSearching, debouncedSearch, config, entity]);
+
+  /* ── popupRender: body + divider + persistent footer ─────────────── */
+  const popupRender = useCallback(
+    (originNode: ReactNode) => {
+      // For the populated list we render Antd's originNode (it includes the
+      // virtualized option list); for empty / loading / error / search-empty
+      // we render our StateSwitch body instead so the user sees the
+      // illustrated state. Footer is appended at the bottom in BOTH cases.
+      const showOriginNode = !loadingOptions && !loadError && !empty;
+      return (
+        <>
+          {showOriginNode ? originNode : stateBody}
+          {footerVisible ? (
+            <QuickCreateFooter
+              entity={entity}
+              labelKey={ctaAction.labelKey}
+              context={ctaAction.context as Record<string, unknown> | undefined}
+              onActivate={() => handleCtaClick('footer')}
+            />
+          ) : null}
+        </>
+      );
+    },
+    [loadingOptions, loadError, empty, stateBody, footerVisible, entity, ctaAction, handleCtaClick],
+  );
 
   /* ── Build Antd options with optional highlight wrapper ──────────── */
   const antdOptions: SelectProps['options'] = useMemo(
@@ -253,7 +379,7 @@ export function SelectWithQuickCreate({
 
   /* ── Determine which heavy chunk to render ─────────────────────── */
   const ModalOrDrawer =
-    config.class === 'A' ? QuickCreateModalLazy : config.class === 'B' ? QuickCreateDrawerLazy : null;
+    config?.class === 'A' ? QuickCreateModalLazy : config?.class === 'B' ? QuickCreateDrawerLazy : null;
 
   return (
     <>
@@ -266,7 +392,7 @@ export function SelectWithQuickCreate({
         loading={loadingOptions}
         options={antdOptions}
         placeholder={placeholder ?? t('entity_select.placeholder', 'Search…')}
-        notFoundContent={notFoundContent}
+        popupRender={popupRender}
         disabled={disabled}
         allowClear={allowClear}
         className={className}

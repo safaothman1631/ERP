@@ -1,0 +1,103 @@
+---
+/**
+ * LanguageSwitcher — dropdown to switch between ku / en / ar.
+ *
+ * Preserves the current path when switching (e.g. /en/pricing → /ar/pricing).
+ */
+import {
+  SUPPORTED_LOCALES,
+  localeFromPath,
+  stripLocale,
+  localizedPath,
+  t,
+  type Locale,
+} from '../i18n/utils';
+
+const pathname = new URL(Astro.request.url).pathname;
+const currentLocale: Locale = localeFromPath(pathname);
+const bare = stripLocale(pathname);
+
+const LANGUAGE_NAMES: Record<Locale, string> = {
+  ku: 'کوردی',
+  ar: 'عربي',
+  en: 'English',
+};
+
+const FLAG_EMOJI: Record<Locale, string> = {
+  ku: '🇮🇶',
+  ar: '🇮🇶',
+  en: '🇬🇧',
+};
+---
+
+<div class="relative inline-block text-ink-700" data-lang-switcher>
+  <button
+    type="button"
+    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium hover:bg-ink-50 transition-colors"
+    aria-label={t('lang.switcher_label', currentLocale)}
+    aria-haspopup="listbox"
+    aria-expanded="false"
+    data-lang-toggle
+  >
+    <span aria-hidden="true">🌐</span>
+    <span class="hidden sm:inline">{LANGUAGE_NAMES[currentLocale]}</span>
+    <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+      <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <ul
+    class="hidden absolute end-0 mt-1 min-w-[160px] bg-white border border-ink-200 rounded-lg shadow-lift py-1 z-50"
+    role="listbox"
+    data-lang-menu
+  >
+    {
+      SUPPORTED_LOCALES.map((loc) => (
+        <li role="none">
+          <a
+            href={localizedPath(loc, bare)}
+            role="option"
+            aria-selected={loc === currentLocale}
+            class:list={[
+              'flex items-center gap-2 px-3 py-2 text-sm hover:bg-ink-50 no-underline',
+              loc === currentLocale ? 'text-brand-600 font-semibold' : 'text-ink-700',
+            ]}
+            lang={loc}
+            hreflang={loc}
+          >
+            <span aria-hidden="true">{FLAG_EMOJI[loc]}</span>
+            <span>{LANGUAGE_NAMES[loc]}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</div>
+
+<script>
+  document.querySelectorAll('[data-lang-switcher]').forEach((root) => {
+    const toggle = root.querySelector('[data-lang-toggle]') as HTMLButtonElement | null;
+    const menu = root.querySelector('[data-lang-menu]') as HTMLUListElement | null;
+    if (!toggle || !menu) return;
+
+    const close = () => {
+      menu.classList.add('hidden');
+      toggle.setAttribute('aria-expanded', 'false');
+    };
+    const open = () => {
+      menu.classList.remove('hidden');
+      toggle.setAttribute('aria-expanded', 'true');
+    };
+
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menu.classList.contains('hidden') ? open() : close();
+    });
+    document.addEventListener('click', (e) => {
+      if (!root.contains(e.target as Node)) close();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') close();
+    });
+  });
+</script>

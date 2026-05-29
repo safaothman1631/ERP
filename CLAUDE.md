@@ -221,3 +221,214 @@ frontend/src/
 - `_deltas/EP-2-summary.md` — تۆماری گۆڕانکاریەکان + skipped files (ExpenseForm, Rental, Repair, IoT, Workflow).
 
 **تێبینی:** ئەم گۆڕانکاریانە پشت بە `frontend/src/design-system/empty/SelectWithQuickCreate.tsx` و `frontend/src/data/quickCreateRegistry.ts` دەبەستن کە EP-0 دروستی دەکات. تا EP-0 جێبەجێ نەکرێت، compile ناکات.
+
+### 2026-05-29 — launch-readiness Phase R1 (Backend Quick-Create Endpoints)
+
+سپێسی `.kiro/specs/launch-readiness` بلۆکەری #2 (ئەندپۆینتە کەمەکانی Quick-Create). ٩ ئەندپۆینتی نوێ/alias دروستکران کە پێشتر 404 دەیاندا کاتێک بەکارهێنەر مۆداڵی quick-create دەکردەوە:
+
+- `backend/app/schemas/quick_create.py` — مۆدێلی Pydantic بۆ Create/Response (expense_category, equipment_category, currency, tag, payment_method, team, subscription_plan, bank_account, location). ناوی فیلدەکان بە تەواوی لەگەڵ `quickCreateRegistry.ts` یەکدەگرنەوە.
+- `backend/app/firestore/quick_create_repos.py` — repo-کان بۆ کۆلێکشنە نوێیەکان (بێ `WRITE_MODEL` تا فیلدەکان نەفڕێنرێن).
+- `backend/app/api/quick_create.py` — ٩ ڕووتەر: `/api/expense-categories`, `/api/equipment-categories`, `/api/currencies` (idempotent upsert بە کۆد), `/api/tags` ((scope,name) dedup → 200), `/api/payment-methods` (`requires_gateway_config` + default-flip), `/api/teams`, `/api/subscription-plans` (alias), `/api/bank-accounts` (alias + ماسکی ژمارە), `/api/locations` (شوێنی بازرگانی، default-flip). هەر یەکێک: GET list + POST 201 لەگەڵ `Location` header + `require_perm`.
+- `backend/app/main.py` — تۆمارکردنی ڕووتەرە نوێیەکان (`quick_create_api.ALL_ROUTERS`).
+- `backend/app/services/permissions.py` — زیادکردنی ٩ کۆدی مۆڵەت بۆ `ALL_PERMISSIONS`.
+- `backend/app/middleware/idempotency_http.py` — زیادکردنی prefix-ە نوێیەکان بۆ پشتگیری `Idempotency-Key` (idempotency + rate-limit بە middleware-ی گشتی).
+- `backend/tests/quick_create/` — ٩ فایلی تێست (٤٠ تێست): happy-path 201 + Location، validation 422، permission 403، و کەیسە تایبەتەکان (idempotent currency, tag dedup, gateway flag, default-flip, account-number mask). **هەموو ٤٠ تێست سەرکەوتوو بوون.**
+
+**جێبەجێنەکراو (پێویستی بە دەستگەیشتنی دەرەکی هەیە، نەکراون):** R2.1–R2.4 hardening-ی ئەندپۆینتە بەردەستەکان (contacts/items/taxes/accounts کاردەکەن)؛ R3 staging (GCP/DNS/Vercel)؛ R4 sandbox-ی پارەدان (FastPay/Qi/Zain credentials)؛ R5 Stripe billing (legal entity)؛ R7 پرسیارە کراوەکان.
+
+### 2026-05-29 — launch-readiness Integration Wiring (R3/R4/R5 routers → main.py)
+
+تەواوکردنی TODO-ی integration کە ئاژانسە پێشووەکان (R3 onboarding، R4 payments، R5 SaaS billing) نەیانتوانیوە بکەن چونکە بنەماکانیان ڕێگەی دەستکاری `main.py`/`requirements.txt` نەدەدا. هەموو مۆدیوولەکان پێشتر بوونیان هەبوو و پاک import دەبوون (stripe بە lazy-import).
+
+- `backend/app/main.py` — import + تۆمارکردنی: `onboarding_wizard_api.ALL_ROUTERS`، `payments_api.ALL_ROUTERS`، `invoices_payments_api.router`، `saas_billing_api.router`، `saas_admin_api.ALL_ROUTERS`. هەروەها بانگکردنی `register_default_providers()` لە کاتی startup (لەناو try/except دژی شکستی bootstrap).
+- `backend/app/middleware/idempotency_http.py` — زیادکردنی prefix-ەکانی `/api/onboarding/coa/` و `/api/payments/`.
+- `backend/requirements.txt` — زیادکردنی `pyyaml>=6.0,<7.0` و `stripe>=11.0.0,<13.0.0`.
+- ڕووتە تۆمارکراوەکان (پشتڕاستکراو): `/api/onboarding/state`, `/api/onboarding/coa/apply`, `/api/payments/initiate|/{id}/capture|/{id}/refund`, `/api/payments/webhooks/{provider_slug}`, `/api/invoices/{id}/pay-link`, `/api/saas-billing/webhooks/stripe`, `/api/saas-billing/admin/*`.
+
+**تاقیکردنەوە:** ١٩٣ تێست سەرکەوتوو + ١ skipped (`tests/quick_create/` ٤٠، `tests/billing/` ٦٨، `test_onboarding`، `test_payments_*`). ڕیگرێشن: ٢١ تێستی پەیوەندیدار (pre-launch, rbac, idempotency, v1, module-gate, rate-limit) سەوز. app بەتەواوی boot دەبێت (١٣٨١ ڕووت).
+
+**ماوە بۆ بەکارهێنەر:** `pip install -r requirements.txt` (بۆ stripe لەسەر ماشینی خۆت)؛ STRIPE_* env vars؛ Firestore composite indices (R4)؛ APScheduler cron؛ هەروەها هەموو ئەوەی لە `_deltas/launch-readiness-REMAINING-WORK.md` (GCP staging, payment sandboxes, Stripe entity, R7).
+
+### 2026-05-29 — launch-readiness Local Finalization (deps + indices + cron + env)
+
+تەواوکردنی هەنگاوە ناوخۆییەکانی ماوە کە دەکران لێرە جێبەجێ بکرێن:
+
+- **`stripe>=11,<13` دامەزرا** لە venv (نسخە 12.5.1) — `app.main` ئێستا بەتەواوی boot دەبێت لەگەڵ stripe بەردەست.
+- **`firestore.indexes.json`** — زیادکردنی ٣ composite index بۆ `payments`: `(org_id, status, created_at DESC)`, `(org_id, provider_slug, provider_charge_id)`, `(org_id, invoice_id, created_at DESC)`. JSON دروستە (٢٨ index).
+- **`app/services/scheduler.py`** — زیادکردنی job-ی `payments_reconciliation_nightly` (CronTrigger hour=2, minute=15) + فەنکشنی `_job_payments_reconciliation()` کە `run_nightly_reconciliation()` بۆ هەموو org-ەکان دەخوازێت. ژمارەی job: 14 → 15.
+- **`app/utils/env_docs.py` + `.env.example`** — زیادکردنی بەشی Payments: `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET` (placeholder), `PUBLIC_APP_URL`. `.env.example` دروستکرایەوە.
+
+**تاقیکردنەوەی کۆتایی:** ٢٣٨ تێست سەرکەوتوو (quick_create 40, billing 68, onboarding, payments, env_docs 34, scheduler_properties). app boot دەبێت، job-ی reconciliation تۆمارکراوە.
+
+**ماوە (تەنها دەرەکی — Claude ناتوانێ):** GCP staging infra، بڕواننامەی sandbox-ی FastPay/Qi/Zain، Stripe legal entity + کلیلە ڕاستەقینەکان، deploy-ی `firestore.indexes.json` بۆ GCP. هەموو لە `_deltas/launch-readiness-REMAINING-WORK.md`.
+
+### 2026-05-29 — growth-to-100 Phase G4b (Iraq Localization)
+
+سپێسی growth-to-100 § R4 (compliance، بەشە غەیری e-Fakhata).
+
+- **WHT engine**: `backend/app/tax/withholding.py` (WHTCalculator + 4 placeholder rate) + `app/api/wht.py` (`POST /api/tax/wht/calculate`, `GET /rates|/report`). 18 تێست.
+- **CBI rates**: `app/services/cbi_rates.py` (fetch + 7-day fallback + hardcoded 1320) + `app/services/currency_converter.py` + `app/api/cbi_rates.py`. Cron `cbi_rate_refresh_daily` ساتی 06:00 UTC. 14 تێست.
+- **PDF Iraqi**: `app/pdf/iraqi_formatter.py` (IQD با U+066C، Arabic-Indic، phone +964، Hijri) + `app/pdf/arabic_typesetter.py` (Noto Naskh → Amiri → Helvetica fallback) + 3 template (Arabic/Kurdish invoice + Arabic receipt). 17 تێست.
+- **Iraq presets**: `app/data/iraqi_tax_presets.py` — 18 governorate × WHT × 3 sector، هەموو placeholder.
+- **Company schema**: `app/schemas/company.py` — `commercial_registration_no` + format validator.
+- **Frontend utils**: `utils/iqd-denominations.ts` (DENOMINATIONS، breakDown، quickCashTenders، format) + `utils/arabic-digits.ts` + `utils/hijri-date.ts` (Intl + tabular، بێ npm dep). 39 vitest.
+- **Frontend contexts/components**: `DigitPreferenceContext` + `CalendarPreferenceContext`؛ `WHTBreakdown`، `CashDrawerBreakdown`، `QuickCashTender`، `CurrencyConverter`، `CalendarToggle`، `DigitPreferenceToggle`. `hooks/useCBIRate.ts`.
+- **Settings**: `CompanyInfo.tsx` — زیادکردنی فیلدی `commercial_registration_no`.
+- **Wiring**: `main.py` (2 router)، `idempotency_http.py` (2 prefix)، `scheduler.py` (1 cron نوێ → 16 job).
+- `_deltas/G4b-l10n-summary.md` + `_deltas/G4b-deps.md`.
+
+**ماوە:** `hijri-converter>=2.3.1` لە requirements.txt (ئیختیاری)؛ Noto Naskh + Amiri TTF لە `backend/app/static/fonts/`؛ `CBI_API_URL` env var؛ R7.1 (verification بۆ 112 placeholder)؛ R7.6 (CBI URL/schema).
+
+### 2026-05-29 — launch-readiness Phase R4 (Tenant-Side Payments Scaffolding)
+
+سپێسی launch-readiness Phase R4. `PaymentGateway` ـی ئابسترەکت + هەفت adapter + Firestore model + API + UI ـی Settings و POS و pay-link.
+
+- `backend/app/payments/{__init__,gateway,registry,bootstrap}.py` — Protocol + value objects + runtime registry + default-adapter registration.
+- `backend/app/payments/{cash,cod,stripe}_gateway.py` — تەواوبوون. Cash بە idempotent immediate-succeeded، COD بە state machine تەواو، Stripe بە HMAC-SHA256 webhook verify + BalanceTransaction settlement.
+- `backend/app/payments/{fastpay,qi,zain_cash,asia_pay}_gateway.py` — interface تەواو، بەڵام هەر method ـێک `NotImplementedError('… credentials pending — see R7.X')` دەگەڕێنێتەوە.
+- `backend/app/firestore/payment_repo.py` — `PaymentRepository` + `WebhookEventLogRepository` (dedup) + `ReconciliationQueueRepository`.
+- `backend/app/api/payments.py` — `POST /api/payments/initiate|/{id}/capture|/{id}/refund`، `GET /api/payments[/{id}]`، `POST /api/payments/webhooks/{provider}` (public, signature-verified, deduped). `ALL_ROUTERS`.
+- `backend/app/api/invoices_payments.py` — `POST /api/invoices/{id}/pay-link` (signed JWT).
+- `backend/app/services/payments_reconciliation.py` — `run_nightly_reconciliation()` بۆ APScheduler.
+- `backend/tests/test_payments_{cash,cod,stripe,webhooks}.py` — 31 تێست (repo-mocked).
+- `frontend/src/pages/settings/payments/{Providers,Reconciliation}.tsx` — لیستی provider + reconciliation queue.
+- `frontend/src/components/pos/POSPaymentMethodPicker.tsx` — گریدی tile لە POS، flow ـی جیاواز بۆ هەر provider.
+- `frontend/src/pages/pay/PayLink.tsx` — پەڕەی گشتی hosted payment لە `/pay/:token`.
+- `_deltas/R4-deps.md` + `_deltas/R4-payments-summary.md`.
+
+**TODOs بۆ بەکارهێنەر (یاسا: ناتوانم `main.py` و `requirements.txt` دەستکاری بکەم):** (1) `stripe>=11.0.0,<13.0.0` لە `requirements.txt`؛ (2) `register_default_providers()` لە `main.py` startup + `include_router(payments_api.ALL_ROUTERS[0])` + `include_router(invoices_payments_api.router)`؛ (3) `/api/payments/` لە `_IDEMPOTENCY_PREFIXES`؛ (4) `STRIPE_*` env vars؛ (5) 3 composite index لە `firestore.indexes.json`؛ (6) APScheduler cron `02:15`. هەموو ورد لە `_deltas/R4-payments-summary.md`.
+
+**بلۆکی دەرەکی:** R7.2 (FastPay), R7.3 (Qi), R7.4 (Zain), R7.5 (Asia Pay). کاتێک credentials دەگەڕێ، تەنها 5 method-ی پەیوەندیدار لە فایلی `*_gateway.py` پر بکرێتەوە.
+
+### 2026-05-29 — growth-to-100 Phase G3 (Hardware Compatibility Layer)
+
+سپێسی `.kiro/specs/growth-to-100` §R3. لایەنی ESC/POS ـی POS هاردوێر بە تەواوی پڕۆداکشن-گرەید نوسرا — درایڤەری چاپکەر، کاش درۆوەر، سکانەر، نمایشی کڕیار، تێمپلەیتی پسوولە، wizard-ی ٧ هەنگاوی pair، API ـی tenant، و دۆکیومێنت. تەنها هاردوێری فیزیکی بەکارنەهاتووە — هەموو dialect-ەکان فیکسچەری بایت-ستریمیان هەیە، ئامادە بۆ procurement.
+
+**فرۆنتێند (`frontend/src/hardware/`):**
+- `printers/types.ts` + `dialects/_baseline.ts` + 5 dialect (Epson, Xprinter, Bixolon, generic 58mm BT, generic 80mm) + `dialects/index.ts` + `detection.ts` (GS I 1 probe + name regex + NUS service hint) + `commands.ts` (printReceipt, breakdownIQD, formatIQD, toArabicIndic) + `printer-service.ts` (Web Bluetooth/USB/Serial + native BLE + browser-print fallback) + `tests/printer-driver.test.ts` (30 case).
+- `cash-drawer/cash-drawer.ts` — kickPin5/kickPin2 + per-dialect defaults.
+- `scanner/scanner-service.ts` — HID keyboard-wedge + `useBarcodeInput()` hook + camera bridge + `tests/scanner-service.test.ts` (8 case).
+- `customer-display/{types,serial-driver,bluetooth-driver,wifi-driver,display-service}.ts` — سێ ڕێگەی نمایش (LCD pole VFD، BT-tablet PWA، WiFi TV).
+- `receipts/{Receipt58mm,Receipt80mm,ReceiptIQD}.tsx` + `templates/{standard,with-logo,arabic,restaurant}.tsx`.
+
+**فرۆنتێند کۆمپۆنێنت (`frontend/src/components/pos/`):**
+- `HardwarePairingWizard.tsx` — wizard-ی ٧ هەنگاوی (Device → Connection → Discover → Confirm → Dialect → Test print + cut → Drawer + save)؛ persist بۆ localStorage.
+- `TestPrintPreview.tsx` — preview ـی پسوولە + ESC/POS command trace.
+- `HardwareDeviceCard.tsx` — کارتی ئامێر + RSSI bar.
+
+**داتا (`frontend/src/data/`):**
+- `hardwareRegistry.ts` — ١٠ چاپکەر + ٥ سکانەر + ٢ درۆوەر + ٤ نمایش لەگەڵ نرخی USD، dialect ID، و statu‌s.
+
+**باکێند (`backend/app/api/`):**
+- `tenant_hardware.py` — GET/PUT/DELETE بۆ printers/scanners/drawers/displays لە `/api/tenants/{tid}/hardware/<kind>[/<id>]` + bundle + `POST /reset-defaults` (R3.15). فایرستۆر لە `tenants/{tid}/hardware/{kind}/items/{id}` + in-memory fallback. `ALL_ROUTERS` ئامادە بۆ تۆمارکردن لە `main.py`.
+
+**Mobile bridges (`mobile/src/bridge/`):**
+- `printer.ts` — زیادکردنی `DialectHint` + `recommendedChunkSize()` بۆ BLE MTU per dialect (Epson 200B، Bixolon 180B، Xprinter 160B، generic-58 120B).
+- `scanner.ts` — زیادکردنی `unifiedScanner.startUnified(onResult)` بۆ یەکخستنی HID + ML Kit native.
+
+**دۆکیومێنت (`docs/`):**
+- `hardware/compatibility-matrix.md` — جەدوەلی پشتگیری.
+- `hardware/setup-guides/` — ٤ گاید (Epson TM-T20III، Xprinter XP-T80A، Bixolon SRP-330II، generic 58mm BT).
+- `hardware/troubleshooting.md` — جەدوەلی symptom → cause → fix.
+- `sales/hardware-kits.md` — ٣ بەستە بۆ partnership (Starter USD 295، Pro USD 545، Kitchen USD 680) + پلانی outreach W4–W7.
+
+**دەلتا:** `_deltas/G3-hardware-summary.md` (تەواو، لەگەڵ test counts، top-5 procurement list، open questions).
+
+**TODOs بۆ بەکارهێنەر:** (1) تۆمارکردنی `tenant_hardware.ALL_ROUTERS` لە `backend/app/main.py`؛ (2) route entry بۆ `HardwarePairingWizard` لە `App.routes.tsx`؛ (3) procure ـی top-5 ئامێر (~USD 720)؛ (4) دامەزراندنی engineer-ی Baghdad بۆ regression-ی سێ-مانگی.
+
+### 2026-05-29 — launch-readiness Phase R3 Frontend (Onboarding Wizard, 5 steps)
+
+سپێسی launch-readiness Phase R3 (frontend only). Wizard-ێکی نوێی ٥ هەنگاوی "یەکەم ٦٠ چرکە" دروستکرا کە لە "بنکەی بەتاڵ" بۆ "یەکەم فرۆشتن" دەبا. تەواوی فایلەکانی نوێ لە تەنیشتی wizard-ی پێشوو (industry/module-picker) دانراون و لێکجیاوازن (`useOnboardingWizardStore` vs پێشوو `useOnboardingStore`).
+
+- `frontend/src/onboarding/state.ts` — Zustand store + transition reducer (start/next/back/skip/goTo/complete/save/hydrate)؛ auto-skip-ی POS بۆ services/ngo؛ `normalizeIraqPhone()` (E.164).
+- `frontend/src/onboarding/telemetry.ts` — RUM emitter بۆ `onboarding.started/step_completed/step_skipped/completed/abandoned` لە `/api/rum/vitals`.
+- `frontend/src/onboarding/state.test.ts` — تێستی هەموو transition-ەکان + resume-from-state.
+- `frontend/src/onboarding/OnboardingShell.tsx` — هێدەری progress bar، animated step slot (Framer Motion، RTL، prefers-reduced-motion)، فووتەری Back/Skip/Next/Finish، auto-save، CSS-only confetti.
+- `frontend/src/onboarding/steps/StepCompanyInfo.tsx` — Antd Form (ناو، ناونیشان، فۆن E.164، VAT status، business_type، intended_use).
+- `frontend/src/onboarding/steps/StepIraqRegion.tsx` — SVG-ی ١٨ پارێزگا (clickable + keyboard) + لیستی Radio-ی دەستڕاگەیشتو + side card.
+- `frontend/src/onboarding/steps/StepChartOfAccounts.tsx` — ٥ template card + Tree preview + `POST /api/onboarding/coa/apply`.
+- `frontend/src/onboarding/steps/StepPOSHardware.tsx` — Web Bluetooth pairing (ESC/POS UUID)، paper width 58/80mm، cash drawer pin 2/5، browser-print fallback، Skip prominent.
+- `frontend/src/onboarding/steps/StepFirstSale.tsx` — ٤ sub-step (product → customer → sale → receipt) بە POST بۆ `/api/items`, `/api/contacts`, `/api/invoices`.
+- `frontend/src/data/iraqRegionPresets.ts` — ١٨ پارێزگا + tri-lingual labels + withholding rates + `placeholder: true` بۆ R7.1 verification.
+- `frontend/src/i18n.config.ts` — زیادکردنی `'onboarding'` بۆ `NAMESPACES`.
+- `frontend/public/locales/{ku,en,ar}/onboarding.json` — ~١٦٥ کلیل بۆ هەر زمانێک.
+- `_deltas/R3-frontend-summary.md` — تۆماری گۆڕانکاریەکان + route-wiring TODO + پرسیارە کراوەکان.
+
+**TODOs:** Route wiring لە `App.routes.tsx` (لیستی do-not-modify)، backend endpoints (`/api/onboarding/state`, `/api/onboarding/coa/apply`)، printer service integration، R7.1 tax-rate verification.
+
+### 2026-05-29 — growth-to-100 G4a (Iraq e-Fakhata: XML schema, XAdES-BES signing, MoF queue, auditor export)
+
+سپێسی growth-to-100 § R4 (Iraq Compliance — e-Fakhata). سیستەمی e-invoicing-ی تەواو بۆ وەزارەتی دارایی عێراق دروستکرا.
+
+- `backend/app/efakhata/__init__.py` + `schema.py` — Pydantic + lxml ـی e-Fakhata XML v1.0 (Supplier/Customer/Lines/Totals + Signature placeholder، round-trip parser).
+- `backend/app/efakhata/builder.py` — `EFakhataBuilder.from_invoice()` بۆ مەپ کردنی Firestore invoice dict بۆ XML model (لەگەڵ VAT/WHT placeholder، governorate normalization).
+- `backend/app/efakhata/version_registry.py` — `current_version = "1.0"` + migration registry بۆ v1.1/v2.0 داهاتوو.
+- `backend/app/efakhata/cert_storage.py` — PKCS#12 cert/password لە GCP Secret Manager (`tenant-{tid}-efakhata-cert`)، لەگەڵ in-process fallback بۆ dev (`EFAKHATA_LOCAL_CERT_STORE=1`).
+- `backend/app/efakhata/signing.py` — XAdES-BES بە `signxml` + XML-DSig fallback؛ sign/verify/rotate. NEVER لاگ بکات password یان P12 bytes.
+- `backend/app/efakhata/submission_queue.py` — Firestore-backed queue (`efakhata_submissions`) لەگەڵ state machine (pending → submitting → submitted → acknowledged/rejected/failed/cancelled)، dedup بە invoice_id، exponential backoff (1m, 5m, 30m, 2h, 12h، MAX 5 attempts).
+- `backend/app/efakhata/mof_client.py` — HTTPS + mTLS client بۆ MoF API لەگەڵ `Idempotency-Key`، 30s timeout، 3 retries بۆ network. اگر `MOF_BASE` نەبێت → `MoFNotConfigured` و queue پەلامار نادات.
+- `backend/app/efakhata/submission_worker.py` — APScheduler worker (30s poll، 50 batch، per-tenant) بۆ ئاوی کردنی queue.
+- `backend/app/efakhata/auditor_export.py` — ZIP builder (`invoices/{n}.xml + .pdf`, `manifest.csv`, `signature_chain.pem`, `README.md`)، GCS upload، 7-day signed URL.
+- `backend/app/api/efakhata.py` — `POST /api/invoices/{id}/efakhata/submit`, `GET/POST /api/efakhata/submissions[/{sid}[/cancel]]`, `POST/GET/DELETE /api/tenants/{tid}/efakhata/cert` (multipart).
+- `backend/app/api/efakhata_export.py` — `POST/GET /api/efakhata/auditor-export[/{id}]` (BackgroundTask).
+- `backend/tests/test_efakhata_{schema,signing,queue,export}.py` — 50 تێست (round-trip XML، XAdES sign+verify+tampering، state machine + backoff، ZIP structure + path-traversal guard).
+- `frontend/src/pages/efakhata/{EFakhataDashboard,SubmissionDetail}.tsx` — submissions list + filter + timeline + cancel.
+- `frontend/src/pages/settings/efakhata/{CertManagement,AuditorExport}.tsx` — upload cert + revoke + ZIP request.
+- `frontend/src/i18n.config.ts` — زیادکردنی `'efakhata'` بۆ `NAMESPACES`.
+- `_deltas/G4a-deps.md` + `_deltas/G4a-efakhata-summary.md` — تۆمار + flow diagram + ١٤ TODO بۆ R7.X.
+
+**TODOs بۆ بەکارهێنەر (یاسا: ناتوانم `main.py` و `requirements.txt` دەستکاری بکەم):** (1) `lxml>=5.0,<6.0`, `signxml>=3.2,<4.0`, `google-cloud-secret-manager>=2.20.0` لە `requirements.txt`؛ (2) `include_router(efakhata_api.ALL_ROUTERS[*])` و `efakhata_export_api.ALL_ROUTERS[*]` لە `main.py`؛ (3) APScheduler job `efakhata_submission_drain` (IntervalTrigger seconds=30)؛ (4) `firestore.indexes.json` indices بۆ `efakhata_submissions` (org_id+status+next_attempt_at، org_id+invoice_id) و `efakhata_export_batches`؛ (5) env vars `MOF_BASE`, `GCP_PROJECT_ID` (یان `EFAKHATA_LOCAL_CERT_STORE=1` بۆ dev)؛ (6) `App.routes.tsx` routes بۆ `/efakhata`, `/efakhata/submissions/:sid`, `/settings/efakhata/cert`, `/settings/efakhata/export`.
+
+**بلۆکی دەرەکی:** R7.X (تەسدیقی MoF XML schema و endpoints). 14 جێ بە `# TODO: verify against published spec (R7.X)` نیشانکراون.
+
+### 2026-05-29 — growth-to-100 Phase G1 (Marketing Site, NEW `marketing/` directory)
+
+سپێسی `.kiro/specs/growth-to-100` Phase G1 (T-G.1.1 → T-G.1.13). سایتێکی بازرگانی نوێی Astro v4-ـی سێ زمانە (کوردی/عەرەبی/ئینگلیزی) لە `marketing/` دروستکراوە — جیاوازە لە `frontend/`، static بەتەواوی، RTL، بۆ Vercel ئامادەیە لە `zoho-kurdish.iq`.
+
+- `marketing/{package.json,astro.config.mjs,tailwind.config.mjs,tsconfig.json,vercel.json,.gitignore,.env.example,eslint.config.js,.prettierrc.json,lighthouserc.json,README.md}` — scaffold-ی Astro v4 + Tailwind + MDX + sitemap + RSS.
+- `marketing/src/i18n/{utils.ts,ku.json,en.json,ar.json}` — ٢١٠ کلیلی i18n (٧٠ × ٣ زمان)؛ `dir()`, `localeFromPath()`, `localizedPath()`, `alternateUrls()`, `fmtIQD()`, `fmtUSD()`.
+- `marketing/src/layouts/{BaseLayout,MarketingLayout,DocsLayout}.astro` — HTML shell بە hreflang، OG، JSON-LD، skip-link، CookieBanner.
+- `marketing/src/components/` — ١٣ کۆمپۆنێنتی سەرەکی: Hero (لەگەڵ A/B test `landing-hero-cta` چالاککراو), Header, Footer, LanguageSwitcher, FeatureCard, PricingCard (IQD/USD toggle + monthly/annual), Testimonial, CTABanner, EmailCapture (POST بۆ `/api/marketing/leads`), AnalyticsScripts (Plausible + GA4 consent-gated), CookieBanner, StructuredData (Organization + SoftwareApplication + WebPage/Article/FAQPage), SEO.
+- `marketing/src/components/sections/{ProblemsSection,FeaturesSection,PricingSection,TestimonialsSection}.astro` — بەشە دووبارە بەکارهێنراوەکان.
+- `marketing/src/components/pages/{HomePage,PricingPage,FeaturesPage,AboutPage,ContactPage,LegalPage,BlogIndexPage}.astro` — قاڵبە سەرەکیەکان، locale-agnostic.
+- `marketing/src/pages/` — ٢٧ پەڕە: ٩ بۆ هەر زمان (default ku بێ prefix، `/en/`، `/ar/`) + `blog/[slug].astro` + `rss.xml.ts`.
+- `marketing/src/content/{config.ts,blog/*.md}` — Zod schema + **١٠ وتاری SEO بە ئینگلیزی** (~١.٢k–١.٨k وشە هەرکامێک): iraq-tax-guide-2026, pos-setup-iraq-shopkeeper, e-fakhata-explained, pharmacy-management-iraq, restaurant-pos-iraq, kurdish-erp-vs-zoho, iraqi-dinar-formatting-best-practices, whatsapp-commerce-iraq, offline-first-pos-power-outages, chart-of-accounts-iraq-smb.
+- `marketing/src/lib/ab.ts` — کۆمەکی A/B test: visitor-cookie، deterministic hash، Plausible exposure/conversion، سێ ئەزموون تۆمارکراون.
+- `marketing/src/styles/brand.css` — CSS variables، Iraqi-flag-inspired palette (muted brand-red + accent-green + ink).
+- `marketing/public/{robots.txt,manifest.webmanifest,brand/{favicon.svg,logo.svg,og/*.svg,README.md}}` — بنکەکان + brand placeholder-ەکان.
+- `.github/workflows/marketing-ci.yml` — CI بۆ `marketing/**`: install، astro check، lint، build، Lighthouse CI، linkinator.
+- `_deltas/G1-marketing-summary.md` — تۆماری گۆڕانکاریەکان + open questions.
+
+**TODOs بۆ بەکارهێنەر:** (1) `npm install --legacy-peer-deps && npm run dev` لە Windows؛ (2) backend endpoint `POST /api/marketing/leads` (T-G.1.11)؛ (3) native-speaker QA-ی کوردی و عەرەبی؛ (4) دیزاینەر brand assets بنێرێت (logo.png، OG raster، favicons)؛ (5) counsel review بۆ `/legal/{terms,privacy,dpa}`؛ (6) decision: Plausible self-hosted vs hosted؛ (7) hCaptcha site key بۆ فۆڕمی contact؛ (8) demo video بۆ A/B variant B-ی hero.
+
+### 2026-05-29 — growth-to-100 (Tier 2) Wiring & Verification — هەموو ئەوەی ماوە کۆدی
+
+تەواوکردنی هەموو کاری کۆدی ماوەی Tier 2 (`growth-to-100`): wiring-ی G2/G3/G4a بۆ ئەو فایلانەی ئاژانسە پێشووەکان ڕێگەیان پێنەدرابوو دەستکارییان بکەن (`main.py`, `scheduler.py`, `requirements.txt`, `App.routes.tsx`, `AppShell.tsx`, `firestore.indexes.json`, `idempotency_http.py`, `env_docs.py`) + چاکردنی چەند بەگێکی نهێنی.
+
+- **Deps (`requirements.txt` + venv):** `lxml>=5,<6`, `signxml>=4,<5` (نەک `<4` — signxml 3.x لەسەر pyOpenSSL 24+ تێکدەچوو چونکە `OpenSSL.crypto.verify` لابراوە؛ 4.x پشت بە pyOpenSSL نابەستێت), `google-cloud-secret-manager>=2.20`؛ `firebase-admin` → `>=6.5,<8`. هەرسێ لە venv دامەزران.
+- **`app/efakhata/signing.py`:** گونجاندن لەگەڵ signxml 4.x — لابردنی `signing_time=` لە `XAdESSigner.sign()`، verify بە `x509_cert`-ی ناوبراو (سێرتی self-signed-ی تینانت)، فەنکشنی `_extract_embedded_cert()`، لابردنی placeholder-ی `<ds:Signature>`-ی بەتاڵ پێش واژۆ (XSD validation).
+- **`app/efakhata/auditor_export.py`:** چاکردنی path-traversal لە `_safe()` (پێشتر `../etc/passwd` دەڕۆیشت).
+- **`backend/app/main.py`:** routerـەکانی G2 (`impersonate`, `tenant_flags`, `nps`, `health_emit`)، G3 (`tenant_hardware`)، G4a (`efakhata`, `efakhata_export` — guarded) + ٢ middleware (`read_only_mode`, `impersonation_audit`). ڕووت: 2325.
+- **`app/services/scheduler.py`:** ٣ job نوێ (status-page emit 60s, onboarding-drip 10m, e-Fakhata drain 30s). 16 → 19.
+- **`app/api/marketing.py`:** ئەندپۆینتی گشتی `POST /api/marketing/leads` (T-G.1.11) — honeypot + per-IP rate-limit، نووسین بۆ `marketing_leads`.
+- **`firestore.indexes.json`:** ٤ index (`efakhata_submissions` ×2، `efakhata_export_batches`، `mobile_devices`). 28 → 32.
+- **`idempotency_http.py`:** `/api/nps/`, `/api/admin/impersonate/`.
+- **`env_docs.py` + `.env.example`:** ١٣ env var (Crisp, 360Dialog, Statuspage, MoF, EFAKHATA_LOCAL_CERT_STORE, GCP_PROJECT_ID, CBI_API_URL...).
+- **Frontend `App.routes.tsx`:** ٦ ڕووت — `efakhata`, `efakhata/submissions/:sid`, `settings/efakhata/cert`, `settings/efakhata/export`, `admin/impersonate`, `get-started` (R3 OnboardingShell).
+- **Frontend `layouts/AppShell.tsx`:** `<HelpWidget />` + `<NPSSurvey />` (deferred-load).
+- **چاکردنی تێستی latent:** `test_efakhata_signing` (password mismatch لە fixture)، `test_tenant_flags` (`TenantFlagDoc` keyword دووبارە)، `test_email_support.classify` (ڕیزبەندی how-to پێش billing)، `test_withholding` (gross سفر → `applied=False`).
+
+**تاقیکردنەوە:** backend boot (2325 ڕووت)؛ pytest **1152 سەرکەوتوو / 2 شکست** (هەردووکیان pre-existing و بێ پەیوەندی بە Tier 2: `test_redis_rate_limit_config` storage_uri drift، `test_firestore_audit_tool` بۆ `app/firestore/client.py`)؛ frontend `tsc --noEmit` **0 هەڵە**.
+
+**دوای feedback-ی بەکارهێنەر — ئەمانەش کران (پێشتر بە هەڵە "external" نراون):** (1) `HardwarePairingWizard` لە `POSConfigs.tsx` wire کرا (دوگمەی "Pair hardware" → Modal)؛ (2) G2 `ImpersonationBanner` لە `AppShell` mount کرا (alias `TenantImpersonationBanner`؛ لەگەڵ platform banner ناتەبا نییە چونکە token-ی جیاوازن)؛ (3) **`firestore.indexes.json` deploy کرا** بۆ پڕۆژەی `zoho-83cda` (`firebase deploy --only firestore:indexes` — سەرکەوتوو، بێ `--force`)؛ (4) deps لە venv دامەزران.
+
+**`.firebaserc` ڕاستکرایەوە:** default → **`zoho-83cda`** (پڕۆژەی زیندوو کە هەموو config-ـی frontend/backend بەکاریدەهێنێت؛ `erp-system-494716` لابرا چونکە تەنها لێرە بوو و کۆن بوو). `firebase use` → `zoho-83cda`.
+
+**Build-fix (دوای داوای "چێکی تەواوەتی"ی بەکارهێنەر — `npm run build` ـی ڕاستەقینە دۆزییەوە کە tsc نەیدۆزی):**
+- `frontend/src/onboarding/steps/StepPOSHardware.tsx`: `BluetoothOutlined` (لە `@ant-design/icons` نییە، بەڵام لە `.d.ts` ڕایگەیاندووە بۆیە tsc تێپەڕی) → `ApiOutlined`.
+- `frontend/src/hardware/printers/printer-service.ts`: `import('../../../../mobile/src/bridge/printer')` ـەکە `/* @vite-ignore */`ـی پێدرا (web bundler هەوڵی resolve-کردنی `@capacitor/core` دەدا).
+- `backend/app/main.py`: mount-ی `/assets` بە `isdir(dist/assets)` guard کرا — build-ی ناتەواو (`dist` بێ `assets`) پێشتر `app.main` ـی لە import-دا دەکوژی (هەموو تێستەکانی دەشکاند).
+
+**ئەنجامی کۆتایی:** `npm run build` → exit 0 (473 PWA precache)؛ backend pytest → **1152 سەرکەوتوو / 2 شکست** (هەردوو pre-existing، بێ پەیوەندی)؛ `app.main` پاک import دەبێت.
+
+**ماوە (تەنها دەرەکی ڕاستەقینە — credential/account/مرۆڤ):** MoF/CBI URL+schema (R7.x)، Stripe entity+keys، Apple/Play enrollment، Crisp/360Dialog/Statuspage API keys، native-speaker QA، partner-entity lawyer.

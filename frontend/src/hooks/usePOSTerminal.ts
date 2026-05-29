@@ -87,7 +87,7 @@ export interface TerminalActions {
   clearCart: () => void;
   search: (q: string) => Promise<void>;
   saveDraft: () => Promise<void>;
-  checkout: (payments: PosPaymentPayload[]) => Promise<{ ok: boolean; offline: boolean }>;
+  checkout: (payments: PosPaymentPayload[]) => Promise<{ ok: boolean; offline: boolean; error?: string }>;
   syncOfflineQueue: () => Promise<void>;
   scanText: (code: string) => Promise<void>;
   print: (bytes: Uint8Array) => Promise<void>;
@@ -305,7 +305,7 @@ export function usePOSTerminal(opts: UsePOSTerminalOptions): TerminalState & Ter
   }, [sessionId, cart, currentOrderId, customer, buildOrderLines]);
 
   const checkout = useCallback(
-    async (payments: PosPaymentPayload[]): Promise<{ ok: boolean; offline: boolean }> => {
+    async (payments: PosPaymentPayload[]): Promise<{ ok: boolean; offline: boolean; error?: string }> => {
       if (!sessionId || cart.length === 0) return { ok: false, offline: false };
 
       const queue = async () => {
@@ -341,7 +341,22 @@ export function usePOSTerminal(opts: UsePOSTerminalOptions): TerminalState & Ter
         await api.post(`/api/pos/orders/${orderId}/pay`, { payments });
         clearCart();
         return { ok: true, offline: false };
-      } catch {
+      } catch (err) {
+        // 4xx ≠ "we're offline". For a 4xx (validation, closed session, bad
+        // input) we surface the error so the cashier sees what happened
+        // instead of silently dropping the sale into the offline queue.
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        const detail =
+          (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? '';
+        if (status && status >= 400 && status < 500) {
+          return {
+            ok: false,
+            offline: false,
+            error:
+              detail || `POS order rejected (HTTP ${status}). Open a session and try again.`,
+          };
+        }
+        // 5xx or network failure — queue for sync.
         await queue();
         return { ok: true, offline: true };
       }

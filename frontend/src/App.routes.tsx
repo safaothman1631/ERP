@@ -88,6 +88,15 @@ const PayrollRuns = lazyWithRetry(() => import('./pages/PayrollRuns'), 'payroll-
 // Wave AE: Onboarding + Mileage
 const OnboardingWizard = lazyWithRetry(() => import('./pages/onboarding/OnboardingWizard'), 'onboarding-wizard');
 const OnboardingChecklist = lazyWithRetry(() => import('./pages/onboarding/OnboardingChecklist'), 'onboarding-checklist');
+// growth-to-100 § R3 "first 60 seconds" wizard (distinct from the modal above).
+const GetStartedWizard = lazyWithRetry(() => import('./onboarding/OnboardingShell'), 'get-started-wizard');
+// growth-to-100 § G4a — Iraq e-Fakhata pages.
+const EFakhataDashboard = lazyWithRetry(() => import('./pages/efakhata/EFakhataDashboard'), 'efakhata-dashboard');
+const EFakhataSubmissionDetail = lazyWithRetry(() => import('./pages/efakhata/SubmissionDetail'), 'efakhata-submission-detail');
+const EFakhataCertManagement = lazyWithRetry(() => import('./pages/settings/efakhata/CertManagement'), 'efakhata-cert-management');
+const EFakhataAuditorExport = lazyWithRetry(() => import('./pages/settings/efakhata/AuditorExport'), 'efakhata-auditor-export');
+// growth-to-100 § G2 — super-admin tenant impersonation launcher.
+const ImpersonateTenant = lazyWithRetry(() => import('./pages/admin/ImpersonateTenant'), 'impersonate-tenant');
 const MileageLog = lazyWithRetry(() => import('./pages/mileage/MileageLog'), 'mileage-log');
 const MileageRates = lazyWithRetry(() => import('./pages/mileage/MileageRates'), 'mileage-rates');
 const MfgBOMs = lazyWithRetry(() => import('./pages/MfgBOMs'), 'mfg-bo-ms');
@@ -571,6 +580,15 @@ export const routes: RouteObject[] = [
       { path: 'activities/my', element: <PageTransition><MyActivities /></PageTransition> },
       { path: 'activities', element: <PageTransition><ActivitiesDashboard /></PageTransition> },
       { path: 'einvoice/dashboard', element: <PageTransition><EInvoiceDashboard /></PageTransition> },
+      // growth-to-100 § G4a — Iraq e-Fakhata
+      { path: 'efakhata', element: <PageTransition><EFakhataDashboard /></PageTransition> },
+      { path: 'efakhata/submissions/:sid', element: <PageTransition><EFakhataSubmissionDetail /></PageTransition> },
+      { path: 'settings/efakhata/cert', element: <PageTransition><EFakhataCertManagement /></PageTransition> },
+      { path: 'settings/efakhata/export', element: <PageTransition><EFakhataAuditorExport /></PageTransition> },
+      // growth-to-100 § G2 — super-admin tenant impersonation launcher
+      { path: 'admin/impersonate', element: <PageTransition><ImpersonateTenant /></PageTransition> },
+      // growth-to-100 § R3 — "first 60 seconds" onboarding wizard
+      { path: 'get-started', element: <PageTransition><GetStartedWizard /></PageTransition> },
       { path: 'whatsapp', element: <PageTransition><WhatsApp /></PageTransition> },
       { path: 'ocr/receipts', element: <PageTransition><OCRReceipts /></PageTransition> },
       { path: 'hr', element: <PageTransition><HRDashboard /></PageTransition> },

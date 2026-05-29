@@ -114,6 +114,49 @@ async function loadDeps() {
 
 let connectedDeviceId: string | null = null;
 
+// --- Dialect awareness (G3 hardware compatibility layer) -----------------
+//
+// The frontend `printer-service` runs dialect detection on the byte stream
+// itself; the native bridge only needs to ferry pre-rendered ESC/POS bytes.
+// We expose the helper below so the frontend can, when running on native,
+// pass a dialect hint to the bridge for diagnostics (e.g. choosing MTU
+// based on chipset). Today it's pass-through; physical lab testing may
+// reveal MTU quirks per dialect that we encode here.
+
+export type DialectHint =
+  | 'escpos-epson'
+  | 'escpos-xprinter'
+  | 'escpos-bixolon'
+  | 'escpos-generic-58'
+  | 'escpos-generic-80'
+  | 'escpos-unknown';
+
+/** Returns the recommended BLE MTU chunk size for a dialect, in bytes. */
+export function recommendedChunkSize(dialect?: DialectHint): number {
+  switch (dialect) {
+    case 'escpos-epson':
+      return 200; // Epson chipsets handle larger frames cleanly.
+    case 'escpos-bixolon':
+      return 180;
+    case 'escpos-xprinter':
+      return 160; // Xprinter cheaper modules drop frames > 160B.
+    case 'escpos-generic-58':
+      return 120; // Goojprt / Rongta — conservative.
+    default:
+      return 180;
+  }
+}
+
+let currentDialectHint: DialectHint | undefined;
+
+export function setDialectHint(d: DialectHint | undefined): void {
+  currentDialectHint = d;
+}
+
+export function getDialectHint(): DialectHint | undefined {
+  return currentDialectHint;
+}
+
 export const nativePrinter: PrinterBridge = {
   async isAvailable() {
     if (!Capacitor.isNativePlatform()) return false;
@@ -188,7 +231,8 @@ export const nativePrinter: PrinterBridge = {
     const copies = Math.max(1, Math.min(3, job.copies ?? 1));
 
     // Chunked write — most BLE stacks cap MTU at 20-185 bytes per packet.
-    const CHUNK = 180;
+    // Per-dialect chunk size (G3) accounts for cheaper modules dropping frames.
+    const CHUNK = recommendedChunkSize(currentDialectHint);
     for (let c = 0; c < copies; c++) {
       for (let i = 0; i < bytes.length; i += CHUNK) {
         const slice = bytes.slice(i, i + CHUNK);

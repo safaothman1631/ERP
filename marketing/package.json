@@ -1,0 +1,46 @@
+{
+  "name": "@zoho-kurdish/marketing",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Public marketing site for the Kurdish ERP — Astro v4, trilingual (Kurdish/Arabic/English), static export, mobile-first, RTL-aware.",
+  "scripts": {
+    "dev": "astro dev --host 0.0.0.0 --port 4321",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "check": "astro check",
+    "lint": "eslint . --ext .js,.ts,.astro --max-warnings 0",
+    "lint:fix": "eslint . --ext .js,.ts,.astro --fix",
+    "format": "prettier --write .",
+    "lhci": "lhci autorun",
+    "test:links": "linkinator ./dist --recurse --silent"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@astrojs/mdx": "^3.1.9",
+    "@astrojs/rss": "^4.0.7",
+    "@astrojs/sitemap": "^3.2.1",
+    "@astrojs/tailwind": "^5.1.2",
+    "astro": "^4.16.18",
+    "astro-i18next": "^1.0.0-beta.21",
+    "i18next": "^23.16.5",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.6.3"
+  },
+  "devDependencies": {
+    "@lhci/cli": "^0.14.0",
+    "@typescript-eslint/eslint-plugin": "^8.16.0",
+    "@typescript-eslint/parser": "^8.16.0",
+    "eslint": "^9.15.0",
+    "eslint-plugin-astro": "^1.3.1",
+    "linkinator": "^6.1.2",
+    "prettier": "^3.4.1",
+    "prettier-plugin-astro": "^0.14.1",
+    "prettier-plugin-tailwindcss": "^0.6.9"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

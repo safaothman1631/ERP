@@ -1,0 +1,35 @@
+---
+import { t, type Locale } from '../../i18n/utils';
+import Testimonial from '../Testimonial.astro';
+export interface Props { locale: Locale; }
+const { locale } = Astro.props;
+
+const TESTIMONIALS: Record<Locale, Array<{ quote: string; author: string; role: string; company: string; city: string }>> = {
+  ku: [
+    { quote: 'یەکەم جار سیستەمێکم بەکارهێنا کە بە کوردی بێت و لە کاتی کارەباگرتن لە کاری نەکات. POS-ـەکە ساکارە و کارمەندانم خۆیان لێی فێر بوون.', author: 'هاوژین حەسەن', role: 'خاوەن', company: 'باشاری بازار', city: 'سلێمانی' },
+    { quote: 'WHT و VAT-ـەکانم خۆکار دەکات. پێشتر هەموو مانگ سێ ڕۆژم بەسەردا دەگەیاند بۆ هەژمار. ئێستا تەنها بیست خولەک.', author: 'ئاکام ئەحمەد', role: 'هەژمارکار', company: 'دیجیتاڵ هەولێر', city: 'هەولێر' },
+    { quote: 'e-Fakhata-ـی ٢٠٢٦ ئامادەکراوە. تیمی پشتیوانیشیان بە کوردی و عەرەبی پەیوەندی پێوەم دەکەن.', author: 'مەریوان جەلال', role: 'بەڕێوەبەری گشتی', company: 'تاوێر ئەنتەرپڕایز', city: 'بەغدا' },
+  ],
+  en: [
+    { quote: 'First time I have used a real Kurdish-language ERP that does not die during a power cut. The POS is simple and my staff trained themselves.', author: 'Hawzin Hassan', role: 'Owner', company: 'Basari Bazar', city: 'Sulaymaniyah' },
+    { quote: 'WHT and VAT happen automatically. Used to take me three days a month for accounting; now it is twenty minutes.', author: 'Akam Ahmed', role: 'Accountant', company: 'Digital Hawler', city: 'Erbil' },
+    { quote: 'Already e-Fakhata-ready for 2026. Support reaches out to me in Kurdish and Arabic.', author: 'Mariwan Jalal', role: 'CEO', company: 'Tawir Enterprise', city: 'Baghdad' },
+  ],
+  ar: [
+    { quote: 'أول مرة أستخدم نظام ERP حقيقي باللغة الكردية لا يتوقف عند انقطاع الكهرباء. نقطة البيع بسيطة وموظفيي تعلموا بأنفسهم.', author: 'هاوژین حسن', role: 'مالك', company: 'بازار باشاری', city: 'السليمانية' },
+    { quote: 'ضريبة الاستقطاع وضريبة القيمة المضافة تحدثان تلقائياً. كانت تستغرق مني ثلاثة أيام شهرياً للمحاسبة؛ الآن عشرون دقيقة.', author: 'آكام أحمد', role: 'محاسب', company: 'ديجيتال أربيل', city: 'أربيل' },
+    { quote: 'جاهز للفاتورة الإلكترونية لعام ٢٠٢٦. الدعم يتواصل معي بالكردية والعربية.', author: 'مريوان جلال', role: 'مدير عام', company: 'تاوير إنتربرايز', city: 'بغداد' },
+  ],
+};
+const items = TESTIMONIALS[locale] ?? TESTIMONIALS.en;
+---
+<section class="section bg-ink-50">
+  <div class="container-marketing">
+    <h2 class="font-display font-bold text-3xl md:text-4xl text-ink-950 text-center mb-12 text-balance">
+      {t('testimonial.title', locale)}
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {items.map((it) => <Testimonial {...it} />)}
+    </div>
+  </div>
+</section>

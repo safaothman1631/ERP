@@ -1,0 +1,79 @@
+name: Mobile iOS TestFlight
+
+# Spec ref: design.md §5.1, tasks.md T-G.5.6, T-G.5.22. Runs on push of a
+# `mobile-v*` tag. Builds a signed Release IPA and uploads to TestFlight.
+# Promotion to the public App Store is a manual click in App Store
+# Connect (intentional — gates founder review + screenshot upload).
+
+on:
+  push:
+    tags:
+      - "mobile-v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ios-testflight:
+    name: Build IPA + upload to TestFlight
+    runs-on: macos-14
+    timeout-minutes: 90
+    environment: mobile-production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            mobile/package-lock.json
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: mobile/ios
+
+      - name: Select Xcode 15.4
+        run: sudo xcode-select -switch /Applications/Xcode_15.4.app
+
+      - name: Install + build frontend
+        working-directory: frontend
+        run: |
+          npm ci --legacy-peer-deps
+          npm run build
+
+      - name: Install mobile deps + sync iOS
+        working-directory: mobile
+        run: |
+          npm ci --legacy-peer-deps
+          npx cap sync ios
+
+      - name: CocoaPods install
+        working-directory: mobile/ios/App
+        run: pod install --repo-update
+
+      - name: Fastlane TestFlight
+        working-directory: mobile/ios
+        env:
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_GIT_BASIC_AUTH_BASE64: ${{ secrets.MATCH_GIT_BASIC_AUTH_BASE64 }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_API_ISSUER: ${{ secrets.APP_STORE_CONNECT_API_ISSUER }}
+          APP_STORE_CONNECT_API_KEY_B64: ${{ secrets.APP_STORE_CONNECT_API_KEY_B64 }}
+          MATCH_READONLY: "true"
+        run: bundle exec fastlane testflight
+
+      - name: Upload IPA artifact (audit trail)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-release-ipa-${{ github.ref_name }}
+          path: mobile/ios/build/App.ipa
+          retention-days: 90
+          if-no-files-found: warn

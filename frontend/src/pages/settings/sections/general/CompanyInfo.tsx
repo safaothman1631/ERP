@@ -42,6 +42,12 @@ interface CompanyInfoApi {
   name: string;
   legal_name?: string;
   registration_number?: string;
+  /**
+   * Iraqi commercial registration number (growth-to-100 § R4.14).
+   * Format ``XX-NNNNNN`` (governorate prefix) or 6–15 bare digits.
+   * Final format pending R7.1 sign-off.
+   */
+  commercial_registration_no?: string;
   tax_id?: string;
   fiscal_year_start?: string; // ISO yyyy-mm-dd (month-day used)
   timezone: string;
@@ -54,6 +60,7 @@ interface CompanyInfoForm {
   name: string;
   legal_name?: string;
   registration_number?: string;
+  commercial_registration_no?: string;
   tax_id?: string;
   fiscal_year_start?: Dayjs;
   timezone: string;
@@ -98,6 +105,7 @@ const CompanyInfo: React.FC = React.memo(() => {
       name: data.name,
       legal_name: data.legal_name,
       registration_number: data.registration_number,
+      commercial_registration_no: data.commercial_registration_no,
       tax_id: data.tax_id,
       fiscal_year_start: data.fiscal_year_start ? dayjs(data.fiscal_year_start) : undefined,
       timezone: data.timezone,
@@ -143,6 +151,7 @@ const CompanyInfo: React.FC = React.memo(() => {
         name: data.name,
         legal_name: data.legal_name,
         registration_number: data.registration_number,
+        commercial_registration_no: data.commercial_registration_no,
         tax_id: data.tax_id,
         fiscal_year_start: data.fiscal_year_start ? dayjs(data.fiscal_year_start) : undefined,
         timezone: data.timezone,
@@ -207,6 +216,28 @@ const CompanyInfo: React.FC = React.memo(() => {
               label={t('settings:company.tax_id', { defaultValue: 'Tax ID' })}
             >
               <Input maxLength={64} />
+            </Form.Item>
+          </Col>
+          <Col xs={24} md={12}>
+            <Form.Item
+              name="commercial_registration_no"
+              label={t('settings:company.commercial_registration_no', {
+                defaultValue: 'Commercial registration no. (Iraq)',
+              })}
+              tooltip={t('settings:company.commercial_registration_no.help', {
+                defaultValue:
+                  'Iraqi Ministry of Trade business registration. Format XX-NNNNNN (governorate prefix) or 6–15 bare digits. Final format pending verification.',
+              })}
+              rules={[
+                {
+                  pattern: /^(?:[A-Za-z]{2}-)?\d{6,15}$/,
+                  message: t('settings:company.commercial_registration_no.invalid', {
+                    defaultValue: 'Format: XX-NNNNNN or 6–15 digits',
+                  }),
+                },
+              ]}
+            >
+              <Input maxLength={32} placeholder="BG-123456" />
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>

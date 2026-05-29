@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import api from '../api';
 import dayjs from 'dayjs';
 import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { downloadCsv } from '../utils/exportCsv';
 import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
@@ -141,7 +142,7 @@ const RecurringInvoices: React.FC = () => {
  <Form form={form} layout="vertical" onFinish={handleSave} initialValues={{ start_date: dayjs(), frequency: 'monthly', payment_terms_days: 30 }}>
  <Space wrap>
  <Form.Item label={t('customer')} name="contact_id" rules={[{ required: true, message: t('required_contact') }]} style={{ width: 250 }}>
- <Select showSearch optionFilterProp="label" placeholder={t('placeholder_customer')} options={contacts.map(c => ({ label: c.display_name, value: c.id }))} />
+ <SelectWithQuickCreate entity="customer" showSearch placeholder={t('placeholder_customer')} allowClear />
  </Form.Item>
  <Form.Item label={t('frequency')} name="frequency" rules={[{ required: true, message: t('required_field') }]}>
  <Select placeholder={t('placeholder_select')} options={freqOptions.map(f => ({ label: t(f), value: f }))} style={{ width: 150 }} />
@@ -155,7 +156,7 @@ const RecurringInvoices: React.FC = () => {
  <thead><tr><th>{t('items')}</th><th>{t('description')}</th><th>{t('quantity')}</th><th>{t('unit_price')}</th><th>{t('discount')}%</th><th>{t('total')}</th><th></th></tr></thead>
  <tbody>{lines.map(l => (
  <tr key={l.key}>
- <td style={{ padding: 4 }}><Select style={{ width: 180 }} value={l.item_id || undefined} onChange={v => updateLine(l.key, 'item_id', v)} options={items.map(i => ({ label: i.name, value: i.id }))} showSearch optionFilterProp="label" allowClear /></td>
+ <td style={{ padding: 4 }}><SelectWithQuickCreate entity="item" style={{ width: 180 }} value={l.item_id || undefined} onChange={(v: any) => updateLine(l.key, 'item_id', v)} allowClear /></td>
  <td style={{ padding: 4 }}><Input value={l.description} onChange={e => updateLine(l.key, 'description', e.target.value)} /></td>
  <td style={{ padding: 4 }}><InputNumber min={1} value={l.quantity} onChange={v => updateLine(l.key, 'quantity', v || 1)} style={{ width: 80 }} /></td>
  <td style={{ padding: 4 }}><InputNumber min={0} value={l.unit_price} onChange={v => updateLine(l.key, 'unit_price', v || 0)} style={{ width: 120 }} /></td>

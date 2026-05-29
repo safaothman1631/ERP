@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import api from '../api';
 import dayjs from 'dayjs';
 import { PageHeader, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { downloadCsv } from '../utils/exportCsv';
 import { space as spaceTk } from '../theme/tokens';
 import { useAuthStore } from '../store';
@@ -365,13 +366,13 @@ const Assets: React.FC = () => {
  </Form.Item>
  <Space wrap>
  <Form.Item label={t('account')} name="asset_account_id" rules={[{ required: true, message: t('required_account') }]} style={{ width: 220 }}>
- <Select showSearch optionFilterProp="label" placeholder={t('placeholder_select')} options={accounts.map(a => ({ label: `${a.code} - ${a.name}`, value: a.id }))} />
+ <SelectWithQuickCreate entity="account" showSearch placeholder={t('placeholder_select')} allowClear />
  </Form.Item>
  <Form.Item label={t('depreciation') + ' ' + t('account')} name="depreciation_account_id" rules={[{ required: true, message: t('required_account') }]} style={{ width: 220 }}>
- <Select showSearch optionFilterProp="label" placeholder={t('placeholder_select')} options={accounts.map(a => ({ label: `${a.code} - ${a.name}`, value: a.id }))} />
+ <SelectWithQuickCreate entity="account" showSearch placeholder={t('placeholder_select')} allowClear />
  </Form.Item>
  <Form.Item label={t('accumulated_depreciation_account')} name="accumulated_depreciation_account_id" style={{ width: 220 }}>
- <Select showSearch optionFilterProp="label" placeholder={t('placeholder_select')} options={accounts.map(a => ({ label: `${a.code} - ${a.name}`, value: a.id }))} allowClear />
+ <SelectWithQuickCreate entity="account" showSearch placeholder={t('placeholder_select')} allowClear />
  </Form.Item>
  </Space>
  <Space wrap>

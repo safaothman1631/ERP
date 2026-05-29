@@ -54,6 +54,23 @@ ALL_PERMISSIONS += [
     "modules.request",
     "modules.approve",
     "modules.view",
+    # Quick-create entities (launch-readiness § R2) — codes match the
+    # frontend quickCreateRegistry so client gating and server enforcement agree.
+    "expenses.create_category",
+    "equipment.create_category",
+    "currencies.create",
+    "tags.create",
+    "payments.create_method",
+    "teams.create",
+    "subscriptions.create_plan",
+    "bank_accounts.create",
+    "locations.create",
+    # SaaS billing (launch-readiness § R5) — tenant-side actions on their own
+    # subscription. ``settings.billing`` already exists above and is the
+    # required code for change_plan/cancel/restart; super-admin endpoints in
+    # ``saas_admin.py`` bypass require_perm via _require_platform_admin.
+    "saas_billing.read",
+    "saas_billing.write",
 ]
 
 # write/create/update and module aliases used by user_has_perm

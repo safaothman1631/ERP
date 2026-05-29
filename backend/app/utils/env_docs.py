@@ -183,6 +183,185 @@ ENV_VAR_REGISTRY: list[EnvVarDoc] = [
             "Required in production unless running on Cloud Run with a workload identity."
         ),
     ),
+    # ── Payments / Billing (launch-readiness R4/R5) ────────────────────────────
+    EnvVarDoc(
+        name="STRIPE_SECRET_KEY",
+        description=(
+            "Stripe secret API key for international SaaS billing (R5) and the "
+            "tenant-side Stripe gateway (R4). Lazy-loaded — absence simply disables "
+            "Stripe flows; it does not block startup."
+        ),
+        required=False,
+        example="sk_test_xxxxxxxxxxxxxxxxxxxxxxxx",
+        default=None,
+        sensitive=True,
+        category="Payments",
+        notes="Use sk_test_… in development and sk_live_… in production. Never commit the real value.",
+    ),
+    EnvVarDoc(
+        name="STRIPE_PUBLISHABLE_KEY",
+        description="Stripe publishable key surfaced to the browser for client-side payment confirmation.",
+        required=False,
+        example="pk_test_xxxxxxxxxxxxxxxxxxxxxxxx",
+        default=None,
+        sensitive=False,
+        category="Payments",
+    ),
+    EnvVarDoc(
+        name="STRIPE_WEBHOOK_SECRET",
+        description=(
+            "Signing secret used to verify Stripe webhook payloads at "
+            "POST /api/saas-billing/webhooks/stripe and the tenant-side payments webhook."
+        ),
+        required=False,
+        example="whsec_xxxxxxxxxxxxxxxxxxxxxxxx",
+        default=None,
+        sensitive=True,
+        category="Payments",
+        notes="Obtain from the Stripe Dashboard → Developers → Webhooks for each endpoint.",
+    ),
+    EnvVarDoc(
+        name="PUBLIC_APP_URL",
+        description=(
+            "Public base URL of the frontend, used to build tenant-facing payment "
+            "links (invoice pay-link, hosted payment page)."
+        ),
+        required=False,
+        example="https://app.example.com",
+        default="http://localhost:5173",
+        sensitive=False,
+        category="Payments",
+    ),
+    # ── Support stack (growth-to-100 § G2) ──────────────────────────────────────
+    EnvVarDoc(
+        name="CRISP_WEBSITE_ID",
+        description="Crisp website ID used to boot the chat SDK and identify users.",
+        required=False,
+        example="00000000-0000-0000-0000-000000000000",
+        default="",
+        sensitive=False,
+        category="Support",
+        notes="Absent → chat widget no-ops cleanly. Frontend reads VITE_CRISP_WEBSITE_ID.",
+    ),
+    EnvVarDoc(
+        name="CRISP_API_IDENTIFIER",
+        description="Crisp REST API identifier for server-side ticket forwarding.",
+        required=False,
+        example="00000000-0000-0000-0000-000000000000",
+        default="",
+        sensitive=False,
+        category="Support",
+    ),
+    EnvVarDoc(
+        name="CRISP_API_KEY",
+        description="Crisp REST API key paired with CRISP_API_IDENTIFIER.",
+        required=False,
+        example="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        default="",
+        sensitive=True,
+        category="Support",
+        notes="Never commit the real value.",
+    ),
+    EnvVarDoc(
+        name="DIALOG360_API_KEY",
+        description="360Dialog WhatsApp Business API key for inbound/outbound message routing.",
+        required=False,
+        example="xxxxxxxxxxxxxxxxxxxxxxxx",
+        default="",
+        sensitive=True,
+        category="Support",
+    ),
+    EnvVarDoc(
+        name="DIALOG360_API_URL",
+        description="360Dialog messages endpoint.",
+        required=False,
+        example="https://waba.360dialog.io/v1/messages",
+        default="https://waba.360dialog.io/v1/messages",
+        sensitive=False,
+        category="Support",
+    ),
+    EnvVarDoc(
+        name="STATUSPAGE_API_KEY",
+        description="Statuspage.io OAuth key used by the 60s synthetic health emit job.",
+        required=False,
+        example="xxxxxxxxxxxxxxxxxxxx",
+        default="",
+        sensitive=True,
+        category="Support",
+    ),
+    EnvVarDoc(
+        name="STATUSPAGE_PAGE_ID",
+        description="Statuspage.io page ID whose components are updated by the health emit job.",
+        required=False,
+        example="abc123def456",
+        default="",
+        sensitive=False,
+        category="Support",
+    ),
+    EnvVarDoc(
+        name="STATUSPAGE_COMPONENTS",
+        description="JSON map of logical component name → Statuspage component ID.",
+        required=False,
+        example='{"api":"<id>","firestore":"<id>","pos_offline_sync":"<id>","email_delivery":"<id>"}',
+        default="",
+        sensitive=False,
+        category="Support",
+        notes="Fetch IDs once provisioned: GET …/components.json.",
+    ),
+    EnvVarDoc(
+        name="INTERNAL_CRON_TOKEN",
+        description="Shared secret authorizing manual calls to internal cron endpoints (e.g. health-emit).",
+        required=False,
+        example="change-me-internal-cron-token",
+        default="",
+        sensitive=True,
+        category="Support",
+    ),
+    # ── Iraq compliance (growth-to-100 § G4 — e-Fakhata + CBI) ──────────────────
+    EnvVarDoc(
+        name="MOF_BASE",
+        description=(
+            "Iraq Ministry of Finance e-Fakhata API base URL (HTTPS). When unset the "
+            "submission worker holds the queue without erroring."
+        ),
+        required=False,
+        example="https://efakhata.mof.gov.iq",
+        default="",
+        sensitive=False,
+        category="Iraq Compliance",
+        notes="Endpoint paths/field shapes pending verification against the published MoF spec (R7.X).",
+    ),
+    EnvVarDoc(
+        name="EFAKHATA_LOCAL_CERT_STORE",
+        description=(
+            "Set to 1 to bypass GCP Secret Manager and use the in-process PKCS#12 "
+            "cert store (dev/CI only)."
+        ),
+        required=False,
+        example="1",
+        default="0",
+        sensitive=False,
+        category="Iraq Compliance",
+    ),
+    EnvVarDoc(
+        name="GCP_PROJECT_ID",
+        description="GCP project ID used to build Secret Manager resource names for tenant e-Fakhata certs.",
+        required=False,
+        example="my-gcp-project",
+        default="",
+        sensitive=False,
+        category="Iraq Compliance",
+    ),
+    EnvVarDoc(
+        name="CBI_API_URL",
+        description="Central Bank of Iraq daily USD↔IQD rate source consumed by the 06:00 UTC refresh job.",
+        required=False,
+        example="https://cbi.iq/en/currency",
+        default="",
+        sensitive=False,
+        category="Iraq Compliance",
+        notes="Falls back to the previous day's rate (then a hardcoded 1320) on fetch failure. Format pending R7.6.",
+    ),
 ]
 
 # Lookup by name for O(1) access

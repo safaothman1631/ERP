@@ -1,0 +1,103 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import MarketingLayout from '../../layouts/MarketingLayout.astro';
+import CTABanner from '../../components/CTABanner.astro';
+import { t, type Locale } from '../../i18n/utils';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
+}
+
+interface Props { post: CollectionEntry<'blog'>; }
+const { post } = Astro.props;
+const { Content } = await post.render();
+
+const locale: Locale = (post.data.locale as Locale) ?? 'en';
+
+const fmtDate = (d: Date) =>
+  new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'ar-IQ',
+    { year: 'numeric', month: 'long', day: 'numeric' }).format(d);
+
+const articleJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: post.data.title,
+  description: post.data.description,
+  datePublished: post.data.date.toISOString(),
+  dateModified: (post.data.updated ?? post.data.date).toISOString(),
+  author: { '@type': 'Person', name: post.data.author },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Kurdish ERP',
+    logo: { '@type': 'ImageObject', url: 'https://zoho-kurdish.iq/brand/logo.svg' },
+  },
+  image: `https://zoho-kurdish.iq${post.data.og_image}`,
+  inLanguage: locale === 'ku' ? 'ckb-IQ' : locale === 'ar' ? 'ar-IQ' : 'en-US',
+};
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://zoho-kurdish.iq/' },
+    { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://zoho-kurdish.iq/blog' },
+    { '@type': 'ListItem', position: 3, name: post.data.title },
+  ],
+};
+---
+
+<MarketingLayout
+  locale={locale}
+  title={post.data.title}
+  description={post.data.description}
+  ogImage={post.data.og_image}
+  schemaType="Article"
+  jsonLd={[articleJsonLd, breadcrumbJsonLd]}
+>
+  <article class="section">
+    <div class="container-marketing max-w-3xl">
+      <nav class="text-sm text-ink-500 mb-6" aria-label="Breadcrumb">
+        <ol class="flex flex-wrap items-center gap-1">
+          <li><a href="/" class="hover:text-brand-600">Home</a></li>
+          <li aria-hidden="true">/</li>
+          <li><a href="/blog" class="hover:text-brand-600">Blog</a></li>
+          <li aria-hidden="true">/</li>
+          <li class="text-ink-700" aria-current="page">{post.data.title}</li>
+        </ol>
+      </nav>
+
+      <header class="mb-8">
+        <div class="flex flex-wrap items-center gap-2 mb-4">
+          {post.data.tags.map((tag) => (
+            <span class="px-2 py-0.5 text-xs rounded-full bg-brand-50 text-brand-700">{tag}</span>
+          ))}
+        </div>
+        <h1 class="font-display font-bold text-3xl md:text-4xl text-ink-950 text-balance mb-4">
+          {post.data.title}
+        </h1>
+        <p class="text-lg text-ink-600 text-pretty mb-6">{post.data.description}</p>
+        <div class="flex items-center gap-3 text-sm text-ink-500">
+          <span>{t('blog.published', locale)} {fmtDate(post.data.date)}</span>
+          <span aria-hidden="true">·</span>
+          <span>{post.data.author}</span>
+          {post.data.reading_minutes && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span>{post.data.reading_minutes} {t('blog.minutes', locale)}</span>
+            </>
+          )}
+        </div>
+      </header>
+
+      <div class="prose-marketing">
+        <Content />
+      </div>
+    </div>
+  </article>
+
+  <CTABanner locale={locale} />
+</MarketingLayout>

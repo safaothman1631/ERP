@@ -15,7 +15,7 @@ httpx>=0.27.0
 aiofiles>=23.2.1
 slowapi>=0.1.9
 redis>=5.0.0
-firebase-admin>=6.4.0
+firebase-admin>=6.5.0,<8.0
 google-cloud-firestore>=2.14.0
 google-cloud-storage>=2.14.0
 cachetools>=5.3.2
@@ -39,6 +39,18 @@ google-cloud-bigquery>=3.27.0
 # Backend hardening (P4)
 prometheus-client>=0.20.0
 google-cloud-monitoring>=2.20.0
+
+# Launch-readiness R3/R4/R5: onboarding (COA YAML templates) + SaaS billing
+pyyaml>=6.0,<7.0
+stripe>=11.0.0,<13.0.0
+
+# growth-to-100 § R4 (Iraq e-Fakhata): XML build + XAdES-BES signing + cert vault.
+# NOTE: signxml is pinned >=4.0 (not the spec's <4.0) because signxml 3.x imports
+# `OpenSSL.crypto.verify`, which pyOpenSSL removed in 24.0; 4.x dropped the
+# pyOpenSSL dependency entirely and runs on the modern cryptography stack.
+lxml>=5.0,<6.0
+signxml>=4.0,<5.0
+google-cloud-secret-manager>=2.20.0
 
 # CI / local tests
 pytest>=8.0.0

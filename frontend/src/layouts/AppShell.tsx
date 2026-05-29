@@ -32,6 +32,14 @@ import {
 import { palette, space, radius, motion, shadow } from '../theme/tokens';
 import ImpersonationBanner from '../platform/components/ImpersonationBanner';
 import PlatformAnnouncementBanner from '../platform/components/PlatformAnnouncementBanner';
+// growth-to-100 § G2 (support): global help launcher + NPS survey. Both defer
+// their network/SDK work until interaction, so they are safe to always mount.
+import HelpWidget from '../components/help/HelpWidget';
+import NPSSurvey from '../components/NPSSurvey';
+// growth-to-100 § G2 — tenant (RFC-8693 read-only) impersonation banner. Distinct
+// from the platform "view as user" banner above; the two are driven by separate
+// token systems and never display at the same time. Self-hides when no G2 token.
+import TenantImpersonationBanner from '../components/ImpersonationBanner';
 import { RoleAccentProvider } from '../components/role/RoleAccentProvider';
 import RoleWelcomeSheet from '../components/role/RoleWelcomeSheet';
 import { useViewport } from '../hooks/useViewport';
@@ -381,6 +389,10 @@ export const AppShell: React.FC = () => {
       <QuickSearch />
       {toastHolder}
       <RoleWelcomeSheet />
+      {/* growth-to-100 § G2 — global support UX + tenant impersonation banner */}
+      <TenantImpersonationBanner />
+      <HelpWidget />
+      <NPSSurvey />
     </Layout>
     </RoleAccentProvider>
   );

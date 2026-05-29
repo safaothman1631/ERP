@@ -16,6 +16,7 @@
  */
 import React, { useState, Suspense, lazy } from 'react';
 import { Layout, Button, Space, Tag, Badge, Typography, Input } from 'antd';
+import { message } from '../../utils/message';
 import {
   WifiOutlined,
   SyncOutlined,
@@ -157,7 +158,11 @@ export const POSTerminalShell: React.FC<POSTerminalShellProps> = ({
             paymentMethods={paymentMethods}
             onConfirm={async (payments) => {
               const result = await terminal.checkout(payments);
-              if (result.ok) setPaymentOpen(false);
+              if (result.ok) {
+                setPaymentOpen(false);
+              } else if (result.error) {
+                message.error(result.error);
+              }
               return result;
             }}
           />

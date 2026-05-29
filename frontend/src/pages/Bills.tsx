@@ -9,6 +9,7 @@ import { listQueryKeys } from '../api/queries/keys';
 import ExportButton from '../components/ExportButton';
 import dayjs from 'dayjs';
 import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { downloadCsv } from '../utils/exportCsv';
 import { space } from '../theme/tokens';
 import { useAuthStore } from '../store';
@@ -197,12 +198,7 @@ const Bills: React.FC = () => {
  <Form form={form} layout="vertical" onFinish={handleSave} initialValues={{ date: dayjs(), currency_code: 'IQD' }}>
  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
  <Form.Item label={t('vendor')} name="contact_id" rules={[{ required: true, message: t('required_contact') }]}>
- <Select
- showSearch
- optionFilterProp="label"
- options={vendors.map((v: any) => ({ label: v.display_name, value: v.id }))}
- placeholder={t('placeholder_vendor')}
- />
+ <SelectWithQuickCreate entity="vendor" showSearch placeholder={t('placeholder_vendor')} allowClear />
  </Form.Item>
  <Form.Item label={t('date')} name="date" rules={[{ required: true, message: t('required_date') }]}>
  <DatePicker style={{ width: '100%' }} placeholder={t('placeholder_date')} />
@@ -211,13 +207,7 @@ const Bills: React.FC = () => {
  <DatePicker style={{ width: '100%' }} placeholder={t('placeholder_due_date')} />
  </Form.Item>
  <Form.Item label={t('account')} name="account_id">
- <Select
- showSearch
- optionFilterProp="label"
- options={accounts.map((a: any) => ({ label: `${a.code} - ${a.name}`, value: a.id }))}
- placeholder={t('placeholder_select')}
- allowClear
- />
+ <SelectWithQuickCreate entity="account" showSearch placeholder={t('placeholder_select')} allowClear />
  </Form.Item>
  </div>
  <Form.Item label={t('notes')} name="notes"><Input.TextArea rows={2} placeholder={t('placeholder_notes')} /></Form.Item>

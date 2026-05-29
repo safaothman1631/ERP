@@ -1,0 +1,8 @@
+# iOS Appfile
+#
+# `apple_id` + `team_id` are read from env at runtime so we don't have to
+# hard-code the founder's Apple ID into the repo.
+
+app_identifier(ENV["APP_IDENTIFIER"] || "com.zoho.kurdishierp")
+apple_id(ENV["APPLE_ID"])
+team_id(ENV["APPLE_TEAM_ID"])

@@ -53,12 +53,18 @@ const config: CapacitorConfig = {
 
   plugins: {
     SplashScreen: {
+      // Spec ref: R5.7 — splash with logo + localized "Loading…".
       launchShowDuration: 1500,
       launchAutoHide: true,
       androidScaleType: 'CENTER_CROP',
       backgroundColor: '#0c0d10',
       showSpinner: false,
       splashImmersive: true,
+      // Brand logo lives under `android/app/src/main/res/drawable-*/splash.png`
+      // and `ios/App/App/Assets.xcassets/Splash.imageset/`. The localized
+      // "Loading…" string is rendered by the React shell once webview is ready.
+      androidSplashResourceName: 'splash',
+      iosSpinnerStyle: 'small',
     },
     StatusBar: {
       style: 'DARK',
@@ -82,6 +88,33 @@ const config: CapacitorConfig = {
     Preferences: {
       group: 'com.zoho.kurdishierp.prefs',
     },
+    // ── Push (FCM + APNs) — design.md §5.4 ─────────────────────────────────
+    PushNotifications: {
+      // Show heads-up banner + sound on Android. iOS is configured in
+      // `ios/App/App/AppDelegate.swift` via `UNUserNotificationCenter`.
+      presentationOptions: ['badge', 'sound', 'alert'],
+    },
+    // Firebase Messaging (preferred over the bare Capacitor PushNotifications
+    // plugin on Android because it exposes topic management + foreground
+    // delivery callbacks). iOS still uses APNs under the hood; this plugin
+    // bridges the FCM token via the APNs registration callback.
+    FirebaseMessaging: {
+      // Auto-init the SDK; we manage the token lifecycle ourselves in
+      // `src/bridge/push.ts`.
+    },
+    // In-app update (Android Play Store only — iOS uses App Store banner).
+    AppUpdate: {
+      // Reads min/latest from `/api/mobile/version-check` at cold start; this
+      // plugin's role is to surface the Play Store in-app update prompt for
+      // Android once the backend decides an update is required.
+    },
+    // App lifecycle + deep links (used by the in-app update gate to listen
+    // for `appStateChange` events and re-check version on resume).
+    App: {},
+    // Network plugin: drives offline banner + queued mutations in POS.
+    Network: {},
+    // Filesystem: used by offline cache and printer ESC/POS payload staging.
+    Filesystem: {},
   },
 
   loggingBehavior: 'production',

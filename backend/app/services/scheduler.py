@@ -162,8 +162,60 @@ def start_scheduler(app=None):
         replace_existing=True,
     )
 
+    # Launch-readiness R4.12: nightly tenant-side payment reconciliation
+    _scheduler.add_job(
+        _job_payments_reconciliation,
+        trigger=CronTrigger(hour=2, minute=15),
+        id="payments_reconciliation_nightly",
+        name="Tenant-Side Payments Reconciliation",
+        replace_existing=True,
+    )
+
+    # growth-to-100 § R4.15: daily CBI USD↔IQD exchange-rate refresh
+    # 09:00 Baghdad time = 06:00 UTC (Baghdad is UTC+3 year-round).
+    _scheduler.add_job(
+        _job_cbi_rate_refresh,
+        trigger=CronTrigger(hour=6, minute=0),
+        id="cbi_rate_refresh_daily",
+        name="CBI Daily USD↔IQD Rate Refresh",
+        replace_existing=True,
+    )
+
+    # growth-to-100 § G2: push derived component health to Statuspage every 60s.
+    _scheduler.add_job(
+        _job_status_page_emit,
+        trigger=IntervalTrigger(seconds=60),
+        id="status_page_emit_60s",
+        name="Status Page Health Emit",
+        coalesce=True,
+        max_instances=1,
+        replace_existing=True,
+    )
+
+    # growth-to-100 § G2: deliver due onboarding-drip messages every 10 minutes.
+    _scheduler.add_job(
+        _job_onboarding_drip,
+        trigger=IntervalTrigger(minutes=10),
+        id="onboarding_drip_dispatch_10m",
+        name="Onboarding Drip Dispatch",
+        coalesce=True,
+        max_instances=1,
+        replace_existing=True,
+    )
+
+    # growth-to-100 § G4a: drain the e-Fakhata submission queue every 30 seconds.
+    _scheduler.add_job(
+        _job_efakhata_submission_drain,
+        trigger=IntervalTrigger(seconds=30),
+        id="efakhata_submission_drain",
+        name="e-Fakhata Submission Queue Drain",
+        coalesce=True,
+        max_instances=1,
+        replace_existing=True,
+    )
+
     _scheduler.start()
-    logger.info("✅ Scheduler started with 14 jobs")
+    logger.info("✅ Scheduler started with 19 jobs")
 
 
 def shutdown_scheduler():
@@ -183,6 +235,106 @@ stop_scheduler = shutdown_scheduler
 def get_scheduler() -> Optional[AsyncIOScheduler]:
     """Get the scheduler instance (for status checks)."""
     return _scheduler
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Launch-readiness R4.12: tenant-side payments reconciliation
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _job_payments_reconciliation():
+    """Nightly per-(provider, tenant) settlement reconciliation.
+
+    Walks every registered payment provider against each organization's
+    ``Payment`` records for the prior day and records mismatches to the
+    reconciliation queue surfaced in Settings → Payments → Reconciliation.
+    """
+    import asyncio
+
+    from app.firebase_client import get_firestore_client
+    from app.services.payments_reconciliation import run_nightly_reconciliation
+
+    try:
+        logger.info("🔄 Running nightly payments reconciliation...")
+        db = get_firestore_client()
+        org_ids = [doc.id for doc in db.collection("organizations").stream()]
+        if not org_ids:
+            logger.info("payments reconciliation: no organizations to process")
+            return
+        reports = asyncio.run(run_nightly_reconciliation(org_ids))
+        logger.info(
+            "✅ payments reconciliation complete: %d report(s) across %d org(s)",
+            len(reports),
+            len(org_ids),
+        )
+    except Exception as exc:  # pragma: no cover - defensive scheduler guard
+        logger.exception("payments reconciliation job failed: %s", exc)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# growth-to-100 § R4.15: daily CBI exchange-rate refresh
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def _job_cbi_rate_refresh():
+    """Fetch the day's CBI rate and persist to ``cbi_rates/{yyyy-mm-dd}``.
+
+    Falls back to yesterday's rate on HTTP failure so the UI never goes
+    completely dark — see ``app.services.cbi_rates.refresh_today_rate``.
+    """
+    try:
+        from app.services.cbi_rates import refresh_today_rate
+
+        logger.info("🔄 Refreshing CBI USD↔IQD rate...")
+        doc = refresh_today_rate()
+        logger.info(
+            "✅ CBI rate refresh complete: rate=%s source=%s",
+            doc.get("rate"),
+            doc.get("source"),
+        )
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.exception("CBI rate refresh job failed: %s", exc)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# growth-to-100 § G2 / G4a: support + e-Fakhata background jobs
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def _job_status_page_emit():
+    """G2: derive component health and push to Statuspage.io / Cachet."""
+    try:
+        from app.api.internal.health_emit import emit_status_now
+
+        emit_status_now()
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.warning("status page emit job failed: %s", exc)
+
+
+def _job_onboarding_drip():
+    """G2: deliver due onboarding-drip email/WhatsApp messages."""
+    try:
+        from app.services.onboarding_drip import dispatch_due
+
+        result = dispatch_due()
+        if result and result.get("sent"):
+            logger.info("✅ onboarding drip dispatched: %s", result)
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.warning("onboarding drip job failed: %s", exc)
+
+
+def _job_efakhata_submission_drain():
+    """G4a: drain the e-Fakhata submission queue (per tenant, 50/batch).
+
+    Holds without erroring when ``MOF_BASE`` is unset (see submission_worker).
+    """
+    try:
+        from app.efakhata.submission_worker import run_once
+
+        result = run_once()
+        if result and (result.get("submitted") or result.get("failed") or result.get("processed")):
+            logger.info("✅ e-Fakhata drain: %s", result)
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.warning("e-Fakhata submission drain job failed: %s", exc)
 
 
 # ═══════════════════════════════════════════════════════════════════════════

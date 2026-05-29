@@ -1,0 +1,89 @@
+---
+/**
+ * Footer — sitemap, legal, social, made-in-Iraq line.
+ */
+import { localeFromPath, t, localizedPath, type Locale } from '../i18n/utils';
+import EmailCapture from './EmailCapture.astro';
+
+const pathname = new URL(Astro.request.url).pathname;
+const locale: Locale = localeFromPath(pathname);
+const DOCS_URL = 'https://docs.zoho-kurdish.iq';
+const STATUS_URL = 'https://status.zoho-kurdish.iq';
+const HELP_URL = 'https://help.zoho-kurdish.iq';
+
+const product = [
+  { label: t('nav.features', locale), href: localizedPath(locale, '/features') },
+  { label: t('nav.pricing', locale), href: localizedPath(locale, '/pricing') },
+  { label: t('footer.docs', locale), href: DOCS_URL },
+];
+const company = [
+  { label: t('footer.about', locale), href: localizedPath(locale, '/about') },
+  { label: t('nav.blog', locale), href: localizedPath(locale, '/blog') },
+  { label: t('footer.contact', locale), href: localizedPath(locale, '/contact') },
+];
+const resources = [
+  { label: t('footer.support', locale), href: HELP_URL },
+  { label: t('footer.status', locale), href: STATUS_URL },
+];
+const legal = [
+  { label: t('footer.terms', locale), href: localizedPath(locale, '/legal/terms') },
+  { label: t('footer.privacy', locale), href: localizedPath(locale, '/legal/privacy') },
+  { label: t('footer.dpa', locale), href: localizedPath(locale, '/legal/dpa') },
+];
+---
+
+<footer class="mt-auto bg-ink-50 border-t border-ink-100" role="contentinfo">
+  <div class="container-marketing py-16">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
+      <div class="col-span-2">
+        <div class="flex items-center gap-2 font-display font-bold text-lg text-ink-900 mb-3">
+          <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-brand-500 text-white font-bold" aria-hidden="true">K</span>
+          <span>{t('site.name', locale)}</span>
+        </div>
+        <p class="text-sm text-ink-600 max-w-sm mb-4">{t('site.tagline', locale)}</p>
+        <EmailCapture compact={true} />
+      </div>
+
+      <div>
+        <h3 class="text-xs font-semibold uppercase text-ink-500 tracking-wider mb-3">{t('footer.product', locale)}</h3>
+        <ul class="space-y-2">
+          {product.map((it) => (
+            <li><a href={it.href} class="text-sm text-ink-700 hover:text-brand-600 no-underline">{it.label}</a></li>
+          ))}
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="text-xs font-semibold uppercase text-ink-500 tracking-wider mb-3">{t('footer.company', locale)}</h3>
+        <ul class="space-y-2">
+          {company.map((it) => (
+            <li><a href={it.href} class="text-sm text-ink-700 hover:text-brand-600 no-underline">{it.label}</a></li>
+          ))}
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="text-xs font-semibold uppercase text-ink-500 tracking-wider mb-3">{t('footer.resources', locale)}</h3>
+        <ul class="space-y-2">
+          {resources.map((it) => (
+            <li><a href={it.href} class="text-sm text-ink-700 hover:text-brand-600 no-underline">{it.label}</a></li>
+          ))}
+        </ul>
+        <h3 class="text-xs font-semibold uppercase text-ink-500 tracking-wider mt-6 mb-3">{t('footer.legal', locale)}</h3>
+        <ul class="space-y-2">
+          {legal.map((it) => (
+            <li><a href={it.href} class="text-sm text-ink-700 hover:text-brand-600 no-underline">{it.label}</a></li>
+          ))}
+        </ul>
+      </div>
+    </div>
+
+    <div class="pt-6 border-t border-ink-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <p class="text-xs text-ink-500">{t('footer.copyright', locale)}</p>
+      <p class="text-xs text-ink-500 inline-flex items-center gap-1.5">
+        <span aria-hidden="true">🇮🇶</span>
+        <span>{t('footer.made_in_iraq', locale)}</span>
+      </p>
+    </div>
+  </div>
+</footer>

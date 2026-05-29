@@ -8,6 +8,7 @@ import { useListQuery } from '../api/queries/useListQuery';
 import { listQueryKeys } from '../api/queries/keys';
 import dayjs from 'dayjs';
 import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { downloadCsv } from '../utils/exportCsv';
 import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
@@ -141,7 +142,7 @@ const PurchaseOrders: React.FC = () => {
  <Form form={form} layout="vertical" onFinish={handleSave} initialValues={{ date: dayjs() }}>
  <Space wrap>
  <Form.Item label={t('vendor')} name="contact_id" rules={[{ required: true, message: t('required_contact') }]} style={{ width: 250 }}>
- <Select showSearch optionFilterProp="label" placeholder={t('placeholder_vendor')} options={contacts.map(c => ({ label: c.display_name, value: c.id }))} />
+ <SelectWithQuickCreate entity="vendor" showSearch placeholder={t('placeholder_vendor')} allowClear />
  </Form.Item>
  <Form.Item label={t('date')} name="date" rules={[{ required: true, message: t('required_date') }]}><DatePicker placeholder={t('placeholder_date')} /></Form.Item>
  <Form.Item label={t('expected_delivery')} name="expected_delivery_date"><DatePicker placeholder={t('placeholder_date')} /></Form.Item>
@@ -152,7 +153,7 @@ const PurchaseOrders: React.FC = () => {
  <thead><tr><th>{t('items')}</th><th>{t('description')}</th><th>{t('quantity')}</th><th>{t('unit_price')}</th><th>{t('discount')}%</th><th>{t('total')}</th><th></th></tr></thead>
  <tbody>{lines.map(l => (
  <tr key={l.key}>
- <td style={{ padding: 4 }}><Select style={{ width: 180 }} value={l.item_id || undefined} onChange={v => updateLine(l.key, 'item_id', v)} options={items.map(i => ({ label: i.name, value: i.id }))} showSearch optionFilterProp="label" allowClear /></td>
+ <td style={{ padding: 4 }}><SelectWithQuickCreate entity="item" style={{ width: 180 }} value={l.item_id || undefined} onChange={(v: any) => updateLine(l.key, 'item_id', v)} allowClear /></td>
  <td style={{ padding: 4 }}><Input value={l.description} onChange={e => updateLine(l.key, 'description', e.target.value)} /></td>
  <td style={{ padding: 4 }}><InputNumber min={1} value={l.quantity} onChange={v => updateLine(l.key, 'quantity', v || 1)} style={{ width: 80 }} /></td>
  <td style={{ padding: 4 }}><InputNumber min={0} value={l.unit_price} onChange={v => updateLine(l.key, 'unit_price', v || 0)} style={{ width: 120 }} /></td>

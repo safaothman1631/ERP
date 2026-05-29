@@ -54,7 +54,38 @@ def create_quote(data: dict, user: dict = Depends(get_current_user)):
     quote_number = seq_repo.get_next("quote")
     repo = QuoteRepository(user["org_id"])
     lines = data.pop("lines", [])
-    quote = repo.create({"id": str(uuid.uuid4()), "quote_number": quote_number, **data})
+
+    # Compute totals server-side so the list view's Total column is populated
+    # even when the client doesn't pre-aggregate. Mirrors invoices.py.
+    from app.api.invoices import _calculate_invoice_totals
+    tax_repo = TaxRateRepository(user["org_id"])
+    subtotal, total_tax = _calculate_invoice_totals(lines, tax_repo)
+    total = (
+        subtotal
+        + total_tax
+        + float(data.get("shipping_charge") or 0)
+        + float(data.get("adjustment") or 0)
+        - float(data.get("discount_amount") or 0)
+    )
+
+    quote_payload = {
+        "id": str(uuid.uuid4()),
+        "quote_number": quote_number,
+        "subtotal": subtotal,
+        "tax_amount": total_tax,
+        "total": total,
+        "status": data.get("status") or "draft",
+        **data,
+    }
+    # Don't let client-supplied total/subtotal/tax_amount silently override
+    # the server-computed ones; re-pin them after the spread.
+    quote_payload["subtotal"] = subtotal
+    quote_payload["tax_amount"] = total_tax
+    quote_payload["total"] = total
+    if not quote_payload.get("status"):
+        quote_payload["status"] = "draft"
+
+    quote = repo.create(quote_payload)
     if lines: repo.set_lines(quote["id"], lines)
     
     # Webhook: quote.created

@@ -1,0 +1,324 @@
+/*
+ * Brand tokens for the Kurdish ERP marketing site.
+ *
+ * Iraqi-flag-inspired but tasteful:
+ *   - brand red    → muted, used sparingly for primary CTAs
+ *   - accent green → success, verified, growth
+ *   - ink neutrals → typography, surfaces
+ *
+ * Replaces Tailwind preflight (we set applyBaseStyles: false in tailwind config).
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Color tokens */
+    --color-bg: #ffffff;
+    --color-bg-soft: #f7f7f8;
+    --color-bg-muted: #eeeef1;
+    --color-fg: #28282d;
+    --color-fg-muted: #5b5b67;
+    --color-fg-subtle: #71717f;
+    --color-border: #d8d8de;
+    --color-border-soft: #eeeef1;
+
+    --color-brand: #e5495d;
+    --color-brand-hover: #d12747;
+    --color-brand-fg: #ffffff;
+
+    --color-accent: #2fa356;
+    --color-accent-hover: #218144;
+    --color-accent-fg: #ffffff;
+
+    /* Layout tokens */
+    --container-max: 1200px;
+    --header-h: 64px;
+    --footer-h: auto;
+
+    /* Type scale */
+    --font-display: 'Vazirmatn', 'Noto Naskh Arabic', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+    --font-body: 'Vazirmatn', 'IBM Plex Sans Arabic', 'Segoe UI', Roboto, system-ui, sans-serif;
+
+    /* Motion */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  [data-theme='dark'] {
+    --color-bg: #0c0c0f;
+    --color-bg-soft: #1a1a20;
+    --color-bg-muted: #28282d;
+    --color-fg: #f7f7f8;
+    --color-fg-muted: #b6b6c0;
+    --color-fg-subtle: #8e8e9c;
+    --color-border: #3f3f47;
+    --color-border-soft: #28282d;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* RTL adjustments — directionality is set via the <html dir> attribute */
+  [dir='rtl'] body {
+    font-feature-settings: 'liga' 1, 'kern' 1;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--color-fg);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  a {
+    color: var(--color-brand);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+  }
+
+  a:hover {
+    color: var(--color-brand-hover);
+  }
+
+  /* Focus ring — accessibility */
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  img,
+  svg,
+  video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  /* Skip-to-content (a11y) */
+  .skip-link {
+    position: absolute;
+    inset-inline-start: 0;
+    top: -40px;
+    background: var(--color-brand);
+    color: var(--color-brand-fg);
+    padding: 8px 16px;
+    z-index: 100;
+    transition: top var(--transition-fast);
+  }
+  .skip-link:focus {
+    top: 0;
+  }
+}
+
+@layer components {
+  /* Container */
+  .container-marketing {
+    width: 100%;
+    max-width: var(--container-max);
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 640px) {
+    .container-marketing {
+      padding-inline: 1.5rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .container-marketing {
+      padding-inline: 2rem;
+    }
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.5rem;
+    border: 1px solid transparent;
+    transition:
+      background var(--transition-fast),
+      color var(--transition-fast),
+      transform var(--transition-fast);
+    text-decoration: none;
+    line-height: 1;
+    font-size: 0.95rem;
+  }
+  .btn:active {
+    transform: translateY(1px);
+  }
+  .btn-primary {
+    background: var(--color-brand);
+    color: var(--color-brand-fg);
+  }
+  .btn-primary:hover {
+    background: var(--color-brand-hover);
+    color: var(--color-brand-fg);
+  }
+  .btn-secondary {
+    background: var(--color-bg);
+    color: var(--color-fg);
+    border-color: var(--color-border);
+  }
+  .btn-secondary:hover {
+    background: var(--color-bg-soft);
+    color: var(--color-fg);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-fg);
+  }
+  .btn-ghost:hover {
+    background: var(--color-bg-soft);
+    color: var(--color-fg);
+  }
+  .btn-lg {
+    padding: 1rem 1.5rem;
+    font-size: 1.05rem;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border-soft);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    transition:
+      border-color var(--transition-base),
+      box-shadow var(--transition-base),
+      transform var(--transition-base);
+  }
+  .card:hover {
+    border-color: var(--color-border);
+    box-shadow: 0 6px 18px rgb(0 0 0 / 0.06);
+  }
+
+  /* Section spacing */
+  .section {
+    padding-block: 4rem;
+  }
+  @media (min-width: 768px) {
+    .section {
+      padding-block: 6rem;
+    }
+  }
+
+  /* Prose for blog body */
+  .prose-marketing {
+    max-width: 72ch;
+    color: var(--color-fg);
+    font-size: 1.075rem;
+    line-height: 1.75;
+  }
+  .prose-marketing h2 {
+    font-size: 1.75rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+  }
+  .prose-marketing h3 {
+    font-size: 1.35rem;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  .prose-marketing p {
+    margin-block: 1rem;
+  }
+  .prose-marketing ul,
+  .prose-marketing ol {
+    margin-block: 1rem;
+    padding-inline-start: 1.5rem;
+  }
+  .prose-marketing li {
+    margin-block: 0.5rem;
+  }
+  .prose-marketing blockquote {
+    border-inline-start: 4px solid var(--color-brand);
+    padding-inline-start: 1rem;
+    margin-block: 1.5rem;
+    font-style: italic;
+    color: var(--color-fg-muted);
+  }
+  .prose-marketing code {
+    background: var(--color-bg-soft);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9em;
+  }
+  .prose-marketing pre {
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border-soft);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    overflow-x: auto;
+    margin-block: 1.5rem;
+  }
+  .prose-marketing pre code {
+    background: transparent;
+    padding: 0;
+  }
+  .prose-marketing a {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+}

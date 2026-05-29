@@ -1,0 +1,134 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Zoho Kurdish ERP — Android Fastfile
+#
+# Spec ref: design.md §5.1–§5.2 (Capacitor pipeline + Play App Signing),
+# requirements.md §R5.3 (Play App Signing for production key), tasks.md
+# T-G.5.3, T-G.5.5, T-G.5.11 (FCM provisioning) and T-G.5.21 (production
+# release). Lanes are designed to run in three environments:
+#
+#   1. Local dev (`fastlane android debug`) — sanity build before pushing.
+#   2. CI on PR (`fastlane android debug`) — wired in mobile-android-debug.yml.
+#   3. CI on tag `mobile-v*` (`fastlane android beta` / `production`) —
+#      wired in mobile-android-beta.yml; uploads to Play Console.
+#
+# Secrets expected (set via GitHub Actions Secrets, NEVER checked in):
+#   KEYSTORE_BASE64           # base64-encoded upload keystore (.jks)
+#   KEYSTORE_PASSWORD         # store password
+#   KEY_ALIAS                 # alias used at keystore generation
+#   KEY_PASSWORD              # key password
+#   PLAY_JSON_KEY_BASE64      # base64-encoded service-account JSON for
+#                             #   Google Play Developer API
+#
+# See docs/mobile/android-signing.md for keystore generation + secret
+# rotation procedure.
+# ─────────────────────────────────────────────────────────────────────────────
+
+default_platform(:android)
+
+platform :android do
+  before_all do
+    # Verify we're in the `android/` dir relative to the mobile root.
+    UI.user_error!("Run from mobile/android/") unless File.exist?("../../capacitor.config.ts")
+  end
+
+  desc "Build a debug APK (no signing required) for PR validation"
+  lane :debug do
+    gradle(
+      task: "clean assembleDebug",
+      project_dir: ".",
+      print_command: false,
+    )
+    UI.success("Debug APK at app/build/outputs/apk/debug/app-debug.apk")
+  end
+
+  desc "Build a signed release AAB. Reads keystore + creds from env."
+  lane :release do
+    _restore_keystore_from_env
+    gradle(
+      task: "clean bundleRelease",
+      project_dir: ".",
+      properties: {
+        "android.injected.signing.store.file" => ENV["KEYSTORE_PATH"],
+        "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
+        "android.injected.signing.key.alias" => ENV["KEY_ALIAS"],
+        "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
+      },
+      print_command: false,
+    )
+    UI.success("Release AAB at app/build/outputs/bundle/release/app-release.aab")
+  end
+
+  desc "Upload a signed AAB to the Play Console *internal* testing track"
+  lane :internal do
+    release
+    _restore_play_creds_from_env
+    upload_to_play_store(
+      track: "internal",
+      aab: "app/build/outputs/bundle/release/app-release.aab",
+      json_key: ENV["PLAY_JSON_KEY_PATH"],
+      skip_upload_apk: true,
+      skip_upload_metadata: true,
+      skip_upload_changelogs: false,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      release_status: "draft",
+    )
+    UI.success("Uploaded to Play Internal Testing — promote in Play Console.")
+  end
+
+  desc "Promote a build from internal → closed beta on the Play Console"
+  lane :beta do
+    release
+    _restore_play_creds_from_env
+    upload_to_play_store(
+      track: "beta",
+      aab: "app/build/outputs/bundle/release/app-release.aab",
+      json_key: ENV["PLAY_JSON_KEY_PATH"],
+      skip_upload_apk: true,
+      skip_upload_metadata: false,
+      skip_upload_changelogs: false,
+      skip_upload_images: false,
+      skip_upload_screenshots: false,
+      release_status: "completed",
+    )
+    UI.success("Uploaded to Play Closed Beta.")
+  end
+
+  desc "Promote a build to production. Rollout starts at 10% by default."
+  lane :production do
+    release
+    _restore_play_creds_from_env
+    upload_to_play_store(
+      track: "production",
+      aab: "app/build/outputs/bundle/release/app-release.aab",
+      json_key: ENV["PLAY_JSON_KEY_PATH"],
+      skip_upload_apk: true,
+      skip_upload_metadata: false,
+      skip_upload_changelogs: false,
+      skip_upload_images: false,
+      skip_upload_screenshots: false,
+      release_status: "inProgress",
+      rollout: "0.10",
+    )
+    UI.success("Started production rollout @ 10%. Monitor Crashlytics for 24h before increasing.")
+  end
+
+  # ── Helpers ────────────────────────────────────────────────────────────────
+  desc "Restore the upload keystore from KEYSTORE_BASE64 env"
+  private_lane :_restore_keystore_from_env do
+    base64 = ENV["KEYSTORE_BASE64"]
+    UI.user_error!("KEYSTORE_BASE64 not set") if base64.nil? || base64.empty?
+    target = File.expand_path("upload.jks")
+    File.write(target, Base64.decode64(base64), mode: "wb")
+    ENV["KEYSTORE_PATH"] = target
+  end
+
+  desc "Restore the Play Developer API JSON key from PLAY_JSON_KEY_BASE64 env"
+  private_lane :_restore_play_creds_from_env do
+    base64 = ENV["PLAY_JSON_KEY_BASE64"]
+    UI.user_error!("PLAY_JSON_KEY_BASE64 not set") if base64.nil? || base64.empty?
+    target = File.expand_path("play-key.json")
+    File.write(target, Base64.decode64(base64))
+    ENV["PLAY_JSON_KEY_PATH"] = target
+  end
+end

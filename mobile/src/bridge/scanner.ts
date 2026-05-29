@@ -147,3 +147,56 @@ export const nativeScanner: ScannerBridge = {
 };
 
 export default nativeScanner;
+
+// --- Unified scanner (G3) ------------------------------------------------
+//
+// `unifiedScanner` ties together the native ML Kit path (this file) with
+// the web HID + camera paths in `frontend/src/hardware/scanner/scanner-service.ts`.
+// Callers can subscribe once via `start(onResult)` and receive scans
+// regardless of which path fired. The HID path runs in the web layer; the
+// native path runs here. They share a single emit channel.
+
+type UnifiedListener = (r: ScanResult) => void;
+
+const unifiedListeners = new Set<UnifiedListener>();
+
+/** Push a scan from any source — used by the web HID handler and the native ML Kit callback. */
+export function emitScan(reading: ScanResult): void {
+  for (const l of unifiedListeners) {
+    try {
+      l(reading);
+    } catch {
+      // ignore listener errors.
+    }
+  }
+}
+
+/** Start receiving scans. On native, kicks off the ML Kit continuous path. */
+export async function startUnified(onResult: UnifiedListener): Promise<() => Promise<void>> {
+  unifiedListeners.add(onResult);
+  let stopNative = async () => {
+    /* noop */
+  };
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await nativeScanner.scan({
+        continuous: true,
+        onResult: (r) => emitScan(r),
+      });
+      stopNative = async () => {
+        await nativeScanner.stop();
+      };
+    } catch {
+      // Native unavailable — fall back to HID-only via web layer.
+    }
+  }
+  return async () => {
+    unifiedListeners.delete(onResult);
+    await stopNative();
+  };
+}
+
+export const unifiedScanner = {
+  startUnified,
+  emitScan,
+};

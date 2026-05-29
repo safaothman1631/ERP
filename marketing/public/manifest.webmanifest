@@ -1,0 +1,16 @@
+{
+  "name": "Kurdish ERP — ERP & POS for Iraqi businesses",
+  "short_name": "Kurdish ERP",
+  "description": "Trilingual ERP and POS designed for Iraqi small and mid-size businesses.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#e5495d",
+  "lang": "ckb-IQ",
+  "dir": "rtl",
+  "icons": [
+    { "src": "/brand/favicon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/brand/manifest-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/brand/manifest-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

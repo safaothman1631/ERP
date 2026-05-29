@@ -1,0 +1,70 @@
+---
+import { t, type Locale } from '../../i18n/utils';
+import MarketingLayout from '../../layouts/MarketingLayout.astro';
+import CTABanner from '../CTABanner.astro';
+
+export interface Props { locale: Locale; }
+const { locale } = Astro.props;
+
+const VALUES: Record<Locale, Array<{ title: string; body: string; icon: string }>> = {
+  en: [
+    { icon: '🇮🇶', title: 'Built in Iraq', body: 'Designed in Sulaymaniyah by Iraqi engineers who knew the shops, the printers, and the tax codes before they wrote a line of code.' },
+    { icon: '🌐', title: 'Trilingual from day one', body: 'Kurdish Sorani, Arabic, and English — every screen, every report, every help article. No half-translated drop-down menus.' },
+    { icon: '⚡', title: 'Designed for Iraqi power and internet', body: 'IndexedDB-backed offline POS, low-bandwidth dashboards, and a sync model that survives a 3-day outage.' },
+    { icon: '📜', title: 'Iraqi tax law, native', body: 'WHT, VAT, e-Fakhata, CBI rate, IQD denominations — first-class concepts, not afterthoughts.' },
+  ],
+  ku: [
+    { icon: '🇮🇶', title: 'لە عێراق دروستکراوە', body: 'لە سلێمانی لە لایەن ئەندازیارە عێراقیەکانەوە دیزاین کراوە کە لە پێش نووسینی کۆد، فرۆشگاکان، چاپکەرەکان، و یاسای ضەریبەیان زانیوە.' },
+    { icon: '🌐', title: 'سێ زمان لە ڕۆژی یەکەمەوە', body: 'کوردی سۆرانی، عەرەبی، ئینگلیزی — هەموو دیمەنێک، هەموو ڕاپۆرتێک، هەموو وتارێکی یارمەتی.' },
+    { icon: '⚡', title: 'بۆ کارەبا و ئینتەرنێتی عێراق', body: 'POS-ـی ئۆفلاین لەسەر IndexedDB، داشبۆردی کەم-بەندە، و سینکێک کە بەرگەی ٣ ڕۆژ پچڕان دەگرێت.' },
+    { icon: '📜', title: 'یاسای ضەریبەی عێراقی', body: 'WHT، VAT، e-Fakhata، نرخی CBI، دینارەکان — لە بنەڕەتدا.' },
+  ],
+  ar: [
+    { icon: '🇮🇶', title: 'صُنع في العراق', body: 'مصمم في السليمانية على يد مهندسين عراقيين عرفوا المحلات والطابعات وقوانين الضرائب قبل كتابة سطر واحد من الكود.' },
+    { icon: '🌐', title: 'ثلاثي اللغة من اليوم الأول', body: 'الكردية السورانية والعربية والإنجليزية — كل شاشة، كل تقرير، كل مقال مساعدة.' },
+    { icon: '⚡', title: 'مصمم لكهرباء وإنترنت العراق', body: 'POS غير متصل عبر IndexedDB، لوحات تحكم منخفضة النطاق، ومزامنة تتحمل انقطاع ٣ أيام.' },
+    { icon: '📜', title: 'قانون الضرائب العراقي بشكل أصيل', body: 'WHT، VAT، الفاتورة الإلكترونية، سعر البنك المركزي، فئات الدينار — مفاهيم أساسية لا إضافات.' },
+  ],
+};
+const values = VALUES[locale];
+---
+
+<MarketingLayout
+  locale={locale}
+  title={t('about.title', locale)}
+  description={t('about.sub', locale)}
+>
+  <section class="section pt-16">
+    <div class="container-marketing max-w-3xl text-center">
+      <h1 class="font-display font-bold text-4xl md:text-display-sm text-ink-950 mb-4 text-balance">
+        {t('about.title', locale)}
+      </h1>
+      <p class="text-xl text-ink-600 text-pretty">{t('about.sub', locale)}</p>
+    </div>
+  </section>
+
+  <section class="section bg-ink-50">
+    <div class="container-marketing max-w-3xl">
+      <h2 class="font-display font-bold text-2xl md:text-3xl text-ink-950 mb-4">
+        {t('about.story.title', locale)}
+      </h2>
+      <p class="text-lg text-ink-700 text-pretty">{t('about.story.body', locale)}</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container-marketing">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        {values.map((v) => (
+          <div class="card">
+            <div class="text-3xl mb-3" aria-hidden="true">{v.icon}</div>
+            <h3 class="font-display font-semibold text-xl text-ink-900 mb-2">{v.title}</h3>
+            <p class="text-ink-600">{v.body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <CTABanner locale={locale} />
+</MarketingLayout>

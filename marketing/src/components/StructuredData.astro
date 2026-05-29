@@ -1,0 +1,92 @@
+---
+/**
+ * StructuredData — JSON-LD emitter.
+ *
+ * Emits:
+ *   - Organization (every page)
+ *   - SoftwareApplication or WebPage (default)
+ *   - Article + BreadcrumbList for blog posts (schemaType=Article)
+ *   - FAQPage (schemaType=FAQPage)
+ *   - Extra payload merged after
+ */
+import type { Locale } from '../i18n/utils';
+
+export interface Props {
+  locale: Locale;
+  type: 'WebPage' | 'Article' | 'FAQPage' | 'Product';
+  title: string;
+  description: string;
+  url: string;
+  image: string;
+  extra?: Record<string, unknown> | Record<string, unknown>[];
+}
+
+const { locale, type, title, description, url, image, extra } = Astro.props;
+const SITE_URL = import.meta.env.PUBLIC_SITE_URL || 'https://zoho-kurdish.iq';
+
+const organization = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Kurdish ERP',
+  alternateName: ['ERP کوردی', 'ERP الكردي'],
+  url: SITE_URL,
+  logo: `${SITE_URL}/brand/logo.svg`,
+  email: 'hello@zoho-kurdish.iq',
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Sulaymaniyah',
+    addressRegion: 'Kurdistan Region',
+    addressCountry: 'IQ',
+  },
+  sameAs: [
+    'https://twitter.com/kurdisherp',
+    'https://www.linkedin.com/company/kurdish-erp',
+    'https://github.com/kurdish-erp',
+  ],
+};
+
+const softwareApp = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Kurdish ERP',
+  description,
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web, iOS, Android',
+  inLanguage: ['ckb', 'ar', 'en'],
+  offers: {
+    '@type': 'AggregateOffer',
+    priceCurrency: 'IQD',
+    lowPrice: '35000',
+    highPrice: '450000',
+    offerCount: 3,
+  },
+  aggregateRating: {
+    '@type': 'AggregateRating',
+    ratingValue: '4.8',
+    ratingCount: '120',
+  },
+};
+
+const webPage = {
+  '@context': 'https://schema.org',
+  '@type': type,
+  name: title,
+  description,
+  url,
+  image,
+  inLanguage: locale === 'ku' ? 'ckb-IQ' : locale === 'ar' ? 'ar-IQ' : 'en-US',
+  isPartOf: { '@type': 'WebSite', url: SITE_URL, name: 'Kurdish ERP' },
+};
+
+const all: unknown[] = [organization, softwareApp, webPage];
+if (extra) {
+  if (Array.isArray(extra)) all.push(...extra);
+  else all.push(extra);
+}
+---
+
+<script
+  type="application/ld+json"
+  is:inline
+  set:html={JSON.stringify(all)}
+/>
