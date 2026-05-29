@@ -30,7 +30,7 @@ class OrgPatchPayload(BaseModel):
 
 
 def _user_count(db, org_id: str) -> int:
-    return len(list(db.collection("users").where("org_id", "==", org_id).limit(500).stream()))
+    return len(list(db.collection("users").where("org_id", "==", org_id).limit(500).stream(timeout=30)))
 
 
 @router.get("/orgs")
@@ -43,7 +43,7 @@ def list_orgs(
 ):
     db = get_db()
     items = []
-    for doc in db.collection("organizations").limit(5000).stream():
+    for doc in db.collection("organizations").limit(5000).stream(timeout=30):
         data = {"id": doc.id, **(doc.to_dict() or {})}
         if data.get("deleted_at"):
             continue

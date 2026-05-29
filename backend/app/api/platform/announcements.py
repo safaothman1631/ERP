@@ -27,7 +27,7 @@ class AnnouncementPayload(BaseModel):
 @router.get("/announcements")
 def list_announcements(user: dict = Depends(require_platform_admin)):
     db = get_db()
-    items = [{"id": d.id, **d.to_dict()} for d in db.collection("platform_announcements").limit(200).stream()]
+    items = [{"id": d.id, **d.to_dict()} for d in db.collection("platform_announcements").limit(200).stream(timeout=30)]
     items.sort(key=lambda x: x.get("start_at") or "", reverse=True)
     return {"items": items}
 
@@ -54,7 +54,7 @@ def active_announcements():
     now = datetime.utcnow().isoformat()
     items = []
     try:
-        for doc in db.collection("platform_announcements").limit(50).stream():
+        for doc in db.collection("platform_announcements").limit(50).stream(timeout=30):
             row = doc.to_dict()
             start = row.get("start_at") or ""
             end = row.get("end_at") or "9999"

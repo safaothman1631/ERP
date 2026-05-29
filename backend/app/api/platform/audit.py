@@ -51,7 +51,7 @@ def list_audit(
     if org_id:
         query = query.where("org_id", "==", org_id)
     items = []
-    for doc in query.limit(1000).stream():
+    for doc in query.limit(1000).stream(timeout=30):
         row = {"id": doc.id, **doc.to_dict()}
         if action and not str(row.get("action", "")).startswith(action):
             continue

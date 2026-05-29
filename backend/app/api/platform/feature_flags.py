@@ -25,7 +25,7 @@ class FlagPayload(BaseModel):
 @router.get("/feature-flags")
 def list_flags(user: dict = Depends(require_platform_admin)):
     db = get_db()
-    items = [{"id": d.id, **d.to_dict()} for d in db.collection("feature_flags").limit(500).stream()]
+    items = [{"id": d.id, **d.to_dict()} for d in db.collection("feature_flags").limit(500).stream(timeout=30)]
     return {"items": items}
 
 

@@ -39,7 +39,7 @@ def list_module_requests(
     if status:
         query = query.where("status", "==", status)
     items = []
-    for doc in query.limit(1000).stream():
+    for doc in query.limit(1000).stream(timeout=30):
         row = {"id": doc.id, **doc.to_dict()}
         if org_id and row.get("org_id") != org_id:
             continue

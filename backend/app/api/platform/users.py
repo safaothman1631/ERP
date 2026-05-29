@@ -22,7 +22,7 @@ def search_users(
     limit: int = Query(default=50, ge=1, le=200),
 ):
     db = get_db()
-    stream = db.collection("users").limit(5000).stream()
+    stream = db.collection("users").limit(5000).stream(timeout=30)
     items = []
     ql = (q or "").lower()
     for doc in stream:
