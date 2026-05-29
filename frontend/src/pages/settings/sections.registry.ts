@@ -63,6 +63,8 @@ export interface SectionDef {
 const CompanyInfo = lazy(() => import('./sections/general/CompanyInfo'));
 const Localization = lazy(() => import('./sections/general/Localization'));
 const Branding = lazy(() => import('./sections/general/Branding'));
+// scale-foundation (Tier 3 § SF2): tenant GDPR/PDPL data-rights section.
+const DataRights = lazy(() => import('./sections/system/DataRights'));
 
 // Placeholder for not-yet-migrated sections — keeps the registry shape valid
 // and produces a friendly "TODO: migrate from bodies.tsx" notice at runtime.
@@ -414,9 +416,9 @@ export const SECTIONS: Record<string, SectionDef> = {
   },
   'system.gdpr': {
     titleKey: 'settings.gdpr',
-    fallbackTitle: 'GDPR',
+    fallbackTitle: 'Data rights (GDPR/PDPL)',
     group: 'system',
-    loader: TODO,
+    loader: DataRights,
   },
   'system.mobile': {
     titleKey: 'settings.mobile',

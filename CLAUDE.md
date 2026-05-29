@@ -432,3 +432,20 @@ frontend/src/
 **ئەنجامی کۆتایی:** `npm run build` → exit 0 (473 PWA precache)؛ backend pytest → **1152 سەرکەوتوو / 2 شکست** (هەردوو pre-existing، بێ پەیوەندی)؛ `app.main` پاک import دەبێت.
 
 **ماوە (تەنها دەرەکی ڕاستەقینە — credential/account/مرۆڤ):** MoF/CBI URL+schema (R7.x)، Stripe entity+keys، Apple/Play enrollment، Crisp/360Dialog/Statuspage API keys، native-speaker QA، partner-entity lawyer.
+
+### 2026-05-29 — scale-foundation (Tier 3) — ٧ ئەیگێنتی پاراڵێل + integration
+
+تایەری سێیەم (`scale-foundation`، SF1–SF6) بە وۆرکفلۆی ٧ ئەیگێنتی پاراڵێل (٨٨٤k token) بنیاتنرا — هەموو ئەوەی **کۆد/دۆکیومێنت-کراوە**؛ ئەوەی دەرەکییە (دامەزراندن، lawyer، pen-test، GCP apply، pilot ڕاستەقینە) flag کراوە نەک fake. orchestrator wiring-ی فایلە هاوبەشەکانی جێبەجێکرد + verify.
+
+- **SF1 (docs):** `docs/handbook/` (engineering-handbook ١٢ بەش + onboarding)، `docs/adr/` (٢٠ ADR + README index)، `docs/runbooks/` (١٠)، `scripts/ops/iam-leaver-audit.py` + allowlist، `docs/oncall/{escalation-policy,rotation}.md`.
+- **SF2 (legal drafts + GDPR code):** `legal/` (١٠ دۆکیومێنتی DRAFT: ToS/Privacy/DPA/MSA/Order/SLA/sub-processors/AUP/Cookie/Refund)، `docs/compliance/calendar.yml`، `templates/employment/`؛ **data-rights** فانکشناڵ: `backend/app/api/data_rights.py` (٤ endpoint) + service/repo/purge + `test_data_rights.py` (١٨ تێست) + `frontend/.../settings/sections/system/DataRights.tsx` (perms: `privacy.export/erasure`).
+- **SF3 (DR):** `scripts/dr/{restore-full,restore-tenant,provision-dr}.sh` + helpers، `backend/app/api/admin/dr_restore.py` (4-eyes + diff، ١٤ تێست) + `DrRestorePage.tsx`، `.github/workflows/dr-backup-restore-verify.yml`، `docs/runbooks/dr-restore.md`.
+- **SF4 (security):** `middleware/csrf.py` + `services/upload_validation.py`، `test_tenant_isolation/jwt/csrf/upload` (١٦٣ تێستی security/DR)، `firestore-rules-tests/` + `docs/security/{firestore-rules-audit,sirp,security-summary}.md`، `.gitleaks.toml` + workflow + pre-commit.
+- **SF5 (observability):** `terraform/monitoring/` (٦ dashboard + ٢٤ alert + BQ RUM)، `sql/observability/*.sql`، `observability/{otel_middleware,heartbeat}.py` + `frontend/.../traceparent.ts`، `.github/workflows/{sentry-release,k6-nightly}.yml`.
+- **SF6 (UAT toolkit):** `pilots/` (README، ٣٢ Iraqi edge-case، surveys ku/ar/en، _template + worked example)، `templates/pilot-agreement.md`، `docs/training/scripts/` (١٠ سکریپت ku+ar)، `.github/workflows/pilot-release.yml`.
+
+**Wiring (orchestrator):** `main.py` (dr_restore + data_rights router، csrf + otel middleware)؛ `config.py` (CSRF/CLAMAV flags)؛ `scheduler.py` (heartbeat + EVENT_JOB_ERROR listener → ٢٠ job)؛ `App.routes.tsx` (`/platform/dr-restore`)؛ `sections.registry.ts` (`system.gdpr` → DataRights)؛ `api.ts` (traceparent interceptor)؛ `test_scheduler_properties.py` (`deadline=None` بۆ flake).
+
+**تاقیکردنەوە:** backend boot ٢٣٣٨ ڕووت؛ pytest **١٣٣٣ سەرکەوتوو / ٢ شکست** (هەردوو pre-existing: firestore_audit/client.py، redis storage_uri)؛ frontend `tsc` 0 + `npm run build` exit 0 (٤٧٥ PWA).
+
+**ماوە (دەرەکی):** hiring، counsel sign-off + LLC + insurance، pen-test/SOC2/bug-bounty، `terraform apply` + PagerDuty/Sentry accounts، WIF cloud apply، pilot ڕاستەقینەکان + hardware + video. (وردەکاری: `_deltas/scale-foundation-tier3-summary.md`.)

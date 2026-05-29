@@ -81,6 +81,11 @@ class Settings(BaseSettings):
     # Fernet key (url-safe base64, 32 bytes) for PII field encryption
     FIELD_ENCRYPTION_KEY: str = ""
     FIELD_ENCRYPTION_KEY_PREVIOUS: str = ""
+    # scale-foundation (Tier 3 § SF4) — CSRF double-submit + SameSite=Strict hardening.
+    CSRF_PROTECTION_ENABLED: bool = True
+    # scale-foundation (Tier 3 § SF4) — ClamAV malware scan on uploads (off unless a
+    # clamd daemon is reachable). CLAMAV_HOST/CLAMAV_PORT honored by upload_validation.
+    UPLOAD_CLAMAV_ENABLED: bool = False
 
     # ── Observability ─────────────────────────────────────────────────────────
     SENTRY_DSN: str = ""

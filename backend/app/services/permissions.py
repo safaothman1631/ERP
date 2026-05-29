@@ -34,6 +34,10 @@ ALL_PERMISSIONS += [
     "settings.fiscal",
     "org.manage",
     "privacy.export",
+    # SF2 GDPR/PDPL data-rights (T-SF.2.22): tenant-admin self-service erasure.
+    # ``privacy.export`` (above) already gates the data-export request; erasure
+    # is a strictly more dangerous action so it carries its own code.
+    "privacy.erasure",
     # Simplified read/write/delete aliases (Phase 2 RBAC sweep)
     "bank.write", "hr.write", "payroll.write",
     "manufacturing.write", "crm.write", "projects.write",

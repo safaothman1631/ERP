@@ -214,8 +214,27 @@ def start_scheduler(app=None):
         replace_existing=True,
     )
 
+    # scale-foundation (Tier 3 § SF5): observability heartbeat (alert #15 "scheduler
+    # down" fires on absence of this beat) + structured job-failure emitter.
+    try:
+        from app.observability.heartbeat import heartbeat_job, on_job_error
+        from apscheduler.events import EVENT_JOB_ERROR
+
+        _scheduler.add_job(
+            heartbeat_job,
+            trigger=IntervalTrigger(minutes=5),
+            id="observability_heartbeat",
+            name="Observability Scheduler Heartbeat",
+            coalesce=True,
+            max_instances=1,
+            replace_existing=True,
+        )
+        _scheduler.add_listener(on_job_error, EVENT_JOB_ERROR)
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.warning("observability heartbeat not registered: %s", exc)
+
     _scheduler.start()
-    logger.info("✅ Scheduler started with 19 jobs")
+    logger.info("✅ Scheduler started with 20 jobs")
 
 
 def shutdown_scheduler():

@@ -1,0 +1,4 @@
+# Copy to backend.hcl (git-ignored) and pass via: terraform init -backend-config=backend.hcl
+# The GCS bucket must already exist (see README.md prerequisites).
+bucket = "zoho-tfstate-monitoring"
+prefix = "monitoring/production"

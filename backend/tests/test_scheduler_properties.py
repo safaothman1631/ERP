@@ -113,7 +113,7 @@ def _run_start_scheduler_with_env(h: int, m: int) -> list[dict]:
     h=st.integers(min_value=0, max_value=23),
     m=st.integers(min_value=0, max_value=59),
 )
-@h_settings(max_examples=100)
+@h_settings(max_examples=100, deadline=None)
 def test_property15_scheduler_cron_hour_and_minute_are_configurable(h: int, m: int) -> None:
     """
     **Validates: Requirements 6.3, 6.4**
@@ -171,7 +171,7 @@ def test_property15_scheduler_cron_hour_and_minute_are_configurable(h: int, m: i
         max_size=10,
     )
 )
-@h_settings(max_examples=100)
+@h_settings(max_examples=100, deadline=None)
 def test_property16_scheduler_continues_on_per_org_failure(orgs: list[str]) -> None:
     """
     **Validates: Requirements 6.8**

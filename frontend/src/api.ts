@@ -1,6 +1,8 @@
 import axios, { type AxiosRequestConfig } from 'axios';
 import { message } from './utils/message';
 import i18n from './i18n';
+// scale-foundation (Tier 3 § SF5): W3C traceparent propagation for end-to-end tracing.
+import { axiosTraceparentInterceptor } from './observability/traceparent';
 
 const api = axios.create({
   baseURL: '',
@@ -44,6 +46,9 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// scale-foundation (Tier 3 § SF5): start/propagate a W3C trace on each request (10% sampled).
+api.interceptors.request.use(axiosTraceparentInterceptor);
 
 // Dispatch mutation events for real-time UI updates
 api.interceptors.response.use(

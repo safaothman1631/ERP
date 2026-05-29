@@ -1,0 +1,107 @@
+name: Sentry release
+
+# Auto-tag a Sentry release on every successful production deploy (T-SF.5.x).
+#
+# Triggers when either deploy workflow finishes successfully on the default
+# branch, and on manual dispatch. Wraps scripts/sentry-release-tag.sh (already
+# in-repo) which: creates the release, associates commits, uploads sourcemaps
+# (if present), finalizes it, and marks a deploy in the environment.
+#
+# Required GitHub config (Settings → Secrets/Variables):
+#   secrets.SENTRY_AUTH_TOKEN   internal-integration token (project:releases)
+#   secrets.SENTRY_ORG          Sentry org slug
+# The script degrades gracefully (exit 0) when these are absent, so forks/PRs
+# don't fail.
+#
+# EXTERNAL BLOCKER: a Sentry org/project + auth token must exist for this to do
+# anything real — see externalBlockers.
+
+on:
+  workflow_run:
+    workflows:
+      - "Deploy to Cloud Run"
+      - "deploy-production"
+    types: [completed]
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: "Release version override (defaults to the deployed SHA)."
+        required: false
+        default: ""
+      environment:
+        description: "Sentry deploy environment label."
+        required: false
+        default: "production"
+
+permissions:
+  contents: read
+
+concurrency:
+  # One release tag per deployed commit; never cancel a half-finished tag.
+  group: sentry-release-${{ github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  tag-release:
+    name: Tag & finalize Sentry release
+    runs-on: ubuntu-latest
+    # Only run when the upstream deploy actually succeeded (dispatch always ok).
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Checkout the deployed commit (full history for commit assoc.)
+        uses: actions/checkout@v4
+        with:
+          # For workflow_run, check out the exact SHA that was deployed so
+          # set-commits --auto walks the right history.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Resolve release version + git SHA
+        id: meta
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.release_version }}
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          SHA="${RUN_SHA:-${GITHUB_SHA}}"
+          VERSION="${INPUT_VERSION:-$SHA}"
+          echo "git_sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "app_version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Resolved release: version=$VERSION sha=$SHA"
+
+      - name: Setup Node (for npx @sentry/cli fallback)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Make script executable
+        run: chmod +x scripts/sentry-release-tag.sh
+
+      - name: Tag Sentry release
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: zoho-backend
+          SENTRY_ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
+          APP_VERSION: ${{ steps.meta.outputs.app_version }}
+          GIT_SHA: ${{ steps.meta.outputs.git_sha }}
+        run: ./scripts/sentry-release-tag.sh
+
+      # Frontend sourcemaps live in the Vercel build, not here; if a future
+      # job uploads a dist/ artifact, set SOURCEMAP_DIR above. The script
+      # already handles the optional upload.
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Sentry release"
+            echo ""
+            echo "- version: \`${{ steps.meta.outputs.app_version }}\`"
+            echo "- sha: \`${{ steps.meta.outputs.git_sha }}\`"
+            echo "- environment: \`${{ github.event.inputs.environment || 'production' }}\`"
+            echo ""
+            echo "If SENTRY_AUTH_TOKEN/SENTRY_ORG are unset the script no-ops (see logs)."
+          } >> "$GITHUB_STEP_SUMMARY"

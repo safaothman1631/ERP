@@ -1,0 +1,28 @@
+# IAM leaver-audit allowlist (scale-foundation SF1 / T-SF.1.17)
+#
+# Consumed by scripts/ops/iam-leaver-audit.py. Any principal bound to a role on
+# the GCP project that is NOT matched here is reported as "unexpected" (a likely
+# un-revoked leaver, stale service account, or unauthorized grant).
+#
+# Match precedence: exact `members` > `domains` > managed `service_account_suffixes`.
+# Keep this file under review; every addition is an explicit, auditable decision.
+# NOTE: replace the placeholder identities with the real ones once the LLC's
+# Google Workspace + the gcp-admins@ group (T-SF.1.16) exist.
+
+members:
+  # Exact principals always allowed (humans + named service accounts).
+  - user:safa@zoho-kurd.iq                                   # founder / owner
+  # - user:<sre-lead>@zoho-kurd.iq                            # add when hired (T-SF.1.5)
+  # - user:<sr-fe>@zoho-kurd.iq                               # add when hired (T-SF.1.2)
+  - serviceAccount:github-deployer@zoho-83cda.iam.gserviceaccount.com   # CI/CD (WIF)
+  - serviceAccount:cloud-run-runtime@zoho-83cda.iam.gserviceaccount.com # backend runtime
+
+domains:
+  # Whole domains allowed (the company Google Workspace). Every employee email
+  # lives here; leavers are removed from Workspace AND should disappear from IAM.
+  - zoho-kurd.iq
+
+service_account_suffixes:
+  # GCP-managed service agents (e.g. service-<num>@gcp-sa-*.iam.gserviceaccount.com)
+  # are auto-allowed only when they look GCP-managed (see _is_allowed()).
+  - .gserviceaccount.com

@@ -1,0 +1,192 @@
+# Pilot release channel — dedicated weekly `pilot` Cloud Run revision (SF6 / T-SF.6.6, T-SF.6.19).
+#
+# What this is:
+#   The UAT pilot program (scale-foundation SF6) ships to a *dedicated* Cloud Run
+#   revision tagged `pilot`, separate from production traffic. Pilot tenants are
+#   pointed at the tagged pilot URL so they get fast weekly iteration without
+#   putting general-availability tenants at risk.
+#
+# Cadence (design §6.5):
+#   - Wednesday: release decision (which commit ships).
+#   - Friday:    this workflow deploys that commit as a NEW pilot-tagged revision.
+#   - Sat/Sun:   on-call monitors the pilot revision for anomalies.
+#   - Monday:    Pilot Review signs off; a good pilot revision is later promoted
+#                into the production traffic split via scripts/deploy-bluegreen.sh
+#                (that promotion is the existing deploy-production.yml path, NOT here).
+#
+# Channel model:
+#   gcloud run deploy ... --no-traffic --tag pilot
+#   → reachable at  https://pilot---<service>-<hash>-<region>.run.app
+#   → production keeps serving its stable revision (this never takes prod traffic).
+#
+# Rollback: `gcloud run services update-traffic <svc> --remove-tags pilot`.
+#
+# This EXTENDS the existing pipelines (deploy-cloudrun.yml / deploy-production.yml);
+# it does not replace them. Same WIF auth, region, service, and Artifact Registry repo.
+
+name: Pilot Release Channel
+
+on:
+  # Friday 06:00 UTC (~09:00 Iraq, AST = UTC+3) — before the shop's day ramps up.
+  schedule:
+    - cron: "0 6 * * 5"
+  # Manual trigger for ad-hoc pilot releases (e.g. a P0/P1 hotfix mid-week).
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref (branch/tag/SHA) to ship to the pilot channel"
+        required: false
+        default: "main"
+      reason:
+        description: "Why this off-cadence pilot release? (logged in the summary)"
+        required: false
+        default: "manual pilot release"
+
+# Avoid overlapping pilot deploys clobbering the same tag.
+concurrency:
+  group: pilot-release
+  cancel-in-progress: false
+
+permissions:
+  id-token: write   # WIF for google-github-actions/auth@v2
+  contents: read
+
+env:
+  REGION: me-central1
+  SERVICE_NAME: zoho-erp-backend
+  ARTIFACT_REPO: zoho-images
+  PILOT_TAG: pilot
+
+jobs:
+  deploy-pilot:
+    name: Deploy pilot-tagged revision
+    runs-on: ubuntu-latest
+    # Pilot releases ship from main (scheduled) or an explicit ref (dispatch).
+    steps:
+      - name: Resolve ref
+        id: ref
+        run: |
+          REF="${{ github.event.inputs.ref || 'main' }}"
+          echo "ref=${REF}" >> "$GITHUB_OUTPUT"
+          echo "Shipping ref: ${REF}"
+          echo "Reason: ${{ github.event.inputs.reason || 'scheduled Friday pilot release' }}"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.ref.outputs.ref }}
+
+      - name: Record commit
+        id: commit
+        run: |
+          SHA="$(git rev-parse HEAD)"
+          SHORT="$(git rev-parse --short HEAD)"
+          echo "sha=${SHA}" >> "$GITHUB_OUTPUT"
+          echo "short=${SHORT}" >> "$GITHUB_OUTPUT"
+          echo "Pilot release commit: ${SHORT} (${SHA})"
+
+      - name: Authenticate to Google Cloud (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build container with Cloud Build
+        run: |
+          IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REPO }}/${{ env.SERVICE_NAME }}:pilot-${{ steps.commit.outputs.short }}"
+          echo "Building ${IMAGE}"
+          gcloud builds submit \
+            --tag "${IMAGE}" \
+            --timeout 20m \
+            --project ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Deploy pilot revision (no traffic, tag=pilot)
+        id: deploy
+        run: |
+          IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REPO }}/${{ env.SERVICE_NAME }}:pilot-${{ steps.commit.outputs.short }}"
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image "${IMAGE}" \
+            --region ${{ env.REGION }} \
+            --project ${{ secrets.GCP_PROJECT_ID }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --no-traffic \
+            --tag ${{ env.PILOT_TAG }} \
+            --min-instances 1 \
+            --max-instances 10 \
+            --memory 1Gi \
+            --cpu 2 \
+            --concurrency 80 \
+            --execution-environment gen2 \
+            --cpu-throttling=false \
+            --port 8080 \
+            --set-env-vars "ENVIRONMENT=pilot,APP_VERSION=pilot-${{ steps.commit.outputs.short }},APP_NAME=zoho-erp-backend,RELEASE_CHANNEL=pilot,RATE_LIMITING_ENABLED=true,RUN_MIGRATIONS_ON_BOOT=true,LOG_LEVEL=INFO,OTEL_SERVICE_NAME=zoho-backend-pilot,FIREBASE_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}" \
+            --set-secrets "SECRET_KEY=zoho-secret-key:latest,SENTRY_DSN=zoho-sentry-dsn:latest,REDIS_URL=zoho-redis-url:latest,FIELD_ENCRYPTION_KEY=field-encryption-key:latest,DATABASE_URL=zoho-database-url:latest"
+
+      - name: Capture pilot channel URL
+        id: url
+        run: |
+          # The tagged revision is reachable at the tag-prefixed URL regardless of
+          # production traffic split. Prefer the URL Cloud Run reports for the tag.
+          PILOT_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region ${{ env.REGION }} \
+            --project ${{ secrets.GCP_PROJECT_ID }} \
+            --format="value(status.traffic.url)" \
+            --filter="status.traffic.tag=${{ env.PILOT_TAG }}" 2>/dev/null | head -n1 || true)
+          if [[ -z "${PILOT_URL}" ]]; then
+            # Fallback: derive from the base service URL.
+            BASE=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+              --region ${{ env.REGION }} --project ${{ secrets.GCP_PROJECT_ID }} \
+              --format='value(status.url)')
+            PILOT_URL="(tag '${{ env.PILOT_TAG }}' on ${BASE} — see Cloud Run console for the exact tagged URL)"
+          fi
+          echo "pilot_url=${PILOT_URL}" >> "$GITHUB_OUTPUT"
+          echo "Pilot URL: ${PILOT_URL}"
+
+      - name: Smoke-check the pilot revision (/health)
+        run: |
+          PILOT_URL="${{ steps.url.outputs.pilot_url }}"
+          # Only probe if we have a real URL (not the fallback note).
+          if [[ "${PILOT_URL}" == https://* ]]; then
+            echo "Probing ${PILOT_URL}/health"
+            for i in 1 2 3 4 5; do
+              code=$(curl -s -o /dev/null -w '%{http_code}' "${PILOT_URL}/health" || echo "000")
+              echo "  attempt ${i}: HTTP ${code}"
+              if [[ "${code}" == "200" ]]; then
+                echo "Pilot revision healthy."
+                exit 0
+              fi
+              sleep 10
+            done
+            echo "::warning::Pilot /health did not return 200 after retries — investigate before pointing pilots at this revision."
+          else
+            echo "::warning::Could not resolve a concrete pilot URL automatically; check the Cloud Run console."
+          fi
+
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "## Pilot release"
+            echo ""
+            echo "| Field | Value |"
+            echo "|-------|-------|"
+            echo "| Commit | \`${{ steps.commit.outputs.short }}\` |"
+            echo "| Ref | \`${{ steps.ref.outputs.ref }}\` |"
+            echo "| Tag | \`${{ env.PILOT_TAG }}\` |"
+            echo "| Region | ${{ env.REGION }} |"
+            echo "| Service | ${{ env.SERVICE_NAME }} |"
+            echo "| Pilot URL | ${{ steps.url.outputs.pilot_url }} |"
+            echo "| Trigger | ${{ github.event_name }} |"
+            echo "| Reason | ${{ github.event.inputs.reason || 'scheduled Friday pilot release' }} |"
+            echo ""
+            echo "Production traffic is **unchanged** — this revision serves only on the \`${{ env.PILOT_TAG }}\` tag."
+            echo "To promote into prod later, use \`scripts/deploy-bluegreen.sh\` (via deploy-production.yml)."
+            echo "To roll back the pilot tag: \`gcloud run services update-traffic ${{ env.SERVICE_NAME }} --region ${{ env.REGION }} --remove-tags ${{ env.PILOT_TAG }}\`."
+          } >> "$GITHUB_STEP_SUMMARY"

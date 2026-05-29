@@ -1,0 +1,295 @@
+# Compliance Calendar — Zoho Kurdish ERP / ERPIQ
+#
+# DRAFT — pending owner confirmation and counsel/accountant review (T-SF.2.21).
+# Spec ref: scale-foundation design.md §2.10, requirements R2.2 / R2.13 / NFR-SF.8 / NFR-SF.22.
+#
+# Single source of truth for recurring compliance obligations. Each entry has:
+#   id            — stable key (do not reuse)
+#   title         — human-readable obligation
+#   category      — tax | corporate | insurance | security | data-protection | dr | backup
+#   cadence       — quarterly | annual | monthly | weekly | semiannual
+#   owner         — accountable role (NOT a person; map to a person in the runbook)
+#   authority     — external body, if any
+#   due           — when it is due (cron-like or descriptive)
+#   grace_days    — buffer before it is "late"
+#   reminders     — lead times for Google Calendar reminders
+#   escalation    — who is paged/notified if missed past grace
+#   evidence      — where proof is filed
+#   automated_by  — backing automation (APScheduler job / CI workflow), if any
+#   notes         — context, dependencies, external blockers
+#
+# This file is mirrored to Google Calendar with 14-day and 1-day reminders (design.md §2.10).
+# Mirroring itself is an EXTERNAL action (requires a Google Workspace calendar + sync) — see
+# obligation `gcal-mirror-setup`.
+
+meta:
+  version: "0.1-draft"
+  last_reviewed: "TBD-on-publication"
+  source_of_truth: "docs/compliance/calendar.yml"
+  google_calendar: "TBD (Ops/SRE to create shared 'Compliance' calendar)"
+  default_reminders_days: [14, 1]
+  governing_language: "Arabic binding (RSK-19); this operational file is maintained in English"
+  timezone: "Asia/Baghdad"
+
+obligations:
+
+  # ---------------------------------------------------------------------------
+  # Tax (external accountant owns; founder/admin supports)
+  # ---------------------------------------------------------------------------
+  - id: vat-return-quarterly
+    title: "Quarterly VAT return (GCT)"
+    category: tax
+    cadence: quarterly
+    owner: external-accountant
+    authority: "Iraqi General Commission for Taxes (GCT)"
+    due: "Within [statutory days — CONFIRM] after each calendar quarter end (Mar 31, Jun 30, Sep 30, Dec 31)"
+    grace_days: 0   # statutory deadline — no internal grace; file early
+    reminders: [21, 14, 3, 1]
+    escalation: "Founder; engage accountant immediately if not filed 3 days before deadline"
+    evidence: "legal/tax/vat/<year>-Q<n>/"
+    automated_by: null
+    notes: >
+      VAT applies where Iraqi VAT is generally applicable (requirements R2.2).
+      CONFIRM exact filing window and whether KRG vs Federal applies to HQ.
+
+  - id: corporate-income-tax-annual
+    title: "Annual corporate income-tax filing"
+    category: tax
+    cadence: annual
+    owner: external-accountant
+    authority: "Iraqi General Commission for Taxes (GCT)"
+    due: "Annual — by [statutory date — CONFIRM, typically within months of fiscal year-end]"
+    grace_days: 0
+    reminders: [60, 30, 14, 3, 1]
+    escalation: "Founder; CEO if filing at risk 14 days out"
+    evidence: "legal/tax/income/<year>/"
+    automated_by: null
+    notes: "Depends on fiscal-year-end definition in the Articles of Association."
+
+  - id: employee-withholding-monthly
+    title: "Employee withholding-tax remittance"
+    category: tax
+    cadence: monthly
+    owner: external-accountant
+    authority: "Iraqi General Commission for Taxes (GCT)"
+    due: "Monthly — by [statutory date — CONFIRM] for the prior month's payroll"
+    grace_days: 0
+    reminders: [7, 1]
+    escalation: "Founder"
+    evidence: "legal/tax/withholding/<year>-<month>/"
+    automated_by: null
+    notes: "Only active once there are employees on payroll (links to employment templates)."
+
+  # ---------------------------------------------------------------------------
+  # Corporate (lawyer / founder)
+  # ---------------------------------------------------------------------------
+  - id: chamber-of-commerce-dues
+    title: "Chamber of Commerce dues / membership"
+    category: corporate
+    cadence: quarterly   # design.md §2.10 lists quarterly dues; CONFIRM (membership itself is annual ~IQD 150K)
+    owner: founder-admin
+    authority: "Chamber of Commerce (Erbil/KRG or Baghdad/Federal)"
+    due: "Per chamber schedule — CONFIRM cadence and amount"
+    grace_days: 14
+    reminders: [14, 1]
+    escalation: "Founder"
+    evidence: "legal/corporate/chamber/"
+    automated_by: null
+    notes: "Annual fee ≈ IQD 150,000 (design.md §2.1). Reconcile quarterly-vs-annual at first renewal."
+
+  - id: llc-annual-renewal
+    title: "Annual LLC registration renewal"
+    category: corporate
+    cadence: annual
+    owner: lawyer
+    authority: "Iraqi Companies Registrar (KRG or Federal)"
+    due: "Annual — on the registration anniversary [CONFIRM date]"
+    grace_days: 30
+    reminders: [60, 30, 14, 1]
+    escalation: "Founder; engage retained lawyer"
+    evidence: "legal/corporate/registration/"
+    automated_by: null
+    notes: "External blocker until LLC is registered (T-SF.2.4)."
+
+  # ---------------------------------------------------------------------------
+  # Insurance (founder)
+  # ---------------------------------------------------------------------------
+  - id: insurance-renewal-annual
+    title: "Cyber + E&O insurance renewal (USD 1M each)"
+    category: insurance
+    cadence: annual
+    owner: founder
+    authority: "Broker (Dubai: Marsh / Aon / AHC) + carrier"
+    due: "Annual — 30 days before policy expiry [CONFIRM bind date]"
+    grace_days: 0   # no lapse permitted — coverage gap is unacceptable
+    reminders: [90, 60, 30, 14, 1]
+    escalation: "Founder; CEO if renewal not bound 30 days before expiry"
+    evidence: "legal/insurance/"
+    automated_by: null
+    notes: >
+      USD 1M Cyber + USD 1M E&O (requirements R2.10 / NFR-SF.22; design.md §2.8).
+      EXTERNAL BLOCKER: binding requires broker engagement + LLC + premium payment
+      (T-SF.2.16–2.18). File certificate of insurance and calendar renewal on bind.
+
+  # ---------------------------------------------------------------------------
+  # Security (Ops/SRE)
+  # ---------------------------------------------------------------------------
+  - id: pentest-annual
+    title: "External penetration test"
+    category: security
+    cadence: annual
+    owner: ops-sre
+    authority: "Bishop Fox / Trail of Bits / NCC Group / Help AG (Dubai)"
+    due: "Annual — schedule by [month — CONFIRM]; 2-week scoped engagement"
+    grace_days: 30
+    reminders: [90, 30, 7]
+    escalation: "Security lead; Founder for budget approval"
+    evidence: "audit/security/pentest/<year>/"
+    automated_by: null
+    notes: "Scope: web, mobile, API, multi-tenant isolation. Budget USD 20K–40K (requirements R4.1). EXTERNAL BLOCKER: vendor engagement + budget."
+
+  - id: soc2-attestation-annual
+    title: "SOC 2 attestation / evidence collection"
+    category: security
+    cadence: annual
+    owner: ops-sre
+    authority: "SOC 2 auditor (CPA firm)"
+    due: "Annual cycle; evidence collected continuously, audit window [CONFIRM]"
+    grace_days: 30
+    reminders: [120, 60, 30]
+    escalation: "Security lead; Founder"
+    evidence: "audit/security/soc2/<year>/"
+    automated_by: null
+    notes: >
+      Evidence sources already exist: audit logs (≥18mo, hash-chained), CI security-scan,
+      backup-verify, DR drill logs. EXTERNAL BLOCKER: auditor engagement.
+
+  - id: secret-rotation
+    title: "Secret / credential rotation review"
+    category: security
+    cadence: quarterly
+    owner: ops-sre
+    authority: null
+    due: "Quarterly review of Secret Manager keys; rotate per docs/security/secret-rotation.md"
+    grace_days: 14
+    reminders: [14, 1]
+    escalation: "Security lead"
+    evidence: "audit/security/secret-rotation/<year>-Q<n>.md"
+    automated_by: "manual review + scripts/rotate-secret.sh"
+    notes: "Includes FIRESTORE_FIELD_ENCRYPTION_KEY and SECRET_KEY rotation runbook."
+
+  - id: iam-access-audit
+    title: "IAM / RBAC access review (least-privilege)"
+    category: security
+    cadence: quarterly
+    owner: ops-sre
+    authority: null
+    due: "Quarterly — review GCP IAM, Firebase, repo, and app RBAC role grants"
+    grace_days: 14
+    reminders: [14, 1]
+    escalation: "Security lead"
+    evidence: "audit/security/iam/<year>-Q<n>.md"
+    automated_by: null
+    notes: "Confirm no orphaned service accounts; verify tenant-isolation rules unchanged."
+
+  - id: sub-processor-review
+    title: "Sub-processor list review & DPA refresh"
+    category: data-protection
+    cadence: semiannual
+    owner: security-lead
+    authority: null
+    due: "Every 6 months — review legal/sub-processors.md vs actual vendors; refresh DPAs"
+    grace_days: 30
+    reminders: [30, 7]
+    escalation: "Security lead; Founder if a new vendor lacks a DPA"
+    evidence: "legal/sub-processors.md change log"
+    automated_by: null
+    notes: >
+      Keeps the single source of truth current (RSK-16/RSK-19). Verify Google/Vercel/Sentry/
+      Stripe/360Dialog/Crisp/Firebase regions + DPAs. Reconcile Twilio-vs-360Dialog discrepancy.
+
+  - id: dependency-license-scan
+    title: "SBOM + dependency/license scan"
+    category: security
+    cadence: weekly   # runs per release via CI; weekly floor for the report review
+    owner: ops-sre
+    authority: null
+    due: "Per release (CI) + weekly review of the license report"
+    grace_days: 7
+    reminders: [7]
+    escalation: "Security lead"
+    evidence: "CI artifacts (security-scan workflow) + SBOM per release"
+    automated_by: "CI: .github/workflows/security-scan.yml (Syft + Grype); FOSSA free tier (T-SF.2.23)"
+    notes: "Mostly automated; the calendar entry tracks the human review of findings."
+
+  # ---------------------------------------------------------------------------
+  # Disaster recovery (rotating DR Captain)
+  # ---------------------------------------------------------------------------
+  - id: dr-drill-quarterly
+    title: "Disaster-recovery drill (tabletop + staging procedure)"
+    category: dr
+    cadence: quarterly
+    owner: dr-captain-rotating
+    authority: null
+    due: "Quarterly — per DISASTER_RECOVERY.md §8/§9; results logged in §10"
+    grace_days: 14
+    reminders: [21, 7, 1]
+    escalation: "Tech lead; Ops/SRE"
+    evidence: "audit/dr/<year>-Q<n>-drill.md"
+    automated_by: "partially — backup_restore_drill.py; tabletop is manual"
+    notes: >
+      RTO 1h / RPO 5min targets (DISASTER_RECOVERY.md §1). Validates PITR (7-day window),
+      GCS restore, and region failover (me-central1 -> asia-southeast1).
+
+  # ---------------------------------------------------------------------------
+  # Backups (on-call)
+  # ---------------------------------------------------------------------------
+  - id: backup-verify-weekly
+    title: "Backup verification"
+    category: backup
+    cadence: weekly
+    owner: on-call
+    authority: null
+    due: "Weekly — verify the nightly Firestore export restores and reconciles"
+    grace_days: 3
+    reminders: [3, 1]
+    escalation: "Tech lead if a verification fails"
+    evidence: "CI: backup-verify workflow output; DISASTER_RECOVERY.md §10.2"
+    automated_by: "CI: .github/workflows/backup-verify.yml + daily_backup APScheduler job (02:00 Baghdad)"
+    notes: >
+      Retention enforced by GCS lifecycle: daily 30d / weekly 12w / monthly 12m / yearly 7y
+      (requirements R3.9 / NFR-SF.8). PITR enabled on zoho-83cda since 2026-05-26.
+
+  - id: audit-log-retention-review
+    title: "Audit-log retention & integrity check"
+    category: data-protection
+    cadence: quarterly
+    owner: ops-sre
+    authority: null
+    due: "Quarterly — confirm ≥18-month retention and run the hash-chain integrity verifier"
+    grace_days: 14
+    reminders: [14, 1]
+    escalation: "Security lead"
+    evidence: "audit/security/audit-log/<year>-Q<n>.md"
+    automated_by: "verify_audit_chain() + Cloud Logging sink to BigQuery"
+    notes: "Security-relevant logs retained ≥18 months, hash-chained (requirements R2.13 / NFR-SF.23)."
+
+  # ---------------------------------------------------------------------------
+  # Setup / one-time-then-recurring
+  # ---------------------------------------------------------------------------
+  - id: gcal-mirror-setup
+    title: "Mirror this calendar into Google Calendar with reminders"
+    category: corporate
+    cadence: annual   # review the mirror annually after initial setup
+    owner: ops-sre
+    authority: null
+    due: "One-time setup, then annual review of reminder accuracy"
+    grace_days: 30
+    reminders: [30]
+    escalation: "Ops/SRE"
+    evidence: "Shared 'Compliance' Google Calendar"
+    automated_by: null
+    notes: >
+      EXTERNAL ACTION: create a shared Google Workspace 'Compliance' calendar and load each
+      obligation with 14-day and 1-day reminders (design.md §2.10). Keep this YAML as the
+      source of truth and re-sync on change.

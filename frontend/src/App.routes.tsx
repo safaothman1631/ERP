@@ -267,6 +267,8 @@ const GlobalModuleRequestsPage = lazyWithRetry(() => import('./platform/pages/Gl
 const GlobalUsersPage = lazyWithRetry(() => import('./platform/pages/GlobalUsersPage'), 'global-users-page');
 const PlatformAuditPage = lazyWithRetry(() => import('./platform/pages/PlatformAuditPage'), 'platform-audit-page');
 const PlatformHealthPage = lazyWithRetry(() => import('./platform/pages/PlatformHealthPage'), 'platform-health-page');
+// scale-foundation (Tier 3 § SF3): super-admin DR restore console (4-eyes + diff preview).
+const DrRestorePage = lazyWithRetry(() => import('./platform/pages/DrRestorePage'), 'dr-restore-page');
 const FeatureFlagsPage = lazyWithRetry(() => import('./platform/pages/FeatureFlagsPage'), 'feature-flags-page');
 const AnnouncementsPage = lazyWithRetry(() => import('./platform/pages/AnnouncementsPage'), 'announcements-page');
 const PlatformRoute = lazyWithRetry(() => import('./platform/guards/PlatformRoute'), 'platform-route');
@@ -466,6 +468,7 @@ export const routes: RouteObject[] = [
       { path: 'users', element: <Suspense fallback={FeatureFallback}><GlobalUsersPage /></Suspense> },
       { path: 'audit', element: <Suspense fallback={FeatureFallback}><PlatformAuditPage /></Suspense> },
       { path: 'health', element: <Suspense fallback={FeatureFallback}><PlatformHealthPage /></Suspense> },
+      { path: 'dr-restore', element: <Suspense fallback={FeatureFallback}><DrRestorePage /></Suspense> },
       { path: 'flags', element: <Suspense fallback={FeatureFallback}><FeatureFlagsPage /></Suspense> },
       { path: 'announcements', element: <Suspense fallback={FeatureFallback}><AnnouncementsPage /></Suspense> },
     ],

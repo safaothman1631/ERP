@@ -1,0 +1,102 @@
+# Gitleaks configuration — secret scanning for the Kurdish ERP monorepo.
+# SF4 / T-SF.4.20 (secret scanning in pre-commit + CI).
+#
+# Extends the bundled default ruleset (Stripe/AWS/GCP/JWT/private-key/etc.) and
+# layers on:
+#   * project-specific detectors (Firebase service-account keys, the app JWT
+#     SECRET_KEY, Stripe live keys), and
+#   * an allowlist for the documented dev-only insecure defaults and test
+#     fixtures so the scan stays signal-rich (no false positives that train
+#     people to ignore it).
+#
+# Run locally:   gitleaks detect --config .gitleaks.toml --no-banner
+# Pre-commit:    handled by .pre-commit-config.yaml (gitleaks hook)
+# CI:            .github/workflows/gitleaks.yml
+
+title = "Kurdish ERP gitleaks config"
+
+# Inherit all of gitleaks' built-in rules, then add ours below.
+[extend]
+useDefault = true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Project-specific rules
+# ─────────────────────────────────────────────────────────────────────────────
+
+[[rules]]
+id = "firebase-service-account-key"
+description = "Firebase / GCP service-account private key JSON"
+regex = '''"private_key"\s*:\s*"-----BEGIN (RSA |EC )?PRIVATE KEY-----'''
+tags = ["firebase", "gcp", "private-key"]
+
+[[rules]]
+id = "firebase-service-account-type"
+description = "GCP service-account credential file marker"
+regex = '''"type"\s*:\s*"service_account"'''
+tags = ["firebase", "gcp"]
+
+[[rules]]
+id = "app-secret-key-assignment"
+description = "Application JWT SECRET_KEY assigned a long literal (possible leaked prod key)"
+# Flags SECRET_KEY="...32+ non-placeholder chars..." but the allowlist below
+# exempts the documented dev default and obvious placeholders.
+regex = '''(?i)SECRET_KEY\s*[:=]\s*["']([A-Za-z0-9+/_\-]{32,})["']'''
+tags = ["jwt", "secret"]
+
+[[rules]]
+id = "stripe-live-secret-key"
+description = "Stripe live secret key"
+regex = '''sk_live_[0-9a-zA-Z]{24,}'''
+tags = ["stripe", "payment"]
+
+[[rules]]
+id = "stripe-live-restricted-key"
+description = "Stripe live restricted key"
+regex = '''rk_live_[0-9a-zA-Z]{24,}'''
+tags = ["stripe", "payment"]
+
+[[rules]]
+id = "generic-bearer-token"
+description = "Hard-coded long Bearer token"
+regex = '''(?i)bearer\s+[A-Za-z0-9\-_]{40,}\.?[A-Za-z0-9\-_]*\.?[A-Za-z0-9\-_]*'''
+tags = ["token"]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Allowlist — documented non-secrets so the scan stays high-signal.
+# ─────────────────────────────────────────────────────────────────────────────
+[allowlist]
+description = "Global allowlist for known dev defaults, fixtures, and docs"
+
+# Files/paths that legitimately contain example/placeholder secrets.
+paths = [
+  '''\.env\.example$''',
+  '''(^|/)tests?/''',
+  '''(^|/)__tests__/''',
+  '''(^|/)test_.*\.py$''',
+  '''(^|/)conftest\.py$''',
+  '''(^|/).*\.test\.(js|ts|tsx)$''',
+  '''(^|/)fixtures?/''',
+  '''(^|/)fakes?/''',
+  '''firestore-rules-tests/''',
+  '''(^|/)docs/''',
+  '''(^|/)_deltas/''',
+  '''package-lock\.json$''',
+  '''(^|/)node_modules/''',
+  '''(^|/)venv/''',
+]
+
+# Specific strings that are intentional, documented non-secrets.
+regexes = [
+  # The documented dev-only insecure default (see backend/app/config.py).
+  '''dev-only-insecure-key-change-me-in-production''',
+  # Common placeholder tokens used in examples and templates.
+  '''(?i)(your[-_]?secret|changeme|change[-_]?me|placeholder|example|dummy|test[-_]?key|xxx+|<[^>]+>)''',
+  # Stripe TEST keys are fine to appear in examples/docs.
+  '''sk_test_[0-9a-zA-Z]+''',
+  '''pk_test_[0-9a-zA-Z]+''',
+  '''pk_live_[0-9a-zA-Z]+''', # publishable keys are not secret by design
+]
+
+# Specific commits known to contain only fixtures (none yet — add SHAs if a
+# historical scan surfaces an accepted false positive).
+commits = []

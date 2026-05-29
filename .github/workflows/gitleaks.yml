@@ -1,0 +1,47 @@
+name: gitleaks
+
+# SF4 / T-SF.4.20 — secret scanning in CI.
+# Scans the full history on push/PR and on a weekly schedule so a credential
+# that slips past the pre-commit hook is still caught server-side.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  schedule:
+    # Weekly full-history sweep (Mondays 03:30 UTC).
+    - cron: "30 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gitleaks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    name: Scan for secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          # Full history so the scan covers every commit on the ref, not just
+          # the tip. gitleaks diffs the whole DAG when fetch-depth is 0.
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_CONFIG: .gitleaks.toml
+          # No license needed for public repos / org-allowed usage. If this
+          # repo is part of a GitHub org that requires a gitleaks license,
+          # set the GITLEAKS_LICENSE secret (see externalBlockers in the SF4
+          # delivery notes).
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+        with:
+          # Upload a SARIF report to the Security tab when findings exist.
+          config-path: .gitleaks.toml

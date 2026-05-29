@@ -529,6 +529,16 @@ try:
 except Exception as _efk_err:  # noqa: BLE001
     logging.getLogger(__name__).warning("e-Fakhata routers not mounted: %s", _efk_err)
 
+# ── scale-foundation (Tier 3 § SF3): super-admin DR restore (4-eyes + diff) ──
+from app.api.admin import dr_restore as dr_restore_api
+for _dr_router in dr_restore_api.ALL_ROUTERS:
+    app.include_router(_dr_router)
+
+# ── scale-foundation (Tier 3 § SF2): tenant GDPR/PDPL data-rights (export + erasure) ──
+from app.api import data_rights as data_rights_api
+for _dr_rights_router in data_rights_api.ALL_ROUTERS:
+    app.include_router(_dr_rights_router)
+
 # Register the seven tenant-side payment gateway adapters at startup (R4).
 try:
     from app.payments.bootstrap import register_default_providers
@@ -542,9 +552,23 @@ from app.middleware.org_context import org_context_middleware
 
 app.middleware("http")(org_context_middleware)
 
+# scale-foundation (Tier 3 § SF4): CSRF double-submit + SameSite=Strict hardening.
+# Bearer-authenticated API calls are exempt (they don't ride on cookies); only
+# cookie-authenticated state-changing requests are checked. Defaults safe via getattr.
+from app.middleware.csrf import csrf_middleware
+app.middleware("http")(csrf_middleware)
+
 # Rate limit middleware (opt-in via settings bag)
 from app.middleware.rate_limit import RateLimitMiddleware
 app.add_middleware(RateLimitMiddleware)
+
+# scale-foundation (Tier 3 § SF5): OTel span enrichment (org/tenant/request id +
+# X-Trace-Id response header for RUM correlation). Degrades to no-op without OTel.
+try:
+    from app.observability.otel_middleware import OTelEnrichmentMiddleware
+    app.add_middleware(OTelEnrichmentMiddleware)
+except Exception as _otel_err:  # noqa: BLE001
+    logging.getLogger(__name__).warning("OTel enrichment middleware not registered: %s", _otel_err)
 
 # Module gate middleware — enforce enabled_modules on mutating API calls
 from app.services.module_gate import module_gate_middleware
