@@ -24,7 +24,7 @@ gcloud run deploy zoho-erp-backend `
   --region me-central1 `
   --project zoho-83cda `
   --allow-unauthenticated `
-  --memory 1Gi --cpu 1 --min-instances 1 --max-instances 3 --timeout 300 `
+  --memory 1Gi --cpu 1 --min-instances 1 --max-instances 3 --concurrency 20 --timeout 300 `
   --env-vars-file cloudrun-deploy-env.yaml `
   --set-secrets "SECRET_KEY=zoho-secret-key:latest,FIELD_ENCRYPTION_KEY=field-encryption-key:latest"
 

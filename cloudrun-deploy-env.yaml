@@ -15,5 +15,9 @@ IDEMPOTENCY_ENABLED: "true"
 FS_METRICS_ENABLED: "true"
 AUDIT_RETENTION_MONTHS: "24"
 RATE_LIMITING_ENABLED: "true"
+# gRPC fork-safety. The sync Firestore gRPC channel was corrupting (KeyError in
+# grpc channel_spin) -> queries hung -> 504. Root fix is single-process uvicorn
+# (see Dockerfile), but this lets gRPC survive a fork as a safety net.
+GRPC_ENABLE_FORK_SUPPORT: "1"
 # RATE_LIMIT_STORAGE_URI: redis://10.89.110.3:6379/0?socket_connect_timeout=2&socket_timeout=2
 # (VPC connector erpiq-run-connector required; bare redis:// blocks login — see enable_redis_rate_limit_on_cloudrun.sh)
