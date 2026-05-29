@@ -109,3 +109,73 @@ def is_storage_available() -> bool:
 
 # Alias used by scheduler.py and other modules
 get_firestore_client = get_db
+
+
+def reset_firestore_client():
+    """Recreate the Firestore client with a FRESH gRPC channel.
+
+    Recovery path for a wedged channel: the long-lived sync Firestore gRPC
+    channel can intermittently corrupt on Cloud Run (KeyError in grpc
+    ``channel_spin``), after which every query on it hangs until timeout.
+    Tearing down the firebase_admin app and re-initialising yields a brand-new
+    channel. Repositories and handlers fetch the client via ``get_db()`` per
+    request, so the next request transparently picks up the fresh client.
+    """
+    global _app, _db
+    try:
+        import firebase_admin
+        try:
+            firebase_admin.delete_app(firebase_admin.get_app())
+        except Exception:
+            pass
+        _app = None
+        _db = None
+        init_firebase()
+        logger.info("Firestore client reset — fresh gRPC channel")
+    except Exception as e:  # noqa: BLE001
+        logger.error(f"Firestore client reset failed: {e}")
+    return _db
+
+
+def start_firestore_keepalive(interval_sec: int = 20, ping_timeout_sec: int = 8):
+    """Background watchdog that keeps the Firestore gRPC channel healthy.
+
+    Every ``interval_sec`` it issues a tiny, short-deadline read. This both
+    (a) keeps the channel warm so its background poller never idles into the
+    ``channel_spin`` corruption, and (b) detects an already-wedged channel
+    (the ping times out) and recreates it via ``reset_firestore_client()``.
+
+    Daemon thread; idempotent (starts once). Relies on CPU staying allocated
+    between requests (Cloud Run ``--no-cpu-throttling``) so the thread runs.
+    """
+    import threading
+    import time
+
+    if getattr(start_firestore_keepalive, "_started", False):
+        return
+    start_firestore_keepalive._started = True
+
+    def _loop():
+        while True:
+            try:
+                time.sleep(interval_sec)
+                if not _firebase_available:
+                    continue
+                db = get_db()
+                if db is None:
+                    continue
+                # Cheap read (doc need not exist) with a hard deadline so a
+                # wedged channel surfaces as a timeout instead of hanging.
+                db.collection("_keepalive").document("ping").get(timeout=ping_timeout_sec)
+            except Exception as e:  # noqa: BLE001
+                logger.warning(
+                    "Firestore keepalive failed (%s: %s) — recreating channel",
+                    type(e).__name__, e,
+                )
+                try:
+                    reset_firestore_client()
+                except Exception:
+                    pass
+
+    threading.Thread(target=_loop, name="firestore-keepalive", daemon=True).start()
+    logger.info("Firestore keepalive watchdog started (interval=%ss)", interval_sec)

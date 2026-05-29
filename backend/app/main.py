@@ -164,6 +164,16 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logging.getLogger(__name__).warning(f"Scheduler not started: {e}")
 
+    # Firestore self-healing watchdog: keeps the gRPC channel warm and recreates
+    # it the moment it wedges (intermittent channel_spin corruption that hung
+    # /platform queries). Relies on Cloud Run --no-cpu-throttling so the daemon
+    # thread keeps running between requests.
+    try:
+        from app.firebase_client import start_firestore_keepalive
+        start_firestore_keepalive()
+    except Exception as e:
+        logging.getLogger(__name__).warning(f"Firestore keepalive not started: {e}")
+
     if getattr(settings, "RUN_MIGRATIONS_ON_BOOT", False):
         try:
             from app.firestore.migrations import run_pending
