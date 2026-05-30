@@ -249,11 +249,18 @@ class BaseRepository:
         offset=0,
         start_after=None,
         include_deleted=False,
+        _force_client_side: bool = False,
     ) -> tuple:
-        """List documents with pagination. Returns (items, total_count)."""
+        """List documents with pagination. Returns (items, total_count).
+
+        ``_force_client_side`` forces the in-memory capped path, bypassing the
+        indexed ``list_page``. The index-missing fallback uses this to avoid
+        infinitely re-entering ``list_page`` (which would re-raise the same
+        index error and recurse until the stack overflows -> 500).
+        """
         from app.config import get_settings
 
-        if get_settings().USE_FIRESTORE_QUERY and not offset:
+        if get_settings().USE_FIRESTORE_QUERY and not offset and not _force_client_side:
             page = self.list_page(
                 filters=filters,
                 order_by=order_by,

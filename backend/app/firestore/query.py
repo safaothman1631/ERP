@@ -148,6 +148,7 @@ def _list_page_fallback(
         order_by=order_by,
         order_dir=order_dir,
         limit=limit,
+        _force_client_side=True,
     )
     meta.doc_count_fetched = len(items)
     if not include_deleted:
