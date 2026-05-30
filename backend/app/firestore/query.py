@@ -7,6 +7,7 @@ from typing import Any, Optional
 from google.cloud import firestore as fs
 
 from app.services.firestore_resilience import LIST_HARD_CAP, ListMeta, is_firestore_quota_error
+from app.firebase_client import safe_query
 
 
 @dataclass
@@ -74,7 +75,7 @@ def list_page(
         if cursor_id:
             cursor_ref = collection.document(cursor_id)
             q = q.start_after(cursor_ref.get())
-        docs = list(q.limit(min(limit + 1, LIST_HARD_CAP)).stream())
+        docs = safe_query(q.limit(min(limit + 1, LIST_HARD_CAP)))
     except Exception as exc:
         if is_firestore_quota_error(exc):
             logger.warning(

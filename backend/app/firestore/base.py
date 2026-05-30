@@ -1,6 +1,6 @@
 # Base repository for Firestore operations
 from google.cloud import firestore as fs
-from app.firebase_client import get_db
+from app.firebase_client import get_db, safe_query
 from app.cache import cache
 from typing import Any, ClassVar, Iterator, Optional
 import json
@@ -198,7 +198,7 @@ class BaseRepository:
             q = query.limit(batch_size)
             if last_doc is not None:
                 q = q.start_after(last_doc)
-            batch = list(q.stream())
+            batch = safe_query(q)
             if not batch:
                 break
             for doc in batch:
@@ -217,7 +217,7 @@ class BaseRepository:
         try:
             all_items = [
                 {"id": doc.id, **doc.to_dict()}
-                for doc in query.limit(LIST_HARD_CAP).stream()
+                for doc in safe_query(query.limit(LIST_HARD_CAP))
             ]
         except Exception as exc:
             if is_firestore_quota_error(exc):
@@ -501,7 +501,7 @@ class BaseRepository:
             .where(field, "<=", term + "\uf8ff")
             .limit(limit)
         )
-        return [{"id": doc.id, **doc.to_dict()} for doc in query.stream()]
+        return [{"id": doc.id, **doc.to_dict()} for doc in safe_query(query)]
 
     def increment(self, doc_id: str, field: str, value):
         self.collection.document(doc_id).update({field: fs.Increment(value)})
