@@ -137,7 +137,7 @@ def reset_firestore_client():
     return _db
 
 
-def start_firestore_keepalive(interval_sec: int = 20, ping_timeout_sec: int = 8):
+def start_firestore_keepalive(interval_sec: int = 10, ping_timeout_sec: int = 8):
     """Background watchdog that keeps the Firestore gRPC channel healthy.
 
     Every ``interval_sec`` it issues a tiny, short-deadline read. This both
@@ -164,9 +164,12 @@ def start_firestore_keepalive(interval_sec: int = 20, ping_timeout_sec: int = 8)
                 db = get_db()
                 if db is None:
                     continue
-                # Cheap read (doc need not exist) with a hard deadline so a
-                # wedged channel surfaces as a timeout instead of hanging.
-                db.collection("_keepalive").document("ping").get(timeout=ping_timeout_sec)
+                # Use a STREAM query (RunQuery) — the exact gRPC RPC the platform
+                # list endpoints use and that intermittently wedges. A document
+                # .get() (BatchGetDocuments) does NOT reproduce the stream-wedge,
+                # so it would let a wedged RunQuery channel go undetected. The
+                # hard deadline surfaces a wedge as a timeout -> triggers reset.
+                list(db.collection("_keepalive").limit(1).stream(timeout=ping_timeout_sec))
             except Exception as e:  # noqa: BLE001
                 logger.warning(
                     "Firestore keepalive failed (%s: %s) — recreating channel",
