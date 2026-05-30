@@ -1,8 +1,12 @@
 # Firebase client initialization
 import os
 import logging
+import threading
 
 logger = logging.getLogger(__name__)
+
+# Serializes channel resets so concurrent wedge-detections don't race on delete_app.
+_reset_lock = threading.Lock()
 
 _app = None
 _db = None
@@ -122,19 +126,53 @@ def reset_firestore_client():
     request, so the next request transparently picks up the fresh client.
     """
     global _app, _db
-    try:
-        import firebase_admin
+    with _reset_lock:
         try:
-            firebase_admin.delete_app(firebase_admin.get_app())
-        except Exception:
-            pass
-        _app = None
-        _db = None
-        init_firebase()
-        logger.info("Firestore client reset — fresh gRPC channel")
-    except Exception as e:  # noqa: BLE001
-        logger.error(f"Firestore client reset failed: {e}")
+            import firebase_admin
+            try:
+                firebase_admin.delete_app(firebase_admin.get_app())
+            except Exception:
+                pass
+            _app = None
+            _db = None
+            init_firebase()
+            logger.info("Firestore client reset — fresh gRPC channel")
+        except Exception as e:  # noqa: BLE001
+            logger.error(f"Firestore client reset failed: {e}")
     return _db
+
+
+def safe_query(query, timeout: float = 15.0):
+    """Run a Firestore query under a THREADING timeout (NOT a gRPC deadline).
+
+    When the sync gRPC channel corrupts (``channel_spin``), gRPC deadlines stop
+    firing — so ``query.stream(timeout=N)`` hangs the full 300s request timeout
+    instead of timing out, and even the keepalive ping hangs. Running the query
+    in a worker thread + ``join(timeout)`` gives a reliable timeout regardless of
+    gRPC state. On timeout the channel is wedged: reset it (closing the channel
+    also unblocks the stuck worker thread, so it does not leak) and raise, so the
+    caller fails fast in ``timeout`` seconds and any retry lands on a fresh channel.
+
+    Returns the materialised list of document snapshots.
+    """
+    box = {}
+
+    def _run():
+        try:
+            box["r"] = list(query.stream())
+        except Exception as e:  # noqa: BLE001
+            box["e"] = e
+
+    th = threading.Thread(target=_run, name="firestore-query", daemon=True)
+    th.start()
+    th.join(timeout)
+    if th.is_alive():
+        logger.warning("Firestore query wedged (>%ss) — resetting channel", timeout)
+        reset_firestore_client()
+        raise TimeoutError(f"Firestore query exceeded {timeout}s (channel wedged; reset)")
+    if "e" in box:
+        raise box["e"]
+    return box.get("r", [])
 
 
 def start_firestore_keepalive(interval_sec: int = 10, ping_timeout_sec: int = 8):
@@ -164,12 +202,11 @@ def start_firestore_keepalive(interval_sec: int = 10, ping_timeout_sec: int = 8)
                 db = get_db()
                 if db is None:
                     continue
-                # Use a STREAM query (RunQuery) — the exact gRPC RPC the platform
-                # list endpoints use and that intermittently wedges. A document
-                # .get() (BatchGetDocuments) does NOT reproduce the stream-wedge,
-                # so it would let a wedged RunQuery channel go undetected. The
-                # hard deadline surfaces a wedge as a timeout -> triggers reset.
-                list(db.collection("_keepalive").limit(1).stream(timeout=ping_timeout_sec))
+                # Ping via safe_query — a THREADING timeout, because the gRPC
+                # deadline (.stream(timeout=)) is itself broken once the channel
+                # corrupts (so the old ping would hang forever and never reset).
+                # safe_query resets the channel itself if the ping wedges.
+                safe_query(db.collection("_keepalive").limit(1), timeout=ping_timeout_sec)
             except Exception as e:  # noqa: BLE001
                 logger.warning(
                     "Firestore keepalive failed (%s: %s) — recreating channel",

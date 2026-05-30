@@ -7,7 +7,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from app.firebase_client import get_db
+from app.firebase_client import get_db, safe_query
 from app.firestore.module_requests import ModuleAccessRequestRepository
 from app.services.module_registry import ALWAYS_ON
 from app.services.onboarding_prefs import merge_enabled_modules
@@ -39,7 +39,7 @@ def list_module_requests(
     if status:
         query = query.where("status", "==", status)
     items = []
-    for doc in query.limit(1000).stream(timeout=30):
+    for doc in safe_query(query.limit(1000)):
         row = {"id": doc.id, **doc.to_dict()}
         if org_id and row.get("org_id") != org_id:
             continue
