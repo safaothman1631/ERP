@@ -579,3 +579,15 @@ frontend/src/
 **FAIL suites (٢٩) — هەمووی پێش-بوونیار، نەک تێست:** ٢٧ Playwright e2e spec (vitest ناتوانێ ڕانیان بکات)، `scanner-service.test.ts` (import-ی `workers/barcode`-ی نەبوو، لە HEAD-یشدا)، `buildAddOption.test.tsx` («No test suite found» structural — ٤ assertion-ەکەی دەسەرکەون). هیچیان لە کاری منەوە نین و هەمان شکست لەسەر HEAD دەدەن.
 
 **کۆتایی پشتڕاستکراو:** tsc ٠ · lint exit 0 (٠ error / 2939 warn) · i18n:purity:foundation in-scope=٠ · rtl:audit ٠ · audit:glass-modals OK · build exit 0 (2618 module) · **test 1321/1321 ×3 سەوز**. ٠ گۆڕانکاری backend · ٠ سکریپتی کاتی · stash-ی بەکارهێنەر دەستلێنەدراو.
+
+### 2026-06-01 — Production deploy: frontend → Vercel (erpiq.systems) ✅
+
+داوای بەکارهێنەر: دیپلۆیی فرۆنتئیند و باکئیند. ئامرازەکان هەموو دامەزراون و auth کراون (gcloud=safaothman1631@gmail.com، vercel=safaothman1631، docker، gh، + Vercel MCP server).
+
+- **بلۆکەری دیپلۆی کە دۆزرایەوە و چاککرا:** یەکەم `vercel deploy --prod` شکستی هێنا بە `sh: vite: command not found` (exit 127). هۆکار: لە ڕێکخستنی پڕۆژەی Vercel، **Install Command** = no-op (`echo 'install handled by buildCommand'`)، بەڵام `frontend/vercel.json` ـی buildCommand تەنها `npm run build` بوو، بۆیە deps هەرگیز install نەدەبوون. **چاک:** زیادکردنی `"installCommand": "npm install --legacy-peer-deps"` بۆ `frontend/vercel.json` (commit `d47cfbd`).
+- **دیپلۆیی سەرکەوتوو:** `vercel deploy --prod --yes --cwd frontend` → `dpl_3AJcEJQ13REzJ5DG1eePxD5HSLpQ` = **READY · target=production**. پڕۆژە `erpiq-frontend` (team `team_Maa1nFNwGG18NBdSU2I1Y377`, rootDirectory=`frontend`, Vite, Node 22).
+- **پشتڕاستکردنەوەی زیندوو (٣ سەرچاوەی سەربەخۆ):** build log (`install: npm install --legacy-peer-deps`)؛ Vercel API (state READY + production)؛ `erpiq.systems` CSS گۆڕا `index-CzjGwDuI` → `index-CtWMt8MD` لەگەڵ `--role-accent` (premium-glass)؛ `erpiq.systems/api/live` → `{"status":"alive"}` (proxy کاردەکات).
+- **Git:** ٣٢٣ فایل (frontend-only، ٠ backend) لە `1955cad` + چاکی `vercel.json` لە `d47cfbd`، push بۆ `origin/feat/platform-overhaul-2026-05-27`. push بۆ `main` بە policy ڕاگیرا، بۆیە دیپلۆی بە CLI کرا.
+- **Backend:** ٠ گۆڕانکاری ئەم سێشنە → دیپلۆی نەکرا (پێشتر زیندوو: Cloud Run `zoho-erp-backend`/`zoho-83cda`/europe-west1، `route_count 2338`، URL `https://zoho-erp-backend-6plfqh2hiq-ew.a.run.app`).
+
+**ماوە (ئیختیاری):** merge-ی PR (`feat/platform-overhaul-2026-05-27` → `main`) لە GitHub بۆ هاوتەریبی Vercel git-integration (`d47cfbd` دەبێت بگاتە main پێش هەر build-ێکی git-triggered، چونکە main هێشتا installCommand-ی پێنییە)؛ سایتی مارکێتینگ (`marketing/`) دیپلۆی نەکراوە.
