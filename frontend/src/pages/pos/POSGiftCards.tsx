@@ -48,10 +48,10 @@ const POSGiftCards: React.FC = () => {
  try {
  // Get all gift cards - we'll need to fetch them via search or dedicated endpoint
  // For now, using a placeholder approach
- const res = await api.get('/api/pos/gift-cards/PLACEHOLDER');
+ const _res = await api.get('/api/pos/gift-cards/PLACEHOLDER');
  // This will fail but shows the structure
  setCards([]);
- } catch (error) {
+ } catch (_error) {
  // Expected to fail - we need a list endpoint
  setCards([]);
  } finally {
@@ -80,11 +80,11 @@ const POSGiftCards: React.FC = () => {
  batch_count: 1,
  };
  
- const res = await api.post('/api/pos/gift-cards', data);
+ const _res = await api.post('/api/pos/gift-cards', data);
  message.success(t('gift_card_created'));
  setModalOpen(false);
  loadCards();
- } catch (error) {
+ } catch (_error) {
  message.error(t('error_saving'));
  }
  };
@@ -102,7 +102,7 @@ const POSGiftCards: React.FC = () => {
  message.success(t('gift_cards_created', { count }));
  setBatchModalOpen(false);
  loadCards();
- } catch (error) {
+ } catch (_error) {
  message.error(t('error_saving'));
  }
  };
@@ -116,7 +116,7 @@ const POSGiftCards: React.FC = () => {
  await api.post(`/api/pos/gift-cards/${card.code}/activate`);
  message.success(t('gift_card_activated'));
  loadCards();
- } catch (error) {
+ } catch (_error) {
  message.error(t('error_activating'));
  }
  },
@@ -204,7 +204,7 @@ const POSGiftCards: React.FC = () => {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('posGiftCards.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('posGiftCards.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

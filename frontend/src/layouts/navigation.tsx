@@ -1,12 +1,5 @@
 import type React from 'react';
-import {
-  DashboardOutlined, TeamOutlined, ShoppingOutlined, FileTextOutlined,
-  BankOutlined, ProjectOutlined, BookOutlined, WalletOutlined,
-  ShoppingCartOutlined, InboxOutlined, SettingOutlined,
-  ShopOutlined, BarChartOutlined, GlobalOutlined,
-  AppstoreOutlined, ApiOutlined, BuildOutlined, MailOutlined,
-  ToolOutlined,
-} from '@ant-design/icons';
+import { DashboardOutlined, TeamOutlined, FileTextOutlined, BankOutlined, ProjectOutlined, BookOutlined, WalletOutlined, ShoppingCartOutlined, InboxOutlined, SettingOutlined, ShopOutlined, BarChartOutlined, GlobalOutlined, AppstoreOutlined, ApiOutlined, BuildOutlined, MailOutlined, ToolOutlined } from '@ant-design/icons';
 import type { TFunction } from 'i18next';
 
 export type NavZoneKey = 'core-commerce' | 'operations' | 'people' | 'finance-control';

@@ -43,14 +43,14 @@ export default function DeliveryChallans() {
  try {
  const res = await api.get('/api/contacts', { params: { page_size: 500 } });
  setContacts(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  const fetchItems = async () => {
  try {
  const res = await api.get('/api/items', { params: { page_size: 500 } });
  setItems(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  useEffect(() => {
@@ -142,7 +142,7 @@ export default function DeliveryChallans() {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('challans.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('challans.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

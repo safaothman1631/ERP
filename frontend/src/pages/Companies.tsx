@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Form, Input, Switch, Tag, Space, Tooltip, Modal } from 'antd';
+import { Button, Form, Input, Switch, Tag, Space, Tooltip, Modal } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SwapOutlined, BankOutlined } from '@ant-design/icons';
 import { message } from '../utils/message';
 import api from '../api';
@@ -148,7 +148,7 @@ export default function Companies() {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('companies.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('companies.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

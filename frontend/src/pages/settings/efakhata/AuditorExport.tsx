@@ -6,23 +6,12 @@
  * until ``status === 'ready'`` and then surface the signed URL.
  */
 import React, { useEffect, useState } from 'react';
-import {
-  Alert,
-  Button,
-  Card,
-  DatePicker,
-  Form,
-  Space,
-  Table,
-  Tag,
-  Typography,
-  message,
-} from 'antd';
-import dayjs, { Dayjs } from 'dayjs';
+import { Alert, Button, Card, DatePicker, Form, Table, Tag, Typography, message } from 'antd';
+import { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import api from '../../../api';
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Paragraph: _Paragraph, Text } = Typography;
 
 interface ExportBatch {
   id: string;

@@ -6,8 +6,6 @@ import api from '../api';
 import { message } from '../utils/message';
 import ExportButton from '../components/ExportButton';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
-import { ResponsiveForm } from '../components/responsive/ResponsiveForm';
-
 const { RangePicker } = DatePicker;
 
 type AnyRow = Record<string, any>;

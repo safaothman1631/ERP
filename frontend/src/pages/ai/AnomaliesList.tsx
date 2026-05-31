@@ -65,7 +65,7 @@ const AnomaliesList: React.FC = () => {
     }
   };
 
-  const handleEntityLink = (entityType: string, entityId: string) => {
+  const handleEntityLink = (entityType: string, _entityId: string) => {
     const routes: Record<string, string> = {
       invoice: '/invoices',
       bill: '/bills',

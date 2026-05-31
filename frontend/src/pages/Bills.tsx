@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Tag, Space, Select, Form, Input, InputNumber, DatePicker, Table } from 'antd';
+import { Button, Space, Select, Form, Input, InputNumber, DatePicker, Table } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -17,20 +17,14 @@ import { ResponsiveTable, type ResponsiveColumn, type RowAction } from '../compo
 import { asTranslationKey } from '../i18n/types';
 import { FormDialog } from '../components/responsive/FormDialog';
 import { useAddGate } from '../components/AddGate/useAddGate';
-import { EmptyState } from '../components/AddGate/EmptyState';
-
-const statusColors: Record<string, string> = {
- draft: 'default', open: 'blue', paid: 'green', overdue: 'red', partially_paid: 'orange', void: 'grey',
-};
-
 const Bills: React.FC = () => {
  const { t } = useTranslation();
  const [page, setPage] = useState(1);
  const [statusFilter, setStatusFilter] = useState('');
  const [modal, setModal] = useState(false);
  const [form] = Form.useForm();
- const [vendors, setVendors] = useState<any[]>([]);
- const [accounts, setAccounts] = useState<any[]>([]);
+ const [_vendors, setVendors] = useState<any[]>([]);
+ const [_accounts, setAccounts] = useState<any[]>([]);
  const [lines, setLines] = useState([{ description: '', quantity: 1, rate: 0, amount: 0 }]);
  const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
  try { return JSON.parse(localStorage.getItem('bills.hiddenCols') || '[]'); } catch { return []; }
@@ -133,7 +127,7 @@ const Bills: React.FC = () => {
  ),
  },
  ];
- const visibleColumns = useMemo(() => columns.filter((c) => !hiddenCols.includes(c.key as string)), [hiddenCols, columns]);
+ const _visibleColumns = useMemo(() => columns.filter((c) => !hiddenCols.includes(c.key as string)), [hiddenCols, columns]);
  const columnsMeta: ColumnVisibilityItem[] = columns.map((c) => ({
  key: c.key as string,
  label: typeof c.title === 'string' ? c.title : (c.key as string),
@@ -141,7 +135,7 @@ const Bills: React.FC = () => {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('bills.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('bills.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

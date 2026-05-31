@@ -1,0 +1,1010 @@
+{
+  "common": {
+    "2fa_reminder_cta_later": {
+      "ku": "بیرمبەرەوە بە سبەینێ",
+      "en": "Remind me tomorrow"
+    },
+    "2fa_reminder_cta_setup": {
+      "ku": "دامەزراندنی تایبەتمەندی دوو-هەنگاوی",
+      "en": "Set up 2FA"
+    },
+    "2fa_reminder_desc": {
+      "ku": "زیادکردنی تایبەتمەندی دوو-هەنگاوی هەژمارەکەت دەپارێزێت تەنانەت ئەگەر ووشەی نهێنیت بتاوێزرێت. پێشنیاری دەکرێت، واجب نییە — دەتوانیت هەر کاتێک چالاکی بکەیت.",
+      "en": "Adding 2FA keeps your account safe even if your password leaks. It is recommended, not required — you can enable it any time."
+    },
+    "2fa_reminder_title": {
+      "ku": "تایبەتمەندی دوو-هەنگاوی چالاک نییە",
+      "en": "Two-factor authentication is off"
+    },
+    "actual": {
+      "ku": "ڕاستەقینە",
+      "en": "Actual"
+    },
+    "analytic_report": {
+      "ku": "ڕاپۆرتی شیکارانە",
+      "en": "Analytic Report"
+    },
+    "any": {
+      "ku": "هەموو",
+      "en": "Any"
+    },
+    "auth_api_unavailable": {
+      "ku": "خزمەتگوزاری تۆمارکردن بەردەست نییە. تکایە دووبارە هەوڵبدەرەوە.",
+      "en": "Registration service unavailable. Please try again."
+    },
+    "budget_variance": {
+      "ku": "جیاوازی بودجە",
+      "en": "Budget Variance"
+    },
+    "budgeted": {
+      "ku": "بودجەکراو",
+      "en": "Budgeted"
+    },
+    "bulk_duplicate": {
+      "ku": "کۆپیکردنی بڕگەکانی هەڵبژێردراو…",
+      "en": "Duplicating selected items…"
+    },
+    "bulk_email": {
+      "ku": "ناردنی ئیمەیڵ بۆ کڕیاری هەڵبژێردراو…",
+      "en": "Sending emails to selected customers…"
+    },
+    "cashflow_forecast": {
+      "ku": "پێشبینی گەشتی پارە",
+      "en": "Cash Flow Forecast"
+    },
+    "contact_details": {
+      "ku": "وردەکاری پەیوەندی",
+      "en": "Contact Details"
+    },
+    "daily_breakdown": {
+      "ku": "داڕشتنی ڕۆژانە",
+      "en": "Daily Breakdown"
+    },
+    "email_invalid": {
+      "ku": "ئیمەیڵ دروست نییە",
+      "en": "Invalid email address"
+    },
+    "ending_cash": {
+      "ku": "پارەی کۆتایی",
+      "en": "Ending Cash"
+    },
+    "error_quota": {
+      "ku": "خزمەتگوزاری کاتێک بەکار بووە. تکایە ساتێک چاوەڕێ بکە و دووبارە هەوڵبدەرەوە.",
+      "en": "Service temporarily busy. Please try again in a moment."
+    },
+    "go_to_dashboard": {
+      "ku": "بڕۆ بۆ داشبۆرد",
+      "en": "Go to Dashboard"
+    },
+    "language_active": {
+      "ku": "زمانی چالاک",
+      "en": "Active language"
+    },
+    "mine_only": {
+      "ku": "تەنها ی من",
+      "en": "Mine only"
+    },
+    "mine_only_tip": {
+      "ku": "تەنها کردەوەکانی من نیشان بدە",
+      "en": "Show only my actions"
+    },
+    "path": {
+      "ku": "ڕێگا",
+      "en": "Path"
+    },
+    "projected_inflow": {
+      "ku": "داهاتی پێشبینیکراو",
+      "en": "Projected Inflow"
+    },
+    "projected_outflow": {
+      "ku": "دەرچووی پێشبینیکراو",
+      "en": "Projected Outflow"
+    },
+    "pwa.update_available": {
+      "ku": "نوێکردنەوە بەردەستە — کلیک بکە بۆ دووبارە بارکردن",
+      "en": "Update available — click to reload"
+    },
+    "starting_cash": {
+      "ku": "پارەی سەرەتا",
+      "en": "Starting Cash"
+    },
+    "tax_info": {
+      "ku": "زانیاری باج",
+      "en": "Tax Information"
+    },
+    "top_action": {
+      "ku": "کردەوەی سەرەوە",
+      "en": "Top action"
+    },
+    "total_all_time": {
+      "ku": "کۆی هەموو کات",
+      "en": "Total all time"
+    },
+    "unique_users": {
+      "ku": "بەکارهێنەرە جیاوازەکان",
+      "en": "Unique users"
+    },
+    "validation_email": {
+      "ku": "تکایە ئیمەیڵی دروست داخڵ بکە",
+      "en": "Please enter a valid email"
+    },
+    "variance_percent": {
+      "ku": "ڕێژەی جیاوازی",
+      "en": "Variance %"
+    },
+    "view_variance": {
+      "ku": "بینینی جیاوازی",
+      "en": "View Variance"
+    }
+  },
+  "approvals": {
+    "redirect_message": {
+      "ku": "بۆ بینین یان کردەوەکردن لەسەر ئەم بڕگەیە، بگۆڕە بۆ مۆدیوولی پەیوەندیدار.",
+      "en": "To view or act on this item, switch to the related module."
+    },
+    "redirecting": {
+      "ku": "گواستنەوە…",
+      "en": "Redirecting…"
+    },
+    "title": {
+      "ku": "پەسەندکردنەکان",
+      "en": "Approvals"
+    }
+  },
+  "attachments": {
+    "empty": {
+      "ku": "هیچ هاوپێچێک نییە",
+      "en": "No attachments yet"
+    },
+    "title": {
+      "ku": "هاوپێچەکان",
+      "en": "Attachments"
+    },
+    "upload": {
+      "ku": "بارکردنی هاوپێچ",
+      "en": "Upload attachment"
+    },
+    "uploaded": {
+      "ku": "هاوپێچ بارکرا",
+      "en": "Attachment uploaded"
+    }
+  },
+  "audit_log": {
+    "action": {
+      "ku": "کردەوە",
+      "en": "Action"
+    },
+    "action_create": {
+      "ku": "دروستکردن",
+      "en": "Create"
+    },
+    "action_delete": {
+      "ku": "سڕینەوە",
+      "en": "Delete"
+    },
+    "action_update": {
+      "ku": "نوێکردنەوە",
+      "en": "Update"
+    },
+    "entity": {
+      "ku": "بڕگە",
+      "en": "Entity"
+    },
+    "entity_type": {
+      "ku": "جۆری بڕگە",
+      "en": "Entity type"
+    },
+    "ip": {
+      "ku": "ناونیشانی IP",
+      "en": "IP address"
+    },
+    "subtitle": {
+      "ku": "تاقیگەکردنی هەموو کردارەکانی سیستەم",
+      "en": "Track all system operations"
+    },
+    "summary": {
+      "ku": "پوختە",
+      "en": "Summary"
+    },
+    "timestamp": {
+      "ku": "کات",
+      "en": "Timestamp"
+    },
+    "total_logs": {
+      "ku": "کۆی تۆمارەکان",
+      "en": "Total logs"
+    },
+    "user": {
+      "ku": "بەکارهێنەر",
+      "en": "User"
+    },
+    "user_id": {
+      "ku": "ناسنامەی بەکارهێنەر",
+      "en": "User ID"
+    }
+  },
+  "automation": {
+    "action_config": {
+      "ku": "ڕێکخستنی کردار",
+      "en": "Action configuration"
+    },
+    "action_create_activity": {
+      "ku": "چالاکی دروست بکە",
+      "en": "Create activity"
+    },
+    "action_log": {
+      "ku": "کردار تۆمار بکە",
+      "en": "Log action"
+    },
+    "action_send_email": {
+      "ku": "ئیمەیڵ بنێرە",
+      "en": "Send email"
+    },
+    "action_webhook": {
+      "ku": "وەبهووک بنێرە",
+      "en": "Send webhook"
+    },
+    "edit_rule": {
+      "ku": "دەستکاریکردنی ڕێسا",
+      "en": "Edit rule"
+    },
+    "entity_type": {
+      "ku": "جۆری بڕگە",
+      "en": "Entity type"
+    },
+    "new_rule": {
+      "ku": "ڕێسای نوێ",
+      "en": "New rule"
+    },
+    "rule_executed": {
+      "ku": "ڕێسا جێبەجێ کرا",
+      "en": "Rule executed"
+    },
+    "rule_name": {
+      "ku": "ناوی ڕێسا",
+      "en": "Rule name"
+    },
+    "run_now": {
+      "ku": "ئێستا بەکار بهێنە",
+      "en": "Run now"
+    },
+    "subtitle": {
+      "ku": "بەرپرسایەتی خودکارکردنی کردارەکان",
+      "en": "Manage automated workflow actions"
+    }
+  },
+  "bill_form": {
+    "account_placeholder": {
+      "ku": "هەژمار هەڵبژێرە…",
+      "en": "Select account…"
+    },
+    "add_line": {
+      "ku": "هێڵی خەرجی زیاد بکە",
+      "en": "Add expense line"
+    },
+    "bill_number": {
+      "ku": "ژمارەی پسووڵە",
+      "en": "Vendor Bill #"
+    },
+    "bill_number_placeholder": {
+      "ku": "ژمارەی سەرچاوەی دابینکار",
+      "en": "Vendor reference number"
+    },
+    "create_account": {
+      "ku": "هەژمار دروست بکە",
+      "en": "Create account"
+    },
+    "create_vendor": {
+      "ku": "دابینکاری نوێ دروست بکە",
+      "en": "Create new vendor"
+    },
+    "date": {
+      "ku": "بەرواری پسووڵە",
+      "en": "Bill Date"
+    },
+    "notes_placeholder": {
+      "ku": "تێبینی ناوخۆیی دەربارەی ئەم پسووڵەیە",
+      "en": "Internal notes about this bill"
+    },
+    "section_header": {
+      "ku": "وردەکاری پسووڵە",
+      "en": "Bill Details"
+    },
+    "section_header_desc": {
+      "ku": "دابینکار، بەروارەکان، و ژمارەی سەرچاوەی پسووڵە",
+      "en": "Vendor, dates, and bill reference"
+    },
+    "section_lines": {
+      "ku": "هێڵەکانی خەرجی",
+      "en": "Expense Lines"
+    },
+    "section_lines_desc": {
+      "ku": "خەرجی و کرێکانی ئەم پسووڵەیە",
+      "en": "Expenses and charges on this bill"
+    },
+    "summary": {
+      "ku": "پوختەی پسووڵە",
+      "en": "Bill Summary"
+    },
+    "total": {
+      "ku": "بڕی دەیەوە",
+      "en": "Amount Due"
+    },
+    "vendor": {
+      "ku": "دابینکار",
+      "en": "Vendor"
+    },
+    "vendor_placeholder": {
+      "ku": "دابینکار بگەڕێ…",
+      "en": "Search vendors…"
+    }
+  },
+  "billing": {
+    "cancel": {
+      "body": {
+        "ku": "خەمگینی لە چوونت. بەشداریەکەت لە کۆتایی دەورەی پارەدانەکەت دادەکرێت.",
+        "en": "We are sorry to see you go. Your subscription will end at the close of the current billing period."
+      },
+      "confirm": {
+        "ku": "بەڵێ، هەڵبوەشێنەرەوە",
+        "en": "Yes, cancel"
+      },
+      "reason_placeholder": {
+        "ku": "ئیختیاری — بمانڵێ بۆچی تا باشتر بین",
+        "en": "Optional — tell us why so we can improve"
+      },
+      "title": {
+        "ku": "هەڵوەشاندنەوەی بەشداری",
+        "en": "Cancel subscription"
+      }
+    },
+    "usage": {
+      "invoices": {
+        "ku": "فاکتور لە مانگدا",
+        "en": "Invoices / month"
+      },
+      "pos_terminals": {
+        "ku": "تەرمیناڵی فرۆشگا",
+        "en": "POS terminals"
+      },
+      "storage": {
+        "ku": "کۆگاکردن (GB)",
+        "en": "Storage (GB)"
+      },
+      "users": {
+        "ku": "بەکارهێنەران",
+        "en": "Users"
+      }
+    }
+  },
+  "chatter": {
+    "messages": {
+      "ku": "پەیامەکان",
+      "en": "Messages"
+    },
+    "no_messages": {
+      "ku": "هیچ پەیامێک نییە",
+      "en": "No messages yet"
+    },
+    "write_message": {
+      "ku": "پەیام بنووسە",
+      "en": "Write a message"
+    }
+  },
+  "chunk": {
+    "errorBody": {
+      "ku": "نەتوانرا ئەم بەشە بار بکرێت. تکایە دڵنیابە لە پەیوەندیی ئینتەرنێت و دواتر دووبارە هەوڵبدەرەوە.",
+      "en": "This section could not be loaded. Please check your internet connection and try again."
+    },
+    "errorTitle": {
+      "ku": "هەڵە لە بارکردنی پەڕە",
+      "en": "Page load error"
+    },
+    "reloadButton": {
+      "ku": "پەڕە دووبارە بکەرەوە",
+      "en": "Reload page"
+    }
+  },
+  "construction": {
+    "add_boq_item": {
+      "ku": "بڕگەی BOQ زیاد بکە",
+      "en": "Add BOQ item"
+    },
+    "boq_item_deleted": {
+      "ku": "بڕگەی BOQ سڕایەوە",
+      "en": "BOQ item deleted"
+    },
+    "boq_subtitle": {
+      "ku": "بەرپرسایەتی زنجیرەی بها و کۆانتیتەی کار",
+      "en": "Manage bill of quantities and work items"
+    },
+    "boq_title": {
+      "ku": "لیستی مادەکان (BOQ)",
+      "en": "Bill of Quantities (BOQ)"
+    },
+    "completion_pct": {
+      "ku": "ڕێژەی تەواوبوون",
+      "en": "Completion %"
+    },
+    "item_code": {
+      "ku": "کۆدی بڕگە",
+      "en": "Item code"
+    },
+    "quantity": {
+      "ku": "کۆانتیتە",
+      "en": "Quantity"
+    },
+    "select_project": {
+      "ku": "پڕۆژە هەڵبژێرە",
+      "en": "Select project"
+    },
+    "select_project_first": {
+      "ku": "تکایە سەرەتا پڕۆژەیەک هەڵبژێرە",
+      "en": "Please select a project first"
+    },
+    "total_boq": {
+      "ku": "کۆی BOQ",
+      "en": "Total BOQ"
+    },
+    "total_completed": {
+      "ku": "کۆی تەواوکراو",
+      "en": "Total completed"
+    }
+  },
+  "crm": {
+    "customers_subtitle": {
+      "ku": "بەرپرسایەتی پەیوەندی و ماوەی کڕیارەکانت",
+      "en": "Manage your customer relationships and balances"
+    },
+    "no_customers": {
+      "ku": "هیچ کڕیارێک نییە هێشتا",
+      "en": "No customers yet"
+    },
+    "no_customers_hint": {
+      "ku": "یەکەم کڕیارەکەت زیاد بکە بۆ دەستپێکردنی بەرپرسایەتی پەیوەندیەکان",
+      "en": "Add your first customer to start managing relationships"
+    }
+  },
+  "dr": {
+    "warn_body": {
+      "ku": "گەڕاندنەوەی تینانت داتای پڕۆداکشنی ژیوی ئەو کڕیارە دانرێت. پێویستی بە دڵنیاکردنەوەی بەرپرسێکی دیکەیە (چوار-چاو) و تەنها ئەوسا دەتوانرێت جێبەجێ بکرێت. جێبەجێکردن فەرمانێک دەگەڕێنێتەوە کە لەسەر پردی ڕووداو دەخوێندرێتەوە.",
+      "en": "A tenant restore overwrites that customer live production data. It requires approval by a second super-admin (four-eyes) and only then can be executed. Execution returns a command to run on the incident bridge."
+    }
+  },
+  "errors": {
+    "autoSaveFailed": {
+      "ku": "هەڵوگرتنەوەی خودکار شکستی هێنا. تکایە بە دەست خۆت خەزن بکە.",
+      "en": "Auto-save failed. Please save manually."
+    },
+    "fetch_failed": {
+      "ku": "هەڵەیەک ڕووی دا لە کاتی بارکردنی داتا",
+      "en": "Failed to load data"
+    },
+    "operation_failed": {
+      "ku": "کردارەکە شکستی هێنا. تکایە دووبارە هەوڵبدەرەوە.",
+      "en": "Operation failed. Please try again."
+    }
+  },
+  "hr": {
+    "return_hint": {
+      "ku": "پاش خەزنکردن، دووبارە بۆ شوێنی پێشووت دەگەڕێیتەوە.",
+      "en": "After saving, you will be sent back to where you came from."
+    }
+  },
+  "impersonation": {
+    "banner": {
+      "ku": "بینین وەک {{tenant}} — خوێندنەوە تەنها",
+      "en": "VIEWING AS {{tenant}} — READ-ONLY"
+    },
+    "endSession": {
+      "ku": "کۆتایی سێشن بهێنە",
+      "en": "End session"
+    },
+    "expired": {
+      "ku": "کاتی تەواوبووە",
+      "en": "expired"
+    },
+    "expiresIn": {
+      "ku": "{{time}} ماوە",
+      "en": "{{time}} remaining"
+    }
+  },
+  "inventory": {
+    "no_items": {
+      "ku": "هیچ بڕگەیەک نییە هێشتا",
+      "en": "No items yet"
+    },
+    "no_items_hint": {
+      "ku": "یەکەم بڕگەکەت زیاد بکە بۆ دەستپێکردنی بەرپرسایەتی کۆگا",
+      "en": "Add your first item to start managing inventory"
+    },
+    "purchase_rate": {
+      "ku": "نرخی کڕین",
+      "en": "Purchase Rate"
+    },
+    "sales_rate": {
+      "ku": "نرخی فرۆشتن",
+      "en": "Sales Rate"
+    }
+  },
+  "invoices": {
+    "subtotal": {
+      "ku": "کۆی لاوی",
+      "en": "Subtotal"
+    },
+    "tax": {
+      "ku": "باج",
+      "en": "Tax"
+    }
+  },
+  "items": {
+    "add_line": {
+      "ku": "هێڵ زیاد بکە",
+      "en": "Add line"
+    },
+    "amount": {
+      "ku": "بڕ",
+      "en": "Amount"
+    },
+    "description": {
+      "ku": "وەسف",
+      "en": "Description"
+    },
+    "line_items": {
+      "ku": "بڕگەکانی هێڵ",
+      "en": "Line items"
+    },
+    "quantity": {
+      "ku": "کۆانتیتە",
+      "en": "Quantity"
+    },
+    "tax_rate": {
+      "ku": "ڕێژەی باج",
+      "en": "Tax rate"
+    },
+    "unit_price": {
+      "ku": "نرخی یەکە",
+      "en": "Unit price"
+    }
+  },
+  "pay": {
+    "errorTitle": {
+      "ku": "نەتوانرا پارەدان بار بکرێت",
+      "en": "Unable to load payment"
+    },
+    "expired": {
+      "ku": "ئەم لینکی پارەدانە کاتی تەواوبووە",
+      "en": "This payment link has expired"
+    },
+    "initiateFailed": {
+      "ku": "نەتوانرا پارەدان دەستپێ بکات. تکایە دووبارە هەوڵبدەرەوە.",
+      "en": "Could not initiate payment. Please try again."
+    },
+    "invalidToken": {
+      "ku": "لینکی پارەدان دروست نییە",
+      "en": "Invalid payment link"
+    },
+    "notFound": {
+      "ku": "لینکی پارەدان نەدۆزرایەوە یان کاتی تەواوبووە",
+      "en": "Payment link not found or expired"
+    },
+    "receiptSoon": {
+      "ku": "پسووڵەیەک بۆ ئیمەیڵەکەت نێردراوە.",
+      "en": "A receipt has been sent to your email."
+    },
+    "thanks": {
+      "ku": "سوپاس بۆ پارەدانت!",
+      "en": "Thank you for your payment!"
+    }
+  },
+  "po_form": {
+    "add_line": {
+      "ku": "هێڵی داواکاری زیاد بکە",
+      "en": "Add order line"
+    },
+    "create_item": {
+      "ku": "بڕگەی نوێ دروست بکە",
+      "en": "Create new item"
+    },
+    "create_vendor": {
+      "ku": "دابینکاری نوێ دروست بکە",
+      "en": "Create new vendor"
+    },
+    "date": {
+      "ku": "بەرواری داواکاری",
+      "en": "Order Date"
+    },
+    "delivery_address": {
+      "ku": "ناونیشانی گەیاندن",
+      "en": "Delivery Address"
+    },
+    "delivery_address_placeholder": {
+      "ku": "ناونیشانی گەیاندن یان کۆگا",
+      "en": "Delivery address or warehouse"
+    },
+    "expected_delivery": {
+      "ku": "بەرواری گەیاندنی چاوەڕواندراو",
+      "en": "Expected Delivery"
+    },
+    "item_placeholder": {
+      "ku": "بڕگە بگەڕێ…",
+      "en": "Search items…"
+    },
+    "notes_placeholder": {
+      "ku": "ڕێنماییە تایبەتەکان، تێبینی گەیاندن…",
+      "en": "Special instructions, delivery notes…"
+    },
+    "reference_placeholder": {
+      "ku": "نموونە: REQ-001",
+      "en": "e.g. REQ-001"
+    },
+    "section_header": {
+      "ku": "وردەکاری داواکاری",
+      "en": "Order Details"
+    },
+    "section_header_desc": {
+      "ku": "دابینکار، بەروارەکان، و زانیاری گەیاندن",
+      "en": "Vendor, dates, and delivery information"
+    },
+    "section_lines": {
+      "ku": "هێڵەکانی داواکاری",
+      "en": "Order Lines"
+    },
+    "section_lines_desc": {
+      "ku": "بڕگە و کۆانتیتەی داواکراو",
+      "en": "Items and quantities to order"
+    },
+    "summary": {
+      "ku": "پوختەی داواکاری کڕین",
+      "en": "PO Summary"
+    },
+    "vendor": {
+      "ku": "دابینکار",
+      "en": "Vendor"
+    },
+    "vendor_placeholder": {
+      "ku": "دابینکار بگەڕێ…",
+      "en": "Search vendors…"
+    }
+  },
+  "portal": {
+    "account_statement": {
+      "ku": "ڕاپۆرتی هەژمار",
+      "en": "Account Statement"
+    },
+    "back_to_email": {
+      "ku": "گەڕانەوە بۆ ئیمەیڵ",
+      "en": "Back to email"
+    },
+    "check_email": {
+      "ku": "ئیمەیڵەکەت بپشکنە",
+      "en": "Check your email"
+    },
+    "current_balance": {
+      "ku": "ماوەی ئێستا",
+      "en": "Current balance"
+    },
+    "dashboard": {
+      "ku": "داشبۆردی پۆرتاڵ",
+      "en": "Portal Dashboard"
+    },
+    "demo_token": {
+      "ku": "تۆکنی ئازموون",
+      "en": "Demo token"
+    },
+    "email": {
+      "ku": "ئیمەیڵ",
+      "en": "Email"
+    },
+    "email_invalid": {
+      "ku": "ئیمەیڵ دروست نییە",
+      "en": "Invalid email address"
+    },
+    "email_not_found": {
+      "ku": "ئیمەیڵەکە نەدۆزرایەوە",
+      "en": "Email not found"
+    },
+    "email_placeholder": {
+      "ku": "ئیمەیڵەکەت داخڵ بکە",
+      "en": "Enter your email address"
+    },
+    "email_required": {
+      "ku": "ئیمەیڵ پێویستە",
+      "en": "Email is required"
+    },
+    "enter_email": {
+      "ku": "ئیمەیڵ داخڵ بکە",
+      "en": "Enter email"
+    },
+    "invoice": {
+      "ku": "فاکتور",
+      "en": "Invoice"
+    },
+    "invoices": {
+      "ku": "فاکتورەکان",
+      "en": "Invoices"
+    },
+    "login_success": {
+      "ku": "چوونەژوورەوە سەرکەوتوو بوو",
+      "en": "Login successful"
+    },
+    "logout": {
+      "ku": "دەرچوون",
+      "en": "Log out"
+    },
+    "magic_link_instruction": {
+      "ku": "لینکێک بۆ ئیمەیڵەکەت نێردراوە. تکایە ئیمەیڵەکەت بپشکنە و کلیک بکە.",
+      "en": "A link has been sent to your email. Please check your inbox and click the link."
+    },
+    "magic_link_sent": {
+      "ku": "لینکی جادووکارانە نێردرا",
+      "en": "Magic link sent"
+    },
+    "my_orders": {
+      "ku": "داواکارییەکانم",
+      "en": "My orders"
+    },
+    "no_orders": {
+      "ku": "هیچ داواکارییەک نییە",
+      "en": "No orders yet"
+    },
+    "order_date": {
+      "ku": "بەرواری داواکاری",
+      "en": "Order date"
+    },
+    "order_id": {
+      "ku": "ژمارەی داواکاری",
+      "en": "Order ID"
+    },
+    "orders": {
+      "ku": "داواکارییەکان",
+      "en": "Orders"
+    },
+    "overdue": {
+      "ku": "کاتی تێپەڕیوە",
+      "en": "Overdue"
+    },
+    "overdue_amount": {
+      "ku": "بڕی تێپەڕیوەی کات",
+      "en": "Overdue amount"
+    },
+    "payment_instructions": {
+      "ku": "تکایە بە ئەم ڕێگاکانەوە پارەدان بکە یان پەیوەندی بکە لەگەڵ تیمی ئەکاونتینگ.",
+      "en": "Please use the payment options below or contact our accounting team."
+    },
+    "payment_options": {
+      "ku": "هەڵبژاردنەکانی پارەدان",
+      "en": "Payment options"
+    },
+    "payment_summary": {
+      "ku": "پوختەی پارەدان",
+      "en": "Payment summary"
+    },
+    "recent_invoices": {
+      "ku": "فاکتورە نوێکانەکان",
+      "en": "Recent invoices"
+    },
+    "request_failed": {
+      "ku": "داواکاری شکستی هێنا. تکایە دووبارە هەوڵبدەرەوە.",
+      "en": "Request failed. Please try again."
+    },
+    "send_magic_link": {
+      "ku": "لینکی چوونەژوورەوە بنێرە",
+      "en": "Send login link"
+    },
+    "source": {
+      "ku": "سەرچاوە",
+      "en": "Source"
+    },
+    "title": {
+      "ku": "پۆرتاڵی کڕیار",
+      "en": "Customer Portal"
+    },
+    "token_invalid": {
+      "ku": "لینکی چوونەژوورەوە دروست نییە یان کاتی تەواوبووە",
+      "en": "Login link is invalid or expired"
+    },
+    "total": {
+      "ku": "کۆی گشتی",
+      "en": "Total"
+    },
+    "total_due": {
+      "ku": "کۆی دەیەوە",
+      "en": "Total due"
+    },
+    "total_outstanding": {
+      "ku": "کۆی ماوەی دەین",
+      "en": "Total outstanding"
+    },
+    "verify": {
+      "ku": "دڵنیاکردنەوە",
+      "en": "Verify"
+    },
+    "verify_and_login": {
+      "ku": "دڵنیاکردنەوە و چوونەژوورەوە",
+      "en": "Verify and log in"
+    },
+    "verify_failed": {
+      "ku": "دڵنیاکردنەوە شکستی هێنا. تکایە دووبارە هەوڵبدەرەوە.",
+      "en": "Verification failed. Please try again."
+    },
+    "view_all": {
+      "ku": "هەموو ببینە",
+      "en": "View all"
+    }
+  },
+  "returns": {
+    "vendor_credit": {
+      "ku": "کرێدیتی دابینکار",
+      "en": "Vendor credit"
+    },
+    "vendor_return_number": {
+      "ku": "ژمارەی گەڕاندنەوەی دابینکار",
+      "en": "Vendor return number"
+    }
+  },
+  "sales": {
+    "invoices": {
+      "title": {
+        "ku": "فاکتورەکان",
+        "en": "Invoices"
+      }
+    }
+  },
+  "user": {
+    "email": {
+      "ku": "ئیمەیڵ",
+      "en": "Email"
+    },
+    "name": {
+      "ku": "ناو",
+      "en": "Name"
+    }
+  },
+  "vendor_portal": {
+    "all": {
+      "ku": "هەموو",
+      "en": "All"
+    },
+    "bill_against_po": {
+      "ku": "پسووڵە لەسەر بنەمای داواکاری کڕین",
+      "en": "Bill against PO"
+    },
+    "bill_submitted": {
+      "ku": "پسووڵە نێردرا",
+      "en": "Bill submitted"
+    },
+    "dashboard": {
+      "ku": "داشبۆردی پۆرتاڵی دابینکار",
+      "en": "Vendor Portal Dashboard"
+    },
+    "email_label": {
+      "ku": "ئیمەیڵ",
+      "en": "Email"
+    },
+    "email_not_found": {
+      "ku": "ئیمەیڵ نەدۆزرایەوە",
+      "en": "Email not found"
+    },
+    "login": {
+      "ku": "چوونەژوورەوەی پۆرتاڵی دابینکار",
+      "en": "Vendor Portal Login"
+    },
+    "login_success": {
+      "ku": "چوونەژوورەوە سەرکەوتوو بوو",
+      "en": "Login successful"
+    },
+    "logout": {
+      "ku": "دەرچوون",
+      "en": "Log out"
+    },
+    "magic_link_sent": {
+      "ku": "لینکی جادووکارانە نێردرا — ئیمەیڵەکەت بپشکنە",
+      "en": "Magic link sent — check your email"
+    },
+    "my_payments": {
+      "ku": "پارەدانەکانم",
+      "en": "My payments"
+    },
+    "my_pos": {
+      "ku": "داواکارییەکانی کڕینم",
+      "en": "My purchase orders"
+    },
+    "no_payments": {
+      "ku": "هیچ پارەدانێک تۆمار نەکراوە",
+      "en": "No payments recorded"
+    },
+    "no_pos": {
+      "ku": "هیچ داواکاری کڕینێک نییە",
+      "en": "No purchase orders yet"
+    },
+    "not_vendor": {
+      "ku": "ئەم ئیمەیڵە وەک دابینکار تۆمار نەکراوە",
+      "en": "This email is not registered as a vendor"
+    },
+    "open": {
+      "ku": "کراوە",
+      "en": "Open"
+    },
+    "open_pos_count": {
+      "ku": "ژمارەی داواکارییەکانی کڕینی کراوە",
+      "en": "Open POs"
+    },
+    "open_pos_value": {
+      "ku": "بەهای داواکارییەکانی کڕینی کراوە",
+      "en": "Open PO value"
+    },
+    "outstanding_balance": {
+      "ku": "ماوەی دەینی مایەوە",
+      "en": "Outstanding balance"
+    },
+    "payment_amount": {
+      "ku": "بڕی پارەدان",
+      "en": "Payment amount"
+    },
+    "payment_date": {
+      "ku": "بەرواری پارەدان",
+      "en": "Payment date"
+    },
+    "payment_method": {
+      "ku": "شێوازی پارەدان",
+      "en": "Payment method"
+    },
+    "payment_reference": {
+      "ku": "ژمارەی سەرچاوەی پارەدان",
+      "en": "Payment reference"
+    },
+    "payments_30d": {
+      "ku": "پارەدانەکانی ٣٠ ڕۆژی رابردوو",
+      "en": "Payments (last 30 days)"
+    },
+    "pending_bills": {
+      "ku": "پسووڵەکانی چاوەڕوانکراو",
+      "en": "Pending bills"
+    },
+    "po_date": {
+      "ku": "بەرواری داواکاری کڕین",
+      "en": "PO date"
+    },
+    "po_detail": {
+      "ku": "وردەکاری داواکاری کڕین",
+      "en": "PO detail"
+    },
+    "po_status": {
+      "ku": "دۆخی داواکاری کڕین",
+      "en": "PO status"
+    },
+    "po_total": {
+      "ku": "کۆی داواکاری کڕین",
+      "en": "PO total"
+    },
+    "received": {
+      "ku": "وەرگیراوە",
+      "en": "Received"
+    },
+    "request_failed": {
+      "ku": "داواکاری شکستی هێنا. تکایە دووبارە هەوڵبدەرەوە.",
+      "en": "Request failed. Please try again."
+    },
+    "request_link": {
+      "ku": "داوای لینکی چوونەژوورەوە بکە",
+      "en": "Request login link"
+    },
+    "submit_failed": {
+      "ku": "نانەردنی پسووڵە شکستی هێنا. تکایە دووبارە هەوڵبدەرەوە.",
+      "en": "Failed to submit bill. Please try again."
+    },
+    "verify_token": {
+      "ku": "دڵنیاکردنەوەی تۆکن",
+      "en": "Verify token"
+    },
+    "view_po": {
+      "ku": "بینینی داواکاری کڕین",
+      "en": "View PO"
+    },
+    "welcome": {
+      "ku": "بەخێربێیت بۆ پۆرتاڵی دابینکار",
+      "en": "Welcome to the Vendor Portal"
+    }
+  }
+}

@@ -90,7 +90,7 @@ const POSSelfOrder: React.FC = () => {
       });
       setSelfOrderId(startRes.data.id);
       setStep(2);
-    } catch (error) {
+    } catch (_error) {
       message.error(t('error_loading'));
     } finally {
       setLoading(false);
@@ -155,14 +155,14 @@ const POSSelfOrder: React.FC = () => {
       // Update cart items
       await api.post(`/api/pos/self-order/${selfOrderId}/items`, { lines: cart });
       setStep(4);
-    } catch (error) {
+    } catch (_error) {
       message.error(t('error_saving'));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmitOrder = async (values: any) => {
+  const handleSubmitOrder = async (_values: any) => {
     handleActivity();
     if (!selfOrderId) return;
 
@@ -171,7 +171,7 @@ const POSSelfOrder: React.FC = () => {
       // Submit the order
       await api.post(`/api/pos/self-order/${selfOrderId}/submit`);
       setStep(5);
-    } catch (error) {
+    } catch (_error) {
       message.error(t('error_submitting_order'));
     } finally {
       setLoading(false);

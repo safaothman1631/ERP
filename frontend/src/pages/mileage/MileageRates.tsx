@@ -31,7 +31,7 @@ const MileageRates: FC = () => {
  try {
  const res = await api.get('/api/mileage/rates');
  setData(res.data.items || res.data || []);
- } catch (err) {
+ } catch (_err) {
  // Fallback: static rates
  setData([
  { id: '1', vehicle_type: 'Car', rate_per_km: 0.5, description: 'Standard car', is_default: true },

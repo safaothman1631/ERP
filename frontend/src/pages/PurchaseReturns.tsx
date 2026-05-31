@@ -46,14 +46,14 @@ export default function PurchaseReturns() {
  try {
  const res = await api.get('/api/contacts', { params: { contact_type: 'vendor', page_size: 500 } });
  setContacts(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  const fetchBills = async () => {
  try {
  const res = await api.get('/api/bills', { params: { page_size: 200 } });
  setBills(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  useEffect(() => {
@@ -173,7 +173,7 @@ export default function PurchaseReturns() {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('purchaseReturns.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('purchaseReturns.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

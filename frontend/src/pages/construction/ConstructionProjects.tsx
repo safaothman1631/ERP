@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { Button, Space, Input, Form, Select, InputNumber, Tag, Row, Col, Card, Statistic } from 'antd';
+import { Button, Space, Input, Form, Select, InputNumber, Row, Col, Card, Statistic } from 'antd';
 
 import { message } from '../../utils/message';
 import { PlusOutlined, SearchOutlined, EyeOutlined } from '@ant-design/icons';

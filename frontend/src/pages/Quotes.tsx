@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Tag, Select, Dropdown, Space } from 'antd';
+import { Button, Select, Dropdown, Space } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, MoreOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -13,10 +13,6 @@ import { space } from '../theme/tokens';
 import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { useAddGate } from '../components/AddGate/useAddGate';
-
-const statusColors: Record<string, string> = {
-  draft: 'default', sent: 'blue', accepted: 'green', declined: 'red', expired: 'grey', invoiced: 'purple',
-};
 
 const Quotes: React.FC = () => {
   const { t } = useTranslation();
@@ -94,7 +90,7 @@ const Quotes: React.FC = () => {
   }));
   const persistHidden = (next: string[]) => {
     setHiddenCols(next);
-    try { localStorage.setItem('quotes.hiddenCols', JSON.stringify(next)); } catch {}
+    try { localStorage.setItem('quotes.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
   };
 
   return (

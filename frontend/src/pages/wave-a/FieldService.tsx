@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Form, Input, Select, Tag, message, Card, DatePicker, Modal } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, UserAddOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { Button, Space, Form, Input, Select, Tag, message, Card, Modal } from 'antd';
+import { PlusOutlined, DeleteOutlined, UserAddOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader } from '../../design-system';
@@ -27,7 +27,7 @@ const FieldService: React.FC = () => {
  try {
  const res = await api.get('/api/field-service/service-orders', { params: { limit: 100 } });
  setOrders(res.data.items || []);
- } catch (error) {
+ } catch (_error) {
  message.error(t('error'));
  } finally {
  setLoading(false);
@@ -38,7 +38,7 @@ const FieldService: React.FC = () => {
  try {
  const res = await api.get('/api/field-service/workers', { params: { limit: 100 } });
  setWorkers(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  useEffect(() => {

@@ -1,8 +1,8 @@
 import type React from 'react';
 import { useState, useEffect } from 'react';
-import { Button, Space, Switch, Tag, Card, Tabs, Segmented } from 'antd';
+import { Button, Space, Switch, Tag, Card, Segmented } from 'antd';
 import { message } from '../../utils/message';
-import { ArrowUpOutlined, ArrowDownOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
+import { ArrowUpOutlined, ArrowDownOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../design-system';

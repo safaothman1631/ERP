@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Form, Input, Select, Tag, Space} from 'antd';
+import { Button, Form, Input, Space } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, BarChartOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -7,13 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { PageHeader, StatusTag } from '../design-system';
 import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
-import { space } from '../theme/tokens';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
-
-const statusColors: Record<string, string> = {
- active: 'blue', completed: 'green', on_hold: 'orange', cancelled: 'red',
-};
 
 const Projects: React.FC = () => {
  const { t } = useTranslation();
@@ -23,7 +18,7 @@ const Projects: React.FC = () => {
  const [total, setTotal] = useState(0);
  const [page, setPage] = useState(1);
  const [modal, setModal] = useState(false);
- const [contacts, setContacts] = useState<any[]>([]);
+ const [_contacts, setContacts] = useState<any[]>([]);
  const [form] = Form.useForm();
 
  const fetchData = async () => {

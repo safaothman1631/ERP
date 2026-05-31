@@ -61,7 +61,7 @@ const PortalDashboard: React.FC = () => {
       });
 
       setRecentInvoices(statementsRes.data.recent_invoices || []);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('portal.load_failed'));
     } finally {
       setLoading(false);

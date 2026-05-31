@@ -10,7 +10,7 @@
  * informational alert indicating credentials are pending (R7.2–R7.5); the
  * toggle is left enabled so admins can pre-stage their config.
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Button,
@@ -28,7 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { PageHeader } from '../../../design-system';
 import api from '../../../api';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title: _Title, Text, Paragraph } = Typography;
 
 interface ProviderConfig {
   slug: string;

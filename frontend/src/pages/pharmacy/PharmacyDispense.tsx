@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Button, Space, Input, Form, message, Select, InputNumber, Tag } from 'antd';
+import { Card, Button, Space, Input, Form, message, Tag } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { SearchOutlined, MedicineBoxOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { SearchOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { PageHeader, KpiCard } from '../../design-system';
+import { PageHeader } from '../../design-system';
 import api from '../../api';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -42,12 +42,12 @@ interface Patient {
 
 const PharmacyDispense: React.FC = () => {
  const { t } = useTranslation();
- const [form] = Form.useForm();
+ const [_form] = Form.useForm();
  const [loading, setLoading] = useState(false);
  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
  const [dispenses, setDispenses] = useState<Dispense[]>([]);
- const [drugs, setDrugs] = useState<Drug[]>([]);
- const [patients, setPatients] = useState<Patient[]>([]);
+ const [_drugs, setDrugs] = useState<Drug[]>([]);
+ const [_patients, setPatients] = useState<Patient[]>([]);
  const [searchText, setSearchText] = useState('');
  const [modalVisible, setModalVisible] = useState(false);
  const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);

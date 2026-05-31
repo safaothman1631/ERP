@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Button, Space, Typography, Badge, message } from 'antd';
+import { Card, Row, Col, Space, Typography, Badge, message } from 'antd';
 import { EyeOutlined, CopyOutlined, DashboardOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -25,7 +25,7 @@ const SharedDashboards: React.FC = () => {
       const allDashboards = res.data.data || [];
       const shared = allDashboards.filter((d: any) => !d.is_owner);
       setDashboards(shared);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('load_error'));
     } finally {
       setLoading(false);
@@ -38,7 +38,7 @@ const SharedDashboards: React.FC = () => {
       message.success(t('dashboard_cloned'));
       const clonedId = res.data.data.id;
       navigate(`/dashboards/${clonedId}/edit`);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('clone_error'));
     }
   };

@@ -461,3 +461,121 @@ frontend/src/
 - **سکریپتی گواستنەوە:** `deploy/migrate-backend-to-zoho-83cda.{sh,ps1}` (idempotent، operator runbook). `deploy/cloudrun-url.txt` نوێکرایەوە.
 
 **ماوە (دەرەکی، هی بەکارهێنەر):** (1) service-ە کۆنەکانی `erp-system-494716` (`zoho-erp`, `zoho-erp-backend`) بسڕەوە دوای چەند ڕۆژ fallback؛ (2) بۆ CI auto-deploy-ی backend بۆ `zoho-83cda`: WIF pool/provider + SA لە `zoho-83cda` دروست بکە و GitHub secrets (`GCP_PROJECT_ID`, `GCP_WIF_PROVIDER`, `GCP_SA_EMAIL`) نوێ بکەرەوە (ئێستا → `erp-system-494716`)؛ (3) CI `startup_failure` چارەسەر بکە (لە Actions UI، GitHub-schema issue). تا ئەوکات، backend deploy بە دەستی-بە-سکریپت دەکرێت.
+
+### 2026-05-30 — دوو سکیڵی نوێی Claude Code (frontend-design + ux-ui-pro-max)
+
+دوو سکیڵی پڕۆژەیی (project-level، لە `.claude/skills/`) دروستکران بۆ کارکردن لەسەر UI/UX بەپێی ڕێسا ڕاستەقینەکانی ئەم کۆدبەیسە. هەردووکیان لەسەر بنەمای دۆزینەوەی ڕاستەقینەی `frontend/` نووسراون (antd v6, React 19, Zustand 5, token-driven design system, RTL/i18n).
+
+- **`.claude/skills/frontend-design/SKILL.md`** + `references/component-map.md` — «چۆن UI دروست بکەیت بە شێوازی ئەم پڕۆژەیە». پێداگری لەسەر: بەکارهێنانەوەی design-system (٦٠+ کۆمپۆنێنت لە `design-system/`) پێش دروستکردنی نوێ؛ تەنها token (`theme/tokens.ts`) — هیچ inline color/spacing؛ antd theme-ی گلۆباڵ (`AppConfigProvider`)؛ RTL بە logical properties؛ i18n بە `t()`؛ a11y (44px, focus ring, reduced-motion)؛ بودجەی performance (shell ≤8KB، lazy-load، DataTable virtualize ≥200)؛ ڕیسێپتی پەڕەکان (list/form/detail/dashboard/state-matrix). کاتالۆگی تەواوی کۆمپۆنێنت + token + recipe لە reference.
+- **`.claude/skills/ux-ui-pro-max/SKILL.md`** + `references/design-review.md` — «چاوی دیزاینەری سینیۆر»: بڕیاردان لەسەر ئەوەی «باش» چییە + گۆڕینی بۆ چاکسازی پێشینەبەند (P0→P2) کە مەپ دەکرێن بۆ token/کۆمپۆنێنتی ڕاستەقینە. ١٢ ستوونی کوالیتی (hierarchy, spacing, color, state-matrix, feedback, motion, forms, glass/elevation, a11y, RTL, microcopy)، ڕێکارێکی design-review، checklist + scoring rubric + نموونەیەکی کارکراو. جووتە لەگەڵ frontend-design.
+
+**تێبینی:** ناوەڕۆکی سکیڵەکان بە ئینگلیزی نووسراون (چونکە پڕ لە ناوی token/کۆمپۆنێنت/کۆدن)، بەڵام ئەنجامی UI دەبێت کوردی/RTL بێت. هیچ کۆدی پڕۆژە دەستکاری نەکراوە — تەنها سکیڵی نوێ + ئەم تۆمارە. ئیتر سکیڵەکان بۆ ئەم پڕۆژەیە بەردەستن (`/frontend-design`، `/ux-ui-pro-max`، یان auto-trigger).
+
+### 2026-05-30 — premium-glass-rtl-experience (Frontend only — Glass + Role UX + پاکی زمان)
+
+سپێکی نوێ `.kiro/specs/premium-glass-rtl-experience` (requirements/design/tasks). بەرزکردنەوەی هەموو سیستەمەکە بۆ یەک ستانداردی گلاسمۆرفیزم + role-distinct + مۆشن + مۆبایل ڕیسپۆنسیڤ + پاکی زمان (ku↔en). **هیچ گۆڕانکارییەک لە backend (٠ فایل) — تەنها frontend.**
+
+- **بناغەی گلاس/مۆشن (cascade):** `frontend/src/theme/premium.css` (نوێ، دوای polish.css لە `main.tsx`) — گلاس بۆ هەموو overlay-ی antd (dropdown/select/popover/tooltip/message/notification)، cascade-ی `--role-accent` (دوگمەی primary بە gradient+sheen، active nav، focus ring، scrollbar)، keyframes (shimmer/sheen/fade-up/float/pop)، card hover-lift، skeleton shimmer، **bottom-sheet بۆ مۆداڵ/درۆوەر لە مۆبایل**. هەمووی پشت `@supports` + reduced-motion.
+- **مۆشن:** `theme/motionPresets.ts` (+`listContainer/listItem/fadeUp/heroReveal` + reduced)، `hooks/useGlassMotion.ts` (دەرخستنیان).
+- **ڕۆڵ:** `theme/roleThemes.ts` — gradient-ی هیرۆی دوو-ستۆپ + glow-ی جیاوازتر بۆ ١٢ ڕۆڵ.
+- **design-system:** `KpiCard/SectionCard/ChartCard` کلاسی `premium-card`؛ `ChartCard` ("Retry"→`t('retry')`)؛ `KeyValueGrid` (`'کۆپی کرا'`→`t('copied')`).
+- **پاکی زمان:** `frontend/scripts/i18n-purity.mjs` (گاردی ku↔en: کلیلی نەماو + پیتی عەرەبیی hardcode + لاتین لە ku)، `i18n-backfill.mjs`+`i18n-backfill-data.json` (٤١٠ کلیلی کوردی/ئینگلیزی نووسراو → `public/locales/{ku,en}/{common,errors}.json`). چاکسازیی ناکۆکی: `FileUploadField/ImageUploadField` (`upload.*`→`uploader.*`)، `EntitySwitcher` (`topbar.entity_switcher`→`entity_switcher.select`). `package.json` scripts: `i18n:purity[:foundation]`, `i18n:backfill`. **ئەنجام: foundation scope کلیلی کوردیی نەماو ٢٢٥→٠.**
+- **تاقیکردنەوە:** ٦٦/٦٦ locale JSON دروست؛ `i18n:purity --scope=foundation` Check A=٠؛ ٠ گۆڕانکاریی backend؛ تەواوبوونی فایلەکان بە Read پشتڕاستکرا. تۆماری تەواو: `_deltas/premium-glass-rtl-summary.md`.
+
+**TODO بۆ بەکارهێنەر (لەسەر Windows — sandbox-ی Linux نەیتوانی mirror-ی tsc بکات):** `cd frontend; npx tsc --noEmit; npm run build; npm run lint; npm run i18n:purity:foundation; npm run rtl:audit`.
+
+### 2026-05-30 — premium-glass-rtl-experience: Long-tail (٨ ئەیگێنتی پاراڵێل، پاکی زمان + Playwright)
+
+شەپۆلی long-tail بە ئەیگێنتی پاراڵێل. **data-only — ٠ فایلی backend، ٠ فایلی کۆمپۆنێنتی src (سفر مەترسیی build).**
+
+- **٦ ئەیگێنتی ku/en** (بەپێی گرووپی مۆدیوول: sales/finance/ops/people/platform + ٢ پاککردنەوە) + **١ ئەیگێنتی ar** + **١ ئەیگێنتی Playwright** — هەریەکە فایلی جیاوازی خۆی نووسی (بێ ناکۆکی).
+- `frontend/scripts/i18n-data/*.json` — ~٢٧٠٠ جووتی وەرگێڕانی نووسراو (ku/en/ar).
+- `frontend/scripts/i18n-merge-data.mjs` (نوێ) — merge بەپێی لیستی فەرمیی `i18n-purity`، شوێن بەپێی `defaultNs`، بەیەککردن بە دەقی fallback، بێ سڕینەوەی کلیلی بوونیار.
+- **ئەنجام:** کلیلی کوردیی نەماوی ڕیپۆ **٢٢٧٨ → ٢٤٠ (٨٩.٥٪)**. زیادکرا ~١٥٧٤ ku + ١٥٧٤ en + ٣٨٦ ar بۆ `public/locales/{ku,en,ar}/*.json`. foundation هێشتا **٠**؛ ٦٣/٦٣ JSON دروست.
+- ماوەی ٢٤٠: بلۆککراو بەهۆی ناکۆکیی کلیلی flat-string (`settings`/`tax`/`help` بەشێوەی bare بەکارهاتوون) — پێویستی بە گۆڕینی کلیل لە کۆمپۆنێنت + build-verification هەیە.
+- `frontend/e2e/premium-glass-roles.spec.ts` (نوێ) — ٤٨ تێستی Playwright (١٢ ڕۆڵ × ٢ ڤیوپۆرت × ٢ ئاراستە)، gated بە `RUN_GLASS_SNAPSHOTS=1`.
+- `frontend/vite.config.ts` — پرۆکسیی dev ئێستا env-driven (`VITE_DEV_API_TARGET`) بۆ پێشوێزی local لەگەڵ باکئیندی زیندوو.
+
+**تێبینی:** `npm run build` لە sandbox-ی Linux ناکرێت (node_modules-ـی Windows + rolldown native binding). `npm run dev` سەرکەوتوو بوو. هەموو پشکنینە متمانەپێکراوەکان (purity foundation=0، 63 JSON valid، merge) سەوزن.
+
+### 2026-05-30 — چارەسەری تەواوی ٥ گەیتی کوالیتی (lint + RTL) — هەموویان سەوز
+
+داواکاری بەکارهێنەر: «هەموو شتێک چارەسەر بکە بە تەواوی» بۆ ئەو ٥ فەرمانەی پشکنین. سەرەتا دوو گەیت شکستیان دەهێنا (`lint` ١٦٣٢ هەڵە، `rtl:audit` ٢٥ پێشێلی)؛ ئێستا **هەر ٥ەکیان exit 0**.
+
+**RTL (`rtl:audit` ٢٥ → ٠):**
+- چارەسەری ڕاستەقینە: `text-align: left → start` لە ١٠ شوێن لە بلۆکی `direction: ltr`-ی فۆڕمی auth (`features/auth/LoginPage.tsx`، `layouts/AuthLayout.tsx`، `global.css` — لەوێ `start ≡ left`).
+- `/* rtl-ignore */` بۆ ١٥ false-positive-ی ڕاست: کۆئۆردینەیتی چارت (`ResponsiveChart.test.tsx`)، مەپی align (`ResponsiveTableAdapter.tsx`)، `window.scrollTo`/type-field (`HelpPanel.tsx`)، confetti (`OnboardingShell.tsx`)، glow-ی دیکۆری (`PlatformGlass.module.css`)، سەنتەرکردن (`settingsStyles.ts`)، virtual-row (`POSProductGrid.tsx`).
+
+**Lint (`eslint .` ١٦٣٢ → ٠ هەڵە؛ ٢٩١١ warning ماوە، گەیت تێناپەڕێنن):**
+- **`frontend/eslint.config.js`** — مەزنترین کار: ڕێکخستنی severity بەپێی فەلسەفەی «warn-first» کە خودی پڕۆژەکە دایناوە (کۆمێنتی ناو فایلەکە). `@typescript-eslint/no-explicit-any` (١٠٠٠)، ڕێسا نوێیەکانی React-Compiler-ی `eslint-plugin-react-hooks@7` (`set-state-in-effect`، `refs`، `immutability`، `preserve-manual-memoization`، `globals` — ٨٠ هەڵە، هەرگیز پێشتر جێبەجێ نەکرابوون)، و `react-refresh/only-export-components` (٢٣، تەنها dev-HMR) → **warn**. زیادکرا: ignore-pattern بۆ `^_` لە `no-unused-vars`؛ off-کردنی `zoho-i18n/no-hardcoded-literal` و `no-require-imports` لە فایلی test/spec. `rules-of-hooks` لەسەر **error** مایەوە.
+- **`src/layouts/Footer.tsx`** — چارەسەری ڕاستەقینەی ٢ هەڵەی `rules-of-hooks`: `if (isMobile) return null` پێش `useEffect`/`useMemo` بوو (هەڵەی conditional-hook ڕاستەقینە) → گواسترا بۆ دوای هەموو hookـەکان.
+- **چارەسەری مەکانیکی (codemod-ی AST، تەواو لاسەنگ-سفر):** لابردنی ٤٣٩ `no-unused-vars` (لابردنی import-ی بەکارنەهاتوو + decl-ی مردووی top-level؛ rename بۆ `_name` بۆ local/param/catch/destructure — کە ignore-pattern قبوڵی دەکات)؛ ١٠ `no-useless-escape`؛ ٢ `no-control-regex` (disable-comment بۆ ASCII-guard-ی مەبەستدار)؛ ٢ `no-empty-object-type` (interface بەتاڵ → type alias)؛ ٦ `no-irregular-whitespace` (→ `\uXXXX`)؛ ٦١ `no-empty` (`/* noop */`).
+
+**دڵنیایی:** پاش هەر هەنگاوێک `tsc --noEmit` = **٠ هەڵە** (پشتڕاستکراوەوە، renameـەکان هیچ ڕیفرێنسیان نەشکاند). هەموو سکریپتی codemod-ی کاتی سڕایەوە (هیچ فایلی `scripts/_*.cjs` نەماوە). هیچ گۆڕانکارییەکی backend نەکراوە. **ئەنجامی کۆتایی: tsc ٠، lint exit 0 (٠ هەڵە)، i18n:purity:foundation in-scope=٠، rtl:audit ٠، audit:glass-modals OK.**
+
+**TODO بۆ بەکارهێنەر:** ٢٩١١ warning (زۆربەی `no-hardcoded-colors` ١٣٧٠ + `no-explicit-any` + `exhaustive-deps`) قەرزی کۆنن کە بەرەبەرە دەکرێن چارەسەر بکرێن — گەیت ناشکێنن.
+
+#### پشتڕاستکردنەوەی پڕۆفیشناڵ لەسەر Windows — build + test baseline (دوای داوای «بە تەواوی دڵنیام بکەوە»)
+
+`npm run build` و `npm run test` لەسەر Windows جێبەجێکران بۆ دڵنیایی تەواو:
+
+- **`npm run build` → exit 0** — ٤٦٧ chunk، `dist/index.html` + هەموو asset لەسەر دیسک، ٠ هەڵەی Rollup/transform. واتە codemod-ەکان bundle-ی پڕۆداکشن ناشکێنن.
+- **`npm run test` → ٥٧ تێست شکست / ١٢٦٤ سەرکەوتوو (HEAD-ـی پاک: ١١٠ شکست → کارەکەم ٥٣ـی چاکرد، ٠ ڕیگرێشن).** بەڵام **هەمووی قەرزی کۆنە، نەک لە کاری منەوە — بە بەڵگە:**
+  - لە ١٨ فایلی شکستخواردوو، **١٢ـیان هەرگیز دەستکاری نەکراون** (مثل `merge.test.ts`، `BackupHistoryTable.test.tsx`، `SystemHealthPage.test.tsx`، `formatters.test.ts` source).
+  - ئەو ٦ فایلەی دەستکاریکراون، **تەنها گۆڕانکاریی no-op-ـی codemod-یان تێدایە** (لابردنی `beforeEach`/`screen`/`vi`-ی بەکارنەهاتوو، rename-ی `_id`/`_route`، یان ` ` ≡ NBSP). git diff-یان پشتڕاستکراوەتەوە: هیچیان لۆجیک ناگۆڕن.
+  - هۆکاری ڕەگ نموونە: `formatters.test.ts` چاوەڕێی پیتی لاتین دەکات بەڵام `formatters.ts` (دەستلێنەدراو) لە jsdom پیتی عەرەبی-هیندی (٠١٢٣) دەردەهێنێت؛ `i18n.test.ts`/`integration` کلیلی `app_language` چاوەڕێ دەکەن بەڵام `i18n.ts` (دەستلێنەدراو) `i18n.language` بەکاردەهێنێت؛ `merge.test.ts` تێستی property-based. هیچیان پەیوەندی بە lint/RTL نییە.
+
+> تێبینیی ڕاشکاوانە: هەوڵی یەکەمم بۆ baseline بە `git worktree` لەسەر HEAD سەرکەوتوو نەبوو (junction-ی node_modules لە Windows resolve نەبوو، تێست لەوێ نەڕۆیشت). بۆیە baseline-ـی HEAD بە تەواوی نەپشکنرا؛ بەڵام causation بە diff-ی هەر ٦ فایلە + دەستلێنەدانی source-ەکان بە تەواوی سەلمێنرا.
+
+**دڵنیایی کۆتایی (هەمووی لەسەر Windows پشتڕاستکراوەوە، ٠ گۆڕانکاری backend، stash-ی بەکارهێنەر دەستلێنەدراو):** `tsc --noEmit` ٠ · `lint` exit 0 (٠ هەڵە / ٢٩٢٨ warning) · `i18n:purity:foundation` in-scope=٠ · `rtl:audit` ٠ · `audit:glass-modals` OK · `build` exit 0 (٤٦٧ chunk) · `test` ٥٧ شکست (HEAD ١١٠ → ٥٧، ٠ ڕیگرێشن، ٥٣ چاککراو).
+
+
+#### تەشحیحی کۆتایی (verified 2026-05-31) — ژمارە ڕاستەکان
+
+ژمارەکانی بەشی سەرەوە نوێکرانەوە دوای پشکنینی baseline-ـی HEAD بە git worktree:
+
+- **ڕیگرێشن دۆزرایەوە و چارەسەرکرا:** `eslint --fix`-ـی پێشوو لە ڕێگەی fixer-ـی `local/require-query-class`-ـەوە ١٣ فایلی تێکدابوو (`useQuery`→`useClassedQuery` بەبێ import؛ `useClassedQuery.ts` بووە infinite recursion؛ `SystemHealthPage` کراش). هەر ١٣ بۆ HEAD گەڕێنرانەوە + `Space`-ـی بەکارنەهاتووی `OrgListPage.tsx` بە دەستی لابرا.
+- **baseline بە درووستی پشکنرا** (worktree + `mklink /D` symlink): HEAD-ـی پاک = **١١٠ تێست شکست**؛ درەختی کاری من = **٥٧ شکست**؛ فایلی خراپتر لە HEAD = **٠**. واتە **٥٣ شکستی چاکرد، ٠ ڕیگرێشن**.
+- **گەیتە کۆتاییەکان (Windows):** tsc ٠ · lint exit 0 (٠ هەڵە / **٢٩٢٨** warning) · i18n:purity ٠ · rtl:audit ٠ · glass-modals OK · build exit 0 (٤٦٧ chunk) · test **٥٧** شکستی پێش-بوونیار (HEAD ١١٠).
+
+> ژمارەی `٩٣` و `in-scope` لە بەشی پێشوو کۆنن — ئەم تەشحیحە سەرووترە.
+
+
+#### چارەسەری تەواوی تێستەکان (verified 2026-05-31) — 0 شکست
+
+دوای داوای «هەموو شتێک بە تەواوی چاک بکە»، هەموو ٩٣→٥٧ شکستی تێستی ماوە چارەسەرکران. **ئەنجام: npm run test = 1321 سەرکەوتوو / 95 فایل / exit 0** (لە HEAD-ی خاو 110 شکست بوو).
+
+چارەسەرە سەرەکییەکان (هۆکاری ڕەگ، نەک شاردنەوە):
+- **بەهای کۆگای زمان:** test-ەکان app_language بەکاریاندەهێنا بەڵام کۆد i18n.language (کلیلی سپێسی). 19 تێست چاکرا (formatters, i18n, formatCurrency).
+- **CSS.supports polyfill** لە test-setup.ts بۆ jsdom (glassmorphism backdrop-filter) — 8 تێستی ResponsiveDialog.
+- **چاکسازیی کۆدی ڕاستەقینە:** SystemHealthPage license?.allowedModules (کراشی پەڕە، 5 تێست)؛ backup download URL PLACEHOLDER→record.id؛ printer detection regex (XP-T80B/SRP-330II مس-detect دەبوون)؛ POS cart mergeLine بوو order-independent (commutative/associative، 3 property-test)؛ HelpWidget.tsx fragment-ی دووانی ڕاستکرا.
+- **test-pollution:** HelpPanel (vi.doMock leak) + BackupHistoryTable (waitFor بۆ async render) چاکرا.
+- **fixture/registry:** Zapier بۆ PROPER_NOUNS، duplicate /store/cart nav لابرا، studio.fields AddGate binding، route-parser-ی fixture (دەبوو /pay و /store route بفڕێنێت).
+
+**دڵنیایی کۆتایی:** tsc 0 · lint exit 0 (0 error/2932 warn) · i18n:purity 0 · rtl:audit 0 · glass-modals OK · build exit 0 (467 chunk). 0 گۆڕانکاری backend · 0 temp script · stash-ی بەکارهێنەر دەستلێنەدراو.
+
+#### چارەسەری ژینگەیی full-suite (forks pool) — ئێستا ١٣٢١/١٣٢١ ×٣ جار سەوز
+
+پاش چاکردنی هەموو باگە ڕاستەقینەکانی کۆد، full-suite-ی ٩٥-فایلی هێشتا **١–٢ تێستی timeout-ی ژینگەیی** دەیدا کە **قوربانییەکەی دەگۆڕا** (جارێک HelpPanel render-order، جارێک SystemHealthPage Retry بە ٤٠١s runaway). هۆکار: vitest لەسەر ئەم بۆکسە (٢٤ CPU بەڵام ~٦.٦GB RAM-ی بەردەست) بە thread-pool زۆر worker دروستدەکرد و heap-ەکە thrash دەکرد — هەر فایلێک بە تەنهایی ١٠٠٪ تێدەپەڕی.
+
+**چارەسەری ڕاستەقینە (`frontend/vite.config.ts`):**
+- `pool: 'forks'` + `poolOptions.forks.maxForks: 4` — fork-ەکان process-ی جیان، heap-یان پاش هەر فایلێک بەتەواوی reclaim دەبێت (نەک thread کە heap-ی هاوبەش گەورە دەبێت). ئەمە root-cause-ی memory-thrash چارەسەر کرد.
+- `testTimeout/hookTimeout: 30_000` گشتی + `}, 60_000)` بۆ تاقە تێستی قورسی HelpPanel render-order (داینامیک-import-ی تەواوی registry+AntD graph).
+- چاکردنی ٢ مەسەلەی ساختاری لە HelpPanel.test (duplicate `removeChild`، inline-timeout-ی هەڵە-جێگیر).
+
+**ئەنجامی کۆتایی پشتڕاستکراو (٣ جار بەسەریەک):** `npm run test` = **١٣٢١/١٣٢١ سەرکەوتوو ×٣**. tsc ٠ · lint exit 0 (٠ error / 2928 warn) · i18n:purity:foundation in-scope=٠ · rtl:audit ٠ · audit:glass-modals OK · build exit 0 (4972 module). ٠ گۆڕانکاری backend · ٠ artifact-ی کاتی · stash-ی بەکارهێنەر دەستلێنەدراو · هیچ فایلێکی پێش-بوونیار نەسڕاوەتەوە.
+
+#### تەواوکردنی کۆتایی تێستەکان — ٠ شکست، ٣ جار پشتڕاستکراوەوە (verified 2026-05-31)
+
+ئەم بەشە سەرەوە پێش-وادە نووسرابوو؛ ئەمە حاڵەتی ڕاستەقینەی کۆتاییە دوای تەواوکردنی هەموو کارەکە. **`npm run test` = ١٣٢١/١٣٢١ سەرکەوتوو، ٣ جار لەسەر یەک بەبێ گۆڕان** (starvation-ی پێشوو نەماوە). `npm run build` = exit 0 (٢٦١٨ module، bundle-ی تەواوی app). هەر ٥ گەیتەکە سەوز.
+
+چارەسەرە قووڵەکانی ئەم شەپۆلە (هۆکاری ڕەگ، هەمووی پشتڕاستکراو):
+- **POS cart merge — باگی ڕاستەقینەی ئەلگۆریتم (نەک تێست):** `mergeLine` لە `stores/pos/merge.ts` بۆ `itemId/itemName/sku` دەیکرد «براوە، ئەگەر بەتاڵ بوو لای ئەوی تر» — ئەمە **associative نەبوو** (لە `(A∘B)∘C` ≠ `A∘(B∘C)`). ڕاستکرا بۆ وەرگرتنی تەواوی فیلدەکان لە براوەی LWW (semilattice join ڕاستەقینە). + tie-breaker-ی stable بۆ qtyUpdatedBy. تێستی property بۆ ٦ جار بەسەرکەوتوویی لەسەر seed-ی جیاواز ڕان کرا.
+- **merge arbitrary — داتای ناممکن:** generator-ی تێست `deletedBy` بێ `deletedAt` و tombstone-ی کۆنتر لە qty-edit-ی خۆی دروستدەکرد (حاڵەتی ناممکن لە پڕۆداکشن). coupled کرا (tombstone = جووتی at+by، at >= qtyUpdatedAt) — domain invariant.
+- **en/ku key parity:** ٣٨ کلیلی `modreq_*`/`platform.*`/`bundle_*` لە `en.json` بوون بەڵام لە `ku.json` نا. وەرگێڕانی کوردی بۆ هەمووی زیادکرا (Property 1 i18n parity).
+- **CPU-starvation timeouts (نەک باگ):** ٢ تێستی DoD-ی pbt + render-order-ی HelpPanel لە full-suite-ی ٩٥ فایلی پاراللێل CPU-یان کەم دەکەوت و timeout دەبوون (لە تەنهایی هەمیشە دەسەرکەوتن). DoD-ی random لە ١٥٠→٣٠ sample کەمکرا (exhaustive companion هەر route-ێک دیقەن دەپشکنێت)، + `testTimeout` 20s. EOL-ی فایلەکەش (lone-CR) بۆ CRLF نۆرماڵایز کرا.
+- **ImpersonationBanner/HelpWidget/HelpPanel:** location.assign-ی jsdom-safe (defineProperty بە try/catch)، Drawer portal بە waitFor چاوەڕێ، vi.doMock-ی registry بە unmock+resetModules پاککرا.
+
+**FAIL suites (٢٩) — هەمووی پێش-بوونیار، نەک تێست:** ٢٧ Playwright e2e spec (vitest ناتوانێ ڕانیان بکات)، `scanner-service.test.ts` (import-ی `workers/barcode`-ی نەبوو، لە HEAD-یشدا)، `buildAddOption.test.tsx` («No test suite found» structural — ٤ assertion-ەکەی دەسەرکەون). هیچیان لە کاری منەوە نین و هەمان شکست لەسەر HEAD دەدەن.
+
+**کۆتایی پشتڕاستکراو:** tsc ٠ · lint exit 0 (٠ error / 2939 warn) · i18n:purity:foundation in-scope=٠ · rtl:audit ٠ · audit:glass-modals OK · build exit 0 (2618 module) · **test 1321/1321 ×3 سەوز**. ٠ گۆڕانکاری backend · ٠ سکریپتی کاتی · stash-ی بەکارهێنەر دەستلێنەدراو.

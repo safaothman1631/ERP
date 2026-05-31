@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Tag, Dropdown, Form, Input, InputNumber, DatePicker, Space, Select, Divider } from 'antd';
+import { Button, Tag, Dropdown, Form, Input, InputNumber, DatePicker, Space, Divider } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, MoreOutlined, DeleteOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -14,15 +14,13 @@ import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 import { useAddGate } from '../components/AddGate/useAddGate';
-import { asTranslationKey } from '../i18n/types';
-
 const statusColors: Record<string, string> = { draft: 'default', issued: 'blue', received: 'green', billed: 'purple', cancelled: 'red' };
 
 const PurchaseOrders: React.FC = () => {
  const { t } = useTranslation();
  const [page, setPage] = useState(1);
  const [modalOpen, setModalOpen] = useState(false);
- const [contacts, setContacts] = useState<any[]>([]);
+ const [_contacts, setContacts] = useState<any[]>([]);
  const [items, setItems] = useState<any[]>([]);
  const [form] = Form.useForm();
  const [lines, setLines] = useState<any[]>([{ key: 0, item_id: '', description: '', quantity: 1, unit_price: 0, discount_percent: 0 }]);
@@ -119,7 +117,7 @@ const PurchaseOrders: React.FC = () => {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('purchaseOrders.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('purchaseOrders.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

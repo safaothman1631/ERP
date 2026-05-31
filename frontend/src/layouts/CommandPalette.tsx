@@ -510,7 +510,7 @@ const CommandItemRow: React.FC<CommandItemRowProps> = ({
   item,
   isActive,
   isDark,
-  isRTL,
+  isRTL: _isRTL,
   onMouseEnter,
   onClick,
 }) => {

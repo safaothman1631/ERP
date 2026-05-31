@@ -20,7 +20,7 @@ import {
   message,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import dayjs, { Dayjs } from 'dayjs';
+import { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 
@@ -73,7 +73,7 @@ const EFakhataDashboard: React.FC = () => {
       }
       const res = await api.get('/api/efakhata/submissions', { params });
       setItems(res.data.items || []);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('list_load_failed', 'Failed to load submissions'));
     } finally {
       setLoading(false);

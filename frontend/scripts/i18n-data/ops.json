@@ -1,0 +1,942 @@
+{
+  "common": {
+    "inventory_overview": {
+      "ku": "پوختەی کۆگا",
+      "en": "Inventory Overview"
+    },
+    "low_stock_alerts": {
+      "ku": "ئاگادارکردنەوەی کۆگای کەم",
+      "en": "Low Stock Alerts"
+    },
+    "adjustments": {
+      "ku": "ڕێکخستنەکان",
+      "en": "Adjustments"
+    },
+    "item_groups": {
+      "ku": "گرووپەکانی کاڵا",
+      "en": "Item Groups"
+    },
+    "total_items": {
+      "ku": "کۆی کاڵاکان",
+      "en": "Total Items"
+    },
+    "total_stock_value": {
+      "ku": "کۆی بەهای کۆگا",
+      "en": "Total Stock Value"
+    },
+    "low_stock_count": {
+      "ku": "ژمارەی کاڵاکانی کۆگای کەم",
+      "en": "Low Stock Count"
+    },
+    "stock": {
+      "ku": "کۆگا",
+      "en": "Stock"
+    },
+    "required_item": {
+      "ku": "کاڵا پێویستە",
+      "en": "Item is required"
+    },
+    "required_account": {
+      "ku": "هەژمار پێویستە",
+      "en": "Account is required"
+    },
+    "required_quantity": {
+      "ku": "بڕ پێویستە",
+      "en": "Quantity is required"
+    },
+    "required_field": {
+      "ku": "ئەم خانەیە پێویستە",
+      "en": "This field is required"
+    },
+    "required_date": {
+      "ku": "بەروار پێویستە",
+      "en": "Date is required"
+    },
+    "placeholder_quantity": {
+      "ku": "بڕ داخڵبکە",
+      "en": "Enter quantity"
+    },
+    "placeholder_amount": {
+      "ku": "بڕی پارە داخڵبکە",
+      "en": "Enter amount"
+    },
+    "placeholder_select": {
+      "ku": "هەڵبژێرە…",
+      "en": "Select…"
+    },
+    "placeholder_description": {
+      "ku": "وەسف داخڵبکە",
+      "en": "Enter description"
+    },
+    "placeholder_name": {
+      "ku": "ناو داخڵبکە",
+      "en": "Enter name"
+    },
+    "placeholder_address": {
+      "ku": "ناونیشان داخڵبکە",
+      "en": "Enter address"
+    },
+    "placeholder_date": {
+      "ku": "بەروار هەڵبژێرە",
+      "en": "Select date"
+    },
+    "placeholder_item_name": {
+      "ku": "ناوی کاڵا داخڵبکە",
+      "en": "Enter item name"
+    },
+    "placeholder_sku": {
+      "ku": "SKU داخڵبکە",
+      "en": "Enter SKU"
+    },
+    "new_group": {
+      "ku": "گرووپی نوێ",
+      "en": "New Group"
+    },
+    "stockTransfer": {
+      "ku": "گواستنەوەی کۆگا",
+      "en": "Stock Transfer"
+    },
+    "no_warehouses_yet": {
+      "ku": "هێشتا هیچ کۆگایەک نییە",
+      "en": "No warehouses yet"
+    },
+    "no_warehouses_hint": {
+      "ku": "کرتە لە دروستکردن بکە بۆ زیادکردنی کۆگای یەکەم",
+      "en": "Click Create to add your first warehouse"
+    },
+    "no_transfers_yet": {
+      "ku": "هێشتا هیچ گواستنەوەیەک نییە",
+      "en": "No transfers yet"
+    },
+    "no_transfers_hint": {
+      "ku": "کرتە لە دروستکردن بکە بۆ دەستپێکردنی گواستنەوەی کۆگا",
+      "en": "Click Create to start a stock transfer"
+    },
+    "add_line": {
+      "ku": "زیادکردنی ڕیز",
+      "en": "Add Line"
+    },
+    "priceLists": {
+      "ku": "لیستەکانی نرخ",
+      "en": "Price Lists"
+    },
+    "custom_rate": {
+      "ku": "نرخی تایبەت",
+      "en": "Custom Rate"
+    },
+    "select_warehouse": {
+      "ku": "کۆگا هەڵبژێرە",
+      "en": "Select warehouse"
+    },
+    "new_location": {
+      "ku": "شوێنی نوێ",
+      "en": "New Location"
+    },
+    "edit_location": {
+      "ku": "دەستکاریکردنی شوێن",
+      "en": "Edit Location"
+    },
+    "no_locations": {
+      "ku": "هێشتا هیچ شوێنێک نییە",
+      "en": "No locations yet"
+    },
+    "no_locations_hint": {
+      "ku": "شوێنەکان بە درختی پلەبەند ڕێکدەخرێن — زۆن، پاسیلۆ، بن، و شوێنی ناوبەر",
+      "en": "Locations are organised in a hierarchy — zones, aisles, bins, and staging areas"
+    },
+    "location_type": {
+      "ku": "جۆری شوێن",
+      "en": "Location Type"
+    },
+    "parent_location": {
+      "ku": "شوێنی دایک",
+      "en": "Parent Location"
+    },
+    "aisle": {
+      "ku": "پاسیلۆ",
+      "en": "Aisle"
+    },
+    "bin": {
+      "ku": "بن",
+      "en": "Bin"
+    },
+    "staging": {
+      "ku": "شوێنی ناوبەر",
+      "en": "Staging"
+    },
+    "zone": {
+      "ku": "ناوچە",
+      "en": "Zone"
+    },
+    "warehouse": {
+      "ku": "کۆگا",
+      "en": "Warehouse"
+    },
+    "code": {
+      "ku": "کۆد",
+      "en": "Code"
+    },
+    "filter_by_item": {
+      "ku": "فلتەر بەپێی کاڵا",
+      "en": "Filter by item"
+    },
+    "filter_by_status": {
+      "ku": "فلتەر بەپێی دۆخ",
+      "en": "Filter by status"
+    },
+    "new_serial": {
+      "ku": "ژمارەی سیریاڵی نوێ",
+      "en": "New Serial Number"
+    },
+    "edit_serial": {
+      "ku": "دەستکاریکردنی ژمارەی سیریاڵ",
+      "en": "Edit Serial Number"
+    },
+    "batch_number": {
+      "ku": "ژمارەی بەستە",
+      "en": "Batch Number"
+    },
+    "purchase_date": {
+      "ku": "بەرواری کڕین",
+      "en": "Purchase Date"
+    },
+    "in_stock": {
+      "ku": "لە کۆگادا",
+      "en": "In Stock"
+    },
+    "reserved": {
+      "ku": "ڕیزەرڤکراو",
+      "en": "Reserved"
+    },
+    "damaged": {
+      "ku": "خراپکراو",
+      "en": "Damaged"
+    },
+    "new_putaway_rule": {
+      "ku": "یاسای دانانی نوێ",
+      "en": "New Putaway Rule"
+    },
+    "edit_putaway_rule": {
+      "ku": "دەستکاریکردنی یاسای دانان",
+      "en": "Edit Putaway Rule"
+    },
+    "no_putaway_rules": {
+      "ku": "هێشتا هیچ یاسای دانانێک نییە",
+      "en": "No putaway rules yet"
+    },
+    "no_putaway_rules_hint": {
+      "ku": "یاساکانی دانان کاڵای هاتوو بە خۆکاری ئاڕاستەی شوێنی دروست دەکەن",
+      "en": "Putaway rules automatically direct incoming stock to the right location"
+    },
+    "target_location": {
+      "ku": "شوێنی ئامانج",
+      "en": "Target Location"
+    },
+    "putaway_rule_item_hint": {
+      "ku": "بەتاڵ بهێڵەوە بۆ جێبەجێکردنی یاسا لەسەر هەموو کاڵاکان",
+      "en": "Leave empty to apply rule to all items"
+    },
+    "priority_hint": {
+      "ku": "ژمارەی کەمتر = پێشەوەتری بەرز",
+      "en": "Lower number = higher priority"
+    },
+    "select_location": {
+      "ku": "شوێن هەڵبژێرە",
+      "en": "Select location"
+    },
+    "new_cycle_count": {
+      "ku": "ژماردنی چەرخی نوێ",
+      "en": "New Cycle Count"
+    },
+    "no_cycle_counts": {
+      "ku": "هێشتا هیچ ژماردنی چەرخێک نییە",
+      "en": "No cycle counts yet"
+    },
+    "no_cycle_counts_hint": {
+      "ku": "ژماردنی چەرخ پشتڕاستکردنەوەی ژماردنی فیزیکی و شناسکردنی جیاوازیەکانت یارمەتی دەدات",
+      "en": "Cycle counts help verify physical stock and identify discrepancies"
+    },
+    "scheduled_date": {
+      "ku": "بەرواری خشتەبەستراو",
+      "en": "Scheduled Date"
+    },
+    "cycle_count_location_hint": {
+      "ku": "بەتاڵ بهێڵەوە بۆ ژماردنی هەموو شوێنەکانی کۆگا",
+      "en": "Leave empty to count all locations in the warehouse"
+    },
+    "all_locations": {
+      "ku": "هەموو شوێنەکان",
+      "en": "All Locations"
+    },
+    "cycle_count_started": {
+      "ku": "ژماردنی چەرخ دەستی پێکرد",
+      "en": "Cycle count started"
+    },
+    "cycle_count_completed": {
+      "ku": "ژماردنی چەرخ تەواوبوو",
+      "en": "Cycle count completed"
+    },
+    "line_added": {
+      "ku": "ڕیز زیادکرا",
+      "en": "Line added"
+    },
+    "cycle_count_detail": {
+      "ku": "وردەکاریی ژماردنی چەرخ",
+      "en": "Cycle Count Detail"
+    },
+    "complete_count": {
+      "ku": "تەواوکردنی ژماردن",
+      "en": "Complete Count"
+    },
+    "completed_at": {
+      "ku": "تەواوکرا لە",
+      "en": "Completed At"
+    },
+    "lines": {
+      "ku": "ڕیزەکان",
+      "en": "Lines"
+    },
+    "select_item": {
+      "ku": "کاڵا هەڵبژێرە",
+      "en": "Select item"
+    },
+    "expected_qty": {
+      "ku": "بڕی چاوەڕوانکراو",
+      "en": "Expected Qty"
+    },
+    "counted_qty": {
+      "ku": "بڕی ژمارەکراو",
+      "en": "Counted Qty"
+    },
+    "variance": {
+      "ku": "جیاوازی",
+      "en": "Variance"
+    },
+    "location": {
+      "ku": "شوێن",
+      "en": "Location"
+    },
+    "boms": {
+      "ku": "لیستەکانی پێکهاتە",
+      "en": "Bills of Materials"
+    },
+    "new_bom": {
+      "ku": "لیستی پێکهاتەی نوێ",
+      "en": "New BOM"
+    },
+    "edit_bom": {
+      "ku": "دەستکاریکردنی لیستی پێکهاتە",
+      "en": "Edit BOM"
+    },
+    "product": {
+      "ku": "بەرهەم",
+      "en": "Product"
+    },
+    "archived": {
+      "ku": "ئەرشیفکراو",
+      "en": "Archived"
+    },
+    "confirm_archive": {
+      "ku": "دڵنیای لە ئەرشیفکردن؟",
+      "en": "Confirm archive?"
+    },
+    "add_component": {
+      "ku": "زیادکردنی پێکهاتە",
+      "en": "Add Component"
+    },
+    "manufacturing_orders": {
+      "ku": "داواکارییەکانی بەرهەمهێنان",
+      "en": "Manufacturing Orders"
+    },
+    "new_mo": {
+      "ku": "داواکاریی بەرهەمهێنانی نوێ",
+      "en": "New Manufacturing Order"
+    },
+    "required_qty": {
+      "ku": "بڕی پێویستی",
+      "en": "Required Qty"
+    },
+    "duration_min": {
+      "ku": "ماوە (خولەک)",
+      "en": "Duration (min)"
+    },
+    "capacity_per_hour": {
+      "ku": "توانا لە کاتژمێر",
+      "en": "Capacity per Hour"
+    },
+    "cost_per_hour": {
+      "ku": "تێچوو لە کاتژمێر",
+      "en": "Cost per Hour"
+    },
+    "new_work_center": {
+      "ku": "ناوەندی کاری نوێ",
+      "en": "New Work Center"
+    },
+    "items_subtitle": {
+      "ku": "کاڵا و خزمەتگوزاریەکان",
+      "en": "Items and services"
+    },
+    "backend_unavailable_title": {
+      "ku": "سێرڤەر بەردەست نییە",
+      "en": "Backend Unavailable"
+    },
+    "backend_unavailable_description": {
+      "ku": "سێرڤەر ئێستا بەردەست نییە. تکایە چەند خولەکێک بوەستە و دووبارە هەوڵبدەرەوە.",
+      "en": "The backend is currently unavailable. Please wait a moment and try again."
+    },
+    "basic_info": {
+      "ku": "زانیاری بنەڕەتی",
+      "en": "Basic Info"
+    },
+    "item_type": {
+      "ku": "جۆری کاڵا",
+      "en": "Item Type"
+    },
+    "goods": {
+      "ku": "کاڵا",
+      "en": "Goods"
+    },
+    "pricing": {
+      "ku": "نرخاندن",
+      "en": "Pricing"
+    },
+    "income_account": {
+      "ku": "هەژماری داهات",
+      "en": "Income Account"
+    },
+    "expense_account": {
+      "ku": "هەژماری خەرجی",
+      "en": "Expense Account"
+    },
+    "track_inventory": {
+      "ku": "بەدواداچوونی کۆگا",
+      "en": "Track Inventory"
+    },
+    "opening_stock": {
+      "ku": "کۆگای کردنەوە",
+      "en": "Opening Stock"
+    },
+    "reorder_level": {
+      "ku": "ئاستی دووبارەکردنەوەی داواکاری",
+      "en": "Reorder Level"
+    },
+    "accounting": {
+      "ku": "ژمێریاری",
+      "en": "Accounting"
+    },
+    "inventory": {
+      "ku": "کۆگا",
+      "en": "Inventory"
+    },
+    "items": {
+      "ku": "کاڵاکان",
+      "en": "Items"
+    },
+    "item": {
+      "ku": "کاڵا",
+      "en": "Item"
+    },
+    "selling_price": {
+      "ku": "نرخی فرۆشتن",
+      "en": "Selling Price"
+    },
+    "cost_price": {
+      "ku": "نرخی تێچوو",
+      "en": "Cost Price"
+    },
+    "sku": {
+      "ku": "SKU",
+      "en": "SKU"
+    },
+    "new_item": {
+      "ku": "کاڵای نوێ",
+      "en": "New Item"
+    },
+    "address": {
+      "ku": "ناونیشان",
+      "en": "Address"
+    },
+    "primary": {
+      "ku": "سەرەکی",
+      "en": "Primary"
+    },
+    "warehouses": {
+      "ku": "کۆگاکان",
+      "en": "Warehouses"
+    },
+    "from": {
+      "ku": "لە",
+      "en": "From"
+    },
+    "to": {
+      "ku": "بۆ",
+      "en": "To"
+    },
+    "serial_number": {
+      "ku": "ژمارەی سیریاڵ",
+      "en": "Serial Number"
+    },
+    "serial_numbers": {
+      "ku": "ژمارەکانی سیریاڵ",
+      "en": "Serial Numbers"
+    },
+    "expiry_date": {
+      "ku": "بەرواری بەسەرچوون",
+      "en": "Expiry Date"
+    },
+    "barcode": {
+      "ku": "بارکۆد",
+      "en": "Barcode"
+    },
+    "priority": {
+      "ku": "پێشەوەتری",
+      "en": "Priority"
+    },
+    "start": {
+      "ku": "دەستپێکردن",
+      "en": "Start"
+    },
+    "finish": {
+      "ku": "تەواوکردن",
+      "en": "Finish"
+    },
+    "done": {
+      "ku": "تەواوبوو",
+      "en": "Done"
+    },
+    "view": {
+      "ku": "بینین",
+      "en": "View"
+    },
+    "bom": {
+      "ku": "لیستی پێکهاتە",
+      "en": "BOM"
+    },
+    "routing": {
+      "ku": "ڕووتینگ",
+      "en": "Routing"
+    },
+    "work_center": {
+      "ku": "ناوەندی کار",
+      "en": "Work Center"
+    },
+    "work_orders": {
+      "ku": "فەرمانەکانی کار",
+      "en": "Work Orders"
+    },
+    "work_centers": {
+      "ku": "ناوەندەکانی کار",
+      "en": "Work Centers"
+    },
+    "components": {
+      "ku": "پێکهاتەکان",
+      "en": "Components"
+    },
+    "in_progress": {
+      "ku": "لە کارکردندایە",
+      "en": "In Progress"
+    },
+    "self_order_kiosk": {
+      "ku": "کیۆسکی داواکاریی خۆکار",
+      "en": "Self-Order Kiosk"
+    },
+    "touch_to_start_order": {
+      "ku": "دەست بکه بۆ دەستپێکردنی داواکاریەکەت",
+      "en": "Touch to start your order"
+    },
+    "start_order": {
+      "ku": "دەستپێکردنی داواکاری",
+      "en": "Start Order"
+    },
+    "session_timeout": {
+      "ku": "کاتی دانیشتن تەواوبوو",
+      "en": "Session timed out"
+    },
+    "error_loading": {
+      "ku": "هەڵەی بارکردن ڕوویدا",
+      "en": "Error loading data"
+    },
+    "error_saving": {
+      "ku": "هەڵەی پاشەکەوتکردن ڕوویدا",
+      "en": "Error saving data"
+    },
+    "error_submitting_order": {
+      "ku": "هەڵەی ناردنی داواکاری ڕوویدا",
+      "en": "Error submitting order"
+    },
+    "cart_is_empty": {
+      "ku": "سەبەتەکە بەتاڵە",
+      "en": "Cart is empty"
+    },
+    "review_cart": {
+      "ku": "پشکنینی سەبەتە",
+      "en": "Review Cart"
+    },
+    "menu": {
+      "ku": "مێنیو",
+      "en": "Menu"
+    },
+    "review_your_order": {
+      "ku": "داواکارییەکەت پشکنەرەوە",
+      "en": "Review Your Order"
+    },
+    "back_to_menu": {
+      "ku": "گەڕانەوە بۆ مێنیو",
+      "en": "Back to Menu"
+    },
+    "proceed_to_checkout": {
+      "ku": "بڕۆ بۆ پارەدان",
+      "en": "Proceed to Checkout"
+    },
+    "checkout": {
+      "ku": "پارەدان",
+      "en": "Checkout"
+    },
+    "confirm_order": {
+      "ku": "پشتڕاستکردنەوەی داواکاری",
+      "en": "Confirm Order"
+    },
+    "order_confirmed": {
+      "ku": "داواکاری پشتڕاستکرایەوە",
+      "en": "Order Confirmed"
+    },
+    "take_number_to_counter": {
+      "ku": "ژمارەی داواکارییەکەت ببە بۆ کاونتەر",
+      "en": "Take your order number to the counter"
+    },
+    "start_new_order": {
+      "ku": "دەستپێکردنی داواکاریی نوێ",
+      "en": "Start New Order"
+    },
+    "welcome": {
+      "ku": "بەخێربێیت",
+      "en": "Welcome"
+    },
+    "categories": {
+      "ku": "پۆلەکان",
+      "en": "Categories"
+    },
+    "cart": {
+      "ku": "سەبەتە",
+      "en": "Cart"
+    },
+    "available": {
+      "ku": "بەردەستە",
+      "en": "Available"
+    },
+    "unavailable": {
+      "ku": "بەردەست نییە",
+      "en": "Unavailable"
+    },
+    "are_you_sure": {
+      "ku": "دڵنیایت؟",
+      "en": "Are you sure?"
+    },
+    "data_table_v2.delete_n_confirm": {
+      "ku": "{{n}} کاڵا بسڕەوە؟",
+      "en": "Delete {{n}} items?"
+    },
+    "confirm_delete": {
+      "ku": "دڵنیای لە سڕینەوە؟",
+      "en": "Confirm Delete?"
+    },
+    "updated": {
+      "ku": "نوێکراوەتەوە",
+      "en": "Updated"
+    },
+    "created": {
+      "ku": "دروستکرا",
+      "en": "Created"
+    },
+    "deleted": {
+      "ku": "سڕایەوە",
+      "en": "Deleted"
+    }
+  },
+  "pos": {
+    "complete": {
+      "ku": "تەواوکردن",
+      "en": "Complete"
+    },
+    "order_completed": {
+      "ku": "داواکاری تەواوبوو",
+      "en": "Order completed"
+    },
+    "fullscreen": {
+      "ku": "پڕ-پەردە",
+      "en": "Fullscreen"
+    },
+    "floor_plan": {
+      "ku": "نەخشەی نهۆم",
+      "en": "Floor Plan"
+    },
+    "table_details": {
+      "ku": "وردەکاریی مێز",
+      "en": "Table Details"
+    },
+    "guests": {
+      "ku": "میوانەکان",
+      "en": "Guests"
+    },
+    "state": {
+      "ku": "دۆخ",
+      "en": "State"
+    },
+    "table_state_available": {
+      "ku": "بەردەستە",
+      "en": "Available"
+    },
+    "table_state_occupied": {
+      "ku": "داگیراوە",
+      "en": "Occupied"
+    },
+    "table_state_reserved": {
+      "ku": "ڕیزەرڤکراوە",
+      "en": "Reserved"
+    },
+    "table_state_paying": {
+      "ku": "لە پارەدانیدایە",
+      "en": "Paying"
+    },
+    "order_id": {
+      "ku": "ناسنامەی داواکاری",
+      "en": "Order ID"
+    },
+    "view_order": {
+      "ku": "بینینی داواکاری",
+      "en": "View Order"
+    },
+    "free_table": {
+      "ku": "ئازادکردنی مێز",
+      "en": "Free Table"
+    },
+    "enter_guests": {
+      "ku": "ژمارەی میوان داخڵبکە",
+      "en": "Enter Guests"
+    },
+    "how_many_guests": {
+      "ku": "چەند میوانێک هەن؟",
+      "en": "How many guests?"
+    },
+    "no_open_session": {
+      "ku": "هیچ سێشنێکی کراوە نییە بۆ ئەم مەودایە",
+      "en": "No open session for this terminal"
+    },
+    "table_freed": {
+      "ku": "مێز ئازادکرایەوە",
+      "en": "Table freed"
+    },
+    "config": {
+      "ku": "مەودا",
+      "en": "Config"
+    },
+    "opened_at": {
+      "ku": "کراوەتەوە لە",
+      "en": "Opened At"
+    },
+    "closed_at": {
+      "ku": "داخراوە لە",
+      "en": "Closed At"
+    },
+    "total_sales": {
+      "ku": "کۆی فرۆشتن",
+      "en": "Total Sales"
+    },
+    "state_opened": {
+      "ku": "کراوە",
+      "en": "Opened"
+    },
+    "state_closed": {
+      "ku": "داخراو",
+      "en": "Closed"
+    },
+    "resume": {
+      "ku": "بەردەوامکردن",
+      "en": "Resume"
+    },
+    "sessions": {
+      "ku": "سێشنەکان",
+      "en": "Sessions"
+    }
+  },
+  "restaurant": {
+    "tables": {
+      "ku": "مێزەکان",
+      "en": "Tables"
+    },
+    "tables_subtitle": {
+      "ku": "بەڕێوەبردنی مێزەکانی چێشتخانە",
+      "en": "Manage restaurant tables"
+    },
+    "add_table": {
+      "ku": "زیادکردنی مێز",
+      "en": "Add Table"
+    },
+    "add_table_hint": {
+      "ku": "تکایە مێزەکان لە ڕێکخستنی چێشتخانەدا دروست بکە",
+      "en": "Please create tables in restaurant settings"
+    },
+    "status_occupied": {
+      "ku": "داگیراوە",
+      "en": "Occupied"
+    },
+    "status_free": {
+      "ku": "بەردەستە",
+      "en": "Free"
+    },
+    "status_reserved": {
+      "ku": "ڕیزەرڤکراوە",
+      "en": "Reserved"
+    },
+    "status_cleaning": {
+      "ku": "لە پاکردنەوەدایە",
+      "en": "Cleaning"
+    },
+    "seats": {
+      "ku": "کورسیەکان",
+      "en": "Seats"
+    },
+    "table": {
+      "ku": "مێز",
+      "en": "Table"
+    },
+    "section": {
+      "ku": "بەش",
+      "en": "Section"
+    },
+    "current_order": {
+      "ku": "داواکاریی ئێستا",
+      "en": "Current Order"
+    },
+    "order_id": {
+      "ku": "ناسنامەی داواکاری",
+      "en": "Order ID"
+    },
+    "items": {
+      "ku": "کاڵاکان",
+      "en": "Items"
+    },
+    "open_order": {
+      "ku": "کردنەوەی داواکاری",
+      "en": "Open Order"
+    },
+    "order_opened": {
+      "ku": "داواکاری کراوەتەوە",
+      "en": "Order opened"
+    },
+    "menu_manager": {
+      "ku": "بەڕێوەبردنی مێنیو",
+      "en": "Menu Manager"
+    },
+    "manage_menu_items": {
+      "ku": "بەڕێوەبردنی کاڵاکانی مێنیو",
+      "en": "Manage menu items"
+    },
+    "add_item": {
+      "ku": "زیادکردنی کاڵا",
+      "en": "Add Item"
+    },
+    "edit_item": {
+      "ku": "دەستکاریکردنی کاڵا",
+      "en": "Edit Item"
+    },
+    "item_name": {
+      "ku": "ناوی کاڵا",
+      "en": "Item Name"
+    },
+    "price": {
+      "ku": "نرخ",
+      "en": "Price"
+    },
+    "category": {
+      "ku": "پۆل",
+      "en": "Category"
+    },
+    "prep_time": {
+      "ku": "کاتی ئامادەکردن",
+      "en": "Prep Time"
+    },
+    "minutes": {
+      "ku": "خولەک",
+      "en": "min"
+    },
+    "availability": {
+      "ku": "بەردەستی",
+      "en": "Availability"
+    },
+    "menu": {
+      "ku": "مێنیو",
+      "en": "Menu"
+    },
+    "select_menu": {
+      "ku": "مێنیو هەڵبژێرە",
+      "en": "Select menu"
+    },
+    "kitchen_display": {
+      "ku": "نیشاندەری چێشتخانە",
+      "en": "Kitchen Display"
+    },
+    "kds_subtitle": {
+      "ku": "دۆخی داواکارییەکانی ئامادەکردن لە کاتی ڕاستەقینە",
+      "en": "Real-time preparation order status"
+    },
+    "no_pending_orders": {
+      "ku": "هیچ داواکاریی چاوەڕوانی نییە",
+      "en": "No pending orders"
+    },
+    "order": {
+      "ku": "داواکاری",
+      "en": "Order"
+    },
+    "start_cooking": {
+      "ku": "دەستپێکردنی پێشکردن",
+      "en": "Start Cooking"
+    },
+    "mark_ready": {
+      "ku": "ئامادەیە نیشان بدە",
+      "en": "Mark Ready"
+    },
+    "cooking_started": {
+      "ku": "پێشکردن دەستی پێکرد",
+      "en": "Cooking started"
+    },
+    "order_ready": {
+      "ku": "داواکاری ئامادەیە",
+      "en": "Order ready"
+    },
+    "station_grill": {
+      "ku": "ستانشنی گریل",
+      "en": "Grill"
+    },
+    "station_salad": {
+      "ku": "ستانشنی سەلاتە",
+      "en": "Salad"
+    },
+    "station_dessert": {
+      "ku": "ستانشنی خواردنی شیرین",
+      "en": "Dessert"
+    },
+    "station_bar": {
+      "ku": "ستانشنی بار",
+      "en": "Bar"
+    },
+    "station_main": {
+      "ku": "ستانشنی سەرەکی",
+      "en": "Main"
+    },
+    "station_hot": {
+      "ku": "ستانشنی گەرم",
+      "en": "Hot"
+    },
+    "station_cold": {
+      "ku": "ستانشنی سارد",
+      "en": "Cold"
+    }
+  },
+  "inventory": {
+    "reorder_point": {
+      "ku": "خاڵی دووبارەکردنەوەی داواکاری",
+      "en": "Reorder Point"
+    }
+  }
+}

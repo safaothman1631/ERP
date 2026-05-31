@@ -5,9 +5,7 @@ import type { TableProps } from 'antd';
 import type { UploadFile, UploadProps } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import {
- InboxOutlined, ReloadOutlined, EyeOutlined, PlusOutlined, FileImageOutlined,
-} from '@ant-design/icons';
+import { InboxOutlined, ReloadOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../design-system';
 import api from '../../api';
 import { FormDialog } from '../../components/responsive/FormDialog';

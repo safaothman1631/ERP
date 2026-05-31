@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Form, Input, Select, Tag, message, Card, InputNumber, DatePicker, Modal } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { Button, Space, Form, Input, Select, Tag, message, Card, Modal } from 'antd';
+import { PlusOutlined, DeleteOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader } from '../../design-system';
@@ -12,7 +12,7 @@ const Maintenance: React.FC = () => {
  const { t } = useTranslation();
  const [requests, setRequests] = useState<any[]>([]);
  const [equipment, setEquipment] = useState<any[]>([]);
- const [schedules, setSchedules] = useState<any[]>([]);
+ const [_schedules, setSchedules] = useState<any[]>([]);
  const [loading, setLoading] = useState(false);
  const [modalOpen, setModalOpen] = useState(false);
  const [form] = Form.useForm();
@@ -23,7 +23,7 @@ const Maintenance: React.FC = () => {
  try {
  const res = await api.get('/api/maintenance/requests', { params: { limit: 100 } });
  setRequests(res.data.items || []);
- } catch (error) {
+ } catch (_error) {
  message.error(t('error'));
  } finally {
  setLoading(false);
@@ -34,14 +34,14 @@ const Maintenance: React.FC = () => {
  try {
  const res = await api.get('/api/maintenance/equipment', { params: { limit: 100 } });
  setEquipment(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  const fetchSchedules = async () => {
  try {
  const res = await api.get('/api/maintenance/schedules', { params: { limit: 100 } });
  setSchedules(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  useEffect(() => {

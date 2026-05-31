@@ -219,7 +219,7 @@ const POSConfigs: React.FC = () => {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('posConfigs.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('posConfigs.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  const tabItems = [

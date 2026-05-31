@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Row, Col, Statistic, Tag, Button, Space } from 'antd';
-import { 
-  HddOutlined, CheckCircleOutlined, CloseCircleOutlined, 
-  WarningOutlined, BellOutlined 
-} from '@ant-design/icons';
+import { HddOutlined, CheckCircleOutlined, CloseCircleOutlined, BellOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';

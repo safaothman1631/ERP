@@ -7,25 +7,12 @@
  * revoke the active version (and is then expected to upload a fresh one).
  */
 import React, { useEffect, useState } from 'react';
-import {
-  Alert,
-  Button,
-  Card,
-  Form,
-  Input,
-  Popconfirm,
-  Space,
-  Table,
-  Tag,
-  Typography,
-  Upload,
-  message,
-} from 'antd';
+import { Alert, Button, Card, Form, Input, Popconfirm, Table, Tag, Typography, Upload, message } from 'antd';
 import type { UploadFile } from 'antd/es/upload/interface';
 import { useTranslation } from 'react-i18next';
 import api from '../../../api';
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Paragraph: _Paragraph, Text } = Typography;
 
 interface CertVersion {
   version: string;
@@ -50,7 +37,7 @@ const CertManagementPage: React.FC = () => {
     try {
       const res = await api.get(`/api/tenants/${tid}/efakhata/cert`);
       setVersions(res.data.items || []);
-    } catch (err) {
+    } catch (_err) {
       // Allow 404 (no cert yet) silently.
     } finally {
       setLoading(false);
@@ -97,7 +84,7 @@ const CertManagementPage: React.FC = () => {
       form.resetFields(['password']);
       setFile(null);
       void fetchVersions(tenantId);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('upload_failed', 'Upload failed'));
     } finally {
       setSubmitting(false);
@@ -112,7 +99,7 @@ const CertManagementPage: React.FC = () => {
       });
       message.success(t('revoked_ok', 'Certificate revoked'));
       void fetchVersions(tenantId);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('revoke_failed', 'Revoke failed'));
     }
   };

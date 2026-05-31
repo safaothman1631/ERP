@@ -37,7 +37,7 @@ interface PairedTransaction {
 const EliminationsWorkbench = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const [transactions, setTransactions] = useState<ICTransaction[]>([]);
+  const [_transactions, setTransactions] = useState<ICTransaction[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [pairs, setPairs] = useState<PairedTransaction[]>([]);
 
@@ -45,7 +45,7 @@ const EliminationsWorkbench = () => {
     try {
       const { data } = await api.get('/api/companies');
       setCompanies(data);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('multi_entity.error_loading_companies'));
     }
   };
@@ -56,7 +56,7 @@ const EliminationsWorkbench = () => {
       const { data } = await api.get('/api/companies/intercompany');
       setTransactions(data);
       buildPairs(data);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('multi_entity.error_loading_ic_transactions'));
     } finally {
       setLoading(false);
@@ -123,7 +123,7 @@ const EliminationsWorkbench = () => {
       }
       message.success(t('multi_entity.elimination_successful'));
       fetchTransactions();
-    } catch (err) {
+    } catch (_err) {
       message.error(t('multi_entity.error_eliminating'));
     }
   };

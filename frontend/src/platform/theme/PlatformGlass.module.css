@@ -50,7 +50,7 @@
   width: 420px;
   height: 420px;
   top: -80px;
-  left: -60px;
+  left: -60px; /* rtl-ignore */
   background: #6366f1;
 }
 
@@ -58,7 +58,7 @@
   width: 360px;
   height: 360px;
   bottom: -60px;
-  right: -40px;
+  right: -40px; /* rtl-ignore */
   background: #7c3aed;
 }
 

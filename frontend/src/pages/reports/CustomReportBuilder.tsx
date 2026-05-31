@@ -3,20 +3,12 @@ import {
  Card, Row, Col, Form, Select, Button, Space, 
  Input, message, Tag, Divider 
 } from 'antd';
-import { 
- PlayCircleOutlined, SaveOutlined, PlusOutlined, 
- DeleteOutlined, FilterOutlined 
-} from '@ant-design/icons';
+import { PlayCircleOutlined, SaveOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { useNavigate } from 'react-router-dom';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
-
-interface Field {
- name: string;
- type: string;
-}
 
 interface FilterCondition {
  field: string;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Form, Input, Select, Space, DatePicker, Card, Row, Col, Tag } from 'antd';
+import { Button, Form, Input, Select, Space, DatePicker, Card, Tag } from 'antd';
 import { PlusOutlined, FilterOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { ColumnsType } from 'antd/es/table';
@@ -41,7 +41,7 @@ const IntercompanyTransactions = () => {
  try {
  const { data } = await api.get('/api/companies');
  setCompanies(data);
- } catch (err) {
+ } catch (_err) {
  message.error(t('multi_entity.error_loading_companies'));
  }
  };
@@ -51,7 +51,7 @@ const IntercompanyTransactions = () => {
  try {
  const { data } = await api.get('/api/companies/intercompany');
  setTransactions(data);
- } catch (err) {
+ } catch (_err) {
  message.error(t('multi_entity.error_loading_ic_transactions'));
  } finally {
  setLoading(false);
@@ -79,7 +79,7 @@ const IntercompanyTransactions = () => {
  message.success(t('multi_entity.ic_transaction_created'));
  setDrawerOpen(false);
  fetchTransactions();
- } catch (err) {
+ } catch (_err) {
  message.error(t('multi_entity.error_creating_ic_transaction'));
  }
  };

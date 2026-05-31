@@ -2,9 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, Button, Typography, Space, Tag, Empty } from 'antd';
 import { message } from '../../utils/message';
-import { HistoryOutlined, ArrowLeftOutlined, InboxOutlined, CloudUploadOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, InboxOutlined, CloudUploadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import api from '../../api';
 import { PageHeader } from '../../design-system';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 

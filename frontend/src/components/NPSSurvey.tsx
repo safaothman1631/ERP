@@ -10,21 +10,11 @@
  * if the user dismisses we won't re-prompt until the next milestone.
  */
 import React, { useEffect, useState } from 'react';
-import {
-  Alert,
-  Button,
-  Card,
-  Input,
-  Modal,
-  Radio,
-  Space,
-  Typography,
-  message,
-} from 'antd';
+import { Button, Input, Modal, Radio, Space, Typography, message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 
-const { Title, Paragraph } = Typography;
+const { Title: _Title, Paragraph } = Typography;
 
 interface ShouldShowResponse {
   should_show: boolean;

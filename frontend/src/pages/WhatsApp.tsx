@@ -7,7 +7,6 @@ import { PlusOutlined, ReloadOutlined, SendOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { PageHeader } from '../design-system';
-import { space as spaceTk } from '../theme/tokens';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 
 interface Template { id: string; name: string; body: string; description?: string; locale?: string; }
@@ -55,7 +54,7 @@ export default function WhatsApp() {
  }
  };
 
- useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+ useEffect(() => { load();   }, []);
 
  const saveConfig = async () => {
  const v = await configForm.validateFields();

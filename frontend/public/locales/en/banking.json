@@ -94,5 +94,13 @@
   "wh_workdays": "Working Days",
   "unique_transactions": "Unique Transactions",
   "system_balance": "System Balance",
-  "running_balance": "Running Balance"
+  "running_balance": "Running Balance",
+  "payment_mode": "Mode",
+  "unused_amount": "Unused",
+  "payment_type": "Type",
+  "payments_subtitle": "Track customer and vendor payments",
+  "new_payment": "New Payment",
+  "search_payments": "Search payments…",
+  "no_payments": "No payments yet",
+  "no_payments_hint": "Record your first payment to start tracking cash flow"
 }

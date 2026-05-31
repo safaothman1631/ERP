@@ -20,7 +20,7 @@ const DashboardEditor: React.FC = () => {
  const { t } = useTranslation();
  const navigate = useNavigate();
  const { id } = useParams<{ id: string }>();
- const [dashboard, setDashboard] = useState<any>(null);
+ const [_dashboard, setDashboard] = useState<any>(null);
  const [widgets, setWidgets] = useState<any[]>([]);
  const [name, setName] = useState('');
  const [loading, setLoading] = useState(true);
@@ -45,7 +45,7 @@ const DashboardEditor: React.FC = () => {
  setDashboard(dash);
  setName(dash.name);
  setWidgets(dash.widgets || []);
- } catch (err) {
+ } catch (_err) {
  message.error(t('load_error'));
  } finally {
  setLoading(false);
@@ -71,7 +71,7 @@ const DashboardEditor: React.FC = () => {
  message.success(t('saved'));
  setHasChanges(false);
  navigate(`/dashboards/${id}`);
- } catch (err) {
+ } catch (_err) {
  message.error(t('save_error'));
  }
  };

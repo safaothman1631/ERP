@@ -24,8 +24,8 @@ export interface DetectionResult {
 // Vendor name patterns. Ordered: longest / most-specific first.
 const NAME_PATTERNS: Array<{ rx: RegExp; id: DialectId; conf: DetectionResult['confidence']; reason: string }> = [
   { rx: /\b(tm[-_ ]?t\d|tm[-_ ]?m\d|epson)\b/i, id: 'escpos-epson', conf: 'high', reason: 'BLE/USB name matches Epson family' },
-  { rx: /\b(xp[-_ ]?t?\d{2,}|xprinter)\b/i, id: 'escpos-xprinter', conf: 'high', reason: 'BLE/USB name matches Xprinter family' },
-  { rx: /\b(srp[-_ ]?\d|bixolon)\b/i, id: 'escpos-bixolon', conf: 'high', reason: 'BLE/USB name matches Bixolon family' },
+  { rx: /\b(xp[-_ ]?t?\d{2,}|xprinter)/i, id: 'escpos-xprinter', conf: 'high', reason: 'BLE/USB name matches Xprinter family' },
+  { rx: /\b(srp[-_ ]?\d|bixolon)/i, id: 'escpos-bixolon', conf: 'high', reason: 'BLE/USB name matches Bixolon family' },
   { rx: /\b(pt[-_ ]?\d{3}|goojprt|rpp\d|rongta|sunmi[-_ ]?v\d)\b/i, id: 'escpos-generic-58', conf: 'medium', reason: 'BLE name matches a known 58mm generic OEM' },
   { rx: /\b58\s?mm\b/i, id: 'escpos-generic-58', conf: 'medium', reason: 'Name mentions 58mm width' },
   { rx: /\b80\s?mm\b/i, id: 'escpos-generic-80', conf: 'medium', reason: 'Name mentions 80mm width' },

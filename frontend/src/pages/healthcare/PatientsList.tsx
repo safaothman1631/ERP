@@ -3,7 +3,7 @@ import { Button, Space, Input, Form, message, Popconfirm, Tag } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { PageHeader, StatusTag } from '../../design-system';
+import { PageHeader } from '../../design-system';
 import { ListWithEmptyState } from '../../design-system/empty/ListWithEmptyState';
 import api from '../../api';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';

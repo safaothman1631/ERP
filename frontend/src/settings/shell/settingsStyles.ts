@@ -293,7 +293,7 @@ export const settingsCss = `
 .st-drawer-handle {
   position: absolute;
   top: 8px;
-  left: 50%;
+  left: 50%; /* rtl-ignore */
   transform: translateX(-50%);
   width: 36px;
   height: 4px;

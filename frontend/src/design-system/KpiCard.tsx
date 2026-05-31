@@ -165,6 +165,7 @@ const KpiCardInner: React.FC<KpiCardProps> = ({
 
   const cardContent = (
     <Card
+      className="premium-card"
       hoverable={!!onClick}
       onClick={onClick}
       styles={{ body: { padding: space.lg } }}

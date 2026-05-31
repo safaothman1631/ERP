@@ -138,7 +138,7 @@ const CompanyInfo: React.FC = React.memo(() => {
       // Roll back optimistic update on failure.
       if (previous) qc.setQueryData(QUERY_KEY, previous);
       message.error(t('common:save_failed', { defaultValue: 'Save failed' }));
-      // eslint-disable-next-line no-console
+       
       console.warn('[CompanyInfo] save failed', err);
     } finally {
       setSaving(false);

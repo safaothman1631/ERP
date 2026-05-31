@@ -138,11 +138,11 @@ export const EntitySwitcher: React.FC<EntitySwitcherProps> = ({ isRTL }) => {
         if (open) void loadCompanies();
       }}
     >
-      <Tooltip title={t('topbar.entity_switcher', 'Company')}>
+      <Tooltip title={t('entity_switcher.select', 'Company')}>
         <Button
           type="text"
           icon={<BankOutlined />}
-          aria-label={t('topbar.entity_switcher', 'Company')}
+          aria-label={t('entity_switcher.select', 'Company')}
           style={{ maxWidth: 140 }}
         >
           <span

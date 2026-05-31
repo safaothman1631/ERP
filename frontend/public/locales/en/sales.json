@@ -130,5 +130,6 @@
   "lost_reason": "Lost Reason",
   "contact_person": "Contact Person",
   "next_action": "Next Action",
-  "next_action_date": "Next Action Date"
+  "next_action_date": "Next Action Date",
+  "invoices_subtitle": "Track invoices, balances, and customer payments"
 }

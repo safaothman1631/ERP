@@ -5,8 +5,6 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
 import vendorApi from '../../api/vendorPortal';
-import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
-
 const { Title, Text } = Typography;
 
 const VendorPortalLogin: React.FC = () => {

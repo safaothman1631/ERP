@@ -57,13 +57,9 @@ const PROPER_NOUN_SET = new Set<string>(PROPER_NOUNS as unknown as string[]);
  * Kurdish (Arabic script) character range — covers Arabic + Arabic Extended
  * blocks used by Kurdish Sorani.
  */
-const ARABIC_SCRIPT_RE = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
-
 /**
  * Latin script character range — Basic Latin letters + Latin Extended.
  */
-const LATIN_SCRIPT_RE = /[A-Za-z\u00C0-\u024F\u1E00-\u1EFF]/;
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -338,7 +334,7 @@ async function assertHelpAndAddGateCoverage(page: Page): Promise<void> {
   // the rollout phase. Once task 10.5 and 10.6 complete, this can be
   // made strict.
   if (result.length > 0) {
-    // eslint-disable-next-line no-console
+     
     console.warn(
       `[P9] Help/AddGate coverage issues (${result.length}):`,
       result.slice(0, 5),

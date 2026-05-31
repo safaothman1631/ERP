@@ -7,7 +7,7 @@
  *
  * Validates: Requirements 4.5, 4.6
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -45,7 +45,7 @@ describe('Language switching pipeline: ku → en → ar', () => {
   });
 
   it('starts in Kurdish with RTL direction and correct lang attribute', async () => {
-    const ls = makeLocalStorageMock({ app_language: 'ku' });
+    const ls = makeLocalStorageMock({ 'i18n.language': 'ku' });
     vi.stubGlobal('localStorage', ls);
     vi.resetModules();
 
@@ -56,7 +56,7 @@ describe('Language switching pipeline: ku → en → ar', () => {
   });
 
   it('switching ku → en updates translations, localStorage, dir, and lang atomically', async () => {
-    const ls = makeLocalStorageMock({ app_language: 'ku' });
+    const ls = makeLocalStorageMock({ 'i18n.language': 'ku' });
     vi.stubGlobal('localStorage', ls);
     vi.resetModules();
 
@@ -72,7 +72,7 @@ describe('Language switching pipeline: ku → en → ar', () => {
     // Translation changes
     expect(i18n.t('dashboard')).toBe('Dashboard');
     // localStorage updated
-    expect(ls.setItem).toHaveBeenCalledWith('app_language', 'en');
+    expect(ls.setItem).toHaveBeenCalledWith('i18n.language', 'en');
     // Document direction changes to LTR
     expect(document.documentElement.dir).toBe('ltr');
     // Document lang attribute updated
@@ -80,7 +80,7 @@ describe('Language switching pipeline: ku → en → ar', () => {
   });
 
   it('switching en → ar updates translations, localStorage, dir, and lang atomically', async () => {
-    const ls = makeLocalStorageMock({ app_language: 'en' });
+    const ls = makeLocalStorageMock({ 'i18n.language': 'en' });
     vi.stubGlobal('localStorage', ls);
     vi.resetModules();
 
@@ -92,14 +92,14 @@ describe('Language switching pipeline: ku → en → ar', () => {
     await i18n.changeLanguage('ar');
 
     // localStorage updated
-    expect(ls.setItem).toHaveBeenCalledWith('app_language', 'ar');
+    expect(ls.setItem).toHaveBeenCalledWith('i18n.language', 'ar');
     // Arabic is RTL
     expect(document.documentElement.dir).toBe('rtl');
     expect(document.documentElement.lang).toBe('ar');
   });
 
   it('full sequence ku → en → ar produces correct final state', async () => {
-    const ls = makeLocalStorageMock({ app_language: 'ku' });
+    const ls = makeLocalStorageMock({ 'i18n.language': 'ku' });
     vi.stubGlobal('localStorage', ls);
     vi.resetModules();
 
@@ -122,13 +122,13 @@ describe('Language switching pipeline: ku → en → ar', () => {
 
     // localStorage reflects the last language set
     const setItemCalls = ls.setItem.mock.calls.filter(
-      ([key]: [string]) => key === 'app_language'
+      ([key]: [string]) => key === 'i18n.language'
     );
-    expect(setItemCalls.at(-1)).toEqual(['app_language', 'ar']);
+    expect(setItemCalls.at(-1)).toEqual(['i18n.language', 'ar']);
   });
 
   it('switching back from ar → ku restores RTL and Kurdish translations', async () => {
-    const ls = makeLocalStorageMock({ app_language: 'ar' });
+    const ls = makeLocalStorageMock({ 'i18n.language': 'ar' });
     vi.stubGlobal('localStorage', ls);
     vi.resetModules();
 
@@ -139,7 +139,7 @@ describe('Language switching pipeline: ku → en → ar', () => {
     expect(document.documentElement.dir).toBe('rtl');
     expect(document.documentElement.lang).toBe('ku');
     expect(i18n.t('dashboard')).toBe('داشبۆرد');
-    expect(ls.setItem).toHaveBeenCalledWith('app_language', 'ku');
+    expect(ls.setItem).toHaveBeenCalledWith('i18n.language', 'ku');
   });
 });
 
@@ -161,7 +161,7 @@ describe('RTL/LTR direction changes', () => {
     { lang: 'ar', expectedDir: 'rtl' },
     { lang: 'en', expectedDir: 'ltr' },
   ])('language "$lang" sets dir="$expectedDir" on init', async ({ lang, expectedDir }) => {
-    const ls = makeLocalStorageMock({ app_language: lang });
+    const ls = makeLocalStorageMock({ 'i18n.language': lang });
     vi.stubGlobal('localStorage', ls);
     vi.resetModules();
 
@@ -180,7 +180,7 @@ describe('RTL/LTR direction changes', () => {
   ])(
     'switching from "$from" to "$to" sets dir="$expectedDir"',
     async ({ from, to, expectedDir }) => {
-      const ls = makeLocalStorageMock({ app_language: from });
+      const ls = makeLocalStorageMock({ 'i18n.language': from });
       vi.stubGlobal('localStorage', ls);
       vi.resetModules();
 
@@ -192,7 +192,7 @@ describe('RTL/LTR direction changes', () => {
   );
 
   it('dir and lang attributes are always in sync after language change', async () => {
-    const ls = makeLocalStorageMock({ app_language: 'ku' });
+    const ls = makeLocalStorageMock({ 'i18n.language': 'ku' });
     vi.stubGlobal('localStorage', ls);
     vi.resetModules();
 
@@ -223,7 +223,7 @@ describe('Missing key handling — full i18n pipeline', () => {
   });
 
   it('humanizes a missing key in English context', async () => {
-    const ls = makeLocalStorageMock({ app_language: 'en' });
+    const ls = makeLocalStorageMock({ 'i18n.language': 'en' });
     vi.stubGlobal('localStorage', ls);
     vi.resetModules();
 
@@ -236,7 +236,7 @@ describe('Missing key handling — full i18n pipeline', () => {
   });
 
   it('humanizes a missing key in Kurdish context', async () => {
-    const ls = makeLocalStorageMock({ app_language: 'ku' });
+    const ls = makeLocalStorageMock({ 'i18n.language': 'ku' });
     vi.stubGlobal('localStorage', ls);
     vi.resetModules();
 
@@ -249,7 +249,7 @@ describe('Missing key handling — full i18n pipeline', () => {
   });
 
   it('humanizes a missing key in Arabic context', async () => {
-    const ls = makeLocalStorageMock({ app_language: 'ar' });
+    const ls = makeLocalStorageMock({ 'i18n.language': 'ar' });
     vi.stubGlobal('localStorage', ls);
     vi.resetModules();
 
@@ -262,7 +262,7 @@ describe('Missing key handling — full i18n pipeline', () => {
   });
 
   it('missing key handler produces consistent output regardless of active language', async () => {
-    const ls = makeLocalStorageMock({ app_language: 'ku' });
+    const ls = makeLocalStorageMock({ 'i18n.language': 'ku' });
     vi.stubGlobal('localStorage', ls);
     vi.resetModules();
 
@@ -286,7 +286,7 @@ describe('Missing key handling — full i18n pipeline', () => {
   });
 
   it('does not return the raw key for any missing key across all languages', async () => {
-    const ls = makeLocalStorageMock({ app_language: 'en' });
+    const ls = makeLocalStorageMock({ 'i18n.language': 'en' });
     vi.stubGlobal('localStorage', ls);
     vi.resetModules();
 
@@ -310,7 +310,7 @@ describe('Missing key handling — full i18n pipeline', () => {
   });
 
   it('returns actual translation (not humanized) for keys that exist', async () => {
-    const ls = makeLocalStorageMock({ app_language: 'en' });
+    const ls = makeLocalStorageMock({ 'i18n.language': 'en' });
     vi.stubGlobal('localStorage', ls);
     vi.resetModules();
 
@@ -337,7 +337,7 @@ describe('Language persistence across simulated app reloads', () => {
   });
 
   it('restores English from localStorage on init', async () => {
-    const ls = makeLocalStorageMock({ app_language: 'en' });
+    const ls = makeLocalStorageMock({ 'i18n.language': 'en' });
     vi.stubGlobal('localStorage', ls);
     vi.resetModules();
 
@@ -349,7 +349,7 @@ describe('Language persistence across simulated app reloads', () => {
   });
 
   it('restores Arabic from localStorage on init', async () => {
-    const ls = makeLocalStorageMock({ app_language: 'ar' });
+    const ls = makeLocalStorageMock({ 'i18n.language': 'ar' });
     vi.stubGlobal('localStorage', ls);
     vi.resetModules();
 
@@ -374,7 +374,7 @@ describe('Language persistence across simulated app reloads', () => {
 
   it('language change persists the new language for the next simulated load', async () => {
     // First "session": start with ku, switch to en
-    const ls = makeLocalStorageMock({ app_language: 'ku' });
+    const ls = makeLocalStorageMock({ 'i18n.language': 'ku' });
     vi.stubGlobal('localStorage', ls);
     vi.resetModules();
 
@@ -382,11 +382,11 @@ describe('Language persistence across simulated app reloads', () => {
     await i18n.changeLanguage('en');
 
     // Verify localStorage was updated
-    expect(ls._store['app_language']).toBe('en');
+    expect(ls._store['i18n.language']).toBe('en');
 
     // Second "session": simulate reload by re-importing with the updated store
     vi.resetModules();
-    const ls2 = makeLocalStorageMock({ app_language: ls._store['app_language'] });
+    const ls2 = makeLocalStorageMock({ 'i18n.language': ls._store['i18n.language'] });
     vi.stubGlobal('localStorage', ls2);
 
     const { default: i18n2 } = await import('./i18n');

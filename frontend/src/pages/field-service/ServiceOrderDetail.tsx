@@ -33,7 +33,7 @@ interface ServiceOrder {
 const ServiceOrderDetail: React.FC = () => {
  const { t } = useTranslation();
  const { id } = useParams<{ id: string }>();
- const navigate = useNavigate();
+ const _navigate = useNavigate();
  const [loading, setLoading] = useState(false);
  const { showSkeleton } = useLoadingState(loading);
  const [order, setOrder] = useState<ServiceOrder | null>(null);

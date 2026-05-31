@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Tag, Card, Select, DatePicker, Space, Button } from 'antd';
-import { ReloadOutlined, FilterOutlined } from '@ant-design/icons';
+import { ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader } from '../../design-system';
 import { space } from '../../theme/tokens';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 const { RangePicker } = DatePicker;

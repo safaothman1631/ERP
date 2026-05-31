@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Tabs, Button, Space, Form, Input, Select, message, Popconfirm, Card, Row, Col, Statistic } from 'antd';
+import { Tabs, Button, Space, Form, Input, Select, message, Popconfirm, Row, Col } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined, HomeOutlined, UserOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';

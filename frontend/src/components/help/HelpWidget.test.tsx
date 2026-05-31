@@ -2,8 +2,8 @@
  * Tests for HelpWidget (G2 / R2.6).
  */
 import React from 'react';
-import { describe, it, expect, afterEach, vi } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { describe, it, expect, afterEach } from 'vitest';
+import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import i18n from 'i18next';
 import { initReactI18next, I18nextProvider } from 'react-i18next';
 import { HelpWidget } from './HelpWidget';
@@ -43,10 +43,13 @@ describe('HelpWidget', () => {
       </I18nextProvider>,
     );
     fireEvent.click(screen.getByTestId('help-widget-toggle'));
-    // The lazy-loaded panel needs a tick before it mounts.
-    await new Promise((r) => setTimeout(r, 50));
-    // The panel mounts inside a Drawer portal — search the document.
-    const drawer = document.querySelector('[data-testid="help-panel"]');
-    expect(drawer).not.toBeNull();
+    // The panel is React.lazy-loaded and mounts into an AntD Drawer portal, so
+    // its appearance is asynchronous (dynamic import + portal render). Poll for
+    // the canonical open-drawer element (`.ant-drawer`) — AntD v6 does not
+    // forward `rootClassName`/`data-testid` to a queryable DOM node, so the
+    // framework class is the reliable signal that the panel opened.
+    await waitFor(() => {
+      expect(document.querySelector('.ant-drawer')).not.toBeNull();
+    });
   });
 });

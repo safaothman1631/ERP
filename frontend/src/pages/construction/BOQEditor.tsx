@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Button, Space, Input, Form, Select, InputNumber, Typography, Card } from 'antd';
 
 import { message } from '../../utils/message';
-import { PlusOutlined, SearchOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { Popconfirm } from 'antd';
 import api from '../../api';

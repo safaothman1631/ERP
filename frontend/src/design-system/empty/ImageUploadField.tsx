@@ -88,11 +88,11 @@ export function ImageUploadField({
   const handleBeforeUpload = useCallback<NonNullable<UploadProps['beforeUpload']>>(
     async (file) => {
       if (!IMAGE_TYPES.includes(file.type)) {
-        message.error(t('upload.not_image', 'Please choose an image file'));
+        message.error(t('uploader.not_image', 'Please choose an image file'));
         return Upload.LIST_IGNORE;
       }
       if (file.size > maxSizeMB * 1024 * 1024) {
-        message.error(t('upload.too_large', `Image exceeds ${maxSizeMB}MB`));
+        message.error(t('uploader.too_large', `Image exceeds ${maxSizeMB}MB`));
         return Upload.LIST_IGNORE;
       }
       setUploading(true);
@@ -121,8 +121,8 @@ export function ImageUploadField({
           });
         }
       } catch (err) {
-        message.error(t('upload.failed', 'Upload failed'));
-        // eslint-disable-next-line no-console
+        message.error(t('uploader.failed', 'Upload failed'));
+         
         console.error('[ImageUploadField] upload error', err);
       } finally {
         setUploading(false);
@@ -150,7 +150,7 @@ export function ImageUploadField({
         ) : (
           <div>
             {uploading ? <LoadingOutlined /> : <PlusOutlined />}
-            <div style={{ marginTop: 8 }}>{t('upload.image', 'Upload image')}</div>
+            <div style={{ marginTop: 8 }}>{t('uploader.image', 'Upload image')}</div>
           </div>
         )}
       </Upload>
@@ -159,7 +159,7 @@ export function ImageUploadField({
           type="button"
           className="qc-image-upload__remove"
           onClick={() => onChange?.(null)}
-          aria-label={t('upload.remove', 'Remove image')}
+          aria-label={t('uploader.remove', 'Remove image')}
           style={{
             background: 'transparent',
             border: '1px solid var(--border-color, #d9d9d9)',
@@ -168,7 +168,7 @@ export function ImageUploadField({
             cursor: 'pointer',
           }}
         >
-          <DeleteOutlined /> {t('upload.remove', 'Remove')}
+          <DeleteOutlined /> {t('uploader.remove', 'Remove')}
         </button>
       )}
     </div>

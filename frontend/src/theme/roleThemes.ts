@@ -29,9 +29,10 @@ function buildRoleTheme(
     id,
     accent,
     accentMuted,
-    glassBorderGlow: `0 0 0 1px ${accentMuted}, 0 8px 32px ${accent}22`,
-    heroGradientLight: `linear-gradient(135deg, ${accent}18 0%, transparent 55%)`,
-    heroGradientDark: `linear-gradient(135deg, ${accent}28 0%, transparent 60%)`,
+    glassBorderGlow: `0 0 0 1px ${accentMuted}, 0 12px 40px ${accent}26`,
+    // Richer two-stop accent wash so each role's home reads as distinctly "theirs".
+    heroGradientLight: `linear-gradient(135deg, ${accent}24 0%, ${accent}0D 38%, transparent 72%)`,
+    heroGradientDark: `linear-gradient(135deg, ${accent}38 0%, ${accent}16 42%, transparent 74%)`,
     defaultRoute,
     navProfile,
     quickActions,

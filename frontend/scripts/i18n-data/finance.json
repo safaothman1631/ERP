@@ -1,0 +1,832 @@
+{
+  "_note": "Authored ku+en values for finance/accounting/banking/reports/purchases scope. Keys from i18n-purity.mjs --json filtered to: Journals, Reports, AdvancedReports, TaxReturns, TaxSettings, Expenses, ExpenseForm, ExpenseClaims, Bills, PurchaseOrders, PurchaseReturns, VendorCredits, /banking/, /fx/, /multi-entity/, /reports/, /billing/, /subscriptions/. 2026-05-30.",
+
+  "common": {
+    "bulk_delete_confirm": {
+      "ku": "سڕینەوەی پارەدانە هەڵبژێردراوەکان…",
+      "en": "Deleting selected payments…"
+    },
+    "bulk_approve": {
+      "ku": "پەسەندکردنی پسووڵە هەڵبژێردراوەکان…",
+      "en": "Approving selected bills…"
+    },
+    "total_records": {
+      "ku": "{{n}} تۆمار",
+      "en": "{{n}} records"
+    },
+    "bulk_delete_confirm_purchases": {
+      "ku": "سڕینەوەی پسووڵە هەڵبژێردراوەکان…",
+      "en": "Deleting selected bills…"
+    }
+  },
+
+  "banking": {
+    "payment_mode": {
+      "ku": "شێوازی پارەدان",
+      "en": "Mode"
+    },
+    "unused_amount": {
+      "ku": "بڕی بەکارنەهاتوو",
+      "en": "Unused"
+    },
+    "payment_type": {
+      "ku": "جۆری پارەدان",
+      "en": "Type"
+    },
+    "payments_subtitle": {
+      "ku": "پارەدانەکانی کڕیار و دابینکار بشارێزە",
+      "en": "Track customer and vendor payments"
+    },
+    "new_payment": {
+      "ku": "پارەدانی نوێ",
+      "en": "New Payment"
+    },
+    "search_payments": {
+      "ku": "گەڕان بۆ پارەدانەکان…",
+      "en": "Search payments…"
+    },
+    "no_payments": {
+      "ku": "هیچ پارەدانێک نییە",
+      "en": "No payments yet"
+    },
+    "no_payments_hint": {
+      "ku": "یەکەم پارەدانت تۆمار بکە بۆ شارەزاکردنی گەردشی پارە",
+      "en": "Record your first payment to start tracking cash flow"
+    }
+  },
+
+  "purchases": {
+    "no_bills": {
+      "ku": "هیچ پسووڵەیەک نییە",
+      "en": "No bills yet"
+    },
+    "no_bills_hint": {
+      "ku": "یەکەم پسووڵەی دابینکارت تۆمار بکە بۆ شارەزاکردنی پارەدانی مانەوە",
+      "en": "Record your first vendor bill to track payables"
+    },
+    "po_number": {
+      "ku": "ژمارەی داواکاری",
+      "en": "PO #"
+    },
+    "delivery_status": {
+      "ku": "دەگمەنکردن",
+      "en": "Delivery"
+    },
+    "bulk_issue": {
+      "ku": "دەرکردنی داواکارییە هەڵبژێردراوەکان…",
+      "en": "Issuing selected purchase orders…"
+    },
+    "receive": {
+      "ku": "وەرگرتن",
+      "en": "Mark Received"
+    },
+    "bulk_receive": {
+      "ku": "نیشانکردنی داواکارییە هەڵبژێردراوەکان وەک وەرگیراو…",
+      "en": "Marking selected POs as received…"
+    },
+    "purchase_orders_subtitle": {
+      "ku": "داواکاریی کڕینی دابینکار و گەیاندن بەڕێوە ببە",
+      "en": "Manage vendor purchase orders and deliveries"
+    },
+    "new_po": {
+      "ku": "داواکاری کڕینی نوێ",
+      "en": "New Purchase Order"
+    },
+    "search_pos": {
+      "ku": "گەڕان بۆ داواکاریی کڕین…",
+      "en": "Search purchase orders…"
+    },
+    "no_pos": {
+      "ku": "هیچ داواکاری کڕینێک نییە",
+      "en": "No purchase orders yet"
+    },
+    "no_pos_hint": {
+      "ku": "یەکەم داواکاری کڕینت دروست بکە بۆ دەستپێکردنی بەڕێوەبردنی کڕین",
+      "en": "Create your first purchase order to start managing procurement"
+    }
+  },
+
+  "billing": {
+    "trial.banner": {
+      "ku": "{{days}} ڕۆژ ماوە لە سەردەمی تاقیکردنەوە",
+      "en": "{{days}} days left in your trial"
+    },
+    "upgrade": {
+      "ku": "بەرزکردنەوە",
+      "en": "Upgrade"
+    },
+    "upgrade_now": {
+      "ku": "ئێستا بەرزبکەرەوە",
+      "en": "Upgrade now"
+    },
+    "title": {
+      "ku": "بەشداری و پارەدان",
+      "en": "Subscription & Billing"
+    },
+    "past_due.banner": {
+      "ku": "پارەدانەکەت ماوەی خۆی تێپەڕاوە. تکایە زانیاری پارەدانەکەت نوێ بکەرەوە.",
+      "en": "Your payment is past due. Please update your billing details."
+    },
+    "suspended.banner": {
+      "ku": "هەژمارەکەت ڕاگیراوە. بەشداریەکەت دووبارە بکەرەوە بۆ گەیشتنی دووبارە.",
+      "en": "Your account is suspended. Restart your subscription to regain access."
+    },
+    "restart": {
+      "ku": "دووبارەکردنەوە",
+      "en": "Restart"
+    },
+    "current_plan": {
+      "ku": "پلانی ئێستا",
+      "en": "Current plan"
+    },
+    "change_plan": {
+      "ku": "گۆڕینی پلان",
+      "en": "Change plan"
+    },
+    "cancel": {
+      "ku": "هەڵوەشاندنەوەی بەشداری",
+      "en": "Cancel subscription"
+    },
+    "undo_cancel": {
+      "ku": "پوچەڵکردنەوەی هەڵوەشاندنەوە",
+      "en": "Undo cancellation"
+    },
+    "usage": {
+      "ku": "بەکارهێنان",
+      "en": "Usage"
+    },
+    "usage.users": {
+      "ku": "بەکارهێنەران",
+      "en": "Users"
+    },
+    "usage.invoices": {
+      "ku": "فاکتور / مانگ",
+      "en": "Invoices / month"
+    },
+    "usage.pos_terminals": {
+      "ku": "تەرمینالی POS",
+      "en": "POS terminals"
+    },
+    "usage.storage": {
+      "ku": "ئەرشیف (GB)",
+      "en": "Storage (GB)"
+    },
+    "invoices": {
+      "ku": "مێژووی فاکتور",
+      "en": "Invoice history"
+    },
+    "no_invoices": {
+      "ku": "هیچ فاکتورێک نییە",
+      "en": "No invoices yet"
+    },
+    "invoice.number": {
+      "ku": "ژمارە",
+      "en": "Number"
+    },
+    "invoice.amount": {
+      "ku": "بڕ",
+      "en": "Amount"
+    },
+    "invoice.status": {
+      "ku": "دۆخ",
+      "en": "Status"
+    },
+    "invoice.date": {
+      "ku": "بەروار",
+      "en": "Date"
+    },
+    "invoice.view": {
+      "ku": "بینین",
+      "en": "View"
+    },
+    "cancelled": {
+      "ku": "بەشداری هەڵوەشایەوە",
+      "en": "Subscription cancelled"
+    },
+    "restarted": {
+      "ku": "بەشداری دووبارە کرایەوە",
+      "en": "Subscription restarted"
+    },
+    "plan_changed": {
+      "ku": "پلان گۆڕدرا",
+      "en": "Plan changed"
+    },
+    "cancel.title": {
+      "ku": "هەڵوەشاندنەوەی بەشداری",
+      "en": "Cancel subscription"
+    },
+    "cancel.confirm": {
+      "ku": "بەڵێ، هەڵیبوەشێنەوە",
+      "en": "Yes, cancel"
+    },
+    "cancel.body": {
+      "ku": "دڵخۆشین بەبینیت. بەشداریەکەت لە کۆتایی ماوەی ئێستاوە دادەکەوێت.",
+      "en": "We're sorry to see you go. Your subscription will end at the period end."
+    },
+    "cancel.reason_placeholder": {
+      "ku": "ئیختیاری — هۆکارەکەمان پێ بگە تا باشتر ببین",
+      "en": "Optional — tell us why so we can improve"
+    },
+    "picker.title": {
+      "ku": "پلانێک هەڵبژێرە",
+      "en": "Choose a plan"
+    },
+    "picker.currency": {
+      "ku": "دراو",
+      "en": "Currency"
+    },
+    "picker.cycle": {
+      "ku": "دەوری پارەدان",
+      "en": "Billing cycle"
+    },
+    "cycle.monthly": {
+      "ku": "مانگانە",
+      "en": "Monthly"
+    },
+    "cycle.annual": {
+      "ku": "ساڵانە",
+      "en": "Annual"
+    },
+    "picker.per_month": {
+      "ku": "/ مانگ",
+      "en": "/ month"
+    },
+    "picker.billed_annually": {
+      "ku": "بە {{total}} ساڵانە دەدرێت",
+      "en": "Billed as {{total}} annually"
+    },
+    "picker.users": {
+      "ku": "{{count}} بەکارهێنەر",
+      "en": "{{count}} users"
+    },
+    "picker.unlimited_invoices": {
+      "ku": "فاکتوری نامحدود",
+      "en": "Unlimited invoices"
+    },
+    "picker.invoices_per_month": {
+      "ku": "{{count}} فاکتور/مانگ",
+      "en": "{{count}} invoices/month"
+    },
+    "picker.unlimited_pos": {
+      "ku": "تەرمینالی POS نامحدود",
+      "en": "Unlimited POS terminals"
+    },
+    "picker.pos_terminals": {
+      "ku": "{{count}} تەرمینالی POS",
+      "en": "{{count}} POS terminals"
+    },
+    "picker.current": {
+      "ku": "پلانی ئێستا",
+      "en": "Current plan"
+    },
+    "picker.preview.title": {
+      "ku": "پێشبینیی پرۆرێشن",
+      "en": "Proration preview"
+    },
+    "picker.preview.due_now": {
+      "ku": "دەبێت ئێستا بدرێت",
+      "en": "Due now"
+    },
+    "picker.preview_button": {
+      "ku": "پێشبینیی گۆڕانکاری",
+      "en": "Preview change"
+    },
+    "picker.confirm": {
+      "ku": "پشتڕاستکردنەوەی گۆڕانکاری",
+      "en": "Confirm change"
+    },
+    "features.api": {
+      "ku": "دەستگەیشتنی API",
+      "en": "API access"
+    },
+    "features.priority": {
+      "ku": "پشتگیری پێشینەبەند",
+      "en": "Priority support"
+    },
+    "features.sso": {
+      "ku": "SSO",
+      "en": "SSO"
+    },
+    "errors.plans_load_failed": {
+      "ku": "بارکردنی پلانەکان سەرکەوتوو نەبوو",
+      "en": "Failed to load plans"
+    },
+    "errors.preview_failed": {
+      "ku": "پێشبینیی گۆڕانکاری سەرکەوتوو نەبوو",
+      "en": "Failed to preview change"
+    },
+    "errors.apply_failed": {
+      "ku": "جێبەجێکردنی گۆڕانکاری سەرکەوتوو نەبوو",
+      "en": "Failed to apply change"
+    },
+    "errors.load_failed": {
+      "ku": "بارکردنی زانیاری پارەدان سەرکەوتوو نەبوو",
+      "en": "Failed to load billing state"
+    },
+    "errors.cancel_failed": {
+      "ku": "هەڵوەشاندنەوە سەرکەوتوو نەبوو",
+      "en": "Could not cancel"
+    },
+    "errors.restart_failed": {
+      "ku": "دووبارەکردنەوە سەرکەوتوو نەبوو",
+      "en": "Could not restart"
+    }
+  },
+
+  "subscription": {
+    "paused": {
+      "ku": "بەشداری ڕاگیرا",
+      "en": "Subscription paused"
+    },
+    "resumed": {
+      "ku": "بەشداری دووبارە دەستپێکرد",
+      "en": "Subscription resumed"
+    },
+    "confirm_cancel": {
+      "ku": "دڵنیایت دەتەوێت هەڵیبوەشێنیتەوە؟",
+      "en": "Are you sure you want to cancel?"
+    },
+    "cancel_warning": {
+      "ku": "بەشداریەکەت لە کۆتایی ماوەی ئێستاوە دادەکەوێت.",
+      "en": "Your subscription will end at the period end."
+    },
+    "cancel_scheduled": {
+      "ku": "هەڵوەشاندنەوە پلانگێڕایەوە",
+      "en": "Cancellation scheduled"
+    },
+    "invoice_generated": {
+      "ku": "فاکتور دروستکرا",
+      "en": "Invoice generated"
+    },
+    "upgraded": {
+      "ku": "بەشداری بەرزکرایەوە",
+      "en": "Subscription upgraded"
+    },
+    "attempt_number": {
+      "ku": "ژمارەی هەوڵ",
+      "en": "Attempt #"
+    },
+    "action": {
+      "ku": "کردار",
+      "en": "Action"
+    },
+    "sent_at": {
+      "ku": "کاتی ناردن",
+      "en": "Sent at"
+    },
+    "subscription_detail": {
+      "ku": "وردەکاری بەشداری",
+      "en": "Subscription Detail"
+    },
+    "overview": {
+      "ku": "گشتگیری",
+      "en": "Overview"
+    },
+    "generate_invoice": {
+      "ku": "دروستکردنی فاکتور",
+      "en": "Generate Invoice"
+    },
+    "upgrade": {
+      "ku": "بەرزکردنەوە",
+      "en": "Upgrade"
+    },
+    "pause": {
+      "ku": "ڕاگرتن",
+      "en": "Pause"
+    },
+    "cancel": {
+      "ku": "هەڵوەشاندنەوە",
+      "en": "Cancel"
+    },
+    "resume": {
+      "ku": "دووبارە دەستپێکردن",
+      "en": "Resume"
+    },
+    "status": {
+      "ku": "دۆخ",
+      "en": "Status"
+    },
+    "plan": {
+      "ku": "پلان",
+      "en": "Plan"
+    },
+    "contact": {
+      "ku": "پەیوەندیدار",
+      "en": "Contact"
+    },
+    "start_date": {
+      "ku": "بەرواری دەستپێک",
+      "en": "Start date"
+    },
+    "current_period_start": {
+      "ku": "دەستپێکی ماوەی ئێستا",
+      "en": "Current period start"
+    },
+    "current_period_end": {
+      "ku": "کۆتایی ماوەی ئێستا",
+      "en": "Current period end"
+    },
+    "next_invoice": {
+      "ku": "فاکتوری داهاتوو",
+      "en": "Next invoice"
+    },
+    "trial_end": {
+      "ku": "کۆتایی تاقیکردنەوە",
+      "en": "Trial end"
+    },
+    "cancel_at": {
+      "ku": "هەڵوەشاندنەوە لە",
+      "en": "Cancel at"
+    },
+    "cancelled_at": {
+      "ku": "هەڵوەشایەوە لە",
+      "en": "Cancelled at"
+    },
+    "cancel_reason": {
+      "ku": "هۆکاری هەڵوەشاندنەوە",
+      "en": "Cancel reason"
+    },
+    "dunning_history": {
+      "ku": "مێژووی تاقیکردنەوەی پارەوەردان",
+      "en": "Dunning history"
+    },
+    "select_new_plan": {
+      "ku": "پلانی نوێ هەڵبژێرە",
+      "en": "Select new plan"
+    },
+    "dunning_sent": {
+      "ku": "پەیامی پارەوەردان نێردرا",
+      "en": "Dunning notification sent"
+    },
+    "subscription_id": {
+      "ku": "ناسنامەی بەشداری",
+      "en": "Subscription ID"
+    },
+    "period_end": {
+      "ku": "کۆتایی ماوە",
+      "en": "Period end"
+    },
+    "days_overdue": {
+      "ku": "ڕۆژی دواکەوتوو",
+      "en": "Days overdue"
+    },
+    "run_dunning": {
+      "ku": "ناردنی پارەوەردان",
+      "en": "Send dunning"
+    },
+    "dunning_subtitle": {
+      "ku": "بەشداریەکانی ماوەیان تێپەڕاوە بشارێزە",
+      "en": "Manage past-due subscriptions"
+    },
+    "no_past_due": {
+      "ku": "هیچ بەشداریەکی دواکەوتوو نییە",
+      "en": "No past-due subscriptions"
+    },
+    "dunning_queue": {
+      "ku": "ڕیزی پارەوەردان",
+      "en": "Dunning queue"
+    },
+    "code": {
+      "ku": "کۆد",
+      "en": "Code"
+    },
+    "plan_name": {
+      "ku": "ناوی پلان",
+      "en": "Plan name"
+    },
+    "price": {
+      "ku": "نرخ",
+      "en": "Price"
+    },
+    "billing_cycle": {
+      "ku": "دەوری پارەدان",
+      "en": "Billing cycle"
+    },
+    "trial_days": {
+      "ku": "ڕۆژانی تاقیکردنەوە",
+      "en": "Trial days"
+    },
+    "setup_fee": {
+      "ku": "کرێی دامەزراندن",
+      "en": "Setup fee"
+    },
+    "plans_subtitle": {
+      "ku": "پلانەکانی بەشداری بەڕێوە ببە",
+      "en": "Manage subscription plans"
+    },
+    "new_plan": {
+      "ku": "پلانی نوێ",
+      "en": "New plan"
+    },
+    "edit_plan": {
+      "ku": "دەستکاریی پلان",
+      "en": "Edit plan"
+    },
+    "cycle_monthly": {
+      "ku": "مانگانە",
+      "en": "Monthly"
+    },
+    "cycle_quarterly": {
+      "ku": "سێ مانگانە",
+      "en": "Quarterly"
+    },
+    "cycle_yearly": {
+      "ku": "ساڵانە",
+      "en": "Yearly"
+    },
+    "billing_interval": {
+      "ku": "ماوەی پارەدان",
+      "en": "Billing interval"
+    },
+    "previous_month": {
+      "ku": "مانگی پێشوو",
+      "en": "Previous month"
+    },
+    "current_month": {
+      "ku": "مانگی ئێستا",
+      "en": "Current month"
+    },
+    "mrr": {
+      "ku": "داهاتی مانگانەی ئەم کاتە (MRR)",
+      "en": "MRR"
+    },
+    "subscriber_count": {
+      "ku": "ژمارەی بەشداران",
+      "en": "Subscriber count"
+    },
+    "reports_subtitle": {
+      "ku": "ئامارە دارایییەکانی بەشداری",
+      "en": "Subscription financial metrics"
+    },
+    "vs_last_month": {
+      "ku": "بەراورد بە مانگی پێشوو",
+      "en": "vs last month"
+    },
+    "arr": {
+      "ku": "داهاتی ساڵانەی ئەم کاتە (ARR)",
+      "en": "ARR"
+    },
+    "active_subscriptions": {
+      "ku": "بەشداری چالاک",
+      "en": "Active subscriptions"
+    },
+    "churn_rate": {
+      "ku": "ڕێژەی جێهێشتن",
+      "en": "Churn rate"
+    },
+    "last_30_days": {
+      "ku": "٣٠ ڕۆژی دوایی",
+      "en": "Last 30 days"
+    },
+    "mrr_trend": {
+      "ku": "ئاراستەی MRR",
+      "en": "MRR trend"
+    },
+    "mrr_by_plan": {
+      "ku": "MRR بە پێی پلان",
+      "en": "MRR by plan"
+    },
+    "churn_details": {
+      "ku": "وردەکاری جێهێشتن",
+      "en": "Churn details"
+    },
+    "active_at_period_start": {
+      "ku": "چالاک لە دەستپێکی ماوە",
+      "en": "Active at period start"
+    },
+    "cancelled_in_period": {
+      "ku": "هەڵوەشاوەتەوە لە ماوەکەدا",
+      "en": "Cancelled in period"
+    },
+    "remaining_active": {
+      "ku": "چالاکی ماوەتەوە",
+      "en": "Remaining active"
+    },
+    "subscriptions_subtitle": {
+      "ku": "بەشداریەکان بەڕێوە ببە",
+      "en": "Manage subscriptions"
+    },
+    "new_subscription": {
+      "ku": "بەشداری نوێ",
+      "en": "New subscription"
+    },
+    "filter_status": {
+      "ku": "فلتەر بەپێی دۆخ",
+      "en": "Filter by status"
+    },
+    "status_trial": {
+      "ku": "تاقیکردنەوە",
+      "en": "Trial"
+    },
+    "status_active": {
+      "ku": "چالاک",
+      "en": "Active"
+    },
+    "status_past_due": {
+      "ku": "دواکەوتوو",
+      "en": "Past due"
+    },
+    "status_paused": {
+      "ku": "ڕاگیراو",
+      "en": "Paused"
+    },
+    "status_cancelled": {
+      "ku": "هەڵوەشاوەتەوە",
+      "en": "Cancelled"
+    },
+    "filter_plan": {
+      "ku": "فلتەر بەپێی پلان",
+      "en": "Filter by plan"
+    },
+    "contact_id_placeholder": {
+      "ku": "کڕیار هەڵبژێرە…",
+      "en": "Select a customer…"
+    },
+    "select_plan": {
+      "ku": "پلانێک هەڵبژێرە",
+      "en": "Select a plan"
+    },
+    "trial_days_override": {
+      "ku": "دەستکاریکردنی ڕۆژانی تاقیکردنەوە",
+      "en": "Override trial days"
+    },
+    "payment_method": {
+      "ku": "شێوازی پارەدان",
+      "en": "Payment method"
+    },
+    "payment_method_placeholder": {
+      "ku": "بەتالفۆن، کارتی کڕێکار…",
+      "en": "e.g. card, bank transfer…"
+    },
+    "subscriptions": {
+      "ku": "بەشداریەکان",
+      "en": "Subscriptions"
+    },
+    "plans": {
+      "ku": "پلانەکان",
+      "en": "Plans"
+    },
+    "reports": {
+      "ku": "ڕاپۆرتەکان",
+      "en": "Reports"
+    }
+  },
+
+  "vendor_portal": {
+    "token_invalid": {
+      "ku": "بەستەرەکە کاتیەکی نییە یان تێپەڕاوە",
+      "en": "Link is invalid or has expired"
+    },
+    "load_failed": {
+      "ku": "بارکردن سەرکەوتوو نەبوو",
+      "en": "Failed to load"
+    },
+    "bill_number": {
+      "ku": "ژمارەی پسووڵە",
+      "en": "Bill #"
+    },
+    "bill_date": {
+      "ku": "بەروارەی پسووڵە",
+      "en": "Bill date"
+    },
+    "due_date": {
+      "ku": "بەروارەی کۆتایی",
+      "en": "Due date"
+    },
+    "bill_status": {
+      "ku": "دۆخی پسووڵە",
+      "en": "Status"
+    },
+    "po_number": {
+      "ku": "ژمارەی داواکاری",
+      "en": "PO #"
+    },
+    "my_bills": {
+      "ku": "پسووڵەکانم",
+      "en": "My bills"
+    },
+    "submit_bill": {
+      "ku": "پێشکەشکردنی پسووڵە",
+      "en": "Submit bill"
+    },
+    "pending_review": {
+      "ku": "چاوەڕوانی پێداچوونەوە",
+      "en": "Pending review"
+    },
+    "approved": {
+      "ku": "پەسەندکراو",
+      "en": "Approved"
+    },
+    "paid": {
+      "ku": "پارەی دراوە",
+      "en": "Paid"
+    },
+    "no_bills": {
+      "ku": "هیچ پسووڵەیەک نییە",
+      "en": "No bills yet"
+    }
+  },
+
+  "invoices": {
+    "total": {
+      "ku": "کۆی گشتی",
+      "en": "Total"
+    },
+    "balance": {
+      "ku": "مانەوە",
+      "en": "Balance"
+    }
+  },
+
+  "portal": {
+    "load_failed": {
+      "ku": "بارکردنی پۆرتاڵ سەرکەوتوو نەبوو",
+      "en": "Failed to load portal"
+    }
+  },
+
+  "expenses": {
+    "expense_details": {
+      "ku": "وردەکاری خەرجی",
+      "en": "Expense Details"
+    },
+    "related": {
+      "ku": "پەیوەندیدار",
+      "en": "Related"
+    }
+  },
+
+  "pos": {
+    "product": {
+      "ku": "بەرهەم",
+      "en": "Product"
+    },
+    "qty_sold": {
+      "ku": "بڕی فرۆشراو",
+      "en": "Qty sold"
+    },
+    "iqd": {
+      "ku": "د.ع",
+      "en": "IQD"
+    },
+    "avg_price": {
+      "ku": "نرخی ناوەند",
+      "en": "Avg. price"
+    },
+    "avg_basket": {
+      "ku": "سەبەتەی ناوەند",
+      "en": "Avg. basket"
+    },
+    "total_sales": {
+      "ku": "کۆی فرۆشتن",
+      "en": "Total sales"
+    },
+    "total_orders": {
+      "ku": "کۆی داواکاریەکان",
+      "en": "Total orders"
+    },
+    "average_basket": {
+      "ku": "سەبەتەی ناوەند",
+      "en": "Average basket"
+    },
+    "total_tax": {
+      "ku": "کۆی باج",
+      "en": "Total tax"
+    },
+    "sales_by_payment_method": {
+      "ku": "فرۆشتن بەپێی شێوازی پارەدان",
+      "en": "Sales by payment method"
+    },
+    "sales_by_product": {
+      "ku": "فرۆشتن بەپێی بەرهەم",
+      "en": "Sales by product"
+    },
+    "sales_by_cashier": {
+      "ku": "فرۆشتن بەپێی کاشیر",
+      "en": "Sales by cashier"
+    },
+    "hourly_sales_heatmap": {
+      "ku": "خەریتەی گەرمی فرۆشتنی کاتژمێری",
+      "en": "Hourly sales heatmap"
+    }
+  },
+
+  "reports": {
+    "custom_reports.analytics_title": {
+      "ku": "داشبۆردی ئامارەکان",
+      "en": "Analytics Dashboard"
+    },
+    "custom_reports.analytics_subtitle": {
+      "ku": "ڕاپۆرتە تایبەتییە پاشەکەوتکراوەکان کە لە داتای کارکردنت دروستکراون.",
+      "en": "Saved custom reports built from your operational data."
+    },
+    "custom_reports.no_reports": {
+      "ku": "هیچ ڕاپۆرتێکی پاشەکەوتکراو نییە.",
+      "en": "No saved reports yet."
+    },
+    "custom_reports.open_builder": {
+      "ku": "کردنەوەی دروستکەر",
+      "en": "Open builder"
+    }
+  }
+}

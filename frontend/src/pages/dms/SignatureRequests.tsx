@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import {
- Button, Space, Tabs, Tag, Form, Input, Select, message, Steps, Avatar, Tooltip, DatePicker, Checkbox, Modal } from 'antd';
-import {
- PlusOutlined, SendOutlined, CheckCircleOutlined, CloseCircleOutlined,
- FileTextOutlined, UserOutlined, BellOutlined, EyeOutlined
-} from '@ant-design/icons';
+import { Button, Space, Tabs, Tag, Form, Input, Select, message, Steps, Avatar, Tooltip, Checkbox, Modal } from 'antd';
+import { PlusOutlined, CheckCircleOutlined, CloseCircleOutlined, FileTextOutlined, UserOutlined, BellOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader } from '../../design-system';
@@ -24,7 +20,7 @@ const SignatureRequests: React.FC = () => {
  const [signDrawerOpen, setSignDrawerOpen] = useState(false);
  const [selectedRequest, setSelectedRequest] = useState<any>(null);
  const [files, setFiles] = useState<any[]>([]);
- const [signForm] = Form.useForm();
+ const [_signForm] = Form.useForm();
  const [requestForm] = Form.useForm();
  const [currentStep, setCurrentStep] = useState(0);
 
@@ -37,7 +33,7 @@ const SignatureRequests: React.FC = () => {
  const userId = localStorage.getItem('userId') || localStorage.getItem('userEmail');
  setSentRequests(allRequests.filter((r: any) => r.created_by === userId));
  setReceivedRequests(allRequests.filter((r: any) => r.created_by !== userId));
- } catch (error) {
+ } catch (_error) {
  message.error(t('error'));
  } finally {
  setLoading(false);
@@ -48,7 +44,7 @@ const SignatureRequests: React.FC = () => {
  try {
  const res = await api.get('/api/documents/files', { params: { limit: 100 } });
  setFiles(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  useEffect(() => {
@@ -107,7 +103,7 @@ const SignatureRequests: React.FC = () => {
  });
  };
 
- const handleRemind = (requestId: string) => {
+ const handleRemind = (_requestId: string) => {
  message.info(t('dms.reminder_coming_soon'));
  };
 
@@ -306,7 +302,7 @@ const SignatureRequests: React.FC = () => {
  <Select mode="tags" placeholder={t('dms.enter_emails')} />
  </Form.Item>
  <Form.List name="roles">
- {(fields) =>
+ {(_fields) =>
  (requestForm.getFieldValue('signers') || []).map((_: any, index: number) => (
  <Form.Item key={index} name={`role_${index}`} label={t('dms.role')} initialValue="signer">
  <Select>

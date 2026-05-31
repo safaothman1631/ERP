@@ -187,7 +187,7 @@ const GeneralSettings: React.FC = () => {
     api.get('/api/system/settings/general').then(r => {
       if (r.data) form.setFieldsValue(r.data);
     }).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const handleSave = async () => {
@@ -318,7 +318,7 @@ const AppearanceSettings: React.FC = () => {
     api.get('/api/system/settings/appearance').then(r => {
       if (r.data) form.setFieldsValue(r.data);
     }).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [currentTheme, currentLayout]);
 
   const handleSave = async () => {
@@ -458,7 +458,7 @@ const FeatureFlagsSettings: React.FC = () => {
     }).catch(() => {
       setFlags(DEFAULT_FLAGS);
     }).finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const handleToggle = async (flagKey: string, enabled: boolean) => {
@@ -557,7 +557,7 @@ const ProfileSettings: React.FC = () => {
     setLoading(true);
     api.get('/api/system/profile').then(r => form.setFieldsValue(r.data))
       .catch(() => {}).finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const handleSave = async () => {
@@ -673,7 +673,7 @@ const OrganizationSettings: React.FC = () => {
     setLoading(true);
     api.get('/api/system/organization').then(r => form.setFieldsValue(r.data))
       .catch(() => {}).finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const handleSave = async () => {
@@ -1646,7 +1646,7 @@ const ModulesSettings: React.FC = () => {
   const enabled = enabledModules
     ? (enabledModules.map(k => MODULES.find(m => m.key === k)).filter(Boolean) as typeof MODULES)
     : null;
-  const pool = license.allowedModules
+  const pool = license?.allowedModules
     ? license.allowedModules.map(k => MODULES.find(m => m.key === k)).filter(Boolean) as typeof MODULES
     : null;
 
@@ -2229,7 +2229,7 @@ const ReminderSettings: React.FC = () => {
     setLoading(true);
     api.get('/api/system/reminder-settings').then(r => form.setFieldsValue(r.data))
       .catch(() => {}).finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const handleSave = async () => {
@@ -2481,7 +2481,7 @@ const EmailSettings: React.FC = () => {
       r.data.forEach((s: {key: string; value: string}) => { vals[s.key] = s.value; });
       form.setFieldsValue(vals);
     }).catch(() => {}).finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const handleSave = async () => {
@@ -2644,7 +2644,7 @@ const ActivityLog: React.FC = () => {
       .catch(() => {}).finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchData(); }, [page, actionFilter, entityFilter, dateRange]); // eslint-disable-line
+  useEffect(() => { fetchData(); }, [page, actionFilter, entityFilter, dateRange]);  
 
   return (
     <SectionCard
@@ -2905,7 +2905,7 @@ function useSettingsBag<T extends Record<string, unknown>>(category: string, def
     } finally {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [category]);
 
   useEffect(() => { load(); }, [load]);

@@ -9,7 +9,7 @@
  * (drawer + markdown loader) until first open via `React.lazy`.
  */
 import React, { Suspense, useState } from 'react';
-import { Button, FloatButton } from 'antd';
+import { FloatButton } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 

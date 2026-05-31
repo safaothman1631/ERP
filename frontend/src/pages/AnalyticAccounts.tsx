@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Space, Input, Form, Switch, Modal } from 'antd';
 import { message } from '../utils/message';
-import { PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { PageHeader } from '../design-system';

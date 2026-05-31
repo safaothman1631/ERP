@@ -7,7 +7,7 @@ import {
 import {
   palette, space, radius, status, typography, dataViz, zIndex,
 } from '../theme/tokens';
-import { ShoppingOutlined, PlusOutlined, InboxOutlined } from '@ant-design/icons';
+import { PlusOutlined, InboxOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 

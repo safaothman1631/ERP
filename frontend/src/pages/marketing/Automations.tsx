@@ -15,7 +15,7 @@ const Automations: React.FC = () => {
  const [loading, setLoading] = useState(false);
  const [createModal, setCreateModal] = useState(false);
  const [form] = Form.useForm();
- const [saving, setSaving] = useState(false);
+ const [saving, _setSaving] = useState(false);
  const [currentStep, setCurrentStep] = useState(0);
  const [steps, setSteps] = useState<any[]>([]);
 

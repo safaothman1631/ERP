@@ -15,7 +15,7 @@
  * Both paths feed the same `useBarcodeInput()` hook so POS UIs don't
  * branch on transport.
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // ───────────────────────── Types ────────────────────────────────────────
 
@@ -78,7 +78,8 @@ export function classifySymbology(raw: string): Symbology {
   if (/^\d{8}$/.test(raw)) return 'EAN_8';
   if (/^\d{12}$/.test(raw)) return 'UPC_A';
   if (/^\d{6,11}$/.test(raw)) return 'UPC_E';
-  if (/^[0-9A-Z\-\.\$/\+%\s]+$/.test(raw) && raw.length <= 43) return 'CODE_39';
+  if (/^[0-9A-Z\-.$/+%\s]+$/.test(raw) && raw.length <= 43) return 'CODE_39';
+  // eslint-disable-next-line no-control-regex -- ASCII range guard is intentional
   if (/^[\x00-\x7f]+$/.test(raw)) return 'CODE_128';
   return 'UNKNOWN';
 }
@@ -87,7 +88,7 @@ export function classifySymbology(raw: string): Symbology {
 
 type Listener = (reading: ScannerReading) => void;
 
-let hidListeners = new Set<Listener>();
+const hidListeners = new Set<Listener>();
 let hidAttached = false;
 let lastEmitted: { value: string; at: number } | null = null;
 let hidState: HidState = { buffer: '', lastKeyAt: 0, startedAt: 0 };

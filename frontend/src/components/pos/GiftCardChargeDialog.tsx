@@ -51,7 +51,7 @@ const GiftCardChargeDialog: React.FC<GiftCardChargeDialogProps> = ({
  } else if (res.data.expiration_date && new Date(res.data.expiration_date) < new Date()) {
  message.warning(t('gift_card_expired'));
  }
- } catch (error) {
+ } catch (_error) {
  message.error(t('gift_card_not_found'));
  setCard(null);
  } finally {

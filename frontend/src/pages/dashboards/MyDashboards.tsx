@@ -16,7 +16,7 @@ const MyDashboards: React.FC = () => {
  const { t } = useTranslation();
  const navigate = useNavigate();
  const [dashboards, setDashboards] = useState<any[]>([]);
- const [loading, setLoading] = useState(true);
+ const [_loading, setLoading] = useState(true);
  const [createModalOpen, setCreateModalOpen] = useState(false);
  const [newName, setNewName] = useState('');
 
@@ -29,7 +29,7 @@ const MyDashboards: React.FC = () => {
  try {
  const res = await api.get('/api/dashboards');
  setDashboards(res.data.data || []);
- } catch (err) {
+ } catch (_err) {
  message.error(t('load_error'));
  } finally {
  setLoading(false);
@@ -48,7 +48,7 @@ const MyDashboards: React.FC = () => {
  setCreateModalOpen(false);
  setNewName('');
  navigate(`/dashboards/${newDash.id}/edit`);
- } catch (err) {
+ } catch (_err) {
  message.error(t('create_error'));
  }
  };
@@ -65,7 +65,7 @@ const MyDashboards: React.FC = () => {
  await api.delete(`/api/dashboards/${id}`);
  message.success(t('deleted'));
  fetchDashboards();
- } catch (err) {
+ } catch (_err) {
  message.error(t('delete_error'));
  }
  }
@@ -77,7 +77,7 @@ const MyDashboards: React.FC = () => {
  await api.post(`/api/dashboards/${id}/clone`);
  message.success(t('dashboard_cloned'));
  fetchDashboards();
- } catch (err) {
+ } catch (_err) {
  message.error(t('clone_error'));
  }
  };
@@ -86,7 +86,7 @@ const MyDashboards: React.FC = () => {
  try {
  await api.post(`/api/dashboards/${id}/set-default`);
  message.success(t('set_as_default_success'));
- } catch (err) {
+ } catch (_err) {
  message.error(t('error'));
  }
  };

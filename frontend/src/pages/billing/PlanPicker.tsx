@@ -13,21 +13,8 @@
  * Spec: launch-readiness § R5.6.
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
-import {
-  Alert,
-  Button,
-  Card,
-  Col,
-  Modal,
-  Radio,
-  Row,
-  Segmented,
-  Space,
-  Spin,
-  Tag,
-  Typography,
-} from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Alert, Button, Card, Col, Modal, Row, Segmented, Space, Spin, Tag, Typography } from 'antd';
 import { CheckCircleFilled } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
@@ -75,7 +62,7 @@ export default function PlanPicker({
 }: Props): React.ReactElement {
   const { t } = useTranslation();
   const [plans, setPlans] = useState<PlanSummary[]>([]);
-  const [trialDays, setTrialDays] = useState<number>(90);
+  const [_trialDays, setTrialDays] = useState<number>(90);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<string>(currentPlanSlug);
   const [currency, setCurrency] = useState<'IQD' | 'USD'>(currentCurrency);

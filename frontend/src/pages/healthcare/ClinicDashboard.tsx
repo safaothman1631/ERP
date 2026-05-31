@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Button, Space, Tag, Typography } from 'antd';
+import { Row, Col, Card, Button, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { CalendarOutlined, UserOutlined, DollarOutlined, CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
@@ -110,7 +110,7 @@ const ClinicDashboard: React.FC = () => {
       title: '',
       key: 'actions',
       width: 100,
-      render: (_: unknown, record: AppointmentRow) => (
+      render: (_: unknown, _record: AppointmentRow) => (
         <Button size="small" onClick={() => navigate(`/healthcare/appointments`)}>
           {t('view')}
         </Button>

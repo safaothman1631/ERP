@@ -34,7 +34,6 @@ import { MotionGateChildren } from '../../components/MotionGate';
 import Particles from '../../components/react-bits/Particles';
 import Typewriter from '../../components/react-bits/Typewriter';
 import { glass, palette } from '../../theme/tokens';
-import { useUiStore } from '../../stores/uiStore';
 import { isRTLLanguage } from '../../utils/language';
 import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
 
@@ -278,7 +277,7 @@ const LoginPage: React.FC = () => {
   }, [attemptState]);
 
   const locked = isLocked(attemptState);
-  const remainingAttempts = MAX_ATTEMPTS - attemptState.count;
+  const _remainingAttempts = MAX_ATTEMPTS - attemptState.count;
 
   // ── Login handler ──
   const handleLogin = useCallback(
@@ -420,11 +419,11 @@ const LoginPage: React.FC = () => {
           line-height: 1.5 !important;
           padding-block: 0 !important;
           direction: ltr !important;
-          text-align: left !important;
+          text-align: start !important;
         }
         .login-form .ant-input-affix-wrapper .ant-input::placeholder {
           direction: ltr !important;
-          text-align: left !important;
+          text-align: start !important;
         }
         .login-form .ant-input-affix-wrapper:hover {
           border-color: rgba(31,111,235,0.40) !important;
@@ -440,7 +439,7 @@ const LoginPage: React.FC = () => {
           background: transparent !important;
           box-shadow: none !important;
           direction: ltr !important;
-          text-align: left !important;
+          text-align: start !important;
         }
         .login-form .ant-input:focus {
           outline: none !important;
@@ -448,7 +447,7 @@ const LoginPage: React.FC = () => {
         }
         .login-form .ant-input::placeholder {
           direction: ltr !important;
-          text-align: left !important;
+          text-align: start !important;
         }
 
         /* Force LTR layout on auth inputs when document is RTL */
@@ -578,7 +577,7 @@ const LoginPage: React.FC = () => {
               disabled={locked || loading}
               aria-label={t('email')}
               aria-required="true"
-              aria-invalid={!!errorMsg ? 'true' : 'false'}
+              aria-invalid={errorMsg ? 'true' : 'false'}
               tabIndex={0}
             />
           </Form.Item>

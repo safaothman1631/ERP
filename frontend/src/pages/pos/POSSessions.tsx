@@ -56,7 +56,7 @@ const POSSessions: React.FC = () => {
     try {
       const res = await api.get('/api/pos/configs', { params: { page_size: 100 } });
       setConfigs(res.data.items || []);
-    } catch {}
+    } catch { /* noop */ }
   };
 
   useEffect(() => {
@@ -143,7 +143,7 @@ const POSSessions: React.FC = () => {
   }));
   const persistHidden = (next: string[]) => {
     setHiddenCols(next);
-    try { localStorage.setItem('posSessions.hiddenCols', JSON.stringify(next)); } catch {}
+    try { localStorage.setItem('posSessions.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
   };
 
   return (

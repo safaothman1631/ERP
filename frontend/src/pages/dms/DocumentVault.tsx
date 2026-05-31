@@ -1,13 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import {
- Button, Space, Upload, Input, Form, Select, Tag, Tree, Card,
- Tooltip, Row, Col, DatePicker, Checkbox, message, List, Avatar, Modal } from 'antd';
-import {
- PlusOutlined, UploadOutlined, FolderOutlined, FileOutlined, DownloadOutlined,
- ShareAltOutlined, DeleteOutlined, HistoryOutlined, AppstoreOutlined,
- UnorderedListOutlined, SearchOutlined, FolderAddOutlined, FileTextOutlined,
- FilePdfOutlined, FileImageOutlined, FileExcelOutlined, FileWordOutlined
-} from '@ant-design/icons';
+import { Button, Space, Input, Form, Select, Tag, Tree, Card, Tooltip, Row, Col, DatePicker, message, Modal } from 'antd';
+import { UploadOutlined, FolderOutlined, FileOutlined, DownloadOutlined, ShareAltOutlined, DeleteOutlined, HistoryOutlined, AppstoreOutlined, UnorderedListOutlined, SearchOutlined, FolderAddOutlined, FileTextOutlined, FilePdfOutlined, FileImageOutlined, FileExcelOutlined, FileWordOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { DataNode } from 'antd/es/tree';
@@ -45,7 +38,7 @@ const DocumentVault: React.FC = () => {
  params: { folder_id: selectedFolder || undefined, limit: 200 },
  });
  setFiles(res.data.items || []);
- } catch (error) {
+ } catch (_error) {
  message.error(t('error'));
  } finally {
  setLoading(false);
@@ -56,7 +49,7 @@ const DocumentVault: React.FC = () => {
  try {
  const res = await api.get('/api/documents/folders', { params: { limit: 500 }});
  setFolders(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  useEffect(() => {
@@ -104,7 +97,7 @@ const DocumentVault: React.FC = () => {
  window.open(record.storage_url, '_blank');
  };
 
- const handleShare = (record: any) => {
+ const handleShare = (_record: any) => {
  message.info(t('dms.share_coming_soon'));
  };
 
@@ -154,8 +147,8 @@ const DocumentVault: React.FC = () => {
  };
 
  const treeData: DataNode[] = useMemo(() => {
- const roots = folders.filter((f) => !f.parent_id);
- const children = folders.filter((f) => f.parent_id);
+ const _roots = folders.filter((f) => !f.parent_id);
+ const _children = folders.filter((f) => f.parent_id);
  const buildTree = (parentId: string | null): DataNode[] => {
  return folders
  .filter((f) => f.parent_id === parentId)

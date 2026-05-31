@@ -128,7 +128,7 @@ const manyColumns: ResponsiveColumn<TestRow>[] = [
   { id: 'status', headerKey: asTranslationKey('col.status'), priority: 'low', render: (r) => r.status },
 ];
 
-const sampleRowActions = (row: TestRow): RowAction[] => [
+const sampleRowActions = (_row: TestRow): RowAction[] => [
   { id: 'edit', labelKey: asTranslationKey('action.edit'), onClick: vi.fn() },
   { id: 'delete', labelKey: asTranslationKey('action.delete'), onClick: vi.fn(), danger: true },
 ];

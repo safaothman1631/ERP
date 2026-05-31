@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Tag, Space, Select, Form, InputNumber, Input, Empty, Typography, Dropdown } from 'antd';
+import { Button, Tag, Space, Select, Form, InputNumber, Input, Typography, Dropdown } from 'antd';
 
 import { message } from '../utils/message';
 import { PlusOutlined, SendOutlined, WalletOutlined, DollarOutlined, InboxOutlined, FilePdfOutlined, MailOutlined, BellOutlined, QrcodeOutlined, CloudUploadOutlined, InfoCircleOutlined, MoreOutlined } from '@ant-design/icons';
@@ -22,10 +22,6 @@ import { EmptyState } from '../components/AddGate/EmptyState';
 import { asTranslationKey } from '../i18n/types';
 
 const { Text } = Typography;
-
-const statusColors: Record<string, string> = {
- draft: 'default', sent: 'blue', paid: 'green', overdue: 'red', partially_paid: 'orange', void: 'grey', retainer: 'purple',
-};
 
 const noWrap: React.CSSProperties = { whiteSpace: 'nowrap' };
 
@@ -250,7 +246,7 @@ const Invoices: React.FC = () => {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('invoices.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('invoices.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

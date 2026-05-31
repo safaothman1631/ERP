@@ -11,13 +11,13 @@ describe('formatCurrency', () => {
     it('renders no decimals', () => {
       const out = formatCurrency(1234567, 'IQD', 'en');
       // Allow either ASCII space or NBSP between number and symbol.
-      expect(out).toMatch(/^1,234,567[\s ]IQD$/);
+      expect(out).toMatch(/^1,234,567[\s\u00a0]IQD$/);
     });
 
     it('uses the localized symbol in Arabic', () => {
       const out = formatCurrency(1234567, 'IQD', 'ar');
       expect(out).toContain('د.ع');
-      expect(out).not.toMatch(/\./); // no decimal point
+      expect(out).not.toMatch(/\d\.\d/); // no decimal separator in the number (the symbol د.ع has a literal dot)
     });
 
     it('uses the localized symbol in Kurdish', () => {
@@ -27,11 +27,11 @@ describe('formatCurrency', () => {
 
     it('rounds rather than truncates fractional input', () => {
       const out = formatCurrency(123.7, 'IQD', 'en');
-      expect(out).toMatch(/^124[\s ]IQD$/);
+      expect(out).toMatch(/^124[\s\u00a0]IQD$/);
     });
 
     it('formats zero', () => {
-      expect(formatCurrency(0, 'IQD', 'en')).toMatch(/0[\s ]IQD/);
+      expect(formatCurrency(0, 'IQD', 'en')).toMatch(/0[\s\u00a0]IQD/);
     });
 
     it('formats negative values', () => {

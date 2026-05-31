@@ -51,7 +51,7 @@ const LoyaltyCardLookup: React.FC<LoyaltyCardLookupProps> = ({
  } else {
  setCard(cards[0]);
  }
- } catch (error) {
+ } catch (_error) {
  message.error(t('error_loading'));
  setCard(null);
  } finally {

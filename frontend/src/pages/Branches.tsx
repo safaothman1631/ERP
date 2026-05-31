@@ -133,7 +133,7 @@ export default function Branches() {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('branches.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('branches.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

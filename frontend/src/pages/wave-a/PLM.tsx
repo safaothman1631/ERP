@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Space, Form, Input, Select, Tag, message, Card, Modal } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, FileTextOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader } from '../../design-system';
@@ -23,7 +23,7 @@ const PLM: React.FC = () => {
  try {
  const res = await api.get('/api/plm/ecos', { params: { limit: 100 } });
  setEcos(res.data.items || []);
- } catch (error) {
+ } catch (_error) {
  message.error(t('error'));
  } finally {
  setLoading(false);

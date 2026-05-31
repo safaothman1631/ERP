@@ -49,7 +49,7 @@ const POSShipLaterDialog: React.FC<POSShipLaterDialogProps> = ({
  message.success(t('pos.ship_later_created'));
  onSuccess(res.data.sales_order_id, res.data.sales_order_number);
  handleClose();
- } catch (error) {
+ } catch (_error) {
  message.error(t('error'));
  } finally {
  setLoading(false);

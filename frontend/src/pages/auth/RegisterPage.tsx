@@ -25,7 +25,6 @@ import { useAuthStore } from '../../store';
 import api from '../../api';
 import AuthLayout from '../../layouts/AuthLayout';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
-import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { isRTLLanguage } from '../../utils/language';
 import { useOnboardingStore } from '../../onboarding/store';

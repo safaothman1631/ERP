@@ -50,8 +50,8 @@ const BankRules: React.FC = () => {
  const [loading, setLoading] = useState(false);
  const [modalOpen, setModalOpen] = useState(false);
  const [editingId, setEditingId] = useState<string | null>(null);
- const [accounts, setAccounts] = useState<{ id: string; name: string; code: string }[]>([]);
- const [contacts, setContacts] = useState<{ id: string; display_name: string }[]>([]);
+ const [_accounts, setAccounts] = useState<{ id: string; name: string; code: string }[]>([]);
+ const [_contacts, setContacts] = useState<{ id: string; display_name: string }[]>([]);
  const [form] = Form.useForm();
  const [saving, setSaving] = useState(false);
  const [applying, setApplying] = useState(false);
@@ -171,7 +171,7 @@ const BankRules: React.FC = () => {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('bankRules.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('bankRules.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

@@ -21,7 +21,7 @@ export interface SettingsRowProps {
 
 const SettingsRow: React.FC<SettingsRowProps> = ({
   label, description, htmlFor, children, divider = true,
-  align = 'center', controlWidth, inline = false,
+  align: _align = 'center', controlWidth, inline = false,
 }) => {
   const isDark = useAuthStore(s => s.theme) === 'dark';
   const ink = isDark ? palette.darkInk : palette.ink900;

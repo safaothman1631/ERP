@@ -1,6 +1,7 @@
 import React from 'react';
 import { Typography, message } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { palette, space } from '../theme/tokens';
 import { useAuthStore } from '../store';
 
@@ -28,6 +29,7 @@ export interface KeyValueGridProps {
  * RTL-aware؛ copyable values جوان نمایش دەکرێن.
  */
 export const KeyValueGrid: React.FC<KeyValueGridProps> = ({ items, columns = 2, rowGap = space.md }) => {
+  const { t } = useTranslation();
   const isDark = useAuthStore((s) => s.theme) === 'dark';
   const labelColor = isDark ? palette.darkInkMuted : palette.ink500;
   const valueColor = isDark ? palette.darkInk : palette.ink900;
@@ -35,7 +37,7 @@ export const KeyValueGrid: React.FC<KeyValueGridProps> = ({ items, columns = 2, 
   const handleCopy = (val: React.ReactNode) => {
     if (typeof val !== 'string' && typeof val !== 'number') return;
     void navigator.clipboard.writeText(String(val));
-    void message.success('کۆپی کرا');
+    void message.success(t('copied', 'Copied'));
   };
 
   return (

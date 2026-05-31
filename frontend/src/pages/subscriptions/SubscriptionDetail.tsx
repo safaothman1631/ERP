@@ -56,14 +56,14 @@ const SubscriptionDetail: React.FC = () => {
  try {
  const res = await api.get(`/api/subscriptions/${id}/dunning`);
  setDunning(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  const fetchPlans = async () => {
  try {
  const res = await api.get('/api/subscriptions/plans');
  setPlans(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  useEffect(() => {

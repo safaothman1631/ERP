@@ -21,7 +21,7 @@ const Attachments: React.FC<AttachmentsProps> = ({ entityType, entityId }) => {
     try {
       const res = await api.get(`/api/attachments/${entityType}/${entityId}`);
       setAttachments(Array.isArray(res.data) ? res.data : []);
-    } catch (error) {
+    } catch (_error) {
       message.error(t('error'));
     } finally {
       setLoading(false);

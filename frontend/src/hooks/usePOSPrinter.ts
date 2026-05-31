@@ -145,7 +145,7 @@ export function usePOSPrinter(): POSPrinterState {
         setReady(false);
       });
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.warn('[usePOSPrinter] Web Bluetooth connect failed', err);
       setReady(false);
     }

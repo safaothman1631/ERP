@@ -3,13 +3,13 @@ import { Button, Space, Tag, Select, DatePicker, message } from 'antd';
 import { ReloadOutlined, CheckOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
 dayjs.extend(relativeTime);
 
-const { RangePicker } = DatePicker;
+const { RangePicker: _RangePicker } = DatePicker;
 
 interface Alert {
   id: string;
@@ -39,7 +39,7 @@ const AlertHistory: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [filters, setFilters] = useState<any>({});
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [autoRefresh, _setAutoRefresh] = useState(true);
 
   useEffect(() => {
     loadAlerts();
@@ -69,7 +69,7 @@ const AlertHistory: React.FC = () => {
       const res = await api.get('/api/iot/alerts', { params });
       setAlerts(res.data.items);
       setTotal(res.data.total);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('common.load_failed', 'Failed to load'));
     } finally {
       setLoading(false);
@@ -90,7 +90,7 @@ const AlertHistory: React.FC = () => {
       await api.post(`/api/iot/alerts/${id}/ack`);
       message.success(t('iot.acknowledged', 'Acknowledged'));
       loadAlerts();
-    } catch (err) {
+    } catch (_err) {
       message.error(t('common.operation_failed', 'Operation failed'));
     }
   };

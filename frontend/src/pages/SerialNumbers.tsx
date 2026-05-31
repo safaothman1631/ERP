@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Tag, Form, Input, Select, DatePicker, Space, Popconfirm } from 'antd';
+import { Button, Tag, Form, Input, Select, DatePicker, Space } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, EditOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -139,7 +139,7 @@ const SerialNumbers: React.FC = () => {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('serialNumbers.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('serialNumbers.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

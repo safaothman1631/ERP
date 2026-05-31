@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
  Button, Space, message, Popconfirm, Card, Tag } from 'antd';
-import { 
- PlusOutlined, EditOutlined, DeleteOutlined, 
- PlayCircleOutlined, EyeOutlined 
-} from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, PlayCircleOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { useNavigate } from 'react-router-dom';

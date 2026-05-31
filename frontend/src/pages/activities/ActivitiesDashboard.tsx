@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Button, Space, Tag, message, Row, Col } from 'antd';
+import { Card, Button, Tag, message, Row, Col } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -20,14 +20,6 @@ interface Activity {
   status: string;
   created_at?: string;
 }
-
-const activityTypeColor: Record<string, string> = {
-  todo: 'blue',
-  call: 'green',
-  meeting: 'purple',
-  email: 'orange',
-  upload: 'cyan',
-};
 
 const activityTypeLabel: Record<string, string> = {
   todo: 'مەرام',

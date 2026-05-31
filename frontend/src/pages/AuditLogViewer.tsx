@@ -37,7 +37,7 @@ const AuditLogViewer: React.FC = () => {
       });
       setLogs(res.data.items || []);
       setTotal(res.data.total || 0);
-    } catch (error) {
+    } catch (_error) {
       message.error(t('error'));
     } finally {
       setLoading(false);

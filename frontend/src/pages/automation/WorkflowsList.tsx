@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Form, Input, Select, Switch, Tag, message, Card, Drawer, Modal } from 'antd';
+import { Button, Space, Form, Input, Select, Switch, Tag, message, Card, Modal } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, CopyOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -49,7 +49,7 @@ const WorkflowsList: React.FC = () => {
 
  const handleCreate = async (values: any) => {
  try {
- const trigger = triggers.find((t) => t.event === values.trigger_event);
+ const _trigger = triggers.find((t) => t.event === values.trigger_event);
  const payload = {
  name: values.name,
  description: values.description,
@@ -68,7 +68,7 @@ const WorkflowsList: React.FC = () => {
  }
  };
 
- const handleToggle = async (id: string, active: boolean) => {
+ const handleToggle = async (id: string, _active: boolean) => {
  try {
  await api.post(`/api/automation/workflows/${id}/toggle`);
  message.success(t('success'));

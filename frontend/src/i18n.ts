@@ -91,7 +91,7 @@ function getPersistedLanguage(): string {
 export const humanizeKey = (key: string): string => {
   const last = key.split('.').pop() || key;
   return last
-    .replace(/[_\-]+/g, ' ')
+    .replace(/[_-]+/g, ' ')
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     .trim()
     .replace(/\b\w/g, (c) => c.toUpperCase());
@@ -215,7 +215,7 @@ i18n.on('languageChanged', (lng) => {
           /* noop — toast unavailable before AppInitializer mounts */
         }
         try {
-          // eslint-disable-next-line no-console
+           
           console.warn('[i18n] Failed to load locale bundle', lng, err);
         } catch {
           /* noop */

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Form, Input, InputNumber, Select, DatePicker, Space} from 'antd';
+import { Button, Form, Input, InputNumber, DatePicker, Space } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -13,8 +13,6 @@ import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 import { useAddGate } from '../components/AddGate/useAddGate';
-import { asTranslationKey } from '../i18n/types';
-
 const Expenses: React.FC = () => {
  const { t } = useTranslation();
  const [data, setData] = useState<any[]>([]);
@@ -23,7 +21,7 @@ const Expenses: React.FC = () => {
  const [page, setPage] = useState(1);
  const [modal, setModal] = useState(false);
  const [form] = Form.useForm();
- const [accounts, setAccounts] = useState<any[]>([]);
+ const [_accounts, setAccounts] = useState<any[]>([]);
  const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
  try { return JSON.parse(localStorage.getItem('expenses.hiddenCols') || '[]'); } catch { return []; }
  });
@@ -82,7 +80,7 @@ const Expenses: React.FC = () => {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('expenses.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('expenses.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

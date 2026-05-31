@@ -58,7 +58,7 @@ const SIDER_COLLAPSED = 64;
  * Replaces legacy AppLayout. Token-driven, RTL-aware, dark-mode-aware.
  */
 export const AppShell: React.FC = () => {
-  const { i18n, t } = useTranslation();
+  const { i18n: _i18n, t } = useTranslation();
   const { theme: appTheme } = useAuthStore();
   const { isMobile, isTablet } = useViewport();
   const orgId = useAuthStore(s => s.orgId);

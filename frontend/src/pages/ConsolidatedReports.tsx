@@ -54,7 +54,7 @@ export default function ConsolidatedReports() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  useEffect(() => { load();   }, []);
 
   const fmt = (n: number) => n.toLocaleString();
 

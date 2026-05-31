@@ -15,9 +15,6 @@ import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 import { useAddGate } from '../components/AddGate/useAddGate';
-import { EmptyState as AddGateEmptyState } from '../components/AddGate/EmptyState';
-import { asTranslationKey } from '../i18n/types';
-
 const { Option } = Select;
 
 const Contacts: React.FC = () => {
@@ -145,7 +142,7 @@ const Contacts: React.FC = () => {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('contacts.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('contacts.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

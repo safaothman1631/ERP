@@ -40,7 +40,7 @@ const StoreProduct: React.FC = () => {
       setLoading(true);
       const res = await api.get(`/api/storefront/products/${id}`);
       setProduct(res.data);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('storefront.product_not_found'));
       navigate('/store');
     } finally {
@@ -85,7 +85,7 @@ const StoreProduct: React.FC = () => {
 
       message.success(t('storefront.added_to_cart'));
       navigate('/store/cart');
-    } catch (err) {
+    } catch (_err) {
       message.error(t('storefront.add_to_cart_failed'));
     } finally {
       setAdding(false);

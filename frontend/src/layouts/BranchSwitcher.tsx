@@ -3,7 +3,7 @@ import { Tooltip, Button, Dropdown, Spin, Tag } from 'antd';
 import { ApartmentOutlined, CheckOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useOrgStore } from '../stores/orgStore';
-import { palette, space } from '../theme/tokens';
+import { palette } from '../theme/tokens';
 
 interface BranchItem {
   id: string;

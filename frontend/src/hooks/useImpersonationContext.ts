@@ -50,7 +50,7 @@ export function useImpersonationContext(): ImpersonationContext {
     } catch (e) {
       // Even if the backend call fails (token already expired, network
       // hiccup), wipe local storage so the UI doesn't loop.
-      // eslint-disable-next-line no-console
+       
       console.warn('impersonation.end_failed', e);
     } finally {
       clearImpersonationToken();

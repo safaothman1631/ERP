@@ -137,7 +137,7 @@ const PriceLists: React.FC = () => {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('priceLists.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('priceLists.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  const nestedColumns = [

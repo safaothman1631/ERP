@@ -36,7 +36,10 @@
     "lhci": "lhci autorun",
     "lhci:no-regression": "node scripts/lighthouse-no-regression.mjs",
     "release:readiness": "node scripts/release-readiness.mjs",
-    "prepare": "cd .. && husky frontend/.husky || true"
+    "prepare": "cd .. && husky frontend/.husky || true",
+    "i18n:purity": "node scripts/i18n-purity.mjs",
+    "i18n:purity:foundation": "node scripts/i18n-purity.mjs --scope=foundation",
+    "i18n:backfill": "node scripts/i18n-backfill.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx}": [

@@ -310,7 +310,7 @@ const POSProducts: React.FC = () => {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('posProducts.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('posProducts.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  const noFilters = !filters.q && !filters.category_id;

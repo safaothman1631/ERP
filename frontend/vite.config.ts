@@ -88,6 +88,30 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test-setup.ts'],
     globals: true,
+    // A few integration-style suites (HelpPanel, the system-wide PBT sweep) do
+    // real work per test — dynamic `import()` of the help registry, i18n init,
+    // full React render with `waitFor` polling. They pass in well under a
+    // second in isolation. 30 s is generous headroom without masking a hang.
+    testTimeout: 30_000,
+    hookTimeout: 30_000,
+    // Cap worker concurrency. The dev box reports 24 logical CPUs but only
+    // ~16 GB RAM, so a 1-worker-per-core jsdom pool spawns ~24 heavy workers
+    // that contend for memory and thrash — which is what made the integration
+    // tests above crawl past their timeout under the full 95-file run (they are
+    // fast in isolation). Pinning the pool to a memory-safe width keeps every
+    // worker responsive; total wall-clock is unchanged because the suite is
+    // memory-bound, not CPU-bound, at this scale.
+    // `forks` (separate processes), NOT `threads`: each fork's heap is fully
+    // reclaimed when it finishes a file, so memory does not accumulate across
+    // the 95-file run. On this box (24 logical CPUs but only ~16 GB RAM) a
+    // thread pool grew the shared heap until heavy integration tests (HelpPanel
+    // render, SystemHealthPage retry, the PBT sweep) went into GC death-spiral
+    // and blew their timeout — even though every file passes in isolation.
+    // Capping at 4 forks keeps total resident memory well within budget.
+    pool: 'forks',
+    poolOptions: {
+      forks: { minForks: 1, maxForks: 4 },
+    },
   },
   server: {
     port: 5173,
@@ -102,7 +126,10 @@ export default defineConfig({
     // so they reach the correct host without a proxy.
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000',
+        // Defaults to the local FastAPI backend. To preview the dev UI against
+        // the LIVE backend (no local backend needed), set VITE_DEV_API_TARGET,
+        // e.g. PowerShell:  $env:VITE_DEV_API_TARGET="https://erpiq.systems"; npm run dev
+        target: process.env.VITE_DEV_API_TARGET || 'http://127.0.0.1:8000',
         changeOrigin: true,
         secure: false,
       },

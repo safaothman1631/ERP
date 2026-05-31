@@ -14,8 +14,9 @@
  * ```
  */
 import React from 'react';
-import { Card, Skeleton, Alert, Typography } from 'antd';
+import { Card, Alert, Typography } from 'antd';
 import { motion, useReducedMotion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { palette, radius, shadow, space } from '../theme/tokens';
 import { cardVariants } from '../utils/animations';
 import LoadingSkeleton from './LoadingSkeleton';
@@ -62,6 +63,7 @@ const ChartCardInner: React.FC<ChartCardProps> = ({
   height = 280,
   animated = true,
 }) => {
+  const { t } = useTranslation();
   const prefersReducedMotion = useReducedMotion();
   const shouldAnimate = animated && !prefersReducedMotion;
 
@@ -75,6 +77,7 @@ const ChartCardInner: React.FC<ChartCardProps> = ({
 
   const content = (
     <Card
+      className="premium-card"
       styles={{ body: { padding: space.lg } }}
       style={cardStyle}
       title={
@@ -127,7 +130,7 @@ const ChartCardInner: React.FC<ChartCardProps> = ({
                     padding: '2px 8px',
                   }}
                 >
-                  Retry
+                  {t('retry', 'Retry')}
                 </button>
               ) : undefined
             }

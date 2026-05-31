@@ -130,5 +130,6 @@
   "lost_reason": "سبب الخسارة",
   "contact_person": "شخص الاتصال",
   "next_action": "الإجراء التالي",
-  "next_action_date": "تاريخ الإجراء التالي"
+  "next_action_date": "تاريخ الإجراء التالي",
+  "invoices_subtitle": "تتبع الفواتير والأرصدة ومدفوعات العملاء"
 }

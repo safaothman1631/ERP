@@ -171,7 +171,7 @@ const MarketingDashboard: React.FC = () => {
             dataSource={campaigns}
             rowKey="id"
             pagination={false}
-            onRow={(rec) => ({ onClick: () => navigate(`/marketing/campaigns/email`) })}
+            onRow={(_rec) => ({ onClick: () => navigate(`/marketing/campaigns/email`) })}
             style={{ cursor: 'pointer' }}
           />
         </Card>

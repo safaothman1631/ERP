@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Tag, Select, Dropdown, Form, Input, InputNumber, DatePicker, Space, Divider, Descriptions } from 'antd';
+import { Button, Tag, Dropdown, Form, Input, InputNumber, DatePicker, Space, Divider, Descriptions } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, MoreOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -15,15 +15,13 @@ import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 import { useAddGate } from '../components/AddGate/useAddGate';
-import { asTranslationKey } from '../i18n/types';
-
 const statusColors: Record<string, string> = { draft: 'default', confirmed: 'blue', invoiced: 'purple', void: 'red' };
 
 const SalesOrders: React.FC = () => {
  const { t } = useTranslation();
  const [page, setPage] = useState(1);
  const [modalOpen, setModalOpen] = useState(false);
- const [contacts, setContacts] = useState<any[]>([]);
+ const [_contacts, setContacts] = useState<any[]>([]);
  const [items, setItems] = useState<any[]>([]);
  const [form] = Form.useForm();
  const [lines, setLines] = useState<any[]>([{ key: 0, item_id: '', description: '', quantity: 1, unit_price: 0, discount_percent: 0 }]);
@@ -108,7 +106,7 @@ const SalesOrders: React.FC = () => {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('salesOrders.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('salesOrders.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

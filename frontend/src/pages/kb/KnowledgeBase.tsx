@@ -50,7 +50,7 @@ export default function KnowledgeBase() {
       const arts = artRes.data.items || [];
       setArticles(arts);
       setPopular(arts.sort((a: Article, b: Article) => (b.view_count || 0) - (a.view_count || 0)).slice(0, 5));
-    } catch (err) {
+    } catch (_err) {
       setError(true);
     } finally {
       setLoading(false);

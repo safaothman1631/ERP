@@ -19,7 +19,7 @@
  * isn't wired (early dev / Storybook), we fall back to English literals.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ALL_DIALECTS, getDialectById } from '../../hardware/printers/dialects';
+import { ALL_DIALECTS } from '../../hardware/printers/dialects';
 import { detectCapabilities, PrinterService } from '../../hardware/printers/printer-service';
 import { CashDrawerService } from '../../hardware/cash-drawer/cash-drawer';
 import { DisplayService } from '../../hardware/customer-display/display-service';

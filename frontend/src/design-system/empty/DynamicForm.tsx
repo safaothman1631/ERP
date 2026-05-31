@@ -12,7 +12,7 @@
  */
 
 import { memo, useCallback, useMemo, type ReactNode, type ChangeEvent } from 'react';
-import { Form, Input, InputNumber, Select, Upload, Button } from 'antd';
+import { Form, Input, InputNumber, Select, Upload } from 'antd';
 import { InboxOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { FieldDef, FieldOption, QuickCreateValues } from './types';

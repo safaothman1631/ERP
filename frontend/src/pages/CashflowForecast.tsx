@@ -13,7 +13,7 @@ const { Option } = Select;
 const CashflowForecast: React.FC = () => {
   const { t } = useTranslation();
   const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
   const [days, setDays] = useState(30);
 
   const fetchData = async () => {

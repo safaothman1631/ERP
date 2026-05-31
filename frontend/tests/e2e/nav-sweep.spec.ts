@@ -72,10 +72,6 @@ async function openCommandPalette(page: Page): Promise<void> {
   ).toBeVisible({ timeout: 5_000 });
 }
 
-async function closeCommandPalette(page: Page): Promise<void> {
-  await page.keyboard.press('Escape');
-}
-
 /**
  * Drive the side-nav: expand the section that owns `entry.path`, click the
  * leaf, assert the URL and absence of NotFound.

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Button, DatePicker, Space, Statistic, Typography, message } from 'antd';
-import { ReloadOutlined, EditOutlined, DollarOutlined, RiseOutlined } from '@ant-design/icons';
+import { Card, Button, DatePicker, Space, Statistic, Typography, message } from 'antd';
+import { ReloadOutlined, EditOutlined, DollarOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
@@ -19,7 +19,7 @@ const { Responsive, WidthProvider } = RGL as any;
 type Layout = { i: string; x: number; y: number; w: number; h: number };
 
 const { RangePicker } = DatePicker;
-const { Text, Title } = Typography;
+const { Text, Title: _Title } = Typography;
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
@@ -51,7 +51,7 @@ const DashboardView: React.FC = () => {
     try {
       const res = await api.get(`/api/dashboards/${id}`);
       setDashboard(res.data.data);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('load_error'));
     } finally {
       setLoading(false);
@@ -79,7 +79,7 @@ const DashboardView: React.FC = () => {
     }
   };
 
-  const formatNumber = (val: number | undefined, unit?: string) => {
+  const _formatNumber = (val: number | undefined, unit?: string) => {
     if (val === undefined || val === null) return '-';
     const formatted = new Intl.NumberFormat('en-US').format(val);
     return unit ? `${formatted} ${unit}` : formatted;

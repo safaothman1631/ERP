@@ -83,7 +83,7 @@ const ReconciliationPage: React.FC = () => {
     }
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [providerFilter, dateRange]);
+  useEffect(() => { load();   }, [providerFilter, dateRange]);
 
   const handleResolve = async () => {
     if (!actionTarget) return;

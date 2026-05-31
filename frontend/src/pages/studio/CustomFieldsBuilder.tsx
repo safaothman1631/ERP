@@ -6,7 +6,6 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, ArrowUpOutlined, ArrowDownO
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageHeader, EmptyState } from '../../design-system';
-import { space } from '../../theme/tokens';
 import api from '../../api';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';

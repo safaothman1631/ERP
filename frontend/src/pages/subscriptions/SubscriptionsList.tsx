@@ -64,7 +64,7 @@ const SubscriptionsList: React.FC = () => {
  try {
  const res = await api.get('/api/subscriptions/plans');
  setPlans(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  useEffect(() => {

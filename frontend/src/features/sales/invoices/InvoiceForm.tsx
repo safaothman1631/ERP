@@ -13,7 +13,7 @@
  * Requirements: 15.1–15.7
  */
 import React, { Suspense, useCallback, useMemo, useState } from 'react';
-import { Form, Input, DatePicker, Select, Divider, Typography, Space } from 'antd';
+import { Form, Input, DatePicker, Select, Divider, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import dayjs from 'dayjs';

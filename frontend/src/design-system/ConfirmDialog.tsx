@@ -70,13 +70,13 @@ const ConfirmDialogInner: React.FC<ConfirmDialogProps> = ({
  open,
  title,
  description,
- okText = 'OK',
- cancelText = 'Cancel',
+ okText: _okText = 'OK',
+ cancelText: _cancelText = 'Cancel',
  danger = false,
- loading = false,
+ loading: _loading = false,
  onOk,
  onCancel,
- ariaLabel,
+ ariaLabel: _ariaLabel,
 }) => {
  const icon = danger ? (
  <ExclamationCircleFilled style={{ color: palette.danger }} />

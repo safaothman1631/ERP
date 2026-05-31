@@ -16,7 +16,7 @@ interface TableShapeProps {
 }
 
 const TableShape: React.FC<TableShapeProps> = ({ table, onClick }) => {
- const { t } = useTranslation();
+ const { t: _t } = useTranslation();
  
  const stateColors: Record<string, string> = {
  available: '#52c41a',

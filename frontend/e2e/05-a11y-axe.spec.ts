@@ -13,11 +13,7 @@ import { loginAsAdmin } from './helpers/auth';
  */
 
 /** Routes that do NOT require authentication. */
-const PUBLIC_ROUTES = ['/login', '/'] as const;
-
 /** Routes that require authentication. */
-const AUTHENTICATED_ROUTES = ['/dashboard', '/settings', '/sales/invoices'] as const;
-
 /**
  * Runs an Axe scan on the current page and asserts zero serious/critical violations.
  */

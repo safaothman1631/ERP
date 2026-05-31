@@ -38,6 +38,7 @@ const SectionCardInner: React.FC<SectionCardProps> = ({
   ) : undefined;
   return (
     <Card
+      className="premium-card"
       bordered={bordered}
       style={{ borderRadius: radius.lg, boxShadow: elev, marginBottom: space.lg, ...style }}
       styles={{

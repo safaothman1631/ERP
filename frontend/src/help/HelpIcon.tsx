@@ -78,7 +78,7 @@ export const HelpIcon: React.FC<HelpIconProps> = ({ sectionId, sectionNameKey })
   if (resolved.unavailable) {
     // Log a structured warning for monitoring.
     try {
-      // eslint-disable-next-line no-console
+       
       console.warn('[HelpIcon] Help registry unavailable for section:', sectionId);
     } catch {
       /* noop — never crash the section */

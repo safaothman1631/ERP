@@ -129,7 +129,7 @@ export default function PaymentLinks() {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('paymentLinks.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('paymentLinks.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

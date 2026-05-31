@@ -14,27 +14,7 @@
  *  - Test RTL language support (font stacks for Kurdish/Arabic)
  */
 import { describe, it, expect } from 'vitest';
-import {
-  palette,
-  space,
-  spacing,
-  radius,
-  fontFamily,
-  fontSize,
-  fontWeight,
-  lineHeight,
-  duration,
-  shadow,
-  zIndex,
-  a11y,
-  buildAntTokens,
-  buildAntComponents,
-  status,
-  elevation,
-  typography,
-  dataViz,
-  controlHeight,
-} from './tokens';
+import { palette, space, spacing, fontFamily, fontSize, fontWeight, duration, shadow, zIndex, a11y, buildAntTokens, buildAntComponents, status, elevation, typography, dataViz, controlHeight } from './tokens';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -275,7 +255,7 @@ describe('Token accessibility and consistency', () => {
     });
 
     it('all duration values are non-negative numbers', () => {
-      for (const [key, val] of Object.entries(duration)) {
+      for (const [_key, val] of Object.entries(duration)) {
         expect(typeof val).toBe('number');
         expect(val).toBeGreaterThanOrEqual(0);
       }

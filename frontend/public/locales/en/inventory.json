@@ -110,5 +110,10 @@
   "export_items": "Export Items",
   "usefulLife": "Useful Life",
   "salvageValue": "Salvage Value",
-  "purchasePrice": "Purchase Price"
+  "purchasePrice": "Purchase Price",
+  "stock_on_hand": "Stock",
+  "purchase_rate": "Purchase Rate",
+  "sales_rate": "Sales Rate",
+  "no_items": "No items yet",
+  "no_items_hint": "Add your first item to start managing inventory"
 }

@@ -28,7 +28,7 @@ export default function HRAttendance() {
     setList(a.data.items || []);
     setEmps(e.data.items || []);
   };
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [emp, range]);
+  useEffect(() => { load();   }, [emp, range]);
 
   const checkIn = async () => {
     if (!emp) return message.warning(t('select_employee'));

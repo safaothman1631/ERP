@@ -97,7 +97,7 @@ const Branding: React.FC = React.memo(() => {
     } catch (err) {
       if (previous) qc.setQueryData(QUERY_KEY, previous);
       message.error(t('common:save_failed', { defaultValue: 'Save failed' }));
-      // eslint-disable-next-line no-console
+       
       console.warn('[Branding] save failed', err);
     } finally {
       setSaving(false);

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { FC } from 'react';
-import { Button, Form, Input, InputNumber, DatePicker, Select, Space, Popconfirm, Tag, message as antdMessage } from 'antd';
+import { Button, Form, Input, InputNumber, DatePicker, Select, Space, Popconfirm } from 'antd';
 
 import { PlusOutlined, EditOutlined, DeleteOutlined, CheckOutlined, SendOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -46,8 +46,8 @@ const MileageLog: FC = () => {
 
  // Filters
  const [statusFilter, setStatusFilter] = useState<string>('');
- const [dateFrom, setDateFrom] = useState<Dayjs | null>(null);
- const [dateTo, setDateTo] = useState<Dayjs | null>(null);
+ const [_dateFrom, _setDateFrom] = useState<Dayjs | null>(null);
+ const [_dateTo, _setDateTo] = useState<Dayjs | null>(null);
 
  const fetchData = async () => {
  setLoading(true);

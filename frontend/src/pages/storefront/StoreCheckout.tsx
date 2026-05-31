@@ -5,8 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
 import api from '../../api';
-import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
-
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
@@ -64,7 +62,7 @@ const StoreCheckout: React.FC = () => {
 
       message.success(t('storefront.order_placed'));
       navigate(`/store/order/${res.data.order_id}?email=${values.email}`);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('storefront.checkout_failed'));
     } finally {
       setSubmitting(false);

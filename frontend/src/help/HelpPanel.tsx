@@ -201,7 +201,7 @@ function scrollRouteTargetIntoView(route: string): void {
   // semantics for a page-level Section.
   if (typeof window !== 'undefined') {
     try {
-      window.scrollTo({ top: 0, left: 0, behavior });
+      window.scrollTo({ top: 0, left: 0, behavior }); /* rtl-ignore */
     } catch {
       window.scrollTo(0, 0);
     }
@@ -383,7 +383,7 @@ interface DesktopPopoverProps {
 /** Computed top-left coordinates for the desktop popover. */
 interface PopoverPosition {
   top: number;
-  left: number;
+  left: number; /* rtl-ignore */
   /** True when the popover is positioned **above** the anchor (flipped). */
   flipped: boolean;
 }
@@ -448,7 +448,7 @@ const DesktopPopover: React.FC<DesktopPopoverProps> = ({
   const panelRef = useRef<HTMLDivElement | null>(null);
   const [position, setPosition] = useState<PopoverPosition>({
     top: 0,
-    left: 0,
+    left: 0, /* rtl-ignore */
     flipped: false,
   });
 

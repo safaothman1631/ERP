@@ -1,5 +1,5 @@
 import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
-import { Drawer, Input, Layout, Tag, Tooltip } from 'antd';
+import { Input, Layout, Tag, Tooltip } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
@@ -183,7 +183,7 @@ export const SideNav: React.FC<SideNavProps> = ({
   const itemPadY = isMobile ? 1 : (isCompact ? 5 : 6);
   const itemFont = isMobile ? 12.5 : (isCompact ? 13 : 13.5);
   const itemGap = isMobile ? 7 : 8;
-  const itemBorderRadius = isMobile ? 5 : (radius.md as number | string);
+  const _itemBorderRadius = isMobile ? 5 : (radius.md as number | string);
 
   // Auto-expand active section
   useEffect(() => {
@@ -232,7 +232,7 @@ export const SideNav: React.FC<SideNavProps> = ({
   const ink        = isDark ? '#E5E9F2' : '#0F172A';
   const inkMuted   = isDark ? '#7B8497' : '#64748B';
   const inkDim     = isDark ? '#5A6275' : '#94A3B8';
-  const hoverBg    = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.04)';
+  const _hoverBg    = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.04)';
   const activeBg   = isDark ? 'rgba(31,111,235,0.16)' : 'rgba(31,111,235,0.08)';
 
   const toggleSection = (key: string) => {

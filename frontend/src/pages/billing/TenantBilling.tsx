@@ -16,7 +16,7 @@
  * Spec: launch-readiness § R5.6.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   Button,
@@ -114,7 +114,7 @@ export default function TenantBilling(): React.ReactElement {
       ]);
       setState(stateRes.data);
       setInvoices(invRes.data.items || []);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('billing.errors.load_failed', 'Failed to load billing state'));
     } finally {
       setLoading(false);
@@ -140,7 +140,7 @@ export default function TenantBilling(): React.ReactElement {
       message.success(t('billing.cancelled', 'Subscription cancelled'));
       setCancelOpen(false);
       void loadState();
-    } catch (err) {
+    } catch (_err) {
       message.error(t('billing.errors.cancel_failed', 'Could not cancel'));
     } finally {
       setCancelling(false);

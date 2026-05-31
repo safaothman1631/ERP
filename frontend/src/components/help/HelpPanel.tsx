@@ -40,7 +40,7 @@ import {
 } from '../../data/helpArticles';
 import HelpArticle from './HelpArticle';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text: _Text, Paragraph: _Paragraph } = Typography;
 
 export interface HelpPanelProps {
   open: boolean;

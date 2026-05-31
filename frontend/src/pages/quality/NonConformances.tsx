@@ -7,7 +7,6 @@ import api from '../../api';
 import { message } from '../../utils/message';
 import { PageHeader } from '../../design-system';
 import { Popconfirm } from 'antd';
-import { space } from '../../theme/tokens';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 

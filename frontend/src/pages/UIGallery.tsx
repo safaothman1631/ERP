@@ -398,7 +398,7 @@ const OPTIONS: LayoutOption[] = [
 
 /* ---------- main page ---------- */
 const UIGallery: React.FC = () => {
- const { i18n, t } = useTranslation();
+ const { i18n, t: _t } = useTranslation();
  const isKu = i18n.language === 'ku';
  const setLayout = useAuthStore(s => s.setLayoutMode);
  const current = useAuthStore(s => s.layoutMode);

@@ -22,7 +22,7 @@ const RecurringInvoices: React.FC = () => {
  const [total, setTotal] = useState(0);
  const [page, setPage] = useState(1);
  const [modalOpen, setModalOpen] = useState(false);
- const [contacts, setContacts] = useState<any[]>([]);
+ const [_contacts, setContacts] = useState<any[]>([]);
  const [contactMap, setContactMap] = useState<Record<string, string>>({});
  const [items, setItems] = useState<any[]>([]);
  const [form] = Form.useForm();
@@ -119,7 +119,7 @@ const RecurringInvoices: React.FC = () => {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('recurringInvoices.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('recurringInvoices.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

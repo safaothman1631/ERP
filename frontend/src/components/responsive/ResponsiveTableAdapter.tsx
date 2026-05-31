@@ -171,9 +171,9 @@ export function ResponsiveTableAdapter<T extends Record<string, any> = any>({
   className,
   onRow,
   'data-testid': testId,
-  ...rest
+  ..._rest
 }: ResponsiveTableAdapterProps<T>): React.ReactElement {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
 
   // Convert AntD columns to ResponsiveColumn format
   const responsiveColumns: ResponsiveColumn<T>[] = useMemo(() => {
@@ -203,9 +203,9 @@ export function ResponsiveTableAdapter<T extends Record<string, any> = any>({
 
       // Map alignment
       const alignMap: Record<string, 'start' | 'center' | 'end'> = {
-        left: 'start',
+        left: 'start', /* rtl-ignore */
         center: 'center',
-        right: 'end',
+        right: 'end', /* rtl-ignore */
       };
 
       return {
@@ -238,9 +238,9 @@ export function ResponsiveTableAdapter<T extends Record<string, any> = any>({
     });
   }, [columns]);
 
-  const rowActions = useMemo(() => {
+  const _rowActions = useMemo(() => {
     if (!actionsColumn?.render) return undefined;
-    return (row: T): RowAction[] => {
+    return (_row: T): RowAction[] => {
       // The actions column render returns JSX — we can't easily convert
       // that to RowAction[] without knowing the structure. For the adapter,
       // we'll render the actions column content as a single "actions" entry.

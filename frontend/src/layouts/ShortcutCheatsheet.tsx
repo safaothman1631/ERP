@@ -2,7 +2,7 @@ import React from 'react';
 import { Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useUiStore } from '../stores/uiStore';
-import { palette, space, radius } from '../theme/tokens';
+import { palette, space } from '../theme/tokens';
 import KbdHint from '../design-system/KbdHint';
 import { FormDialog } from '../components/responsive/FormDialog';
 

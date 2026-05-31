@@ -334,11 +334,11 @@ const cssOverrides = `
     outline: none !important;
     height: auto !important;
     direction: ltr !important;
-    text-align: left !important;
+    text-align: start !important;
   }
   .auth-input.ant-input-affix-wrapper .ant-input::placeholder {
     direction: ltr !important;
-    text-align: left !important;
+    text-align: start !important;
   }
   .auth-input.ant-input-affix-wrapper:hover {
     border-color: rgba(31,111,235,0.35) !important;

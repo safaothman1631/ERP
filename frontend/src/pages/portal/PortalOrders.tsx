@@ -35,7 +35,7 @@ const PortalOrders: React.FC = () => {
       });
 
       setOrders(res.data.orders || []);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('portal.load_failed'));
     } finally {
       setLoading(false);

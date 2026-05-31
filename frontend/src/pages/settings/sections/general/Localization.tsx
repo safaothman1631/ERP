@@ -117,7 +117,7 @@ const Localization: React.FC = React.memo(() => {
     } catch (err) {
       if (previousData) qc.setQueryData(QUERY_KEY, previousData);
       message.error(t('common:save_failed', { defaultValue: 'Save failed' }));
-      // eslint-disable-next-line no-console
+       
       console.warn('[Localization] save failed', err);
     } finally {
       setSaving(false);

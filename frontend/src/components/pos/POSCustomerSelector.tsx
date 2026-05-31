@@ -57,7 +57,7 @@ const POSCustomerSelector: React.FC<POSCustomerSelectorProps> = ({
  }
  
  setCustomers(items);
- } catch (error) {
+ } catch (_error) {
  message.error(t('error'));
  } finally {
  setLoading(false);
@@ -75,7 +75,7 @@ const POSCustomerSelector: React.FC<POSCustomerSelectorProps> = ({
  message.success(t('pos.customer_created'));
  onSelect(res.data);
  handleClose();
- } catch (error) {
+ } catch (_error) {
  message.error(t('error'));
  }
  };

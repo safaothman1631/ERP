@@ -45,7 +45,7 @@ const ConsolidatedPL = () => {
       const { data } = await api.get('/api/companies');
       setCompanies(data);
       setSelectedCompanies(data.map((c: Company) => c.id));
-    } catch (err) {
+    } catch (_err) {
       message.error(t('multi_entity.error_loading_companies'));
     }
   };
@@ -73,7 +73,7 @@ const ConsolidatedPL = () => {
         profit: filtered.rows.reduce((sum: number, r: PLRow) => sum + r.profit, 0),
       };
       setPlData(filtered);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('multi_entity.error_generating_pl'));
     } finally {
       setLoading(false);

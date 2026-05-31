@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Space, Tag, Switch, Form, Input, Select, App, Drawer, Modal } from 'antd';
+import { Button, Space, Tag, Switch, Form, Input, Select, App, Modal } from 'antd';
 import { PlusOutlined, EditOutlined, LockOutlined, UnlockOutlined, BarcodeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
@@ -36,7 +36,7 @@ const POSEmployees: React.FC = () => {
  const [loading, setLoading] = useState(false);
  const [modalOpen, setModalOpen] = useState(false);
  const [editingId, setEditingId] = useState<string | null>(null);
- const [pinVisible, setPinVisible] = useState(false);
+ const [_pinVisible, _setPinVisible] = useState(false);
  const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
  try { return JSON.parse(localStorage.getItem('posEmployees.hiddenCols') || '[]'); } catch { return []; }
  });
@@ -55,7 +55,7 @@ const POSEmployees: React.FC = () => {
  ]);
  setEmployees(empRes.data.items || []);
  setConfigs(configRes.data.items || []);
- } catch (error) {
+ } catch (_error) {
  message.error(t('error_loading'));
  } finally {
  setLoading(false);
@@ -94,7 +94,7 @@ const POSEmployees: React.FC = () => {
  }
  setModalOpen(false);
  loadData();
- } catch (error) {
+ } catch (_error) {
  message.error(t('error_saving'));
  }
  };
@@ -104,7 +104,7 @@ const POSEmployees: React.FC = () => {
  await api.put(`/api/pos/employees/${id}`, { is_active: isActive });
  message.success(t('updated_successfully'));
  loadData();
- } catch (error) {
+ } catch (_error) {
  message.error(t('error_saving'));
  }
  };
@@ -120,7 +120,7 @@ const POSEmployees: React.FC = () => {
  await api.put(`/api/pos/employees/${record.id}`, { pin });
  message.success(t('pin_reset_success'));
  loadData();
- } catch (error) {
+ } catch (_error) {
  message.error(t('error_saving'));
  }
  } else {
@@ -205,7 +205,7 @@ const POSEmployees: React.FC = () => {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('posEmployees.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('posEmployees.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

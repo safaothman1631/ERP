@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Button, Form, Input, Select, Space, Tag, message, Popconfirm, Modal } from 'antd';
+import { Button, Form, Input, Select, Space, Tag, message, Modal } from 'antd';
 import type { TableProps } from 'antd';
-import { PlusOutlined, ReloadOutlined, FilterOutlined } from '@ant-design/icons';
+import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';

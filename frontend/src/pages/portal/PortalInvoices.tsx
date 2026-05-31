@@ -35,7 +35,7 @@ const PortalInvoices: React.FC = () => {
       });
 
       setInvoices(res.data.invoices || []);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('portal.load_failed'));
     } finally {
       setLoading(false);

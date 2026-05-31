@@ -6,7 +6,7 @@ import { space } from '../../theme/tokens';
 import { LoadingSkeleton } from '../../design-system/LoadingSkeleton';
 
 const Subscriptions: React.FC = () => {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   const navigate = useNavigate();
   useEffect(() => { navigate('/subscriptions', { replace: true }); }, [navigate]);
   return (<Card style={{ padding: space.lg, textAlign: 'center' }}><LoadingSkeleton variant="row" rows={2} /></Card>);

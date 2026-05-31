@@ -14,10 +14,8 @@
  */
 
 import React, { useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-
 import type { SectionId } from '../../help/sectionIds';
-import { asTranslationKey, type TranslationKey } from '../../i18n/types';
+import { type TranslationKey } from '../../i18n/types';
 import { useAddGate } from './useAddGate';
 import { EmptyState } from './EmptyState';
 

@@ -43,7 +43,7 @@ export default function BranchesComparison() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  useEffect(() => { load();   }, []);
 
   const fmt = (n: number) => n.toLocaleString();
   const cols = [

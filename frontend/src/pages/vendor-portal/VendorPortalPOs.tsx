@@ -45,7 +45,7 @@ const VendorPortalPOs: React.FC = () => {
  const res = await vendorApi.get(`/api/vendor-portal/me/purchase-orders/${poId}`);
  setSelectedPO(res.data);
  setDrawerVisible(true);
- } catch (err: any) {
+ } catch (_err: any) {
  message.error(t('portal.load_failed'));
  }
  };

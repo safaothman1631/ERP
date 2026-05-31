@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Tabs, Timeline, Avatar, Button, Space, Form, Input, Select, DatePicker, Tag, Popconfirm, Empty, message } from 'antd';
 import type { TabsProps } from 'antd';
-import { PlusOutlined, CheckOutlined, DeleteOutlined, EditOutlined, UserAddOutlined } from '@ant-design/icons';
+import { PlusOutlined, CheckOutlined, DeleteOutlined, UserAddOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import api from '../api';
 import { useAuthStore } from '../store';
@@ -55,12 +54,12 @@ const activityTypeLabel: Record<string, string> = {
 
 export default function ChatterPanel({ entityType, entityId }: ChatterPanelProps) {
  const { t } = useTranslation();
- const currentUserId = useAuthStore((s) => s.userId);
+ const _currentUserId = useAuthStore((s) => s.userId);
  const [activities, setActivities] = useState<Activity[]>([]);
  const [followers, setFollowers] = useState<Follower[]>([]);
  const [users, setUsers] = useState<UserOption[]>([]);
- const [loadingActivities, setLoadingActivities] = useState(false);
- const [loadingFollowers, setLoadingFollowers] = useState(false);
+ const [_loadingActivities, setLoadingActivities] = useState(false);
+ const [_loadingFollowers, setLoadingFollowers] = useState(false);
  const [activityDrawer, setActivityDrawer] = useState(false);
  const [followerDrawer, setFollowerDrawer] = useState(false);
  const [noteText, setNoteText] = useState('');

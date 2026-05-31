@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
 // Cache token across tests in same worker to avoid hitting auth rate limit (5/min)
 let cachedToken: { access_token: string; user_id: string; org_id: string; user_name?: string } | null = null;

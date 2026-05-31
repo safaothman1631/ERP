@@ -2,11 +2,7 @@
 import { Button, Tooltip } from 'antd';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import {
-  AppstoreOutlined, CloseOutlined, DashboardOutlined, FileTextOutlined,
-  HomeOutlined, MenuOutlined, SearchOutlined, ShoppingCartOutlined,
-  WalletOutlined,
-} from '@ant-design/icons';
+import { AppstoreOutlined, CloseOutlined, HomeOutlined, SearchOutlined } from '@ant-design/icons';
 import { buildNavSections, flattenRoutes } from './navigation';
 import type { LayoutMode } from '../store';
 import { palette, radius, shadow, space } from '../theme/tokens';
@@ -107,10 +103,10 @@ const writeBottomTabs = (v: string[]) => {
   try { localStorage.setItem(BOTTOM_NAV_KEY, JSON.stringify(v)); } catch { /* ignore */ }
 };
 
-export const BottomNav: React.FC<{ isDark: boolean; onOpenPalette: () => void }> = ({ isDark, onOpenPalette }) => {
+export const BottomNav: React.FC<{ isDark: boolean; onOpenPalette: () => void }> = ({ isDark, onOpenPalette: _onOpenPalette }) => {
   const { t } = useTranslation();
   const loc = useLocation();
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const [tabs, setTabs] = useState<string[]>(readBottomTabs);
   const [editing, setEditing] = useState(false);
   const [swapSlot, setSwapSlot] = useState<number | null>(null);

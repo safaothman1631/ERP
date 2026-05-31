@@ -238,7 +238,7 @@ const OnboardingWizardInner: FC = () => {
 
       message.success(t('onboarding.wizard_complete'));
       navigate('/onboarding/checklist');
-    } catch (err) {
+    } catch (_err) {
       message.error(t('error'));
     } finally {
       setLoading(false);

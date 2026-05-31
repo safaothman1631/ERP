@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Button, Form, Input, Select, DatePicker, InputNumber, Tag, Space, Divider, message as antMessage } from 'antd';
+import { Card, Button, Form, Input, Select, DatePicker, InputNumber, Tag, Space, Divider } from 'antd';
 import { PlusOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { PageHeader } from '../design-system';
 import { space } from '../theme/tokens';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import { message } from '../utils/message';
 import { FormDialog } from '../components/responsive/FormDialog';
 

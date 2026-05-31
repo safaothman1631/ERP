@@ -74,5 +74,8 @@
   "access_denied": "Access Denied",
   "access_denied_desc": "You don't have permission to view this page",
   "something_went_wrong": "Something Went Wrong",
-  "something_went_wrong_desc": "Please try again or contact support"
+  "something_went_wrong_desc": "Please try again or contact support",
+  "pageLoadFailed": "Page failed to load",
+  "pageLoadTimeout": "The page took too long to load. Please try again.",
+  "pageLoadFailedDesc": "Something went wrong while loading this page."
 }

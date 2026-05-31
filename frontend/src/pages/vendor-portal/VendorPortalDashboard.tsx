@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Row, Col, Statistic, Button, Typography, Empty, Space } from 'antd';
+import { Card, Row, Col, Statistic, Button, Typography, Empty } from 'antd';
 import { ShoppingOutlined, FileTextOutlined, DollarOutlined, WarningOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +10,7 @@ import { LoadingSkeleton } from '../../design-system/LoadingSkeleton';
 import { InlineError } from '../../components/feedback/InlineError';
 import { useLoadingState } from '../../hooks/useLoadingState';
 
-const { Title, Text } = Typography;
+const { Title, Text: _Text } = Typography;
 
 interface DashboardStats {
   open_pos_count: number;
@@ -84,7 +84,7 @@ const VendorPortalDashboard: React.FC = () => {
     {
       title: t('actions'),
       key: 'actions',
-      render: (_: any, record: any) => (
+      render: (_: any, _record: any) => (
         <Button
           type="link"
           onClick={() => navigate(`/vendor-portal/purchase-orders`)}

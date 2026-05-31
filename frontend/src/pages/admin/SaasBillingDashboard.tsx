@@ -13,18 +13,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  Alert,
-  Card,
-  Col,
-  Row,
-  Space,
-  Spin,
-  Statistic,
-  Table,
-  Tag,
-  Typography,
-} from 'antd';
+import { Alert, Card, Col, Row, Spin, Statistic, Table, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { message } from '../../utils/message';

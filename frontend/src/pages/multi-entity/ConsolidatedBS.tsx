@@ -44,7 +44,7 @@ const ConsolidatedBS = () => {
       const { data } = await api.get('/api/companies');
       setCompanies(data);
       setSelectedCompanies(data.map((c: Company) => c.id));
-    } catch (err) {
+    } catch (_err) {
       message.error(t('multi_entity.error_loading_companies'));
     }
   };
@@ -69,7 +69,7 @@ const ConsolidatedBS = () => {
         equity: filtered.rows.reduce((sum: number, r: BSRow) => sum + r.equity, 0),
       };
       setBsData(filtered);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('multi_entity.error_generating_bs'));
     } finally {
       setLoading(false);

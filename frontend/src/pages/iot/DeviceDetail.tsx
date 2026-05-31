@@ -41,7 +41,7 @@ interface Reading {
 const DeviceDetail: React.FC = () => {
  const { id } = useParams<{ id: string }>();
  const { t } = useTranslation();
- const navigate = useNavigate();
+ const _navigate = useNavigate();
  const [form] = Form.useForm();
  const [loading, setLoading] = useState(true);
  const { showSkeleton } = useLoadingState(loading);
@@ -65,7 +65,7 @@ const DeviceDetail: React.FC = () => {
  setLoading(true);
  const res = await api.get(`/api/iot/devices/${id}`);
  setDevice(res.data);
- } catch (err) {
+ } catch (_err) {
  message.error(t('common.load_failed', 'Failed to load'));
  } finally {
  setLoading(false);
@@ -125,7 +125,7 @@ const DeviceDetail: React.FC = () => {
  message.success(t('common.updated', 'Updated'));
  setEditModalVisible(false);
  loadDevice();
- } catch (err) {
+ } catch (_err) {
  message.error(t('common.save_failed', 'Save failed'));
  }
  };

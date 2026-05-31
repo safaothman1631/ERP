@@ -131,7 +131,7 @@ export async function collectOfflineSyncSnapshot(): Promise<HeartbeatSnapshot | 
     };
   } catch (err) {
     // POS DB unavailable (SSR, private mode, etc.). No-op.
-    // eslint-disable-next-line no-console
+     
     console.warn('[offline-sync-heartbeat] snapshot skipped:', err);
     return null;
   }
@@ -172,7 +172,7 @@ async function sendHeartbeat(): Promise<void> {
       keepalive: true,
     });
   } catch (err) {
-    // eslint-disable-next-line no-console
+     
     console.warn('[offline-sync-heartbeat] send failed:', err);
   }
 }

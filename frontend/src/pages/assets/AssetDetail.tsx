@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Descriptions, Button, Space, Tag, Form, DatePicker, InputNumber, Empty, Spin, Input } from 'antd';
-import { ArrowLeftOutlined, FallOutlined, StopOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, StopOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import api from '../../api';

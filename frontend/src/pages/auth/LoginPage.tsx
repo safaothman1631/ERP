@@ -19,7 +19,6 @@ import { useAuthStore } from '../../store';
 import api from '../../api';
 import AuthLayout from '../../components/AuthLayout';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
-import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
 import { getPostLoginPath } from '../../personas/resolveRoleUx';
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Tabs, Button, Tag, Card, Statistic, Row, Col, Form, Input, InputNumber, Select, Space } from 'antd';
+import { Tabs, Button, Tag, Card, Statistic, Row, Col, Form, Input, InputNumber, Space } from 'antd';
 import { message } from '../utils/message';
 import { WarningOutlined, PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -76,8 +76,8 @@ const Adjustments: React.FC = () => {
  const [data, setData] = useState<any[]>([]);
  const [loading, setLoading] = useState(false);
  const [modalOpen, setModalOpen] = useState(false);
- const [items, setItems] = useState<any[]>([]);
- const [accounts, setAccounts] = useState<any[]>([]);
+ const [_items, setItems] = useState<any[]>([]);
+ const [_accounts, setAccounts] = useState<any[]>([]);
  const [form] = Form.useForm();
  const [saving, setSaving] = useState(false);
 

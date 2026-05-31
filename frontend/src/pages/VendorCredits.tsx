@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Tag, Dropdown, Form, Input, InputNumber, DatePicker, Space, Select, Divider } from 'antd';
+import { Button, Tag, Dropdown, Form, Input, InputNumber, DatePicker, Space, Divider } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, MoreOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +21,7 @@ const VendorCredits: React.FC = () => {
  const { t } = useTranslation();
  const [page, setPage] = useState(1);
  const [modalOpen, setModalOpen] = useState(false);
- const [contacts, setContacts] = useState<any[]>([]);
+ const [_contacts, setContacts] = useState<any[]>([]);
  const [items, setItems] = useState<any[]>([]);
  const [form] = Form.useForm();
  const [lines, setLines] = useState<any[]>([{ key: 0, item_id: '', description: '', quantity: 1, unit_price: 0, discount_percent: 0 }]);
@@ -102,7 +102,7 @@ const VendorCredits: React.FC = () => {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('vendorCredits.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('vendorCredits.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

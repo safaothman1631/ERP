@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, DatePicker, Form, InputNumber, Select, message, Space, Typography, Input } from 'antd';
 import { PlusOutlined, DeleteOutlined, LineChartOutlined } from '@ant-design/icons';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
@@ -10,7 +10,7 @@ import { FormDialog } from '../../components/responsive/FormDialog';
 import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
 import { asTranslationKey } from '../../i18n/types';
 
-const { Title, Text } = Typography;
+const { Title, Text: _Text } = Typography;
 const { Option } = Select;
 
 interface CurrencyRate {

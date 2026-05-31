@@ -35,7 +35,7 @@ export default function POSCustomerDisplay() {
     // Auto-fullscreen
     try {
       document.documentElement.requestFullscreen?.();
-    } catch (e) {
+    } catch (_e) {
       // Fullscreen not supported
     }
 

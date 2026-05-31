@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
- Card, Descriptions, Button, Space, Tabs, Input, message, Form, Select, Tag, List, Avatar, Upload, Tooltip, DatePicker, Modal } from 'antd';
+import { Card, Descriptions, Button, Space, Tabs, Input, message, Form, Select, Tag, List, Avatar, Tooltip, DatePicker, Modal } from 'antd';
 import {
  DownloadOutlined, ShareAltOutlined, DeleteOutlined, UploadOutlined,
  RollbackOutlined, UserOutlined, LinkOutlined, SendOutlined
@@ -21,10 +20,10 @@ const DocumentDetail: React.FC = () => {
  const navigate = useNavigate();
  const [doc, setDoc] = useState<any>(null);
  const [versions, setVersions] = useState<any[]>([]);
- const [comments, setComments] = useState<any[]>([]);
+ const [comments, _setComments] = useState<any[]>([]);
  const [shares, setShares] = useState<any[]>([]);
- const [activity, setActivity] = useState<any[]>([]);
- const [loading, setLoading] = useState(false);
+ const [activity, _setActivity] = useState<any[]>([]);
+ const [_loading, setLoading] = useState(false);
  const [commentText, setCommentText] = useState('');
  const [shareModalOpen, setShareModalOpen] = useState(false);
  const [versionModalOpen, setVersionModalOpen] = useState(false);
@@ -37,7 +36,7 @@ const DocumentDetail: React.FC = () => {
  try {
  const res = await api.get(`/api/documents/files/${docId}`);
  setDoc(res.data);
- } catch (error) {
+ } catch (_error) {
  message.error(t('error'));
  } finally {
  setLoading(false);
@@ -49,7 +48,7 @@ const DocumentDetail: React.FC = () => {
  try {
  const res = await api.get(`/api/documents/files/${docId}/versions`);
  setVersions(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  const fetchShares = async () => {
@@ -57,7 +56,7 @@ const DocumentDetail: React.FC = () => {
  try {
  const res = await api.get('/api/documents/shares', { params: { file_id: docId } });
  setShares(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  useEffect(() => {
@@ -136,7 +135,7 @@ const DocumentDetail: React.FC = () => {
  }
  };
 
- const handleRestoreVersion = async (versionId: string) => {
+ const handleRestoreVersion = async (_versionId: string) => {
  message.info(t('dms.restore_coming_soon'));
  };
 

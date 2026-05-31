@@ -9,9 +9,6 @@ import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTable
 import { FormDialog } from '../components/responsive/FormDialog';
 import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { useAddGate } from '../components/AddGate/useAddGate';
-import { EmptyState as AddGateEmptyState } from '../components/AddGate/EmptyState';
-import { asTranslationKey } from '../i18n/types';
-
 const { Text } = Typography;
 
 interface Warehouse {
@@ -191,7 +188,7 @@ const StockTransfers: React.FC = () => {
  const [data, setData] = useState<StockTransfer[]>([]);
  const [loading, setLoading] = useState(false);
  const [modalOpen, setModalOpen] = useState(false);
- const [warehouses, setWarehouses] = useState<{ id: string; name: string }[]>([]);
+ const [_warehouses, setWarehouses] = useState<{ id: string; name: string }[]>([]);
  const [items, setItems] = useState<{ id: string; name: string }[]>([]);
  const [form] = Form.useForm();
  const [saving, setSaving] = useState(false);

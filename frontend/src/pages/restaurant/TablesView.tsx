@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Row, Col, Button, Space, message, Typography, Badge } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { PlusOutlined, CloseOutlined } from '@ant-design/icons';
+import { PlusOutlined } from '@ant-design/icons';
 import api from '../../api';
 import { PageHeader } from '../../design-system';
 import { space, radius } from '../../theme/tokens';
@@ -30,7 +30,7 @@ interface Order {
 const TablesView: React.FC = () => {
  const { t } = useTranslation();
  const [tables, setTables] = useState<RestTable[]>([]);
- const [loading, setLoading] = useState(false);
+ const [_loading, setLoading] = useState(false);
  const [drawerOpen, setDrawerOpen] = useState(false);
  const [selectedTable, setSelectedTable] = useState<RestTable | null>(null);
  const [currentOrder, setCurrentOrder] = useState<Order | null>(null);

@@ -37,7 +37,7 @@ const POSQuotationDialog: React.FC<POSQuotationDialogProps> = ({
  message.success(t('pos.quotation_saved'));
  onSuccess();
  handleClose();
- } catch (error) {
+ } catch (_error) {
  message.error(t('error'));
  } finally {
  setLoading(false);

@@ -45,7 +45,7 @@ const SalesReturns: React.FC = () => {
  const [refundMethod, setRefundMethod] = useState<string>('credit_note');
  const [refundAmount, setRefundAmount] = useState<number>(0);
  const [refunds, setRefunds] = useState<RefundRecord[]>([]);
- const [refundModalVisible, setRefundModalVisible] = useState(false);
+ const [_refundModalVisible, _setRefundModalVisible] = useState(false);
 
  useEffect(() => {
  fetchReturns();
@@ -59,7 +59,7 @@ const SalesReturns: React.FC = () => {
  });
  setReturns(response.data.items || []);
  setTotal(response.data.total || 0);
- } catch (error) {
+ } catch (_error) {
  message.error(t('errors.fetch_failed'));
  } finally {
  setLoading(false);
@@ -86,7 +86,7 @@ const SalesReturns: React.FC = () => {
  try {
  const response = await api.get(`/returns/sales/${record.id}/refunds`);
  setRefunds(response.data.items || []);
- } catch (error) {
+ } catch (_error) {
  setRefunds([]);
  }
  };

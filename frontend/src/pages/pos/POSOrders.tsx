@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Button, Tag, Space, Descriptions, Select, Typography, Switch } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { EyeOutlined, PrinterOutlined, RollbackOutlined, ShoppingCartOutlined } from '@ant-design/icons';
@@ -174,7 +174,7 @@ const POSOrders: React.FC = () => {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('posOrders.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('posOrders.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

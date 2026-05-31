@@ -58,7 +58,7 @@ const VendorReturns: React.FC = () => {
  });
  setReturns(response.data.items || []);
  setTotal(response.data.total || 0);
- } catch (error) {
+ } catch (_error) {
  message.error(t('errors.fetch_failed'));
  } finally {
  setLoading(false);
@@ -85,7 +85,7 @@ const VendorReturns: React.FC = () => {
  try {
  const response = await api.get(`/returns/vendor/${record.id}/refunds`);
  setRefunds(response.data.items || []);
- } catch (error) {
+ } catch (_error) {
  setRefunds([]);
  }
  };

@@ -3,7 +3,7 @@ import { Button, Typography } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
 import { FormDialog } from '../responsive/FormDialog';
 
-const { Text } = Typography;
+const { Text: _Text } = Typography;
 
 interface PINPadProps {
  onComplete: (pin: string) => void;

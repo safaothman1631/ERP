@@ -55,7 +55,7 @@ const IoTDevices: React.FC = () => {
  const res = await api.get('/api/iot/devices', { params });
  setDevices(res.data.items);
  setTotal(res.data.total);
- } catch (err) {
+ } catch (_err) {
  message.error(t('common.load_failed', 'Failed to load'));
  } finally {
  setLoading(false);
@@ -89,7 +89,7 @@ const IoTDevices: React.FC = () => {
  }
  setModalVisible(false);
  loadDevices();
- } catch (err) {
+ } catch (_err) {
  message.error(t('common.save_failed', 'Save failed'));
  }
  };
@@ -99,7 +99,7 @@ const IoTDevices: React.FC = () => {
  await api.delete(`/api/iot/devices/${id}`);
  message.success(t('common.deleted', 'Deleted'));
  loadDevices();
- } catch (err) {
+ } catch (_err) {
  message.error(t('common.delete_failed', 'Delete failed'));
  }
  };
@@ -110,7 +110,7 @@ const IoTDevices: React.FC = () => {
  setNewApiKey(res.data.api_key);
  setKeyModalVisible(true);
  message.success(t('iot.key_regenerated', 'API key regenerated'));
- } catch (err) {
+ } catch (_err) {
  message.error(t('common.operation_failed', 'Operation failed'));
  }
  };

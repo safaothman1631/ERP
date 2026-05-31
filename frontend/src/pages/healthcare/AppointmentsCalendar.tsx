@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, Badge, Card, Button, Form, Input, Select, DatePicker, TimePicker, message, Space, Tag, Popconfirm } from 'antd';
+import { Calendar, Badge, Card, Button, Form, Input, Select, DatePicker, TimePicker, message, Space, Popconfirm } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import type { Dayjs } from 'dayjs';
@@ -27,7 +27,7 @@ interface Patient {
 const AppointmentsCalendar: React.FC = () => {
  const { t } = useTranslation();
  const [form] = Form.useForm();
- const [loading, setLoading] = useState(false);
+ const [_loading, setLoading] = useState(false);
  const [appointments, setAppointments] = useState<Appointment[]>([]);
  const [patients, setPatients] = useState<Patient[]>([]);
  const [drawerVisible, setDrawerVisible] = useState(false);

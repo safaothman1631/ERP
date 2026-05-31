@@ -57,7 +57,7 @@ const NumberingSequences: React.FC = () => {
  try {
  const response = await api.get('/numbering/sequences');
  setSequences(response.data.items || []);
- } catch (error) {
+ } catch (_error) {
  message.error(t('errors.fetch_failed'));
  } finally {
  setLoading(false);

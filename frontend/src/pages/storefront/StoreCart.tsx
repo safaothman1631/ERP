@@ -80,7 +80,7 @@ const StoreCart: React.FC = () => {
 
       setLines(updatedLines);
       message.success(t('storefront.cart_updated'));
-    } catch (err) {
+    } catch (_err) {
       message.error(t('storefront.update_failed'));
     } finally {
       setUpdating(false);

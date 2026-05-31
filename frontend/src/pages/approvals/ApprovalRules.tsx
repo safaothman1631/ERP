@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Button, Form, Input, Select, Space, Switch, InputNumber, Card, Tag, Popconfirm } from 'antd';
+import { Button, Form, Input, Select, Space, Switch, InputNumber, Card, Popconfirm } from 'antd';
 import { message } from '../../utils/message';
-import { PlusOutlined, EditOutlined, DeleteOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';

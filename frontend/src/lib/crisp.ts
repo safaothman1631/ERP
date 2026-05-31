@@ -26,7 +26,7 @@ export function bootCrisp(websiteId?: string): void {
   if (booted) return;
   const id = websiteId || (window as any).__CRISP_ID__ || '';
   if (!id) {
-    // eslint-disable-next-line no-console
+     
     console.info('crisp.skipped', 'no website id configured');
     return;
   }

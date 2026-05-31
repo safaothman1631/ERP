@@ -73,7 +73,7 @@ const SubmissionDetailPage: React.FC = () => {
     try {
       const res = await api.get(`/api/efakhata/submissions/${sid}`);
       setRecord(res.data);
-    } catch (e) {
+    } catch (_e) {
       message.error(t('not_found', 'Submission not found'));
     } finally {
       setLoading(false);
@@ -91,7 +91,7 @@ const SubmissionDetailPage: React.FC = () => {
       await api.post(`/api/efakhata/submissions/${sid}/cancel`);
       message.success(t('cancelled_ok', 'Submission cancelled'));
       void load();
-    } catch (e) {
+    } catch (_e) {
       message.error(t('cancel_failed', 'Cancel failed'));
     }
   };

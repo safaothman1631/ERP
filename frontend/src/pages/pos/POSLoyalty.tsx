@@ -57,7 +57,7 @@ const POSLoyalty: React.FC = () => {
  try {
  const res = await api.get('/api/pos/loyalty/programs');
  setPrograms(res.data.items || []);
- } catch (error) {
+ } catch (_error) {
  message.error(t('error_loading'));
  } finally {
  setLoading(false);
@@ -69,7 +69,7 @@ const POSLoyalty: React.FC = () => {
  try {
  const res = await api.get('/api/pos/loyalty/cards');
  setCards(res.data.items || []);
- } catch (error) {
+ } catch (_error) {
  message.error(t('error_loading'));
  } finally {
  setLoading(false);
@@ -117,7 +117,7 @@ const POSLoyalty: React.FC = () => {
  }
  setModalOpen(false);
  loadPrograms();
- } catch (error) {
+ } catch (_error) {
  message.error(t('error_saving'));
  }
  };
@@ -131,7 +131,7 @@ const POSLoyalty: React.FC = () => {
  await api.delete(`/api/pos/loyalty/programs/${id}`);
  message.success(t('deleted_successfully'));
  loadPrograms();
- } catch (error) {
+ } catch (_error) {
  message.error(t('error_deleting'));
  }
  },

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Button, Tag, Dropdown, Form, Input, InputNumber, DatePicker, Space, Select, Divider, Tabs } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, MoreOutlined, DeleteOutlined, FilePdfOutlined } from '@ant-design/icons';
@@ -20,7 +20,7 @@ const CreditNotes: React.FC = () => {
  const { t } = useTranslation();
  const [page, setPage] = useState(1);
  const [modalOpen, setModalOpen] = useState(false);
- const [contacts, setContacts] = useState<any[]>([]);
+ const [_contacts, setContacts] = useState<any[]>([]);
  const [items, setItems] = useState<any[]>([]);
  const [form] = Form.useForm();
  const [lines, setLines] = useState<any[]>([{ key: 0, item_id: '', description: '', quantity: 1, unit_price: 0, discount_percent: 0 }]);
@@ -167,7 +167,7 @@ const CreditNotes: React.FC = () => {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('creditNotes.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('creditNotes.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

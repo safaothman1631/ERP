@@ -1,0 +1,438 @@
+{
+  "common": {
+    "edit_employee": {
+      "ku": "دەستکاریکردنی کارمەند",
+      "en": "Edit Employee"
+    },
+    "add_task": {
+      "ku": "زیادکردنی ئەرک",
+      "en": "Add Task"
+    },
+    "add_dependency": {
+      "ku": "زیادکردنی پەیوەندی",
+      "en": "Add Dependency"
+    },
+    "add_milestone": {
+      "ku": "زیادکردنی مایلستۆن",
+      "en": "Add Milestone"
+    },
+    "mark_complete": {
+      "ku": "نیشانکردن وەک تەواوبوو",
+      "en": "Mark Complete"
+    },
+    "no_dependencies": {
+      "ku": "هیچ پەیوەندییەک تۆمارنەکراوە",
+      "en": "No dependencies recorded"
+    },
+    "no_tasks_gantt": {
+      "ku": "هیچ ئەرکێک نییە — یەکێک زیاد بکە بۆ دەستپێکردن",
+      "en": "No tasks yet — add one to get started"
+    },
+    "edit_task": {
+      "ku": "دەستکاریکردنی ئەرک",
+      "en": "Edit Task"
+    },
+    "progress": {
+      "ku": "پێشکەوتن",
+      "en": "Progress"
+    },
+    "non_billable": {
+      "ku": "بێ حساب",
+      "en": "Non-billable"
+    }
+  },
+  "hr": {
+    "return_hint": {
+      "ku": "پاش پاشەکەوتکردن، دەگەڕێیتەوە بۆ ئەوێ کە لێی هاتوویت.",
+      "en": "After saving, you'll be sent back to where you came from."
+    }
+  },
+  "hr_extended": {
+    "application_id": {
+      "ku": "ناسنامەی داواکاری",
+      "en": "Application ID"
+    },
+    "candidate": {
+      "ku": "نامزد",
+      "en": "Candidate"
+    },
+    "position": {
+      "ku": "پۆست",
+      "en": "Position"
+    },
+    "status": {
+      "ku": "دۆخ",
+      "en": "Status"
+    },
+    "appraisal_id": {
+      "ku": "ناسنامەی هەڵسەنگاندن",
+      "en": "Appraisal ID"
+    },
+    "employee": {
+      "ku": "کارمەند",
+      "en": "Employee"
+    },
+    "cycle": {
+      "ku": "خول",
+      "en": "Cycle"
+    },
+    "rating": {
+      "ku": "هەڵسەنگاندن",
+      "en": "Rating"
+    },
+    "title": {
+      "ku": "دامەزراندن و هەڵسەنگاندن",
+      "en": "Recruitment & Appraisals"
+    },
+    "subtitle": {
+      "ku": "بەڕێوەبردنی داواکاری و هەڵسەنگاندنی کارمەندان",
+      "en": "Manage job applications and employee appraisals"
+    },
+    "new_application": {
+      "ku": "داواکاری نوێ",
+      "en": "New Application"
+    },
+    "new_appraisal": {
+      "ku": "هەڵسەنگاندنی نوێ",
+      "en": "New Appraisal"
+    },
+    "recruitment": {
+      "ku": "دامەزراندن",
+      "en": "Recruitment"
+    },
+    "appraisals": {
+      "ku": "هەڵسەنگاندنەکان",
+      "en": "Appraisals"
+    },
+    "edit_application": {
+      "ku": "دەستکاریکردنی داواکاری",
+      "en": "Edit Application"
+    },
+    "edit_appraisal": {
+      "ku": "دەستکاریکردنی هەڵسەنگاندن",
+      "en": "Edit Appraisal"
+    },
+    "candidate_id_placeholder": {
+      "ku": "ناسنامەی نامزد بنووسە",
+      "en": "Enter candidate ID"
+    },
+    "position_id_placeholder": {
+      "ku": "ناسنامەی پۆست بنووسە",
+      "en": "Enter position ID"
+    },
+    "notes": {
+      "ku": "تێبینیەکان",
+      "en": "Notes"
+    },
+    "employee_id_placeholder": {
+      "ku": "ناسنامەی کارمەند بنووسە",
+      "en": "Enter employee ID"
+    },
+    "cycle_id_placeholder": {
+      "ku": "ناسنامەی خول بنووسە",
+      "en": "Enter cycle ID"
+    }
+  },
+  "approvals": {
+    "not_found": {
+      "ku": "داواکاری دەستنیشانکراو نەدۆزرایەوە",
+      "en": "Approval request not found"
+    },
+    "step": {
+      "ku": "هەنگاو",
+      "en": "Step"
+    },
+    "approver": {
+      "ku": "پەسەندکەر",
+      "en": "Approver"
+    },
+    "delegated_to": {
+      "ku": "دەگێڕدرا بۆ",
+      "en": "Delegated to"
+    },
+    "comments": {
+      "ku": "تێبینیەکان",
+      "en": "Comments"
+    },
+    "request_detail": {
+      "ku": "وردەکاری داواکاری",
+      "en": "Request Detail"
+    },
+    "doc_type": {
+      "ku": "جۆری بەڵگەنامە",
+      "en": "Document Type"
+    },
+    "document_number": {
+      "ku": "ژمارەی بەڵگەنامە",
+      "en": "Document Number"
+    },
+    "amount": {
+      "ku": "بڕ",
+      "en": "Amount"
+    },
+    "contact": {
+      "ku": "پەیوەندیدار",
+      "en": "Contact"
+    },
+    "current_step": {
+      "ku": "هەنگاوی ئێستا",
+      "en": "Current Step"
+    },
+    "requested_by": {
+      "ku": "داواکراوی لەلایەن",
+      "en": "Requested By"
+    },
+    "created_at": {
+      "ku": "بەرواری دروستکردن",
+      "en": "Created At"
+    },
+    "completed_at": {
+      "ku": "بەرواری تەواوبوون",
+      "en": "Completed At"
+    },
+    "approval_flow": {
+      "ku": "جەریانی پەسەندکردن",
+      "en": "Approval Flow"
+    },
+    "timeline": {
+      "ku": "کڕۆنۆلۆژیا",
+      "en": "Timeline"
+    },
+    "created": {
+      "ku": "دروستکرا",
+      "en": "Created"
+    },
+    "by": {
+      "ku": "لەلایەن",
+      "en": "by"
+    },
+    "pending_approval": {
+      "ku": "چاوەڕوانی پەسەندکردن",
+      "en": "Pending Approval"
+    },
+    "name": {
+      "ku": "ناو",
+      "en": "Name"
+    },
+    "condition": {
+      "ku": "مەرج",
+      "en": "Condition"
+    },
+    "always": {
+      "ku": "هەمیشە",
+      "en": "Always"
+    },
+    "steps": {
+      "ku": "هەنگاوەکان",
+      "en": "Steps"
+    },
+    "priority": {
+      "ku": "پێشینە",
+      "en": "Priority"
+    },
+    "active": {
+      "ku": "چالاک",
+      "en": "Active"
+    },
+    "rules": {
+      "ku": "ڕێسا و مەرجەکان",
+      "en": "Approval Rules"
+    },
+    "new_rule": {
+      "ku": "ڕێسایەکی نوێ",
+      "en": "New Rule"
+    },
+    "edit_rule": {
+      "ku": "دەستکاریکردنی ڕێسا",
+      "en": "Edit Rule"
+    },
+    "doc_type_purchase_order": {
+      "ku": "داواکاری کڕین",
+      "en": "Purchase Order"
+    },
+    "doc_type_expense_claim": {
+      "ku": "داواکاری خەرجی",
+      "en": "Expense Claim"
+    },
+    "doc_type_sales_order": {
+      "ku": "داواکاری فرۆشتن",
+      "en": "Sales Order"
+    },
+    "doc_type_bill": {
+      "ku": "پسوولە",
+      "en": "Bill"
+    },
+    "doc_type_invoice": {
+      "ku": "فاکتور",
+      "en": "Invoice"
+    },
+    "condition_label": {
+      "ku": "مەرجی جێبەجێکردن",
+      "en": "Trigger Condition"
+    },
+    "field": {
+      "ku": "خانە",
+      "en": "Field"
+    },
+    "operator": {
+      "ku": "کردار",
+      "en": "Operator"
+    },
+    "value": {
+      "ku": "بەها",
+      "en": "Value"
+    },
+    "approver_type": {
+      "ku": "جۆری پەسەندکەر",
+      "en": "Approver Type"
+    },
+    "approver_type_user": {
+      "ku": "بەکارهێنەرێکی دیاریکراو",
+      "en": "Specific User"
+    },
+    "approver_type_role": {
+      "ku": "ڕۆڵ",
+      "en": "Role"
+    },
+    "approver_type_manager": {
+      "ku": "بەڕێوەبەری داواکار",
+      "en": "Manager of Requester"
+    },
+    "can_delegate": {
+      "ku": "دەتوانێت بیگێڕێت",
+      "en": "Can Delegate"
+    },
+    "add_step": {
+      "ku": "زیادکردنی هەنگاو",
+      "en": "Add Step"
+    },
+    "approved": {
+      "ku": "پەسەندکرا",
+      "en": "Approved"
+    },
+    "rejected": {
+      "ku": "ڕەتکرایەوە",
+      "en": "Rejected"
+    },
+    "delegated": {
+      "ku": "گێڕدرا",
+      "en": "Delegated"
+    },
+    "step_label": {
+      "ku": "هەنگاو",
+      "en": "Step"
+    },
+    "approve": {
+      "ku": "پەسەندکردن",
+      "en": "Approve"
+    },
+    "reject": {
+      "ku": "ڕەتکردنەوە",
+      "en": "Reject"
+    },
+    "delegate": {
+      "ku": "گێڕانی مەسئوولیەت",
+      "en": "Delegate"
+    },
+    "my_approvals": {
+      "ku": "پەسەندکردنەکانم",
+      "en": "My Approvals"
+    },
+    "my_inbox": {
+      "ku": "تازەکانم",
+      "en": "My Inbox"
+    },
+    "i_submitted": {
+      "ku": "ئەوانەی نێردوومن",
+      "en": "I Submitted"
+    },
+    "delegate_to": {
+      "ku": "گێڕان بۆ",
+      "en": "Delegate To"
+    }
+  },
+  "activities": {
+    "due": {
+      "ku": "کاتی داواکراو",
+      "en": "Due"
+    }
+  },
+  "construction": {
+    "cost_summary_error": {
+      "ku": "کێشەیەک ڕوویدا لە بارکردنی کۆی تێچووەکان",
+      "en": "Failed to load cost summary"
+    },
+    "project_name": {
+      "ku": "ناوی پرۆژە",
+      "en": "Project Name"
+    },
+    "status": {
+      "ku": "دۆخ",
+      "en": "Status"
+    },
+    "view_detail": {
+      "ku": "بینینی وردەکاری",
+      "en": "View Detail"
+    },
+    "add_project": {
+      "ku": "زیادکردنی پرۆژە",
+      "en": "Add Project"
+    },
+    "status_planning": {
+      "ku": "پلاندانان",
+      "en": "Planning"
+    },
+    "status_in_progress": {
+      "ku": "لە پرۆسەدا",
+      "en": "In Progress"
+    },
+    "status_on_hold": {
+      "ku": "ڕاگیراو",
+      "en": "On Hold"
+    },
+    "status_completed": {
+      "ku": "تەواوبووە",
+      "en": "Completed"
+    },
+    "status_cancelled": {
+      "ku": "هەڵوەشاندراوەتەوە",
+      "en": "Cancelled"
+    },
+    "project_info": {
+      "ku": "زانیاری پرۆژە",
+      "en": "Project Info"
+    },
+    "total_budget": {
+      "ku": "کۆی بودجە",
+      "en": "Total Budget"
+    },
+    "total_actual": {
+      "ku": "کۆی ڕاستەقینە",
+      "en": "Total Actual"
+    },
+    "vs_budget": {
+      "ku": "بەرامبەر بودجە",
+      "en": "vs Budget"
+    },
+    "labor_cost": {
+      "ku": "تێچووی کەسال",
+      "en": "Labour Cost"
+    },
+    "material_cost": {
+      "ku": "تێچووی کەرەستە",
+      "en": "Material Cost"
+    },
+    "equipment_cost": {
+      "ku": "تێچووی ئامێر",
+      "en": "Equipment Cost"
+    },
+    "subcontract_cost": {
+      "ku": "تێچووی پیمانکاری لاوەکی",
+      "en": "Subcontract Cost"
+    },
+    "overhead_cost": {
+      "ku": "تێچووی سەرباری",
+      "en": "Overhead Cost"
+    }
+  }
+}

@@ -122,7 +122,7 @@ export default function CustomFields() {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('customFields.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('customFields.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

@@ -96,7 +96,7 @@ const POSKitchen: React.FC = () => {
   const { t } = useTranslation();
   const [display, setDisplay] = useState<any | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [_loading, _setLoading] = useState(false);
   const [lastOrderCount, setLastOrderCount] = useState(0);
 
   const defaultStages = [

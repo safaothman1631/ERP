@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { RightOutlined, LeftOutlined, HomeOutlined } from '@ant-design/icons';
-import { palette, space } from '../theme/tokens';
+import { palette } from '../theme/tokens';
 import { buildNavSections } from './navigation';
 
 interface BreadcrumbProps {

@@ -51,7 +51,7 @@ const Journals: React.FC = () => {
   }));
   const persistHidden = (next: string[]) => {
     setHiddenCols(next);
-    try { localStorage.setItem('journals.hiddenCols', JSON.stringify(next)); } catch {}
+    try { localStorage.setItem('journals.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
   };
 
   return (

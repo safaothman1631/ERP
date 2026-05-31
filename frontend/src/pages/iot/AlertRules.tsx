@@ -49,7 +49,7 @@ const AlertRules: React.FC = () => {
  });
  setRules(res.data.items);
  setTotal(res.data.total);
- } catch (err) {
+ } catch (_err) {
  message.error(t('common.load_failed', 'Failed to load'));
  } finally {
  setLoading(false);
@@ -90,7 +90,7 @@ const AlertRules: React.FC = () => {
  }
  setModalVisible(false);
  loadRules();
- } catch (err) {
+ } catch (_err) {
  message.error(t('common.save_failed', 'Save failed'));
  }
  };
@@ -100,7 +100,7 @@ const AlertRules: React.FC = () => {
  await api.delete(`/api/iot/alert-rules/${id}`);
  message.success(t('common.deleted', 'Deleted'));
  loadRules();
- } catch (err) {
+ } catch (_err) {
  message.error(t('common.delete_failed', 'Delete failed'));
  }
  };

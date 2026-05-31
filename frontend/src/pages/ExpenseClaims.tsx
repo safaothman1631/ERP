@@ -209,7 +209,7 @@ export default function ExpenseClaims() {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('expenseClaims.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('expenseClaims.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

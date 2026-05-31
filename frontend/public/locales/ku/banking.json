@@ -94,5 +94,13 @@
   "wh_workdays": "ڕۆژەکانی کار",
   "unique_transactions": "مامەڵەکانی تایبەت",
   "system_balance": "باڵانسی سیستەم",
-  "running_balance": "باڵانسی جێبەجێ"
+  "running_balance": "باڵانسی جێبەجێ",
+  "payment_mode": "شێوازی پارەدان",
+  "unused_amount": "بڕی بەکارنەهاتوو",
+  "payment_type": "جۆری پارەدان",
+  "payments_subtitle": "پارەدانەکانی کڕیار و دابینکار بشارێزە",
+  "new_payment": "پارەدانی نوێ",
+  "search_payments": "گەڕان بۆ پارەدانەکان…",
+  "no_payments": "هیچ پارەدانێک نییە",
+  "no_payments_hint": "یەکەم پارەدانت تۆمار بکە بۆ شارەزاکردنی گەردشی پارە"
 }

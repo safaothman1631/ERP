@@ -41,12 +41,13 @@ export function concat(parts: Uint8Array[]): Uint8Array {
 }
 
 /** Encode text using a code-page hint. CP864/CP720 used for Arabic, CP437 fallback. */
-export function encodeText(text: string, codePage: string): Uint8Array {
+export function encodeText(text: string, _codePage: string): Uint8Array {
   // The browser TextEncoder only supports UTF-8. For thermal printers we
   // do best-effort mapping: if all chars are ASCII we use ASCII, else we
   // emit UTF-8 and rely on firmware ≥ 2020 that supports it (Xprinter
   // T80B, Epson TM-T20III firmware ≥ K). Older firmware falls back to
   // garbled output — the receipt template can downgrade per dialect.
+  // eslint-disable-next-line no-control-regex -- ASCII range guard is intentional
   const ascii = /^[\x00-\x7f]*$/.test(text);
   if (ascii) {
     return Uint8Array.from(text, (c) => c.charCodeAt(0));

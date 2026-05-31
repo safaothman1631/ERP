@@ -64,7 +64,7 @@ const POSSessionDetail: React.FC = () => {
  try {
  const res = await api.get(`/api/pos/sessions/${sessionId}/summary`);
  setSummary(res.data);
- } catch {}
+ } catch { /* noop */ }
  };
 
  const loadOrders = async () => {
@@ -73,7 +73,7 @@ const POSSessionDetail: React.FC = () => {
  params: { page_size: 1000 }
  });
  setOrders(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  const loadPayments = async () => {
@@ -82,7 +82,7 @@ const POSSessionDetail: React.FC = () => {
  params: { page_size: 1000 }
  });
  setPayments(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  const handleCloseSession = async (values: any) => {

@@ -73,7 +73,7 @@ export default function EInvoiceDashboard() {
  }
  };
 
- useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+ useEffect(() => { load();   }, []);
 
  const summary = report?.summary || {};
  const total = useMemo(() => Object.values(summary).reduce((s, v) => s + v, 0), [summary]);

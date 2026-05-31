@@ -37,7 +37,7 @@ const CompaniesList = () => {
  try {
  const { data } = await api.get('/api/companies');
  setCompanies(data);
- } catch (err) {
+ } catch (_err) {
  message.error(t('multi_entity.error_loading_companies'));
  } finally {
  setLoading(false);
@@ -72,7 +72,7 @@ const CompaniesList = () => {
  }
  setDrawerOpen(false);
  fetchCompanies();
- } catch (err) {
+ } catch (_err) {
  message.error(t('multi_entity.error_saving_company'));
  }
  };
@@ -82,7 +82,7 @@ const CompaniesList = () => {
  await api.delete(`/api/companies/${id}`);
  message.success(t('multi_entity.company_deleted'));
  fetchCompanies();
- } catch (err) {
+ } catch (_err) {
  message.error(t('multi_entity.error_deleting_company'));
  }
  };
@@ -91,7 +91,7 @@ const CompaniesList = () => {
  try {
  await api.post(`/api/companies/${id}/switch`);
  message.success(t('multi_entity.company_switched'));
- } catch (err) {
+ } catch (_err) {
  message.error(t('multi_entity.error_switching_company'));
  }
  };

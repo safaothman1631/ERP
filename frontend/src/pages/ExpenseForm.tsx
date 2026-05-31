@@ -15,7 +15,7 @@ const ExpenseForm: React.FC = () => {
   const [form] = Form.useForm();
   const isDark = useAuthStore((s) => s.theme === 'dark');
   const [accounts, setAccounts] = useState<any[]>([]);
-  const [vendors, setVendors] = useState<any[]>([]);
+  const [_vendors, setVendors] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [taxes, setTaxes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);

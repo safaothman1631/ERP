@@ -99,7 +99,7 @@ function EmptyStatePreview(props: {
           primaryAction={{
             labelKey: `qc.${props.entity}.cta`,
             onClick: () => {
-              // eslint-disable-next-line no-console
+               
               console.log('dev-gallery: primary clicked', props);
             },
           }}

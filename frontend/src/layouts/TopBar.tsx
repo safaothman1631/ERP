@@ -46,7 +46,7 @@ interface TopBarProps {
  * Requirements: 4.5, 4.6, 4.9, 12.1
  */
 export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDark, onOpenPalette, drawerOpen = false }) => {
-  const { t, i18n } = useTranslation();
+  const { t, i18n: _i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, toggleTheme } = useAuthStore();
@@ -91,7 +91,7 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
   const searchBorder = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)';
   const searchInk  = isDark ? 'rgba(255,255,255,0.62)' : palette.ink500;
   const kbdBg      = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.05)';
-  const userInk    = isDark ? palette.darkInk : palette.ink900;
+  const _userInk    = isDark ? palette.darkInk : palette.ink900;
 
   // ─── Mobile compact TopBar — Requirements 2.1–2.8 ───────────────────────
   if (isMobile) {
@@ -427,7 +427,7 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
  * - Micro-interaction hover/active states — Requirement 8.1–8.8
  * - Responsive hiding of search bar on small screens
  */
-function topbarCss(solidFallbackBg: string, isDark: boolean): string {
+function topbarCss(solidFallbackBg: string, _isDark: boolean): string {
   return `
     /* Glass morphism @supports fallback — Requirement 12.5 */
     @supports not (backdrop-filter: blur(1px)) {

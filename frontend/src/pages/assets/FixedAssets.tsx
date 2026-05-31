@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Tag, Form, Input, InputNumber, Select, Space, DatePicker, Popconfirm, Row, Col, Empty } from 'antd';
-import { PlusOutlined, DeleteOutlined, EyeOutlined, FallOutlined, StopOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, EyeOutlined, FallOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
@@ -125,7 +125,7 @@ const FixedAssets: React.FC = () => {
  setModalOpen(true);
  };
 
- const openEdit = async (record: Asset) => {
+ const _openEdit = async (record: Asset) => {
  setEditingId(record.id);
  form.setFieldsValue({
  ...record,

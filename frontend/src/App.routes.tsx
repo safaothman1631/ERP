@@ -31,7 +31,6 @@ import { useAuthStore } from './store';
 import { readSessionClaims } from './platform/utils/sessionClaims';
 import { postLoginPath } from './platform/utils/postLoginPath';
 import AppLayout from './layouts/AppShell';
-import Login from './pages/Login';
 import PageTransition from './components/PageTransition';
 import LandingPage from './pages/LandingPage';
 import { LoadingSkeleton } from './design-system/LoadingSkeleton';

@@ -56,7 +56,7 @@ const Assets: React.FC = () => {
  const isDark = useAuthStore((s) => s.theme === 'dark');
  const [modalOpen, setModalOpen] = useState(false);
  const [editingId, setEditingId] = useState<string | null>(null);
- const [accounts, setAccounts] = useState<{ id: string; name: string; code: string }[]>([]);
+ const [_accounts, setAccounts] = useState<{ id: string; name: string; code: string }[]>([]);
  const [form] = Form.useForm();
  const [saving, setSaving] = useState(false);
  const [depreciating, setDepreciating] = useState(false);
@@ -218,7 +218,7 @@ const Assets: React.FC = () => {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('assets.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('assets.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  const depreciationColumns = [

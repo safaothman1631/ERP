@@ -101,5 +101,9 @@
   "merge_contacts": "Merge Contacts",
   "import_contacts": "Import Contacts",
   "export_contacts": "Export Contacts",
-  "total_contacts": "Total Contacts"
+  "total_contacts": "Total Contacts",
+  "search_customers": "Search customers…",
+  "customers_subtitle": "Manage your customer relationships and balances",
+  "no_customers": "No customers yet",
+  "no_customers_hint": "Add your first customer to start managing relationships"
 }

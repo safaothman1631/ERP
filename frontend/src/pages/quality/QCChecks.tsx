@@ -5,7 +5,7 @@ import { PlusOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { message } from '../../utils/message';
-import { PageHeader, StatusTag } from '../../design-system';
+import { PageHeader } from '../../design-system';
 import { Popconfirm } from 'antd';
 import { space } from '../../theme/tokens';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';

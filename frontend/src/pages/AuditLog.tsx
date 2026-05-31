@@ -136,7 +136,7 @@ export default function AuditLog() {
   }));
   const persistHidden = (next: string[]) => {
     setHiddenCols(next);
-    try { localStorage.setItem('auditLog.hiddenCols', JSON.stringify(next)); } catch {}
+    try { localStorage.setItem('auditLog.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
   };
 
   return (

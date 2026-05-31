@@ -55,7 +55,7 @@ export default function CRMActivities() {
  }
  };
 
- useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [filterStatus]);
+ useEffect(() => { load();   }, [filterStatus]);
 
  const onCreate = async () => {
  const v = await form.validateFields();
@@ -121,7 +121,7 @@ export default function CRMActivities() {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('crmActivities.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('crmActivities.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (

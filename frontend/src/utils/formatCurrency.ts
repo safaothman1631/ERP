@@ -73,11 +73,11 @@ export function formatCurrency(value: number, currency: string, locale: string):
     const number = nf.format(value);
     const symbol =
       override.symbol[localePrefix(locale)] ?? override.defaultSymbol;
-    // NB: we deliberately use a NO-BREAK SPACE ( ) between number and
+    // NB: we deliberately use a NO-BREAK SPACE (\u00a0) between number and
     // symbol so RTL layout doesn't break the pair across lines.
     return override.position === 'prefix'
-      ? `${symbol} ${number}`
-      : `${number} ${symbol}`;
+      ? `${symbol}\u00a0${number}`
+      : `${number}\u00a0${symbol}`;
   }
 
   try {

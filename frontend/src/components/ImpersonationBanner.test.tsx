@@ -92,12 +92,20 @@ describe('ImpersonationBanner', () => {
     });
 
     const api = (await import('../api')).default as any;
-    // Stub the assign so jsdom doesn't navigate.
-    const origAssign = window.location.assign;
-    Object.defineProperty(window.location, 'assign', {
-      configurable: true,
-      value: vi.fn(),
-    });
+    // Best-effort stub so jsdom does not attempt a real navigation. Modern
+    // jsdom marks window.location.assign non-configurable, so tolerate the
+    // redefine failing — the real assign is a harmless no-op in jsdom and the
+    // assertion below (the POST to /end) is the observable contract.
+    let assignRedefined = false;
+    try {
+      Object.defineProperty(window.location, 'assign', {
+        configurable: true,
+        value: vi.fn(),
+      });
+      assignRedefined = true;
+    } catch {
+      assignRedefined = false;
+    }
 
     render(
       <I18nextProvider i18n={testI18n}>
@@ -114,9 +122,14 @@ describe('ImpersonationBanner', () => {
       expect.objectContaining({ audit_id: 'aud-1' }),
     );
 
-    Object.defineProperty(window.location, 'assign', {
-      configurable: true,
-      value: origAssign,
-    });
+    // Cleanup — only if we actually redefined `assign` above. Restore a plain
+    // no-op (jsdom's native assign is already a no-op, so this keeps later
+    // tests from navigating without depending on a captured original).
+    if (assignRedefined) {
+      Object.defineProperty(window.location, 'assign', {
+        configurable: true,
+        value: () => {},
+      });
+    }
   });
 });

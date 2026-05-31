@@ -9,7 +9,7 @@
  *
  * Requirements: 18.1, 18.2, 18.3, 18.4
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -37,7 +37,7 @@ describe('formatMoney', () => {
   });
 
   it('formats IQD in English locale with comma thousands separator', async () => {
-    vi.stubGlobal('localStorage', makeLocalStorageMock({ app_language: 'en' }));
+    vi.stubGlobal('localStorage', makeLocalStorageMock({ 'i18n.language': 'en' }));
     vi.resetModules();
     await import('../i18n');
     const { formatMoney } = await import('./formatters');
@@ -48,7 +48,7 @@ describe('formatMoney', () => {
   });
 
   it('formats USD in English locale', async () => {
-    vi.stubGlobal('localStorage', makeLocalStorageMock({ app_language: 'en' }));
+    vi.stubGlobal('localStorage', makeLocalStorageMock({ 'i18n.language': 'en' }));
     vi.resetModules();
     await import('../i18n');
     const { formatMoney } = await import('./formatters');
@@ -59,7 +59,7 @@ describe('formatMoney', () => {
   });
 
   it('formats EUR in English locale', async () => {
-    vi.stubGlobal('localStorage', makeLocalStorageMock({ app_language: 'en' }));
+    vi.stubGlobal('localStorage', makeLocalStorageMock({ 'i18n.language': 'en' }));
     vi.resetModules();
     await import('../i18n');
     const { formatMoney } = await import('./formatters');
@@ -70,7 +70,7 @@ describe('formatMoney', () => {
   });
 
   it('formats zero correctly', async () => {
-    vi.stubGlobal('localStorage', makeLocalStorageMock({ app_language: 'en' }));
+    vi.stubGlobal('localStorage', makeLocalStorageMock({ 'i18n.language': 'en' }));
     vi.resetModules();
     await import('../i18n');
     const { formatMoney } = await import('./formatters');
@@ -80,7 +80,7 @@ describe('formatMoney', () => {
   });
 
   it('formats negative amounts correctly', async () => {
-    vi.stubGlobal('localStorage', makeLocalStorageMock({ app_language: 'en' }));
+    vi.stubGlobal('localStorage', makeLocalStorageMock({ 'i18n.language': 'en' }));
     vi.resetModules();
     await import('../i18n');
     const { formatMoney } = await import('./formatters');
@@ -91,7 +91,7 @@ describe('formatMoney', () => {
   });
 
   it('defaults to IQD when no currency is specified', async () => {
-    vi.stubGlobal('localStorage', makeLocalStorageMock({ app_language: 'en' }));
+    vi.stubGlobal('localStorage', makeLocalStorageMock({ 'i18n.language': 'en' }));
     vi.resetModules();
     await import('../i18n');
     const { formatMoney } = await import('./formatters');
@@ -101,7 +101,7 @@ describe('formatMoney', () => {
   });
 
   it('returns a non-empty string for any valid amount', async () => {
-    vi.stubGlobal('localStorage', makeLocalStorageMock({ app_language: 'en' }));
+    vi.stubGlobal('localStorage', makeLocalStorageMock({ 'i18n.language': 'en' }));
     vi.resetModules();
     await import('../i18n');
     const { formatMoney } = await import('./formatters');
@@ -115,7 +115,7 @@ describe('formatMoney', () => {
 
   it('produces different output for ku vs en locale', async () => {
     // English
-    vi.stubGlobal('localStorage', makeLocalStorageMock({ app_language: 'en' }));
+    vi.stubGlobal('localStorage', makeLocalStorageMock({ 'i18n.language': 'en' }));
     vi.resetModules();
     await import('../i18n');
     const { formatMoney: formatMoneyEn } = await import('./formatters');
@@ -124,7 +124,7 @@ describe('formatMoney', () => {
     // Kurdish
     vi.unstubAllGlobals();
     vi.resetModules();
-    vi.stubGlobal('localStorage', makeLocalStorageMock({ app_language: 'ku' }));
+    vi.stubGlobal('localStorage', makeLocalStorageMock({ 'i18n.language': 'ku' }));
     await import('../i18n');
     const { formatMoney: formatMoneyKu } = await import('./formatters');
     const kuResult = formatMoneyKu(1000, 'USD');
@@ -148,7 +148,7 @@ describe('formatDate', () => {
   });
 
   it('formats a valid date string in YYYY-MM-DD format by default', async () => {
-    vi.stubGlobal('localStorage', makeLocalStorageMock({ app_language: 'en' }));
+    vi.stubGlobal('localStorage', makeLocalStorageMock({ 'i18n.language': 'en' }));
     vi.resetModules();
     await import('../i18n');
     const { formatDate } = await import('./formatters');
@@ -158,7 +158,7 @@ describe('formatDate', () => {
   });
 
   it('returns empty string for empty input', async () => {
-    vi.stubGlobal('localStorage', makeLocalStorageMock({ app_language: 'en' }));
+    vi.stubGlobal('localStorage', makeLocalStorageMock({ 'i18n.language': 'en' }));
     vi.resetModules();
     await import('../i18n');
     const { formatDate } = await import('./formatters');
@@ -167,7 +167,7 @@ describe('formatDate', () => {
   });
 
   it('handles Date objects', async () => {
-    vi.stubGlobal('localStorage', makeLocalStorageMock({ app_language: 'en' }));
+    vi.stubGlobal('localStorage', makeLocalStorageMock({ 'i18n.language': 'en' }));
     vi.resetModules();
     await import('../i18n');
     const { formatDate } = await import('./formatters');
@@ -178,7 +178,7 @@ describe('formatDate', () => {
   });
 
   it('returns the input string for invalid dates', async () => {
-    vi.stubGlobal('localStorage', makeLocalStorageMock({ app_language: 'en' }));
+    vi.stubGlobal('localStorage', makeLocalStorageMock({ 'i18n.language': 'en' }));
     vi.resetModules();
     await import('../i18n');
     const { formatDate } = await import('./formatters');
@@ -199,7 +199,7 @@ describe('formatNumber', () => {
   });
 
   it('formats a number in English locale', async () => {
-    vi.stubGlobal('localStorage', makeLocalStorageMock({ app_language: 'en' }));
+    vi.stubGlobal('localStorage', makeLocalStorageMock({ 'i18n.language': 'en' }));
     vi.resetModules();
     await import('../i18n');
     const { formatNumber } = await import('./formatters');
@@ -209,7 +209,7 @@ describe('formatNumber', () => {
   });
 
   it('returns empty string for NaN', async () => {
-    vi.stubGlobal('localStorage', makeLocalStorageMock({ app_language: 'en' }));
+    vi.stubGlobal('localStorage', makeLocalStorageMock({ 'i18n.language': 'en' }));
     vi.resetModules();
     await import('../i18n');
     const { formatNumber } = await import('./formatters');
@@ -218,7 +218,7 @@ describe('formatNumber', () => {
   });
 
   it('formats zero as "0"', async () => {
-    vi.stubGlobal('localStorage', makeLocalStorageMock({ app_language: 'en' }));
+    vi.stubGlobal('localStorage', makeLocalStorageMock({ 'i18n.language': 'en' }));
     vi.resetModules();
     await import('../i18n');
     const { formatNumber } = await import('./formatters');
