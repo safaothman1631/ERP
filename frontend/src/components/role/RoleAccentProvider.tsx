@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useRoleUx } from '../../hooks/useRoleUx';
 
-export const RoleAccentContext = React.createContext<string>('#1F6FEB');
+export const RoleAccentContext = React.createContext<string>('#7B61FF');
 
 export const RoleAccentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { theme } = useRoleUx();

@@ -1,6 +1,6 @@
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense, useEffect, useMemo } from 'react';
 import { BrowserRouter, useRoutes, useLocation } from 'react-router-dom';
-import { App as AntApp, ConfigProvider, theme as antTheme } from 'antd';
+import { App as AntApp, ConfigProvider } from 'antd';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +11,13 @@ import { setMessageInstance } from './utils/message';
 import { routes } from './App.routes';
 import { LoadingSkeleton } from './design-system/LoadingSkeleton';
 import { isRTLLanguage, resolveLanguage } from './utils/language';
+// Vertex "Slate & Signal" theme — the single root ConfigProvider builds from
+// this so the whole app (AntD + custom components) renders in violet + slate.
+import { buildVertexTheme, vertexCssVars, PALETTE } from './theme/vertexTheme';
+import { controlHeight as densityControlHeight } from './theme/tokens';
+import { useUiStore } from './stores/uiStore';
+import { usePermission } from './hooks/usePermission';
+import { useRoleUx } from './hooks/useRoleUx';
 
 /**
  * Global React Query client — configured per design spec:
@@ -58,10 +65,42 @@ const App: React.FC = () => {
   const currentLang = resolveLanguage(i18n.language || 'ku');
   const isRTL = isRTLLanguage(currentLang);
   const isDark = appTheme === 'dark';
+  const density = useUiStore((s) => s.density);
+
+  // colorPrimary follows the active role's Vertex accent; before a role is known
+  // (e.g. the login screen) it falls back to the brand violet.
+  const { role } = usePermission();
+  const roleUx = useRoleUx();
+  const accent = role ? roleUx.theme.accent : PALETTE.accent;
+
+  const vertexThemeConfig = useMemo(
+    () =>
+      buildVertexTheme({
+        dark: isDark,
+        accent,
+        isRTL,
+        controlHeight: densityControlHeight[density] ?? 36,
+      }),
+    [isDark, accent, isRTL, density],
+  );
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', appTheme);
   }, [appTheme]);
+
+  // Inject the Vertex token CSS variables once so custom (non-AntD) components
+  // resolve --accent-*/--bg/--surface/--ink-* from the same source as AntD. The
+  // dark override keys off [data-theme="dark"] (set above); re-injects on accent change.
+  useEffect(() => {
+    const STYLE_ID = 'vertex-tokens';
+    let el = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
+    if (!el) {
+      el = document.createElement('style');
+      el.id = STYLE_ID;
+      document.head.appendChild(el);
+    }
+    el.textContent = vertexCssVars(accent);
+  }, [accent]);
 
   // Apply RTL/LTR direction and lang attribute on language change (Requirements 3.5, 3.6)
   useEffect(() => {
@@ -77,70 +116,7 @@ const App: React.FC = () => {
     <QueryClientProvider client={queryClient}>
     <ConfigProvider
       direction={isRTL ? 'rtl' : 'ltr'}
-      theme={{
-        algorithm: isDark ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
-        token: isDark ? {
-          colorPrimary: '#60A5FA',
-          colorBgBase: '#0a0a0f',
-          colorBgContainer: 'rgba(255,255,255,0.03)',
-          colorBgElevated: 'rgba(255,255,255,0.06)',
-          colorBgLayout: '#0a0a0f',
-          colorBorder: 'rgba(255,255,255,0.08)',
-          colorBorderSecondary: 'rgba(255,255,255,0.05)',
-          colorText: '#f8fafc',
-          colorTextSecondary: '#94a3b8',
-          colorTextTertiary: '#64748b',
-          borderRadius: 12,
-          fontFamily: isRTL ? "'Noto Sans Arabic', sans-serif" : "'Inter', sans-serif",
-        } : {
-          colorPrimary: '#1F6FEB',
-          colorInfo: '#0EA5E9',
-          colorSuccess: '#16A34A',
-          colorWarning: '#F59E0B',
-          colorError: '#DC2626',
-          colorBgBase: '#FFFFFF',
-          colorBgLayout: '#F8FAFC',
-          colorBgContainer: '#FFFFFF',
-          colorBgElevated: '#FFFFFF',
-          colorBorder: '#E5E7EB',
-          colorBorderSecondary: '#EEF1F5',
-          colorText: '#0F172A',
-          colorTextSecondary: '#334155',
-          colorTextTertiary: '#64748B',
-          colorTextQuaternary: '#94A3B8',
-          borderRadius: 8,
-          borderRadiusLG: 14,
-          borderRadiusSM: 6,
-          fontSize: 14,
-          fontFamily: isRTL ? "'Noto Sans Arabic', sans-serif" : "'Inter', sans-serif",          controlHeight: 36,
-          wireframe: false,
-        },
-        components: isDark ? {
-          Card: { colorBgContainer: 'rgba(255,255,255,0.03)', borderRadiusLG: 16 },
-          Table: { colorBgContainer: 'transparent', headerBg: 'rgba(255,255,255,0.04)' },
-          Menu: { darkItemBg: 'transparent', darkItemSelectedBg: 'rgba(99,102,241,0.15)' },
-          Button: { primaryShadow: '0 4px 12px rgba(99,102,241,0.3)' },
-          Input: { colorBgContainer: 'rgba(255,255,255,0.03)' },
-          Select: { colorBgContainer: 'rgba(255,255,255,0.03)' },
-          Modal: { contentBg: '#12121a' },
-        } : {
-          Card: { borderRadiusLG: 14, paddingLG: 20 },
-          Table: { headerBg: '#FBFCFD', headerColor: '#334155', rowHoverBg: 'rgba(31,111,235,0.04)', borderRadius: 10, headerSplitColor: 'transparent' },
-          Button: { borderRadius: 6, controlHeight: 36, fontWeight: 500 },
-          Modal: { borderRadiusLG: 14, paddingContentHorizontalLG: 24 },
-          Drawer: { paddingLG: 24 },
-          Menu: { itemBorderRadius: 8, subMenuItemBg: 'transparent', itemHeight: 38 },
-          Tabs: { titleFontSize: 14, horizontalItemPadding: '10px 4px', inkBarColor: '#1F6FEB' },
-          Input: { borderRadius: 6, controlHeight: 36 },
-          Select: { borderRadius: 6, controlHeight: 36 },
-          DatePicker: { borderRadius: 6 },
-          Tag: { borderRadiusSM: 6 },
-          Tooltip: { borderRadius: 6, colorBgSpotlight: 'rgba(15,23,42,0.92)' },
-          Popover: { borderRadiusLG: 10 },
-          Dropdown: { borderRadiusLG: 10, paddingBlock: 6 },
-          Segmented: { borderRadius: 6 },
-        },
-      }}
+      theme={vertexThemeConfig}
     >
       <AntApp>
         <AppInitializer />

@@ -9,7 +9,7 @@
   --onb-text-primary: #0f172a;
   --onb-text-muted: #64748b;
   --onb-surface-soft: rgba(248, 250, 252, 0.72);
-  --onb-hero-bg: linear-gradient(135deg, color-mix(in srgb, var(--role-accent, #1F6FEB) 88%, transparent) 0%, rgba(24, 88, 191, 0.82) 45%, rgba(11, 47, 102, 0.9) 100%);
+  --onb-hero-bg: linear-gradient(135deg, color-mix(in srgb, var(--role-accent, #7B61FF) 88%, transparent) 0%, rgba(106, 77, 240, 0.82) 45%, rgba(44, 27, 115, 0.9) 100%);
   --onb-alert-warn-bg: rgba(255, 251, 235, 0.82);
 
   position: fixed;
@@ -85,7 +85,7 @@
   height: 280px;
   top: 42%;
   inset-inline-start: 58%;
-  background: rgba(99, 102, 241, 0.28);
+  background: rgba(123, 97, 255, 0.28);
   animation-delay: -8s;
 }
 

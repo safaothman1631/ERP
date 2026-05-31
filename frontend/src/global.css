@@ -429,7 +429,7 @@ body {
    outline:none above is safe because :focus-visible provides a visible
    focus indicator sourced from tokens.ts (a11y.focusRingColor). */
 .premium-nav-leaf:focus-visible {
-  outline: 2px solid var(--focus-ring-color, #1F6FEB);
+  outline: 2px solid var(--focus-ring-color, #7B61FF);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -876,13 +876,13 @@ body {
 
   --border-glass-hover: rgba(255, 255, 255, 0.15);
 
-  --gradient-primary: linear-gradient(135deg, #6366f1, #8b5cf6);
+  --gradient-primary: linear-gradient(135deg, #7B61FF, #9275FF);
 
-  --gradient-accent: linear-gradient(135deg, #818cf8, #a78bfa);
+  --gradient-accent: linear-gradient(135deg, #9275FF, #AC97FF);
 
   --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.3);
 
-  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
+  --shadow-glow: 0 0 20px rgba(123, 97, 255, 0.15);
 
 }
 
@@ -912,7 +912,7 @@ body {
 
   transform: translateY(-4px);
 
-  box-shadow: 0 20px 40px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 20px 40px rgba(123, 97, 255, 0.15);
 
   border-color: var(--border-glass-hover);
 
@@ -980,9 +980,9 @@ body {
 
 [data-theme="dark"] .ant-select-focused .ant-select-selector {
 
-  border-color: #6366f1 !important;
+  border-color: #7B61FF !important;
 
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+  box-shadow: 0 0 0 3px rgba(123, 97, 255, 0.15) !important;
 
 }
 
@@ -996,13 +996,13 @@ body {
 
   border: none !important;
 
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(123, 97, 255, 0.3);
 
 }
 
 [data-theme="dark"] .ant-btn-primary:hover {
 
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 20px rgba(123, 97, 255, 0.4);
 
   transform: translateY(-1px);
 
@@ -1035,7 +1035,7 @@ body {
 
 .role-accent-root [data-theme="light"] .ant-modal-content,
 .role-accent-root .ant-modal-content {
-  border-color: color-mix(in srgb, var(--role-accent, #1F6FEB) 25%, transparent);
+  border-color: color-mix(in srgb, var(--role-accent, #7B61FF) 25%, transparent);
   box-shadow: var(--role-glass-glow, 0 24px 64px rgba(15, 23, 42, 0.12));
 }
 
@@ -1094,9 +1094,9 @@ body {
 
 [data-theme="dark"] .ant-menu-item-selected {
 
-  background: rgba(99, 102, 241, 0.15) !important;
+  background: rgba(123, 97, 255, 0.15) !important;
 
-  border-inline-end: 2px solid #6366f1 !important;
+  border-inline-end: 2px solid #7B61FF !important;
 
 }
 
@@ -1126,7 +1126,7 @@ body {
 
 /* Phase 2 â€” Navbar polish: active item accent bar + group headers */
 .ant-menu-dark .ant-menu-item-selected {
-  background: rgba(99, 102, 241, 0.18) !important;
+  background: rgba(123, 97, 255, 0.18) !important;
   position: relative;
 }
 .ant-menu-dark .ant-menu-item-selected::before {
@@ -1135,7 +1135,7 @@ body {
   inset-block: 6px;
   inset-inline-end: 0;
   width: 3px;
-  background: linear-gradient(180deg, #6366f1, #8b5cf6);
+  background: linear-gradient(180deg, #7B61FF, #9275FF);
   border-radius: 2px;
 }
 .ant-menu-dark .ant-menu-item-group-title {

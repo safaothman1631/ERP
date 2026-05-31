@@ -11,7 +11,7 @@
 
 /* ── Focus ring — 2px solid primary500, 2px offset (Requirement 17.3, 8.3) ── */
 :focus-visible {
-  outline: 2px solid #1F6FEB !important;
+  outline: 2px solid #7B61FF !important;
   outline-offset: 2px !important;
   border-radius: 4px;
 }
@@ -30,7 +30,7 @@
 .ant-checkbox-input:focus-visible + .ant-checkbox-inner,
 .ant-radio-input:focus-visible + .ant-radio-inner,
 .ant-switch:focus-visible {
-  outline: 2px solid #1F6FEB !important;
+  outline: 2px solid #7B61FF !important;
   outline-offset: 2px !important;
 }
 
@@ -111,7 +111,7 @@
   inset-inline-start: -9999px;
   z-index: 9999;
   padding: 8px 16px;
-  background: #1F6FEB;
+  background: #7B61FF;
   color: #fff;
   font-weight: 600;
   font-size: 14px;

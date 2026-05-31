@@ -129,7 +129,7 @@
   .responsive-form__line-item-toggle {
     font-size: 13px;
     font-weight: 500;
-    color: var(--color-primary, #1F6FEB);
+    color: var(--color-primary, #7B61FF);
     /* Touch-target floor for the toggle hint itself when it is the only
      * tappable hint. The summary already gets ≥ 44 px above. */
     min-block-size: 24px;

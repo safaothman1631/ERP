@@ -36,7 +36,11 @@ const zohoI18n = require('./eslint-rules/index.cjs')
 const localQueryRules = require('../tools/eslint-rules/index.js')
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // `dist` is build output. The "Vertex Design System" folder is a standalone,
+  // read-only reference kit (HTML/CSS/JSX-via-Babel + a handoff theme file)
+  // dropped under src/ for reference only — it is not part of the app build,
+  // so it is excluded from linting (its production port lives in theme/vertexTheme.ts).
+  globalIgnores(['dist', 'src/design-system/Vertex Design System/**']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -143,6 +147,16 @@ export default defineConfig([
     rules: {
       'zoho-i18n/no-hardcoded-literal': 'off',
       '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+  // theme/vertexTheme.ts is a color-token *source* (the Vertex "Slate & Signal"
+  // palette + AntD theme builder) — exactly like theme/tokens.ts, which the
+  // no-hardcoded-colors rule already exempts. The hex literals here ARE the
+  // design tokens, so the rule does not apply.
+  {
+    files: ['src/theme/vertexTheme.ts'],
+    rules: {
+      'zoho-design-tokens/no-hardcoded-colors': 'off',
     },
   },
 ])

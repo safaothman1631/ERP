@@ -8,9 +8,9 @@
 
 /* ---------- Design tokens (CSS custom properties) ---------- */
 :root {
-  --pl-brand:        #1F6FEB;
-  --pl-brand-50:     #EBF2FF;
-  --pl-brand-100:    #D6E4FF;
+  --pl-brand:        #7B61FF;
+  --pl-brand-50:     #F1EEFF;
+  --pl-brand-100:    #E4DEFF;
   --pl-ink-900:      #0F172A;
   --pl-ink-700:      #334155;
   --pl-ink-500:      #64748B;
@@ -36,7 +36,7 @@
   --pl-shadow-md:   0 4px 12px rgba(15,23,42,0.06), 0 1px 3px rgba(15,23,42,0.04);
   --pl-shadow-lg:   0 12px 32px rgba(15,23,42,0.10), 0 2px 6px rgba(15,23,42,0.05);
   --pl-shadow-xl:   0 24px 64px rgba(15,23,42,0.16), 0 4px 12px rgba(15,23,42,0.06);
-  --pl-shadow-focus: 0 0 0 3px rgba(31,111,235,0.18);
+  --pl-shadow-focus: 0 0 0 3px rgba(123,97,255,0.18);
 
   --pl-motion-fast:  140ms cubic-bezier(0.2, 0, 0, 1);
   --pl-motion-base:  200ms cubic-bezier(0.2, 0, 0, 1);
@@ -59,7 +59,7 @@
   --pl-shadow-md:   0 4px 12px rgba(0,0,0,0.40);
   --pl-shadow-lg:   0 12px 32px rgba(0,0,0,0.55);
   --pl-shadow-xl:   0 24px 64px rgba(0,0,0,0.60);
-  --pl-shadow-focus: 0 0 0 3px rgba(96,165,250,0.30);
+  --pl-shadow-focus: 0 0 0 3px rgba(172,151,255,0.30);
 }
 
 /* ---------- Body / Layout backgrounds ---------- */
@@ -130,7 +130,7 @@ body, html {
   box-shadow: var(--pl-shadow-xs) !important;
 }
 .ant-card-hoverable:hover {
-  border-color: rgba(31,111,235,0.25) !important;
+  border-color: rgba(123,97,255,0.25) !important;
   box-shadow: var(--pl-shadow-md) !important;
   transform: translateY(-1px);
 }
@@ -186,13 +186,13 @@ body, html {
 }
 .ant-table-tbody > tr:hover > td,
 .ant-table-tbody > tr.ant-table-row-hover > td {
-  background: rgba(31,111,235,0.04) !important;
+  background: rgba(123,97,255,0.04) !important;
 }
 [data-theme="dark"] .ant-table-tbody > tr:hover > td {
-  background: rgba(96,165,250,0.06) !important;
+  background: rgba(172,151,255,0.06) !important;
 }
 .ant-table-row-selected > td {
-  background: rgba(31,111,235,0.07) !important;
+  background: rgba(123,97,255,0.07) !important;
 }
 .ant-table-pagination.ant-pagination {
   margin: 16px !important;
@@ -224,23 +224,23 @@ body, html {
   background: var(--pl-brand-50) !important;
 }
 [data-theme="dark"] .ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):not(.ant-btn-link):not(.ant-btn-text):hover {
-  background: rgba(31,111,235,0.10) !important;
+  background: rgba(123,97,255,0.10) !important;
 }
 .ant-btn-primary {
   background: var(--pl-brand) !important;
   border-color: var(--pl-brand) !important;
   color: #fff !important;
-  box-shadow: 0 1px 2px rgba(31,111,235,0.20) !important;
+  box-shadow: 0 1px 2px rgba(123,97,255,0.20) !important;
 }
 .ant-btn-primary:not(:disabled):hover {
-  background: #1858BF !important;
-  border-color: #1858BF !important;
-  box-shadow: 0 4px 12px rgba(31,111,235,0.28) !important;
+  background: #6A4DF0 !important;
+  border-color: #6A4DF0 !important;
+  box-shadow: 0 4px 12px rgba(123,97,255,0.28) !important;
   transform: translateY(-1px);
 }
 .ant-btn-primary:not(:disabled):active {
   transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(31,111,235,0.20) !important;
+  box-shadow: 0 1px 2px rgba(123,97,255,0.20) !important;
 }
 .ant-btn-dangerous.ant-btn-primary {
   background: var(--pl-danger) !important;
@@ -428,9 +428,9 @@ textarea.ant-input::placeholder {
   border-color: rgba(245,158,11,0.24) !important;
 }
 .ant-tag.ant-tag-processing {
-  background: rgba(31,111,235,0.10) !important;
+  background: rgba(123,97,255,0.10) !important;
   color: var(--pl-brand) !important;
-  border-color: rgba(31,111,235,0.20) !important;
+  border-color: rgba(123,97,255,0.20) !important;
 }
 .ant-tag.ant-tag-default {
   background: rgba(15,23,42,0.05) !important;
@@ -488,7 +488,7 @@ textarea.ant-input::placeholder {
   transition: background var(--pl-motion-fast) !important;
 }
 .ant-dropdown-menu-item:hover {
-  background: rgba(31,111,235,0.08) !important;
+  background: rgba(123,97,255,0.08) !important;
   color: var(--pl-brand) !important;
 }
 .ant-dropdown-menu-item-divider {
@@ -570,7 +570,7 @@ textarea.ant-input::placeholder {
   color: var(--pl-ink-900) !important;
 }
 .ant-progress-bg {
-  background: linear-gradient(90deg, var(--pl-brand), #1858BF) !important;
+  background: linear-gradient(90deg, var(--pl-brand), #6A4DF0) !important;
 }
 
 /* ============================================================================
@@ -594,7 +594,7 @@ textarea.ant-input::placeholder {
   background: var(--pl-brand-50) !important;
 }
 [data-theme="dark"] .ant-pagination .ant-pagination-item-active {
-  background: rgba(31,111,235,0.16) !important;
+  background: rgba(123,97,255,0.16) !important;
 }
 .ant-pagination .ant-pagination-item-active a {
   color: var(--pl-brand) !important;

@@ -8,17 +8,17 @@
 
 // ───────────────────────────── Brand Palette ─────────────────────────────
 export const palette = {
-  // Primary — Zoho-inspired modern blue (shades 50–900)
-  primary50:  '#EBF2FF',
-  primary100: '#D6E4FF',
-  primary200: '#ADC8FF',
-  primary300: '#84A9FF',
-  primary400: '#5B8DEF',
-  primary500: '#1F6FEB', // brand
-  primary600: '#1858BF',
-  primary700: '#114393',
-  primary800: '#0B2F66',
-  primary900: '#061B3A',
+  // Primary — Vertex "Slate & Signal" electric violet (shades 50–900)
+  primary50:  '#F1EEFF',
+  primary100: '#E4DEFF',
+  primary200: '#C9BCFF',
+  primary300: '#AC97FF',
+  primary400: '#9275FF',
+  primary500: '#7B61FF', // brand accent (electric violet)
+  primary600: '#6A4DF0',
+  primary700: '#5638D6',
+  primary800: '#432AA8',
+  primary900: '#2C1B73',
 
   // Semantic — success (green scale)
   success50:  '#F0FDF4',
@@ -96,23 +96,23 @@ export const palette = {
   gray800: '#1E293B',
   gray900: '#0F172A',
 
-  // Neutrals — semantic aliases (Light)
-  ink900: '#0F172A',
-  ink700: '#334155',
-  ink500: '#64748B',
-  ink300: '#94A3B8',
-  ink100: '#E2E8F0',
-  bg:     '#F8FAFC',
+  // Neutrals — semantic aliases (Light) — Vertex slate
+  ink900: '#11161F',
+  ink700: '#353D4A',
+  ink500: '#6B7585',
+  ink300: '#97A1B0',
+  ink100: '#DEE3EA',
+  bg:     '#F4F6F8',
   surface:'#FFFFFF',
-  border: '#E5E7EB',
+  border: '#E2E6EC',
 
-  // Neutrals — Dark
-  darkBg:        '#0B1220',
-  darkSurface:   '#111A2E',
-  darkElevated:  '#172238',
-  darkBorder:    'rgba(148, 163, 184, 0.16)',
-  darkInk:       '#E2E8F0',
-  darkInkMuted:  '#94A3B8',
+  // Neutrals — Dark (Vertex hero look)
+  darkBg:        '#0B0E14',
+  darkSurface:   '#11151F',
+  darkElevated:  '#161B27',
+  darkBorder:    'rgba(255, 255, 255, 0.08)',
+  darkInk:       '#ECEEF2',
+  darkInkMuted:  '#8A93A3',
 } as const;
 
 // ───────────────────────────── Spacing scale (4pt grid) ─────────────────────────────
@@ -158,9 +158,9 @@ export const spacing = {
 export const radius = {
   xs: 4,
   sm: 6,
-  md: 10, // default controls
-  lg: 14, // cards, modals
-  xl: 18,
+  md: 8,  // controls — inputs, buttons (Vertex)
+  lg: 12, // cards (Vertex)
+  xl: 16, // modals (Vertex)
   pill: 999,
 } as const;
 
@@ -173,6 +173,8 @@ export const fontFamily = {
   // RTL stack: Vazirmatn supports Arabic + Kurdish-Sorani well; falls back to Noto Sans Arabic.
   rtl: "'Vazirmatn', 'Noto Sans Arabic', 'Segoe UI', system-ui, sans-serif",
   ltr: "'Inter', 'Segoe UI', system-ui, sans-serif",
+  // Display / headings (Vertex): Inter Tight tight-tracked; Vazirmatn carries RTL glyphs.
+  display: "'Inter Tight', 'Inter', 'Vazirmatn', 'Segoe UI', system-ui, sans-serif",
   mono:"'JetBrains Mono', 'Menlo', monospace",
 } as const;
 
@@ -286,7 +288,7 @@ export const shadow = {
   md:   '0 4px 12px rgba(15,23,42,0.08)',
   lg:   '0 12px 32px rgba(15,23,42,0.12)',
   xl:   '0 24px 48px rgba(15,23,42,0.18), 0 8px 16px rgba(15,23,42,0.08)',
-  primary: '0 6px 16px rgba(31,111,235,0.28)',
+  primary: '0 6px 16px rgba(123,97,255,0.28)',
   // Dark mode variants
   dark: {
     none: 'none',
@@ -335,7 +337,7 @@ export const typography = {
 
 // ───────────────────────────── Data Viz Palette ─────────────────────────────
 export const dataViz = {
-  categorical: ['#1F6FEB', '#16A34A', '#F59E0B', '#DC2626', '#0EA5E9', '#8B5CF6', '#EC4899', '#14B8A6'],
+  categorical: ['#7B61FF', '#16A34A', '#F59E0B', '#DC2626', '#0EA5E9', '#2E8FE0', '#EC4899', '#14B8A6'],
   sequential:  ['#EBF2FF', '#D6E4FF', '#ADC8FF', '#84A9FF', '#5B8DEF', '#1F6FEB', '#1858BF', '#114393'],
   diverging:   ['#DC2626', '#F59E0B', '#FCD34D', '#E5E7EB', '#7DD3FC', '#0EA5E9', '#1F6FEB'],
 } as const;
@@ -606,7 +608,7 @@ export const buildAntComponents = (mode: 'light' | 'dark') => {
     Table:  {
       headerBg:        isDark ? palette.darkElevated : '#F8FAFC',
       headerColor:     isDark ? palette.darkInk : palette.ink700,
-      rowHoverBg:      isDark ? 'rgba(31,111,235,0.08)' : palette.primary50,
+      rowHoverBg:      isDark ? 'rgba(123,97,255,0.08)' : palette.primary50,
       borderRadius:    radius.md,
       cellPaddingBlock:10,
     },
@@ -616,7 +618,7 @@ export const buildAntComponents = (mode: 'light' | 'dark') => {
       itemBorderRadius:    radius.sm,
       subMenuItemBg:       'transparent',
       darkItemBg:          'transparent',
-      darkItemSelectedBg:  'rgba(31,111,235,0.18)',
+      darkItemSelectedBg:  'rgba(123,97,255,0.18)',
       darkItemHoverBg:     'rgba(255,255,255,0.04)',
     },
     Input:  { borderRadius: radius.md },

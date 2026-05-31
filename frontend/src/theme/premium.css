@@ -14,7 +14,7 @@
  *   • Accent comes from --role-accent (set per role by RoleAccentProvider).
  *
  * Token parity (kept in sync with theme/tokens.ts):
- *   primary #1F6FEB · radius lg 14 · easing standard cubic-bezier(0.2,0,0,1)
+ *   accent #7B61FF (Vertex violet) · radius lg 12 · easing standard cubic-bezier(0.2,0,0,1)
  * ========================================================================== */
 
 /* ───────────────────────────── Keyframes ───────────────────────────── */
@@ -45,7 +45,7 @@
  * Derive translucent tints from the role accent so glass borders/glows match
  * whichever role is active. color-mix is already used elsewhere in this repo. */
 .role-accent-root {
-  --rax-accent: var(--role-accent, #1F6FEB);
+  --rax-accent: var(--role-accent, #7B61FF);
   --rax-tint-08: color-mix(in srgb, var(--rax-accent) 8%, transparent);
   --rax-tint-16: color-mix(in srgb, var(--rax-accent) 16%, transparent);
   --rax-tint-24: color-mix(in srgb, var(--rax-accent) 24%, transparent);
