@@ -19,6 +19,11 @@ initI18n().catch((err) => {
   console.warn('[zoho] lazy i18n init failed, falling back to legacy bundle:', err)
   return import('./i18n')
 })
+// Vertex "Slate & Signal" token foundation — the full CSS-variable set + type
+// classes ported from the kit's colors_and_type.css. Loaded FIRST so every layer
+// below (and the ported kit.css in Step 2) resolves from these tokens. The
+// per-role accent ramp is overridden at runtime by vertexCssVars() from App.tsx.
+import './theme/vertex-tokens.css'
 import './global.css'
 import './polish.css'
 // Premium Glass RTL Experience elevation layer (spec: premium-glass-rtl-experience).

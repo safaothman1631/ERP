@@ -40,7 +40,7 @@ export default defineConfig([
   // read-only reference kit (HTML/CSS/JSX-via-Babel + a handoff theme file)
   // dropped under src/ for reference only — it is not part of the app build,
   // so it is excluded from linting (its production port lives in theme/vertexTheme.ts).
-  globalIgnores(['dist', 'src/design-system/Vertex Design System/**']),
+  globalIgnores(['dist', 'src/design-system/Vertex Design System*/**', 'src/design-system/vertex/**']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

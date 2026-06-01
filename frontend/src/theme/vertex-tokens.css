@@ -1,0 +1,209 @@
+/* ============================================================================
+   Vertex Design System v2 — "Slate & Signal" — full token foundation.
+   Ported verbatim from `design-system/.../colors_and_type.css` (the kit's
+   single source of truth) into our theme layer per HANDOFF.md step 1.
+
+   This file defines the COMPLETE CSS-variable set + semantic type classes that
+   the ported kit CSS (`kit.css`, Step 2) and custom (non-AntD) components
+   resolve from. The per-role accent ramp is overridden at runtime by
+   `vertexCssVars(roleAccent)` (injected from App.tsx) so role switching recolors
+   the whole app live.
+
+   Fonts are loaded once in `index.html` (Inter / Inter Tight / Vazirmatn /
+   JetBrains Mono), so the kit's `@import` is intentionally omitted here.
+   Dark mode is the `[data-theme="dark"]` attribute on <html> (set in App.tsx).
+   ============================================================================ */
+
+:root {
+  /* ───────────────── Accent — electric violet (the one bright signal) ───────────────── */
+  --accent-50:  #F1EEFF;
+  --accent-100: #E4DEFF;
+  --accent-200: #C9BCFF;
+  --accent-300: #AC97FF;
+  --accent-400: #9275FF;
+  --accent-500: #7B61FF;   /* PRIMARY accent */
+  --accent-600: #6A4DF0;
+  --accent-700: #5638D6;
+  --accent-800: #432AA8;
+  --accent-900: #2C1B73;
+  --accent: var(--accent-500);
+  --accent-contrast: #FFFFFF;
+  --accent-glow: 0 6px 24px rgba(123,97,255,0.40);
+  --accent-soft: rgba(123,97,255,0.12);   /* tints, selection */
+
+  /* legacy alias so older references don't break (mapped to accent) */
+  --primary-500: #7B61FF; --primary-600: #6A4DF0; --primary-50: #F1EEFF;
+  --primary-700: #5638D6; --primary-400: #9275FF; --primary-100: #E4DEFF;
+  --primary-200: #C9BCFF; --primary-300: #AC97FF; --primary-800: #432AA8; --primary-900: #2C1B73;
+
+  /* ───────────────── Slate neutrals (cool, refined) ───────────────── */
+  --slate-25:  #FAFBFC;
+  --slate-50:  #F4F6F8;
+  --slate-100: #ECEFF3;
+  --slate-200: #DEE3EA;
+  --slate-300: #C4CCD6;
+  --slate-400: #97A1B0;
+  --slate-500: #6B7585;
+  --slate-600: #4C5564;
+  --slate-700: #353D4A;
+  --slate-800: #222934;
+  --slate-900: #141922;
+  --slate-950: #0B0E14;
+
+  /* gray-* aliases (back-compat) */
+  --gray-50: #F4F6F8; --gray-100: #ECEFF3; --gray-200: #DEE3EA; --gray-300: #C4CCD6;
+  --gray-400: #97A1B0; --gray-500: #6B7585; --gray-600: #4C5564; --gray-700: #353D4A;
+  --gray-800: #222934; --gray-900: #141922;
+
+  /* ───────────────── Semantic (used sparingly — slate & violet lead) ───────────────── */
+  --success-500: #1FAE63; --success: #1FAE63; --success-600: #178A4F;
+  --success-bg: #E4F7EE; --success-fg: #137C46;
+  --warning-500: #E0900B; --warning: #E0900B; --warning-600: #B97408;
+  --warning-bg: #FBF0DA; --warning-fg: #8A5A06;
+  --danger-500: #E23D5C; --danger: #E23D5C; --danger-600: #C42B49;
+  --danger-bg: #FCE6EA; --danger-fg: #A82138;
+  --info-500: #2E8FE0; --info: #2E8FE0; --info-600: #1F73BD;
+  --info-bg: #E3F0FB; --info-fg: #1A66A8;
+
+  /* ───────────────── Light-mode semantic surfaces / ink ───────────────── */
+  --bg:        #F4F6F8;   /* app canvas */
+  --bg-deep:   #ECEFF3;   /* recessed areas */
+  --surface:   #FFFFFF;   /* cards, panels */
+  --surface-2: #FAFBFC;   /* nested / striped */
+  --raised:    #FFFFFF;
+  --border:    #E2E6EC;   /* hairline */
+  --border-strong: #D2D8E0;
+  --ink-900:   #11161F;   /* primary text */
+  --ink-700:   #353D4A;   /* secondary */
+  --ink-500:   #6B7585;   /* muted / labels */
+  --ink-400:   #828B9A;   /* subtle / meta */
+  --ink-300:   #97A1B0;   /* placeholder / disabled */
+  --on-accent: #FFFFFF;
+
+  /* ───────────────── Data-viz (violet-led ramp) ───────────────── */
+  --viz-1: #7B61FF; --viz-2: #2E8FE0; --viz-3: #1FAE63; --viz-4: #E0900B;
+  --viz-5: #E23D5C; --viz-6: #14B8A6; --viz-7: #EC4899; --viz-8: #A97BFF;
+
+  /* ============================ TYPOGRAPHY ============================ */
+  --font-ui:      'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Inter Tight', 'Inter', system-ui, sans-serif;  /* tight headings */
+  --font-rtl:     'Vazirmatn', 'Noto Sans Arabic', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Menlo', Consolas, monospace;
+  --font-sans:    var(--font-ui);
+
+  /* Type scale (dense ERP baseline = 14) */
+  --fs-xs: 12px; --fs-sm: 13px; --fs-base: 14px; --fs-md: 15px; --fs-lg: 16px;
+  --fs-xl: 18px; --fs-2xl: 20px; --fs-3xl: 24px; --fs-4xl: 30px; --fs-5xl: 38px;
+  --fs-6xl: 52px; --fs-7xl: 72px;  /* marketing display */
+
+  --fw-regular: 400; --fw-medium: 500; --fw-semibold: 600; --fw-bold: 700; --fw-extrabold: 800;
+
+  /* ============================ SPACING (4pt) ============================ */
+  --space-xxs: 2px; --space-xs: 4px; --space-sm: 8px; --space-md: 12px;
+  --space-lg: 16px; --space-xl: 24px; --space-2xl: 32px; --space-3xl: 48px; --space-4xl: 64px;
+
+  /* ============================ RADIUS (sharper than v1) ============================ */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;    /* controls: inputs, buttons */
+  --radius-lg: 12px;   /* cards, panels */
+  --radius-xl: 16px;   /* large panels, modals */
+  --radius-2xl: 22px;  /* hero / marketing cards */
+  --radius-pill: 999px;
+
+  /* ============================ ELEVATION ============================ */
+  --shadow-xs: 0 1px 2px rgba(17,22,31,0.05);
+  --shadow-sm: 0 1px 3px rgba(17,22,31,0.07), 0 1px 2px rgba(17,22,31,0.04);
+  --shadow-md: 0 6px 18px rgba(17,22,31,0.08), 0 2px 6px rgba(17,22,31,0.05);
+  --shadow-lg: 0 18px 40px rgba(17,22,31,0.12), 0 6px 14px rgba(17,22,31,0.06);
+  --shadow-xl: 0 30px 70px rgba(17,22,31,0.18);
+  --ring: 0 0 0 1px var(--border);   /* crisp hairline ring for cards */
+
+  /* ============================ MOTION ============================ */
+  --dur-fast: 130ms; --dur-normal: 220ms; --dur-slow: 380ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ============================ LAYOUT ============================ */
+  --topbar-h: 56px;
+  --sidebar-w: 248px;
+  --sidebar-collapsed-w: 64px;
+  --content-max: 1480px;
+
+  /* Subtle glass (used only on top bar + command palette) */
+  --glass-bg: rgba(255,255,255,0.72);
+  --glass-blur: blur(14px) saturate(150%);
+  --glass-border: rgba(17,22,31,0.07);
+
+  /* Focus */
+  --focus: var(--accent-500);
+}
+
+/* ============================ DARK MODE (slate-led, the hero look) ============================ */
+[data-theme='dark'] {
+  --bg:        #0B0E14;
+  --bg-deep:   #080A0F;
+  --surface:   #11151F;
+  --surface-2: #161B27;
+  --raised:    #161B27;
+  --border:    rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.14);
+  --ink-900:   #ECEEF2;
+  --ink-700:   #C2C8D2;
+  --ink-500:   #8A93A3;
+  --ink-400:   #727B8A;
+  --ink-300:   #5C6473;
+
+  --accent-soft: rgba(123,97,255,0.18);
+  --accent-glow: 0 8px 30px rgba(123,97,255,0.45);
+
+  --success-bg: rgba(31,174,99,0.16);  --success-fg: #4ED98C;
+  --warning-bg: rgba(224,144,11,0.16); --warning-fg: #F7B64A;
+  --danger-bg:  rgba(226,61,92,0.18);  --danger-fg:  #FF7088;
+  --info-bg:    rgba(46,143,224,0.16); --info-fg:    #5FB0F0;
+
+  --glass-bg: rgba(17,21,31,0.66);
+  --glass-border: rgba(255,255,255,0.08);
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md: 0 8px 22px rgba(0,0,0,0.5);
+  --shadow-lg: 0 22px 50px rgba(0,0,0,0.6);
+  --shadow-xl: 0 36px 80px rgba(0,0,0,0.7);
+  --ring: 0 0 0 1px var(--border);
+}
+
+/* Explicit light block — re-asserts light vars so a [data-theme="light"] element
+   overrides dark vars inherited from an ancestor (e.g. <html data-theme="dark">). */
+[data-theme='light'] {
+  --bg: #F4F6F8; --bg-deep: #ECEFF3; --surface: #FFFFFF; --surface-2: #FAFBFC; --raised: #FFFFFF;
+  --border: #E2E6EC; --border-strong: #D2D8E0;
+  --ink-900: #11161F; --ink-700: #353D4A; --ink-500: #6B7585; --ink-400: #828B9A; --ink-300: #97A1B0;
+  --accent-soft: rgba(123,97,255,0.12); --accent-glow: 0 6px 24px rgba(123,97,255,0.40);
+  --success-bg: #E4F7EE; --success-fg: #137C46;
+  --warning-bg: #FBF0DA; --warning-fg: #8A5A06;
+  --danger-bg: #FCE6EA; --danger-fg: #A82138;
+  --info-bg: #E3F0FB; --info-fg: #1A66A8;
+  --glass-bg: rgba(255,255,255,0.72); --glass-border: rgba(17,22,31,0.07);
+  --shadow-sm: 0 1px 3px rgba(17,22,31,0.07), 0 1px 2px rgba(17,22,31,0.04);
+  --shadow-md: 0 6px 18px rgba(17,22,31,0.08), 0 2px 6px rgba(17,22,31,0.05);
+  --shadow-lg: 0 18px 40px rgba(17,22,31,0.12), 0 6px 14px rgba(17,22,31,0.06);
+  --shadow-xl: 0 30px 70px rgba(17,22,31,0.18);
+}
+
+[dir='rtl'] { --font-sans: var(--font-rtl); --font-display: var(--font-rtl); }
+
+/* ============================================================================
+   SEMANTIC TYPE CLASSES (kit utility classes — opt-in)
+   ============================================================================ */
+.t-mega    { font-family: var(--font-display); font-size: var(--fs-7xl); line-height: 1.02; font-weight: 800; letter-spacing: -0.03em; color: var(--ink-900); }
+.t-display { font-family: var(--font-display); font-size: var(--fs-6xl); line-height: 1.05; font-weight: 800; letter-spacing: -0.025em; color: var(--ink-900); }
+.t-h1      { font-family: var(--font-display); font-size: var(--fs-4xl); line-height: 1.15; font-weight: 700; letter-spacing: -0.02em; color: var(--ink-900); }
+.t-h2      { font-family: var(--font-display); font-size: var(--fs-3xl); line-height: 1.2;  font-weight: 700; letter-spacing: -0.015em; color: var(--ink-900); }
+.t-h3      { font-family: var(--font-display); font-size: var(--fs-xl);  line-height: 1.3;  font-weight: 600; letter-spacing: -0.01em; color: var(--ink-900); }
+.t-body-lg { font-family: var(--font-ui); font-size: var(--fs-md);   line-height: 1.55; font-weight: 400; color: var(--ink-700); }
+.t-body    { font-family: var(--font-ui); font-size: var(--fs-base); line-height: 1.5;  font-weight: 400; color: var(--ink-700); }
+.t-body-sm { font-family: var(--font-ui); font-size: var(--fs-sm);   line-height: 1.45; font-weight: 400; color: var(--ink-500); }
+.t-caption { font-family: var(--font-ui); font-size: var(--fs-xs);   line-height: 1.35; font-weight: 500; color: var(--ink-500); }
+.t-overline{ font-family: var(--font-ui); font-size: 11px; line-height: 1.3; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-500); }
+.t-mono    { font-family: var(--font-mono); font-size: var(--fs-sm); font-variant-numeric: tabular-nums; color: var(--ink-700); }
+.t-num     { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum'; }
