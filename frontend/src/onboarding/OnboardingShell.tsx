@@ -125,8 +125,28 @@ export default function OnboardingShell({ onExit }: OnboardingShellProps) {
         display: 'flex',
         flexDirection: 'column',
         background: token.colorBgLayout,
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
+      {/* Kit atmosphere — soft accent glow + dotted grid (behind content) */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: -1,
+          pointerEvents: 'none',
+          backgroundImage:
+            'radial-gradient(circle at 12% -8%, color-mix(in srgb, var(--accent-500) 16%, transparent), transparent 42%),' +
+            'linear-gradient(rgba(127,127,127,0.05) 1px, transparent 1px),' +
+            'linear-gradient(90deg, rgba(127,127,127,0.05) 1px, transparent 1px)',
+          backgroundSize: 'auto, 48px 48px, 48px 48px',
+          maskImage: 'radial-gradient(ellipse 85% 55% at 50% 18%, #000, transparent)',
+          WebkitMaskImage: 'radial-gradient(ellipse 85% 55% at 50% 18%, #000, transparent)',
+        }}
+      />
+
       {/* Header */}
       <header
         style={{
