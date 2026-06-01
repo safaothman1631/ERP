@@ -663,3 +663,17 @@ frontend/src/
 **گەیتەکان (Windows):** tsc ٠ · lint exit 0 (٠ error / ١٧ warning، هەموو pre-existing-style) · auth.integration + pbt = **٨٤ تێست سەرکەوتوو** · build exit 0 (٤٧٤ PWA) · rtl:audit passed · i18n:purity:foundation in-scope=٠ · glass-modals OK. **پشتڕاستی DOM (localhost:5173):** `/login` → `.vx-root` data-theme=dark، bg `rgb(11,14,20)`، rail ٤٦٪، h1 «بەخێربێیتەوە»، دوگمەی Sign-in `rgb(123,97,255)` (violet)، email/password dir=ltr؛ `/signup` → h1 «هەژمارەکەت دروست بکە»، ٣ خانە، toggle → `/login`.
 
 **تێبینی بۆ بەکارهێنەر:** (1) دیمۆ-ئەکاونتەکان (`owner@zagros.iq` … `password: demo`) وەک kit نیشان دەدرێن — بۆ production لەوانەیە بتەوێت لایان بەریت؛ (2) دوگمەی Microsoft تەنها visual-ە (هەمان Google-flow بانگ دەکات تا API-ی MS زیاد بکرێت)؛ (3) signup-ی kit ناوی کەسی وەرناگرێت (لە email وەردەگیرێت، دواتر لە settings).
+
+### 2026-06-01 — Vertex Auth (٢): forgot/reset + دیالۆگ + ئۆنبۆردینگ + ڕاستکردنەوەی ٣ خاڵ
+
+دوای feedback-ی بەکارهێنەر: (الف) forgot-password + هەموو دیالۆگ + onboarding بۆ دیزاینی kit؛ (ب) خاڵی ١ (دیمۆ-ئەکاونت) لابردن؛ (ج) خاڵی ٢ (Microsoft) با ڤیژوەل بێت؛ (د) خاڵی ٣ (signup) هەموو فیڵدەکانی پێشوو بگەڕێنرێتەوە. **٠ گۆڕانکاری backend.** دیپلۆی نەکراوە.
+
+- **`VertexAuthShell.tsx` فراوانکرا بۆ ٤ mode** (signin/signup/forgot/reset) + دوو شاشەی "done" (reset-link sent، reset success) — وەکو kit-ی `login.jsx`. لابردنی demo-accounts + role-indicator (خاڵی ١). دوگمەی Microsoft ئێستا `aria-disabled` (ڤیژوەل تەنها، Google-flow بانگ ناکات — خاڵی ٢). signup ئێستا ٥ فیڵد: Business name + **Full name** + Email + Password (+ strength meter) + **Confirm password** (خاڵی ٣)، لەگەڵ validation (match + strength).
+- **`LoginPage.tsx`**: بێ گۆڕان (یەکدەگرێتەوە لەگەڵ AuthSubmitValues-ی فراوان).
+- **`RegisterPage.tsx`**: `user_name` ئێستا لە فیڵدی Full name وەردەگیرێت (نەک email).
+- **`ForgotPassword.tsx` (نووسرایەوە)**: `mode="forgot"` + `POST /api/auth/forgot-password` + شاشەی "Check your email" + resend. لابردنی AuthLayout/antd-Form.
+- **`ResetPassword.tsx` (نووسرایەوە)**: `mode="reset"` + token لە URL + `POST /api/auth/reset-password` + شاشەی success؛ validation-ی match لە shell.
+- **دیالۆگ — `theme/vertex-kit.css`**: بەهێزکردنی شێوازی گشتی Modal/Drawer بۆ kit-ی flat (surface card + hairline header/footer + radius-xl + shadow + scrim تاریک `rgba(8,10,15,.55)` + close button). کاریگەری لەسەر **هەموو** دیالۆگەکانی ئەپ.
+- **ئۆنبۆردینگ — `OnboardingShell.tsx`**: پێشتر بەتەواوی theme-driven بوو (violet/slate/flat-button بە token)، بۆیە دیزاینی Vertex-ی هەبوو؛ زیادکردنی `font-display` بۆ سەردێڕ + ناونیشانی هەنگاو (signature-ی kit). + `vx.tsx`: ئایکۆنی `chevronLeft`.
+
+**گەیتەکان:** tsc ٠ · lint ٠ error · build exit 0 · rtl passed · glass-modals OK · ١٠٠ تێست (auth + dialog) سەرکەوتوو. **DOM (localhost:5173):** /login (بێ demo/role، Microsoft disabled)، /signup (٥ فیڵد)، /forgot-password (forgot mode + Back link) — هەمووی dark + violet.

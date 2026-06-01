@@ -138,7 +138,7 @@ export default function OnboardingShell({ onExit }: OnboardingShellProps) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <RocketOutlined style={{ fontSize: 20, color: token.colorPrimary }} aria-hidden />
-            <strong style={{ fontSize: 18 }}>{t('title')}</strong>
+            <strong style={{ fontSize: 18, fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>{t('title')}</strong>
           </div>
           <span
             style={{ fontSize: 12, color: token.colorTextSecondary }}
@@ -194,7 +194,7 @@ export default function OnboardingShell({ onExit }: OnboardingShellProps) {
       >
         <div style={{ width: '100%', maxWidth: 880 }}>
           <div style={{ marginBottom: 24 }}>
-            <h2 style={{ margin: 0, fontSize: 24, color: token.colorTextHeading }}>
+            <h2 style={{ margin: 0, fontSize: 24, color: token.colorTextHeading, fontFamily: 'var(--font-display)', fontWeight: 700, letterSpacing: '-0.02em' }}>
               {t(stepTitleKey)}
             </h2>
             <p style={{ margin: '8px 0 0', color: token.colorTextSecondary }}>

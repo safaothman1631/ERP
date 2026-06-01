@@ -47,7 +47,7 @@ const RegisterPage: React.FC = () => {
   };
 
   // ── Email + password registration ──
-  const handleRegister = async ({ businessName, email, password }: AuthSubmitValues) => {
+  const handleRegister = async ({ businessName, fullName, email, password }: AuthSubmitValues) => {
     const orgName = businessName.trim();
     if (!orgName) {
       setErrorMsg(t('required_company'));
@@ -58,7 +58,7 @@ const RegisterPage: React.FC = () => {
     try {
       const res = await api.post('/api/v1/auth/register', {
         org_name: orgName,
-        user_name: email.split('@')[0] || orgName,
+        user_name: fullName.trim() || email.split('@')[0],
         email,
         password,
       });

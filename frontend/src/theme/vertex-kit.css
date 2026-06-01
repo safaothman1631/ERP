@@ -218,10 +218,24 @@ h1, h2, h3, .ant-typography h1, .ant-typography h2, .ant-typography h3,
   border: 1px solid color-mix(in srgb, var(--accent-500) 28%, transparent);
 }
 
-/* ───────────────────────────── Modals / dropdowns / popovers ─────────────────────────────
-   Kit radii: modal 16, dropdown/popover 12, soft shadow + hairline. */
-.ant-modal-content { border-radius: var(--radius-xl) !important; box-shadow: var(--shadow-xl) !important; }
-.ant-drawer-content { background: var(--surface); }
+/* ───────────────────────────── Modals / dialogs / drawers / dropdowns / popovers ─────────────────────────────
+   Kit aesthetic: flat surface card, hairline border, kit radius, soft shadow, dark scrim. */
+.ant-modal-content {
+  border-radius: var(--radius-xl) !important;
+  box-shadow: var(--shadow-xl) !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+}
+.ant-modal-header { background: transparent !important; border-bottom: 1px solid var(--border) !important; }
+.ant-modal-footer { border-top: 1px solid var(--border) !important; }
+.ant-modal-mask { background: rgba(8, 10, 15, 0.55) !important; }
+.ant-modal-close { color: var(--ink-500) !important; border-radius: var(--radius-md) !important; }
+.ant-modal-close:hover { background: var(--surface-2) !important; color: var(--ink-900) !important; }
+
+.ant-drawer-content { background: var(--surface) !important; }
+.ant-drawer-header { border-bottom: 1px solid var(--border) !important; }
+.ant-drawer-mask { background: rgba(8, 10, 15, 0.55) !important; }
+
 .ant-dropdown-menu, .ant-popover-inner {
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);

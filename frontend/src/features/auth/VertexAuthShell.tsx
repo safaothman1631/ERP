@@ -1,13 +1,20 @@
 /* ============================================================================
    VertexAuthShell — pixel-faithful port of the Vertex kit's AuthScreen
    (ui_kits/vertex-next/login.jsx): dark split-screen with a brand rail (46%)
-   and a centred form (max-width 380). It is presentational + owns the form
-   input state, and calls back into the real auth logic via `onSubmit` /
-   `onGoogleToken`. LoginPage uses mode="signin", RegisterPage uses
-   mode="signup". Markup + classes match the kit 1:1 so vx-kit.css styles it
-   identically; tokens come from theme/vertex-tokens.css (global).
+   and a centred form (max-width 380). Handles all four auth modes the kit does
+   — signin / signup / forgot / reset — plus the post-submit success screens.
+
+   It is presentational + owns the form input state, and calls back into the
+   real auth logic via `onSubmit` / `onGoogleToken`:
+     - LoginPage      → mode="signin"
+     - RegisterPage   → mode="signup"
+     - ForgotPassword → mode="forgot"  (set `done` to show the sent screen)
+     - ResetPassword  → mode="reset"   (set `done` to show the success screen)
+
+   Markup + classes match the kit 1:1 so vx-kit.css styles it identically;
+   tokens come from theme/vertex-tokens.css (global).
    ============================================================================ */
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { signInWithPopup } from 'firebase/auth';
@@ -15,44 +22,35 @@ import { auth, googleProvider } from '../../firebase';
 import { Icon, Logo } from '../../vertex-proof/vx';
 import '../../vertex-proof/vx-kit.css';
 
+export type AuthMode = 'signin' | 'signup' | 'forgot' | 'reset';
+
 // ─── Values passed back to the page on submit ───────────────────────────────
 export interface AuthSubmitValues {
   email: string;
   password: string;
+  confirmPassword: string;
   businessName: string;
+  fullName: string;
   remember: boolean;
 }
 
 export interface VertexAuthShellProps {
-  mode: 'signin' | 'signup';
+  mode: AuthMode;
   loading?: boolean;
-  /** Disable the form (e.g. login locked-out). */
+  /** Disable the form (e.g. login locked-out, or reset link missing). */
   disabled?: boolean;
   /** Rich error / notice content rendered in a danger banner above the form. */
   error?: React.ReactNode;
   /** Override the submit button label (e.g. "Account locked"). */
   submitLabel?: string;
+  /** Show the post-submit success screen: 'sent' (forgot) | 'success' (reset). */
+  done?: 'sent' | 'success';
   onSubmit: (values: AuthSubmitValues) => void;
+  /** Resend handler for the forgot "Check your email" screen. */
+  onResend?: () => void;
   /** Receives a Firebase ID token + the current form values after a Google popup. */
   onGoogleToken?: (idToken: string, values: AuthSubmitValues) => void;
   onGoogleError?: (err: unknown) => void;
-}
-
-// ─── Demo personas (kit parity: role indicator + demo-account chips) ─────────
-interface Role { id: string; en: string; ku: string; ar: string; accent: string }
-const ROLES: Role[] = [
-  { id: 'owner',      en: 'Owner',      ku: 'خاوەن',     ar: 'المالك',    accent: '#7B61FF' },
-  { id: 'accountant', en: 'Accountant', ku: 'ژمێریار',   ar: 'محاسب',     accent: '#1FAE63' },
-  { id: 'sales',      en: 'Sales',      ku: 'فرۆشتن',    ar: 'مبيعات',    accent: '#2E8FE0' },
-  { id: 'inventory',  en: 'Inventory',  ku: 'کۆگا',      ar: 'المخزون',   accent: '#06B6D4' },
-  { id: 'cashier',    en: 'Cashier',    ku: 'خەزنەدار',  ar: 'الصندوق',   accent: '#F59E0B' },
-  { id: 'hr',         en: 'HR',         ku: 'مرۆیی',     ar: 'الموارد',   accent: '#C026D3' },
-];
-const ROLE_BY_ID: Record<string, Role> = ROLES.reduce((m, r) => { m[r.id] = r; return m; }, {} as Record<string, Role>);
-function roleForEmail(email: string): string {
-  const local = (email.split('@')[0] || '').toLowerCase();
-  const hit = ROLES.find(r => local === r.id || local.startsWith(r.id));
-  return hit ? hit.id : 'owner';
 }
 
 // ─── Tiny kit primitives (Field + password-capable Input) ────────────────────
@@ -94,27 +92,76 @@ const VxField: React.FC<{
   </div>
 );
 
+// ─── Password strength (signup) ──────────────────────────────────────────────
+function pwChecks(pw: string) {
+  return {
+    minLength: pw.length >= 8,
+    hasUppercase: /[A-Z]/.test(pw),
+    hasNumber: /[0-9]/.test(pw),
+    hasSpecial: /[^A-Za-z0-9]/.test(pw),
+  };
+}
+function pwScore(pw: string): number {
+  const c = pwChecks(pw);
+  return [c.minLength, c.hasUppercase, c.hasNumber, c.hasSpecial].filter(Boolean).length;
+}
+
 // ─── Shell ───────────────────────────────────────────────────────────────────
 const VertexAuthShell: React.FC<VertexAuthShellProps> = ({
-  mode, loading = false, disabled = false, error, submitLabel, onSubmit, onGoogleToken, onGoogleError,
+  mode, loading = false, disabled = false, error, submitLabel, done,
+  onSubmit, onResend, onGoogleToken, onGoogleError,
 }) => {
   const { i18n } = useTranslation();
   const lang = (i18n.language || 'ku').slice(0, 2) as 'ku' | 'en' | 'ar';
   const tr = (en: string, ku: string, ar?: string) => (lang === 'ku' ? ku : lang === 'ar' ? (ar ?? en) : en);
 
   const signup = mode === 'signup';
+  const signin = mode === 'signin';
+  const forgot = mode === 'forgot';
+  const reset = mode === 'reset';
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [businessName, setBusinessName] = useState('');
+  const [fullName, setFullName] = useState('');
   const [remember, setRemember] = useState(true);
   const [showPw, setShowPw] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const values = (): AuthSubmitValues => ({ email, password, businessName, remember });
+  const values = (): AuthSubmitValues => ({ email, password, confirmPassword, businessName, fullName, remember });
+
+  // Client-side validation per mode; returns an error string or null.
+  const validate = (): string | null => {
+    if (signup) {
+      if (!businessName.trim()) return tr('Business name is required', 'ناوی بزنس پێویستە', 'اسم النشاط مطلوب');
+      if (!fullName.trim()) return tr('Your name is required', 'ناوت پێویستە', 'الاسم مطلوب');
+    }
+    if ((signin || signup || forgot) && !email.trim()) return tr('Email is required', 'ئیمەیڵ پێویستە', 'البريد الإلكتروني مطلوب');
+    if (signin || signup || reset) {
+      if (!password) return tr('Password is required', 'تێپەڕەوشە پێویستە', 'كلمة المرور مطلوبة');
+    }
+    if (signup && pwScore(password) < 4) {
+      return tr('Password needs 8+ characters, an uppercase letter, a number and a symbol.',
+        'تێپەڕەوشە پێویستی بە ٨+ پیت، پیتی گەورە، ژمارە و هێما هەیە.',
+        'تحتاج كلمة المرور إلى ٨+ أحرف وحرف كبير ورقم ورمز.');
+    }
+    if (reset && password.length < 6) {
+      return tr('Password must be at least 6 characters', 'تێپەڕەوشە دەبێت لانیکەم ٦ پیت بێت', 'كلمة المرور يجب أن تكون ٦ أحرف على الأقل');
+    }
+    if ((signup || reset) && password !== confirmPassword) {
+      return tr('Passwords do not match', 'تێپەڕەوشەکان وەک یەک نین', 'كلمتا المرور غير متطابقتين');
+    }
+    return null;
+  };
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (disabled || loading) return;
+    const v = validate();
+    if (v) { setLocalError(v); return; }
+    setLocalError(null);
     onSubmit(values());
   };
 
@@ -148,7 +195,42 @@ const VertexAuthShell: React.FC<VertexAuthShellProps> = ({
     ['trendUp', tr('Live dashboards across every module', 'داشبۆردی زیندوو بۆ هەموو مۆدیوولێک', 'لوحات بيانات حية لكل وحدة')],
   ];
 
-  const role = useMemo(() => ROLE_BY_ID[roleForEmail(email)], [email]);
+  const bannerError = error || localError;
+  const eyeSuffix = (
+    <button
+      type="button" onClick={() => setShowPw((s) => !s)}
+      aria-label={showPw ? tr('Hide password', 'شاردنەوەی تێپەڕەوشە', 'إخفاء كلمة المرور') : tr('Show password', 'پیشاندانی تێپەڕەوشە', 'إظهار كلمة المرور')}
+      style={{ background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer', color: 'var(--ink-300)', display: 'flex' }}
+    >
+      <Icon name="eye" size={16} />
+    </button>
+  );
+
+  // ── Headline + subtitle per mode ──
+  const headline = signup
+    ? tr('Create your account', 'هەژمارەکەت دروست بکە', 'أنشئ حسابك')
+    : forgot
+      ? tr('Forgot password?', 'تێپەڕەوشەت بیرچووە؟', 'نسيت كلمة المرور؟')
+      : reset
+        ? tr('Set a new password', 'تێپەڕەوشەی نوێ دابنێ', 'عيّن كلمة مرور جديدة')
+        : tr('Welcome back', 'بەخێربێیتەوە', 'مرحبًا بعودتك');
+  const subtitle = signup
+    ? tr('Start your free trial — no card required.', 'تاقیکردنەوەی بەخۆڕایی دەست پێبکە — پێویست بە کارت ناکات.', 'ابدأ تجربتك المجانية — لا حاجة لبطاقة.')
+    : forgot
+      ? tr('Enter the email linked to your account and we’ll send you a reset link.', 'ئەو ئیمەیڵە بنووسە کە بەستراوەتەوە بە هەژمارەکەت، لینکی ڕێکخستنەوەت بۆ دەنێرین.', 'أدخل البريد المرتبط بحسابك وسنرسل لك رابط إعادة التعيين.')
+      : reset
+        ? tr('Choose a strong password you haven’t used before.', 'تێپەڕەوشەیەکی بەهێز هەڵبژێرە کە پێشتر بەکارت نەهێناوە.', 'اختر كلمة مرور قوية لم تستخدمها من قبل.')
+        : tr('Sign in to your workspace.', 'بچۆ ژوورەوە بۆ شوێنی کارەکەت.', 'سجّل الدخول إلى مساحة عملك.');
+
+  const score = pwScore(password);
+  const strengthLabel = [
+    tr('Too weak', 'زۆر لاواز', 'ضعيفة جدًا'),
+    tr('Weak', 'لاواز', 'ضعيفة'),
+    tr('Fair', 'مامناوەند', 'متوسطة'),
+    tr('Good', 'باش', 'جيدة'),
+    tr('Strong', 'بەهێز', 'قوية'),
+  ][score];
+  const strengthColor = ['var(--danger-500)', 'var(--danger-500)', 'var(--warning-500)', 'var(--accent-500)', 'var(--success-500)'][score];
 
   return (
     <div className="vx-root" data-theme="dark" style={{ minHeight: '100vh', display: 'flex', background: 'var(--bg)' }}>
@@ -199,132 +281,150 @@ const VertexAuthShell: React.FC<VertexAuthShellProps> = ({
       {/* ── form ── */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32 }} className="vx-scroll">
         <div style={{ width: '100%', maxWidth: 380 }}>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 27, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ink-900)', margin: 0 }}>
-            {signup ? tr('Create your account', 'هەژمارەکەت دروست بکە', 'أنشئ حسابك') : tr('Welcome back', 'بەخێربێیتەوە', 'مرحبًا بعودتك')}
-          </h1>
-          <p style={{ fontSize: 14, color: 'var(--ink-500)', margin: '7px 0 28px' }}>
-            {signup
-              ? tr('Start your free trial — no card required.', 'تاقیکردنەوەی بەخۆڕایی دەست پێبکە — پێویست بە کارت ناکات.', 'ابدأ تجربتك المجانية — لا حاجة لبطاقة.')
-              : tr('Sign in to your workspace.', 'بچۆ ژوورەوە بۆ شوێنی کارەکەت.', 'سجّل الدخول إلى مساحة عملك.')}
-          </p>
 
-          {error && (
-            <div
-              role="alert"
-              style={{
-                display: 'flex', alignItems: 'flex-start', gap: 8, padding: '11px 13px', marginBottom: 16,
-                borderRadius: 'var(--radius-md)', background: 'var(--danger-bg)', color: 'var(--danger-fg)',
-                border: '1px solid color-mix(in srgb, var(--danger-500) 32%, transparent)', fontSize: 13, lineHeight: 1.5,
-              }}
-            >
-              <span style={{ marginTop: 1, flexShrink: 0 }}><Icon name="clock" size={15} /></span>
-              <span>{error}</span>
+          {/* ---------- DONE: reset link sent ---------- */}
+          {forgot && done === 'sent' && (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ width: 56, height: 56, borderRadius: 14, background: 'var(--success-bg)', color: 'var(--success-fg)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}><Icon name="mail" size={26} /></div>
+              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ink-900)', margin: 0 }}>{tr('Check your email', 'ئیمەیڵەکەت بپشکنە', 'تحقّق من بريدك')}</h1>
+              <p style={{ fontSize: 14, color: 'var(--ink-500)', margin: '8px 0 24px', lineHeight: 1.6 }}>
+                {tr('We sent a password reset link to ', 'لینکی ڕێکخستنەوەی تێپەڕەوشەمان نارد بۆ ', 'أرسلنا رابط إعادة تعيين كلمة المرور إلى ')}
+                <b style={{ color: 'var(--ink-700)' }} dir="ltr">{email || 'your email'}</b>.
+                {' '}{tr('It expires in 30 minutes.', 'دوای ٣٠ خولەک بەسەردەچێت.', 'تنتهي صلاحيته خلال ٣٠ دقيقة.')}
+              </p>
+              <Link to="/login" className="vx-btn vx-btn-accent vx-btn-lg" style={{ width: '100%' }}>{tr('Back to sign in', 'گەڕانەوە بۆ چوونەژوورەوە', 'العودة لتسجيل الدخول')}</Link>
+              {onResend && (
+                <p style={{ marginTop: 18, fontSize: 13, color: 'var(--ink-500)' }}>
+                  {tr("Didn't get it? ", 'وەرتنەگرت؟ ', 'لم يصلك؟ ')}
+                  <a onClick={() => onResend()} style={{ color: 'var(--accent-400)', fontWeight: 600, cursor: 'pointer' }}>{tr('Resend', 'دووبارە ناردن', 'إعادة الإرسال')}</a>
+                </p>
+              )}
             </div>
           )}
 
-          <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
-            {signup && (
-              <Field label={tr('Business name', 'ناوی بزنس', 'اسم النشاط')}>
-                <VxField
-                  icon="building" name="organization" autoComplete="organization"
-                  value={businessName} onChange={setBusinessName} disabled={disabled}
-                  placeholder={tr('e.g. Zagros Trading', 'بۆ نموونە: بازرگانی زاگرۆس', 'مثال: زاكروس للتجارة')}
-                  ariaLabel={tr('Business name', 'ناوی بزنس', 'اسم النشاط')}
-                />
-              </Field>
-            )}
-            <Field label={tr('Email', 'ئیمەیڵ', 'البريد الإلكتروني')}>
-              <VxField
-                icon="mail" type="email" name="email" autoComplete="email" dir="ltr"
-                value={email} onChange={setEmail} disabled={disabled}
-                placeholder="you@business.iq" ariaLabel={tr('Email', 'ئیمەیڵ', 'البريد الإلكتروني')}
-              />
-            </Field>
-            <Field label={tr('Password', 'تێپەڕەوشە', 'كلمة المرور')}>
-              <VxField
-                icon="lock" type={showPw ? 'text' : 'password'} name="password" dir="ltr"
-                autoComplete={signup ? 'new-password' : 'current-password'}
-                value={password} onChange={setPassword} disabled={disabled}
-                placeholder="••••••••" ariaLabel={tr('Password', 'تێپەڕەوشە', 'كلمة المرور')}
-                suffix={
-                  <button
-                    type="button" onClick={() => setShowPw((s) => !s)}
-                    aria-label={showPw ? tr('Hide password', 'شاردنەوەی تێپەڕەوشە', 'إخفاء كلمة المرور') : tr('Show password', 'پیشاندانی تێپەڕەوشە', 'إظهار كلمة المرور')}
-                    style={{ background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer', color: 'var(--ink-300)', display: 'flex' }}
-                  >
-                    <Icon name="eye" size={16} />
-                  </button>
-                }
-              />
-            </Field>
-
-            {!signup && role && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--ink-500)', marginTop: -4 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: role.accent, boxShadow: `0 0 0 3px color-mix(in srgb, ${role.accent} 22%, transparent)` }} />
-                {tr('Signing in as', 'چوونەژوورەوە وەک', 'تسجيل الدخول كـ')} <b style={{ color: 'var(--ink-700)' }}>{lang === 'ku' ? role.ku : lang === 'ar' ? role.ar : role.en}</b>
-              </div>
-            )}
-
-            {!signup && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 7, color: 'var(--ink-600)', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} style={{ accentColor: 'var(--accent-500)', width: 15, height: 15 }} />
-                  {tr('Remember me', 'بیرم بمێنێتەوە', 'تذكّرني')}
-                </label>
-                <Link to="/forgot-password" style={{ color: 'var(--accent-400)', fontWeight: 500 }}>{tr('Forgot password?', 'تێپەڕەوشەت بیرچووە؟', 'نسيت كلمة المرور؟')}</Link>
-              </div>
-            )}
-
-            <button type="submit" className="vx-btn vx-btn-accent vx-btn-lg" style={{ width: '100%', marginTop: 4 }} disabled={disabled || loading}>
-              {loading
-                ? tr('Please wait…', 'تکایە چاوەڕێ بکە…', 'يرجى الانتظار…')
-                : submitLabel || (signup ? tr('Create account', 'دروستکردنی هەژمار', 'إنشاء حساب') : tr('Sign in', 'چوونەژوورەوە', 'تسجيل الدخول'))}
-            </button>
-          </form>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '22px 0', color: 'var(--ink-300)', fontSize: 12 }}>
-            <span style={{ flex: 1, height: 1, background: 'var(--border)' }} />{tr('or', 'یان', 'أو')}<span style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <button type="button" className="vx-btn vx-btn-default" style={{ width: '100%' }} onClick={handleGoogle} disabled={disabled || googleLoading}>Google</button>
-            <button type="button" className="vx-btn vx-btn-default" style={{ width: '100%' }} onClick={handleGoogle} disabled={disabled || googleLoading}>Microsoft</button>
-          </div>
-
-          <p style={{ marginTop: 20, fontSize: 13, color: 'var(--ink-500)', textAlign: 'center' }}>
-            {signup ? tr('Already have an account? ', 'پێشتر هەژمارت هەیە؟ ', 'لديك حساب بالفعل؟ ') : tr("Don't have an account? ", 'هەژمارت نییە؟ ', 'ليس لديك حساب؟ ')}
-            <Link to={signup ? '/login' : '/signup'} style={{ color: 'var(--accent-400)', fontWeight: 600 }}>
-              {signup ? tr('Sign in', 'بچۆ ژوورەوە', 'سجّل الدخول') : tr('Create one', 'یەکێک دروست بکە', 'أنشئ حسابًا')}
-            </Link>
-          </p>
-
-          {!signup && (
-            <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-300)', marginBottom: 10, textAlign: 'center' }}>
-                {tr('Demo accounts — tap to fill', 'هەژماری دیمۆ — بۆ پڕکردنەوە دایگرە', 'حسابات تجريبية — انقر للتعبئة')}
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, justifyContent: 'center' }}>
-                {ROLES.map((r) => {
-                  const on = email === r.id + '@zagros.iq';
-                  return (
-                    <button
-                      key={r.id} type="button" onClick={() => setEmail(r.id + '@zagros.iq')}
-                      style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 6, height: 28, padding: '0 10px', borderRadius: 999,
-                        border: '1px solid ' + (on ? r.accent : 'var(--border-strong)'),
-                        background: on ? `color-mix(in srgb, ${r.accent} 14%, transparent)` : 'var(--surface)',
-                        color: on ? r.accent : 'var(--ink-600)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                      }}
-                    >
-                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: r.accent }} />{lang === 'ku' ? r.ku : lang === 'ar' ? r.ar : r.en}
-                    </button>
-                  );
-                })}
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--ink-300)', textAlign: 'center', marginTop: 10, fontFamily: 'var(--font-mono)' }}>
-                {tr('password', 'تێپەڕەوشە', 'كلمة المرور')}: demo
-              </div>
+          {/* ---------- DONE: password reset success ---------- */}
+          {reset && done === 'success' && (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ width: 56, height: 56, borderRadius: 14, background: 'var(--success-bg)', color: 'var(--success-fg)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}><Icon name="checkCircle" size={26} /></div>
+              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ink-900)', margin: 0 }}>{tr('Password reset', 'تێپەڕەوشە ڕێکخرایەوە', 'تمت إعادة التعيين')}</h1>
+              <p style={{ fontSize: 14, color: 'var(--ink-500)', margin: '8px 0 24px', lineHeight: 1.6 }}>{tr('Your password has been updated. You can now sign in.', 'تێپەڕەوشەکەت نوێکرایەوە. ئێستا دەتوانیت بچیتە ژوورەوە.', 'تم تحديث كلمة المرور. يمكنك تسجيل الدخول الآن.')}</p>
+              <Link to="/login" className="vx-btn vx-btn-accent vx-btn-lg" style={{ width: '100%' }}>{tr('Sign in', 'چوونەژوورەوە', 'تسجيل الدخول')}</Link>
             </div>
           )}
+
+          {/* ---------- FORM (signin / signup / forgot / reset) ---------- */}
+          {!done && (<>
+            {(forgot || reset) && (
+              <Link to="/login" className="vx-btn vx-btn-ghost vx-btn-sm" style={{ paddingInlineStart: 0, marginBottom: 14 }}>
+                <Icon name="chevronLeft" size={15} style={{ transform: lang === 'ku' || lang === 'ar' ? 'scaleX(-1)' : 'none' }} />
+                {tr('Back to sign in', 'گەڕانەوە بۆ چوونەژوورەوە', 'العودة لتسجيل الدخول')}
+              </Link>
+            )}
+
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 27, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ink-900)', margin: 0 }}>{headline}</h1>
+            <p style={{ fontSize: 14, color: 'var(--ink-500)', margin: '7px 0 28px', lineHeight: 1.55 }}>{subtitle}</p>
+
+            {bannerError && (
+              <div
+                role="alert"
+                style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 8, padding: '11px 13px', marginBottom: 16,
+                  borderRadius: 'var(--radius-md)', background: 'var(--danger-bg)', color: 'var(--danger-fg)',
+                  border: '1px solid color-mix(in srgb, var(--danger-500) 32%, transparent)', fontSize: 13, lineHeight: 1.5,
+                }}
+              >
+                <span style={{ marginTop: 1, flexShrink: 0 }}><Icon name="clock" size={15} /></span>
+                <span>{bannerError}</span>
+              </div>
+            )}
+
+            <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
+              {signup && (
+                <Field label={tr('Business name', 'ناوی بزنس', 'اسم النشاط')}>
+                  <VxField icon="building" name="organization" autoComplete="organization" value={businessName} onChange={setBusinessName} disabled={disabled}
+                    placeholder={tr('e.g. Zagros Trading', 'بۆ نموونە: بازرگانی زاگرۆس', 'مثال: زاكروس للتجارة')} ariaLabel={tr('Business name', 'ناوی بزنس', 'اسم النشاط')} />
+                </Field>
+              )}
+              {signup && (
+                <Field label={tr('Full name', 'ناوی تەواو', 'الاسم الكامل')}>
+                  <VxField icon="users" name="name" autoComplete="name" value={fullName} onChange={setFullName} disabled={disabled}
+                    placeholder={tr('e.g. Safa Othman', 'بۆ نموونە: سەفا عوسمان', 'مثال: صفا عثمان')} ariaLabel={tr('Full name', 'ناوی تەواو', 'الاسم الكامل')} />
+                </Field>
+              )}
+
+              {(signin || signup || forgot) && (
+                <Field label={tr('Email', 'ئیمەیڵ', 'البريد الإلكتروني')}>
+                  <VxField icon="mail" type="email" name="email" autoComplete="email" dir="ltr" value={email} onChange={setEmail} disabled={disabled}
+                    placeholder="you@business.iq" ariaLabel={tr('Email', 'ئیمەیڵ', 'البريد الإلكتروني')} />
+                </Field>
+              )}
+
+              {(signin || signup || reset) && (
+                <Field label={reset ? tr('New password', 'تێپەڕەوشەی نوێ', 'كلمة المرور الجديدة') : tr('Password', 'تێپەڕەوشە', 'كلمة المرور')}>
+                  <VxField icon="lock" type={showPw ? 'text' : 'password'} name="password" dir="ltr"
+                    autoComplete={signin ? 'current-password' : 'new-password'} value={password} onChange={setPassword} disabled={disabled}
+                    placeholder="••••••••" ariaLabel={tr('Password', 'تێپەڕەوشە', 'كلمة المرور')} suffix={eyeSuffix} />
+                </Field>
+              )}
+
+              {/* password strength meter (signup) */}
+              {signup && password && (
+                <div style={{ marginTop: -6 }}>
+                  <div style={{ display: 'flex', gap: 5 }}>
+                    {[0, 1, 2, 3].map((i) => (
+                      <span key={i} style={{ flex: 1, height: 4, borderRadius: 3, background: i < score ? strengthColor : 'var(--border-strong)', transition: 'background .15s' }} />
+                    ))}
+                  </div>
+                  <div style={{ fontSize: 11.5, color: 'var(--ink-500)', marginTop: 5 }}>{strengthLabel}</div>
+                </div>
+              )}
+
+              {(signup || reset) && (
+                <Field label={tr('Confirm password', 'دڵنیاکردنەوەی تێپەڕەوشە', 'تأكيد كلمة المرور')}>
+                  <VxField icon="lock" type={showPw ? 'text' : 'password'} name="confirm_password" dir="ltr"
+                    autoComplete="new-password" value={confirmPassword} onChange={setConfirmPassword} disabled={disabled}
+                    placeholder="••••••••" ariaLabel={tr('Confirm password', 'دڵنیاکردنەوەی تێپەڕەوشە', 'تأكيد كلمة المرور')} />
+                </Field>
+              )}
+
+              {signin && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 7, color: 'var(--ink-600)', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} style={{ accentColor: 'var(--accent-500)', width: 15, height: 15 }} />
+                    {tr('Remember me', 'بیرم بمێنێتەوە', 'تذكّرني')}
+                  </label>
+                  <Link to="/forgot-password" style={{ color: 'var(--accent-400)', fontWeight: 500 }}>{tr('Forgot password?', 'تێپەڕەوشەت بیرچووە؟', 'نسيت كلمة المرور؟')}</Link>
+                </div>
+              )}
+
+              <button type="submit" className="vx-btn vx-btn-accent vx-btn-lg" style={{ width: '100%', marginTop: 4 }} disabled={disabled || loading}>
+                {loading
+                  ? tr('Please wait…', 'تکایە چاوەڕێ بکە…', 'يرجى الانتظار…')
+                  : submitLabel || (
+                    signup ? tr('Create account', 'دروستکردنی هەژمار', 'إنشاء حساب')
+                      : forgot ? tr('Send reset link', 'ناردنی لینکی ڕێکخستنەوە', 'إرسال رابط إعادة التعيين')
+                        : reset ? tr('Reset password', 'ڕێکخستنەوەی تێپەڕەوشە', 'إعادة تعيين كلمة المرور')
+                          : tr('Sign in', 'چوونەژوورەوە', 'تسجيل الدخول'))}
+              </button>
+            </form>
+
+            {/* social + mode toggle (signin / signup only) */}
+            {(signin || signup) && (<>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '22px 0', color: 'var(--ink-300)', fontSize: 12 }}>
+                <span style={{ flex: 1, height: 1, background: 'var(--border)' }} />{tr('or', 'یان', 'أو')}<span style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <button type="button" className="vx-btn vx-btn-default" style={{ width: '100%' }} onClick={handleGoogle} disabled={disabled || googleLoading}>Google</button>
+                <button type="button" className="vx-btn vx-btn-default" style={{ width: '100%' }} aria-disabled="true">Microsoft</button>
+              </div>
+              <p style={{ marginTop: 20, fontSize: 13, color: 'var(--ink-500)', textAlign: 'center' }}>
+                {signup ? tr('Already have an account? ', 'پێشتر هەژمارت هەیە؟ ', 'لديك حساب بالفعل؟ ') : tr("Don't have an account? ", 'هەژمارت نییە؟ ', 'ليس لديك حساب؟ ')}
+                <Link to={signup ? '/login' : '/signup'} style={{ color: 'var(--accent-400)', fontWeight: 600 }}>
+                  {signup ? tr('Sign in', 'بچۆ ژوورەوە', 'سجّل الدخول') : tr('Create one', 'یەکێک دروست بکە', 'أنشئ حسابًا')}
+                </Link>
+              </p>
+            </>)}
+          </>)}
         </div>
       </div>
 
