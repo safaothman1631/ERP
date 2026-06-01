@@ -170,7 +170,7 @@ const HotelDashboard: React.FC = () => {
         {data.daily_occupancy && data.daily_occupancy.length > 0 ? (
           <ResponsiveChart
             legendItems={[
-              { id: 'occupancy', labelKey: asTranslationKey('hotel.occupancy'), color: '#1f6feb' },
+              { id: 'occupancy', labelKey: asTranslationKey('hotel.occupancy'), color: '#7B61FF' },
             ]}
           >
             <LineChart data={data.daily_occupancy}>
@@ -181,7 +181,7 @@ const HotelDashboard: React.FC = () => {
               <Line
                 type="monotone"
                 dataKey="occupancy"
-                stroke="#1f6feb"
+                stroke="#7B61FF"
                 strokeWidth={2}
                 dot={{ r: 4 }}
               />

@@ -18,7 +18,7 @@
 /* Theme variables — read these so dark-mode/branding inherits automatically. */
 .empty-state {
   --empty-illu-fg: var(--text-primary, rgba(0, 0, 0, 0.85));
-  --empty-illu-bg: var(--surface-muted, rgba(31, 111, 235, 0.08));
+  --empty-illu-bg: var(--surface-muted, rgba(123, 97, 255, 0.08));
 
   display: flex;
   flex-direction: column;
@@ -179,7 +179,7 @@
   padding: 6px 10px;
   border: none;
   background: transparent;
-  color: var(--ant-color-primary, #1677ff);
+  color: var(--ant-color-primary, #7B61FF);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.4;
@@ -191,17 +191,17 @@
 }
 
 .qc-select-footer__cta:hover {
-  background: var(--ant-color-primary-bg, rgba(22, 119, 255, 0.08));
+  background: var(--ant-color-primary-bg, rgba(123, 97, 255, 0.08));
 }
 
 .qc-select-footer__cta:focus-visible {
   outline: none;
-  background: var(--ant-color-primary-bg, rgba(22, 119, 255, 0.08));
-  box-shadow: 0 0 0 2px var(--ant-color-primary-border, rgba(22, 119, 255, 0.4));
+  background: var(--ant-color-primary-bg, rgba(123, 97, 255, 0.08));
+  box-shadow: 0 0 0 2px var(--ant-color-primary-border, rgba(123, 97, 255, 0.4));
 }
 
 .qc-select-footer__cta:active {
-  background: var(--ant-color-primary-bg-hover, rgba(22, 119, 255, 0.12));
+  background: var(--ant-color-primary-bg-hover, rgba(123, 97, 255, 0.12));
 }
 
 .qc-select-footer__cta .anticon {

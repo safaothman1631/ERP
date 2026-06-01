@@ -189,7 +189,7 @@ const heroStyles: Record<string, React.CSSProperties> = {
     position: 'relative',
     overflow: 'hidden',
     borderRadius: radius.xl,
-    background: 'linear-gradient(135deg, #7B61FF 0%, #5638D6 55%, #0B2F66 100%)',
+    background: 'linear-gradient(135deg, #7B61FF 0%, #5638D6 55%, #2C1B73 100%)',
     color: '#fff',
     padding: `${space.xl}px`,
     marginBottom: space.lg,

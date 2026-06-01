@@ -17,7 +17,7 @@ import LanguageSwitcher from './LanguageSwitcher';
  * - Same public API as v1 ({title, subtitle, children}) — drop-in
  */
 
-const BRAND_GRADIENT = 'linear-gradient(135deg, #7B61FF 0%, #5638D6 50%, #0B2F66 100%)';
+const BRAND_GRADIENT = 'linear-gradient(135deg, #7B61FF 0%, #5638D6 50%, #2C1B73 100%)';
 
 const BrandMark: React.FC<{ size?: number }> = ({ size = 40 }) => (
   <svg width={size} height={size} viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
