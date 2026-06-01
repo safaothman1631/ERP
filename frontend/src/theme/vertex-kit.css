@@ -257,17 +257,42 @@ h1, h2, h3, .ant-typography h1, .ant-typography h2, .ant-typography h3,
 .ant-drawer-header { border-bottom: 1px solid var(--border) !important; }
 .ant-drawer-mask { background: rgba(8, 10, 15, 0.55) !important; }
 
+/* Dropdown + context menus (row actions: View / Edit / Duplicate / Delete) — kit menu:
+   surface popover, accent-soft hover, accent text, red danger item. */
 .ant-dropdown-menu, .ant-popover-inner {
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-lg);
+  background: var(--surface) !important;
+  padding: 6px !important;
 }
-.ant-dropdown-menu-item:hover { background: var(--surface-2); }
+.ant-dropdown-menu-item, .ant-dropdown-menu-submenu-title {
+  border-radius: var(--radius-md) !important;
+  color: var(--ink-700) !important;
+  font-weight: 500;
+}
+.ant-dropdown-menu-item .anticon, .ant-dropdown-menu-submenu-title .anticon { color: var(--ink-500); }
+.ant-dropdown-menu-item:hover, .ant-dropdown-menu-submenu-title:hover {
+  background: var(--accent-soft) !important;
+  color: var(--accent-500) !important;
+}
+.ant-dropdown-menu-item:hover .anticon { color: var(--accent-400); }
+.ant-dropdown-menu-item-danger,
+.ant-dropdown-menu-item-danger:hover {
+  color: var(--danger-500) !important;
+  background: color-mix(in srgb, var(--danger-500) 12%, transparent) !important;
+}
+.ant-dropdown-menu-item-danger .anticon { color: var(--danger-500) !important; }
+.ant-dropdown-menu-item-divider, .ant-dropdown-menu-item-group-title { background: var(--border); }
 
 /* ───────────────────────────── Tabs / Segmented ───────────────────────────── */
 .ant-tabs-ink-bar { background: var(--accent-500) !important; }
+.ant-tabs-tab .ant-tabs-tab-btn { color: var(--ink-500); font-weight: 600; }
+.ant-tabs-tab:hover .ant-tabs-tab-btn { color: var(--ink-900); }
 .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn { color: var(--accent-500) !important; }
+.ant-segmented { background: var(--surface-2); }
 .ant-segmented .ant-segmented-item-selected { background: var(--accent-soft); color: var(--accent-500); }
+.ant-segmented .ant-segmented-item:hover:not(.ant-segmented-item-selected) { color: var(--ink-900); }
 
 /* ───────────────────────────── Scrollbars (kit .vx-scroll) ───────────────────────────── */
 .role-accent-root *::-webkit-scrollbar { width: 9px; height: 9px; }
