@@ -168,6 +168,24 @@ h1, h2, h3, .ant-typography h1, .ant-typography h2, .ant-typography h3,
    Uppercase 11px headers on surface-2, 12px cells, hairline rows, hover tint,
    tabular-nums money. */
 .ant-table { font-size: 13.5px; }
+/* All table surfaces use the kit surface token so no white band shows in dark
+   (the body/footer/empty/pagination area below the rows). Auto-flips for light. */
+.ant-table,
+.ant-table-container,
+.ant-table-content,
+.ant-table-body,
+.ant-table-footer,
+.ant-table-summary,
+.ant-table-cell-fix-left,
+.ant-table-cell-fix-right { background: var(--surface) !important; }
+.ant-table-placeholder, .ant-table-placeholder > td, .ant-table-placeholder:hover > td { background: var(--surface) !important; }
+.ant-table-pagination.ant-pagination { background: transparent !important; }
+.ant-pagination .ant-pagination-item { background: var(--surface-2) !important; border-color: var(--border) !important; }
+.ant-pagination .ant-pagination-item a { color: var(--ink-700) !important; }
+.ant-pagination .ant-pagination-item-active { background: var(--accent-soft) !important; border-color: color-mix(in srgb, var(--accent-500) 45%, transparent) !important; }
+.ant-pagination .ant-pagination-item-active a { color: var(--accent-500) !important; }
+.ant-pagination .ant-pagination-prev .ant-pagination-item-link,
+.ant-pagination .ant-pagination-next .ant-pagination-item-link { background: var(--surface-2) !important; border-color: var(--border) !important; color: var(--ink-500) !important; }
 .ant-table-thead > tr > th {
   background: var(--surface-2) !important;
   color: var(--ink-500) !important;
