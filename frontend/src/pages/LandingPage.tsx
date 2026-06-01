@@ -1,91 +1,56 @@
 /**
- * LandingPage.tsx
+ * LandingPage.tsx — Vertex "Slate & Signal" marketing landing.
  *
- * Public Marketing Landing Page — fully bilingual (en/ku) with
- * responsive layout driven by `useViewport`.
+ * Fully rebuilt on the Vertex kit design language: dark slate canvas (#0B0E14),
+ * a masked dotted grid + soft violet/cyan glow orbs, Inter Tight display
+ * headings, the kit's electric-violet accent, hairline slate cards and the
+ * flat-accent CTA. All colours resolve from the global Vertex tokens
+ * (theme/vertex-tokens.css) via a `data-theme="dark"` wrapper, so it stays in
+ * lock-step with the rest of the app.
  *
- * Umbrella rules applied (task 10.9):
- *  - `useViewport` for all responsive decisions (no UA detection)
- *  - Full bilingual coverage via `t()` — zero hardcoded strings
- *  - Safe-area-insets via logical properties
- *  - prefers-reduced-motion respected
- *
- * Validates: Requirements 17.4, 5.6
+ * Bilingual (en/ku) via `t()` — zero hardcoded copy. Responsive via `useViewport`
+ * (no UA sniffing). Logical properties only (RTL-safe). Respects reduced-motion.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, useMotionValue, useSpring, AnimatePresence } from 'framer-motion';
 import {
-  RocketOutlined, BarChartOutlined, TeamOutlined,
-  SafetyOutlined, GlobalOutlined, ThunderboltOutlined,
-  CheckCircleOutlined, StarFilled,
+  RocketOutlined, BarChartOutlined, TeamOutlined, SafetyOutlined, GlobalOutlined,
+  ThunderboltOutlined, CheckCircleOutlined, StarFilled,
 } from '@ant-design/icons';
 import { useViewport } from '../hooks/useViewport';
 
-// ---------------------------------------------------------------------------
-// Custom Cursor (desktop only — driven by useViewport, not UA)
-// ---------------------------------------------------------------------------
+/* ── Custom cursor (desktop only, via useViewport) ── */
 const CustomCursor: React.FC = () => {
-  const cursorX = useMotionValue(-100);
-  const cursorY = useMotionValue(-100);
-  const dotX = useMotionValue(-100);
-  const dotY = useMotionValue(-100);
+  const cursorX = useMotionValue(-100); const cursorY = useMotionValue(-100);
+  const dotX = useMotionValue(-100); const dotY = useMotionValue(-100);
   const springX = useSpring(cursorX, { stiffness: 150, damping: 20 });
   const springY = useSpring(cursorY, { stiffness: 150, damping: 20 });
-  const [isHovering, setIsHovering] = useState(false);
-
+  const [hover, setHover] = useState(false);
   useEffect(() => {
-    const moveCursor = (e: MouseEvent) => {
-      cursorX.set(e.clientX - 16); cursorY.set(e.clientY - 16);
-      dotX.set(e.clientX - 4); dotY.set(e.clientY - 4);
-    };
-    const handleMouseOver = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      setIsHovering(
-        target.tagName === 'BUTTON' || target.tagName === 'A' ||
-        !!target.closest('button') || !!target.closest('a') || !!target.closest('[data-hoverable]')
-      );
-    };
-    window.addEventListener('mousemove', moveCursor);
-    window.addEventListener('mouseover', handleMouseOver);
-    return () => { window.removeEventListener('mousemove', moveCursor); window.removeEventListener('mouseover', handleMouseOver); };
+    const move = (e: MouseEvent) => { cursorX.set(e.clientX - 16); cursorY.set(e.clientY - 16); dotX.set(e.clientX - 4); dotY.set(e.clientY - 4); };
+    const over = (e: MouseEvent) => { const tg = e.target as HTMLElement; setHover(tg.tagName === 'BUTTON' || tg.tagName === 'A' || !!tg.closest('button') || !!tg.closest('a') || !!tg.closest('[data-hoverable]')); };
+    window.addEventListener('mousemove', move); window.addEventListener('mouseover', over);
+    return () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseover', over); };
   }, [cursorX, cursorY, dotX, dotY]);
-
   return (
     <>
-      <motion.div style={{ position: 'fixed', top: 0, left: 0, /* rtl-ignore: cursor coords are physical */ x: springX, y: springY, width: 32, height: 32, borderRadius: '50%', border: '2px solid rgba(123,97,255,0.7)', pointerEvents: 'none', zIndex: 99999, mixBlendMode: 'difference' }} animate={{ scale: isHovering ? 1.6 : 1 }} transition={{ duration: 0.2 }} />
+      <motion.div style={{ position: 'fixed', top: 0, left: 0, /* rtl-ignore: cursor coords are physical */ x: springX, y: springY, width: 32, height: 32, borderRadius: '50%', border: '2px solid rgba(123,97,255,0.7)', pointerEvents: 'none', zIndex: 99999, mixBlendMode: 'difference' }} animate={{ scale: hover ? 1.6 : 1 }} transition={{ duration: 0.2 }} />
       <motion.div style={{ position: 'fixed', top: 0, left: 0, /* rtl-ignore */ x: dotX, y: dotY, width: 8, height: 8, borderRadius: '50%', backgroundColor: '#7B61FF', pointerEvents: 'none', zIndex: 99999 }} />
     </>
   );
 };
 
-// ---------------------------------------------------------------------------
-// Animation Variants
-// ---------------------------------------------------------------------------
-const heroContainerVariants: import("framer-motion").Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.18, delayChildren: 0.1 } },
-};
-const heroItemVariants: import("framer-motion").Variants = {
-  hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
-};
-const fadeInUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: (i: number = 0) => ({ opacity: 1, y: 0, transition: { duration: 0.6, delay: i * 0.1, ease: 'easeOut' as const } }),
-};
+const heroContainer: import('framer-motion').Variants = { hidden: {}, visible: { transition: { staggerChildren: 0.16, delayChildren: 0.08 } } };
+// Capture-safe: animate transform only (never opacity-from-0) per the kit rule.
+const heroItem: import('framer-motion').Variants = { hidden: { y: 28 }, visible: { y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } } };
+const rise = { hidden: { y: 24 }, visible: (i = 0) => ({ y: 0, transition: { duration: 0.5, delay: i * 0.08, ease: 'easeOut' as const } }) };
 
-// ---------------------------------------------------------------------------
-// Data — all text via i18n keys
-// ---------------------------------------------------------------------------
 const featureIcons = [
-  <BarChartOutlined style={{ fontSize: 28, color: '#7B61FF' }} />,
-  <TeamOutlined style={{ fontSize: 28, color: '#7C3AED' }} />,
-  <RocketOutlined style={{ fontSize: 28, color: '#059669' }} />,
-  <GlobalOutlined style={{ fontSize: 28, color: '#DC2626' }} />,
-  <SafetyOutlined style={{ fontSize: 28, color: '#D97706' }} />,
-  <ThunderboltOutlined style={{ fontSize: 28, color: '#0EA5E9' }} />,
+  <BarChartOutlined style={{ fontSize: 26 }} />, <TeamOutlined style={{ fontSize: 26 }} />,
+  <RocketOutlined style={{ fontSize: 26 }} />, <GlobalOutlined style={{ fontSize: 26 }} />,
+  <SafetyOutlined style={{ fontSize: 26 }} />, <ThunderboltOutlined style={{ fontSize: 26 }} />,
 ];
 const featureKeys = [
   { title: 'landing_feature_accounting_title', desc: 'landing_feature_accounting_desc' },
@@ -106,216 +71,190 @@ const testimonialKeys = [
   { name: 'landing_testimonial_3_name', role: 'landing_testimonial_3_role', text: 'landing_testimonial_3_text', rating: 5 },
 ];
 
-// ---------------------------------------------------------------------------
-// Main Component
-// ---------------------------------------------------------------------------
+/* shared inline styles built from kit tokens */
+const accentBtn: React.CSSProperties = { background: 'var(--accent-500)', border: '1px solid transparent', borderRadius: 'var(--radius-md)', color: '#fff', padding: '13px 28px', fontSize: 15, fontWeight: 600, cursor: 'inherit', boxShadow: 'var(--accent-glow)' };
+const ghostBtn: React.CSSProperties = { background: 'color-mix(in srgb, var(--surface) 60%, transparent)', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-md)', color: 'var(--ink-700)', padding: '13px 28px', fontSize: 15, fontWeight: 600, cursor: 'inherit', backdropFilter: 'blur(8px)' };
+const card: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)' };
+const display: React.CSSProperties = { fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-0.025em', color: 'var(--ink-900)' };
+
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { isMobile, isDesktop } = useViewport();
   const isKu = i18n.language === 'ku';
   const isRTL = isKu;
-  const showCustomCursor = isDesktop;
-
+  const showCursor = isDesktop;
   const [isExiting, setIsExiting] = useState(false);
-  const exitTargetRef = useRef<string>('/signup');
-  const navigateWithAnimation = useCallback((to: string) => {
-    if (isExiting) return;
-    exitTargetRef.current = to;
-    setIsExiting(true);
-    setTimeout(() => navigate(to), 320);
-  }, [isExiting, navigate]);
-  const handleGetStarted = useCallback(() => navigateWithAnimation('/signup'), [navigateWithAnimation]);
-  const handleLogin = useCallback(() => navigateWithAnimation('/login'), [navigateWithAnimation]);
-  const toggleLanguage = () => i18n.changeLanguage(isKu ? 'en' : 'ku');
-
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  useEffect(() => { if (!isMobile) setMobileMenuOpen(false); }, [isMobile]);
-  const cursorStyle = showCustomCursor ? 'none' : 'auto';
+  const exitTarget = useRef<string>('/signup');
+  const go = useCallback((to: string) => { if (isExiting) return; exitTarget.current = to; setIsExiting(true); setTimeout(() => navigate(to), 300); }, [isExiting, navigate]);
+  const getStarted = useCallback(() => go('/signup'), [go]);
+  const login = useCallback(() => go('/login'), [go]);
+  const toggleLang = () => i18n.changeLanguage(isKu ? 'en' : 'ku');
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => { if (!isMobile) setMenuOpen(false); }, [isMobile]);
+  const cur = showCursor ? 'none' : 'auto';
 
   return (
     <AnimatePresence mode="wait">
-      {!isExiting ? (
-        <motion.div
-          key="landing-page"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0, y: -12 }}
-          transition={{ duration: 0.3, ease: 'easeInOut' }}
-          dir={isRTL ? 'rtl' : 'ltr'}
-          style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)', color: '#f8fafc', fontFamily: isRTL ? "'Noto Sans Arabic', sans-serif" : "'Inter', sans-serif", cursor: cursorStyle, overflowX: 'hidden' }}
-        >
-          {showCustomCursor && <CustomCursor />}
+      {!isExiting && (
+        <motion.div key="landing" data-theme="dark" dir={isRTL ? 'rtl' : 'ltr'}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3 }}
+          style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--ink-900)', fontFamily: isRTL ? 'var(--font-rtl)' : 'var(--font-ui)', cursor: cur, overflowX: 'hidden', position: 'relative' }}>
+          {showCursor && <CustomCursor />}
+          {/* dotted grid + glow orbs (kit marketing atmosphere) */}
+          <div aria-hidden style={{ position: 'fixed', inset: 0, pointerEvents: 'none', backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '34px 34px', WebkitMaskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%, #000 35%, transparent 75%)', maskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%, #000 35%, transparent 75%)' }} />
+          <div aria-hidden style={{ position: 'fixed', top: '-10%', insetInlineStart: '8%', width: 460, height: 460, borderRadius: '50%', background: 'radial-gradient(circle, color-mix(in srgb, var(--accent-500) 30%, transparent), transparent 70%)', filter: 'blur(80px)', pointerEvents: 'none' }} />
+          <div aria-hidden style={{ position: 'fixed', bottom: '0%', insetInlineEnd: '6%', width: 420, height: 420, borderRadius: '50%', background: 'radial-gradient(circle, rgba(46,143,224,0.22), transparent 70%)', filter: 'blur(90px)', pointerEvents: 'none' }} />
+
           <style>{`
-            .landing-nav-desktop { display: flex !important; }
-            .landing-nav-mobile-toggle { display: none !important; }
-            @media (max-width: 639px) { .landing-nav-desktop { display: none !important; } .landing-nav-mobile-toggle { display: flex !important; } }
+            .lp-nav-d { display: flex !important; } .lp-nav-m { display: none !important; }
+            @media (max-width: 639px) { .lp-nav-d { display: none !important; } .lp-nav-m { display: flex !important; } }
           `}</style>
 
-          {/* Navbar */}
-          <nav style={{ position: 'fixed', top: 0, insetInline: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 clamp(16px, 5vw, 80px)', height: 64, background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-            <motion.div initial={{ opacity: 0, x: isRTL ? 20 : -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #7B61FF, #7C3AED)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16, color: '#fff', flexShrink: 0 }}>E</div>
-              <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: -0.5 }}>ERP<span style={{ color: '#9275FF' }}>IQ</span></span>
-            </motion.div>
-            {/* Desktop nav */}
-            <motion.div initial={{ opacity: 0, x: isRTL ? -20 : 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} style={{ display: 'flex', alignItems: 'center', gap: 12 }} className="landing-nav-desktop">
-              <button data-hoverable="true" onClick={toggleLanguage} aria-label={t('landing_nav_switch_lang')} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: '#cbd5e1', padding: '6px 14px', fontSize: 13, cursor: cursorStyle, transition: 'all 0.2s' }}>{isKu ? 'English' : 'کوردی'}</button>
-              <button data-hoverable="true" onClick={handleLogin} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, color: '#e2e8f0', padding: '6px 18px', fontSize: 14, cursor: cursorStyle, transition: 'all 0.2s' }}>{t('auth_login')}</button>
-              <button data-hoverable="true" onClick={handleGetStarted} style={{ background: 'linear-gradient(135deg, #7B61FF, #7C3AED)', border: 'none', borderRadius: 8, color: '#fff', padding: '7px 20px', fontSize: 14, fontWeight: 600, cursor: cursorStyle, transition: 'all 0.2s', boxShadow: '0 4px 14px rgba(123,97,255,0.4)' }}>{t('landing_cta_get_started')}</button>
-            </motion.div>
-            {/* Mobile hamburger */}
-            <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} onClick={() => setMobileMenuOpen(v => !v)} aria-label={mobileMenuOpen ? t('landing_nav_close_menu') : t('landing_nav_open_menu')} aria-expanded={mobileMenuOpen} className="landing-nav-mobile-toggle" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: '#cbd5e1', width: 40, height: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5, cursor: cursorStyle, padding: 0 }}>
-              <span style={{ display: 'block', width: 18, height: 2, background: '#cbd5e1', borderRadius: 2, transition: 'transform 0.2s, opacity 0.2s', transform: mobileMenuOpen ? 'translateY(7px) rotate(45deg)' : 'none' }} />
-              <span style={{ display: 'block', width: 18, height: 2, background: '#cbd5e1', borderRadius: 2, transition: 'opacity 0.2s', opacity: mobileMenuOpen ? 0 : 1 }} />
-              <span style={{ display: 'block', width: 18, height: 2, background: '#cbd5e1', borderRadius: 2, transition: 'transform 0.2s, opacity 0.2s', transform: mobileMenuOpen ? 'translateY(-7px) rotate(-45deg)' : 'none' }} />
-            </motion.button>
+          {/* Navbar — kit glass top bar */}
+          <nav style={{ position: 'fixed', top: 0, insetInline: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 clamp(16px, 5vw, 72px)', height: 60, background: 'var(--glass-bg)', WebkitBackdropFilter: 'var(--glass-blur)', backdropFilter: 'var(--glass-blur)', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ width: 34, height: 34, borderRadius: 9, background: 'linear-gradient(135deg, var(--accent-400), var(--accent-700))', boxShadow: 'var(--accent-glow)', flexShrink: 0 }} />
+              <span style={{ ...display, fontSize: 19, letterSpacing: '-0.02em' }}>ERP<span style={{ color: 'var(--accent-400)' }}>IQ</span></span>
+            </div>
+            <div className="lp-nav-d" style={{ alignItems: 'center', gap: 10 }}>
+              <button data-hoverable onClick={toggleLang} aria-label={t('landing_nav_switch_lang')} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', color: 'var(--ink-700)', padding: '7px 14px', fontSize: 13, cursor: cur, fontWeight: 600 }}>{isKu ? 'English' : 'کوردی'}</button>
+              <button data-hoverable onClick={login} style={{ background: 'transparent', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-md)', color: 'var(--ink-900)', padding: '7px 18px', fontSize: 14, cursor: cur, fontWeight: 600 }}>{t('auth_login')}</button>
+              <button data-hoverable onClick={getStarted} style={{ ...accentBtn, padding: '8px 18px', fontSize: 14, cursor: cur }}>{t('landing_cta_get_started')}</button>
+            </div>
+            <button onClick={() => setMenuOpen(v => !v)} aria-label={menuOpen ? t('landing_nav_close_menu') : t('landing_nav_open_menu')} aria-expanded={menuOpen} className="lp-nav-m" style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', color: 'var(--ink-700)', width: 40, height: 40, flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5, cursor: cur, padding: 0 }}>
+              <span style={{ width: 18, height: 2, background: 'currentColor', borderRadius: 2, transition: 'transform .2s', transform: menuOpen ? 'translateY(7px) rotate(45deg)' : 'none' }} />
+              <span style={{ width: 18, height: 2, background: 'currentColor', borderRadius: 2, transition: 'opacity .2s', opacity: menuOpen ? 0 : 1 }} />
+              <span style={{ width: 18, height: 2, background: 'currentColor', borderRadius: 2, transition: 'transform .2s', transform: menuOpen ? 'translateY(-7px) rotate(-45deg)' : 'none' }} />
+            </button>
           </nav>
 
-          {/* Mobile dropdown menu */}
           <AnimatePresence>
-            {mobileMenuOpen && (
-              <motion.div key="mobile-menu" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} style={{ position: 'fixed', top: 64, insetInline: 0, zIndex: 999, background: 'rgba(15,23,42,0.97)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '16px clamp(16px, 5vw, 80px)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <button onClick={() => { toggleLanguage(); setMobileMenuOpen(false); }} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#cbd5e1', padding: '10px 16px', fontSize: 14, cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' }}>🌐 {isKu ? 'English' : 'کوردی'}</button>
-                <button onClick={() => { setMobileMenuOpen(false); handleLogin(); }} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#e2e8f0', padding: '10px 16px', fontSize: 14, cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' }}>{t('auth_login')}</button>
-                <button onClick={() => { setMobileMenuOpen(false); handleGetStarted(); }} style={{ background: 'linear-gradient(135deg, #7B61FF, #7C3AED)', border: 'none', borderRadius: 8, color: '#fff', padding: '10px 16px', fontSize: 14, fontWeight: 600, cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' }}>🚀 {t('landing_cta_get_started')}</button>
+            {menuOpen && (
+              <motion.div key="m" initial={{ y: -8 }} animate={{ y: 0 }} exit={{ y: -8 }} transition={{ duration: 0.2 }} style={{ position: 'fixed', top: 60, insetInline: 0, zIndex: 999, background: 'var(--surface)', borderBottom: '1px solid var(--border)', padding: '16px clamp(16px, 5vw, 72px)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <button onClick={() => { toggleLang(); setMenuOpen(false); }} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', color: 'var(--ink-700)', padding: '10px 16px', fontSize: 14, cursor: 'pointer', textAlign: 'start' }}>{isKu ? 'English' : 'کوردی'}</button>
+                <button onClick={() => { setMenuOpen(false); login(); }} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', color: 'var(--ink-900)', padding: '10px 16px', fontSize: 14, cursor: 'pointer', textAlign: 'start' }}>{t('auth_login')}</button>
+                <button onClick={() => { setMenuOpen(false); getStarted(); }} style={{ ...accentBtn, padding: '10px 16px', fontSize: 14, textAlign: 'start' }}>{t('landing_cta_get_started')}</button>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Hero Section */}
-          <section style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 'clamp(80px, 10vw, 120px) clamp(16px, 5vw, 80px) 60px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: '20%', insetInlineStart: '10%', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(123,97,255,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
-            <div style={{ position: 'absolute', bottom: '20%', insetInlineEnd: '10%', width: 350, height: 350, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
-            <motion.div variants={heroContainerVariants} initial="hidden" animate="visible" style={{ maxWidth: 800, position: 'relative', zIndex: 1 }}>
-              <motion.div variants={heroItemVariants}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(123,97,255,0.15)', border: '1px solid rgba(123,97,255,0.3)', borderRadius: 100, padding: '5px 16px', fontSize: 13, color: '#AC97FF', marginBottom: 24 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#9275FF', display: 'inline-block' }} />
-                  {t('landing_badge')}
+          {/* Hero */}
+          <section style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 'clamp(96px, 12vw, 140px) clamp(16px, 5vw, 72px) 60px', position: 'relative', zIndex: 1 }}>
+            <motion.div variants={heroContainer} initial="hidden" animate="visible" style={{ maxWidth: 820 }}>
+              <motion.div variants={heroItem}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'var(--accent-soft)', border: '1px solid color-mix(in srgb, var(--accent-500) 30%, transparent)', borderRadius: 100, padding: '5px 16px', fontSize: 13, fontWeight: 600, color: 'var(--accent-300)', marginBottom: 24 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-400)' }} />{t('landing_badge')}
                 </span>
               </motion.div>
-              <motion.h1 variants={heroItemVariants} style={{ fontSize: 'clamp(36px, 6vw, 72px)', fontWeight: 800, lineHeight: 1.1, margin: '0 0 24px', letterSpacing: -1, background: 'linear-gradient(135deg, #f8fafc 0%, #AC97FF 50%, #C4B5FD 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                {t('landing_hero_title')}
-              </motion.h1>
-              <motion.p variants={heroItemVariants} style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: '#94a3b8', lineHeight: 1.7, margin: '0 0 40px', maxWidth: 600, marginInline: 'auto' }}>
-                {t('landing_hero_subtitle')}
-              </motion.p>
-              <motion.div variants={heroItemVariants} style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-                <motion.button data-hoverable="true" onClick={handleGetStarted} whileHover={{ scale: 1.04, boxShadow: '0 8px 30px rgba(123,97,255,0.5)' }} whileTap={{ scale: 0.97 }} style={{ background: 'linear-gradient(135deg, #7B61FF, #7C3AED)', border: 'none', borderRadius: 12, color: '#fff', padding: '14px 36px', fontSize: 16, fontWeight: 700, cursor: cursorStyle, boxShadow: '0 4px 20px rgba(123,97,255,0.4)' }}>
-                  🚀 {t('landing_cta_start_free')}
-                </motion.button>
-                <motion.button data-hoverable="true" onClick={handleLogin} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, color: '#e2e8f0', padding: '14px 36px', fontSize: 16, fontWeight: 600, cursor: cursorStyle, backdropFilter: 'blur(8px)' }}>
-                  {t('landing_cta_signin')}
-                </motion.button>
+              <motion.h1 variants={heroItem} style={{ ...display, fontSize: 'clamp(38px, 6vw, 72px)', lineHeight: 1.05, margin: '0 0 22px', background: 'linear-gradient(135deg, var(--ink-900) 0%, var(--accent-300) 55%, #C9BCFF 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{t('landing_hero_title')}</motion.h1>
+              <motion.p variants={heroItem} style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: 'var(--ink-500)', lineHeight: 1.65, margin: '0 0 40px', maxWidth: 600, marginInline: 'auto' }}>{t('landing_hero_subtitle')}</motion.p>
+              <motion.div variants={heroItem} style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+                <motion.button data-hoverable onClick={getStarted} whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} style={{ ...accentBtn, padding: '15px 36px', fontSize: 16, cursor: cur }}>{t('landing_cta_start_free')}</motion.button>
+                <motion.button data-hoverable onClick={login} whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} style={{ ...ghostBtn, padding: '15px 36px', fontSize: 16, cursor: cur }}>{t('landing_cta_signin')}</motion.button>
               </motion.div>
-              <motion.div variants={heroItemVariants} style={{ display: 'flex', gap: 'clamp(24px, 4vw, 48px)', justifyContent: 'center', marginTop: 56, flexWrap: 'wrap' }}>
-                {[{ num: '500+', key: 'landing_stat_companies' }, { num: '50K+', key: 'landing_stat_users' }, { num: '99.9%', key: 'landing_stat_uptime' }].map(stat => (
-                  <div key={stat.num} style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 800, color: '#9275FF' }}>{stat.num}</div>
-                    <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>{t(stat.key)}</div>
+              <motion.div variants={heroItem} style={{ display: 'flex', gap: 'clamp(24px, 4vw, 48px)', justifyContent: 'center', marginTop: 56, flexWrap: 'wrap' }}>
+                {[{ num: '500+', key: 'landing_stat_companies' }, { num: '50K+', key: 'landing_stat_users' }, { num: '99.9%', key: 'landing_stat_uptime' }].map(s => (
+                  <div key={s.num} style={{ textAlign: 'center' }}>
+                    <div style={{ ...display, fontSize: 'clamp(24px, 3vw, 36px)', color: 'var(--accent-400)', fontVariantNumeric: 'tabular-nums' }}>{s.num}</div>
+                    <div style={{ fontSize: 13, color: 'var(--ink-400)', marginTop: 4 }}>{t(s.key)}</div>
                   </div>
                 ))}
               </motion.div>
             </motion.div>
           </section>
 
-          {/* Features Section */}
-          <section id="features" style={{ padding: 'clamp(60px, 8vw, 100px) clamp(16px, 5vw, 80px)', background: 'rgba(255,255,255,0.02)' }}>
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={fadeInUp} style={{ textAlign: 'center', marginBottom: 56 }}>
-              <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 800, margin: '0 0 16px', background: 'linear-gradient(135deg, #f8fafc, #AC97FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{t('landing_features_title')}</h2>
-              <p style={{ color: '#64748b', fontSize: 16, maxWidth: 500, margin: '0 auto' }}>{t('landing_features_subtitle')}</p>
+          {/* Features */}
+          <section style={{ padding: 'clamp(60px, 8vw, 100px) clamp(16px, 5vw, 72px)', background: 'var(--surface-2)', position: 'relative', zIndex: 1 }}>
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={rise} style={{ textAlign: 'center', marginBottom: 52 }}>
+              <h2 style={{ ...display, fontSize: 'clamp(28px, 4vw, 46px)', margin: '0 0 14px' }}>{t('landing_features_title')}</h2>
+              <p style={{ color: 'var(--ink-500)', fontSize: 16, maxWidth: 520, margin: '0 auto' }}>{t('landing_features_subtitle')}</p>
             </motion.div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, maxWidth: 1200, margin: '0 auto' }}>
-              {featureKeys.map((feat, i) => (
-                <motion.div key={i} data-hoverable="true" custom={i} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }} variants={fadeInUp} whileHover={{ scale: 1.03, boxShadow: '0 20px 40px rgba(0,0,0,0.3)', y: -4 }} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '28px 24px', cursor: cursorStyle, transition: 'border-color 0.2s' }}>
-                  <div style={{ marginBottom: 16 }}>{featureIcons[i]}</div>
-                  <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 10px', color: '#f1f5f9' }}>{t(feat.title)}</h3>
-                  <p style={{ fontSize: 14, color: '#64748b', margin: 0, lineHeight: 1.6 }}>{t(feat.desc)}</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 18, maxWidth: 1180, margin: '0 auto' }}>
+              {featureKeys.map((f, i) => (
+                <motion.div key={i} data-hoverable custom={i} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }} variants={rise} whileHover={{ y: -4 }} style={{ ...card, padding: '26px 24px', cursor: cur }}>
+                  <span style={{ display: 'inline-flex', width: 48, height: 48, borderRadius: 'var(--radius-md)', background: 'var(--accent-soft)', color: 'var(--accent-400)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>{featureIcons[i]}</span>
+                  <h3 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 8px', color: 'var(--ink-900)' }}>{t(f.title)}</h3>
+                  <p style={{ fontSize: 14, color: 'var(--ink-500)', margin: 0, lineHeight: 1.6 }}>{t(f.desc)}</p>
                 </motion.div>
               ))}
             </div>
           </section>
 
-          {/* Plans Section */}
-          <section id="plans" style={{ padding: 'clamp(60px, 8vw, 100px) clamp(16px, 5vw, 80px)' }}>
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={fadeInUp} style={{ textAlign: 'center', marginBottom: 56 }}>
-              <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 800, margin: '0 0 16px', background: 'linear-gradient(135deg, #f8fafc, #C4B5FD)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{t('landing_plans_title')}</h2>
-              <p style={{ color: '#64748b', fontSize: 16 }}>{t('landing_plans_subtitle')}</p>
+          {/* Plans */}
+          <section style={{ padding: 'clamp(60px, 8vw, 100px) clamp(16px, 5vw, 72px)', position: 'relative', zIndex: 1 }}>
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={rise} style={{ textAlign: 'center', marginBottom: 52 }}>
+              <h2 style={{ ...display, fontSize: 'clamp(28px, 4vw, 46px)', margin: '0 0 14px' }}>{t('landing_plans_title')}</h2>
+              <p style={{ color: 'var(--ink-500)', fontSize: 16 }}>{t('landing_plans_subtitle')}</p>
             </motion.div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24, maxWidth: 1000, margin: '0 auto' }}>
-              {planKeys.map((plan, i) => (
-                <motion.div key={i} data-hoverable="true" custom={i} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }} variants={fadeInUp} whileHover={{ scale: 1.04, boxShadow: plan.highlighted ? '0 24px 50px rgba(123,97,255,0.4)' : '0 20px 40px rgba(0,0,0,0.3)', y: -6 }} style={{ background: plan.highlighted ? 'linear-gradient(135deg, rgba(123,97,255,0.2), rgba(124,58,237,0.2))' : 'rgba(255,255,255,0.04)', border: plan.highlighted ? '1px solid rgba(123,97,255,0.5)' : '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '32px 28px', cursor: cursorStyle, position: 'relative', overflow: 'hidden' }}>
-                  {plan.highlighted && <div style={{ position: 'absolute', top: 16, insetInlineEnd: 16, background: 'linear-gradient(135deg, #7B61FF, #7C3AED)', borderRadius: 100, padding: '3px 12px', fontSize: 11, fontWeight: 700, color: '#fff' }}>{t('landing_plan_popular')}</div>}
-                  <h3 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 8px', color: '#f1f5f9' }}>{t(plan.name)}</h3>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 24 }}>
-                    <span style={{ fontSize: 40, fontWeight: 800, color: plan.highlighted ? '#9275FF' : '#f1f5f9' }}>{plan.price}</span>
-                    <span style={{ fontSize: 14, color: '#64748b' }}>{plan.period}</span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 18, maxWidth: 1000, margin: '0 auto' }}>
+              {planKeys.map((p, i) => (
+                <motion.div key={i} data-hoverable custom={i} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }} variants={rise} whileHover={{ y: -6 }} style={{ ...card, padding: '30px 26px', cursor: cur, position: 'relative', overflow: 'hidden', borderColor: p.highlighted ? 'color-mix(in srgb, var(--accent-500) 45%, transparent)' : 'var(--border)', background: p.highlighted ? 'linear-gradient(180deg, color-mix(in srgb, var(--accent-500) 12%, var(--surface)), var(--surface) 60%)' : 'var(--surface)' }}>
+                  {p.highlighted && <div style={{ position: 'absolute', top: 16, insetInlineEnd: 16, background: 'var(--accent-500)', borderRadius: 100, padding: '3px 12px', fontSize: 11, fontWeight: 700, color: '#fff' }}>{t('landing_plan_popular')}</div>}
+                  <h3 style={{ fontSize: 19, fontWeight: 700, margin: '0 0 8px', color: 'var(--ink-900)' }}>{t(p.name)}</h3>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 22 }}>
+                    <span style={{ ...display, fontSize: 38, color: p.highlighted ? 'var(--accent-400)' : 'var(--ink-900)' }}>{p.price}</span>
+                    <span style={{ fontSize: 14, color: 'var(--ink-400)' }}>{p.period}</span>
                   </div>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {plan.features.map((fKey, fi) => (
-                      <li key={fi} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#cbd5e1' }}>
-                        <CheckCircleOutlined style={{ color: plan.highlighted ? '#9275FF' : '#4ade80', fontSize: 14 }} />
-                        {t(fKey)}
+                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 26px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {p.features.map((fk, fi) => (
+                      <li key={fi} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--ink-700)' }}>
+                        <CheckCircleOutlined style={{ color: p.highlighted ? 'var(--accent-400)' : 'var(--success-fg)', fontSize: 14 }} />{t(fk)}
                       </li>
                     ))}
                   </ul>
-                  <motion.button data-hoverable="true" onClick={handleGetStarted} whileTap={{ scale: 0.97 }} style={{ width: '100%', background: plan.highlighted ? 'linear-gradient(135deg, #7B61FF, #7C3AED)' : 'rgba(255,255,255,0.08)', border: plan.highlighted ? 'none' : '1px solid rgba(255,255,255,0.12)', borderRadius: 10, color: '#fff', padding: '12px', fontSize: 15, fontWeight: 600, cursor: cursorStyle, boxShadow: plan.highlighted ? '0 4px 16px rgba(123,97,255,0.35)' : 'none' }}>{t('landing_cta_get_started')}</motion.button>
+                  <motion.button data-hoverable onClick={getStarted} whileTap={{ scale: 0.97 }} style={p.highlighted ? { ...accentBtn, width: '100%', padding: 12 } : { ...ghostBtn, width: '100%', padding: 12 }}>{t('landing_cta_get_started')}</motion.button>
                 </motion.div>
               ))}
             </div>
           </section>
 
-          {/* Testimonials Section */}
-          <section id="testimonials" style={{ padding: 'clamp(60px, 8vw, 100px) clamp(16px, 5vw, 80px)', background: 'rgba(255,255,255,0.02)' }}>
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={fadeInUp} style={{ textAlign: 'center', marginBottom: 56 }}>
-              <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 800, margin: '0 0 16px', background: 'linear-gradient(135deg, #f8fafc, #86EFAC)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{t('landing_testimonials_title')}</h2>
-              <p style={{ color: '#64748b', fontSize: 16 }}>{t('landing_testimonials_subtitle')}</p>
+          {/* Testimonials */}
+          <section style={{ padding: 'clamp(60px, 8vw, 100px) clamp(16px, 5vw, 72px)', background: 'var(--surface-2)', position: 'relative', zIndex: 1 }}>
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={rise} style={{ textAlign: 'center', marginBottom: 52 }}>
+              <h2 style={{ ...display, fontSize: 'clamp(28px, 4vw, 46px)', margin: '0 0 14px' }}>{t('landing_testimonials_title')}</h2>
+              <p style={{ color: 'var(--ink-500)', fontSize: 16 }}>{t('landing_testimonials_subtitle')}</p>
             </motion.div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, maxWidth: 1100, margin: '0 auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 18, maxWidth: 1100, margin: '0 auto' }}>
               {testimonialKeys.map((tm, i) => (
-                <motion.div key={i} data-hoverable="true" custom={i} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }} variants={fadeInUp} whileHover={{ scale: 1.03, boxShadow: '0 20px 40px rgba(0,0,0,0.3)', y: -4 }} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '28px 24px', cursor: cursorStyle }}>
-                  <div style={{ display: 'flex', gap: 4, marginBottom: 16 }}>
-                    {Array.from({ length: tm.rating }).map((_, si) => <StarFilled key={si} style={{ color: '#FBBF24', fontSize: 14 }} />)}
-                  </div>
-                  <p style={{ fontSize: 15, color: '#cbd5e1', lineHeight: 1.7, margin: '0 0 20px', fontStyle: 'italic' }}>&ldquo;{t(tm.text)}&rdquo;</p>
+                <motion.div key={i} data-hoverable custom={i} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }} variants={rise} whileHover={{ y: -4 }} style={{ ...card, padding: '26px 24px', cursor: cur }}>
+                  <div style={{ display: 'flex', gap: 4, marginBottom: 14 }}>{Array.from({ length: tm.rating }).map((_, si) => <StarFilled key={si} style={{ color: 'var(--warning-500)', fontSize: 14 }} />)}</div>
+                  <p style={{ fontSize: 15, color: 'var(--ink-700)', lineHeight: 1.7, margin: '0 0 20px' }}>&ldquo;{t(tm.text)}&rdquo;</p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #7B61FF, #7C3AED)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16, color: '#fff', flexShrink: 0 }}>{t(tm.name).charAt(0)}</div>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: 14, color: '#f1f5f9' }}>{t(tm.name)}</div>
-                      <div style={{ fontSize: 12, color: '#64748b' }}>{t(tm.role)}</div>
-                    </div>
+                    <div style={{ width: 40, height: 40, borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, var(--accent-400), var(--accent-600))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16, color: '#fff' }}>{t(tm.name).charAt(0)}</div>
+                    <div><div style={{ fontWeight: 600, fontSize: 14, color: 'var(--ink-900)' }}>{t(tm.name)}</div><div style={{ fontSize: 12, color: 'var(--ink-400)' }}>{t(tm.role)}</div></div>
                   </div>
                 </motion.div>
               ))}
             </div>
           </section>
 
-          {/* CTA Section */}
-          <section id="cta" style={{ padding: 'clamp(60px, 8vw, 100px) clamp(16px, 5vw, 80px)', textAlign: 'center' }}>
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={heroContainerVariants} style={{ maxWidth: 700, margin: '0 auto', background: 'linear-gradient(135deg, rgba(123,97,255,0.12), rgba(124,58,237,0.12))', border: '1px solid rgba(123,97,255,0.2)', borderRadius: 24, padding: 'clamp(40px, 6vw, 72px) clamp(24px, 4vw, 56px)' }}>
-              <motion.h2 variants={heroItemVariants} style={{ fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 800, margin: '0 0 16px', background: 'linear-gradient(135deg, #f8fafc, #AC97FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{t('landing_cta_title')}</motion.h2>
-              <motion.p variants={heroItemVariants} style={{ color: '#94a3b8', fontSize: 16, margin: '0 0 36px', lineHeight: 1.7 }}>{t('landing_cta_subtitle')}</motion.p>
-              <motion.div variants={heroItemVariants} style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-                <motion.button data-hoverable="true" onClick={handleGetStarted} whileHover={{ scale: 1.05, boxShadow: '0 10px 30px rgba(123,97,255,0.5)' }} whileTap={{ scale: 0.97 }} style={{ background: 'linear-gradient(135deg, #7B61FF, #7C3AED)', border: 'none', borderRadius: 12, color: '#fff', padding: '14px 40px', fontSize: 16, fontWeight: 700, cursor: cursorStyle, boxShadow: '0 4px 20px rgba(123,97,255,0.4)' }}>🚀 {t('landing_cta_signup_now')}</motion.button>
-                <motion.button data-hoverable="true" onClick={handleLogin} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, color: '#e2e8f0', padding: '14px 40px', fontSize: 16, fontWeight: 600, cursor: cursorStyle }}>{t('landing_cta_signin')}</motion.button>
+          {/* CTA */}
+          <section style={{ padding: 'clamp(60px, 8vw, 100px) clamp(16px, 5vw, 72px)', textAlign: 'center', position: 'relative', zIndex: 1 }}>
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={heroContainer} style={{ maxWidth: 700, margin: '0 auto', background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent-500) 14%, var(--surface)), var(--surface))', border: '1px solid color-mix(in srgb, var(--accent-500) 28%, transparent)', borderRadius: 'var(--radius-2xl)', padding: 'clamp(40px, 6vw, 68px) clamp(24px, 4vw, 56px)' }}>
+              <motion.h2 variants={heroItem} style={{ ...display, fontSize: 'clamp(28px, 4vw, 44px)', margin: '0 0 14px' }}>{t('landing_cta_title')}</motion.h2>
+              <motion.p variants={heroItem} style={{ color: 'var(--ink-500)', fontSize: 16, margin: '0 0 34px', lineHeight: 1.65 }}>{t('landing_cta_subtitle')}</motion.p>
+              <motion.div variants={heroItem} style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+                <motion.button data-hoverable onClick={getStarted} whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} style={{ ...accentBtn, padding: '15px 40px', fontSize: 16, cursor: cur }}>{t('landing_cta_signup_now')}</motion.button>
+                <motion.button data-hoverable onClick={login} whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} style={{ ...ghostBtn, padding: '15px 40px', fontSize: 16, cursor: cur }}>{t('landing_cta_signin')}</motion.button>
               </motion.div>
             </motion.div>
           </section>
 
           {/* Footer */}
-          <footer style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '32px clamp(16px, 5vw, 80px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, color: '#475569', fontSize: 13 }}>
+          <footer style={{ borderTop: '1px solid var(--border)', padding: '28px clamp(16px, 5vw, 72px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, color: 'var(--ink-400)', fontSize: 13, position: 'relative', zIndex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #7B61FF, #7C3AED)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, color: '#fff' }}>E</div>
-              <span style={{ fontWeight: 600, color: '#64748b' }}>ERPIQ © {new Date().getFullYear()}</span>
+              <span style={{ width: 26, height: 26, borderRadius: 7, background: 'linear-gradient(135deg, var(--accent-400), var(--accent-700))', flexShrink: 0 }} />
+              <span style={{ fontWeight: 600, color: 'var(--ink-500)' }}>ERPIQ © {new Date().getFullYear()}</span>
             </div>
             <div style={{ display: 'flex', gap: 24 }}>
-              {['landing_footer_features', 'landing_footer_pricing', 'landing_footer_contact'].map(key => (
-                <span key={key} data-hoverable="true" style={{ cursor: cursorStyle, transition: 'color 0.2s' }} onMouseEnter={e => { (e.currentTarget as HTMLSpanElement).style.color = '#9275FF'; }} onMouseLeave={e => { (e.currentTarget as HTMLSpanElement).style.color = '#475569'; }}>{t(key)}</span>
+              {['landing_footer_features', 'landing_footer_pricing', 'landing_footer_contact'].map(k => (
+                <span key={k} data-hoverable style={{ cursor: cur }}>{t(k)}</span>
               ))}
             </div>
           </footer>
         </motion.div>
-      ) : null}
+      )}
     </AnimatePresence>
   );
 };
