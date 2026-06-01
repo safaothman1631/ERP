@@ -13,7 +13,7 @@ import {
   CloseOutlined, DownloadOutlined, FilterOutlined, ApartmentOutlined, RiseOutlined,
   ClockCircleOutlined, BankOutlined, ProfileOutlined, ShoppingOutlined, AppstoreOutlined,
   ControlOutlined, ReconciliationOutlined, ThunderboltOutlined, MoreOutlined, EditOutlined,
-  DeleteOutlined, EyeOutlined, CopyOutlined,
+  DeleteOutlined, EyeOutlined, CopyOutlined, MailOutlined, LockOutlined,
 } from '@ant-design/icons';
 
 const ICONS: Record<string, React.ComponentType<{ style?: React.CSSProperties }>> = {
@@ -28,6 +28,7 @@ const ICONS: Record<string, React.ComponentType<{ style?: React.CSSProperties }>
   bank: BankOutlined, receipt: ProfileOutlined, shoppingBag: ShoppingOutlined, dotsGrid: AppstoreOutlined,
   command: ControlOutlined, reconcile: ReconciliationOutlined, bolt: ThunderboltOutlined, more: MoreOutlined,
   edit: EditOutlined, trash: DeleteOutlined, eye: EyeOutlined, copy: CopyOutlined,
+  mail: MailOutlined, lock: LockOutlined,
 };
 
 export const Icon: React.FC<{ name: string; size?: number; style?: React.CSSProperties; className?: string }> = ({ name, size = 16, style, className }) => {
