@@ -27,8 +27,10 @@ const EmptyStateInner: React.FC<EmptyStateProps> = ({ icon, title, description, 
   <motion.div
     role="region"
     aria-label={ariaLabel ?? (typeof title === 'string' ? title : 'Empty state')}
-    initial={reduce ? false : { opacity: 0, scale: 0.97 }}
-    animate={reduce ? undefined : { opacity: 1, scale: 1 }}
+    // Capture-safe entrance (Vertex rule): animate transform only, never opacity
+    // from 0 — keeps screenshot / PDF / PPTX export intact.
+    initial={reduce ? false : { scale: 0.97 }}
+    animate={reduce ? undefined : { scale: 1 }}
     transition={{ duration: reduce ? 0 : 0.22 }}
     style={{
       padding: `${space.xxxl}px ${space.xl}px`,

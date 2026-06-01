@@ -822,6 +822,21 @@ const sn3Css = `
     background: linear-gradient(135deg, rgba(123,97,255,0.20) 0%, rgba(123,97,255,0.16) 100%) !important;
     color: #9275FF !important;
   }
+  /* Signature Vertex nav detail: 3px accent bar on the leading edge of the active
+     item (kit .vx-nav.on::before). Uses a free ::after + logical inset so it
+     mirrors correctly in RTL; the hover background lives on ::before above. */
+  .sn3-leaf.is-active::after {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0;
+    top: 7px;
+    bottom: 7px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--accent-500, #7B61FF);
+    z-index: 1;
+  }
+  [dir='rtl'] .sn3-leaf.is-active::after { border-radius: 3px 0 0 3px; }
 
   /* ── Favorite star ───────────────────────────────────────────── */
   .sn3-leaf:hover .sn3-fav { opacity: 0.5 !important; }
