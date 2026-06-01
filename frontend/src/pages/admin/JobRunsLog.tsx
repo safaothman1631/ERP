@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Card, Tag, Button, Space, Typography, Popconfirm, Row, Col, Statistic, Select } from 'antd';
-import { ReloadOutlined, PlayCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { Card, Button, Space, Typography, Popconfirm } from 'antd';
+import { ReloadOutlined, PlayCircleOutlined, ClockCircleOutlined, ThunderboltOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { message } from '../../utils/message';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { PageHeader, FilterBar, SectionCard, StatusTag, KpiCard, type StatusKind } from '../../design-system';
+import { space } from '../../theme/tokens';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
 dayjs.extend(relativeTime);
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 interface JobStatus {
  id: string;
@@ -111,7 +113,7 @@ export default function JobRunsLog() {
  }
  };
 
- const statusColors: Record<string, string> = {
+ const statusKinds: Record<string, StatusKind> = {
  success: 'success',
  partial: 'warning',
  failed: 'error',
@@ -141,7 +143,7 @@ export default function JobRunsLog() {
  key: 'last_status',
  render: (_: any, record: JobStatus) => record.last_run ? (
  <Space>
- <Tag color={statusColors[record.last_run.status]}>{t(`jobs.status_${record.last_run.status}`)}</Tag>
+ <StatusTag status={statusKinds[record.last_run.status] || 'default'} label={t(`jobs.status_${record.last_run.status}`)} />
  <Text type="secondary">{dayjs(record.last_run.started_at).fromNow()}</Text>
  </Space>
  ) : <Text type="secondary">{t('jobs.never_run')}</Text>,
@@ -204,7 +206,7 @@ export default function JobRunsLog() {
  dataIndex: 'status',
  key: 'status',
  render: (status: string) => (
- <Tag color={statusColors[status]}>{t(`jobs.status_${status}`)}</Tag>
+ <StatusTag status={statusKinds[status] || 'default'} label={t(`jobs.status_${status}`)} />
  ),
  width: 100,
  },
@@ -240,39 +242,28 @@ export default function JobRunsLog() {
  };
 
  return (
- <div style={{ padding: 24 }}>
- <Card
- title={
- <Space>
- <ClockCircleOutlined />
- <Title level={4} style={{ margin: 0 }}>{t('jobs.scheduler_title')}</Title>
- {schedulerRunning ? (
- <Tag color="success">{t('jobs.scheduler_running')}</Tag>
- ) : (
- <Tag color="error">{t('jobs.scheduler_stopped')}</Tag>
- )}
- </Space>
+ <div>
+ <PageHeader
+ title={t('jobs.scheduler_title')}
+ tag={
+ schedulerRunning
+ ? <StatusTag status="active" label={t('jobs.scheduler_running')} />
+ : <StatusTag status="error" label={t('jobs.scheduler_stopped')} />
  }
  extra={
  <Button icon={<ReloadOutlined />} onClick={() => { fetchStatus(); fetchRuns(); }} loading={statusLoading || loading}>
  {t('refresh')}
  </Button>
  }
- style={{ marginBottom: 24 }}
- >
- <Row gutter={16} style={{ marginBottom: 24 }}>
- <Col span={8}>
- <Statistic title={t('jobs.total_jobs')} value={jobStats.total} />
- </Col>
- <Col span={8}>
- <Statistic title={t('jobs.recently_run')} value={jobStats.running} valueStyle={{ color: '#3f8600' }} />
- </Col>
- <Col span={8}>
- <Statistic title={t('jobs.failed_jobs')} value={jobStats.failed} valueStyle={{ color: '#cf1322' }} />
- </Col>
- </Row>
+ />
 
- <Title level={5} style={{ marginTop: 24, marginBottom: 16 }}>{t('jobs.registered_jobs')}</Title>
+ <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: space.md, marginBottom: space.lg }}>
+ <KpiCard title={t('jobs.total_jobs')} value={jobStats.total} icon={<ClockCircleOutlined />} tone="primary" />
+ <KpiCard title={t('jobs.recently_run')} value={jobStats.running} icon={<ThunderboltOutlined />} tone="success" />
+ <KpiCard title={t('jobs.failed_jobs')} value={jobStats.failed} icon={<CloseCircleOutlined />} tone="danger" />
+ </div>
+
+ <SectionCard title={t('jobs.registered_jobs')} padded={false}>
  <ResponsiveTableAdapter
  columns={jobColumns}
  dataSource={jobs}
@@ -280,37 +271,32 @@ export default function JobRunsLog() {
  loading={statusLoading}
  pagination={false}
  />
- </Card>
+ </SectionCard>
 
- <Card
- title={t('jobs.execution_history')}
- extra={
- <Space>
- <Select
- placeholder={t('jobs.filter_by_job')}
- allowClear
- style={{ width: 200 }}
- value={filterJob}
- onChange={setFilterJob}
- >
- {jobs.map(j => (
- <Select.Option key={j.id} value={j.id}>{j.name}</Select.Option>
- ))}
- </Select>
- <Select
- placeholder={t('jobs.filter_by_status')}
- allowClear
- style={{ width: 150 }}
- value={filterStatus}
- onChange={setFilterStatus}
- >
- <Select.Option value="success">{t('jobs.status_success')}</Select.Option>
- <Select.Option value="partial">{t('jobs.status_partial')}</Select.Option>
- <Select.Option value="failed">{t('jobs.status_failed')}</Select.Option>
- </Select>
- </Space>
- }
- >
+ <h3 style={{ margin: `0 0 ${space.sm}px`, fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink-900)' }}>
+ {t('jobs.execution_history')}
+ </h3>
+ <FilterBar
+ filters={[
+ {
+ key: 'job',
+ label: t('jobs.filter_by_job'),
+ options: jobs.map((j) => ({ label: j.name, value: j.id })),
+ },
+ {
+ key: 'status',
+ label: t('jobs.filter_by_status'),
+ options: [
+ { label: t('jobs.status_success'), value: 'success' },
+ { label: t('jobs.status_partial'), value: 'partial' },
+ { label: t('jobs.status_failed'), value: 'failed' },
+ ],
+ },
+ ]}
+ values={{ job: filterJob, status: filterStatus }}
+ onChange={(v) => { setFilterJob(v.job as string | undefined); setFilterStatus(v.status as string | undefined); }}
+ />
+ <SectionCard padded={false}>
  <ResponsiveTableAdapter
  columns={runsColumns}
  dataSource={runs}
@@ -322,7 +308,7 @@ export default function JobRunsLog() {
  style: { cursor: 'pointer' },
  })}
  />
- </Card>
+ </SectionCard>
 
  <FormDialog
  title={t('jobs.run_details')}
@@ -337,7 +323,7 @@ export default function JobRunsLog() {
  </div>
  <div>
  <Text strong>{t('jobs.status')}: </Text>
- <Tag color={statusColors[selectedRun.status]}>{t(`jobs.status_${selectedRun.status}`)}</Tag>
+ <StatusTag status={statusKinds[selectedRun.status] || 'default'} label={t(`jobs.status_${selectedRun.status}`)} />
  </div>
  <div>
  <Text strong>{t('jobs.started_at')}: </Text>
@@ -362,10 +348,10 @@ export default function JobRunsLog() {
  {selectedRun.errors && selectedRun.errors.length > 0 && (
  <div>
  <Text strong>{t('jobs.errors')}: </Text>
- <Card style={{ marginTop: 8, background: '#fff2e8' }}>
+ <Card style={{ marginTop: 8, background: 'var(--danger-bg)' }}>
  <Space direction="vertical" style={{ width: '100%' }}>
  {selectedRun.errors.map((err, idx) => (
- <div key={idx} style={{ paddingBottom: 8, borderBottom: idx < selectedRun.errors.length - 1 ? '1px solid #ffd8bf' : 'none' }}>
+ <div key={idx} style={{ paddingBottom: 8, borderBottom: idx < selectedRun.errors.length - 1 ? '1px solid color-mix(in srgb, var(--danger-500) 30%, transparent)' : 'none' }}>
  {err.item_id && (
  <Text type="secondary" style={{ fontSize: 12 }}>
  ID: {err.item_id}

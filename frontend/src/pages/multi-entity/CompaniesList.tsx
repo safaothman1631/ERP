@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Button, Form, Input, Space, Tag, Popconfirm, Card } from 'antd';
+import { Button, Form, Input, Space, Popconfirm } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SwapOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { ColumnsType } from 'antd/es/table';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard, StatusTag } from '../../design-system';
 import api from '../../api';
 import { message } from '../../utils/message';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -104,7 +104,7 @@ const CompaniesList = () => {
  render: (text, record) => (
  <Space>
  {text}
- {record.is_primary && <Tag color="blue">{t('multi_entity.base_entity')}</Tag>}
+ {record.is_primary && <StatusTag status="info" label={t('multi_entity.base_entity')} />}
  </Space>
  ),
  },
@@ -128,9 +128,7 @@ const CompaniesList = () => {
  dataIndex: 'is_active',
  key: 'is_active',
  render: (active) => (
- <Tag color={active ? 'green' : 'red'}>
- {active ? t('multi_entity.active') : t('multi_entity.inactive')}
- </Tag>
+ <StatusTag status={active ? 'active' : 'inactive'} label={active ? t('multi_entity.active') : t('multi_entity.inactive')} />
  ),
  },
  {
@@ -176,7 +174,7 @@ const CompaniesList = () => {
  </Button>
  }
  />
- <Card>
+ <SectionCard padded={false}>
  <ListWithEmptyState
  entity="company"
  data={companies}
@@ -193,7 +191,7 @@ const CompaniesList = () => {
  />
  )}
  />
- </Card>
+ </SectionCard>
 
  <FormDialog
  title={editingId ? t('multi_entity.edit_company') : t('multi_entity.add_company')}

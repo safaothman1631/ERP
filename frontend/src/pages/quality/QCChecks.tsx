@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import type { ColumnsType } from 'antd/es/table';
-import { Button, Space, Form, Input, Select, Tag, InputNumber } from 'antd';
+import { Button, Space, Form, Input, InputNumber } from 'antd';
 import { PlusOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { message } from '../../utils/message';
-import { PageHeader } from '../../design-system';
+import { PageHeader, StatusTag, FilterBar } from '../../design-system';
 import { Popconfirm } from 'antd';
-import { space } from '../../theme/tokens';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
@@ -109,9 +108,9 @@ const QCChecks: React.FC = () => {
  dataIndex: 'status',
  key: 'status',
  render: (v) => {
- if (v === 'pass') return <Tag color="green">{t('quality.passed')}</Tag>;
- if (v === 'fail') return <Tag color="red">{t('quality.failed')}</Tag>;
- return <Tag>{t('quality.pending')}</Tag>;
+ if (v === 'pass') return <StatusTag status="success" label={t('quality.passed')} />;
+ if (v === 'fail') return <StatusTag status="error" label={t('quality.failed')} />;
+ return <StatusTag status="default" label={t('quality.pending')} />;
  },
  },
  {
@@ -161,19 +160,21 @@ const QCChecks: React.FC = () => {
  </Button>
  }
  />
- <div style={{ marginBottom: space.md }}>
- <Select
- placeholder={t('quality.filter_by_status')}
- value={statusFilter || undefined}
- onChange={(v) => setStatusFilter(v || '')}
- allowClear
- style={{ width: 200 }}
- >
- <Select.Option value="pending">{t('quality.pending')}</Select.Option>
- <Select.Option value="pass">{t('quality.passed')}</Select.Option>
- <Select.Option value="fail">{t('quality.failed')}</Select.Option>
- </Select>
- </div>
+ <FilterBar
+ filters={[
+ {
+ key: 'status',
+ label: t('quality.filter_by_status'),
+ options: [
+ { value: 'pending', label: t('quality.pending') },
+ { value: 'pass', label: t('quality.passed') },
+ { value: 'fail', label: t('quality.failed') },
+ ],
+ },
+ ]}
+ values={{ status: statusFilter || undefined }}
+ onChange={(v) => setStatusFilter((v.status as string) || '')}
+ />
  <ResponsiveTableAdapter
  dataSource={data}
  columns={columns}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Tabs, Card, Tag, Button, Upload, Select, Space } from 'antd';
+import { Tabs, Button, Upload, Select, Space } from 'antd';
 import { message } from '../utils/message';
 import { UploadOutlined, LinkOutlined, SettingOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useListQuery } from '../api/queries/useListQuery';
 import { listQueryKeys } from '../api/queries/keys';
-import { PageHeader } from '../design-system';
+import { PageHeader, StatusTag, SectionCard } from '../design-system';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 
 const Banking: React.FC = () => {
@@ -51,7 +51,7 @@ const BankAccounts: React.FC = () => {
     { title: '#', dataIndex: 'account_number', key: 'account_number' },
     {
       title: t('status'), dataIndex: 'account_type', key: 'account_type',
-      render: (v: string) => <Tag color={v === 'bank' ? 'blue' : v === 'cash' ? 'green' : 'orange'}>{v}</Tag>,
+      render: (v: string) => <StatusTag status={v === 'bank' ? 'info' : v === 'cash' ? 'success' : 'warning'} label={v} />,
     },
     { title: t('currency'), dataIndex: 'currency_code', key: 'currency_code' },
     { title: t('balance_due'), dataIndex: 'balance', key: 'balance', render: (v: number) => (v || 0).toLocaleString() },
@@ -163,11 +163,11 @@ const ImportCSV: React.FC = () => {
       </Space>
 
       {csvColumns.length > 0 && (
-        <Card title={t('column_mapping')} size="small" style={{ marginBottom: 16 }}>
+        <SectionCard title={t('column_mapping')} style={{ marginBottom: 16 }}>
           <Space wrap>
             {systemFields.map(sf => (
               <div key={sf} style={{ marginBottom: 8 }}>
-                <div style={{ fontWeight: 'bold', marginBottom: 4 }}>{t(sf)}</div>
+                <div style={{ fontWeight: 600, marginBottom: 4, color: 'var(--ink-700)' }}>{t(sf)}</div>
                 <Select
                   style={{ width: 180 }}
                   value={columnMap[sf]}
@@ -178,7 +178,7 @@ const ImportCSV: React.FC = () => {
               </div>
             ))}
           </Space>
-        </Card>
+        </SectionCard>
       )}
 
       {fileData.length > 0 && (

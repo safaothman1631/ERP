@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Form, Input, Select, Space, message, Popconfirm, Card, Row, Col } from 'antd';
-import { PlusOutlined, ReloadOutlined, CheckOutlined, PhoneOutlined, MailOutlined, CalendarOutlined, FileTextOutlined } from '@ant-design/icons';
+import { Button, Form, Input, Select, Space, message, Popconfirm, Row, Col } from 'antd';
+import { PlusOutlined, ReloadOutlined, CheckOutlined, PhoneOutlined, MailOutlined, CalendarOutlined, FileTextOutlined, ClockCircleOutlined, CheckCircleOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
-import { StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { PageHeader, FilterBar, DataTable, KpiCard, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import type { ColumnDef } from '../design-system/DataTable';
 import { downloadCsv } from '../utils/exportCsv';
 import { useAuthStore } from '../store';
-import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 
 interface Activity {
@@ -88,7 +88,7 @@ export default function CRMActivities() {
  done: items.filter((i) => i.status === 'done').length,
  };
 
- const columns = [
+ const columns: ColumnDef<Activity>[] = [
  { title: t('type'), dataIndex: 'type', key: 'type', render: (v: string) => <Space>{typeIcon(v)} {v}</Space> },
  { title: t('summary'), dataIndex: 'summary', key: 'summary' },
  { title: t('due_date'), dataIndex: 'due_date', key: 'due_date' },
@@ -125,26 +125,36 @@ export default function CRMActivities() {
  };
 
  return (
- <div style={{ padding: 16 }}>
- <Row gutter={12} style={{ marginBottom: 16 }}>
- <Col span={8}><Card><div>{t('total')}</div><div style={{ fontSize: 24 }}>{counts.total}</div></Card></Col>
- <Col span={8}><Card><div>{t('pending')}</div><div style={{ fontSize: 24, color: '#1890ff' }}>{counts.pending}</div></Card></Col>
- <Col span={8}><Card><div>{t('done')}</div><div style={{ fontSize: 24, color: '#52c41a' }}>{counts.done}</div></Card></Col>
+ <div>
+ <PageHeader
+ title={t('activities')}
+ extra={
+ <Space>
+ <Button icon={<ReloadOutlined />} onClick={load}>{t('refresh')}</Button>
+ <Button type="primary" icon={<PlusOutlined />} onClick={() => setOpen(true)}>{t('new_activity')}</Button>
+ </Space>
+ }
+ />
+
+ <Row gutter={[16, 16]} style={{ marginBottom: 'var(--space-lg)' }}>
+ <Col xs={24} sm={8}><KpiCard title={t('total')} value={counts.total} icon={<UnorderedListOutlined />} tone="primary" /></Col>
+ <Col xs={24} sm={8}><KpiCard title={t('pending')} value={counts.pending} icon={<ClockCircleOutlined />} tone="info" /></Col>
+ <Col xs={24} sm={8}><KpiCard title={t('done')} value={counts.done} icon={<CheckCircleOutlined />} tone="success" /></Col>
  </Row>
 
- <Space style={{ marginBottom: 16 }}>
- <h2 style={{ margin: 0 }}>{t('activities')}</h2>
- <Select
- value={filterStatus}
- style={{ width: 160 }}
- onChange={setFilterStatus}
- options={[
+ <FilterBar
+ filters={[{
+ key: 'status', label: t('status'),
+ options: [
  { value: '', label: t('all') },
  { value: 'pending', label: t('pending') },
  { value: 'done', label: t('done') },
- ]}
- />
- <Button icon={<ReloadOutlined />} onClick={load}>{t('refresh')}</Button>
+ ],
+ }]}
+ values={{ status: filterStatus }}
+ onChange={(v) => setFilterStatus((v.status as string) ?? '')}
+ extra={
+ <>
  <ExportMenu
  formats={['csv']}
  onExport={(f: ExportFormat) => {
@@ -155,10 +165,11 @@ export default function CRMActivities() {
  }}
  />
  <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
- <Button type="primary" icon={<PlusOutlined />} onClick={() => setOpen(true)}>{t('new_activity')}</Button>
- </Space>
+ </>
+ }
+ />
 
- <ResponsiveTableAdapter rowKey="id" loading={loading} dataSource={items} columns={visibleColumns} pagination={{ pageSize: 20 }} />
+ <DataTable rowKey="id" loading={loading} dataSource={items} columns={visibleColumns} pagination={{ pageSize: 20 }} />
 
  <FormDialog title={t('new_activity')} open={open} onClose={() => setOpen(false)} onOk={onCreate}>
  <Form form={form} layout="vertical" initialValues={{ type: 'call' }}>

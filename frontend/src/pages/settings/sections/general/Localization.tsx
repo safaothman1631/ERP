@@ -10,7 +10,6 @@
 
 import React, { useCallback, useEffect } from 'react';
 import {
-  Card,
   Form,
   Select,
   Switch,
@@ -28,6 +27,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import api from '../../../../api';
 import i18n from '../../../../i18n';
 import { useClassedQuery } from '../../../../data/useClassedQuery';
+import { SectionCard } from '../../../../design-system';
 import { message } from '../../../../utils/message';
 import { formatCurrency } from '../../../../utils/formatCurrency';
 import { formatNumber } from '../../../../utils/formatNumber';
@@ -143,7 +143,7 @@ const Localization: React.FC = React.memo(() => {
   const useArabicIndic = preview?.number_format === 'arabic-indic';
 
   return (
-    <Card>
+    <SectionCard style={{ marginBottom: 0 }}>
       <Form<LocalizationConfig>
         form={form}
         layout="vertical"
@@ -215,9 +215,7 @@ const Localization: React.FC = React.memo(() => {
           </Col>
         </Row>
 
-        <Card
-          size="small"
-          type="inner"
+        <SectionCard
           title={t('settings:localization.preview', { defaultValue: 'Preview' })}
           style={{ marginBlock: 16 }}
         >
@@ -233,7 +231,7 @@ const Localization: React.FC = React.memo(() => {
             <strong>{t('settings:localization.preview.date', { defaultValue: 'Date' })}:</strong>{' '}
             {formatDate(new Date(), previewLocale, { dateStyle: 'long' })}
           </Typography.Paragraph>
-        </Card>
+        </SectionCard>
 
         <Space>
           <Button type="primary" onClick={handleSave} loading={saving}>
@@ -244,7 +242,7 @@ const Localization: React.FC = React.memo(() => {
           </Button>
         </Space>
       </Form>
-    </Card>
+    </SectionCard>
   );
 });
 

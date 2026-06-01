@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Tag, Select, Input, message } from 'antd';
+import { Button, Space, Tag, message } from 'antd';
 import type { TableProps } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { SearchOutlined, ReloadOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
-import { PageHeader } from '../../design-system';
+import { ReloadOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { PageHeader, FilterBar, StatusTag } from '../../design-system';
+import type { StatusKind } from '../../design-system';
 import { ListWithEmptyState } from '../../design-system/empty/ListWithEmptyState';
 import api from '../../api';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -124,9 +125,10 @@ const AnomaliesList: React.FC = () => {
       dataIndex: 'score',
       key: 'score',
       render: (val: number) => (
-        <Tag color={val > 0.8 ? 'red' : val > 0.5 ? 'orange' : 'yellow'}>
-          {(val * 100).toFixed(0)}%
-        </Tag>
+        <StatusTag
+          status={val > 0.8 ? 'error' : val > 0.5 ? 'warning' : 'default'}
+          label={`${(val * 100).toFixed(0)}%`}
+        />
       ),
       sorter: (a, b) => (a.score || 0) - (b.score || 0),
     },
@@ -148,12 +150,13 @@ const AnomaliesList: React.FC = () => {
       dataIndex: 'status',
       key: 'status',
       render: (val?: string) => {
-        const statusColors: Record<string, string> = {
-          new: 'red',
-          reviewed: 'green',
+        const statusKinds: Record<string, StatusKind> = {
+          new: 'error',
+          reviewed: 'success',
           dismissed: 'default',
         };
-        return <Tag color={statusColors[val || 'new']}>{val || 'new'}</Tag>;
+        const s = val || 'new';
+        return <StatusTag status={statusKinds[s] ?? 'default'} label={t(`ai.status_${s}`, s)} />;
       },
       filters: [
         { text: t('ai.status_new'), value: 'new' },
@@ -203,49 +206,37 @@ const AnomaliesList: React.FC = () => {
         }
       />
 
-      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <Space>
-          <Input
-            placeholder={t('search')}
-            prefix={<SearchOutlined />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 200 }}
-            allowClear
-          />
-          <Select
-            placeholder={t('ai.entity_type')}
-            value={filterEntityType}
-            onChange={setFilterEntityType}
-            style={{ width: 150 }}
-            allowClear
-            options={[
+      <FilterBar
+        searchValue={searchText}
+        onSearchChange={setSearchText}
+        searchPlaceholder={t('search')}
+        filters={[
+          {
+            key: 'entity_type',
+            label: t('ai.entity_type'),
+            options: [
               { label: 'Invoice', value: 'invoice' },
               { label: 'Bill', value: 'bill' },
               { label: 'Payment', value: 'payment' },
               { label: 'Expense', value: 'expense' },
-            ]}
-            filterOption={(input, option) =>
-              String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-            }
-          />
-          <Select
-            placeholder={t('status')}
-            value={filterStatus}
-            onChange={setFilterStatus}
-            style={{ width: 150 }}
-            allowClear
-            options={[
+            ],
+          },
+          {
+            key: 'status',
+            label: t('status'),
+            options: [
               { label: t('ai.status_new'), value: 'new' },
               { label: t('ai.status_reviewed'), value: 'reviewed' },
               { label: t('ai.status_dismissed'), value: 'dismissed' },
-            ]}
-            filterOption={(input, option) =>
-              String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-            }
-          />
-        </Space>
-      </Space>
+            ],
+          },
+        ]}
+        values={{ entity_type: filterEntityType, status: filterStatus }}
+        onChange={(v) => {
+          setFilterEntityType((v.entity_type as string) || undefined);
+          setFilterStatus((v.status as string) || undefined);
+        }}
+      />
 
       <ListWithEmptyState
         entity="anomaly"

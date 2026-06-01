@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  Button, Checkbox, Modal, Space, Tag, Typography, message, Alert,
+  Button, Checkbox, Input, Modal, Space, Typography, message, Alert,
 } from 'antd';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import PremiumPageHeader from '../../components/ui/PremiumPageHeader';
-import SectionCard from '../../components/ui/SectionCard';
+import { PageHeader, SectionCard, StatusTag } from '../../design-system';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { MODULES, type ModuleKey } from '../../onboarding/industries';
 import { useOnboardingStore } from '../../onboarding/store';
@@ -55,7 +54,7 @@ export default function ModuleRequestsPage() {
 
   if (!isAdmin && !isOwner) {
     return (
-      <Alert type="error" showIcon title={t('access_denied', 'Access denied')} />
+      <Alert type="error" showIcon message={t('access_denied', 'Access denied')} />
     );
   }
 
@@ -113,7 +112,7 @@ export default function ModuleRequestsPage() {
       dataIndex: 'requested_modules',
       render: (mods: ModuleKey[]) => (
         <Space wrap size={[4, 4]}>
-          {(mods || []).map(k => <Tag key={k}>{modLabel(k)}</Tag>)}
+          {(mods || []).map(k => <StatusTag key={k} status="default" label={modLabel(k)} />)}
         </Space>
       ),
     },
@@ -140,11 +139,11 @@ export default function ModuleRequestsPage() {
 
   return (
     <div>
-      <PremiumPageHeader
+      <PageHeader
         title={t('modreq_page_title', 'Module requests')}
         subtitle={t('modreq_page_sub', 'Review and approve module access requests from your team.')}
       />
-      <SectionCard title={t('modreq_pending_queue', 'Pending queue')}>
+      <SectionCard title={t('modreq_pending_queue', 'Pending queue')} padded={false}>
         <ResponsiveTableAdapter
           rowKey="id"
           loading={loading}
@@ -181,11 +180,10 @@ export default function ModuleRequestsPage() {
         okText={t('reject', 'Reject')}
       >
         <Typography.Paragraph>{t('modreq_reject_confirm', 'Optionally provide a reason:')}</Typography.Paragraph>
-        <textarea
+        <Input.TextArea
           value={rejectReason}
           onChange={e => setRejectReason(e.target.value)}
           rows={3}
-          style={{ width: '100%' }}
           placeholder={t('modreq_reason_ph', 'Reason…')}
         />
       </Modal>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Button, Space, Typography, Badge, Dropdown, message, Modal } from 'antd';
+import { Card, Row, Col, Button, Space, Typography, Dropdown, Input, message, Modal } from 'antd';
 import {
  PlusOutlined, EditOutlined, DeleteOutlined, CopyOutlined,
  ShareAltOutlined, StarOutlined, EllipsisOutlined, DashboardOutlined
@@ -7,7 +7,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, StatusTag } from '../../design-system';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
 const { Title, Text } = Typography;
@@ -139,9 +139,9 @@ const MyDashboards: React.FC = () => {
  {dash.name}
  </Title>
  {dash.is_owner ? (
- <Badge color="blue" text={t('mine')} />
+ <StatusTag status="info" label={t('mine')} />
  ) : (
- <Badge color="green" text={t('shared_with_me')} />
+ <StatusTag status="success" label={t('shared_with_me')} />
  )}
  </div>
  <Text type="secondary">
@@ -162,13 +162,11 @@ const MyDashboards: React.FC = () => {
  onOk={handleCreate}
  onClose={() => { setCreateModalOpen(false); setNewName(''); }}
  >
- <input
- type="text"
+ <Input
  placeholder={t('dashboard_name')}
  value={newName}
  onChange={(e) => setNewName(e.target.value)}
- style={{ width: '100%', padding: '8px', border: '1px solid #d9d9d9', borderRadius: 4 }}
- onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); }}
+ onPressEnter={handleCreate}
  />
  </FormDialog>
  </div>

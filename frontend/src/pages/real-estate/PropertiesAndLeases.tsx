@@ -3,13 +3,11 @@ import { useEffect, useState } from 'react';
 import { Tabs, Button, Space, Input, Form, Select, InputNumber, Tag, Popconfirm } from 'antd';
 
 import { message } from '../../utils/message';
-import { PlusOutlined, SearchOutlined, DeleteOutlined, FileTextOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import api from '../../api';
-import { PageHeader, StatusTag, SectionCard } from '../../design-system';
-import { space } from '../../theme/tokens';
-import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { PageHeader, StatusTag, FilterBar, DataTable } from '../../design-system';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
 interface Property {
@@ -280,41 +278,46 @@ const PropertiesAndLeases: React.FC = () => {
  }
  />
 
- <SectionCard>
- <Space style={{ marginBottom: space.md, width: '100%', justifyContent: 'space-between' }}>
- <Input
- placeholder={t('search')}
- prefix={<SearchOutlined />}
- value={search}
- onChange={(e) => setSearch(e.target.value)}
- style={{ width: 300 }}
- allowClear
+ <FilterBar
+ searchPlaceholder={t('search')}
+ searchValue={search}
+ onSearchChange={setSearch}
  />
- </Space>
 
- <Tabs activeKey={activeTab} onChange={setActiveTab}>
- <Tabs.TabPane tab={t('real_estate.properties')} key="1">
- <ResponsiveTableAdapter
+ <Tabs
+ activeKey={activeTab}
+ onChange={setActiveTab}
+ items={[
+ {
+ key: '1',
+ label: t('real_estate.properties'),
+ children: (
+ <DataTable<Property>
  columns={propertyColumns}
  dataSource={filteredProperties}
  rowKey="id"
  loading={loading}
+ stickyHeader={false}
  pagination={{ pageSize: 20 }}
- scroll={{ x: 900 }}
  />
- </Tabs.TabPane>
- <Tabs.TabPane tab={t('real_estate.leases')} key="2">
- <ResponsiveTableAdapter
+ ),
+ },
+ {
+ key: '2',
+ label: t('real_estate.leases'),
+ children: (
+ <DataTable<Lease>
  columns={leaseColumns}
  dataSource={filteredLeases}
  rowKey="id"
  loading={loading}
+ stickyHeader={false}
  pagination={{ pageSize: 20 }}
- scroll={{ x: 1100 }}
  />
- </Tabs.TabPane>
- </Tabs>
- </SectionCard>
+ ),
+ },
+ ]}
+ />
 
  <FormDialog
  title={drawerType === 'property' ? t('real_estate.add_property') : t('real_estate.add_lease')}

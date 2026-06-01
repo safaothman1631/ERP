@@ -3,12 +3,12 @@ import { useEffect, useState } from 'react';
 import { Button, Space, Input, Form, Select, Tag, InputNumber } from 'antd';
 
 import { message } from '../../utils/message';
-import { PlusOutlined, SearchOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { Popconfirm } from 'antd';
 import api from '../../api';
-import { PageHeader, StatusTag } from '../../design-system';
-import { space } from '../../theme/tokens';
+import { PageHeader, StatusTag, FilterBar, SectionCard } from '../../design-system';
+import type { StatusKind } from '../../design-system';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
@@ -114,13 +114,13 @@ const PLMEngineeringChanges: React.FC = () => {
  };
 
  const getPriorityTag = (priority: string) => {
- const colors: Record<string, string> = {
+ const kinds: Record<string, StatusKind> = {
  low: 'default',
- medium: 'blue',
- high: 'orange',
- urgent: 'red',
+ medium: 'info',
+ high: 'warning',
+ urgent: 'error',
  };
- return <Tag color={colors[priority] || 'default'}>{t(`plm.priority_${priority}`)}</Tag>;
+ return <StatusTag status={kinds[priority] || 'default'} label={t(`plm.priority_${priority}`)} />;
  };
 
  const filteredData = data.filter((e) => {
@@ -217,31 +217,28 @@ const PLMEngineeringChanges: React.FC = () => {
  }
  />
 
- <div style={{ background: '#fff', padding: space.lg, borderRadius: 8 }}>
- <Space style={{ marginBottom: space.md }}>
- <Input
- placeholder={t('search')}
- prefix={<SearchOutlined />}
- value={search}
- onChange={(e) => setSearch(e.target.value)}
- style={{ width: 300 }}
- allowClear
+ <FilterBar
+ searchValue={search}
+ onSearchChange={setSearch}
+ searchPlaceholder={t('search')}
+ filters={[
+ {
+ key: 'status',
+ label: t('plm.filter_status'),
+ options: [
+ { value: 'draft', label: t('plm.status_draft') },
+ { value: 'review', label: t('plm.status_review') },
+ { value: 'approved', label: t('plm.status_approved') },
+ { value: 'implemented', label: t('plm.status_implemented') },
+ { value: 'rejected', label: t('plm.status_rejected') },
+ ],
+ },
+ ]}
+ values={{ status: statusFilter || undefined }}
+ onChange={(v) => setStatusFilter((v.status as string) || '')}
  />
- <Select
- placeholder={t('plm.filter_status')}
- value={statusFilter}
- onChange={setStatusFilter}
- style={{ width: 150 }}
- allowClear
- >
- <Select.Option value="draft">{t('plm.status_draft')}</Select.Option>
- <Select.Option value="review">{t('plm.status_review')}</Select.Option>
- <Select.Option value="approved">{t('plm.status_approved')}</Select.Option>
- <Select.Option value="implemented">{t('plm.status_implemented')}</Select.Option>
- <Select.Option value="rejected">{t('plm.status_rejected')}</Select.Option>
- </Select>
- </Space>
 
+ <SectionCard padded={false}>
  <ResponsiveTableAdapter
  columns={columns}
  dataSource={filteredData}
@@ -250,7 +247,7 @@ const PLMEngineeringChanges: React.FC = () => {
  pagination={{ pageSize: 20 }}
  scroll={{ x: 1400 }}
  />
- </div>
+ </SectionCard>
 
  <FormDialog
  title={editingId ? t('plm.edit_ecn') : t('plm.create_ecn')}

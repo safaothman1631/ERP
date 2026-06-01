@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Tag, Form, Input, Switch, Card, Modal } from 'antd';
+import { Button, Space, Tag, Form, Input, Switch, Modal } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard, StatusTag } from '../../design-system';
 import { message } from '../../utils/message';
 import type { ColumnsType } from 'antd/es/table';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -145,9 +145,7 @@ const Technicians: React.FC = () => {
  dataIndex: 'is_active',
  key: 'is_active',
  render: (active: boolean) => (
- <Tag color={active ? 'green' : 'red'}>
- {active ? t('field_service.active') : t('inactive')}
- </Tag>
+ <StatusTag status={active ? 'success' : 'error'} label={active ? t('field_service.active') : t('inactive')} />
  ),
  },
  {
@@ -192,7 +190,7 @@ const Technicians: React.FC = () => {
  }
  />
 
- <Card>
+ <SectionCard padded={false}>
  <ResponsiveTableAdapter
  dataSource={technicians}
  columns={columns}
@@ -200,7 +198,7 @@ const Technicians: React.FC = () => {
  loading={loading}
  pagination={{ pageSize: 20, showSizeChanger: true }}
  />
- </Card>
+ </SectionCard>
 
  <FormDialog
  title={editingId ? t('field_service.edit_technician') : t('field_service.new_technician')}

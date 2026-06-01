@@ -1,13 +1,14 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { Button, Input, Select, Tag, Form, InputNumber, Switch } from 'antd';
+import { Button, Input, Form, InputNumber, Switch } from 'antd';
 import { message } from '../../utils/message';
-import { PlusOutlined, SearchOutlined, EyeOutlined } from '@ant-design/icons';
+import { PlusOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, FilterBar, StatusTag } from '../../design-system';
+import type { StatusKind } from '../../design-system';
 import { space } from '../../theme/tokens';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -64,14 +65,14 @@ const RepairOrders: React.FC = () => {
 
  const getStatusTag = (status?: string) => {
  const s = status || 'received';
- const colorMap: Record<string, string> = {
- received: 'blue',
- diagnosed: 'cyan',
- in_repair: 'orange',
- done: 'green',
+ const kindMap: Record<string, StatusKind> = {
+ received: 'info',
+ diagnosed: 'info',
+ in_repair: 'warning',
+ done: 'success',
  delivered: 'default',
  };
- return <Tag color={colorMap[s] || 'default'}>{t(`repairs.status_${s}`)}</Tag>;
+ return <StatusTag status={kindMap[s] || 'default'} label={t(`repairs.status_${s}`)} />;
  };
 
  const filteredData = data.filter((r) => {
@@ -109,7 +110,7 @@ const RepairOrders: React.FC = () => {
  title: t('repairs.warranty'),
  dataIndex: 'is_under_warranty',
  key: 'is_under_warranty',
- render: (v: boolean) => (v ? t('yes') : t('no')),
+ render: (v: boolean) => <StatusTag status={v ? 'success' : 'default'} label={v ? t('yes') : t('no')} />,
  },
  {
  title: t('actions'),
@@ -144,37 +145,26 @@ const RepairOrders: React.FC = () => {
  }
  />
 
- <div
- style={{
- display: 'flex',
- justifyContent: 'space-between',
- marginBottom: space.md,
- gap: space.md,
- flexWrap: 'wrap',
- }}
- >
- <Input
- prefix={<SearchOutlined />}
- placeholder={t('search')}
- value={search}
- onChange={(e) => setSearch(e.target.value)}
- style={{ width: 320 }}
- allowClear
+ <FilterBar
+ searchValue={search}
+ onSearchChange={setSearch}
+ searchPlaceholder={t('search')}
+ filters={[
+ {
+ key: 'status',
+ label: t('repairs.filter_by_status'),
+ options: [
+ { value: 'received', label: t('repairs.status_received') },
+ { value: 'diagnosed', label: t('repairs.status_diagnosed') },
+ { value: 'in_repair', label: t('repairs.status_in_repair') },
+ { value: 'done', label: t('repairs.status_done') },
+ { value: 'delivered', label: t('repairs.status_delivered') },
+ ],
+ },
+ ]}
+ values={{ status: statusFilter || undefined }}
+ onChange={(v) => setStatusFilter((v.status as string) || '')}
  />
- <Select
- placeholder={t('repairs.filter_by_status')}
- value={statusFilter}
- onChange={setStatusFilter}
- style={{ width: 200 }}
- allowClear
- >
- <Select.Option value="received">{t('repairs.status_received')}</Select.Option>
- <Select.Option value="diagnosed">{t('repairs.status_diagnosed')}</Select.Option>
- <Select.Option value="in_repair">{t('repairs.status_in_repair')}</Select.Option>
- <Select.Option value="done">{t('repairs.status_done')}</Select.Option>
- <Select.Option value="delivered">{t('repairs.status_delivered')}</Select.Option>
- </Select>
- </div>
 
  <ResponsiveTableAdapter
  dataSource={filteredData}

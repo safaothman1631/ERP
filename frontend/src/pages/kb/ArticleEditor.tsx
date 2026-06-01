@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Form, Input, Select, Switch, Button, Space, List, message } from 'antd';
+import { Form, Input, Select, Switch, Button, Space, List, message } from 'antd';
 import { SaveOutlined, EyeOutlined, HistoryOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import { PageHeader, LoadingSkeleton } from '../../design-system';
+import { PageHeader, LoadingSkeleton, SectionCard } from '../../design-system';
 import { space } from '../../theme/tokens';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { useLoadingState } from '../../hooks/useLoadingState';
@@ -112,7 +112,7 @@ export default function ArticleEditor() {
  </Space>
  }
  />
- <Card style={{ marginTop: space.md }}>
+ <SectionCard style={{ marginTop: space.md }}>
  <Form form={form} layout="vertical">
  <Form.Item name="title" label={t('kb.title')} rules={[{ required: true }]}>
  <Input />
@@ -139,7 +139,7 @@ export default function ArticleEditor() {
  <Switch />
  </Form.Item>
  </Form>
- </Card>
+ </SectionCard>
 
  <FormDialog
  title={t('kb.version_history')}

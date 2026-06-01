@@ -10,22 +10,25 @@ import ReactFlow, {
 } from 'reactflow';
 import type { Connection, Edge, Node } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Button, Input, Form, Select, message, Space, Tag, Card, Divider } from 'antd';
+import { Button, Input, Form, Select, message, Space, Card, Divider } from 'antd';
 import { SaveOutlined, PlayCircleOutlined, ThunderboltOutlined, HistoryOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard, StatusTag } from '../../design-system';
 import { space } from '../../theme/tokens';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
 const { TextArea } = Input;
 
+// Node-type identity colors for the ReactFlow canvas. Kept as fixed hues (the
+// canvas needs concrete colors) but sourced from the Vertex semantic palette so
+// they read as success / warning / accent / violet and stay on-brand.
 const nodeTypes = {
- trigger: { label: 'Trigger', color: '#52c41a', icon: '⚡' },
- condition: { label: 'Condition', color: '#faad14', icon: '?' },
- action: { label: 'Action', color: '#1890ff', icon: '▶' },
- delay: { label: 'Delay', color: '#722ed1', icon: '⏱' },
+ trigger: { label: 'Trigger', color: '#16A34A', icon: '⚡' },
+ condition: { label: 'Condition', color: '#F59E0B', icon: '?' },
+ action: { label: 'Action', color: '#7B61FF', icon: '▶' },
+ delay: { label: 'Delay', color: '#9333EA', icon: '⏱' },
 };
 
 const WorkflowBuilder: React.FC = () => {
@@ -230,9 +233,7 @@ const WorkflowBuilder: React.FC = () => {
  }
  extra={
  <Space>
- <Tag color={workflow.active ? 'green' : 'default'}>
- {workflow.active ? t('automation.active') : t('automation.inactive')}
- </Tag>
+ <StatusTag status={workflow.active ? 'active' : 'inactive'} label={workflow.active ? t('automation.active') : t('automation.inactive')} />
  <Button icon={<ThunderboltOutlined />} onClick={handleToggleActive}>
  {workflow.active ? t('automation.deactivate') : t('automation.activate')}
  </Button>
@@ -251,7 +252,7 @@ const WorkflowBuilder: React.FC = () => {
 
  <div style={{ display: 'flex', flex: 1 }}>
  {/* Left Palette */}
- <div style={{ width: 240, borderRight: '1px solid #e8e8e8', padding: space.md, overflowY: 'auto' }}>
+ <div style={{ width: 240, borderInlineEnd: '1px solid var(--border)', padding: space.md, overflowY: 'auto', background: 'var(--surface)' }}>
  <h3>{t('automation.palette')}</h3>
  <Divider />
  
@@ -319,9 +320,9 @@ const WorkflowBuilder: React.FC = () => {
  <MiniMap />
  <Background gap={12} />
  <Panel position="top-left">
- <Card>
+ <SectionCard style={{ marginBottom: 0 }}>
  <strong>{t('automation.trigger')}:</strong> {workflow.trigger?.event || 'N/A'}
- </Card>
+ </SectionCard>
  </Panel>
  </ReactFlow>
  </div>
@@ -438,14 +439,14 @@ const WorkflowBuilder: React.FC = () => {
  {testTrace.map((step, idx) => (
  <Card key={idx} style={{ marginBottom: space.sm }}>
  <p><strong>{t('automation.node_id')}:</strong> {step.node_id}</p>
- <p><strong>{t('automation.status')}:</strong> 
- <Tag color={step.status === 'ok' ? 'green' : 'red'}>{step.status}</Tag>
+ <p><strong>{t('automation.status')}:</strong>{' '}
+ <StatusTag status={step.status === 'ok' ? 'success' : 'error'} label={step.status} />
  </p>
  {step.output && (
  <p><strong>{t('automation.output')}:</strong> {JSON.stringify(step.output)}</p>
  )}
  {step.error && (
- <p style={{ color: 'red' }}><strong>{t('error')}:</strong> {step.error}</p>
+ <p style={{ color: 'var(--danger-500)' }}><strong>{t('error')}:</strong> {step.error}</p>
  )}
  </Card>
  ))}

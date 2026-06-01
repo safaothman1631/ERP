@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Button, Form, Input, Select, Space, DatePicker, Card, Tag } from 'antd';
+import { Button, Form, Input, Select, Space, DatePicker } from 'antd';
 import { PlusOutlined, FilterOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import { PageHeader } from '../../design-system';
+import { PageHeader, FilterBar, SectionCard, StatusTag } from '../../design-system';
 import api from '../../api';
 import { message } from '../../utils/message';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -34,8 +34,8 @@ const IntercompanyTransactions = () => {
  const [companies, setCompanies] = useState<Company[]>([]);
  const [drawerOpen, setDrawerOpen] = useState(false);
  const [filterVisible, setFilterVisible] = useState(false);
+ const [filters, setFilters] = useState<Record<string, unknown>>({});
  const [form] = Form.useForm();
- const [filterForm] = Form.useForm();
 
  const fetchCompanies = async () => {
  try {
@@ -128,9 +128,7 @@ const IntercompanyTransactions = () => {
  dataIndex: 'eliminated',
  key: 'eliminated',
  render: (eliminated) => (
- <Tag color={eliminated ? 'green' : 'orange'}>
- {eliminated ? t('multi_entity.eliminated_yes') : t('multi_entity.eliminated_no')}
- </Tag>
+ <StatusTag status={eliminated ? 'success' : 'warning'} label={eliminated ? t('multi_entity.eliminated_yes') : t('multi_entity.eliminated_no')} />
  ),
  },
  ];
@@ -152,36 +150,32 @@ const IntercompanyTransactions = () => {
  }
  />
  {filterVisible && (
- <Card style={{ marginBottom: 16 }}>
- <Form form={filterForm} layout="inline">
- <Form.Item name="from_company" label={t('multi_entity.from_company')}>
- <Select style={{ width: 200 }} allowClear>
- {companies.map((c) => (
- <Select.Option key={c.id} value={c.id}>
- {c.name}
- </Select.Option>
- ))}
- </Select>
- </Form.Item>
- <Form.Item name="to_company" label={t('multi_entity.to_company')}>
- <Select style={{ width: 200 }} allowClear>
- {companies.map((c) => (
- <Select.Option key={c.id} value={c.id}>
- {c.name}
- </Select.Option>
- ))}
- </Select>
- </Form.Item>
- <Form.Item name="eliminated" label={t('multi_entity.eliminated')}>
- <Select style={{ width: 150 }} allowClear>
- <Select.Option value="yes">{t('multi_entity.eliminated_yes')}</Select.Option>
- <Select.Option value="no">{t('multi_entity.eliminated_no')}</Select.Option>
- </Select>
- </Form.Item>
- </Form>
- </Card>
+ <FilterBar
+ filters={[
+ {
+ key: 'from_company',
+ label: t('multi_entity.from_company'),
+ options: companies.map((c) => ({ label: c.name, value: c.id })),
+ },
+ {
+ key: 'to_company',
+ label: t('multi_entity.to_company'),
+ options: companies.map((c) => ({ label: c.name, value: c.id })),
+ },
+ {
+ key: 'eliminated',
+ label: t('multi_entity.eliminated'),
+ options: [
+ { label: t('multi_entity.eliminated_yes'), value: 'yes' },
+ { label: t('multi_entity.eliminated_no'), value: 'no' },
+ ],
+ },
+ ]}
+ values={filters}
+ onChange={setFilters}
+ />
  )}
- <Card>
+ <SectionCard padded={false}>
  <ResponsiveTableAdapter
  columns={columns}
  dataSource={transactions}
@@ -189,7 +183,7 @@ const IntercompanyTransactions = () => {
  loading={loading}
  pagination={{ pageSize: 20 }}
  />
- </Card>
+ </SectionCard>
 
  <FormDialog
  title={t('multi_entity.add_ic_transaction')}

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Tag, Select, DatePicker, Form, Input, InputNumber, Card, Modal } from 'antd';
+import { Button, Space, Select, DatePicker, Form, Input, InputNumber, Modal } from 'antd';
 import { PlusOutlined, SendOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, FilterBar, SectionCard, StatusTag } from '../../design-system';
+import type { StatusKind } from '../../design-system';
 import { message } from '../../utils/message';
 import type { ColumnsType } from 'antd/es/table';
 import type { Dayjs } from 'dayjs';
@@ -126,19 +127,19 @@ const ServiceOrders: React.FC = () => {
  return true;
  });
 
- const statusColors: Record<string, string> = {
+ const statusKinds: Record<string, StatusKind> = {
  draft: 'default',
- scheduled: 'blue',
- in_progress: 'orange',
- done: 'green',
- cancelled: 'red',
+ scheduled: 'info',
+ in_progress: 'warning',
+ done: 'success',
+ cancelled: 'error',
  };
 
- const priorityColors: Record<string, string> = {
+ const priorityKinds: Record<string, StatusKind> = {
  low: 'default',
- normal: 'blue',
- high: 'orange',
- urgent: 'red',
+ normal: 'info',
+ high: 'warning',
+ urgent: 'error',
  };
 
  const columns: ColumnsType<ServiceOrder> = [
@@ -178,7 +179,7 @@ const ServiceOrders: React.FC = () => {
  dataIndex: 'status',
  key: 'status',
  render: (status: string) => (
- <Tag color={statusColors[status]}>{t(`field_service.status_${status}`)}</Tag>
+ <StatusTag status={statusKinds[status] || 'default'} label={t(`field_service.status_${status}`)} />
  ),
  },
  {
@@ -186,7 +187,7 @@ const ServiceOrders: React.FC = () => {
  dataIndex: 'priority',
  key: 'priority',
  render: (priority: string) => (
- <Tag color={priorityColors[priority]}>{t(`field_service.priority_${priority}`)}</Tag>
+ <StatusTag status={priorityKinds[priority] || 'default'} label={t(`field_service.priority_${priority}`)} />
  ),
  },
  ];
@@ -208,36 +209,29 @@ const ServiceOrders: React.FC = () => {
  }
  />
 
- <Card>
- <Space wrap style={{ marginBottom: 16 }}>
- <Select
- placeholder={t('field_service.filter_status')}
- style={{ width: 160 }}
- allowClear
- value={filterStatus}
- onChange={setFilterStatus}
- options={['draft', 'scheduled', 'in_progress', 'done', 'cancelled'].map((s) => ({
+ <FilterBar
+ filters={[
+ {
+ key: 'status',
+ label: t('field_service.filter_status'),
+ options: ['draft', 'scheduled', 'in_progress', 'done', 'cancelled'].map((s) => ({
  label: t(`field_service.status_${s}`),
  value: s,
- }))}
- />
- <Select
- placeholder={t('field_service.filter_technician')}
- style={{ width: 200 }}
- allowClear
- value={filterTechnician}
- onChange={setFilterTechnician}
- showSearch
- filterOption={(input, option) =>
- String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
- }
- >
- {workers.map((w) => (
- <Select.Option key={w.id} value={w.id}>
- {w.name}
- </Select.Option>
- ))}
- </Select>
+ })),
+ },
+ {
+ key: 'technician',
+ label: t('field_service.filter_technician'),
+ options: workers.map((w) => ({ value: w.id, label: w.name })),
+ },
+ ]}
+ values={{ status: filterStatus, technician: filterTechnician }}
+ onChange={(v) => {
+ setFilterStatus((v.status as string) || undefined);
+ setFilterTechnician((v.technician as string) || undefined);
+ }}
+ extra={
+ <Space wrap>
  <RangePicker value={dateRange} onChange={(d) => setDateRange(d as [Dayjs, Dayjs] | null)} />
  <Button
  icon={<SendOutlined />}
@@ -247,7 +241,10 @@ const ServiceOrders: React.FC = () => {
  {t('field_service.bulk_dispatch')}
  </Button>
  </Space>
+ }
+ />
 
+ <SectionCard padded={false}>
  <ResponsiveTableAdapter
  dataSource={filteredOrders}
  columns={columns}
@@ -259,7 +256,7 @@ const ServiceOrders: React.FC = () => {
  }}
  pagination={{ pageSize: 20, showSizeChanger: true }}
  />
- </Card>
+ </SectionCard>
 
  <FormDialog
  title={t('field_service.new_order')}

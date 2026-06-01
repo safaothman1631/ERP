@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Button, Form, Input, Select, DatePicker, InputNumber, Tag, Space, Divider } from 'antd';
+import { Card, Button, Form, Input, Select, DatePicker, InputNumber, Space, Divider } from 'antd';
 import { PlusOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
-import { PageHeader } from '../design-system';
+import { PageHeader, StatusTag } from '../design-system';
 import { space } from '../theme/tokens';
 import dayjs from 'dayjs';
 import { message } from '../utils/message';
@@ -262,7 +262,7 @@ const ProjectGantt: React.FC = () => {
  <Divider titlePlacement="left">{t('milestones')}</Divider>
  {data.milestones.map(ms => (
  <div key={ms.id} style={{ marginBottom: space.xs, display: 'flex', alignItems: 'center', gap: space.sm }}>
- <Tag color={ms.done ? 'green' : 'orange'}>{ms.name}</Tag>
+ <StatusTag status={ms.done ? 'approved' : 'pending'} label={ms.name} />
  <span style={{ fontSize: 12, color: 'var(--ink-500)' }}>{ms.due_date}</span>
  {!ms.done && (
  <Button type="link" onClick={() => completeMilestone(ms.id)}>

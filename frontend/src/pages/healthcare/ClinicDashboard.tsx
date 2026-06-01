@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Button, Space, Typography } from 'antd';
+import { Row, Col, Button, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { CalendarOutlined, UserOutlined, DollarOutlined, CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { PageHeader, KpiCard, StatusTag, LoadingSkeleton } from '../../design-system';
+import { PageHeader, KpiCard, StatusTag, LoadingSkeleton, SectionCard, DataTable } from '../../design-system';
 import api from '../../api';
-import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { InlineError } from '../../components/feedback/InlineError';
 import { useLoadingState } from '../../hooks/useLoadingState';
 
@@ -177,15 +176,17 @@ const ClinicDashboard: React.FC = () => {
         </Col>
       </Row>
 
-      <Card title={t('healthcare.recent_appointments')} style={{ marginTop: 24 }}>
-        <ResponsiveTableAdapter
+      <SectionCard title={t('healthcare.recent_appointments')} padded={false} style={{ marginTop: 24 }}>
+        <DataTable<AppointmentRow>
           dataSource={data?.recent_appointments ?? []}
           columns={columns}
           rowKey="id"
           pagination={false}
           loading={loading}
+          stickyHeader={false}
+          style={{ border: 'none', borderRadius: 0, boxShadow: 'none' }}
         />
-      </Card>
+      </SectionCard>
     </div>
   );
 };

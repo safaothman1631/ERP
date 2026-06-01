@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Tag, Button, Select, Space, Empty, Typography } from 'antd';
+import { Button, Space, Empty } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
 import vendorApi from '../../api/vendorPortal';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
-
-const { Title } = Typography;
+import { PageHeader, FilterBar, SectionCard, StatusTag, type StatusKind } from '../../design-system';
 
 const VendorPortalBills: React.FC = () => {
   const { t } = useTranslation();
@@ -60,19 +59,17 @@ const VendorPortalBills: React.FC = () => {
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => {
-        const colors: any = {
-          pending_review: 'orange',
+        const kinds: Record<string, StatusKind> = {
+          pending_review: 'warning',
           draft: 'default',
-          approved: 'blue',
-          open: 'cyan',
-          paid: 'green',
-          partially_paid: 'lime',
-          void: 'red',
+          approved: 'info',
+          open: 'info',
+          paid: 'success',
+          partially_paid: 'partial',
+          void: 'error',
         };
         return (
-          <Tag color={colors[status] || 'default'}>
-            {t(`vendor_portal.${status}`) || status}
-          </Tag>
+          <StatusTag status={kinds[status] || 'default'} label={t(`vendor_portal.${status}`) || status} />
         );
       },
     },
@@ -80,12 +77,14 @@ const VendorPortalBills: React.FC = () => {
       title: t('invoices.total'),
       dataIndex: 'total',
       key: 'total',
+      align: 'right' as const,
       render: (val: number) => val?.toFixed(2) || '0.00',
     },
     {
       title: t('invoices.balance'),
       dataIndex: 'balance_due',
       key: 'balance_due',
+      align: 'right' as const,
       render: (val: number) => val?.toFixed(2) || '0.00',
     },
     {
@@ -97,36 +96,38 @@ const VendorPortalBills: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <Title level={2}>{t('vendor_portal.my_bills')}</Title>
-        <Space>
-          <Button onClick={() => navigate('/vendor-portal/submit-bill')}>
-            {t('vendor_portal.submit_bill')}
-          </Button>
-          <Button onClick={() => navigate('/vendor-portal')}>
-            {t('back')}
-          </Button>
-        </Space>
-      </div>
+    <div>
+      <PageHeader
+        title={t('vendor_portal.my_bills')}
+        extra={
+          <Space>
+            <Button onClick={() => navigate('/vendor-portal/submit-bill')}>
+              {t('vendor_portal.submit_bill')}
+            </Button>
+            <Button onClick={() => navigate('/vendor-portal')}>
+              {t('back')}
+            </Button>
+          </Space>
+        }
+      />
 
-      <Card style={{ marginTop: 24 }}>
-        <Space style={{ marginBottom: 16 }}>
-          <Select
-            value={statusFilter}
-            onChange={setStatusFilter}
-            style={{ width: 200 }}
-            allowClear
-            placeholder={t('filter_by_status')}
-            options={[
+      <FilterBar
+        filters={[
+          {
+            key: 'status',
+            label: t('filter_by_status'),
+            options: [
               { label: t('vendor_portal.pending_review'), value: 'pending_review' },
               { label: t('vendor_portal.approved'), value: 'approved' },
               { label: t('vendor_portal.paid'), value: 'paid' },
-              { label: t('all'), value: '' },
-            ]}
-          />
-        </Space>
+            ],
+          },
+        ]}
+        values={{ status: statusFilter || undefined }}
+        onChange={(v) => setStatusFilter((v.status as string) || '')}
+      />
 
+      <SectionCard padded={false}>
         <ResponsiveTableAdapter
           dataSource={bills}
           columns={columns}
@@ -136,7 +137,7 @@ const VendorPortalBills: React.FC = () => {
             emptyText: <Empty description={t('vendor_portal.no_bills')} />,
           }}
         />
-      </Card>
+      </SectionCard>
     </div>
   );
 };

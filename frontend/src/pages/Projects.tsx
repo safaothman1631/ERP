@@ -5,9 +5,9 @@ import { PlusOutlined, BarChartOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { PageHeader, StatusTag } from '../design-system';
+import { PageHeader, DataTable, StatusTag } from '../design-system';
+import type { ColumnDef } from '../design-system/DataTable';
 import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
-import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 
 const Projects: React.FC = () => {
@@ -42,7 +42,7 @@ const Projects: React.FC = () => {
  } catch { message.error(t('error')); }
  };
 
- const columns = [
+ const columns: ColumnDef<any>[] = [
  { title: t('name'), dataIndex: 'name', key: 'name' },
  { title: t('status'), dataIndex: 'status', key: 'status', render: (s: string) => <StatusTag status={s} label={t(s)} /> },
  { title: t('description'), dataIndex: 'description', key: 'description' },
@@ -75,7 +75,7 @@ const Projects: React.FC = () => {
  }
  />
 
- <ResponsiveTableAdapter dataSource={data} columns={columns} rowKey="id" loading={loading} pagination={{ current: page, total, pageSize: 20, onChange: setPage }} />
+ <DataTable dataSource={data} columns={columns} rowKey="id" loading={loading} pagination={{ current: page, total, pageSize: 20, onChange: setPage }} />
 
  <FormDialog title={t('new_project')} open={modal} onClose={() => setModal(false)} onOk={() => form.submit()}>
  <Form form={form} layout="vertical" onFinish={handleSave} initialValues={{ status: 'active', billing_method: 'fixed_cost' }}>

@@ -193,7 +193,7 @@ const POSSelfOrder: React.FC = () => {
       style={{
         width: '100vw',
         height: '100vh',
-        background: '#f0f2f5',
+        background: 'var(--surface-2)',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
@@ -297,7 +297,7 @@ const POSSelfOrder: React.FC = () => {
                         <Title level={5} ellipsis={{ rows: 2 }}>
                           {product.name}
                         </Title>
-                        <Text strong style={{ fontSize: 18, color: '#1890ff' }}>
+                        <Text strong style={{ fontSize: 18, color: 'var(--accent-500)' }}>
                           {product.price.toLocaleString()} {t('currency')}
                         </Text>
                       </Card>
@@ -413,7 +413,7 @@ const POSSelfOrder: React.FC = () => {
               height: '100%',
             }}
           >
-            <Title level={1} style={{ color: '#52c41a' }}>
+            <Title level={1} style={{ color: 'var(--success-500)' }}>
               ✓ {t('order_confirmed')}
             </Title>
             <Text style={{ fontSize: 18, marginBottom: 32 }}>

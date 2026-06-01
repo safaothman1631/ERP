@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import {
-  Button, DatePicker, Form, Input, Select, Space, Tag, Typography, message, Alert,
+  Button, DatePicker, Form, Input, Select, Space, Typography, message, Alert,
 } from 'antd';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import PremiumPageHeader from '../../components/ui/PremiumPageHeader';
-import SectionCard from '../../components/ui/SectionCard';
+import { PageHeader, SectionCard, StatusTag } from '../../design-system';
 import { BUNDLES, type BundleId } from '../../onboarding/bundles';
 import { MODULES, type ModuleKey } from '../../onboarding/industries';
 
@@ -84,7 +83,7 @@ export default function OrgLicenseEditor() {
 
   return (
     <div>
-      <PremiumPageHeader
+      <PageHeader
         title={t('platform_license_title', 'Organization licenses')}
         subtitle={t('platform_license_sub', 'Vendor provisioning — cap modules per customer org.')}
       />
@@ -92,9 +91,9 @@ export default function OrgLicenseEditor() {
         type="info"
         showIcon
         style={{ marginBottom: 16 }}
-        title={t('platform_license_hint', 'Requires platform.manage and PLATFORM_ADMIN_USER_IDS allowlist.')}
+        message={t('platform_license_hint', 'Requires platform.manage and PLATFORM_ADMIN_USER_IDS allowlist.')}
       />
-      <SectionCard title={t('platform_license_editor', 'License editor')} loading={loading}>
+      <SectionCard title={t('platform_license_editor', 'License editor')}>
         <Form layout="vertical" style={{ maxWidth: 640 }}>
           <Form.Item label={t('platform_org_id', 'Organization ID')}>
             <Space.Compact style={{ width: '100%' }}>
@@ -121,7 +120,7 @@ export default function OrgLicenseEditor() {
                   </>
                 )}
               />
-              <Button onClick={() => loadLicense(orgId)} disabled={!orgId}>{t('load', 'Load')}</Button>
+              <Button onClick={() => loadLicense(orgId)} disabled={!orgId} loading={loading}>{t('load', 'Load')}</Button>
             </Space.Compact>
           </Form.Item>
 
@@ -157,7 +156,7 @@ export default function OrgLicenseEditor() {
                 <Space wrap>
                   {modules.map(k => {
                     const m = MODULES.find(x => x.key === k);
-                    return m ? <Tag key={k}>{m.icon} {t(m.labelKey, m.title)}</Tag> : null;
+                    return m ? <StatusTag key={k} status="default" icon={<span aria-hidden>{m.icon}</span>} label={t(m.labelKey, m.title)} /> : null;
                   })}
                 </Space>
               </div>

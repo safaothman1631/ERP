@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Space, Form, Input, Switch, InputNumber, Select, Tag, Tabs, Modal } from 'antd';
+import { Button, Space, Form, Input, Switch, InputNumber, Select, Tabs, Modal } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined, EditOutlined, DeleteOutlined, CopyOutlined, CheckCircleOutlined, ApiOutlined } from '@ant-design/icons';
 import api from '../../api';
 import { message } from '../../utils/message';
-import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../../design-system';
+import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../../design-system';
 import { downloadCsv } from '../../utils/exportCsv';
 import { useAuthStore } from '../../store';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -162,9 +162,7 @@ const POSConfigs: React.FC = () => {
  dataIndex: 'iface_type',
  key: 'iface_type',
  render: (type: string) => (
- <Tag color={type === 'shop' ? 'blue' : 'purple'}>
- {t(`pos.${type}`)}
- </Tag>
+ <StatusTag status={type === 'shop' ? 'info' : 'viewed'} label={t(`pos.${type}`)} />
  ),
  },
  {
@@ -172,9 +170,7 @@ const POSConfigs: React.FC = () => {
  dataIndex: 'is_active',
  key: 'is_active',
  render: (active: boolean) => (
- <Tag color={active ? 'green' : 'default'}>
- {active ? t('active') : t('inactive')}
- </Tag>
+ <StatusTag status={active ? 'active' : 'inactive'} label={active ? t('active') : t('inactive')} />
  ),
  },
  {
@@ -369,8 +365,9 @@ const POSConfigs: React.FC = () => {
 
  return (
  <div>
- <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
- <h2>{t('pos.configs')}</h2>
+ <PageHeader
+ title={t('pos.configs')}
+ extra={
  <Space>
  <ExportMenu
  formats={['csv']}
@@ -389,7 +386,8 @@ const POSConfigs: React.FC = () => {
  {t('pos.new_config')}
  </Button>
  </Space>
- </div>
+ }
+ />
 
  <ResponsiveTableAdapter
  dataSource={data}

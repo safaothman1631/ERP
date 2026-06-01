@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Button, Tag, Space, Descriptions, Select, Typography, Switch } from 'antd';
+import { Button, Space, Select, Typography, Switch } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { EyeOutlined, PrinterOutlined, RollbackOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import api from '../../api';
@@ -7,22 +7,23 @@ import { useListQuery } from '../../api/queries/useListQuery';
 import { listQueryKeys } from '../../api/queries/keys';
 import { message } from '../../utils/message';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../../design-system';
+import { PageHeader, StatusTag, KeyValueGrid, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../../design-system';
+import type { StatusKind } from '../../design-system';
 import { downloadCsv } from '../../utils/exportCsv';
 import { useAuthStore } from '../../store';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
-import { palette } from '../../theme/tokens';
 
 const { Title, Text } = Typography;
 
-const statusColors: Record<string, string> = {
- draft: 'default',
- quotation: 'gold',
- paid: 'green',
- invoiced: 'blue',
- cancelled: 'red',
- refunded: 'orange',
+// Map POS order states → StatusTag semantic kinds (auto-flip tokens, light + dark).
+const ORDER_STATUS: Record<string, StatusKind> = {
+ draft: 'draft',
+ quotation: 'pending',
+ paid: 'paid',
+ invoiced: 'sent',
+ cancelled: 'cancelled',
+ refunded: 'warning',
 };
 
 const POSOrders: React.FC = () => {
@@ -91,7 +92,7 @@ const POSOrders: React.FC = () => {
  title: t('pos.order_number'),
  dataIndex: 'order_number',
  key: 'order_number',
- render: (text: string) => <Text strong style={{ color: palette.primary600 }}>{text}</Text>,
+ render: (text: string) => <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--accent-500)' }}>{text}</span>,
  },
  {
  title: t('date'),
@@ -122,9 +123,9 @@ const POSOrders: React.FC = () => {
  key: 'state',
  render: (state: string, record: any) => (
  <Space>
- <Tag color={statusColors[state]}>{t(`pos.order_${state}`)}</Tag>
- {record.is_refund && <Tag color="red">{t('pos.refund')}</Tag>}
- {record.quotation_name && <Tag color="gold">{record.quotation_name}</Tag>}
+ <StatusTag status={ORDER_STATUS[state] ?? 'default'} label={t(`pos.order_${state}`)} />
+ {record.is_refund && <StatusTag status="error" label={t('pos.refund')} />}
+ {record.quotation_name && <StatusTag status="pending" label={record.quotation_name} />}
  </Space>
  ),
  },
@@ -180,12 +181,23 @@ const POSOrders: React.FC = () => {
 
  return (
  <div>
- <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
- <Title level={2}>{t('pos.orders')}</Title>
- </div>
+ <PageHeader title={t('pos.orders')} />
 
- <div style={{ marginBottom: 16 }}>
- <Space>
+ <div
+ style={{
+ display: 'flex',
+ gap: 'var(--space-sm)',
+ flexWrap: 'wrap',
+ alignItems: 'center',
+ marginBlockEnd: 'var(--space-lg)',
+ paddingBlock: 'var(--space-sm)',
+ paddingInline: 'var(--space-md)',
+ background: 'var(--surface)',
+ border: '1px solid var(--border)',
+ borderRadius: 'var(--radius-lg)',
+ boxShadow: 'var(--shadow-sm)',
+ }}
+ >
  <Select
  placeholder={t('status')}
  value={stateFilter || undefined}
@@ -199,12 +211,12 @@ const POSOrders: React.FC = () => {
  <Select.Option value="invoiced">{t('pos.order_invoiced')}</Select.Option>
  <Select.Option value="cancelled">{t('pos.order_cancelled')}</Select.Option>
  </Select>
- 
+
  {/* Sprint 6.3 - Quotations filter */}
  <Space>
- <Text>{t('pos.show_quotations_only')}</Text>
- <Switch 
- checked={showQuotationsOnly} 
+ <Text style={{ color: 'var(--ink-700)' }}>{t('pos.show_quotations_only')}</Text>
+ <Switch
+ checked={showQuotationsOnly}
  onChange={(checked) => {
  setShowQuotationsOnly(checked);
  setStateFilter('');
@@ -212,7 +224,7 @@ const POSOrders: React.FC = () => {
  }}
  />
  </Space>
- </Space>
+ <div style={{ flex: 1, minWidth: 0 }} />
  <ExportMenu
  formats={['csv']}
  onExport={(f: ExportFormat) => {
@@ -246,24 +258,19 @@ const POSOrders: React.FC = () => {
  >
  {selectedOrder && (
  <div>
- <Descriptions bordered column={1} style={{ marginBottom: 16 }}>
- <Descriptions.Item label={t('date')}>
- {formatDate(selectedOrder.date)}
- </Descriptions.Item>
- <Descriptions.Item label={t('customer')}>
- {selectedOrder.partner_name || t('pos.walk_in_customer')}
- </Descriptions.Item>
- <Descriptions.Item label={t('pos.cashier')}>
- {selectedOrder.cashier_name}
- </Descriptions.Item>
- <Descriptions.Item label={t('status')}>
- <Tag color={statusColors[selectedOrder.state]}>
- {t(`pos.order_${selectedOrder.state}`)}
- </Tag>
- </Descriptions.Item>
- </Descriptions>
+ <div style={{ marginBottom: 16 }}>
+ <KeyValueGrid
+ columns={2}
+ items={[
+ { label: t('date'), value: formatDate(selectedOrder.date) },
+ { label: t('customer'), value: selectedOrder.partner_name || t('pos.walk_in_customer') },
+ { label: t('pos.cashier'), value: selectedOrder.cashier_name },
+ { label: t('status'), value: <StatusTag status={ORDER_STATUS[selectedOrder.state] ?? 'default'} label={t(`pos.order_${selectedOrder.state}`)} /> },
+ ]}
+ />
+ </div>
 
- <Title level={5}>{t('pos.order_lines')}</Title>
+ <Title level={5} style={{ fontFamily: 'var(--font-display)', color: 'var(--ink-900)' }}>{t('pos.order_lines')}</Title>
  <ResponsiveTableAdapter
  dataSource={selectedOrder.lines || []}
  columns={[
@@ -295,24 +302,19 @@ const POSOrders: React.FC = () => {
  style={{ marginBottom: 16 }}
  />
 
- <Descriptions bordered column={1}>
- <Descriptions.Item label={t('subtotal')}>
- {formatCurrency(selectedOrder.subtotal || 0)}
- </Descriptions.Item>
- <Descriptions.Item label={t('tax')}>
- {formatCurrency(selectedOrder.tax_total || 0)}
- </Descriptions.Item>
- <Descriptions.Item label={t('discount')}>
- {formatCurrency(selectedOrder.discount_total || 0)}
- </Descriptions.Item>
- <Descriptions.Item label={<strong>{t('total')}</strong>}>
- <strong>{formatCurrency(selectedOrder.total || 0)}</strong>
- </Descriptions.Item>
- </Descriptions>
+ <KeyValueGrid
+ columns={1}
+ items={[
+ { label: t('subtotal'), value: formatCurrency(selectedOrder.subtotal || 0) },
+ { label: t('tax'), value: formatCurrency(selectedOrder.tax_total || 0) },
+ { label: t('discount'), value: formatCurrency(selectedOrder.discount_total || 0) },
+ { label: t('total'), value: <strong>{formatCurrency(selectedOrder.total || 0)}</strong> },
+ ]}
+ />
 
  {selectedOrder.payments && selectedOrder.payments.length > 0 && (
  <>
- <Title level={5} style={{ marginTop: 16 }}>{t('pos.payments')}</Title>
+ <Title level={5} style={{ marginTop: 16, fontFamily: 'var(--font-display)', color: 'var(--ink-900)' }}>{t('pos.payments')}</Title>
  <ResponsiveTableAdapter
  dataSource={selectedOrder.payments}
  columns={[

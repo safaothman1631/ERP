@@ -14,7 +14,6 @@ import React, { useState } from 'react';
 import {
   Alert,
   Button,
-  Card,
   Form,
   Input,
   Modal,
@@ -24,9 +23,10 @@ import {
 } from 'antd';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
+import { PageHeader, SectionCard } from '../../design-system';
 import { storeImpersonationToken } from '../../utils/impersonation';
 
-const { Title, Paragraph, Text } = Typography;
+const { Paragraph, Text } = Typography;
 
 interface StartResponse {
   access_token: string;
@@ -90,15 +90,15 @@ export const ImpersonateTenant: React.FC = () => {
   };
 
   return (
-    <Card style={{ maxWidth: 720, margin: '24px auto' }}>
-      <Title level={3}>{t('impersonation.title', 'Impersonate tenant')}</Title>
-      <Paragraph type="secondary">
-        {t(
+    <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      <PageHeader
+        title={t('impersonation.title', 'Impersonate tenant')}
+        subtitle={t(
           'impersonation.intro',
           'Start a 30-minute read-only session as a tenant for debugging. Every action is logged and visible in the audit trail.',
         )}
-      </Paragraph>
-
+      />
+      <SectionCard>
       <Alert
         type="warning"
         showIcon
@@ -165,6 +165,7 @@ export const ImpersonateTenant: React.FC = () => {
           </Button>
         </Space>
       </Form>
+      </SectionCard>
 
       <Modal
         title={t('impersonation.confirmTitle', 'Confirm impersonation')}
@@ -188,7 +189,7 @@ export const ImpersonateTenant: React.FC = () => {
           <Text italic>{pending?.reason}</Text>
         </Paragraph>
       </Modal>
-    </Card>
+    </div>
   );
 };
 

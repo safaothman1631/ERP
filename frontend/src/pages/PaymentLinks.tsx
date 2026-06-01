@@ -1,12 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Button, Form, Input, InputNumber, Space, Tag, Modal } from 'antd';
+import { Button, Form, Input, InputNumber, Space, Modal } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, CopyOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
-import { PageHeader, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { PageHeader, StatusTag, type StatusKind, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat, FilterBar } from '../design-system';
 import { downloadCsv } from '../utils/exportCsv';
-import { space as spaceTk } from '../theme/tokens';
 import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
@@ -71,10 +70,10 @@ export default function PaymentLinks() {
  message.success(t('copied'));
  };
 
- const statusColors: Record<string, string> = {
- active: 'green',
- expired: 'red',
- used: 'blue',
+ const statusKinds: Record<string, StatusKind> = {
+ active: 'active',
+ expired: 'error',
+ used: 'info',
  };
 
  const columns = [
@@ -90,7 +89,7 @@ export default function PaymentLinks() {
  dataIndex: 'status',
  key: 'status',
  render: (status: string) => (
- <Tag color={statusColors[status] || 'default'}>{t(status)}</Tag>
+ <StatusTag status={statusKinds[status] || 'default'} label={t(status)} />
  ),
  },
  {
@@ -152,7 +151,9 @@ export default function PaymentLinks() {
  </Space>
  }
  />
- <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: spaceTk.md }}>
+ <FilterBar
+ extra={
+ <>
  <ExportMenu
  formats={['csv']}
  onExport={(f: ExportFormat) => {
@@ -163,7 +164,9 @@ export default function PaymentLinks() {
  }}
  />
  <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
- </div>
+ </>
+ }
+ />
  <ResponsiveTableAdapter
  dataSource={data}
  columns={visibleColumns}

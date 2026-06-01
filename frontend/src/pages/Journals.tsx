@@ -1,11 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Tag} from 'antd';
 import { message } from '../utils/message';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
-import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat, FilterBar } from '../design-system';
 import { downloadCsv } from '../utils/exportCsv';
-import { space as spaceTk } from '../theme/tokens';
 import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 
@@ -40,7 +38,7 @@ const Journals: React.FC = () => {
     { title: t('status'), dataIndex: 'status', key: 'status', render: (s: string) => <StatusTag status={s} label={t(s)} /> },
     {
       title: '', dataIndex: 'source_type', key: 'source_type',
-      render: (s: string) => s !== 'manual' ? <Tag>{s}</Tag> : null,
+      render: (s: string) => s !== 'manual' ? <StatusTag status="default" label={t(s, s)} /> : null,
     },
   ];
   const visibleColumns = useMemo(() => columns.filter((c) => !hiddenCols.includes(c.key as string)), [hiddenCols, columns]);
@@ -57,18 +55,22 @@ const Journals: React.FC = () => {
   return (
     <div>
       <PageHeader title={t('journals')} subtitle={t('journals_subtitle', 'Accounting journals')} sectionId="accounting.journals" />
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: spaceTk.md }}>
-        <ExportMenu
-          formats={['csv']}
-          onExport={(f: ExportFormat) => {
-            if (f === 'csv') {
-              const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
-              downloadCsv('journals', data, cols);
-            }
-          }}
-        />
-        <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
-      </div>
+      <FilterBar
+        extra={
+          <>
+            <ExportMenu
+              formats={['csv']}
+              onExport={(f: ExportFormat) => {
+                if (f === 'csv') {
+                  const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+                  downloadCsv('journals', data, cols);
+                }
+              }}
+            />
+            <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
+          </>
+        }
+      />
       <ResponsiveTableAdapter
         dataSource={data}
         columns={visibleColumns}

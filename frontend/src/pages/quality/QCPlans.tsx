@@ -5,7 +5,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { message } from '../../utils/message';
-import { PageHeader } from '../../design-system';
+import { PageHeader, StatusTag } from '../../design-system';
 import { Popconfirm } from 'antd';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -106,7 +106,7 @@ const QCPlans: React.FC = () => {
  title: t('status'),
  dataIndex: 'is_active',
  key: 'is_active',
- render: (v) => (v ? t('active') : t('inactive')),
+ render: (v) => <StatusTag status={v ? 'success' : 'default'} label={v ? t('active') : t('inactive')} />,
  },
  {
  title: t('actions'),

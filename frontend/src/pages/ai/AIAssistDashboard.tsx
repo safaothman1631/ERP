@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Spin, Space, Statistic, Typography, Button } from 'antd';
+import { Row, Col, Card, Spin, Space, Typography, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -8,12 +8,13 @@ import {
 } from '@ant-design/icons';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import type { TooltipProps } from 'recharts';
-import { PageHeader } from '../../design-system';
+import { PageHeader, KpiCard, ChartCard } from '../../design-system';
+import { space } from '../../theme/tokens';
 import api from '../../api';
 import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
 import { asTranslationKey } from '../../i18n/types';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 interface DashboardStats {
   open_anomalies: number;
@@ -83,7 +84,7 @@ const AIAssistDashboard: React.FC = () => {
     const { active, payload } = props as any;
     if (active && payload && payload.length) {
       return (
-        <Card size="small" style={{ border: '1px solid #d9d9d9' }}>
+        <Card size="small" style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}>
           <Text strong>{payload[0].payload.date}</Text>
           <br />
           <Text>{t('ai.anomaly_score')}: {payload[0].value}</Text>
@@ -116,77 +117,67 @@ const AIAssistDashboard: React.FC = () => {
 
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={8}>
-          <Card hoverable onClick={() => navigate('/ai/anomalies')}>
-            <Statistic
-              title={t('ai.open_anomalies')}
-              value={stats?.open_anomalies ?? 0}
-              prefix={<AlertOutlined />}
-              valueStyle={{ color: '#ff4d4f' }}
-            />
-          </Card>
+          <KpiCard
+            title={t('ai.open_anomalies')}
+            value={stats?.open_anomalies ?? 0}
+            icon={<AlertOutlined />}
+            tone="danger"
+            onClick={() => navigate('/ai/anomalies')}
+          />
         </Col>
         <Col xs={24} sm={12} lg={8}>
-          <Card hoverable onClick={() => navigate('/ai/suggestions')}>
-            <Statistic
-              title={t('ai.pending_suggestions')}
-              value={stats?.pending_suggestions ?? 0}
-              prefix={<BulbOutlined />}
-              valueStyle={{ color: '#faad14' }}
-            />
-          </Card>
+          <KpiCard
+            title={t('ai.pending_suggestions')}
+            value={stats?.pending_suggestions ?? 0}
+            icon={<BulbOutlined />}
+            tone="warning"
+            onClick={() => navigate('/ai/suggestions')}
+          />
         </Col>
         <Col xs={24} sm={12} lg={8}>
-          <Card hoverable onClick={() => navigate('/ai/ocr')}>
-            <Space direction="vertical" style={{ width: '100%' }}>
-              <Statistic
-                title={t('ai.ocr_in_progress')}
-                value={stats?.in_progress_ocr ?? 0}
-                prefix={<ScanOutlined />}
-                valueStyle={{ color: '#1890ff' }}
-              />
-              <Text type="secondary">
-                {t('ai.completed')}: {stats?.completed_ocr ?? 0}
-              </Text>
-            </Space>
-          </Card>
+          <KpiCard
+            title={`${t('ai.ocr_in_progress')} · ${t('ai.completed')}: ${stats?.completed_ocr ?? 0}`}
+            value={stats?.in_progress_ocr ?? 0}
+            icon={<ScanOutlined />}
+            tone="info"
+            onClick={() => navigate('/ai/ocr')}
+          />
         </Col>
         <Col xs={24} sm={12} lg={8}>
-          <Card hoverable onClick={() => navigate('/ai/predictions')}>
-            <Statistic
-              title={t('ai.recent_predictions')}
-              value={stats?.recent_predictions ?? 0}
-              prefix={<LineChartOutlined />}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
+          <KpiCard
+            title={t('ai.recent_predictions')}
+            value={stats?.recent_predictions ?? 0}
+            icon={<LineChartOutlined />}
+            tone="success"
+            onClick={() => navigate('/ai/predictions')}
+          />
         </Col>
       </Row>
 
-      <Card
-        style={{ marginTop: 24 }}
-        title={<Title level={5}>{t('ai.anomaly_score_trend')}</Title>}
-      >
-        {stats?.anomaly_trend && stats.anomaly_trend.length > 0 ? (
-          <ResponsiveChart
-            legendItems={[
-              { id: 'score', labelKey: asTranslationKey('ai.anomaly_score'), color: '#ff4d4f' },
-            ]}
-          >
-            <LineChart data={stats.anomaly_trend}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip content={<CustomTooltip />} />
-              <Line type="monotone" dataKey="score" stroke="#ff4d4f" strokeWidth={2} dot={{ r: 4 }} />
-            </LineChart>
-          </ResponsiveChart>
-        ) : (
-          <Space direction="vertical" align="center" style={{ width: '100%', padding: '40px 0' }}>
-            <ExperimentOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />
-            <Text type="secondary">{t('ai.no_trend_data')}</Text>
-          </Space>
-        )}
-      </Card>
+      <div style={{ marginTop: space.lg }}>
+        <ChartCard title={t('ai.anomaly_score_trend')} height={300}>
+          {stats?.anomaly_trend && stats.anomaly_trend.length > 0 ? (
+            <ResponsiveChart
+              legendItems={[
+                { id: 'score', labelKey: asTranslationKey('ai.anomaly_score'), color: 'var(--danger-500)' },
+              ]}
+            >
+              <LineChart data={stats.anomaly_trend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="date" tick={{ fontSize: 12, fill: 'var(--ink-400)' }} />
+                <YAxis tick={{ fontSize: 12, fill: 'var(--ink-400)' }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Line type="monotone" dataKey="score" stroke="var(--danger-500)" strokeWidth={2} dot={{ r: 4 }} />
+              </LineChart>
+            </ResponsiveChart>
+          ) : (
+            <Space direction="vertical" align="center" style={{ width: '100%', padding: '40px 0' }}>
+              <ExperimentOutlined style={{ fontSize: 48, color: 'var(--ink-300)' }} />
+              <Text type="secondary">{t('ai.no_trend_data')}</Text>
+            </Space>
+          )}
+        </ChartCard>
+      </div>
     </div>
   );
 };

@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Button, Typography } from 'antd';
+import { Button, Typography } from 'antd';
 import { LeftOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
-import { StatusTag } from '../../design-system';
+import { PageHeader, SectionCard, StatusTag } from '../../design-system';
 import api from '../../api';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 const PortalInvoices: React.FC = () => {
   const { t } = useTranslation();
@@ -69,12 +69,14 @@ const PortalInvoices: React.FC = () => {
       title: t('portal.amount'),
       dataIndex: 'total',
       key: 'total',
+      align: 'right' as const,
       render: (val: number) => `${val?.toLocaleString()} ${t('currency')}`,
     },
     {
       title: t('portal.balance'),
       dataIndex: 'balance',
       key: 'balance',
+      align: 'right' as const,
       render: (val: number) => (
         <Text strong>{val?.toLocaleString()} {t('currency')}</Text>
       ),
@@ -98,9 +100,9 @@ const PortalInvoices: React.FC = () => {
           {t('portal.back_to_dashboard')}
         </Button>
 
-        <Card>
-          <Title level={2}>{t('portal.my_invoices')}</Title>
+        <PageHeader title={t('portal.my_invoices')} />
 
+        <SectionCard padded={false}>
           <ResponsiveTableAdapter
             dataSource={invoices}
             columns={columns}
@@ -109,7 +111,7 @@ const PortalInvoices: React.FC = () => {
             pagination={{ pageSize: 20 }}
             locale={{ emptyText: t('portal.no_invoices') }}
           />
-        </Card>
+        </SectionCard>
       </div>
     </div>
   );

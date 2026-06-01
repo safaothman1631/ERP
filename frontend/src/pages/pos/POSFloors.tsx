@@ -1,11 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Form, Input, InputNumber, Select, Card, Tag, Row, Col, Modal } from 'antd';
+import { Button, Space, Form, Input, InputNumber, Select, Row, Col, Modal } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SettingOutlined } from '@ant-design/icons';
 import api from '../../api';
 import { message } from '../../utils/message';
+import { PageHeader, StatusTag } from '../../design-system';
+import type { StatusKind } from '../../design-system';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
+
+// Map POS table states → StatusTag semantic kinds (auto-flip tokens).
+const TABLE_STATE_KIND: Record<string, StatusKind> = {
+ available: 'active',
+ occupied: 'error',
+ reserved: 'warning',
+ paying: 'info',
+};
 
 const POSFloors: React.FC = () => {
  const { t } = useTranslation();
@@ -134,7 +144,7 @@ const POSFloors: React.FC = () => {
  height: 100,
  position_x: 0,
  position_y: 0,
- color: '#1890ff',
+ color: '#7B61FF',
  is_active: true,
  });
  }
@@ -179,7 +189,7 @@ const POSFloors: React.FC = () => {
  title: t('pos.status'),
  dataIndex: 'is_active',
  key: 'is_active',
- render: (val: boolean) => <Tag color={val ? 'green' : 'red'}>{val ? t('active') : t('inactive')}</Tag>,
+ render: (val: boolean) => <StatusTag status={val ? 'active' : 'inactive'} label={val ? t('active') : t('inactive')} />,
  },
  {
  title: t('actions'),
@@ -204,15 +214,9 @@ const POSFloors: React.FC = () => {
  title: t('pos.state'),
  dataIndex: 'state',
  key: 'state',
- render: (val: string) => {
- const colors: Record<string, string> = {
- available: 'green',
- occupied: 'red',
- reserved: 'orange',
- paying: 'blue',
- };
- return <Tag color={colors[val] || 'default'}>{t(`pos.table_state_${val}`)}</Tag>;
- },
+ render: (val: string) => (
+ <StatusTag status={TABLE_STATE_KIND[val] ?? 'default'} label={t(`pos.table_state_${val}`)} />
+ ),
  },
  {
  title: t('actions'),
@@ -228,10 +232,29 @@ const POSFloors: React.FC = () => {
 
  return (
  <div>
- <Card
+ <PageHeader
  title={t('pos.floors')}
  extra={
- <Space>
+ <Button type="primary" icon={<PlusOutlined />} onClick={() => openFloorModal()}>
+ {t('pos.new_floor')}
+ </Button>
+ }
+ />
+ <div
+ style={{
+ display: 'flex',
+ gap: 'var(--space-sm)',
+ flexWrap: 'wrap',
+ alignItems: 'center',
+ marginBlockEnd: 'var(--space-lg)',
+ paddingBlock: 'var(--space-sm)',
+ paddingInline: 'var(--space-md)',
+ background: 'var(--surface)',
+ border: '1px solid var(--border)',
+ borderRadius: 'var(--radius-lg)',
+ boxShadow: 'var(--shadow-sm)',
+ }}
+ >
  <Select
  style={{ width: 200 }}
  value={selectedConfigId}
@@ -244,12 +267,7 @@ const POSFloors: React.FC = () => {
  </Select.Option>
  ))}
  </Select>
- <Button type="primary" icon={<PlusOutlined />} onClick={() => openFloorModal()}>
- {t('pos.new_floor')}
- </Button>
- </Space>
- }
- >
+ </div>
  <ResponsiveTableAdapter
  dataSource={floors}
  columns={floorColumns}
@@ -257,7 +275,6 @@ const POSFloors: React.FC = () => {
  loading={loading}
  pagination={false}
  />
- </Card>
 
  <FormDialog
  title={editingFloorId ? t('pos.edit_floor') : t('pos.new_floor')}

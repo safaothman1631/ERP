@@ -65,9 +65,14 @@ interface DashboardData {
   total_contacts: number;
   overdue_invoices: number;
   recent_invoices?: RecentInvoice[];
-  revenue_trend: Array<{ month: string; revenue: number; expense: number }>;
-  top_customers: Array<{ name: string; amount: number }>;
-  cash_flow: Array<{ month: string; inflow: number; outflow: number; net: number }>;
+  // Rich analytics fields — supplied directly by the backend. They are optional on
+  // the type so a lean payload renders gracefully (each consumer guards/degrades)
+  // instead of being masked by mock defaults.
+  revenue_trend?: Array<{ month: string; revenue: number; expense: number }>;
+  top_customers?: Array<{ name: string; amount: number }>;
+  aging?: Array<{ range: string; amount: number }>;
+  cash_flow?: Array<{ month: string; inflow: number; outflow: number; net: number }>;
+  cash_breakdown?: Array<{ name: string; percent: number }>;
   receivable_sparkline?: number[];
   payable_sparkline?: number[];
   income_sparkline?: number[];
@@ -109,6 +114,17 @@ const MOCK_DATA: DashboardData = {
     { month: 'May', inflow: 4_900_000, outflow: 1_950_000, net: 2_950_000 },
     { month: 'Jun', inflow: 5_400_000, outflow: 2_150_000, net: 3_250_000 },
   ],
+  aging: [
+    { range: '0-30', amount: 6_200_000 },
+    { range: '31-60', amount: 3_100_000 },
+    { range: '61-90', amount: 1_900_000 },
+    { range: '90+', amount: 1_300_000 },
+  ],
+  cash_breakdown: [
+    { name: 'Banking', percent: 52 },
+    { name: 'Cash', percent: 28 },
+    { name: 'Total Receivable', percent: 20 },
+  ],
   receivable_sparkline: [8, 10, 9, 12, 11, 13, 12, 14, 13, 12, 13, 12.5],
   payable_sparkline:    [5, 4, 6, 5, 4, 5, 4, 4, 5, 4, 4, 4.2],
   income_sparkline:     [2.8, 3.1, 3.4, 3.2, 3.6, 3.8, 3.5, 3.9, 3.7, 3.8, 3.9, 3.8],
@@ -128,11 +144,27 @@ function yoyDelta(trend: DashboardData['revenue_trend']): number {
   return ((last - first) / first) * 100;
 }
 
-/** Cash-position breakdown bars derived from the latest cash-flow month. */
+/** Token ramp for the cash-position bars (cycled so any number of accounts is themed). */
+const CASH_BAR_COLORS = ['var(--accent-500)', 'var(--info-500)', 'var(--success-500)', 'var(--warning-500)'];
+
+/**
+ * Cash-position breakdown bars.
+ *
+ * Prefers the real backend `cash_breakdown` ({ name, percent }). Falls back to a
+ * value derived from the latest cash-flow month only when the field is absent (e.g.
+ * a lean payload or the offline mock), so real data is never masked.
+ */
 function cashBreakdown(
   data: DashboardData,
   labels: { bank: string; cash: string; receivable: string },
 ): Array<{ label: string; pct: number; color: string }> {
+  if (data.cash_breakdown && data.cash_breakdown.length > 0) {
+    return data.cash_breakdown.map((b, i) => ({
+      label: b.name,
+      pct: Math.max(0, Math.round(b.percent || 0)),
+      color: CASH_BAR_COLORS[i % CASH_BAR_COLORS.length],
+    }));
+  }
   const latest = data.cash_flow?.[data.cash_flow.length - 1];
   const bank = latest?.net ?? Math.max(0, data.income_this_month - data.expenses_this_month);
   const cash = data.income_this_month;
@@ -140,9 +172,9 @@ function cashBreakdown(
   const total = bank + cash + receivable || 1;
   const round = (n: number) => Math.round((n / total) * 100);
   return [
-    { label: labels.bank, pct: round(bank), color: 'var(--accent-500)' },
-    { label: labels.cash, pct: round(cash), color: 'var(--info-500)' },
-    { label: labels.receivable, pct: round(receivable), color: 'var(--success-500)' },
+    { label: labels.bank, pct: round(bank), color: CASH_BAR_COLORS[0] },
+    { label: labels.cash, pct: round(cash), color: CASH_BAR_COLORS[1] },
+    { label: labels.receivable, pct: round(receivable), color: CASH_BAR_COLORS[2] },
   ];
 }
 
@@ -171,25 +203,34 @@ const Dashboard: React.FC<{
     layout.primaryKpis.includes(id as typeof layout.primaryKpis[number])
     || layout.secondaryKpis.includes(id as typeof layout.secondaryKpis[number]);
 
-  const fetchDashboard = async (forceRetry = false) => {
-    setLoading(true);
+  /**
+   * Fetch /api/dashboard.
+   *
+   * @param forceRetry  bypass the backend-unavailable short-circuit (manual retry).
+   * @param silent      background poll — don't toggle the loading skeleton so the
+   *                    live tiles update in place without flashing.
+   */
+  const fetchDashboard = async (forceRetry = false, silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await api.get('/api/dashboard', forceRetry ? backendRetryConfig : undefined);
-      // Merge the (possibly lean) backend payload over the rich MOCK_DATA defaults so
-      // optional trend / sparkline fields are always present for the kit composition.
-      setData({ ...MOCK_DATA, ...(res.data as Partial<DashboardData>) });
+      // Use the real backend payload directly. Optional analytics fields (revenue_trend,
+      // cash_flow, top_customers, aging, *_sparkline, cash_breakdown) render gracefully
+      // when present and degrade when absent — they are never masked by mock defaults.
+      setData(res.data as DashboardData);
       setBackendUnavailable(false);
     } catch (error) {
       if (isBackendUnavailableError(error)) {
-        // Backend unavailable → show the full mock dashboard (resilient offline view).
-        setData(MOCK_DATA);
+        // Backend genuinely unavailable (offline) → resilient full mock dashboard.
+        // A failed background poll keeps the last good data on screen.
+        if (!silent) setData(MOCK_DATA);
         setBackendUnavailable(false);
-      } else {
+      } else if (!silent) {
         setData(null);
         setBackendUnavailable(false);
       }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -199,6 +240,17 @@ const Dashboard: React.FC<{
     }
     initialFetchDoneRef.current = true;
     void fetchDashboard();
+  }, []);
+
+  // ── Live polling: silently refetch every 30s, pausing while the tab is hidden to
+  // avoid background churn. Interval is cleared on unmount. ──
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      void fetchDashboard(false, true);
+    }, 30_000);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const currencySuffix = 'IQD';
@@ -244,11 +296,12 @@ const Dashboard: React.FC<{
   );
 
   // ── Recent invoices: prefer the live recent_invoices payload; otherwise derive a
-  // small list from top_customers so the table is always populated and resilient. ──
+  // small list from top_customers (when present) so the table stays populated. ──
+  const topCustomers = data.top_customers ?? [];
   const recentInvoices: RecentInvoice[] =
     data.recent_invoices && data.recent_invoices.length > 0
       ? data.recent_invoices.slice(0, 5)
-      : data.top_customers.slice(0, 5).map((c, i) => ({
+      : topCustomers.slice(0, 5).map((c, i) => ({
           id: `mock-${i}`,
           invoice_number: `INV-${1042 - i}`,
           date: '',
@@ -274,7 +327,7 @@ const Dashboard: React.FC<{
           {row.customer_name
             ?? (data.recent_invoices?.length
               ? '—'
-              : data.top_customers[recentInvoices.indexOf(row)]?.name ?? '—')}
+              : topCustomers[recentInvoices.indexOf(row)]?.name ?? '—')}
         </span>
       ),
     },
@@ -303,7 +356,8 @@ const Dashboard: React.FC<{
     },
   ];
 
-  const revenueDelta = yoyDelta(data.revenue_trend);
+  const revenueTrend = data.revenue_trend ?? [];
+  const revenueDelta = yoyDelta(revenueTrend);
   const breakdown = cashBreakdown(data, {
     bank: t('banking', 'Banking'),
     cash: t('cash', 'Cash'),
@@ -430,51 +484,64 @@ const Dashboard: React.FC<{
               />
             }
           >
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data.revenue_trend} margin={{ top: 8, right: 0, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="dashRevenueFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--accent-500)" stopOpacity={0.28} />
-                    <stop offset="100%" stopColor="var(--accent-500)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis
-                  dataKey="month"
-                  tick={{ fill: 'var(--ink-500)', fontSize: 11 }}
-                  tickLine={false}
-                  axisLine={{ stroke: 'var(--border)' }}
-                />
-                <YAxis
-                  tick={{ fill: 'var(--ink-500)', fontSize: 11 }}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(v) => `${(v / 1_000_000).toFixed(0)}M`}
-                  width={36}
-                />
-                <Tooltip
-                  formatter={(v) => [`${fmtIQD(v as number)} ${currencySuffix}`, t('revenue', 'Revenue')]}
-                  contentStyle={{
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--border)',
-                    background: 'var(--surface)',
-                    color: 'var(--ink-900)',
-                    boxShadow: 'var(--shadow-md)',
-                  }}
-                  labelStyle={{ color: 'var(--ink-500)' }}
-                  cursor={{ stroke: 'var(--border-strong)' }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="var(--accent-500)"
-                  strokeWidth={2.5}
-                  fill="url(#dashRevenueFill)"
-                  name={t('revenue', 'Revenue')}
-                  isAnimationActive={false}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {revenueTrend.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenueTrend} margin={{ top: 8, right: 0, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="dashRevenueFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--accent-500)" stopOpacity={0.28} />
+                      <stop offset="100%" stopColor="var(--accent-500)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fill: 'var(--ink-500)', fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={{ stroke: 'var(--border)' }}
+                  />
+                  <YAxis
+                    tick={{ fill: 'var(--ink-500)', fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(v) => `${(v / 1_000_000).toFixed(0)}M`}
+                    width={36}
+                  />
+                  <Tooltip
+                    formatter={(v) => [`${fmtIQD(v as number)} ${currencySuffix}`, t('revenue', 'Revenue')]}
+                    contentStyle={{
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--border)',
+                      background: 'var(--surface)',
+                      color: 'var(--ink-900)',
+                      boxShadow: 'var(--shadow-md)',
+                    }}
+                    labelStyle={{ color: 'var(--ink-500)' }}
+                    cursor={{ stroke: 'var(--border-strong)' }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="var(--accent-500)"
+                    strokeWidth={2.5}
+                    fill="url(#dashRevenueFill)"
+                    name={t('revenue', 'Revenue')}
+                    isAnimationActive={false}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                color: 'var(--ink-400)',
+                fontSize: 13,
+              }}>
+                {t('no_data')}
+              </div>
+            )}
           </ChartCard>
 
           {/* Cash-position card — labeled horizontal progress bars */}

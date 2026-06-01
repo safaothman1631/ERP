@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Card, Button, Form, Select, DatePicker, Input, InputNumber, Space, Popconfirm, Tag, message } from 'antd';
+import { Button, Form, Select, DatePicker, Input, InputNumber, Space, Popconfirm, message } from 'antd';
 import { PlusOutlined, ReloadOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import api from '../api';
-import { StatusTag } from '../design-system';
-import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
+import { PageHeader, DataTable, StatusTag } from '../design-system';
+import type { ColumnDef } from '../design-system/DataTable';
 import { FormDialog } from '../components/responsive/FormDialog';
 
 interface Contract {
@@ -45,10 +45,10 @@ export default function HRContracts() {
  catch { message.error(t('error')); }
  };
 
- const cols = [
+ const cols: ColumnDef<Contract>[] = [
  { title: t('employee'), dataIndex: 'employee_id',
  render: (id: string) => emps.find(e => e.id === id)?.name || id },
- { title: t('type'), dataIndex: 'type', render: (s?: string) => <Tag>{s}</Tag> },
+ { title: t('type'), dataIndex: 'type', render: (s?: string) => s ? <StatusTag status="default" label={s} /> : '—' },
  { title: t('wage'), dataIndex: 'wage', align: 'right' as const,
  render: (n?: number, r?: Contract) => `${(n || 0).toLocaleString()} ${r?.currency || 'IQD'}` },
  { title: t('start_date'), dataIndex: 'start_date' },
@@ -66,13 +66,17 @@ export default function HRContracts() {
  ];
 
  return (
- <div style={{ padding: 16 }}>
- <Space style={{ marginBottom: 12 }}>
- <h2 style={{ margin: 0 }}>{t('contracts')}</h2>
+ <div>
+ <PageHeader
+ title={t('contracts')}
+ extra={
+ <Space>
  <Button icon={<ReloadOutlined />} onClick={load}>{t('refresh')}</Button>
  <Button type="primary" icon={<PlusOutlined />} onClick={() => setOpen(true)}>{t('new_contract')}</Button>
  </Space>
- <Card><ResponsiveTableAdapter rowKey="id" dataSource={list} columns={cols} pagination={{ pageSize: 20 }} /></Card>
+ }
+ />
+ <DataTable rowKey="id" dataSource={list} columns={cols} pagination={{ pageSize: 20 }} />
 
  <FormDialog open={open} onOk={save} onClose={() => setOpen(false)} title={t('new_contract')}>
  <Form form={form} layout="vertical">

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Space, Select, Form, Input, InputNumber, DatePicker, Table } from 'antd';
+import { Button, Space, Form, Input, InputNumber, DatePicker, Table } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -8,10 +8,9 @@ import { useListQuery } from '../api/queries/useListQuery';
 import { listQueryKeys } from '../api/queries/keys';
 import ExportButton from '../components/ExportButton';
 import dayjs from 'dayjs';
-import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat, FilterBar } from '../design-system';
 import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { downloadCsv } from '../utils/exportCsv';
-import { space } from '../theme/tokens';
 import { useAuthStore } from '../store';
 import { ResponsiveTable, type ResponsiveColumn, type RowAction } from '../components/responsive/ResponsiveTable';
 import { asTranslationKey } from '../i18n/types';
@@ -152,20 +151,21 @@ const Bills: React.FC = () => {
  </Space>
  }
  />
- <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: space.md, alignItems: 'center', gap: space.md, flexWrap: 'wrap' }}>
- <Select
- placeholder={t('status')}
- value={statusFilter || undefined}
- onChange={(v) => { setStatusFilter(v || ''); setPage(1); }}
- allowClear
- style={{ width: 200 }}
- >
- <Select.Option value="draft">{t('draft')}</Select.Option>
- <Select.Option value="open">{t('open')}</Select.Option>
- <Select.Option value="paid">{t('paid')}</Select.Option>
- <Select.Option value="overdue">{t('overdue')}</Select.Option>
- </Select>
- <Space>
+ <FilterBar
+ filters={[{
+ key: 'status',
+ label: t('status'),
+ options: [
+ { label: t('draft'), value: 'draft' },
+ { label: t('open'), value: 'open' },
+ { label: t('paid'), value: 'paid' },
+ { label: t('overdue'), value: 'overdue' },
+ ],
+ }]}
+ values={{ status: statusFilter || undefined }}
+ onChange={(v) => { setStatusFilter((v.status as string) || ''); setPage(1); }}
+ extra={
+ <>
  <ExportMenu
  formats={['csv']}
  onExport={(f: ExportFormat) => {
@@ -176,8 +176,9 @@ const Bills: React.FC = () => {
  }}
  />
  <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
- </Space>
- </div>
+ </>
+ }
+ />
 
  <ResponsiveTable
  columns={responsiveColumns}

@@ -1,17 +1,14 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { Button, Space, Input, Form, Select, InputNumber, Typography, Card } from 'antd';
+import { Button, Space, Input, Form, Select, InputNumber } from 'antd';
 
 import { message } from '../../utils/message';
 import { PlusOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { Popconfirm } from 'antd';
 import api from '../../api';
-import { PageHeader, SectionCard } from '../../design-system';
-import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { PageHeader, SectionCard, KeyValueGrid, DataTable } from '../../design-system';
 import { FormDialog } from '../../components/responsive/FormDialog';
-
-const { Text } = Typography;
 
 interface Project {
  id: string;
@@ -202,13 +199,11 @@ const BOQEditor: React.FC = () => {
  />
 
  <SectionCard>
- <Space direction="vertical" style={{ width: '100%' }}>
- <Space style={{ width: '100%', justifyContent: 'space-between' }}>
  <Select
  placeholder={t('construction.select_project')}
  value={selectedProject}
  onChange={setSelectedProject}
- style={{ width: 350 }}
+ style={{ width: 350, maxWidth: '100%' }}
  showSearch
  filterOption={(input, option) =>
  String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
@@ -220,39 +215,31 @@ const BOQEditor: React.FC = () => {
  </Select.Option>
  ))}
  </Select>
- </Space>
+ </SectionCard>
 
  {selectedProject && (
  <>
- <Card>
- <Space direction="vertical" style={{ width: '100%' }}>
- <Space style={{ width: '100%', justifyContent: 'space-between' }}>
- <Text strong>{t('construction.total_boq')}</Text>
- <Text>{totalAmount.toLocaleString()}</Text>
- </Space>
- <Space style={{ width: '100%', justifyContent: 'space-between' }}>
- <Text strong>{t('construction.total_completed')}</Text>
- <Text type="success">{totalCompleted.toLocaleString()}</Text>
- </Space>
- <Space style={{ width: '100%', justifyContent: 'space-between' }}>
- <Text strong>{t('construction.completion_pct')}</Text>
- <Text>{totalAmount > 0 ? ((totalCompleted / totalAmount) * 100).toFixed(1) : '0'}%</Text>
- </Space>
- </Space>
- </Card>
+ <SectionCard>
+ <KeyValueGrid
+ columns={3}
+ items={[
+ { label: t('construction.total_boq'), value: `${totalAmount.toLocaleString()} IQD` },
+ { label: t('construction.total_completed'), value: `${totalCompleted.toLocaleString()} IQD` },
+ { label: t('construction.completion_pct'), value: `${totalAmount > 0 ? ((totalCompleted / totalAmount) * 100).toFixed(1) : '0'}%` },
+ ]}
+ />
+ </SectionCard>
 
- <ResponsiveTableAdapter
+ <DataTable<BOQItem>
  columns={columns}
  dataSource={items}
  rowKey="id"
  loading={loading}
+ stickyHeader={false}
  pagination={{ pageSize: 20 }}
- scroll={{ x: 1100 }}
  />
  </>
  )}
- </Space>
- </SectionCard>
 
  <FormDialog title={t('construction.add_boq_item')} open={drawer} onClose={() => setDrawer(false)}>
  <Form form={form} layout="vertical" onFinish={handleCreate}>

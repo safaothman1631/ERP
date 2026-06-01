@@ -1,11 +1,11 @@
 import type React from 'react';
 import { useState, useEffect } from 'react';
-import { Button, Space, Switch, Tag, Card, Segmented } from 'antd';
+import { Button, Space, Switch, Segmented } from 'antd';
 import { message } from '../../utils/message';
 import { ArrowUpOutlined, ArrowDownOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard, StatusTag } from '../../design-system';
 import { space } from '../../theme/tokens';
 import api from '../../api';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -127,8 +127,8 @@ const ViewLayoutEditor: React.FC = () => {
       key: 'field_name',
       render: (v: string, record: FieldLayout) => (
         <Space>
-          <span style={{ fontFamily: 'monospace', fontWeight: record.is_system ? 400 : 600 }}>{v}</span>
-          {record.is_system && <Tag color="blue">{t('studio.system', 'System')}</Tag>}
+          <span style={{ fontFamily: 'var(--font-mono, monospace)', fontWeight: record.is_system ? 400 : 600 }}>{v}</span>
+          {record.is_system && <StatusTag status="info" label={t('studio.system', 'System')} />}
         </Space>
       ),
     },
@@ -186,7 +186,7 @@ const ViewLayoutEditor: React.FC = () => {
         }
       />
 
-      <Card>
+      <SectionCard>
         <Space direction="vertical" size={space.md} style={{ width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Segmented
@@ -198,8 +198,9 @@ const ViewLayoutEditor: React.FC = () => {
               value={activeView}
               onChange={(v) => setActiveView(v as 'form' | 'list' | 'print')}
             />
-            <Tag color="orange">
-              {t('studio.visible_count', {
+            <StatusTag
+              status="warning"
+              label={t('studio.visible_count', {
                 count: fields.filter(
                   (f) =>
                     (activeView === 'form' && f.visible_in_form) ||
@@ -207,7 +208,7 @@ const ViewLayoutEditor: React.FC = () => {
                     (activeView === 'print' && f.visible_in_print)
                 ).length,
               })}
-            </Tag>
+            />
           </div>
 
           <ResponsiveTableAdapter
@@ -220,12 +221,12 @@ const ViewLayoutEditor: React.FC = () => {
           />
 
           {hasChanges && (
-            <div style={{ padding: space.md, background: '#fff7e6', borderRadius: 8, border: '1px solid #ffd591' }}>
+            <div style={{ padding: space.md, background: 'var(--warning-bg)', borderRadius: 'var(--radius-md)', border: '1px solid color-mix(in srgb, var(--warning-500) 35%, transparent)', color: 'var(--warning-fg)' }}>
               {t('studio.unsaved_changes', 'You have unsaved changes')}
             </div>
           )}
         </Space>
-      </Card>
+      </SectionCard>
     </div>
   );
 };

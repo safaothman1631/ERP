@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Select, DatePicker, message } from 'antd';
+import { Button, Space, DatePicker, message } from 'antd';
 import { ReloadOutlined, CheckOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
-import { PageHeader, StatusTag } from '../../design-system';
+import { PageHeader, StatusTag, FilterBar } from '../../design-system';
 import { space } from '../../theme/tokens';
 
 dayjs.extend(relativeTime);
@@ -199,41 +199,45 @@ const AlertHistory: React.FC = () => {
         }
       />
 
-      <Space style={{ marginBottom: 16 }} wrap>
-        <Select
-          placeholder={t('iot.filter_severity', 'Filter by severity')}
-          style={{ width: 150 }}
-          allowClear
-          onChange={val => setFilters({ ...filters, severity: val })}
-        >
-          <Select.Option value="info">{t('iot.info', 'Info')}</Select.Option>
-          <Select.Option value="warn">{t('iot.warn', 'Warning')}</Select.Option>
-          <Select.Option value="critical">{t('iot.critical', 'Critical')}</Select.Option>
-        </Select>
-        <Select
-          placeholder={t('iot.filter_device', 'Filter by device')}
-          style={{ width: 200 }}
-          allowClear
-          showSearch
-          filterOption={(input, option) => 
-            String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
-          }
-          onChange={val => setFilters({ ...filters, device_id: val })}
-        >
-          {devices.map(d => (
-            <Select.Option key={d.id} value={d.id}>{d.name}</Select.Option>
-          ))}
-        </Select>
-        <Select
-          placeholder={t('iot.filter_status', 'Filter by status')}
-          style={{ width: 150 }}
-          allowClear
-          onChange={val => setFilters({ ...filters, acknowledged: val })}
-        >
-          <Select.Option value={false}>{t('iot.pending', 'Pending')}</Select.Option>
-          <Select.Option value={true}>{t('iot.acknowledged', 'Acknowledged')}</Select.Option>
-        </Select>
-      </Space>
+      <FilterBar
+        filters={[
+          {
+            key: 'severity',
+            label: t('iot.filter_severity', 'Filter by severity'),
+            options: [
+              { value: 'info', label: t('iot.info', 'Info') },
+              { value: 'warn', label: t('iot.warn', 'Warning') },
+              { value: 'critical', label: t('iot.critical', 'Critical') },
+            ],
+          },
+          {
+            key: 'device_id',
+            label: t('iot.filter_device', 'Filter by device'),
+            options: devices.map((d) => ({ value: d.id, label: d.name })),
+          },
+          {
+            key: 'acknowledged',
+            label: t('iot.filter_status', 'Filter by status'),
+            options: [
+              { value: 'false', label: t('iot.pending', 'Pending') },
+              { value: 'true', label: t('iot.acknowledged', 'Acknowledged') },
+            ],
+          },
+        ]}
+        values={{
+          severity: filters.severity,
+          device_id: filters.device_id,
+          acknowledged: filters.acknowledged === undefined ? undefined : String(filters.acknowledged),
+        }}
+        onChange={(v) => {
+          setFilters({
+            ...filters,
+            severity: v.severity,
+            device_id: v.device_id,
+            acknowledged: v.acknowledged === undefined ? undefined : v.acknowledged === 'true',
+          });
+        }}
+      />
 
       <ResponsiveTableAdapter
         dataSource={alerts}

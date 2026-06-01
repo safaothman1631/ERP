@@ -11,10 +11,11 @@
  */
 
 import React, { Suspense, useMemo } from 'react';
-import { Layout, Menu, Spin, Typography, Result, Tag } from 'antd';
+import { Layout, Menu, Spin, Result } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { usePermission } from '../../hooks/usePermission';
+import { PageHeader, StatusTag } from '../../design-system';
 import {
   SECTIONS,
   GROUP_ORDER,
@@ -189,9 +190,9 @@ const SettingsShell: React.FC = () => {
           <span>
             {t(def.titleKey, { defaultValue: def.fallbackTitle })}
             {def.badge ? (
-              <Tag color={def.badge === 'soon' ? 'default' : 'blue'} style={{ marginInlineStart: 8 }}>
-                {t(`common:badge.${def.badge}`, { defaultValue: def.badge })}
-              </Tag>
+              <span style={{ marginInlineStart: 8 }}>
+                <StatusTag status={def.badge === 'soon' ? 'default' : 'info'} label={t(`common:badge.${def.badge}`, { defaultValue: def.badge })} />
+              </span>
             ) : null}
           </span>
         ),
@@ -215,27 +216,23 @@ const SettingsShell: React.FC = () => {
         width={260}
         breakpoint="lg"
         collapsedWidth={0}
-        style={{ background: 'var(--color-surface, #fff)', borderInlineEnd: '1px solid var(--color-border, #f0f0f0)' }}
+        style={{ background: 'var(--surface)', borderInlineEnd: '1px solid var(--border)' }}
       >
         <Menu
           mode="inline"
           selectedKeys={[activeKey]}
           onClick={handleSelect}
           items={menuItems}
-          style={{ borderInlineEnd: 0, paddingBlock: 8 }}
+          style={{ borderInlineEnd: 0, paddingBlock: 8, background: 'transparent' }}
         />
       </Sider>
       <Content style={{ padding: '24px 32px' }}>
         {active && ActiveComponent ? (
           <>
-            <Typography.Title level={3} style={{ marginTop: 0 }}>
-              {t(active.titleKey, { defaultValue: active.fallbackTitle })}
-            </Typography.Title>
-            {active.subtitleKey ? (
-              <Typography.Paragraph type="secondary">
-                {t(active.subtitleKey, { defaultValue: '' })}
-              </Typography.Paragraph>
-            ) : null}
+            <PageHeader
+              title={t(active.titleKey, { defaultValue: active.fallbackTitle })}
+              subtitle={active.subtitleKey ? t(active.subtitleKey, { defaultValue: '' }) : undefined}
+            />
             <Suspense fallback={<Spin tip={t('common:loading', { defaultValue: 'Loading…' })} style={{ marginTop: 32 }} />}>
               <ActiveComponent />
             </Suspense>

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Card, Select, DatePicker, Button, Row, Col, Statistic, Space } from 'antd';
+import { Select, DatePicker, Button, Row, Col, Space } from 'antd';
 import { FileTextOutlined, DollarOutlined, LineChartOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard, KpiCard } from '../../design-system';
+import { space } from '../../theme/tokens';
 import api from '../../api';
 import { message } from '../../utils/message';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -123,11 +124,11 @@ const ConsolidatedPL = () => {
         title={t('multi_entity.consolidated_pl')}
         subtitle={t('multi_entity.consolidated_pl_subtitle')}
       />
-      <Card style={{ marginBottom: 16 }}>
+      <SectionCard>
         <Space direction="vertical" style={{ width: '100%' }} size="large">
           <Row gutter={16}>
             <Col span={8}>
-              <label>{t('multi_entity.select_companies')}</label>
+              <label style={{ display: 'block', marginBottom: 4, fontSize: 12.5, fontWeight: 500, color: 'var(--ink-700)' }}>{t('multi_entity.select_companies')}</label>
               <Select
                 mode="multiple"
                 style={{ width: '100%' }}
@@ -145,7 +146,7 @@ const ConsolidatedPL = () => {
               </Select>
             </Col>
             <Col span={6}>
-              <label>{t('multi_entity.date_from')}</label>
+              <label style={{ display: 'block', marginBottom: 4, fontSize: 12.5, fontWeight: 500, color: 'var(--ink-700)' }}>{t('multi_entity.date_from')}</label>
               <DatePicker
                 style={{ width: '100%' }}
                 value={dateFrom}
@@ -153,7 +154,7 @@ const ConsolidatedPL = () => {
               />
             </Col>
             <Col span={6}>
-              <label>{t('multi_entity.date_to')}</label>
+              <label style={{ display: 'block', marginBottom: 4, fontSize: 12.5, fontWeight: 500, color: 'var(--ink-700)' }}>{t('multi_entity.date_to')}</label>
               <DatePicker
                 style={{ width: '100%' }}
                 value={dateTo}
@@ -161,55 +162,41 @@ const ConsolidatedPL = () => {
               />
             </Col>
             <Col span={4}>
-              <label style={{ visibility: 'hidden' }}>.</label>
+              <label style={{ display: 'block', marginBottom: 4, fontSize: 12.5, visibility: 'hidden' }}>.</label>
               <Button type="primary" block onClick={handleGenerate} loading={loading}>
                 {t('multi_entity.generate')}
               </Button>
             </Col>
           </Row>
         </Space>
-      </Card>
+      </SectionCard>
 
       {plData && (
         <>
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={8}>
-              <Card>
-                <Statistic
-                  title={t('multi_entity.total_revenue')}
-                  value={plData.totals.revenue}
-                  precision={0}
-                  prefix={<LineChartOutlined />}
-                  valueStyle={{ color: 'var(--success-500)' }}
-                />
-              </Card>
-            </Col>
-            <Col span={8}>
-              <Card>
-                <Statistic
-                  title={t('multi_entity.total_expenses')}
-                  value={plData.totals.expenses}
-                  precision={0}
-                  prefix={<DollarOutlined />}
-                  valueStyle={{ color: 'var(--danger-500)' }}
-                />
-              </Card>
-            </Col>
-            <Col span={8}>
-              <Card>
-                <Statistic
-                  title={t('multi_entity.total_profit')}
-                  value={plData.totals.profit}
-                  precision={0}
-                  prefix={<FileTextOutlined />}
-                  valueStyle={{ color: plData.totals.profit >= 0 ? 'var(--success-500)' : 'var(--danger-500)' }}
-                />
-              </Card>
-            </Col>
-          </Row>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: space.md, marginBottom: space.lg }}>
+            <KpiCard
+              title={t('multi_entity.total_revenue')}
+              value={plData.totals.revenue}
+              icon={<LineChartOutlined />}
+              tone="success"
+            />
+            <KpiCard
+              title={t('multi_entity.total_expenses')}
+              value={plData.totals.expenses}
+              icon={<DollarOutlined />}
+              tone="danger"
+            />
+            <KpiCard
+              title={t('multi_entity.total_profit')}
+              value={plData.totals.profit}
+              icon={<FileTextOutlined />}
+              tone={plData.totals.profit >= 0 ? 'success' : 'danger'}
+            />
+          </div>
 
-          <Card
+          <SectionCard
             title={t('multi_entity.breakdown_by_company')}
+            padded={false}
             extra={
               <Button onClick={handleExport}>
                 {t('multi_entity.export_pdf')}
@@ -222,7 +209,7 @@ const ConsolidatedPL = () => {
               rowKey="company_id"
               pagination={false}
             />
-          </Card>
+          </SectionCard>
         </>
       )}
     </>

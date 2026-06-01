@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Card, Button, Form, Input, DatePicker, Space, Tag, message, Descriptions, Table } from 'antd';
+import { Button, Form, Input, DatePicker, Space, message, Descriptions, Table } from 'antd';
 import { PlusOutlined, ReloadOutlined, CheckOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-import { PageHeader } from '../design-system';
-import { palette } from '../theme/tokens';
+import { PageHeader, DataTable, StatusTag } from '../design-system';
+import type { ColumnDef } from '../design-system/DataTable';
 import api from '../api';
 import { useListQuery } from '../api/queries/useListQuery';
 import { listQueryKeys } from '../api/queries/keys';
-import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 
 interface Run {
@@ -69,7 +68,7 @@ export default function PayrollRuns() {
  catch { message.error(t('error')); }
  };
 
- const cols = [
+ const cols: ColumnDef<Run>[] = [
  { title: t('name'), dataIndex: 'name' },
  { title: t('period'), key: 'period',
  render: (_: unknown, r: Run) => `${r.period_start || ''} → ${r.period_end || ''}` },
@@ -79,7 +78,7 @@ export default function PayrollRuns() {
  { title: t('total_net'), dataIndex: 'total_net', align: 'right' as const,
  render: (n?: number) => (n || 0).toLocaleString() },
  { title: t('status'), dataIndex: 'status',
- render: (s?: string) => <Tag color={s === 'confirmed' ? 'green' : 'orange'}>{s}</Tag> },
+ render: (s?: string) => <StatusTag status={s === 'confirmed' ? 'posted' : 'pending'} label={s ? t(s, s) : '—'} /> },
  {
  title: t('actions'),
  render: (_: unknown, r: Run) => (
@@ -93,13 +92,13 @@ export default function PayrollRuns() {
  },
  ];
 
- const slipCols = [
+ const slipCols: ColumnDef<Payslip>[] = [
  { title: t('employee'), dataIndex: 'employee_name' },
  { title: t('basic'), dataIndex: 'basic', align: 'right' as const, render: (n?: number) => (n || 0).toLocaleString() },
  { title: t('allowances'), dataIndex: 'allowances', align: 'right' as const, render: (n?: number) => (n || 0).toLocaleString() },
  { title: t('deductions'), dataIndex: 'deductions', align: 'right' as const, render: (n?: number) => (n || 0).toLocaleString() },
  { title: t('net'), dataIndex: 'net', align: 'right' as const, render: (n?: number) => <strong>{(n || 0).toLocaleString()}</strong> },
- { title: t('status'), dataIndex: 'status', render: (s?: string) => <Tag color={s === 'paid' ? 'green' : s === 'confirmed' ? 'blue' : 'orange'}>{s}</Tag> },
+ { title: t('status'), dataIndex: 'status', render: (s?: string) => <StatusTag status={s === 'paid' ? 'paid' : s === 'confirmed' ? 'info' : 'pending'} label={s ? t(s, s) : '—'} /> },
  {
  title: t('actions'),
  render: (_: unknown, r: Payslip) => (
@@ -114,7 +113,7 @@ export default function PayrollRuns() {
  ];
 
  return (
- <div style={{ padding: 16 }} data-section-id="hr.payroll_runs">
+ <div data-section-id="hr.payroll_runs">
  <PageHeader
  title={t('payroll_runs')}
  sectionId="hr.payroll_runs"
@@ -125,7 +124,7 @@ export default function PayrollRuns() {
  </Space>
  }
  />
- <Card><ResponsiveTableAdapter rowKey="id" dataSource={list} columns={cols} pagination={{ pageSize: 20 }} /></Card>
+ <DataTable rowKey="id" dataSource={list} columns={cols} pagination={{ pageSize: 20 }} />
 
  <FormDialog open={open} onOk={submit} onClose={() => setOpen(false)} title={t('new_run')}>
  <Form form={form} layout="vertical">
@@ -158,15 +157,16 @@ export default function PayrollRuns() {
  <Descriptions.Item label={t('employees')}>{drawer.run.employee_count}</Descriptions.Item>
  <Descriptions.Item label={t('total_net')}>{(drawer.run.total_net || 0).toLocaleString()}</Descriptions.Item>
  </Descriptions>
- <ResponsiveTableAdapter rowKey="id" dataSource={drawer.payslips} columns={slipCols} pagination={false} />
+ <DataTable rowKey="id" dataSource={drawer.payslips} columns={slipCols} stickyHeader={false} pagination={false} />
  </>
  )}
  </FormDialog>
 
  <FormDialog open={!!active} onClose={() => setActive(null)} hideFooter title={active?.employee_name || ''}>
  {active && (
- <ResponsiveTableAdapter
+ <DataTable
  rowKey={(r, i) => `${i}`}
+ stickyHeader={false}
  pagination={false}
  dataSource={active.lines || []}
  columns={[
@@ -174,14 +174,16 @@ export default function PayrollRuns() {
  { title: t('name'), dataIndex: 'name' },
  { title: t('type'), dataIndex: 'type' },
  { title: t('amount'), dataIndex: 'amount', align: 'right' as const,
- render: (n: number) => <span style={{ color: n < 0 ? palette.danger : undefined }}>{n.toLocaleString()}</span> },
+ render: (n: number) => <span style={{ color: n < 0 ? 'var(--danger-500)' : undefined }}>{n.toLocaleString()}</span> },
  ]}
- summary={() => (
+ tableProps={{
+ summary: () => (
  <Table.Summary.Row>
  <Table.Summary.Cell index={0} colSpan={3}><strong>{t('net')}</strong></Table.Summary.Cell>
  <Table.Summary.Cell index={3} align="right"><strong>{(active.net || 0).toLocaleString()}</strong></Table.Summary.Cell>
  </Table.Summary.Row>
- )}
+ ),
+ }}
  />
  )}
  </FormDialog>

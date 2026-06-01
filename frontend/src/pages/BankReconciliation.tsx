@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
-import { Button, Tag, Card, Row, Col, Statistic, Space, Checkbox, Empty, Typography } from 'antd';
+import { Button, Row, Col, Space, Checkbox, Empty, Typography } from 'antd';
 import { message } from '../utils/message';
 import { SyncOutlined, CheckCircleOutlined, LinkOutlined, BankOutlined, DollarOutlined, WarningOutlined, InboxOutlined, CloudUploadOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { PageHeader } from '../design-system';
+import { PageHeader, KpiCard, SectionCard, StatusTag, FilterBar } from '../design-system';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
-import { palette } from '../theme/tokens';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 interface Transaction {
   id: string;
@@ -135,7 +134,7 @@ const BankReconciliation: React.FC = () => {
     { title: t('description'), dataIndex: 'description', key: 'description' },
     {
       title: t('amount'), dataIndex: 'amount', key: 'amount',
-      render: (v: number) => <span style={{ color: v >= 0 ? palette.success : palette.danger }}>{fmtIQD(v)}</span>,
+      render: (v: number) => <span style={{ color: v >= 0 ? 'var(--success-fg)' : 'var(--danger-fg)' }}>{fmtIQD(v)}</span>,
     },
   ];
 
@@ -157,9 +156,9 @@ const BankReconciliation: React.FC = () => {
     { title: t('description'), dataIndex: 'description', key: 'description' },
     {
       title: t('amount'), dataIndex: 'amount', key: 'amount',
-      render: (v: number) => <span style={{ color: v >= 0 ? palette.success : palette.danger }}>{fmtIQD(v)}</span>,
+      render: (v: number) => <span style={{ color: v >= 0 ? 'var(--success-fg)' : 'var(--danger-fg)' }}>{fmtIQD(v)}</span>,
     },
-    { title: t('type'), dataIndex: 'type', key: 'type', render: (v: string) => <Tag>{v}</Tag> },
+    { title: t('type'), dataIndex: 'type', key: 'type', render: (v: string) => <StatusTag status="default" label={t(v, v)} /> },
   ];
 
   return (
@@ -180,100 +179,69 @@ const BankReconciliation: React.FC = () => {
           ) : undefined
         }
       />
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <SelectWithQuickCreate
-          entity="bank_account"
-          placeholder={t('account')}
-          value={selectedAccount || undefined}
-          onChange={handleAccountChange}
-          style={{ width: 300 }}
-        />
-        <Space>
-          <Button icon={<SyncOutlined />} loading={matching} onClick={handleAutoMatch} disabled={!selectedAccount}>
-            {t('autoMatch')}
-          </Button>
-          <Button
-            icon={<LinkOutlined />}
-            onClick={handleManualMatch}
-            disabled={selectedBank.length === 0 || selectedSystem.length === 0}
-            loading={matching}
-          >
-            {t('match')}
-          </Button>
-          <Button
-            type="primary"
-            icon={<CheckCircleOutlined />}
-            onClick={handleComplete}
-            disabled={!selectedAccount}
-            loading={completing}
-          >
-            {t('completeReconciliation')}
-          </Button>
-        </Space>
-      </div>
+      <FilterBar
+        extra={
+          <>
+            <SelectWithQuickCreate
+              entity="bank_account"
+              placeholder={t('account')}
+              value={selectedAccount || undefined}
+              onChange={handleAccountChange}
+              style={{ width: 240 }}
+            />
+            <Button icon={<SyncOutlined />} loading={matching} onClick={handleAutoMatch} disabled={!selectedAccount}>
+              {t('autoMatch')}
+            </Button>
+            <Button
+              icon={<LinkOutlined />}
+              onClick={handleManualMatch}
+              disabled={selectedBank.length === 0 || selectedSystem.length === 0}
+              loading={matching}
+            >
+              {t('match')}
+            </Button>
+            <Button
+              type="primary"
+              icon={<CheckCircleOutlined />}
+              onClick={handleComplete}
+              disabled={!selectedAccount}
+              loading={completing}
+            >
+              {t('completeReconciliation')}
+            </Button>
+          </>
+        }
+      />
 
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={8}>
-          <Card className="stat-card gradient-card-blue" style={{ borderRadius: 12 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Statistic
-                title={<Text style={{ color: palette.ink500, fontSize: 13 }}>{t('closing_balance')}</Text>}
-                value={summary.closing_balance}
-                suffix="د.ع"
-                styles={{ content: { color: palette.primary500, fontWeight: 700 } }}
-              />
-              <div style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: palette.primary50 }}>
-                <BankOutlined style={{ fontSize: 24, color: palette.primary500 }} />
-              </div>
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card className="stat-card gradient-card-green" style={{ borderRadius: 12 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Statistic
-                title={<Text style={{ color: palette.ink500, fontSize: 13 }}>{t('system_balance')}</Text>}
-                value={summary.system_balance}
-                suffix="د.ع"
-                styles={{ content: { color: palette.success, fontWeight: 700 } }}
-              />
-              <div style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: palette.successBg }}>
-                <DollarOutlined style={{ fontSize: 24, color: palette.success }} />
-              </div>
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card
-            className={`stat-card ${summary.difference === 0 ? 'gradient-card-green' : 'gradient-card-red'}`}
-            style={{ borderRadius: 12 }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Statistic
-                title={<Text style={{ color: palette.ink500, fontSize: 13 }}>{t('difference')}</Text>}
-                value={summary.difference}
-                suffix="د.ع"
-                styles={{ content: { color: summary.difference === 0 ? palette.success : palette.danger, fontWeight: 700 } }}
-              />
-              <div style={{
-                width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: summary.difference === 0 ? palette.successBg : palette.dangerBg,
-              }}>
-                {summary.difference === 0
-                  ? <CheckCircleOutlined style={{ fontSize: 24, color: palette.success }} />
-                  : <WarningOutlined style={{ fontSize: 24, color: palette.danger }} />}
-              </div>
-            </div>
-          </Card>
-        </Col>
-      </Row>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 'var(--space-md)', marginBlockEnd: 'var(--space-lg)' }}>
+        <KpiCard
+          title={t('closing_balance')}
+          value={summary.closing_balance}
+          icon={<BankOutlined />}
+          tone="primary"
+          suffix=" د.ع"
+        />
+        <KpiCard
+          title={t('system_balance')}
+          value={summary.system_balance}
+          icon={<DollarOutlined />}
+          tone="success"
+          suffix=" د.ع"
+        />
+        <KpiCard
+          title={t('difference')}
+          value={summary.difference}
+          icon={summary.difference === 0 ? <CheckCircleOutlined /> : <WarningOutlined />}
+          tone={summary.difference === 0 ? 'success' : 'danger'}
+          suffix=" د.ع"
+        />
+      </div>
 
       <Row gutter={16}>
         <Col xs={24} lg={12}>
-          <Card
-            title={<Title level={5} style={{ margin: 0, color: palette.primary500 }}><BankOutlined /> {t('bank_statement')}</Title>}
-            size="small"
-            style={{ borderRadius: 12, borderTop: `3px solid ${palette.primary500}` }}
+          <SectionCard
+            title={<><BankOutlined /> {t('bank_statement')}</>}
+            padded={false}
           >
             <ResponsiveTableAdapter
               dataSource={bankTransactions}
@@ -285,19 +253,18 @@ const BankReconciliation: React.FC = () => {
               locale={{
                 emptyText: (
                   <Empty
-                    image={<InboxOutlined style={{ fontSize: 36, color: palette.ink300 }} />}
+                    image={<InboxOutlined style={{ fontSize: 36, color: 'var(--ink-300)' }} />}
                     description={<Text type="secondary">{t('no_data')}</Text>}
                   />
                 ),
               }}
             />
-          </Card>
+          </SectionCard>
         </Col>
         <Col xs={24} lg={12}>
-          <Card
-            title={<Title level={5} style={{ margin: 0, color: palette.success }}><DollarOutlined /> {t('system_transactions')}</Title>}
-            size="small"
-            style={{ borderRadius: 12, borderTop: `3px solid ${palette.success}` }}
+          <SectionCard
+            title={<><DollarOutlined /> {t('system_transactions')}</>}
+            padded={false}
           >
             <ResponsiveTableAdapter
               dataSource={systemTransactions}
@@ -309,13 +276,13 @@ const BankReconciliation: React.FC = () => {
               locale={{
                 emptyText: (
                   <Empty
-                    image={<InboxOutlined style={{ fontSize: 36, color: palette.ink300 }} />}
+                    image={<InboxOutlined style={{ fontSize: 36, color: 'var(--ink-300)' }} />}
                     description={<Text type="secondary">{t('no_data')}</Text>}
                   />
                 ),
               }}
             />
-          </Card>
+          </SectionCard>
         </Col>
       </Row>
     </div>

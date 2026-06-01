@@ -3,7 +3,7 @@ import { Button, Space, Tag, Switch, Form, Input, Select, App, Modal } from 'ant
 import { PlusOutlined, EditOutlined, LockOutlined, UnlockOutlined, BarcodeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../../design-system';
+import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../../design-system';
 import { downloadCsv } from '../../utils/exportCsv';
 import { useAuthStore } from '../../store';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -138,7 +138,7 @@ const POSEmployees: React.FC = () => {
  render: (_: any, record: Employee) => (
  <div>
  <div>{record.name}</div>
- {record.name_ku && <div style={{ fontSize: 12, color: '#999' }}>{record.name_ku}</div>}
+ {record.name_ku && <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>{record.name_ku}</div>}
  </div>
  ),
  },
@@ -147,8 +147,8 @@ const POSEmployees: React.FC = () => {
  dataIndex: 'role',
  key: 'role',
  render: (role: string) => {
- const color = role === 'manager' ? 'blue' : role === 'waiter' ? 'green' : 'default';
- return <Tag color={color}>{t(`pos_role_${role}`)}</Tag>;
+ const kind = role === 'manager' ? 'info' : role === 'waiter' ? 'active' : 'default';
+ return <StatusTag status={kind} label={t(`pos_role_${role}`)} />;
  },
  },
  {
@@ -169,9 +169,9 @@ const POSEmployees: React.FC = () => {
  key: 'locked_until',
  render: (locked: string | undefined, record: Employee) => {
  if (locked && new Date(locked) > new Date()) {
- return <Tag color="red" icon={<LockOutlined />}>{t('locked')}</Tag>;
+ return <StatusTag status="error" icon={<LockOutlined />} label={t('locked')} />;
  }
- return record.is_active ? <Tag color="green">{t('active')}</Tag> : <Tag>{t('inactive')}</Tag>;
+ return record.is_active ? <StatusTag status="active" label={t('active')} /> : <StatusTag status="inactive" label={t('inactive')} />;
  },
  },
  {
@@ -210,8 +210,9 @@ const POSEmployees: React.FC = () => {
 
  return (
  <div style={{ padding: 24 }}>
- <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
- <h1>{t('pos_employees')}</h1>
+ <PageHeader
+ title={t('pos_employees')}
+ extra={
  <Space>
  <ExportMenu
  formats={['csv']}
@@ -227,7 +228,8 @@ const POSEmployees: React.FC = () => {
  {t('add_employee')}
  </Button>
  </Space>
- </div>
+ }
+ />
 
  <ResponsiveTableAdapter
  columns={visibleColumns}

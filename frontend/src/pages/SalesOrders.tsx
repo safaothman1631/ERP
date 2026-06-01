@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Tag, Dropdown, Form, Input, InputNumber, DatePicker, Space, Divider, Descriptions } from 'antd';
+import { Button, Dropdown, Form, Input, InputNumber, DatePicker, Space, Divider, Descriptions } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, MoreOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -8,14 +8,13 @@ import { useListQuery } from '../api/queries/useListQuery';
 import { listQueryKeys } from '../api/queries/keys';
 import ChatterWidget from '../components/chatter/ChatterWidget';
 import dayjs from 'dayjs';
-import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat, FilterBar } from '../design-system';
 import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { downloadCsv } from '../utils/exportCsv';
 import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 import { useAddGate } from '../components/AddGate/useAddGate';
-const statusColors: Record<string, string> = { draft: 'default', confirmed: 'blue', invoiced: 'purple', void: 'red' };
 
 const SalesOrders: React.FC = () => {
  const { t } = useTranslation();
@@ -86,7 +85,7 @@ const SalesOrders: React.FC = () => {
  { title: '#', dataIndex: 'order_number', key: 'order_number' },
  { title: t('date'), dataIndex: 'date', key: 'date', render: (d: string) => d?.substring(0, 10) },
  { title: t('total'), dataIndex: 'total', key: 'total', render: (v: number) => v?.toLocaleString() },
- { title: t('status'), dataIndex: 'status', key: 'status', render: (s: string) => <Tag color={statusColors[s]}>{t(s)}</Tag> },
+ { title: t('status'), dataIndex: 'status', key: 'status', render: (s: string) => <StatusTag status={s} label={t(s)} /> },
  {
  title: t('actions'), key: 'actions',
  render: (_: any, r: any) => {
@@ -111,7 +110,17 @@ const SalesOrders: React.FC = () => {
 
  return (
  <div data-addgate-section="sales.sales_orders">
- <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+ <PageHeader
+ title={t('sales_orders')}
+ subtitle={t('sales_orders_subtitle', 'Customer sales orders')}
+ sectionId="sales.sales_orders"
+ extra={
+ <Button type="primary" icon={<PlusOutlined />} onClick={openNew} data-add-action="sales.sales_orders">{t('new_sales_order')}</Button>
+ }
+ />
+ <FilterBar
+ extra={
+ <>
  <ExportMenu
  formats={['csv']}
  onExport={(f: ExportFormat) => {
@@ -122,8 +131,9 @@ const SalesOrders: React.FC = () => {
  }}
  />
  <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
- <Button type="primary" icon={<PlusOutlined />} onClick={openNew} data-add-action="sales.sales_orders">{t('new_sales_order')}</Button>
- </div>
+ </>
+ }
+ />
  <ResponsiveTableAdapter dataSource={data} columns={visibleColumns} rowKey="id" loading={loading} pagination={{ current: page, total, pageSize: 20, onChange: setPage }} />
  <FormDialog open={modalOpen} onClose={() => setModalOpen(false)} title={t('new_sales_order')} hideFooter>
  <Form form={form} layout="vertical" onFinish={handleSave} initialValues={{ date: dayjs() }}>
@@ -167,7 +177,7 @@ const SalesOrders: React.FC = () => {
  <Descriptions column={1} bordered>
  <Descriptions.Item label={t('date')}>{viewingOrder.date?.substring(0, 10) || '-'}</Descriptions.Item>
  <Descriptions.Item label={t('status')}>
- <Tag color={statusColors[viewingOrder.status] || 'default'}>{t(viewingOrder.status || 'draft')}</Tag>
+ <StatusTag status={viewingOrder.status || 'draft'} label={t(viewingOrder.status || 'draft')} />
  </Descriptions.Item>
  <Descriptions.Item label={t('total')}>{(viewingOrder.total || 0).toLocaleString()}</Descriptions.Item>
  </Descriptions>

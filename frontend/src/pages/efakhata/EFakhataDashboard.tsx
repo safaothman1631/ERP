@@ -9,13 +9,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Alert,
-  Button,
-  Card,
   DatePicker,
-  Select,
   Space,
   Table,
-  Tag,
   Typography,
   message,
 } from 'antd';
@@ -23,8 +19,10 @@ import type { ColumnsType } from 'antd/es/table';
 import { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
+import { PageHeader, FilterBar, SectionCard, StatusTag } from '../../design-system';
+import type { StatusKind } from '../../design-system';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 interface Submission {
   id: string;
@@ -45,13 +43,13 @@ interface Submission {
   next_attempt_at?: string;
 }
 
-const STATUS_COLOR: Record<string, string> = {
+const STATUS_KIND: Record<string, StatusKind> = {
   pending: 'default',
-  submitting: 'processing',
-  submitted: 'blue',
-  acknowledged: 'green',
-  rejected: 'red',
-  failed: 'orange',
+  submitting: 'info',
+  submitted: 'info',
+  acknowledged: 'success',
+  rejected: 'error',
+  failed: 'warning',
   cancelled: 'default',
 };
 
@@ -104,7 +102,7 @@ const EFakhataDashboard: React.FC = () => {
     {
       title: t('col_status', 'Status'),
       dataIndex: 'status',
-      render: (s: string) => <Tag color={STATUS_COLOR[s] ?? 'default'}>{s}</Tag>,
+      render: (s: string) => <StatusTag status={STATUS_KIND[s] ?? 'default'} label={s} />,
     },
     { title: t('col_attempts', 'Attempts'), dataIndex: 'attempts', width: 100 },
     {
@@ -138,8 +136,8 @@ const EFakhataDashboard: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
-      <Title level={3}>{t('title', 'e-Fakhata submissions')}</Title>
+    <div style={{ padding: 'var(--space-xl, 24px)' }}>
+      <PageHeader title={t('title', 'e-Fakhata submissions')} />
       <Alert
         type="info"
         showIcon
@@ -149,15 +147,12 @@ const EFakhataDashboard: React.FC = () => {
           'Iraq Ministry of Finance e-invoicing — wire format pending final MoF spec (R7.X).',
         )}
       />
-      <Card>
-        <Space wrap style={{ marginBottom: 16 }}>
-          <Select
-            placeholder={t('filter_status', 'Status')}
-            style={{ width: 180 }}
-            allowClear
-            value={statusFilter}
-            onChange={(v) => setStatusFilter(v)}
-            options={[
+      <FilterBar
+        filters={[
+          {
+            key: 'status',
+            label: t('filter_status', 'Status'),
+            options: [
               { value: 'pending', label: 'pending' },
               { value: 'submitting', label: 'submitting' },
               { value: 'submitted', label: 'submitted' },
@@ -165,24 +160,28 @@ const EFakhataDashboard: React.FC = () => {
               { value: 'rejected', label: 'rejected' },
               { value: 'failed', label: 'failed' },
               { value: 'cancelled', label: 'cancelled' },
-            ]}
-          />
+            ],
+          },
+        ]}
+        values={{ status: statusFilter }}
+        onChange={(v) => setStatusFilter((v.status as string) || undefined)}
+        onRefresh={() => void fetchSubmissions()}
+        extra={
           <DatePicker.RangePicker
             value={dateRange ?? undefined}
             onChange={(v) => setDateRange(v as [Dayjs, Dayjs] | null)}
           />
-          <Button onClick={() => void fetchSubmissions()} loading={loading}>
-            {t('refresh', 'Refresh')}
-          </Button>
-        </Space>
+        }
+      />
 
-        <Space wrap style={{ marginBottom: 16 }}>
-          {Object.entries(counts).map(([k, v]) => (
-            <Tag key={k} color={STATUS_COLOR[k] ?? 'default'}>
-              {k}: {v}
-            </Tag>
-          ))}
-        </Space>
+      <SectionCard padded={false}>
+        {Object.keys(counts).length > 0 && (
+          <Space wrap style={{ padding: 'var(--space-md, 12px)', borderBottom: '1px solid var(--border)' }}>
+            {Object.entries(counts).map(([k, v]) => (
+              <StatusTag key={k} status={STATUS_KIND[k] ?? 'default'} label={`${k}: ${v}`} />
+            ))}
+          </Space>
+        )}
 
         <Table
           rowKey="id"
@@ -191,7 +190,7 @@ const EFakhataDashboard: React.FC = () => {
           columns={columns}
           pagination={{ pageSize: 25 }}
         />
-      </Card>
+      </SectionCard>
     </div>
   );
 };

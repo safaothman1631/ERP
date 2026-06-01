@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Tag, message, Card } from 'antd';
+import { Button, message } from 'antd';
 import { ReloadOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
-import { space } from '../../theme/tokens';
+import { PageHeader, SectionCard, StatusTag } from '../../design-system';
 import dayjs from 'dayjs';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
@@ -75,9 +74,7 @@ const SubscriptionDunning: React.FC = () => {
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
-        <Tag color="orange">
-          {t(`subscription.status_${status}`)}
-        </Tag>
+        <StatusTag status="warning" label={t(`subscription.status_${status}`)} />
       ),
       width: 100,
     },
@@ -95,7 +92,7 @@ const SubscriptionDunning: React.FC = () => {
         const end = dayjs(record.current_period_end);
         const now = dayjs();
         const days = now.diff(end, 'day');
-        return <Tag color={days > 7 ? 'red' : 'orange'}>{days}</Tag>;
+        return <StatusTag status={days > 7 ? 'error' : 'warning'} label={String(days)} />;
       },
       width: 100,
     },
@@ -117,7 +114,7 @@ const SubscriptionDunning: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: space.lg }}>
+    <div>
       <PageHeader
         title={t('subscription.dunning_queue')}
         subtitle={t('subscription.dunning_subtitle')}
@@ -127,8 +124,8 @@ const SubscriptionDunning: React.FC = () => {
           </Button>
         }
       />
-      
-      <Card style={{ marginTop: space.md }}>
+
+      <SectionCard padded={false}>
         <ResponsiveTableAdapter
           columns={columns}
           dataSource={subscriptions}
@@ -139,7 +136,7 @@ const SubscriptionDunning: React.FC = () => {
             emptyText: t('subscription.no_past_due'),
           }}
         />
-      </Card>
+      </SectionCard>
     </div>
   );
 };

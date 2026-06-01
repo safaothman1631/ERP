@@ -3,7 +3,7 @@ import { Card, Tag, Button, Form, Input, InputNumber, Select, Space, message, Em
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
-import { HelpIcon } from '../help/HelpIcon';
+import { PageHeader } from '../design-system';
 import { FormDialog } from '../components/responsive/FormDialog';
 import { LoadingSkeleton } from '../design-system/LoadingSkeleton';
 import { useLoadingState } from '../hooks/useLoadingState';
@@ -90,22 +90,26 @@ export default function CRMPipeline() {
  opps.filter((o) => o.stage_id === sid).reduce((s, o) => s + (Number(o.amount) || 0), 0);
 
  return (
- <div style={{ padding: 16 }} data-section-id="crm.pipeline">
- <Space style={{ marginBottom: 16 }}>
- <h2 style={{ margin: 0 }}>{t('pipeline')}</h2>
- <HelpIcon sectionId="crm.pipeline" />
+ <div data-section-id="crm.pipeline">
+ <PageHeader
+ title={t('pipeline')}
+ sectionId="crm.pipeline"
+ extra={
+ <Space>
  <Button icon={<ReloadOutlined />} onClick={load}>{t('refresh')}</Button>
  <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
  {t('new_opportunity')}
  </Button>
  </Space>
+ }
+ />
 
  {showSkeleton ? (
  <LoadingSkeleton variant="card" />
  ) : stages.length === 0 ? (
  <Empty />
  ) : (
- <div style={{ display: 'flex', gap: 12, overflowX: 'auto', alignItems: 'flex-start' }}>
+ <div style={{ display: 'flex', gap: 'var(--space-md)', overflowX: 'auto', alignItems: 'flex-start' }}>
  {stages.map((stage) => {
  const stageOpps = opps.filter((o) => o.stage_id === stage.id);
  return (
@@ -118,36 +122,38 @@ export default function CRMPipeline() {
  }}
  style={{
  minWidth: 280,
- background: '#fafafa',
- borderRadius: 8,
- padding: 8,
- borderTop: `4px solid ${stage.color || '#1890ff'}`,
+ background: 'var(--surface-2)',
+ border: '1px solid var(--border)',
+ borderRadius: 'var(--radius-lg)',
+ padding: 10,
+ borderTop: `4px solid ${stage.color || 'var(--accent-500)'}`,
  }}
  >
- <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 8px 8px' }}>
- <strong>{stage.name}</strong>
+ <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 6px 10px' }}>
+ <strong style={{ fontSize: 13, color: 'var(--ink-900)' }}>{stage.name}</strong>
  <Tag>{stageOpps.length} · {formatMoney(totalByStage(stage.id))}</Tag>
  </div>
 
  {stageOpps.map((opp) => (
  <Card
  key={opp.id}
+ className="vx-card vx-card-h"
  style={{ marginBottom: 8, cursor: 'grab' }}
  draggable
  onDragStart={(e) => e.dataTransfer.setData('text/plain', opp.id)}
  >
- <div style={{ fontWeight: 600 }}>{opp.name}</div>
- <div style={{ color: '#666', fontSize: 12 }}>
+ <div style={{ fontWeight: 600, color: 'var(--ink-900)' }}>{opp.name}</div>
+ <div style={{ color: 'var(--ink-500)', fontSize: 12 }}>
  {formatMoney(opp.amount)} · {opp.probability}%
  </div>
  {opp.close_date && (
- <div style={{ color: '#999', fontSize: 11 }}>{opp.close_date}</div>
+ <div style={{ color: 'var(--ink-400)', fontSize: 11 }}>{opp.close_date}</div>
  )}
  </Card>
  ))}
 
  {stageOpps.length === 0 && (
- <div style={{ color: '#bbb', fontSize: 12, textAlign: 'center', padding: 16 }}>
+ <div style={{ color: 'var(--ink-300)', fontSize: 12, textAlign: 'center', padding: 16 }}>
  {t('drop_here')}
  </div>
  )}

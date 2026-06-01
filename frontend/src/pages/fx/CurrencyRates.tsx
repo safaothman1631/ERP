@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, DatePicker, Form, InputNumber, Select, message, Space, Typography, Input } from 'antd';
+import { Button, DatePicker, Form, InputNumber, Select, message, Space, Input } from 'antd';
 import { PlusOutlined, DeleteOutlined, LineChartOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
@@ -9,10 +9,10 @@ import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTa
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
 import { asTranslationKey } from '../../i18n/types';
-import { palette } from '../../theme/tokens';
+import { PageHeader, SectionCard } from '../../design-system';
 
-const { Title, Text: _Text } = Typography;
 const { Option } = Select;
+const CHART_ACCENT = 'var(--accent-500)';
 
 interface CurrencyRate {
  id: string;
@@ -146,9 +146,9 @@ const CurrencyRates: React.FC = () => {
  ];
 
  return (
- <div style={{ padding: '24px' }}>
- <Card
- title={<Title level={3} style={{ margin: 0 }}>{t('fx.currencyRates')}</Title>}
+ <div>
+ <PageHeader
+ title={t('fx.currencyRates')}
  extra={
  <Space>
  <Select
@@ -180,26 +180,28 @@ const CurrencyRates: React.FC = () => {
  </Button>
  </Space>
  }
- >
+ />
+
  {showChart && chartData.length > 0 && (
- <div style={{ marginBottom: '24px' }}>
+ <SectionCard>
  <ResponsiveChart
  legendItems={[
- { id: 'rate', labelKey: asTranslationKey('fx.rate'), color: palette.primary500 },
+ { id: 'rate', labelKey: asTranslationKey('fx.rate'), color: CHART_ACCENT },
  ]}
  minMobileBlockSize={300}
  >
  <LineChart data={chartData}>
- <CartesianGrid strokeDasharray="3 3" />
+ <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
  <XAxis dataKey="date" />
  <YAxis />
  <Tooltip />
- <Line type="monotone" dataKey="rate" stroke={palette.primary500} name={t('fx.rate')} />
+ <Line type="monotone" dataKey="rate" stroke={CHART_ACCENT} name={t('fx.rate')} />
  </LineChart>
  </ResponsiveChart>
- </div>
+ </SectionCard>
  )}
 
+ <SectionCard padded={false}>
  <ResponsiveTableAdapter
  columns={columns}
  dataSource={rates}
@@ -207,7 +209,7 @@ const CurrencyRates: React.FC = () => {
  loading={loading}
  pagination={{ pageSize: 20 }}
  />
- </Card>
+ </SectionCard>
 
  <FormDialog
  title={t('fx.addRate')}

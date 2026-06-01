@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, InputNumber, Typography, Row, Col, Tag, Divider } from 'antd';
+import { Card, Button, InputNumber, Typography, Row, Col, Divider } from 'antd';
 import { ShoppingCartOutlined, LeftOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
 import api from '../../api';
+import { StatusTag } from '../../design-system';
 import { LoadingSkeleton } from '../../design-system/LoadingSkeleton';
 import { useLoadingState } from '../../hooks/useLoadingState';
 
@@ -146,9 +147,9 @@ const StoreProduct: React.FC = () => {
               <Title level={2}>{product.name}</Title>
 
               {product.category && (
-                <Tag color="blue" style={{ marginBottom: 16 }}>
-                  {product.category}
-                </Tag>
+                <div style={{ marginBottom: 16 }}>
+                  <StatusTag status="info" label={product.category} />
+                </div>
               )}
 
               {product.sku && (

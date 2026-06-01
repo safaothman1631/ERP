@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Tag, Card, Button, Space } from 'antd';
+import { Card, Button, Space } from 'antd';
 import { EyeOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard, StatusTag } from '../../design-system';
 import { space } from '../../theme/tokens';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -50,7 +50,7 @@ const WorkflowRunHistory: React.FC = () => {
  title: t('automation.status'),
  dataIndex: 'status',
  key: 'status',
- render: (v: string) => <Tag color={v === 'ok' ? 'green' : 'red'}>{v}</Tag>,
+ render: (v: string) => <StatusTag status={v === 'ok' ? 'success' : 'error'} label={v} />,
  },
  {
  title: t('automation.duration'),
@@ -95,9 +95,9 @@ const WorkflowRunHistory: React.FC = () => {
  </Space>
  }
  />
- <Card style={{ marginTop: space.md }}>
+ <SectionCard padded={false}>
  <ResponsiveTableAdapter dataSource={runs} columns={columns} loading={loading} rowKey="id" />
- </Card>
+ </SectionCard>
 
  <FormDialog
  title={t('automation.run_detail')}
@@ -107,35 +107,35 @@ const WorkflowRunHistory: React.FC = () => {
  {selectedRun && (
  <div>
  <p><strong>{t('automation.run_at')}:</strong> {new Date(selectedRun.ran_at).toLocaleString()}</p>
- <p><strong>{t('automation.status')}:</strong> <Tag color={selectedRun.status === 'ok' ? 'green' : 'red'}>{selectedRun.status}</Tag></p>
+ <p><strong>{t('automation.status')}:</strong> <StatusTag status={selectedRun.status === 'ok' ? 'success' : 'error'} label={selectedRun.status} /></p>
  <p><strong>{t('automation.duration')}:</strong> {selectedRun.duration_ms || 0} ms</p>
- 
+
  {selectedRun.trigger_data && (
  <div style={{ marginTop: space.md }}>
  <h4>{t('automation.trigger_data')}:</h4>
- <pre style={{ backgroundColor: '#f5f5f5', padding: space.sm, borderRadius: 4 }}>
+ <pre style={{ background: 'var(--surface-2)', color: 'var(--ink-700)', padding: space.sm, borderRadius: 'var(--radius-md)' }}>
  {JSON.stringify(selectedRun.trigger_data, null, 2)}
  </pre>
  </div>
  )}
- 
+
  {selectedRun.trace && (
  <div style={{ marginTop: space.md }}>
  <h4>{t('automation.trace')}:</h4>
  {selectedRun.trace.map((step: any, idx: number) => (
  <Card key={idx} style={{ marginBottom: space.sm }}>
  <p><strong>{t('automation.node_id')}:</strong> {step.node_id}</p>
- <p><strong>{t('automation.status')}:</strong> <Tag color={step.status === 'ok' ? 'green' : 'red'}>{step.status}</Tag></p>
+ <p><strong>{t('automation.status')}:</strong> <StatusTag status={step.status === 'ok' ? 'success' : 'error'} label={step.status} /></p>
  {step.output && (
  <details>
  <summary>{t('automation.output')}</summary>
- <pre style={{ backgroundColor: '#f5f5f5', padding: space.xs, marginTop: space.xs }}>
+ <pre style={{ background: 'var(--surface-2)', color: 'var(--ink-700)', padding: space.xs, marginTop: space.xs, borderRadius: 'var(--radius-md)' }}>
  {JSON.stringify(step.output, null, 2)}
  </pre>
  </details>
  )}
  {step.error && (
- <p style={{ color: 'red' }}><strong>{t('error')}:</strong> {step.error}</p>
+ <p style={{ color: 'var(--danger-500)' }}><strong>{t('error')}:</strong> {step.error}</p>
  )}
  </Card>
  ))}

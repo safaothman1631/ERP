@@ -546,6 +546,17 @@ class DashboardResponse(BaseModel):
     recent_invoices: list = []
     recent_expenses: list = []
     income_expense_chart: list = []
+    # ── Additive analytics (purely optional; default [] so the endpoint and
+    #    every existing field keep working even when a computation fails). ──
+    revenue_trend: list = []
+    cash_flow: list = []
+    top_customers: list = []
+    aging: list = []
+    receivable_sparkline: list = []
+    payable_sparkline: list = []
+    income_sparkline: list = []
+    expense_sparkline: list = []
+    cash_breakdown: list = []
 
 
 # ===== Project Schemas =====

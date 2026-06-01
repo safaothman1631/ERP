@@ -5,6 +5,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, MinusCircleOutlined } from 
 import api from '../../api';
 import { message } from '../../utils/message';
 import dayjs from 'dayjs';
+import { PageHeader, StatusTag } from '../../design-system';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
@@ -114,14 +115,14 @@ const POSPricelists: React.FC = () => {
  title: t('pos.rules_count'),
  dataIndex: 'rules',
  key: 'rules',
- render: (rules: any[]) => <Tag color="blue">{rules?.length || 0}</Tag>,
+ render: (rules: any[]) => <StatusTag status="info" label={String(rules?.length || 0)} />,
  },
  {
  title: t('status'),
  dataIndex: 'is_active',
  key: 'is_active',
  render: (active: boolean) => (
- <Tag color={active ? 'green' : 'default'}>{active ? t('active') : t('inactive')}</Tag>
+ <StatusTag status={active ? 'active' : 'inactive'} label={active ? t('active') : t('inactive')} />
  ),
  },
  {
@@ -137,14 +138,15 @@ const POSPricelists: React.FC = () => {
  ];
 
  return (
- <Card
+ <>
+ <PageHeader
  title={t('pos.pricelists')}
  extra={
  <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>
  {t('add')}
  </Button>
  }
- >
+ />
  <ResponsiveTableAdapter dataSource={data} columns={columns} rowKey="id" loading={loading} pagination={false} />
 
  <FormDialog
@@ -252,7 +254,7 @@ const POSPricelists: React.FC = () => {
  </Form.Item>
  </Form>
  </FormDialog>
- </Card>
+ </>
  );
 };
 

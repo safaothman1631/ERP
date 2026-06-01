@@ -1,14 +1,12 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { Button, Space, Input, Form, Select, InputNumber, Row, Col, Card, Statistic } from 'antd';
+import { Button, Space, Input, Form, Select, InputNumber } from 'antd';
 
 import { message } from '../../utils/message';
-import { PlusOutlined, SearchOutlined, EyeOutlined } from '@ant-design/icons';
+import { PlusOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import { PageHeader, StatusTag, KpiCard, SectionCard } from '../../design-system';
-import { space } from '../../theme/tokens';
-import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { PageHeader, StatusTag, KpiCard, SectionCard, KeyValueGrid, FilterBar, DataTable } from '../../design-system';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
 interface Project {
@@ -87,7 +85,7 @@ const ConstructionProjects: React.FC = () => {
  }
  };
 
- const getStatusTag = (status: string) => {
+ const getStatusKind = (status: string): 'success' | 'warning' | 'error' | 'info' => {
  const map: Record<string, 'success' | 'warning' | 'error' | 'info'> = {
  planning: 'info',
  in_progress: 'warning',
@@ -95,8 +93,10 @@ const ConstructionProjects: React.FC = () => {
  completed: 'success',
  cancelled: 'error',
  };
- return <StatusTag status={map[status] || 'info'} />;
+ return map[status] || 'info';
  };
+
+ const getStatusTag = (status: string) => <StatusTag status={getStatusKind(status)} />;
 
  const filteredData = data.filter((p) =>
  !search ||
@@ -150,27 +150,20 @@ const ConstructionProjects: React.FC = () => {
  }
  />
 
- <SectionCard>
- <Space style={{ marginBottom: space.md }}>
- <Input
- placeholder={t('search')}
- prefix={<SearchOutlined />}
- value={search}
- onChange={(e) => setSearch(e.target.value)}
- style={{ width: 300 }}
- allowClear
+ <FilterBar
+ searchPlaceholder={t('search')}
+ searchValue={search}
+ onSearchChange={setSearch}
  />
- </Space>
 
- <ResponsiveTableAdapter
+ <DataTable<Project>
  columns={columns}
  dataSource={filteredData}
  rowKey="id"
  loading={loading}
+ stickyHeader={false}
  pagination={{ pageSize: 20 }}
- scroll={{ x: 1000 }}
  />
- </SectionCard>
 
  <FormDialog title={t('construction.add_project')} open={drawer} onClose={() => setDrawer(false)}>
  <Form form={form} layout="vertical" onFinish={handleCreate}>
@@ -215,79 +208,57 @@ const ConstructionProjects: React.FC = () => {
  onClose={() => setDetailDrawer(false)}
  >
  {selectedProject && (
- <Space direction="vertical" style={{ width: '100%' }}>
- <Card title={t('construction.project_info')}>
- <Row gutter={[16, 16]}>
- <Col span={12}>
- <Statistic title={t('construction.client')} value={selectedProject.client || '-'} />
- </Col>
- <Col span={12}>
- <Statistic title={t('construction.status')} value={t(`construction.status_${selectedProject.status}`)} />
- </Col>
- <Col span={12}>
- <Statistic title={t('construction.start_date')} value={selectedProject.start_date || '-'} />
- </Col>
- <Col span={12}>
- <Statistic title={t('construction.end_date')} value={selectedProject.end_date || '-'} />
- </Col>
- </Row>
- </Card>
+ <Space direction="vertical" size="large" style={{ width: '100%' }}>
+ <SectionCard title={t('construction.project_info')}>
+ <KeyValueGrid
+ columns={2}
+ items={[
+ { label: t('construction.client'), value: selectedProject.client || '—' },
+ { label: t('construction.status'), value: <StatusTag status={getStatusKind(selectedProject.status)} label={t(`construction.status_${selectedProject.status}`)} /> },
+ { label: t('construction.start_date'), value: selectedProject.start_date || '—' },
+ { label: t('construction.end_date'), value: selectedProject.end_date || '—' },
+ ]}
+ />
+ </SectionCard>
 
- <Card title={t('construction.cost_summary')} loading={loadingCost}>
- {costSummary && (
- <Row gutter={[16, 16]}>
- <Col span={12}>
+ <SectionCard title={t('construction.cost_summary')}>
+ {costSummary ? (
+ <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+ <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)' }}>
  <KpiCard
  title={t('construction.total_budget')}
  value={costSummary.total_budget.toLocaleString()}
- trend={0}
+ currency="IQD"
  />
- </Col>
- <Col span={12}>
  <KpiCard
  title={t('construction.total_actual')}
  value={costSummary.total_actual.toLocaleString()}
- trend={
+ currency="IQD"
+ delta={
  costSummary.total_budget > 0
  ? ((costSummary.total_actual / costSummary.total_budget - 1) * 100)
  : 0
  }
  trendLabel={t('construction.vs_budget')}
  />
- </Col>
- <Col span={12}>
- <Statistic
- title={t('construction.labor_cost')}
- value={costSummary.labor_cost.toLocaleString()}
+ </div>
+ <KeyValueGrid
+ columns={2}
+ items={[
+ { label: t('construction.labor_cost'), value: `${costSummary.labor_cost.toLocaleString()} IQD` },
+ { label: t('construction.material_cost'), value: `${costSummary.material_cost.toLocaleString()} IQD` },
+ { label: t('construction.equipment_cost'), value: `${costSummary.equipment_cost.toLocaleString()} IQD` },
+ { label: t('construction.subcontract_cost'), value: `${costSummary.subcontract_cost.toLocaleString()} IQD` },
+ { label: t('construction.overhead_cost'), value: `${costSummary.overhead_cost.toLocaleString()} IQD`, span: 2 },
+ ]}
  />
- </Col>
- <Col span={12}>
- <Statistic
- title={t('construction.material_cost')}
- value={costSummary.material_cost.toLocaleString()}
- />
- </Col>
- <Col span={12}>
- <Statistic
- title={t('construction.equipment_cost')}
- value={costSummary.equipment_cost.toLocaleString()}
- />
- </Col>
- <Col span={12}>
- <Statistic
- title={t('construction.subcontract_cost')}
- value={costSummary.subcontract_cost.toLocaleString()}
- />
- </Col>
- <Col span={24}>
- <Statistic
- title={t('construction.overhead_cost')}
- value={costSummary.overhead_cost.toLocaleString()}
- />
- </Col>
- </Row>
+ </Space>
+ ) : (
+ <div style={{ height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-400)' }}>
+ {loadingCost ? t('loading') : '—'}
+ </div>
  )}
- </Card>
+ </SectionCard>
  </Space>
  )}
  </FormDialog>

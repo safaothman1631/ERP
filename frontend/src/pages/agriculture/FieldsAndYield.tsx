@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { Tabs, Button, Space, Input, Form, Select, InputNumber, Card } from 'antd';
+import { Tabs, Button, Space, Input, Form, Select, InputNumber } from 'antd';
 
 import { message } from '../../utils/message';
 import { PlusOutlined, SearchOutlined, DeleteOutlined, LineChartOutlined } from '@ant-design/icons';
@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Popconfirm } from 'antd';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard, ChartCard } from '../../design-system';
 import { space } from '../../theme/tokens';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -146,7 +146,7 @@ const FieldsAndYield: React.FC = () => {
  }
  />
 
- <div style={{ background: '#fff', padding: space.lg, borderRadius: 8 }}>
+ <SectionCard>
  <Tabs activeKey={activeTab} onChange={setActiveTab}>
  <Tabs.TabPane tab={t('agriculture.fields')} key="1">
  <Space style={{ marginBottom: space.md }}>
@@ -190,21 +190,21 @@ const FieldsAndYield: React.FC = () => {
  </Select>
 
  {selectedField && (
- <Card
+ <ChartCard
  title={t('agriculture.harvest_history')}
  loading={loadingYield}
- extra={<LineChartOutlined />}
+ extra={<LineChartOutlined style={{ color: 'var(--ink-400)' }} />}
  >
  {yieldData.length > 0 ? (
  <ResponsiveChart
  legendItems={[
- { id: 'quantity', labelKey: asTranslationKey('agriculture.quantity'), color: '#52c41a' },
+ { id: 'quantity', labelKey: asTranslationKey('agriculture.quantity'), color: 'var(--success-500)' },
  ]}
  >
  <LineChart data={yieldData}>
- <CartesianGrid strokeDasharray="3 3" />
- <XAxis dataKey="date" />
- <YAxis />
+ <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+ <XAxis dataKey="date" tick={{ fill: 'var(--ink-400)' }} />
+ <YAxis tick={{ fill: 'var(--ink-400)' }} />
  <Tooltip
  content={(props: any) => {
  if (!props.active || !props.payload || props.payload.length === 0) return null;
@@ -212,10 +212,11 @@ const FieldsAndYield: React.FC = () => {
  return (
  <div
  style={{
- background: '#fff',
+ background: 'var(--surface)',
  padding: '8px 12px',
- border: '1px solid #ddd',
- borderRadius: 4,
+ border: '1px solid var(--border)',
+ borderRadius: 'var(--radius-sm)',
+ color: 'var(--ink-900)',
  }}
  >
  <div>
@@ -233,20 +234,20 @@ const FieldsAndYield: React.FC = () => {
  );
  }}
  />
- <Line type="monotone" dataKey="quantity" stroke="#52c41a" strokeWidth={2} />
+ <Line type="monotone" dataKey="quantity" stroke="var(--success-500)" strokeWidth={2} />
  </LineChart>
  </ResponsiveChart>
  ) : (
- <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
+ <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--ink-400)' }}>
  {t('agriculture.no_yield_data')}
  </div>
  )}
- </Card>
+ </ChartCard>
  )}
  </Space>
  </Tabs.TabPane>
  </Tabs>
- </div>
+ </SectionCard>
 
  <FormDialog title={t('agriculture.add_field')} open={drawer} onClose={() => setDrawer(false)}>
  <Form form={form} layout="vertical" onFinish={handleCreateField}>

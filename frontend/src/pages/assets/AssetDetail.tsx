@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Descriptions, Button, Space, Tag, Form, DatePicker, InputNumber, Empty, Spin, Input } from 'antd';
+import { Button, Space, Form, DatePicker, InputNumber, Empty, Spin, Input } from 'antd';
 import { ArrowLeftOutlined, StopOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import api from '../../api';
 import dayjs, { Dayjs } from 'dayjs';
-import { PageHeader } from '../../design-system';
+import { PageHeader, StatusTag, DetailLayout, SectionCard, KeyValueGrid } from '../../design-system';
+import type { StatusKind } from '../../design-system';
 import { message } from '../../utils/message';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -47,10 +48,11 @@ interface ScheduleItem {
  closing_book_value: number;
 }
 
-const statusColors: Record<string, string> = {
- active: 'green',
- fully_depreciated: 'orange',
- disposed: 'red',
+// Map asset statuses → StatusTag semantic kinds (auto-flip tokens, light + dark).
+const ASSET_STATUS_KIND: Record<string, StatusKind> = {
+ active: 'active',
+ fully_depreciated: 'warning',
+ disposed: 'error',
 };
 
 const AssetDetail: React.FC = () => {
@@ -121,7 +123,7 @@ const AssetDetail: React.FC = () => {
  { title: t('assets.period'), dataIndex: 'period', key: 'period' },
  { title: t('date'), dataIndex: 'period_end_date', key: 'date' },
  { title: t('assets.depreciation_amount'), dataIndex: 'depreciation_amount', key: 'amount', render: (v: number) => v.toLocaleString() },
- { title: t('status'), dataIndex: 'status', key: 'status', render: (s: string) => <Tag color={s === 'posted' ? 'green' : 'default'}>{s}</Tag> },
+ { title: t('status'), dataIndex: 'status', key: 'status', render: (s: string) => <StatusTag status={s === 'posted' ? 'posted' : 'default'} label={s} /> },
  ];
 
  const chartData = schedule.map((s) => ({
@@ -131,9 +133,15 @@ const AssetDetail: React.FC = () => {
 
  return (
  <>
+ <DetailLayout
+ header={
  <PageHeader
  title={asset.name}
- extra={
+ subtitle={asset.asset_code}
+ tag={<StatusTag status={ASSET_STATUS_KIND[asset.status] ?? 'default'} label={t(`assets.status_${asset.status}`)} />}
+ />
+ }
+ toolbar={
  <Space>
  {asset.status === 'active' && (
  <Button icon={<StopOutlined />} onClick={() => setDisposeModal(true)}>{t('assets.dispose')}</Button>
@@ -141,46 +149,48 @@ const AssetDetail: React.FC = () => {
  <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/assets')}>{t('back')}</Button>
  </Space>
  }
+ >
+ <SectionCard title={t('assets.asset_info')}>
+ <KeyValueGrid
+ columns={2}
+ items={[
+ { label: t('assets.asset_code'), value: asset.asset_code },
+ { label: t('status'), value: <StatusTag status={ASSET_STATUS_KIND[asset.status] ?? 'default'} label={t(`assets.status_${asset.status}`)} /> },
+ { label: t('assets.acquisition_date'), value: asset.acquisition_date },
+ { label: t('assets.acquisition_cost'), value: asset.acquisition_cost.toLocaleString() },
+ { label: t('assets.salvage_value'), value: asset.salvage_value.toLocaleString() },
+ { label: t('assets.useful_life'), value: `${asset.useful_life_months} ${t('months')}` },
+ { label: t('assets.depreciation_method'), value: t(`assets.${asset.depreciation_method}`) },
+ { label: t('assets.accumulated_depreciation'), value: asset.accumulated_depreciation.toLocaleString() },
+ { label: t('assets.book_value'), value: asset.book_value.toLocaleString() },
+ { label: t('assets.location'), value: asset.location || '—' },
+ ...(asset.notes ? [{ label: t('notes'), value: asset.notes, span: 2 as const }] : []),
+ ]}
  />
- <Card title={t('assets.asset_info')}>
- <Descriptions bordered column={2}>
- <Descriptions.Item label={t('assets.asset_code')}>{asset.asset_code}</Descriptions.Item>
- <Descriptions.Item label={t('status')}>
- <Tag color={statusColors[asset.status] || 'default'}>{t(`assets.status_${asset.status}`)}</Tag>
- </Descriptions.Item>
- <Descriptions.Item label={t('assets.acquisition_date')}>{asset.acquisition_date}</Descriptions.Item>
- <Descriptions.Item label={t('assets.acquisition_cost')}>{asset.acquisition_cost.toLocaleString()}</Descriptions.Item>
- <Descriptions.Item label={t('assets.salvage_value')}>{asset.salvage_value.toLocaleString()}</Descriptions.Item>
- <Descriptions.Item label={t('assets.useful_life')}>{asset.useful_life_months} {t('months')}</Descriptions.Item>
- <Descriptions.Item label={t('assets.depreciation_method')}>{t(`assets.${asset.depreciation_method}`)}</Descriptions.Item>
- <Descriptions.Item label={t('assets.accumulated_depreciation')}>{asset.accumulated_depreciation.toLocaleString()}</Descriptions.Item>
- <Descriptions.Item label={t('assets.book_value')}>{asset.book_value.toLocaleString()}</Descriptions.Item>
- <Descriptions.Item label={t('assets.location')}>{asset.location || '—'}</Descriptions.Item>
- {asset.notes && <Descriptions.Item label={t('notes')} span={2}>{asset.notes}</Descriptions.Item>}
- </Descriptions>
- </Card>
+ </SectionCard>
 
- <Card title={t('assets.depreciation_history')} style={{ marginTop: 16 }}>
+ <SectionCard title={t('assets.depreciation_history')}>
  <ResponsiveTableAdapter columns={historyColumns} dataSource={history} rowKey="id" pagination={false} locale={{ emptyText: <Empty description={t('assets.no_depreciation_yet')} /> }} />
- </Card>
+ </SectionCard>
 
  {schedule.length > 0 && (
- <Card title={t('assets.projected_schedule')} style={{ marginTop: 16 }}>
+ <SectionCard title={t('assets.projected_schedule')}>
  <ResponsiveChart
  legendItems={[
- { id: 'bookValue', labelKey: asTranslationKey('assets.book_value'), color: '#1890ff' },
+ { id: 'bookValue', labelKey: asTranslationKey('assets.book_value'), color: 'var(--accent-500)' },
  ]}
  >
  <LineChart data={chartData}>
- <CartesianGrid strokeDasharray="3 3" />
+ <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
  <XAxis dataKey="period" />
  <YAxis />
  <Tooltip />
- <Line type="monotone" dataKey="value" stroke="#1890ff" name={t('assets.book_value')} />
+ <Line type="monotone" dataKey="value" stroke="var(--accent-500)" name={t('assets.book_value')} />
  </LineChart>
  </ResponsiveChart>
- </Card>
+ </SectionCard>
  )}
+ </DetailLayout>
 
  <FormDialog
  title={t('assets.dispose')}

@@ -5,8 +5,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined, EditOutlined, DeleteOutlined, LoginOutlined, LogoutOutlined } from '@ant-design/icons';
 import api from '../../api';
-import { PageHeader, StatusTag } from '../../design-system';
-import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { PageHeader, StatusTag, DataTable } from '../../design-system';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
 interface RoomType {
@@ -240,11 +239,12 @@ const RoomsBookings: React.FC = () => {
  >
  {t('hotel.add_room')}
  </Button>
- <ResponsiveTableAdapter
+ <DataTable<Room>
  columns={roomColumns}
  dataSource={rooms}
  rowKey="id"
  loading={loading}
+ stickyHeader={false}
  pagination={{ pageSize: 20 }}
  />
  </>
@@ -254,11 +254,12 @@ const RoomsBookings: React.FC = () => {
  key: 'bookings',
  label: t('hotel.bookings'),
  children: (
- <ResponsiveTableAdapter
+ <DataTable<Reservation>
  columns={reservationColumns}
  dataSource={reservations}
  rowKey="id"
  loading={loading}
+ stickyHeader={false}
  pagination={{ pageSize: 20 }}
  />
  ),

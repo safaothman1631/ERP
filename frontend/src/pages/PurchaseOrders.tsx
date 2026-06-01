@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Tag, Dropdown, Form, Input, InputNumber, DatePicker, Space, Divider } from 'antd';
+import { Button, Dropdown, Form, Input, InputNumber, DatePicker, Space, Divider } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, MoreOutlined, DeleteOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -7,14 +7,13 @@ import api from '../api';
 import { useListQuery } from '../api/queries/useListQuery';
 import { listQueryKeys } from '../api/queries/keys';
 import dayjs from 'dayjs';
-import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat, FilterBar } from '../design-system';
 import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { downloadCsv } from '../utils/exportCsv';
 import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 import { useAddGate } from '../components/AddGate/useAddGate';
-const statusColors: Record<string, string> = { draft: 'default', issued: 'blue', received: 'green', billed: 'purple', cancelled: 'red' };
 
 const PurchaseOrders: React.FC = () => {
  const { t } = useTranslation();
@@ -96,7 +95,7 @@ const PurchaseOrders: React.FC = () => {
  { title: '#', dataIndex: 'order_number', key: 'order_number' },
  { title: t('date'), dataIndex: 'date', key: 'date', render: (d: string) => d?.substring(0, 10) },
  { title: t('total'), dataIndex: 'total', key: 'total', render: (v: number) => v?.toLocaleString() },
- { title: t('status'), dataIndex: 'status', key: 'status', render: (s: string) => <Tag color={statusColors[s]}>{t(s)}</Tag> },
+ { title: t('status'), dataIndex: 'status', key: 'status', render: (s: string) => <StatusTag status={s} label={t(s)} /> },
  {
  title: t('actions'), key: 'actions',
  render: (_: any, r: any) => {
@@ -122,7 +121,17 @@ const PurchaseOrders: React.FC = () => {
 
  return (
  <div data-addgate-section="purchases.purchase_orders">
- <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+ <PageHeader
+ title={t('purchase_orders')}
+ subtitle={t('purchase_orders_subtitle', 'Vendor purchase orders')}
+ sectionId="purchases.purchase_orders"
+ extra={
+ <Button type="primary" icon={<PlusOutlined />} onClick={openNew} data-add-action="purchases.purchase_orders">{t('new_purchase_order')}</Button>
+ }
+ />
+ <FilterBar
+ extra={
+ <>
  <ExportMenu
  formats={['csv']}
  onExport={(f: ExportFormat) => {
@@ -133,8 +142,9 @@ const PurchaseOrders: React.FC = () => {
  }}
  />
  <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
- <Button type="primary" icon={<PlusOutlined />} onClick={openNew} data-add-action="purchases.purchase_orders">{t('new_purchase_order')}</Button>
- </div>
+ </>
+ }
+ />
  <ResponsiveTableAdapter dataSource={data} columns={visibleColumns} rowKey="id" loading={loading} pagination={{ current: page, total, pageSize: 20, onChange: setPage }} />
  <FormDialog open={modalOpen} onClose={() => setModalOpen(false)} title={t('new_purchase_order')} hideFooter>
  <Form form={form} layout="vertical" onFinish={handleSave} initialValues={{ date: dayjs() }}>

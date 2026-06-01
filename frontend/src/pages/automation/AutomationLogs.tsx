@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Tag, Card, Select, DatePicker, Space, Button } from 'antd';
+import { DatePicker, Button } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
-import { space } from '../../theme/tokens';
+import { PageHeader, FilterBar, SectionCard, StatusTag } from '../../design-system';
 import dayjs from 'dayjs';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
@@ -85,13 +84,13 @@ const AutomationLogs: React.FC = () => {
       title: t('automation.trigger'),
       dataIndex: 'trigger',
       key: 'trigger',
-      render: (v: string) => <Tag color="blue">{v || 'auto'}</Tag>,
+      render: (v: string) => <StatusTag status="info" label={v || 'auto'} />,
     },
     {
       title: t('automation.status'),
       dataIndex: 'status',
       key: 'status',
-      render: (v: string) => <Tag color={v === 'ok' ? 'green' : 'red'}>{v}</Tag>,
+      render: (v: string) => <StatusTag status={v === 'ok' ? 'success' : 'error'} label={v} />,
     },
     {
       title: t('automation.result'),
@@ -113,38 +112,34 @@ const AutomationLogs: React.FC = () => {
         }
       />
       
-      <Card style={{ marginTop: space.md, marginBottom: space.md }}>
-        <Space wrap>
-          <Select
-            placeholder={t('automation.filter_workflow')}
-            style={{ width: 200 }}
-            allowClear
-            onChange={(v) => setFilters({ ...filters, workflow_id: v })}
-          >
-            {workflows.map((wf) => (
-              <Select.Option key={wf.id} value={wf.id}>{wf.name}</Select.Option>
-            ))}
-          </Select>
-          
-          <Select
-            placeholder={t('automation.filter_status')}
-            style={{ width: 150 }}
-            allowClear
-            onChange={(v) => setFilters({ ...filters, status: v })}
-          >
-            <Select.Option value="ok">{t('automation.status_ok')}</Select.Option>
-            <Select.Option value="error">{t('automation.status_error')}</Select.Option>
-          </Select>
-          
+      <FilterBar
+        filters={[
+          {
+            key: 'workflow_id',
+            label: t('automation.filter_workflow'),
+            options: workflows.map((wf) => ({ label: wf.name, value: wf.id })),
+          },
+          {
+            key: 'status',
+            label: t('automation.filter_status'),
+            options: [
+              { label: t('automation.status_ok'), value: 'ok' },
+              { label: t('automation.status_error'), value: 'error' },
+            ],
+          },
+        ]}
+        values={{ workflow_id: filters.workflow_id ?? undefined, status: filters.status ?? undefined }}
+        onChange={(v) => setFilters({ ...filters, workflow_id: v.workflow_id ?? null, status: v.status ?? null })}
+        extra={
           <RangePicker
             onChange={(dates) => setFilters({ ...filters, date_range: dates })}
           />
-        </Space>
-      </Card>
-      
-      <Card>
+        }
+      />
+
+      <SectionCard padded={false}>
         <ResponsiveTableAdapter dataSource={logs} columns={columns} loading={loading} rowKey={(r) => `${r.id || r.ran_at}`} />
-      </Card>
+      </SectionCard>
     </div>
   );
 };

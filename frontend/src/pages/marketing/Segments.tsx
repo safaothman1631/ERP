@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Form, Input, Select, Card, Popconfirm, Tag } from 'antd';
+import { Button, Space, Form, Input, Select, Popconfirm, Tag } from 'antd';
 
 import { message } from '../../utils/message';
 import { PlusOutlined, EyeOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard } from '../../design-system';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
@@ -151,7 +151,7 @@ const Segments: React.FC = () => {
  open={!!previewModal}
  onClose={() => setPreviewModal(null)} hideFooter
  >
- <Card loading={previewLoading}>
+ <SectionCard>
  <p>
  {t('marketing.total_members')}: <strong>{previewData.length}</strong>
  </p>
@@ -159,9 +159,10 @@ const Segments: React.FC = () => {
  columns={previewColumns}
  dataSource={previewData}
  rowKey="id"
+ loading={previewLoading}
  pagination={{ pageSize: 10 }}
  />
- </Card>
+ </SectionCard>
  </FormDialog>
  </div>
  );

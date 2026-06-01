@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Tag, Descriptions, Select, Space, Empty, Typography } from 'antd';
+import { Button, Descriptions, Space, Empty } from 'antd';
 import { EyeOutlined, FileAddOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -7,8 +7,7 @@ import { message } from '../../utils/message';
 import vendorApi from '../../api/vendorPortal';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
-
-const { Title } = Typography;
+import { PageHeader, FilterBar, SectionCard, StatusTag, type StatusKind } from '../../design-system';
 
 const VendorPortalPOs: React.FC = () => {
  const { t } = useTranslation();
@@ -67,20 +66,21 @@ const VendorPortalPOs: React.FC = () => {
  dataIndex: 'status',
  key: 'status',
  render: (status: string) => {
- const colors: any = {
+ const kinds: Record<string, StatusKind> = {
  draft: 'default',
- approved: 'blue',
- open: 'green',
+ approved: 'info',
+ open: 'success',
  received: 'success',
- cancelled: 'red',
+ cancelled: 'error',
  };
- return <Tag color={colors[status] || 'default'}>{status}</Tag>;
+ return <StatusTag status={kinds[status] || 'default'} label={status} />;
  },
  },
  {
  title: t('vendor_portal.po_total'),
  dataIndex: 'total',
  key: 'total',
+ align: 'right' as const,
  render: (val: number) => `${val?.toFixed(2) || '0.00'}`,
  },
  {
@@ -122,39 +122,46 @@ const VendorPortalPOs: React.FC = () => {
  title: t('items.unit_price'),
  dataIndex: 'unit_price',
  key: 'unit_price',
+ align: 'right' as const,
  render: (val: number) => val?.toFixed(2) || '0.00',
  },
  {
  title: t('items.amount'),
  dataIndex: 'amount',
  key: 'amount',
+ align: 'right' as const,
  render: (val: number) => val?.toFixed(2) || '0.00',
  },
  ];
 
  return (
- <div style={{ padding: 24 }}>
- <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
- <Title level={2}>{t('vendor_portal.my_pos')}</Title>
+ <div>
+ <PageHeader
+ title={t('vendor_portal.my_pos')}
+ extra={
  <Button onClick={() => navigate('/vendor-portal')}>
  {t('back')}
  </Button>
- </div>
+ }
+ />
 
- <Card style={{ marginTop: 24 }}>
- <Space style={{ marginBottom: 16 }}>
- <Select
- value={statusFilter}
- onChange={setStatusFilter}
- style={{ width: 150 }}
- options={[
+ <FilterBar
+ filters={[
+ {
+ key: 'status',
+ label: t('vendor_portal.po_status'),
+ options: [
  { label: t('vendor_portal.open'), value: 'open' },
  { label: t('vendor_portal.received'), value: 'received' },
  { label: t('vendor_portal.all'), value: 'all' },
+ ],
+ },
  ]}
+ values={{ status: statusFilter }}
+ onChange={(v) => setStatusFilter((v.status as string) || 'open')}
  />
- </Space>
 
+ <SectionCard padded={false}>
  <ResponsiveTableAdapter
  dataSource={pos}
  columns={columns}
@@ -164,7 +171,7 @@ const VendorPortalPOs: React.FC = () => {
  emptyText: <Empty description={t('vendor_portal.no_pos')} />,
  }}
  />
- </Card>
+ </SectionCard>
 
  <FormDialog
  title={t('vendor_portal.po_detail')}
@@ -181,7 +188,7 @@ const VendorPortalPOs: React.FC = () => {
  {selectedPO.date}
  </Descriptions.Item>
  <Descriptions.Item label={t('vendor_portal.po_status')}>
- <Tag color="blue">{selectedPO.status}</Tag>
+ <StatusTag status="info" label={selectedPO.status} />
  </Descriptions.Item>
  <Descriptions.Item label={t('vendor_portal.po_total')}>
  {selectedPO.total?.toFixed(2) || '0.00'}

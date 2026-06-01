@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Card, Button, Row, Col, Tag, Space, Typography, Empty } from 'antd';
+import { Card, Button, Row, Col, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { ShopOutlined, PlayCircleOutlined, PlusOutlined, SettingOutlined } from '@ant-design/icons';
+import { ShopOutlined, PlayCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import api from '../../api';
 import { message } from '../../utils/message';
+import { PageHeader, StatusTag, EmptyState } from '../../design-system';
 import { LoadingSkeleton } from '../../design-system/LoadingSkeleton';
 import { InlineError } from '../../components/feedback/InlineError';
 import { useLoadingState } from '../../hooks/useLoadingState';
@@ -77,28 +78,25 @@ const POSHub: React.FC = () => {
 
   if (configs.length === 0) {
     return (
-      <Empty
-        description={t('pos.no_configs')}
-        style={{ marginTop: 100 }}
-      >
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/pos/configs')}>
-          {t('pos.create_config')}
-        </Button>
-      </Empty>
+      <EmptyState
+        icon={<ShopOutlined />}
+        title={t('pos.no_configs')}
+        actionLabel={t('pos.create_config')}
+        onAction={() => navigate('/pos/configs')}
+      />
     );
   }
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <Title level={2} style={{ margin: 0 }}>
-          <ShopOutlined style={{ marginRight: 8 }} />
-          {t('pos.select_config')}
-        </Title>
-        <Button icon={<SettingOutlined />} onClick={() => navigate('/pos/configs')}>
-          {t('settings')}
-        </Button>
-      </div>
+      <PageHeader
+        title={t('pos.select_config')}
+        extra={
+          <Button icon={<SettingOutlined />} onClick={() => navigate('/pos/configs')}>
+            {t('settings')}
+          </Button>
+        }
+      />
 
       <Row gutter={[16, 16]}>
         {configs.map((config) => (
@@ -125,11 +123,9 @@ const POSHub: React.FC = () => {
                 </Title>
                 <Text type="secondary">{config.name}</Text>
                 <Space wrap>
-                  {config.restaurant_mode && <Tag color="orange">{t('pos.restaurant')}</Tag>}
-                  {config.cash_control && <Tag color="green">{t('pos.cash_control')}</Tag>}
-                  <Tag color={config.iface_type === 'shop' ? 'blue' : 'purple'}>
-                    {t(`pos.${config.iface_type}`)}
-                  </Tag>
+                  {config.restaurant_mode && <StatusTag status="warning" label={t('pos.restaurant')} />}
+                  {config.cash_control && <StatusTag status="active" label={t('pos.cash_control')} />}
+                  <StatusTag status={config.iface_type === 'shop' ? 'info' : 'viewed'} label={t(`pos.${config.iface_type}`)} />
                 </Space>
               </Space>
             </Card>

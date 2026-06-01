@@ -75,7 +75,7 @@ const StoreCheckout: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
+    <div style={{ padding: '24px', background: 'var(--surface-2)', minHeight: '100vh' }}>
       <div style={{ maxWidth: 800, margin: '0 auto' }}>
         <Button
           icon={<LeftOutlined />}
@@ -146,11 +146,11 @@ const StoreCheckout: React.FC = () => {
 
             {step === 1 && (
               <>
-                <Card style={{ marginBottom: 24, background: '#fafafa' }}>
+                <Card style={{ marginBottom: 24, background: 'var(--surface-2)' }}>
                   <Title level={4}>{t('storefront.order_summary')}</Title>
                   <Row justify="space-between" style={{ marginTop: 16 }}>
                     <Text strong>{t('storefront.total')}:</Text>
-                    <Title level={3} style={{ margin: 0, color: '#1890ff' }}>
+                    <Title level={3} style={{ margin: 0, color: 'var(--accent-500)' }}>
                       {cartTotal.toLocaleString()} {t('currency')}
                     </Title>
                   </Row>

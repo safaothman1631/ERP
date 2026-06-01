@@ -20,7 +20,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   Button,
-  Card,
   Descriptions,
   Input,
   Modal,
@@ -44,7 +43,7 @@ import { AxiosError } from 'axios';
 import api from '../../../../api';
 import { useClassedQuery } from '../../../../data/useClassedQuery';
 import { usePermission } from '../../../../hooks/usePermission';
-import { palette } from '../../../../theme/tokens';
+import { SectionCard, StatusTag, type StatusKind } from '../../../../design-system';
 import { message } from '../../../../utils/message';
 
 const { Paragraph, Text } = Typography;
@@ -124,36 +123,36 @@ function fmtBytes(bytes?: number | null): string {
 }
 
 function exportStatusTag(status: ExportStatus, t: (k: string, o?: object) => string): React.ReactNode {
-  const map: Record<ExportStatus, { color: string; label: string }> = {
-    ready: { color: 'green', label: t('settings:data_rights.status.ready', { defaultValue: 'Ready' }) },
-    pending: { color: 'gold', label: t('settings:data_rights.status.pending', { defaultValue: 'Pending' }) },
-    failed: { color: 'red', label: t('settings:data_rights.status.failed', { defaultValue: 'Failed' }) },
+  const map: Record<ExportStatus, { kind: StatusKind; label: string }> = {
+    ready: { kind: 'success', label: t('settings:data_rights.status.ready', { defaultValue: 'Ready' }) },
+    pending: { kind: 'warning', label: t('settings:data_rights.status.pending', { defaultValue: 'Pending' }) },
+    failed: { kind: 'error', label: t('settings:data_rights.status.failed', { defaultValue: 'Failed' }) },
   };
   const cfg = map[status];
-  return <Tag color={cfg.color}>{cfg.label}</Tag>;
+  return <StatusTag status={cfg.kind} label={cfg.label} />;
 }
 
 function erasureStatusTag(status: ErasureStatus, t: (k: string, o?: object) => string): React.ReactNode {
-  const map: Record<ErasureStatus, { color: string; label: string }> = {
+  const map: Record<ErasureStatus, { kind: StatusKind; label: string }> = {
     awaiting_confirmation: {
-      color: 'gold',
+      kind: 'warning',
       label: t('settings:data_rights.erasure_status.awaiting', { defaultValue: 'Awaiting confirmation' }),
     },
     scheduled: {
-      color: 'volcano',
+      kind: 'error',
       label: t('settings:data_rights.erasure_status.scheduled', { defaultValue: 'Scheduled' }),
     },
     completed: {
-      color: 'default',
+      kind: 'default',
       label: t('settings:data_rights.erasure_status.completed', { defaultValue: 'Completed' }),
     },
     cancelled: {
-      color: 'default',
+      kind: 'default',
       label: t('settings:data_rights.erasure_status.cancelled', { defaultValue: 'Cancelled' }),
     },
   };
   const cfg = map[status];
-  return <Tag color={cfg.color}>{cfg.label}</Tag>;
+  return <StatusTag status={cfg.kind} label={cfg.label} />;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -304,7 +303,8 @@ const DataRights: React.FC = React.memo(() => {
       />
 
       {/* ── Export ───────────────────────────────────────────────────────── */}
-      <Card
+      <SectionCard
+        style={{ marginBottom: 0 }}
         title={
           <Space>
             <CloudDownloadOutlined />
@@ -392,10 +392,11 @@ const DataRights: React.FC = React.memo(() => {
             )}
           </Descriptions>
         )}
-      </Card>
+      </SectionCard>
 
       {/* ── Erasure ──────────────────────────────────────────────────────── */}
-      <Card
+      <SectionCard
+        style={{ marginBottom: 0 }}
         title={
           <Space>
             <DeleteOutlined />
@@ -458,14 +459,14 @@ const DataRights: React.FC = React.memo(() => {
             )}
           </Descriptions>
         )}
-      </Card>
+      </SectionCard>
 
       {/* ── Erasure confirm modal ────────────────────────────────────────── */}
       <Modal
         open={confirmOpen}
         title={
           <Space>
-            <ExclamationCircleOutlined style={{ color: palette.danger }} />
+            <ExclamationCircleOutlined style={{ color: 'var(--danger-500)' }} />
             {t('settings:data_rights.confirm_title', { defaultValue: 'Confirm data erasure' })}
           </Space>
         }

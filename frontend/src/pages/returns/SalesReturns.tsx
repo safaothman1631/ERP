@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Select, InputNumber, message, Space, Descriptions, Modal } from 'antd';
+import { Button, Select, InputNumber, message, Space, Modal } from 'antd';
 import { CheckOutlined, DollarOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { PageHeader, StatusTag } from '../../design-system';
+import { PageHeader, StatusTag, FilterBar, KeyValueGrid } from '../../design-system';
+import type { FilterDef } from '../../design-system';
 import api from '../../api';
 import { formatCurrency } from '../../utils/formatters';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -46,16 +47,17 @@ const SalesReturns: React.FC = () => {
  const [refundAmount, setRefundAmount] = useState<number>(0);
  const [refunds, setRefunds] = useState<RefundRecord[]>([]);
  const [_refundModalVisible, _setRefundModalVisible] = useState(false);
+ const [statusFilter, setStatusFilter] = useState('');
 
  useEffect(() => {
  fetchReturns();
- }, [page, pageSize]);
+ }, [page, pageSize, statusFilter]);
 
  const fetchReturns = async () => {
  setLoading(true);
  try {
  const response = await api.get('/returns/sales', {
- params: { page, page_size: pageSize }
+ params: { page, page_size: pageSize, status: statusFilter || undefined }
  });
  setReturns(response.data.items || []);
  setTotal(response.data.total || 0);
@@ -65,6 +67,17 @@ const SalesReturns: React.FC = () => {
  setLoading(false);
  }
  };
+
+ const filterDefs: FilterDef[] = [
+ {
+ key: 'status',
+ label: t('status'),
+ options: [
+ { value: 'pending', label: t('returns.pending') },
+ { value: 'approved', label: t('returns.approved') },
+ ],
+ },
+ ];
 
  const handleApprove = async (returnId: string) => {
  try {
@@ -184,11 +197,19 @@ const SalesReturns: React.FC = () => {
  <div>
  <PageHeader
  title={t('returns.sales_returns')}
+ subtitle={t('returns.sales_returns_subtitle', { defaultValue: '' }) || undefined}
  extra={
- <Button type="primary" onClick={fetchReturns}>
+ <Button icon={<ReloadOutlined />} onClick={fetchReturns}>
  {t('refresh')}
  </Button>
  }
+ />
+
+ <FilterBar
+ filters={filterDefs}
+ values={{ status: statusFilter }}
+ onChange={(v) => { setStatusFilter((v.status as string) ?? ''); setPage(1); }}
+ onRefresh={fetchReturns}
  />
 
  <ResponsiveTableAdapter
@@ -214,24 +235,21 @@ const SalesReturns: React.FC = () => {
  >
  {selectedReturn && (
  <>
- <Descriptions column={1} bordered>
- <Descriptions.Item label={t('numbering.invoice')}>
- {selectedReturn.return_number}
- </Descriptions.Item>
- <Descriptions.Item label={t('total')}>
- {formatCurrency(selectedReturn.total, selectedReturn.currency)}
- </Descriptions.Item>
- <Descriptions.Item label={t('status')}>
- <StatusTag status={selectedReturn.status} label={t(`returns.${selectedReturn.status}`)} />
- </Descriptions.Item>
- </Descriptions>
+ <KeyValueGrid
+ columns={1}
+ items={[
+ { label: t('numbering.invoice'), value: selectedReturn.return_number },
+ { label: t('total'), value: formatCurrency(selectedReturn.total, selectedReturn.currency) },
+ { label: t('status'), value: <StatusTag status={selectedReturn.status} label={t(`returns.${selectedReturn.status}`)} /> },
+ ]}
+ />
 
  {selectedReturn.status === 'approved' && !selectedReturn.refund_status && (
  <div style={{ marginTop: 24 }}>
- <h4>{t('returns.create_refund')}</h4>
+ <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink-900)', marginBottom: 'var(--space-md)' }}>{t('returns.create_refund')}</h4>
  <Space direction="vertical" style={{ width: '100%' }}>
  <div>
- <label>{t('returns.refund_method')}</label>
+ <label style={{ color: 'var(--ink-700)', fontSize: 12.5 }}>{t('returns.refund_method')}</label>
  <Select
  style={{ width: '100%', marginTop: 8 }}
  value={refundMethod}
@@ -243,7 +261,7 @@ const SalesReturns: React.FC = () => {
  </Select>
  </div>
  <div>
- <label>{t('returns.refund_amount')}</label>
+ <label style={{ color: 'var(--ink-700)', fontSize: 12.5 }}>{t('returns.refund_amount')}</label>
  <InputNumber
  style={{ width: '100%', marginTop: 8 }}
  value={refundAmount}
@@ -261,7 +279,7 @@ const SalesReturns: React.FC = () => {
 
  {refunds.length > 0 && (
  <div style={{ marginTop: 24 }}>
- <h4>{t('returns.refund_list')}</h4>
+ <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink-900)', marginBottom: 'var(--space-md)' }}>{t('returns.refund_list')}</h4>
  <ResponsiveTableAdapter
  dataSource={refunds}
  rowKey="id"

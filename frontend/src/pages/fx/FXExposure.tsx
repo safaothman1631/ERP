@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Card, DatePicker, Statistic, Row, Col, Space, Typography, Tag, message } from 'antd';
+import { DatePicker, Space, Typography, message } from 'antd';
 import { DollarOutlined, RiseOutlined, FallOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
-import { palette } from '../../theme/tokens';
+import { PageHeader, KpiCard, SectionCard, StatusTag } from '../../design-system';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 interface ExposureCurrency {
   currency: string;
@@ -106,7 +106,7 @@ const FXExposure: React.FC = () => {
       dataIndex: 'currency',
       key: 'currency',
       width: 120,
-      render: (currency: string) => <Tag color={palette.info}>{currency}</Tag>,
+      render: (currency: string) => <StatusTag status="info" label={currency} />,
     },
     {
       title: t('fx.foreignBalance'),
@@ -151,12 +151,12 @@ const FXExposure: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Card
-        title={<Title level={3} style={{ margin: 0 }}>{t('fx.fxExposure')}</Title>}
+    <div>
+      <PageHeader
+        title={t('fx.fxExposure')}
         extra={
           <Space>
-            <Text>{t('fx.asOf')}:</Text>
+            <Text style={{ color: 'var(--ink-500)' }}>{t('fx.asOf')}:</Text>
             <DatePicker
               value={asOfDate}
               onChange={handleDateChange}
@@ -165,41 +165,26 @@ const FXExposure: React.FC = () => {
             />
           </Space>
         }
-      >
-        <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-          <Col span={8}>
-            <Card>
-              <Statistic
-                title={t('fx.totalUnrealizedGainLoss')}
-                value={exposure?.total_unrealized || 0}
-                precision={2}
-                valueStyle={{
-                  color: (exposure?.total_unrealized || 0) >= 0 ? palette.success : palette.danger,
-                }}
-                prefix={<DollarOutlined />}
-                suffix="IQD"
-              />
-            </Card>
-          </Col>
-          <Col span={8}>
-            <Card>
-              <Statistic
-                title={t('fx.currenciesExposed')}
-                value={exposure?.currencies?.length || 0}
-              />
-            </Card>
-          </Col>
-          <Col span={8}>
-            <Card>
-              <Statistic
-                title={t('fx.evaluationDate')}
-                value={exposure?.as_of_date || asOfDate.format('YYYY-MM-DD')}
-                valueStyle={{ fontSize: '16px' }}
-              />
-            </Card>
-          </Col>
-        </Row>
+      />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 'var(--space-md)', marginBlockEnd: 'var(--space-lg)' }}>
+        <KpiCard
+          title={t('fx.totalUnrealizedGainLoss')}
+          value={(exposure?.total_unrealized || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+          icon={<DollarOutlined />}
+          tone={(exposure?.total_unrealized || 0) >= 0 ? 'success' : 'danger'}
+          currency="IQD"
+        />
+        <KpiCard
+          title={t('fx.currenciesExposed')}
+          value={exposure?.currencies?.length || 0}
+        />
+        <KpiCard
+          title={t('fx.evaluationDate')}
+          value={exposure?.as_of_date || asOfDate.format('YYYY-MM-DD')}
+        />
+      </div>
 
+      <SectionCard padded={false}>
         <ResponsiveTableAdapter
           columns={columns}
           dataSource={exposure?.currencies || []}
@@ -211,7 +196,7 @@ const FXExposure: React.FC = () => {
           }}
           pagination={false}
         />
-      </Card>
+      </SectionCard>
     </div>
   );
 };

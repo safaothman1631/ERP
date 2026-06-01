@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Card, Select, DatePicker, Button, Row, Col, Statistic, Space, Divider } from 'antd';
+import { Select, DatePicker, Button, Row, Col, Space, Divider } from 'antd';
 import { BankOutlined, AccountBookOutlined, WalletOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard, KpiCard } from '../../design-system';
+import { space } from '../../theme/tokens';
 import api from '../../api';
 import { message } from '../../utils/message';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -115,11 +116,11 @@ const ConsolidatedBS = () => {
         title={t('multi_entity.consolidated_bs')}
         subtitle={t('multi_entity.consolidated_bs_subtitle')}
       />
-      <Card style={{ marginBottom: 16 }}>
+      <SectionCard>
         <Space direction="vertical" style={{ width: '100%' }} size="large">
           <Row gutter={16}>
             <Col span={10}>
-              <label>{t('multi_entity.select_companies')}</label>
+              <label style={{ display: 'block', marginBottom: 4, fontSize: 12.5, fontWeight: 500, color: 'var(--ink-700)' }}>{t('multi_entity.select_companies')}</label>
               <Select
                 mode="multiple"
                 style={{ width: '100%' }}
@@ -137,7 +138,7 @@ const ConsolidatedBS = () => {
               </Select>
             </Col>
             <Col span={8}>
-              <label>{t('multi_entity.as_of_date')}</label>
+              <label style={{ display: 'block', marginBottom: 4, fontSize: 12.5, fontWeight: 500, color: 'var(--ink-700)' }}>{t('multi_entity.as_of_date')}</label>
               <DatePicker
                 style={{ width: '100%' }}
                 value={asOfDate}
@@ -145,55 +146,41 @@ const ConsolidatedBS = () => {
               />
             </Col>
             <Col span={6}>
-              <label style={{ visibility: 'hidden' }}>.</label>
+              <label style={{ display: 'block', marginBottom: 4, fontSize: 12.5, visibility: 'hidden' }}>.</label>
               <Button type="primary" block onClick={handleGenerate} loading={loading}>
                 {t('multi_entity.generate')}
               </Button>
             </Col>
           </Row>
         </Space>
-      </Card>
+      </SectionCard>
 
       {bsData && (
         <>
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={8}>
-              <Card>
-                <Statistic
-                  title={t('multi_entity.total_assets')}
-                  value={bsData.totals.assets}
-                  precision={0}
-                  prefix={<BankOutlined />}
-                  valueStyle={{ color: 'var(--info-500)' }}
-                />
-              </Card>
-            </Col>
-            <Col span={8}>
-              <Card>
-                <Statistic
-                  title={t('multi_entity.total_liabilities')}
-                  value={bsData.totals.liabilities}
-                  precision={0}
-                  prefix={<AccountBookOutlined />}
-                  valueStyle={{ color: 'var(--danger-500)' }}
-                />
-              </Card>
-            </Col>
-            <Col span={8}>
-              <Card>
-                <Statistic
-                  title={t('multi_entity.total_equity')}
-                  value={bsData.totals.equity}
-                  precision={0}
-                  prefix={<WalletOutlined />}
-                  valueStyle={{ color: 'var(--success-500)' }}
-                />
-              </Card>
-            </Col>
-          </Row>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: space.md, marginBottom: space.lg }}>
+            <KpiCard
+              title={t('multi_entity.total_assets')}
+              value={bsData.totals.assets}
+              icon={<BankOutlined />}
+              tone="info"
+            />
+            <KpiCard
+              title={t('multi_entity.total_liabilities')}
+              value={bsData.totals.liabilities}
+              icon={<AccountBookOutlined />}
+              tone="danger"
+            />
+            <KpiCard
+              title={t('multi_entity.total_equity')}
+              value={bsData.totals.equity}
+              icon={<WalletOutlined />}
+              tone="success"
+            />
+          </div>
 
-          <Card
+          <SectionCard
             title={t('multi_entity.breakdown_by_company')}
+            padded={false}
             extra={
               <Button onClick={handleExport}>
                 {t('multi_entity.export_pdf')}
@@ -207,11 +194,11 @@ const ConsolidatedBS = () => {
               pagination={false}
             />
             <Divider />
-            <p style={{ textAlign: 'center', color: 'var(--ink-500)' }}>
+            <p style={{ textAlign: 'center', color: 'var(--ink-500)', paddingInline: 'var(--space-lg)', paddingBlockEnd: 'var(--space-lg)' }}>
               {t('multi_entity.accounting_equation')}: {t('multi_entity.assets')} ={' '}
               {t('multi_entity.liabilities')} + {t('multi_entity.equity')}
             </p>
-          </Card>
+          </SectionCard>
         </>
       )}
     </>

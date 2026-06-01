@@ -5,7 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import dayjs, { Dayjs } from 'dayjs';
-import { PageHeader, StatusTag } from '../../design-system';
+import { PageHeader, StatusTag, FilterBar } from '../../design-system';
+import type { FilterDef } from '../../design-system';
 import { message } from '../../utils/message';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -209,6 +210,23 @@ const FixedAssets: React.FC = () => {
  },
  ];
 
+ const filterDefs: FilterDef[] = [
+ {
+ key: 'status',
+ label: t('status'),
+ options: [
+ { value: 'active', label: t('assets.status_active') },
+ { value: 'fully_depreciated', label: t('assets.status_fully_depreciated') },
+ { value: 'disposed', label: t('assets.status_disposed') },
+ ],
+ },
+ {
+ key: 'category_id',
+ label: t('assets.category'),
+ options: categories.map((c) => ({ value: c.id, label: c.name })),
+ },
+ ];
+
  return (
  <>
  <PageHeader
@@ -222,18 +240,11 @@ const FixedAssets: React.FC = () => {
  </Space>
  }
  />
- <Space style={{ marginBottom: 16 }}>
- <Select placeholder={t('status')} value={statusFilter} onChange={setStatusFilter} allowClear style={{ width: 150 }}>
- <Select.Option value="active">{t('assets.status_active')}</Select.Option>
- <Select.Option value="fully_depreciated">{t('assets.status_fully_depreciated')}</Select.Option>
- <Select.Option value="disposed">{t('assets.status_disposed')}</Select.Option>
- </Select>
- <Select placeholder={t('assets.category')} value={categoryFilter} onChange={setCategoryFilter} allowClear style={{ width: 200 }}>
- {categories.map((c) => (
- <Select.Option key={c.id} value={c.id}>{c.name}</Select.Option>
- ))}
- </Select>
- </Space>
+ <FilterBar
+ filters={filterDefs}
+ values={{ status: statusFilter || undefined, category_id: categoryFilter || undefined }}
+ onChange={(v) => { setStatusFilter((v.status as string) ?? ''); setCategoryFilter((v.category_id as string) ?? ''); }}
+ />
  <ResponsiveTableAdapter columns={columns} dataSource={data} rowKey="id" loading={loading} pagination={{ pageSize: 20 }} locale={{ emptyText: <Empty description={t('empty_assets')} /> }} />
  <FormDialog
  title={editingId ? t('edit') : t('new')}

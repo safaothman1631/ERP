@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Tabs, Tag, Form, Input, Select, message, Steps, Avatar, Tooltip, Checkbox, Modal } from 'antd';
+import { Button, Space, Tabs, Form, Input, Select, message, Steps, Avatar, Tooltip, Checkbox, Modal } from 'antd';
 import { PlusOutlined, CheckCircleOutlined, CloseCircleOutlined, FileTextOutlined, UserOutlined, BellOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, StatusTag } from '../../design-system';
+import type { StatusKind } from '../../design-system';
 import { space } from '../../theme/tokens';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -118,14 +119,14 @@ const SignatureRequests: React.FC = () => {
  };
 
  const getStatusTag = (status: string) => {
- const statusMap: Record<string, { color: string; label: string }> = {
- pending: { color: 'processing', label: t('dms.status_pending') },
- completed: { color: 'success', label: t('dms.status_signed') },
- cancelled: { color: 'default', label: t('dms.status_cancelled') },
- declined: { color: 'error', label: t('dms.status_declined') },
+ const statusMap: Record<string, { kind: StatusKind; label: string }> = {
+ pending: { kind: 'info', label: t('dms.status_pending') },
+ completed: { kind: 'success', label: t('dms.status_signed') },
+ cancelled: { kind: 'default', label: t('dms.status_cancelled') },
+ declined: { kind: 'error', label: t('dms.status_declined') },
  };
  const config = statusMap[status] || statusMap.pending;
- return <Tag color={config.color}>{config.label}</Tag>;
+ return <StatusTag status={config.kind} label={config.label} />;
  };
 
  const sentColumns = [
@@ -367,9 +368,9 @@ const SignatureRequests: React.FC = () => {
  </div>
 
  {/* Preview */}
- <div style={{ background: '#fafafa', padding: space.md, borderRadius: 8, textAlign: 'center' }}>
+ <div style={{ background: 'var(--surface-2)', padding: space.md, borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
  <p>{t('dms.document_preview')}</p>
- <div style={{ height: 400, border: '1px solid #d9d9d9' }}>
+ <div style={{ height: 400, border: '1px solid var(--border)' }}>
  {/* Placeholder preview */}
  <p style={{ paddingTop: 180 }}>{t('dms.pdf_preview_here')}</p>
  </div>
@@ -388,9 +389,7 @@ const SignatureRequests: React.FC = () => {
  )}
 
  {selectedRequest.status !== 'pending' && (
- <Tag color="success" style={{ fontSize: 16, padding: space.sm }}>
- {t('dms.already_signed')}
- </Tag>
+ <StatusTag status="success" label={t('dms.already_signed')} />
  )}
  </Space>
  )}

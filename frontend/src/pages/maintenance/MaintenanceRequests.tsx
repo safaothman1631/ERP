@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Tag, Form, Input, Select, Space, DatePicker, Popconfirm, Row, Col } from 'antd';
+import { Button, Form, Input, Select, Space, DatePicker, Popconfirm, Row, Col } from 'antd';
 import { PlusOutlined, DeleteOutlined, PlayCircleOutlined, CheckCircleOutlined, StopOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import dayjs, { Dayjs } from 'dayjs';
-import { PageHeader } from '../../design-system';
+import { PageHeader, FilterBar, StatusTag } from '../../design-system';
+import type { StatusKind } from '../../design-system';
 import { message } from '../../utils/message';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -27,18 +28,18 @@ interface Equipment {
  name: string;
 }
 
-const statusColors: Record<string, string> = {
+const statusKinds: Record<string, StatusKind> = {
  new: 'default',
- in_progress: 'blue',
- done: 'green',
- cancelled: 'red',
+ in_progress: 'info',
+ done: 'success',
+ cancelled: 'error',
 };
 
-const priorityColors: Record<string, string> = {
+const priorityKinds: Record<string, StatusKind> = {
  low: 'default',
- medium: 'blue',
- high: 'orange',
- urgent: 'red',
+ medium: 'info',
+ high: 'warning',
+ urgent: 'error',
 };
 
 const MaintenanceRequests: React.FC = () => {
@@ -184,9 +185,7 @@ const MaintenanceRequests: React.FC = () => {
  key: 'priority',
  width: 100,
  render: (priority: string) => (
- <Tag color={priorityColors[priority] || 'default'}>
- {t(`maintenance.priority_${priority}`, priority)}
- </Tag>
+ <StatusTag status={priorityKinds[priority] || 'default'} label={t(`maintenance.priority_${priority}`, priority)} />
  ),
  },
  {
@@ -195,9 +194,7 @@ const MaintenanceRequests: React.FC = () => {
  key: 'status',
  width: 120,
  render: (status: string) => (
- <Tag color={statusColors[status] || 'default'}>
- {t(`maintenance.status_${status}`, status)}
- </Tag>
+ <StatusTag status={statusKinds[status] || 'default'} label={t(`maintenance.status_${status}`, status)} />
  ),
  },
  { title: t('maintenance.requested_by'), dataIndex: 'requested_by', key: 'requested_by', width: 130 },
@@ -250,49 +247,45 @@ const MaintenanceRequests: React.FC = () => {
  </Button>
  }
  />
- <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
- <Col span={8}>
- <Select
- style={{ width: '100%' }}
- placeholder={t('maintenance.filter_status')}
- allowClear
- value={statusFilter || undefined}
- onChange={(val) => setStatusFilter(val || '')}
- >
- <Select.Option value="new">{t('maintenance.status_new')}</Select.Option>
- <Select.Option value="in_progress">{t('maintenance.status_in_progress')}</Select.Option>
- <Select.Option value="done">{t('maintenance.status_done')}</Select.Option>
- <Select.Option value="cancelled">{t('maintenance.status_cancelled')}</Select.Option>
- </Select>
- </Col>
- <Col span={8}>
- <Select
- style={{ width: '100%' }}
- placeholder={t('maintenance.filter_type')}
- allowClear
- value={typeFilter || undefined}
- onChange={(val) => setTypeFilter(val || '')}
- >
- <Select.Option value="corrective">{t('maintenance.type_corrective')}</Select.Option>
- <Select.Option value="preventive">{t('maintenance.type_preventive')}</Select.Option>
- <Select.Option value="inspection">{t('maintenance.type_inspection')}</Select.Option>
- </Select>
- </Col>
- <Col span={8}>
- <Select
- style={{ width: '100%' }}
- placeholder={t('maintenance.filter_priority')}
- allowClear
- value={priorityFilter || undefined}
- onChange={(val) => setPriorityFilter(val || '')}
- >
- <Select.Option value="low">{t('maintenance.priority_low')}</Select.Option>
- <Select.Option value="medium">{t('maintenance.priority_medium')}</Select.Option>
- <Select.Option value="high">{t('maintenance.priority_high')}</Select.Option>
- <Select.Option value="urgent">{t('maintenance.priority_urgent')}</Select.Option>
- </Select>
- </Col>
- </Row>
+ <FilterBar
+ filters={[
+ {
+ key: 'status',
+ label: t('maintenance.filter_status'),
+ options: [
+ { value: 'new', label: t('maintenance.status_new') },
+ { value: 'in_progress', label: t('maintenance.status_in_progress') },
+ { value: 'done', label: t('maintenance.status_done') },
+ { value: 'cancelled', label: t('maintenance.status_cancelled') },
+ ],
+ },
+ {
+ key: 'type',
+ label: t('maintenance.filter_type'),
+ options: [
+ { value: 'corrective', label: t('maintenance.type_corrective') },
+ { value: 'preventive', label: t('maintenance.type_preventive') },
+ { value: 'inspection', label: t('maintenance.type_inspection') },
+ ],
+ },
+ {
+ key: 'priority',
+ label: t('maintenance.filter_priority'),
+ options: [
+ { value: 'low', label: t('maintenance.priority_low') },
+ { value: 'medium', label: t('maintenance.priority_medium') },
+ { value: 'high', label: t('maintenance.priority_high') },
+ { value: 'urgent', label: t('maintenance.priority_urgent') },
+ ],
+ },
+ ]}
+ values={{ status: statusFilter || undefined, type: typeFilter || undefined, priority: priorityFilter || undefined }}
+ onChange={(v) => {
+ setStatusFilter((v.status as string) || '');
+ setTypeFilter((v.type as string) || '');
+ setPriorityFilter((v.priority as string) || '');
+ }}
+ />
  <ResponsiveTableAdapter
  columns={columns}
  dataSource={data}

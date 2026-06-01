@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Card, Tabs, Button, Space, Form, Input, Select, message, List, Tag, Empty } from 'antd';
+import { Tabs, Button, Space, Form, Input, Select, message, List, Tag, Empty } from 'antd';
 import { ArrowLeftOutlined, CheckOutlined, CloseOutlined, ReloadOutlined, WarningOutlined, PlusOutlined, UserAddOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import { PageHeader, StatusTag, LoadingSkeleton } from '../../design-system';
+import { PageHeader, StatusTag, LoadingSkeleton, DetailLayout, SectionCard, KeyValueGrid } from '../../design-system';
 import type { StatusKind } from '../../design-system';
 import { space } from '../../theme/tokens';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -248,12 +248,16 @@ export default function TicketDetail() {
  ];
 
  return (
- <div style={{ padding: space.lg }}>
+ <DetailLayout
+ header={
  <PageHeader
  title={ticket.subject}
  subtitle={`#${ticket.id.slice(0, 8)}`}
- extra={
- <Space>
+ tag={<StatusTag status={statusKind} label={t(`helpdesk.status_${ticket.status}`)} />}
+ />
+ }
+ toolbar={
+ <Space wrap>
  <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/helpdesk/tickets')}>
  {t('back')}
  </Button>
@@ -278,31 +282,24 @@ export default function TicketDetail() {
  </Button>
  </Space>
  }
+ >
+ <SectionCard title={t('helpdesk.details', 'Details')}>
+ <KeyValueGrid
+ columns={2}
+ items={[
+ { label: t('helpdesk.status'), value: <StatusTag status={statusKind} label={t(`helpdesk.status_${ticket.status}`)} /> },
+ { label: t('helpdesk.priority'), value: <Tag>{t(`helpdesk.priority_${ticket.priority}`)}</Tag> },
+ ...(ticket.sla_resolution_due
+ ? [{ label: t('helpdesk.sla_due'), value: new Date(ticket.sla_resolution_due).toLocaleString() }]
+ : []),
+ { label: t('description'), value: ticket.description || t('no_description'), span: 2 as const },
+ ]}
  />
+ </SectionCard>
 
- <Card style={{ marginTop: space.md }}>
- <Space direction="vertical" style={{ width: '100%' }}>
- <div>
- <strong>{t('helpdesk.status')}:</strong> <StatusTag status={statusKind} label={t(`helpdesk.status_${ticket.status}`)} />
- </div>
- <div>
- <strong>{t('helpdesk.priority')}:</strong> <Tag>{t(`helpdesk.priority_${ticket.priority}`)}</Tag>
- </div>
- {ticket.sla_resolution_due && (
- <div>
- <strong>{t('helpdesk.sla_due')}:</strong> {new Date(ticket.sla_resolution_due).toLocaleString()}
- </div>
- )}
- <div>
- <strong>{t('description')}:</strong>
- <div style={{ marginTop: space.xs }}>{ticket.description || t('no_description')}</div>
- </div>
- </Space>
- </Card>
-
- <Card style={{ marginTop: space.md }}>
+ <SectionCard>
  <Tabs items={tabItems} />
- </Card>
+ </SectionCard>
 
  <FormDialog title={t('helpdesk.add_reply')} open={replyOpen} onOk={onReply} onClose={() => setReplyOpen(false)}>
  <Form form={replyForm} layout="vertical">
@@ -342,7 +339,7 @@ export default function TicketDetail() {
  dropdownRender={(menu) => (
  <>
  {menu}
- <div style={{ borderTop: '1px solid #f0f0f0', padding: 8 }}>
+ <div style={{ borderTop: '1px solid var(--border)', padding: 8 }}>
  <Button
  type="link"
  icon={<PlusOutlined />}
@@ -358,6 +355,6 @@ export default function TicketDetail() {
  </Form.Item>
  </Form>
  </FormDialog>
- </div>
+ </DetailLayout>
  );
 }

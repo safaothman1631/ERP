@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Descriptions, Tag, Button, Space, message, Select, Modal } from 'antd';
+import { Button, Space, message, Select, Modal } from 'antd';
 import { ArrowLeftOutlined, PauseOutlined, PlayCircleOutlined, StopOutlined, FileTextOutlined, UploadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { DetailLayout, SectionCard, KeyValueGrid, StatusTag, type StatusKind, type KeyValueItem } from '../../design-system';
 import { space } from '../../theme/tokens';
 import dayjs from 'dayjs';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -134,11 +134,11 @@ const SubscriptionDetail: React.FC = () => {
  }
  };
 
- const statusColors: Record<string, string> = {
- trial: 'blue',
- active: 'green',
- past_due: 'orange',
- cancelled: 'red',
+ const statusKinds: Record<string, StatusKind> = {
+ trial: 'info',
+ active: 'active',
+ past_due: 'warning',
+ cancelled: 'error',
  paused: 'default',
  };
 
@@ -164,7 +164,7 @@ const SubscriptionDetail: React.FC = () => {
  title: t('status'),
  dataIndex: 'status',
  key: 'status',
- render: (status: string) => <Tag>{status}</Tag>,
+ render: (status: string) => <StatusTag status="default" label={status} />,
  },
  ];
 
@@ -174,23 +174,37 @@ const SubscriptionDetail: React.FC = () => {
 
  const currentPlan = plans.find(p => p.id === subscription.plan_id);
 
+ const overviewItems: KeyValueItem[] = [
+ { label: t('subscription.plan'), value: currentPlan?.name || subscription.plan_id },
+ { label: t('subscription.contact'), value: subscription.contact_id },
+ { label: t('subscription.start_date'), value: dayjs(subscription.start_date).format('YYYY-MM-DD') },
+ { label: t('subscription.current_period_start'), value: dayjs(subscription.current_period_start).format('YYYY-MM-DD') },
+ { label: t('subscription.current_period_end'), value: dayjs(subscription.current_period_end).format('YYYY-MM-DD') },
+ ...(subscription.next_invoice_date ? [{ label: t('subscription.next_invoice'), value: dayjs(subscription.next_invoice_date).format('YYYY-MM-DD') }] : []),
+ ...(subscription.trial_end ? [{ label: t('subscription.trial_end'), value: dayjs(subscription.trial_end).format('YYYY-MM-DD') }] : []),
+ ...(subscription.cancel_at ? [{ label: t('subscription.cancel_at'), value: dayjs(subscription.cancel_at).format('YYYY-MM-DD') }] : []),
+ ...(subscription.cancelled_at ? [{ label: t('subscription.cancelled_at'), value: dayjs(subscription.cancelled_at).format('YYYY-MM-DD') }] : []),
+ ...(subscription.cancel_reason ? [{ label: t('subscription.cancel_reason'), value: subscription.cancel_reason, span: 2 as const }] : []),
+ ];
+
  return (
- <div style={{ padding: space.lg }}>
- <PageHeader
- title={t('subscription.subscription_detail')}
- subtitle={subscription.id}
- extra={
+ <DetailLayout
+ header={
+ <div>
+ <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-500)' }}>{subscription.id}</div>
+ <div style={{ display: 'flex', alignItems: 'center', gap: space.sm, flexWrap: 'wrap', marginTop: 4 }}>
+ <span style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ink-900)' }}>
+ {t('subscription.subscription_detail')}
+ </span>
+ <StatusTag status={statusKinds[subscription.status] || 'default'} label={t(`subscription.status_${subscription.status}`)} />
+ </div>
+ </div>
+ }
+ toolbar={
+ <Space wrap>
  <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/subscriptions')}>
  {t('back')}
  </Button>
- }
- />
-
- <Card
- title={t('subscription.overview')}
- style={{ marginTop: space.md }}
- extra={
- <Space>
  {subscription.status === 'active' && (
  <>
  <Button icon={<FileTextOutlined />} onClick={handleGenerateInvoice}>
@@ -215,56 +229,11 @@ const SubscriptionDetail: React.FC = () => {
  </Space>
  }
  >
- <Descriptions column={2} bordered>
- <Descriptions.Item label={t('subscription.status')}>
- <Tag color={statusColors[subscription.status] || 'default'}>
- {t(`subscription.status_${subscription.status}`)}
- </Tag>
- </Descriptions.Item>
- <Descriptions.Item label={t('subscription.plan')}>
- {currentPlan?.name || subscription.plan_id}
- </Descriptions.Item>
- <Descriptions.Item label={t('subscription.contact')}>
- {subscription.contact_id}
- </Descriptions.Item>
- <Descriptions.Item label={t('subscription.start_date')}>
- {dayjs(subscription.start_date).format('YYYY-MM-DD')}
- </Descriptions.Item>
- <Descriptions.Item label={t('subscription.current_period_start')}>
- {dayjs(subscription.current_period_start).format('YYYY-MM-DD')}
- </Descriptions.Item>
- <Descriptions.Item label={t('subscription.current_period_end')}>
- {dayjs(subscription.current_period_end).format('YYYY-MM-DD')}
- </Descriptions.Item>
- {subscription.next_invoice_date && (
- <Descriptions.Item label={t('subscription.next_invoice')}>
- {dayjs(subscription.next_invoice_date).format('YYYY-MM-DD')}
- </Descriptions.Item>
- )}
- {subscription.trial_end && (
- <Descriptions.Item label={t('subscription.trial_end')}>
- {dayjs(subscription.trial_end).format('YYYY-MM-DD')}
- </Descriptions.Item>
- )}
- {subscription.cancel_at && (
- <Descriptions.Item label={t('subscription.cancel_at')}>
- {dayjs(subscription.cancel_at).format('YYYY-MM-DD')}
- </Descriptions.Item>
- )}
- {subscription.cancelled_at && (
- <Descriptions.Item label={t('subscription.cancelled_at')}>
- {dayjs(subscription.cancelled_at).format('YYYY-MM-DD')}
- </Descriptions.Item>
- )}
- {subscription.cancel_reason && (
- <Descriptions.Item label={t('subscription.cancel_reason')} span={2}>
- {subscription.cancel_reason}
- </Descriptions.Item>
- )}
- </Descriptions>
- </Card>
+ <SectionCard title={t('subscription.overview')}>
+ <KeyValueGrid columns={2} items={overviewItems} />
+ </SectionCard>
 
- <Card title={t('subscription.dunning_history')} style={{ marginTop: space.md }}>
+ <SectionCard title={t('subscription.dunning_history')} padded={false}>
  <RelatedDataPanel
  entity="billing_event"
  data={dunning}
@@ -282,7 +251,7 @@ const SubscriptionDetail: React.FC = () => {
  pagination={false}
  />
  </RelatedDataPanel>
- </Card>
+ </SectionCard>
 
  <FormDialog
  title={t('subscription.upgrade')}
@@ -305,7 +274,7 @@ const SubscriptionDetail: React.FC = () => {
  ))}
  </Select>
  </FormDialog>
- </div>
+ </DetailLayout>
  );
 };
 

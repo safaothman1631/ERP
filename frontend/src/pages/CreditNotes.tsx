@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Button, Tag, Dropdown, Form, Input, InputNumber, DatePicker, Space, Select, Divider, Tabs } from 'antd';
+import { Button, Dropdown, Form, Input, InputNumber, DatePicker, Space, Select, Divider, Tabs } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, MoreOutlined, DeleteOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -7,15 +7,13 @@ import api from '../api';
 import { useListQuery } from '../api/queries/useListQuery';
 import { listQueryKeys } from '../api/queries/keys';
 import dayjs from 'dayjs';
-import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat, FilterBar } from '../design-system';
 import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { formatCurrency } from '../utils/formatters';
 import { downloadCsv } from '../utils/exportCsv';
 import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
-
-const statusColors: Record<string, string> = { draft: 'default', approved: 'green', void: 'red' };
 
 const CreditNotes: React.FC = () => {
  const { t } = useTranslation();
@@ -147,7 +145,7 @@ const CreditNotes: React.FC = () => {
  { title: t('date'), dataIndex: 'date', key: 'date', render: (d: string) => d?.substring(0, 10) },
  { title: t('total'), dataIndex: 'total', key: 'total', render: (v: number) => v?.toLocaleString() },
  { title: t('creditBalance'), dataIndex: 'balance', key: 'balance', render: (v: number) => (v || 0).toLocaleString() },
- { title: t('status'), dataIndex: 'status', key: 'status', render: (s: string) => <Tag color={statusColors[s]}>{t(s)}</Tag> },
+ { title: t('status'), dataIndex: 'status', key: 'status', render: (s: string) => <StatusTag status={s} label={t(s)} /> },
  {
  title: t('actions'), key: 'actions',
  render: (_: any, r: any) => {
@@ -173,7 +171,16 @@ const CreditNotes: React.FC = () => {
 
  return (
  <div>
- <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+ <PageHeader
+ title={t('credit_notes', 'Credit Notes')}
+ subtitle={t('credit_notes_subtitle', 'Customer credit notes')}
+ extra={
+ <Button type="primary" icon={<PlusOutlined />} onClick={openNew}>{t('new_credit_note')}</Button>
+ }
+ />
+ <FilterBar
+ extra={
+ <>
  <ExportMenu
  formats={['csv']}
  onExport={(f: ExportFormat) => {
@@ -184,8 +191,9 @@ const CreditNotes: React.FC = () => {
  }}
  />
  <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
- <Button type="primary" icon={<PlusOutlined />} onClick={openNew}>{t('new_credit_note')}</Button>
- </div>
+ </>
+ }
+ />
  <ResponsiveTableAdapter dataSource={data} columns={visibleColumns} rowKey="id" loading={loading} pagination={{ current: page, total, pageSize: 20, onChange: setPage }} />
 
  {/* Create Credit Note Modal */}

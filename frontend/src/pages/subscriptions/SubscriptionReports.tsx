@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Statistic } from 'antd';
-import { ArrowUpOutlined, ArrowDownOutlined, DollarOutlined, TeamOutlined } from '@ant-design/icons';
+import { Row, Col, Statistic } from 'antd';
+import { DollarOutlined, TeamOutlined, FallOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import api from '../../api';
-import { PageHeader, StatusTag } from '../../design-system';
+import { PageHeader, SectionCard, KpiCard, StatusTag } from '../../design-system';
 import { space } from '../../theme/tokens';
 import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
 import { asTranslationKey } from '../../i18n/types';
@@ -83,75 +83,46 @@ const SubscriptionReports: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: space.lg }}>
+    <div>
       <PageHeader
         title={t('subscription.reports')}
         subtitle={t('subscription.reports_subtitle')}
       />
       
-      <Row gutter={[16, 16]} style={{ marginTop: space.md }}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card loading={loading}>
-            <Statistic
-              title={t('subscription.mrr')}
-              value={mrrData?.current_mrr || 0}
-              precision={2}
-              prefix={<DollarOutlined />}
-              suffix="IQD"
-              valueStyle={{ color: mrrData && mrrData.growth_pct > 0 ? 'var(--success-500)' : 'var(--danger-500)' }}
-            />
-            {mrrData && (
-              <div style={{ marginTop: space.sm }}>
-                {mrrData.growth_pct > 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
-                <span style={{ marginInlineStart: space.xs }}>
-                  {Math.abs(mrrData.growth_pct).toFixed(2)}% {t('subscription.vs_last_month')}
-                </span>
-              </div>
-            )}
-          </Card>
-        </Col>
-        
-        <Col xs={24} sm={12} lg={6}>
-          <Card loading={loading}>
-            <Statistic
-              title={t('subscription.arr')}
-              value={arrData?.arr || 0}
-              precision={2}
-              prefix={<DollarOutlined />}
-              suffix="IQD"
-            />
-          </Card>
-        </Col>
-        
-        <Col xs={24} sm={12} lg={6}>
-          <Card loading={loading}>
-            <Statistic
-              title={t('subscription.active_subscriptions')}
-              value={mrrData?.active_count || 0}
-              prefix={<TeamOutlined />}
-            />
-          </Card>
-        </Col>
-        
-        <Col xs={24} sm={12} lg={6}>
-          <Card loading={loading}>
-            <Statistic
-              title={t('subscription.churn_rate')}
-              value={churnData?.churn_pct || 0}
-              precision={2}
-              suffix="%"
-              valueStyle={{ color: churnData && churnData.churn_pct < 5 ? 'var(--success-500)' : 'var(--danger-500)' }}
-            />
-            {churnData && (
-              <div style={{ marginTop: space.sm, fontSize: '12px', color: 'var(--ink-500)' }}>
-                {t('subscription.last_30_days')}
-              </div>
-            )}
-          </Card>
-        </Col>
-      </Row>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: space.md, marginBottom: space.lg }}>
+        <KpiCard
+          title={t('subscription.mrr')}
+          value={`${(mrrData?.current_mrr || 0).toFixed(2)} IQD`}
+          icon={<DollarOutlined />}
+          loading={loading}
+          tone={mrrData && mrrData.growth_pct > 0 ? 'success' : 'danger'}
+          delta={mrrData ? mrrData.growth_pct : undefined}
+          trendLabel={t('subscription.vs_last_month')}
+        />
+        <KpiCard
+          title={t('subscription.arr')}
+          value={`${(arrData?.arr || 0).toFixed(2)} IQD`}
+          icon={<DollarOutlined />}
+          loading={loading}
+          tone="primary"
+        />
+        <KpiCard
+          title={t('subscription.active_subscriptions')}
+          value={mrrData?.active_count || 0}
+          icon={<TeamOutlined />}
+          loading={loading}
+          tone="info"
+        />
+        <KpiCard
+          title={t('subscription.churn_rate')}
+          value={`${(churnData?.churn_pct || 0).toFixed(2)}%`}
+          icon={<FallOutlined />}
+          loading={loading}
+          tone={churnData && churnData.churn_pct < 5 ? 'success' : 'danger'}
+        />
+      </div>
 
-      <Card title={t('subscription.mrr_trend')} loading={loading} style={{ marginTop: space.md }}>
+      <SectionCard title={t('subscription.mrr_trend')}>
         <ResponsiveChart
           legendItems={[
             { id: 'mrr', labelKey: asTranslationKey('subscription.mrr'), color: 'var(--accent-500)' },
@@ -165,19 +136,19 @@ const SubscriptionReports: React.FC = () => {
             <Line type="monotone" dataKey="mrr" stroke="var(--accent-500)" name={t('subscription.mrr')} />
           </LineChart>
         </ResponsiveChart>
-      </Card>
+      </SectionCard>
 
-      <Card title={t('subscription.mrr_by_plan')} loading={loading} style={{ marginTop: space.md }}>
+      <SectionCard title={t('subscription.mrr_by_plan')} padded={false}>
         <ResponsiveTableAdapter
           columns={planColumns}
           dataSource={mrrData?.by_plan || []}
           rowKey="plan"
           pagination={false}
         />
-      </Card>
+      </SectionCard>
 
       {churnData && (
-        <Card title={t('subscription.churn_details')} loading={loading} style={{ marginTop: space.md }}>
+        <SectionCard title={t('subscription.churn_details')}>
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={8}>
               <Statistic
@@ -200,7 +171,7 @@ const SubscriptionReports: React.FC = () => {
               />
             </Col>
           </Row>
-        </Card>
+        </SectionCard>
       )}
     </div>
   );

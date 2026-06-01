@@ -14,21 +14,19 @@ import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Button,
-  Card,
   Form,
   Input,
   Space,
   Spin,
   Switch,
-  Tag,
   Typography,
   message,
 } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { PageHeader } from '../../../design-system';
+import { PageHeader, SectionCard, StatusTag } from '../../../design-system';
 import api from '../../../api';
 
-const { Title: _Title, Text, Paragraph } = Typography;
+const { Text, Paragraph } = Typography;
 
 interface ProviderConfig {
   slug: string;
@@ -231,13 +229,13 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
   const [form] = Form.useForm();
 
   return (
-    <Card
+    <SectionCard
       title={
         <Space>
           <Text strong>{provider.display_name}</Text>
-          {provider.sandbox && <Tag color="orange">sandbox</Tag>}
-          {provider.credentials_pending && <Tag color="red">credentials pending</Tag>}
-          {provider.configured && !provider.credentials_pending && <Tag color="green">configured</Tag>}
+          {provider.sandbox && <StatusTag status="warning" label="sandbox" />}
+          {provider.credentials_pending && <StatusTag status="error" label="credentials pending" />}
+          {provider.configured && !provider.credentials_pending && <StatusTag status="success" label="configured" />}
         </Space>
       }
       extra={
@@ -248,6 +246,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
           disabled={provider.credentials_pending && !provider.configured}
         />
       }
+      style={{ marginBottom: 0 }}
     >
       {provider.credentials_pending && (
         <Alert
@@ -288,7 +287,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
           {t('payments.providers.noConfig', 'No configuration required.')}
         </Paragraph>
       )}
-    </Card>
+    </SectionCard>
   );
 };
 

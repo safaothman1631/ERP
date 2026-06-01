@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, Button, Space, Tag, Typography, Row, Col } from 'antd';
+import { Card, Button, Space, Typography, Row, Col } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { ReloadOutlined, FullscreenOutlined, CheckOutlined } from '@ant-design/icons';
 import api from '../../api';
 import { message } from '../../utils/message';
+import { StatusTag } from '../../design-system';
 
 const { Text, Title } = Typography;
 
@@ -35,8 +36,9 @@ const PreparationOrderCard: React.FC<PreparationOrderCardProps> = ({ order, stag
       size="small"
       style={{
         marginBottom: 12,
-        border: '2px solid #d9d9d9',
-        backgroundColor: '#fff',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-md)',
+        backgroundColor: 'var(--surface)',
       }}
     >
       <Space orientation="vertical" style={{ width: '100%' }} size="small">
@@ -44,21 +46,21 @@ const PreparationOrderCard: React.FC<PreparationOrderCardProps> = ({ order, stag
           <Text strong style={{ fontSize: 16 }}>
             {order.table_name || t('pos.order')} #{order.sequence || order.id?.slice(-4)}
           </Text>
-          <Tag color="orange">{getElapsedTime()}</Tag>
+          <StatusTag status="warning" label={getElapsedTime()} />
         </div>
-        
+
         {order.lines?.map((line: any, idx: number) => (
-          <div key={idx} style={{ padding: '4px 0', borderBottom: '1px solid #f0f0f0' }}>
+          <div key={idx} style={{ padding: '4px 0', borderBottom: '1px solid var(--border)' }}>
             <Text strong>{line.qty}x</Text> {line.item_name}
             {line.note && (
-              <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
+              <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 2 }}>
                 📝 {line.note}
               </div>
             )}
             {line.course && (
-              <Tag color="blue" style={{ marginTop: 4 }}>
-                {line.course}
-              </Tag>
+              <div style={{ marginTop: 4 }}>
+                <StatusTag status="info" label={line.course} />
+              </div>
             )}
           </div>
         ))}
@@ -80,7 +82,7 @@ const PreparationOrderCard: React.FC<PreparationOrderCardProps> = ({ order, stag
               block
               icon={<CheckOutlined />}
               onClick={() => onComplete(order.id)}
-              style={{ backgroundColor: '#52c41a' }}
+              style={{ backgroundColor: 'var(--success-500)', borderColor: 'var(--success-500)' }}
             >
               {t('pos.complete')}
             </Button>
@@ -100,10 +102,10 @@ const POSKitchen: React.FC = () => {
   const [lastOrderCount, setLastOrderCount] = useState(0);
 
   const defaultStages = [
-    { key: 'received', name: 'Received', color: '#ff4d4f' },
-    { key: 'preparing', name: 'Preparing', color: '#faad14' },
-    { key: 'ready', name: 'Ready', color: '#52c41a' },
-    { key: 'served', name: 'Served', color: '#8c8c8c' },
+    { key: 'received', name: 'Received', color: 'var(--danger-500)' },
+    { key: 'preparing', name: 'Preparing', color: 'var(--warning-500)' },
+    { key: 'ready', name: 'Ready', color: 'var(--success-500)' },
+    { key: 'served', name: 'Served', color: 'var(--ink-400)' },
   ];
 
   const fetchDisplay = async () => {

@@ -1,23 +1,23 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Tag, Space, Select, Typography } from 'antd';
+import { Button, Space, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { EyeOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import api from '../../api';
 import { message } from '../../utils/message';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../../design-system';
+import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../../design-system';
+import type { StatusKind } from '../../design-system';
 import { downloadCsv } from '../../utils/exportCsv';
 import { useAuthStore } from '../../store';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
-const { Title } = Typography;
-
-const statusColors: Record<string, string> = {
-  opening: 'blue',
-  opened: 'green',
-  closing: 'orange',
-  closed: 'default',
+// Map POS session states → StatusTag semantic kinds (auto-flip tokens, light + dark).
+const SESSION_STATUS: Record<string, StatusKind> = {
+  opening: 'info',
+  opened: 'active',
+  closing: 'warning',
+  closed: 'closed',
 };
 
 const POSSessions: React.FC = () => {
@@ -106,7 +106,7 @@ const POSSessions: React.FC = () => {
       dataIndex: 'state',
       key: 'state',
       render: (state: string) => (
-        <Tag color={statusColors[state]}>{t(`pos.state_${state}`)}</Tag>
+        <StatusTag status={SESSION_STATUS[state] ?? 'default'} label={t(`pos.state_${state}`)} />
       ),
     },
     {
@@ -148,11 +148,23 @@ const POSSessions: React.FC = () => {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Title level={2}>{t('pos.sessions')}</Title>
-      </div>
+      <PageHeader title={t('pos.sessions')} />
 
-      <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: 'var(--space-sm)',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          marginBlockEnd: 'var(--space-lg)',
+          paddingBlock: 'var(--space-sm)',
+          paddingInline: 'var(--space-md)',
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-sm)',
+        }}
+      >
         <Select
           placeholder={t('pos.config')}
           value={configFilter || undefined}
@@ -176,6 +188,7 @@ const POSSessions: React.FC = () => {
           <Select.Option value="opened">{t('pos.state_opened')}</Select.Option>
           <Select.Option value="closed">{t('pos.state_closed')}</Select.Option>
         </Select>
+        <div style={{ flex: 1, minWidth: 0 }} />
         <ExportMenu
           formats={['csv']}
           onExport={(f: ExportFormat) => {

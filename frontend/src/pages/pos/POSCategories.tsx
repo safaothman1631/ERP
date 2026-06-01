@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Tree, Button, Space, Form, Input, InputNumber, ColorPicker, Card, Modal } from 'antd';
+import { Tree, Button, Space, Form, Input, InputNumber, ColorPicker, Modal } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { DataNode } from 'antd/es/tree';
 import api from '../../api';
 import { message } from '../../utils/message';
+import { PageHeader, SectionCard } from '../../design-system';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
 const POSCategories: React.FC = () => {
@@ -89,7 +90,7 @@ const POSCategories: React.FC = () => {
  setParentId(null);
  form.setFieldsValue({
  ...record,
- color: record.color || '#1890ff',
+ color: record.color || '#7B61FF',
  });
  } else {
  setEditingId(null);
@@ -98,7 +99,7 @@ const POSCategories: React.FC = () => {
  form.setFieldsValue({
  is_active: true,
  sequence: 10,
- color: '#1890ff',
+ color: '#7B61FF',
  parent_id: parent || null,
  });
  }
@@ -109,7 +110,7 @@ const POSCategories: React.FC = () => {
  try {
  const payload = {
  ...values,
- color: typeof values.color === 'string' ? values.color : values.color?.toHexString?.() || '#1890ff',
+ color: typeof values.color === 'string' ? values.color : values.color?.toHexString?.() || '#7B61FF',
  parent_id: values.parent_id || null,
  };
 
@@ -143,19 +144,22 @@ const POSCategories: React.FC = () => {
  };
 
  return (
- <Card
+ <>
+ <PageHeader
  title={t('pos.categories')}
  extra={
  <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>
  {t('add')}
  </Button>
  }
- >
+ />
+ <SectionCard>
  <Tree
  treeData={treeData}
  defaultExpandAll
  showLine
  />
+ </SectionCard>
 
  <FormDialog
  open={modalVisible}
@@ -189,7 +193,7 @@ const POSCategories: React.FC = () => {
  </Form.Item>
  </Form>
  </FormDialog>
- </Card>
+ </>
  );
 };
 

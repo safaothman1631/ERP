@@ -7,12 +7,13 @@
  * revoke the active version (and is then expected to upload a fresh one).
  */
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, Card, Form, Input, Popconfirm, Table, Tag, Typography, Upload, message } from 'antd';
+import { Alert, Button, Form, Input, Popconfirm, Typography, Upload, message } from 'antd';
 import type { UploadFile } from 'antd/es/upload/interface';
 import { useTranslation } from 'react-i18next';
 import api from '../../../api';
+import { PageHeader, SectionCard, StatusTag, DataTable } from '../../../design-system';
 
-const { Title, Paragraph: _Paragraph, Text } = Typography;
+const { Paragraph: _Paragraph, Text } = Typography;
 
 interface CertVersion {
   version: string;
@@ -105,8 +106,8 @@ const CertManagementPage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: 24 }}>
-      <Title level={3}>{t('cert_title', 'e-Fakhata signing certificate')}</Title>
+    <div>
+      <PageHeader title={t('cert_title', 'e-Fakhata signing certificate')} />
       <Alert
         type="warning"
         showIcon
@@ -117,7 +118,7 @@ const CertManagementPage: React.FC = () => {
         )}
       />
 
-      <Card title={t('upload', 'Upload new certificate')} style={{ marginBottom: 16 }}>
+      <SectionCard title={t('upload', 'Upload new certificate')}>
         <Form form={form} layout="vertical" onFinish={handleUpload}>
           <Form.Item label={t('cert_file', 'PKCS#12 file (.p12 / .pfx)')}>
             <Upload
@@ -152,10 +153,10 @@ const CertManagementPage: React.FC = () => {
             {t('upload_button', 'Upload')}
           </Button>
         </Form>
-      </Card>
+      </SectionCard>
 
-      <Card title={t('history', 'Version history')}>
-        <Table
+      <SectionCard title={t('history', 'Version history')} padded={false}>
+        <DataTable<CertVersion>
           rowKey="version"
           loading={loading}
           dataSource={versions}
@@ -173,24 +174,26 @@ const CertManagementPage: React.FC = () => {
               title: 'Status',
               dataIndex: 'revoked',
               render: (rev: boolean) =>
-                rev ? <Tag color="red">revoked</Tag> : <Tag color="green">active</Tag>,
+                rev ? <StatusTag status="error" label="revoked" /> : <StatusTag status="active" label="active" />,
             },
           ]}
         />
         {versions.some((v) => !v.revoked) && (
-          <Popconfirm
-            title={t(
-              'revoke_confirm',
-              'Revoke the active certificate? You must immediately upload a replacement.',
-            )}
-            onConfirm={handleRevoke}
-          >
-            <Button danger style={{ marginTop: 16 }}>
-              {t('revoke_button', 'Revoke active')}
-            </Button>
-          </Popconfirm>
+          <div style={{ padding: 'var(--space-md) var(--space-lg)' }}>
+            <Popconfirm
+              title={t(
+                'revoke_confirm',
+                'Revoke the active certificate? You must immediately upload a replacement.',
+              )}
+              onConfirm={handleRevoke}
+            >
+              <Button danger>
+                {t('revoke_button', 'Revoke active')}
+              </Button>
+            </Popconfirm>
+          </div>
         )}
-      </Card>
+      </SectionCard>
     </div>
   );
 };

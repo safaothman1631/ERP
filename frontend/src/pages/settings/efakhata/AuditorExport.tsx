@@ -6,12 +6,13 @@
  * until ``status === 'ready'`` and then surface the signed URL.
  */
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, Card, DatePicker, Form, Table, Tag, Typography, message } from 'antd';
+import { Alert, Button, DatePicker, Form, Typography, message } from 'antd';
 import { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import api from '../../../api';
+import { PageHeader, SectionCard, StatusTag, DataTable, type StatusKind } from '../../../design-system';
 
-const { Title, Paragraph: _Paragraph, Text } = Typography;
+const { Paragraph: _Paragraph, Text } = Typography;
 
 interface ExportBatch {
   id: string;
@@ -27,10 +28,10 @@ interface ExportBatch {
   completed_at?: string | null;
 }
 
-const STATUS_COLOR: Record<string, string> = {
-  pending: 'processing',
-  ready: 'green',
-  failed: 'red',
+const STATUS_KIND: Record<string, StatusKind> = {
+  pending: 'info',
+  ready: 'success',
+  failed: 'error',
 };
 
 const AuditorExportPage: React.FC = () => {
@@ -86,8 +87,8 @@ const AuditorExportPage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: 24 }}>
-      <Title level={3}>{t('export_title', 'Tax auditor export')}</Title>
+    <div>
+      <PageHeader title={t('export_title', 'Tax auditor export')} />
       <Alert
         type="info"
         showIcon
@@ -98,7 +99,7 @@ const AuditorExportPage: React.FC = () => {
         )}
       />
 
-      <Card style={{ marginBottom: 16 }}>
+      <SectionCard>
         <Form layout="inline" form={form} onFinish={handleSubmit}>
           <Form.Item name="range" rules={[{ required: true }]}>
             <DatePicker.RangePicker />
@@ -109,10 +110,10 @@ const AuditorExportPage: React.FC = () => {
             </Button>
           </Form.Item>
         </Form>
-      </Card>
+      </SectionCard>
 
-      <Card title={t('past_exports', 'Past exports')}>
-        <Table
+      <SectionCard title={t('past_exports', 'Past exports')} padded={false}>
+        <DataTable<ExportBatch>
           rowKey="id"
           loading={loading}
           dataSource={items}
@@ -127,12 +128,13 @@ const AuditorExportPage: React.FC = () => {
               title: t('col_invoices', 'Invoices'),
               dataIndex: 'invoice_count',
               width: 100,
+              align: 'right' as const,
             },
             {
               title: t('col_status', 'Status'),
               dataIndex: 'status',
               width: 120,
-              render: (s: string) => <Tag color={STATUS_COLOR[s] ?? 'default'}>{s}</Tag>,
+              render: (s: string) => <StatusTag status={STATUS_KIND[s] ?? 'default'} label={s} />,
             },
             {
               title: t('col_requested_by', 'Requested by'),
@@ -158,7 +160,7 @@ const AuditorExportPage: React.FC = () => {
             },
           ]}
         />
-      </Card>
+      </SectionCard>
     </div>
   );
 };

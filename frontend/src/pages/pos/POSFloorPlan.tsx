@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Tabs, Button, Space, Tag, Typography, Statistic, Row, Col, InputNumber } from 'antd';
+import { Card, Tabs, Button, Space, Typography, Statistic, Row, Col, InputNumber } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { ReloadOutlined, FullscreenOutlined } from '@ant-design/icons';
 import { usePOSFloorStore } from '../../stores/posFloor';
 import api from '../../api';
 import { message } from '../../utils/message';
+import { StatusTag } from '../../design-system';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
 const { Text } = Typography;
@@ -19,13 +20,13 @@ const TableShape: React.FC<TableShapeProps> = ({ table, onClick }) => {
  const { t: _t } = useTranslation();
  
  const stateColors: Record<string, string> = {
- available: '#52c41a',
- occupied: '#ff4d4f',
- reserved: '#faad14',
- paying: '#1890ff',
+ available: 'var(--success-500)',
+ occupied: 'var(--danger-500)',
+ reserved: 'var(--warning-500)',
+ paying: 'var(--info-500)',
  };
 
- const bgColor = stateColors[table.state] || '#d9d9d9';
+ const bgColor = stateColors[table.state] || 'var(--ink-300)';
  const isRound = table.shape === 'round';
 
  return (
@@ -172,10 +173,10 @@ const POSFloorPlan: React.FC = () => {
  position: 'relative',
  width: 1200,
  height: 800,
- backgroundColor: '#f0f0f0',
+ backgroundColor: 'var(--surface-2)',
  backgroundImage: floor.background_image_url ? `url(${floor.background_image_url})` : undefined,
  backgroundSize: 'cover',
- border: '1px solid #d9d9d9',
+ border: '1px solid var(--border)',
  margin: '0 auto',
  }}
  >
@@ -205,9 +206,7 @@ const POSFloorPlan: React.FC = () => {
  </Row>
  <div>
  <Text strong>{t('pos.state')}:</Text>{' '}
- <Tag color={selectedTable.state === 'occupied' ? 'red' : 'green'}>
- {t(`pos.table_state_${selectedTable.state}`)}
- </Tag>
+ <StatusTag status={selectedTable.state === 'occupied' ? 'error' : 'active'} label={t(`pos.table_state_${selectedTable.state}`)} />
  </div>
  {selectedTable.current_order_id && (
  <div>

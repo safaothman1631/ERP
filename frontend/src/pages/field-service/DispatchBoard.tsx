@@ -4,7 +4,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import api from '../../api';
-import { PageHeader, StatusTag } from '../../design-system';
+import { PageHeader, StatusTag, SectionCard } from '../../design-system';
 import { space } from '../../theme/tokens';
 import { message } from '../../utils/message';
 import type { ColumnsType } from 'antd/es/table';
@@ -197,7 +197,7 @@ const DispatchBoard: React.FC = () => {
  }
  />
 
- <Card>
+ <SectionCard padded={false}>
  <ResponsiveTableAdapter
  dataSource={schedules}
  columns={columns}
@@ -206,7 +206,7 @@ const DispatchBoard: React.FC = () => {
  pagination={false}
  scroll={{ x: 800 }}
  />
- </Card>
+ </SectionCard>
 
  <FormDialog
  title={t('field_service.unassigned_orders')}

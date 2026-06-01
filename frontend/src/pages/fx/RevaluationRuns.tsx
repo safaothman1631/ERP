@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
- Card,
  Button,
  DatePicker,
  Form,
@@ -8,7 +7,6 @@ import {
  message,
  Space,
  Typography,
- Tag,
  Descriptions,
  Input,
  Row,
@@ -26,9 +24,9 @@ import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
-import { palette } from '../../theme/tokens';
+import { PageHeader, SectionCard, StatusTag } from '../../design-system';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
@@ -191,11 +189,11 @@ const RevaluationRuns: React.FC = () => {
  key: 'status',
  width: 100,
  render: (status: string) => (
- <Tag color={status === 'posted' ? 'green' : 'blue'}>
- {status === 'posted' ? <CheckCircleOutlined /> : <ClockCircleOutlined />}
- {' '}
- {t(`fx.status_${status}`)}
- </Tag>
+ <StatusTag
+ status={status === 'posted' ? 'success' : 'info'}
+ icon={status === 'posted' ? <CheckCircleOutlined /> : <ClockCircleOutlined />}
+ label={t(`fx.status_${status}`)}
+ />
  ),
  },
  {
@@ -330,9 +328,9 @@ const RevaluationRuns: React.FC = () => {
  ];
 
  return (
- <div style={{ padding: '24px' }}>
- <Card
- title={<Title level={3} style={{ margin: 0 }}>{t('fx.revaluations')}</Title>}
+ <div>
+ <PageHeader
+ title={t('fx.revaluations')}
  extra={
  <Button
  type="primary"
@@ -346,7 +344,8 @@ const RevaluationRuns: React.FC = () => {
  {t('fx.newRevaluation')}
  </Button>
  }
- >
+ />
+ <SectionCard padded={false}>
  <ResponsiveTableAdapter
  columns={columns}
  dataSource={runs}
@@ -354,7 +353,7 @@ const RevaluationRuns: React.FC = () => {
  loading={loading}
  pagination={{ pageSize: 20 }}
  />
- </Card>
+ </SectionCard>
 
  {/* New Revaluation Drawer */}
  <FormDialog
@@ -406,39 +405,39 @@ const RevaluationRuns: React.FC = () => {
  <>
  <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
  <Col span={8}>
- <Card>
+ <SectionCard>
  <Statistic
  title={t('fx.totalGain')}
  value={previewData.total_gain}
  precision={2}
- valueStyle={{ color: palette.success }}
+ valueStyle={{ color: 'var(--success-fg)' }}
  suffix="IQD"
  />
- </Card>
+ </SectionCard>
  </Col>
  <Col span={8}>
- <Card>
+ <SectionCard>
  <Statistic
  title={t('fx.totalLoss')}
  value={previewData.total_loss}
  precision={2}
- valueStyle={{ color: palette.danger }}
+ valueStyle={{ color: 'var(--danger-fg)' }}
  suffix="IQD"
  />
- </Card>
+ </SectionCard>
  </Col>
  <Col span={8}>
- <Card>
+ <SectionCard>
  <Statistic
  title={t('fx.netImpact')}
  value={previewData.net}
  precision={2}
  valueStyle={{
- color: previewData.net >= 0 ? palette.success : palette.danger,
+ color: previewData.net >= 0 ? 'var(--success-fg)' : 'var(--danger-fg)',
  }}
  suffix="IQD"
  />
- </Card>
+ </SectionCard>
  </Col>
  </Row>
 
@@ -530,9 +529,7 @@ const RevaluationRuns: React.FC = () => {
  {dayjs(selectedRun.period_end).format('YYYY-MM-DD')}
  </Descriptions.Item>
  <Descriptions.Item label={t('fx.status')}>
- <Tag color={selectedRun.status === 'posted' ? 'green' : 'blue'}>
- {t(`fx.status_${selectedRun.status}`)}
- </Tag>
+ <StatusTag status={selectedRun.status === 'posted' ? 'success' : 'info'} label={t(`fx.status_${selectedRun.status}`)} />
  </Descriptions.Item>
  <Descriptions.Item label={t('fx.totalGain')}>
  <Text type="success">

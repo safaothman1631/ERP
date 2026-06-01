@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Space, Form, Input, InputNumber, Select, Switch, Card, Tag, Image, Empty, Typography } from 'antd';
+import { Button, Space, Form, Input, InputNumber, Select, Switch, Image, Empty, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { EditOutlined, SearchOutlined, PlusOutlined, ImportOutlined, AppstoreAddOutlined } from '@ant-design/icons';
 import api from '../../api';
 import { message } from '../../utils/message';
-import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../../design-system';
+import { PageHeader, StatusTag, EmptyState, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../../design-system';
 import { downloadCsv } from '../../utils/exportCsv';
 import { useAuthStore } from '../../store';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -285,7 +285,7 @@ const POSProducts: React.FC = () => {
  dataIndex: 'qty_available',
  key: 'qty_available',
  render: (val: number) => (
- <Tag color={(val ?? 0) > 0 ? 'green' : 'red'}>{val ?? 0}</Tag>
+ <StatusTag status={(val ?? 0) > 0 ? 'active' : 'error'} label={String(val ?? 0)} />
  ),
  },
  {
@@ -317,7 +317,8 @@ const POSProducts: React.FC = () => {
  const showEmptyState = !loading && data.length === 0 && noFilters;
 
  return (
- <Card
+ <>
+ <PageHeader
  title={t('pos.products')}
  extra={
  <Space>
@@ -338,8 +339,22 @@ const POSProducts: React.FC = () => {
  </Button>
  </Space>
  }
+ />
+ <div
+ style={{
+ display: 'flex',
+ gap: 'var(--space-sm)',
+ flexWrap: 'wrap',
+ alignItems: 'center',
+ marginBlockEnd: 'var(--space-lg)',
+ paddingBlock: 'var(--space-sm)',
+ paddingInline: 'var(--space-md)',
+ background: 'var(--surface)',
+ border: '1px solid var(--border)',
+ borderRadius: 'var(--radius-lg)',
+ boxShadow: 'var(--shadow-sm)',
+ }}
  >
- <Space style={{ marginBottom: 16 }} wrap>
  <Input
  placeholder={t('search')}
  value={filters.q}
@@ -359,6 +374,7 @@ const POSProducts: React.FC = () => {
  <Button type="primary" onClick={handleSearch}>
  {t('search')}
  </Button>
+ <div style={{ flex: 1, minWidth: 0 }} />
  <ExportMenu
  formats={['csv']}
  onExport={(f: ExportFormat) => {
@@ -369,39 +385,24 @@ const POSProducts: React.FC = () => {
  }}
  />
  <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
- </Space>
+ </div>
 
  {showEmptyState ? (
- <div style={{ padding: '48px 16px' }}>
- <Empty
- image={<AppstoreAddOutlined style={{ fontSize: 64, color: 'var(--ink-400)' }} />}
- description={
- <div style={{ marginTop: 12 }}>
- <Text strong style={{ fontSize: 16, display: 'block', marginBottom: 4 }}>
- {t('pos.no_products_yet', 'No POS products yet')}
- </Text>
- <Text type="secondary">
- {t(
+ <EmptyState
+ icon={<AppstoreAddOutlined />}
+ title={t('pos.no_products_yet', 'No POS products yet')}
+ description={t(
  'pos.no_products_help',
  'Pull existing inventory items into POS, or create a new item from scratch.',
  )}
- </Text>
- </div>
- }
- >
- <Space>
- <Button type="primary" icon={<ImportOutlined />} onClick={openPullModal}>
- {t('pos.add_existing_items', 'Add from inventory')}
- </Button>
- <Button
- icon={<PlusOutlined />}
- onClick={openCreateModal}
- >
+ actionLabel={t('pos.add_existing_items', 'Add from inventory')}
+ onAction={openPullModal}
+ secondary={
+ <Button icon={<PlusOutlined />} onClick={openCreateModal}>
  {t('pos.create_new_item', 'Create new item')}
  </Button>
- </Space>
- </Empty>
- </div>
+ }
+ />
  ) : (
  <ResponsiveTableAdapter
  dataSource={data}
@@ -620,7 +621,7 @@ const POSProducts: React.FC = () => {
  </Form.Item>
  </Form>
  </FormDialog>
- </Card>
+ </>
  );
 };
 

@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Tag, Button, Typography } from 'antd';
+import { Button, Typography } from 'antd';
 import { LeftOutlined, ShoppingOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
 import api from '../../api';
+import { PageHeader, SectionCard, StatusTag, type StatusKind } from '../../design-system';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 const PortalOrders: React.FC = () => {
   const { t } = useTranslation();
@@ -49,7 +50,7 @@ const PortalOrders: React.FC = () => {
       key: 'id',
       render: (text: string) => (
         <span>
-          <ShoppingOutlined style={{ marginRight: 8 }} />
+          <ShoppingOutlined style={{ marginInlineEnd: 8 }} />
           {text.slice(0, 8)}...
         </span>
       ),
@@ -63,12 +64,13 @@ const PortalOrders: React.FC = () => {
       title: t('portal.source'),
       dataIndex: 'source',
       key: 'source',
-      render: (source: string) => <Tag>{source || 'manual'}</Tag>,
+      render: (source: string) => <StatusTag status="default" label={source || 'manual'} />,
     },
     {
       title: t('portal.total'),
       dataIndex: 'total',
       key: 'total',
+      align: 'right' as const,
       render: (val: number) => (
         <Text strong>{val?.toLocaleString()} {t('currency')}</Text>
       ),
@@ -78,21 +80,21 @@ const PortalOrders: React.FC = () => {
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => {
-        const colorMap: Record<string, string> = {
+        const kindMap: Record<string, StatusKind> = {
           draft: 'default',
-          confirmed: 'blue',
-          processing: 'orange',
-          shipped: 'cyan',
-          delivered: 'green',
-          cancelled: 'red',
+          confirmed: 'info',
+          processing: 'warning',
+          shipped: 'info',
+          delivered: 'success',
+          cancelled: 'error',
         };
-        return <Tag color={colorMap[status] || 'default'}>{status}</Tag>;
+        return <StatusTag status={kindMap[status] || 'default'} label={status} />;
       },
     },
   ];
 
   return (
-    <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
+    <div style={{ padding: '24px', background: 'var(--surface-2)', minHeight: '100vh' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <Button
           icon={<LeftOutlined />}
@@ -102,9 +104,9 @@ const PortalOrders: React.FC = () => {
           {t('portal.back_to_dashboard')}
         </Button>
 
-        <Card>
-          <Title level={2}>{t('portal.my_orders')}</Title>
+        <PageHeader title={t('portal.my_orders')} />
 
+        <SectionCard padded={false}>
           <ResponsiveTableAdapter
             dataSource={orders}
             columns={columns}
@@ -113,7 +115,7 @@ const PortalOrders: React.FC = () => {
             pagination={{ pageSize: 20 }}
             locale={{ emptyText: t('portal.no_orders') }}
           />
-        </Card>
+        </SectionCard>
       </div>
     </div>
   );

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { List, Button, Space, Tag, Card, message, Empty, Spin, Select } from 'antd';
+import { List, Button, Space, Tag, message, Empty, Spin, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, CloseOutlined, ReloadOutlined, BulbOutlined } from '@ant-design/icons';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard, StatusTag } from '../../design-system';
 import api from '../../api';
 
 interface SuggestionItem {
@@ -116,16 +116,15 @@ const SuggestionsInbox: React.FC = () => {
 
       {Object.keys(grouped).length === 0 ? (
         <Empty
-          image={<BulbOutlined style={{ fontSize: 64, color: '#d9d9d9' }} />}
+          image={<BulbOutlined style={{ fontSize: 64, color: 'var(--ink-300)' }} />}
           description={t('ai.no_suggestions')}
           style={{ marginTop: 60 }}
         />
       ) : (
         Object.entries(grouped).map(([entityType, suggestions]) => (
-          <Card
+          <SectionCard
             key={entityType}
             title={<Tag color="blue">{entityType}</Tag>}
-            style={{ marginBottom: 16 }}
           >
             <List
               dataSource={suggestions}
@@ -155,13 +154,13 @@ const SuggestionsInbox: React.FC = () => {
                   ].filter(Boolean)}
                 >
                   <List.Item.Meta
-                    avatar={<BulbOutlined style={{ fontSize: 24, color: '#faad14' }} />}
+                    avatar={<BulbOutlined style={{ fontSize: 24, color: 'var(--warning-500)' }} />}
                     title={
                       <Space>
                         {item.items.map((itm, idx) => (
                           <Tag key={idx}>{itm.action || itm.entity}</Tag>
                         ))}
-                        {item.status && <Tag color="green">{item.status}</Tag>}
+                        {item.status && <StatusTag status="success" label={item.status} />}
                       </Space>
                     }
                     description={
@@ -170,7 +169,7 @@ const SuggestionsInbox: React.FC = () => {
                           {item.rationale || t('ai.no_rationale')}
                         </div>
                         {item.items.map((itm, idx) => (
-                          <div key={idx} style={{ fontSize: 12, color: '#8c8c8c' }}>
+                          <div key={idx} style={{ fontSize: 12, color: 'var(--ink-500)' }}>
                             {itm.confidence !== undefined && (
                               <>
                                 {t('ai.confidence')}: {(itm.confidence * 100).toFixed(0)}%
@@ -178,7 +177,7 @@ const SuggestionsInbox: React.FC = () => {
                             )}
                           </div>
                         ))}
-                        <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 4 }}>
+                        <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 4 }}>
                           {item.created_at
                             ? item.created_at.substring(0, 16).replace('T', ' ')
                             : ''}
@@ -189,7 +188,7 @@ const SuggestionsInbox: React.FC = () => {
                 </List.Item>
               )}
             />
-          </Card>
+          </SectionCard>
         ))
       )}
     </div>

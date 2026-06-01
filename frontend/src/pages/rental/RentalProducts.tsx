@@ -2,12 +2,11 @@ import type React from 'react';
 import { useEffect, useState } from 'react';
 import { Button, Space, Input, Form, InputNumber, Switch, Modal } from 'antd';
 import { message } from '../../utils/message';
-import { PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import { PageHeader, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat, BulkActionBar } from '../../design-system';
+import { PageHeader, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat, BulkActionBar, FilterBar, StatusTag } from '../../design-system';
 import { downloadCsv } from '../../utils/exportCsv';
-import { space } from '../../theme/tokens';
 import { useAuthStore } from '../../store';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -138,7 +137,7 @@ const RentalProducts: React.FC = () => {
  title: t('rental.available'),
  dataIndex: 'is_available',
  key: 'is_available',
- render: (v: boolean) => (v ? t('yes') : t('no')),
+ render: (v: boolean) => <StatusTag status={v ? 'success' : 'default'} label={v ? t('yes') : t('no')} />,
  },
  {
  title: t('actions'),
@@ -194,24 +193,11 @@ const RentalProducts: React.FC = () => {
  }
  />
 
- <div
- style={{
- display: 'flex',
- justifyContent: 'space-between',
- marginBottom: space.md,
- alignItems: 'center',
- gap: space.md,
- flexWrap: 'wrap',
- }}
- >
- <Input
- prefix={<SearchOutlined />}
- placeholder={t('search')}
- value={search}
- onChange={(e) => setSearch(e.target.value)}
- style={{ width: 320 }}
- allowClear
- />
+ <FilterBar
+ searchValue={search}
+ onSearchChange={setSearch}
+ searchPlaceholder={t('search')}
+ extra={
  <Space>
  <ExportMenu
  formats={['csv']}
@@ -231,7 +217,8 @@ const RentalProducts: React.FC = () => {
  isDark={isDark}
  />
  </Space>
- </div>
+ }
+ />
 
  <ResponsiveTableAdapter
  dataSource={filteredData}

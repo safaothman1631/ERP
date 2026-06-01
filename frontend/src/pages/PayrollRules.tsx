@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Card, Button, Form, Input, InputNumber, Select, Space, Popconfirm, Tag, message, Switch } from 'antd';
+import { Button, Form, Input, InputNumber, Select, Space, Popconfirm, message, Switch } from 'antd';
 import { PlusOutlined, DeleteOutlined, EditOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
-import { PageHeader } from '../design-system';
-import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
+import { PageHeader, DataTable, StatusTag } from '../design-system';
+import type { ColumnDef } from '../design-system/DataTable';
 import { FormDialog } from '../components/responsive/FormDialog';
 
 interface Rule {
@@ -42,15 +42,15 @@ export default function PayrollRules() {
 
  const startEdit = (r: Rule) => { setEditing(r); form.setFieldsValue(r); setOpen(true); };
 
- const cols = [
+ const cols: ColumnDef<Rule>[] = [
  { title: t('code'), dataIndex: 'code' },
  { title: t('name'), dataIndex: 'name' },
- { title: t('type'), dataIndex: 'type', render: (s?: string) => <Tag>{s}</Tag> },
+ { title: t('type'), dataIndex: 'type', render: (s?: string) => s ? <StatusTag status="default" label={s} /> : '—' },
  { title: t('amount_type'), dataIndex: 'amount_type' },
  { title: t('amount'), dataIndex: 'amount', align: 'right' as const,
  render: (n: number, r: Rule) => r.amount_type === 'percent' ? `${n}%` : n.toLocaleString() },
  { title: t('active'), dataIndex: 'active',
- render: (b: boolean) => <Tag color={b ? 'green' : 'default'}>{b ? t('yes') : t('no')}</Tag> },
+ render: (b: boolean) => <StatusTag status={b ? 'active' : 'default'} label={b ? t('yes') : t('no')} /> },
  {
  title: t('actions'),
  render: (_: unknown, r: Rule) => (
@@ -65,7 +65,7 @@ export default function PayrollRules() {
  ];
 
  return (
- <div style={{ padding: 16 }}>
+ <div>
  <PageHeader
  title={t('salary_rules')}
  extra={
@@ -77,7 +77,7 @@ export default function PayrollRules() {
  </Space>
  }
  />
- <Card><ResponsiveTableAdapter rowKey="id" dataSource={list} columns={cols} pagination={false} /></Card>
+ <DataTable rowKey="id" dataSource={list} columns={cols} pagination={false} />
 
  <FormDialog open={open} onOk={save} onClose={() => setOpen(false)} title={editing ? t('edit_rule') : t('new_rule')}>
  <Form form={form} layout="vertical">

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Button, DatePicker, Space, Statistic, Typography, message } from 'antd';
+import { Button, DatePicker, Space, Typography, message } from 'antd';
 import { ReloadOutlined, EditOutlined, DollarOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import api from '../../api';
-import { PageHeader, LoadingSkeleton } from '../../design-system';
+import { PageHeader, LoadingSkeleton, SectionCard, KpiCard } from '../../design-system';
+import { dataViz } from '../../theme/tokens';
 import dayjs, { Dayjs } from 'dayjs';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -22,7 +23,7 @@ const { RangePicker } = DatePicker;
 const { Text, Title: _Title } = Typography;
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+const COLORS = dataViz.categorical;
 
 const DashboardView: React.FC = () => {
   const { t } = useTranslation();
@@ -92,15 +93,13 @@ const DashboardView: React.FC = () => {
 
     if (widget.type === 'kpi') {
       return (
-        <Card style={{ height: '100%' }}>
-          <Statistic
-            title={widget.title}
-            value={value}
-            prefix={config.icon ? <DollarOutlined /> : undefined}
-            suffix={config.unit}
-            valueStyle={{ color: config.color || '#3f8600' }}
-          />
-        </Card>
+        <KpiCard
+          title={widget.title}
+          value={value ?? '—'}
+          icon={config.icon ? <DollarOutlined /> : undefined}
+          suffix={config.unit}
+          tone="success"
+        />
       );
     }
 
@@ -111,41 +110,41 @@ const DashboardView: React.FC = () => {
         value: item.total || item.quantity || 0
       }));
       return (
-        <Card title={widget.title} style={{ height: '100%' }}>
+        <SectionCard title={widget.title} style={{ height: '100%', marginBottom: 0 }}>
           <ResponsiveChart legendItems={[]} minMobileBlockSize={250}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="value" fill={config.color || '#8884d8'} />
+              <Bar dataKey="value" fill={config.color || dataViz.categorical[0]} />
             </BarChart>
           </ResponsiveChart>
-        </Card>
+        </SectionCard>
       );
     }
 
     if (widget.type === 'line') {
       const items = data?.raw?.data?.items || [];
       return (
-        <Card title={widget.title} style={{ height: '100%' }}>
+        <SectionCard title={widget.title} style={{ height: '100%', marginBottom: 0 }}>
           <ResponsiveChart legendItems={[]} minMobileBlockSize={250}>
             <LineChart data={items}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Line type="monotone" dataKey="value" stroke={config.color || '#8884d8'} />
+              <Line type="monotone" dataKey="value" stroke={config.color || dataViz.categorical[0]} />
             </LineChart>
           </ResponsiveChart>
-        </Card>
+        </SectionCard>
       );
     }
 
     if (widget.type === 'pie') {
       const items = data?.raw?.data?.items || [];
       return (
-        <Card title={widget.title} style={{ height: '100%' }}>
+        <SectionCard title={widget.title} style={{ height: '100%', marginBottom: 0 }}>
           <ResponsiveChart legendItems={[]} minMobileBlockSize={250}>
             <PieChart>
               <Pie data={items} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
@@ -156,7 +155,7 @@ const DashboardView: React.FC = () => {
               <Tooltip />
             </PieChart>
           </ResponsiveChart>
-        </Card>
+        </SectionCard>
       );
     }
 
@@ -168,29 +167,29 @@ const DashboardView: React.FC = () => {
         key
       })) : [];
       return (
-        <Card title={widget.title} style={{ height: '100%' }}>
+        <SectionCard title={widget.title} padded={false} style={{ height: '100%', marginBottom: 0 }}>
           <ResponsiveTableAdapter dataSource={items} columns={columns} pagination={false} size="small" scroll={{ y: 200 }} />
-        </Card>
+        </SectionCard>
       );
     }
 
     if (widget.type === 'progress') {
       return (
-        <Card title={widget.title} style={{ height: '100%' }}>
+        <SectionCard title={widget.title} style={{ height: '100%', marginBottom: 0 }}>
           <Text>Progress: {value}%</Text>
-        </Card>
+        </SectionCard>
       );
     }
 
     if (widget.type === 'iframe') {
       return (
-        <Card title={widget.title} style={{ height: '100%' }}>
-          <iframe src={config.url} style={{ width: '100%', height: 300, border: 0 }} />
-        </Card>
+        <SectionCard title={widget.title} style={{ height: '100%', marginBottom: 0 }}>
+          <iframe title={widget.title} src={config.url} style={{ width: '100%', height: 300, border: 0 }} />
+        </SectionCard>
       );
     }
 
-    return <Card title={widget.title}>Unknown widget type</Card>;
+    return <SectionCard title={widget.title} style={{ marginBottom: 0 }}>Unknown widget type</SectionCard>;
   };
 
   const layouts: Layout[] = dashboard?.widgets?.map((w: any) => ({
@@ -228,7 +227,7 @@ const DashboardView: React.FC = () => {
         }
       />
 
-      <div style={{ marginTop: 24 }}>
+      <div>
         <ResponsiveGridLayout
           className="layout"
           layouts={{ lg: layouts }}

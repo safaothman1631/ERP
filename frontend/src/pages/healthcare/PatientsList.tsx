@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Space, Input, Form, message, Popconfirm, Tag } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { PageHeader } from '../../design-system';
-import { ListWithEmptyState } from '../../design-system/empty/ListWithEmptyState';
+import { PageHeader, FilterBar, DataTable } from '../../design-system';
 import api from '../../api';
-import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
 interface Patient {
@@ -26,7 +24,6 @@ const PatientsList: React.FC = () => {
  const [form] = Form.useForm();
  const [loading, setLoading] = useState(false);
  const [patients, setPatients] = useState<Patient[]>([]);
- const [total, setTotal] = useState(0);
  const [searchText, setSearchText] = useState('');
  const [modalVisible, setModalVisible] = useState(false);
  const [editingId, setEditingId] = useState<string | null>(null);
@@ -40,7 +37,6 @@ const PatientsList: React.FC = () => {
  try {
  const res = await api.get('/api/healthcare/patients', { params: { limit: 500 } });
  setPatients(res.data.items);
- setTotal(res.data.total);
  } catch (error) {
  console.error(error);
  void message.error(t('error'));
@@ -164,33 +160,23 @@ const PatientsList: React.FC = () => {
  }
  />
 
- <Space style={{ marginBottom: 16 }}>
- <Input
- placeholder={t('healthcare.search_patient')}
- prefix={<SearchOutlined />}
- value={searchText}
- onChange={(e) => setSearchText(e.target.value)}
- style={{ width: 300 }}
+ <FilterBar
+ searchPlaceholder={t('healthcare.search_patient')}
+ searchValue={searchText}
+ onSearchChange={setSearchText}
  />
- </Space>
 
- <ListWithEmptyState
- entity="patient"
- data={filteredPatients}
- loading={loading}
- searchQuery={searchText}
- onClearSearch={() => setSearchText('')}
- onCreate={handleCreate}
- onRetry={() => void fetchPatients()}
- render={(rows) => (
- <ResponsiveTableAdapter
- dataSource={rows}
+ <DataTable<Patient>
  columns={columns}
+ dataSource={filteredPatients}
  rowKey="id"
  loading={loading}
- pagination={{ total, pageSize: 50 }}
- />
- )}
+ stickyHeader={false}
+ emptyIcon={<TeamOutlined />}
+ emptyTitle={t('healthcare.patients')}
+ emptyActionLabel={t('healthcare.new_patient')}
+ onEmptyAction={handleCreate}
+ pagination={{ pageSize: 50, showSizeChanger: true }}
  />
 
  <FormDialog

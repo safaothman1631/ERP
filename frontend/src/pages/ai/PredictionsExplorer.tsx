@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Tag, Typography, message, Card, Progress } from 'antd';
+import { Button, Space, Tag, Typography, message, Progress } from 'antd';
 import type { TableProps } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { ReloadOutlined, EyeOutlined, LineChartOutlined } from '@ant-design/icons';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard } from '../../design-system';
 import api from '../../api';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -90,7 +90,7 @@ const PredictionsExplorer: React.FC = () => {
  <Progress
  percent={percent}
  style={{ width: 80 }}
- strokeColor={percent > 80 ? '#52c41a' : percent > 50 ? '#faad14' : '#ff4d4f'}
+ strokeColor={percent > 80 ? 'var(--success-500)' : percent > 50 ? 'var(--warning-500)' : 'var(--danger-500)'}
  />
  </Space>
  );
@@ -147,11 +147,11 @@ const PredictionsExplorer: React.FC = () => {
  >
  {selectedPrediction && (
  <>
- <Card style={{ marginBottom: 16 }}>
+ <SectionCard>
  <Space direction="vertical" style={{ width: '100%' }}>
  <div>
  <Text type="secondary">{t('ai.entity')}:</Text>
- <Tag color="purple" style={{ marginLeft: 8 }}>
+ <Tag color="purple" style={{ marginInlineStart: 8 }}>
  {selectedPrediction.entity}
  </Tag>
  </div>
@@ -163,7 +163,7 @@ const PredictionsExplorer: React.FC = () => {
  <Text type="secondary">{t('ai.confidence')}:</Text>{' '}
  <Progress
  percent={(selectedPrediction.confidence || 0) * 100}
- style={{ width: 200, marginLeft: 8 }}
+ style={{ width: 200, marginInlineStart: 8 }}
  />
  </div>
  <div>
@@ -173,16 +173,16 @@ const PredictionsExplorer: React.FC = () => {
  </Text>
  </div>
  </Space>
- </Card>
+ </SectionCard>
 
  {selectedPrediction.explanation && (
- <Card title={t('ai.explanation')} style={{ marginBottom: 16 }}>
+ <SectionCard title={t('ai.explanation')}>
  <Paragraph>{selectedPrediction.explanation}</Paragraph>
- </Card>
+ </SectionCard>
  )}
 
  {selectedPrediction.points && selectedPrediction.points.length > 0 && (
- <Card title={t('ai.forecast_points')}>
+ <SectionCard title={t('ai.forecast_points')}>
  <ResponsiveTableAdapter
  dataSource={selectedPrediction.points}
  pagination={false}
@@ -221,7 +221,7 @@ const PredictionsExplorer: React.FC = () => {
  },
  ]}
  />
- </Card>
+ </SectionCard>
  )}
  </>
  )}

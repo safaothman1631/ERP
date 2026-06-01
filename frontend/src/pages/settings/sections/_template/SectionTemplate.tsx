@@ -44,12 +44,13 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Card, Form, Input, Button, Space, Spin, Alert } from 'antd';
+import { Form, Input, Button, Space, Spin, Alert } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 
 import api from '../../../../api';
 import { useClassedQuery } from '../../../../data/useClassedQuery';
+import { SectionCard } from '../../../../design-system';
 import { message } from '../../../../utils/message';
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -111,7 +112,7 @@ const SectionTemplate: React.FC = React.memo(() => {
   }
 
   return (
-    <Card>
+    <SectionCard style={{ marginBottom: 0 }}>
       <Form<ExampleConfig> form={form} layout="vertical">
         <Form.Item
           name="some_field"
@@ -126,7 +127,7 @@ const SectionTemplate: React.FC = React.memo(() => {
           </Button>
         </Space>
       </Form>
-    </Card>
+    </SectionCard>
   );
 });
 

@@ -5,7 +5,7 @@ import { message } from '../../utils/message';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
-import { PageHeader, EmptyState } from '../../design-system';
+import { PageHeader, EmptyState, StatusTag } from '../../design-system';
 import api from '../../api';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -142,7 +142,7 @@ const CustomFieldsBuilder: React.FC = () => {
  title: t('studio.field_name', 'Field Name'),
  dataIndex: 'field_name',
  key: 'field_name',
- render: (v: string) => <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{v}</span>,
+ render: (v: string) => <span style={{ fontFamily: 'var(--font-mono, monospace)', fontWeight: 600 }}>{v}</span>,
  },
  {
  title: t('studio.field_label', 'Label (EN)'),
@@ -159,13 +159,13 @@ const CustomFieldsBuilder: React.FC = () => {
  title: t('studio.field_type', 'Type'),
  dataIndex: 'field_type',
  key: 'field_type',
- render: (v: string) => <Tag color="blue">{v}</Tag>,
+ render: (v: string) => <StatusTag status="info" label={v} />,
  },
  {
  title: t('required'),
  dataIndex: 'is_required',
  key: 'is_required',
- render: (v: boolean) => (v ? <Tag color="red">{t('yes')}</Tag> : <Tag>{t('no')}</Tag>),
+ render: (v: boolean) => (v ? <StatusTag status="error" label={t('yes')} /> : <StatusTag status="default" label={t('no')} />),
  },
  {
  title: t('studio.order', 'Order'),

@@ -1,11 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Tag, Form, Input, InputNumber, Select, Tabs, App, Switch, DatePicker, Modal } from 'antd';
+import { Button, Space, Form, Input, InputNumber, Select, Tabs, App, Switch, DatePicker, Modal } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, GiftOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import api from '../../api';
+import { PageHeader, StatusTag } from '../../design-system';
+import type { StatusKind } from '../../design-system';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
+
+// Map loyalty program types → StatusTag semantic kinds (auto-flip tokens).
+const PROGRAM_TYPE_KIND: Record<string, StatusKind> = {
+ loyalty: 'info',
+ coupons: 'active',
+ gift_card: 'viewed',
+ ewallet: 'warning',
+ promotion: 'error',
+};
 
 interface LoyaltyProgram {
  id: string;
@@ -150,7 +161,7 @@ const POSLoyalty: React.FC = () => {
  render: (_: any, record: LoyaltyProgram) => (
  <div>
  <div>{record.name}</div>
- {record.name_ku && <div style={{ fontSize: 12, color: '#999' }}>{record.name_ku}</div>}
+ {record.name_ku && <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>{record.name_ku}</div>}
  </div>
  ),
  },
@@ -158,16 +169,9 @@ const POSLoyalty: React.FC = () => {
  title: t('type'),
  dataIndex: 'program_type',
  key: 'program_type',
- render: (type: string) => {
- const colors: Record<string, string> = {
- loyalty: 'blue',
- coupons: 'green',
- gift_card: 'purple',
- ewallet: 'orange',
- promotion: 'red',
- };
- return <Tag color={colors[type] || 'default'}>{t(`loyalty_type_${type}`)}</Tag>;
- },
+ render: (type: string) => (
+ <StatusTag status={PROGRAM_TYPE_KIND[type] ?? 'default'} label={t(`loyalty_type_${type}`)} />
+ ),
  },
  {
  title: t('point_ratio'),
@@ -196,7 +200,7 @@ const POSLoyalty: React.FC = () => {
  dataIndex: 'is_active',
  key: 'is_active',
  render: (val: boolean) => (
- <Tag color={val ? 'green' : 'default'}>{val ? t('active') : t('inactive')}</Tag>
+ <StatusTag status={val ? 'active' : 'inactive'} label={val ? t('active') : t('inactive')} />
  ),
  },
  {
@@ -240,14 +244,14 @@ const POSLoyalty: React.FC = () => {
  title: t('points_balance'),
  dataIndex: 'points_balance',
  key: 'points_balance',
- render: (val: number) => <Tag color="blue">{val.toFixed(2)}</Tag>,
+ render: (val: number) => <StatusTag status="info" label={val.toFixed(2)} />,
  },
  {
  title: t('status'),
  dataIndex: 'is_active',
  key: 'is_active',
  render: (val: boolean) => (
- <Tag color={val ? 'green' : 'default'}>{val ? t('active') : t('inactive')}</Tag>
+ <StatusTag status={val ? 'active' : 'inactive'} label={val ? t('active') : t('inactive')} />
  ),
  },
  {
@@ -260,15 +264,23 @@ const POSLoyalty: React.FC = () => {
 
  return (
  <div style={{ padding: 24 }}>
- <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
- <h1>{t('loyalty_programs')}</h1>
+ <PageHeader
+ title={t('loyalty_programs')}
+ extra={
  <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
  {t('add_program')}
  </Button>
- </div>
+ }
+ />
 
- <Tabs activeKey={activeTab} onChange={setActiveTab}>
- <Tabs.TabPane tab={t('programs')} key="programs">
+ <Tabs
+ activeKey={activeTab}
+ onChange={setActiveTab}
+ items={[
+ {
+ key: 'programs',
+ label: t('programs'),
+ children: (
  <ResponsiveTableAdapter
  columns={programColumns}
  dataSource={programs}
@@ -276,9 +288,13 @@ const POSLoyalty: React.FC = () => {
  loading={loading}
  pagination={{ pageSize: 20 }}
  />
- </Tabs.TabPane>
- 
- <Tabs.TabPane tab={t('loyalty_cards')} key="cards">
+ ),
+ },
+ {
+ key: 'cards',
+ label: t('loyalty_cards'),
+ children: (
+ <>
  <div style={{ marginBottom: 16 }}>
  <Button icon={<GiftOutlined />} onClick={handleIssueCard}>
  {t('issue_card')}
@@ -291,8 +307,11 @@ const POSLoyalty: React.FC = () => {
  loading={loading}
  pagination={{ pageSize: 20 }}
  />
- </Tabs.TabPane>
- </Tabs>
+ </>
+ ),
+ },
+ ]}
+ />
 
  <FormDialog
  title={editingId ? t('edit_program') : t('add_program')}

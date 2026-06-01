@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Descriptions, Tabs, Button, Space, Form, Input, Tag } from 'antd';
+import { Tabs, Button, Space, Form, Input } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { PlayCircleOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import api from '../../api';
-import { PageHeader, LoadingSkeleton } from '../../design-system';
+import { PageHeader, LoadingSkeleton, DetailLayout, SectionCard, KeyValueGrid, StatusTag } from '../../design-system';
+import type { StatusKind, KeyValueItem } from '../../design-system';
 import { message } from '../../utils/message';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { useLoadingState } from '../../hooks/useLoadingState';
@@ -111,125 +112,81 @@ const ServiceOrderDetail: React.FC = () => {
  return <LoadingSkeleton variant="card" />;
  }
 
- const statusColors: Record<string, string> = {
+ const statusKinds: Record<string, StatusKind> = {
  draft: 'default',
- scheduled: 'blue',
- in_progress: 'orange',
- done: 'green',
- cancelled: 'red',
+ scheduled: 'info',
+ in_progress: 'warning',
+ done: 'success',
+ cancelled: 'error',
  };
 
- const priorityColors: Record<string, string> = {
+ const priorityKinds: Record<string, StatusKind> = {
  low: 'default',
- normal: 'blue',
- high: 'orange',
- urgent: 'red',
+ normal: 'info',
+ high: 'warning',
+ urgent: 'error',
  };
 
  const canStart = order.status === 'scheduled';
  const canComplete = order.status === 'in_progress';
  const canCancel = order.status !== 'done' && order.status !== 'cancelled';
 
+ const detailItems: KeyValueItem[] = [
+ { label: t('field_service.order_number'), value: order.order_number || order.id.slice(0, 8) },
+ { label: t('field_service.status'), value: <StatusTag status={statusKinds[order.status] || 'default'} label={t(`field_service.status_${order.status}`)} /> },
+ { label: t('field_service.customer_name'), value: order.customer_name },
+ { label: t('field_service.priority'), value: <StatusTag status={priorityKinds[order.priority] || 'default'} label={t(`field_service.priority_${order.priority}`)} /> },
+ { label: t('field_service.address'), value: order.address || '-', span: 2 },
+ { label: t('field_service.scheduled_at'), value: order.scheduled_at ? dayjs(order.scheduled_at).format('YYYY-MM-DD HH:mm') : '-' },
+ { label: t('field_service.technician'), value: order.assigned_worker_name || '-' },
+ { label: t('field_service.description'), value: order.description || '-', span: 2 },
+ ...(order.latitude ? [{ label: t('field_service.latitude'), value: order.latitude } as KeyValueItem] : []),
+ ...(order.longitude ? [{ label: t('field_service.longitude'), value: order.longitude } as KeyValueItem] : []),
+ ...(order.started_at ? [{ label: t('field_service.started_at'), value: dayjs(order.started_at).format('YYYY-MM-DD HH:mm'), span: 2 } as KeyValueItem] : []),
+ ...(order.completed_at ? [{ label: t('field_service.completed_at'), value: dayjs(order.completed_at).format('YYYY-MM-DD HH:mm'), span: 2 } as KeyValueItem] : []),
+ ...(order.completion_notes ? [{ label: t('field_service.completion_notes'), value: order.completion_notes, span: 2 } as KeyValueItem] : []),
+ ...(order.cancel_reason ? [{ label: t('field_service.cancel_reason'), value: order.cancel_reason, span: 2 } as KeyValueItem] : []),
+ ];
+
  const tabItems = [
  {
  key: 'details',
  label: t('field_service.order_details'),
- children: (
- <Descriptions bordered column={2}>
- <Descriptions.Item label={t('field_service.order_number')}>
- {order.order_number || order.id.slice(0, 8)}
- </Descriptions.Item>
- <Descriptions.Item label={t('field_service.status')}>
- <Tag color={statusColors[order.status]}>{t(`field_service.status_${order.status}`)}</Tag>
- </Descriptions.Item>
- <Descriptions.Item label={t('field_service.customer_name')}>
- {order.customer_name}
- </Descriptions.Item>
- <Descriptions.Item label={t('field_service.priority')}>
- <Tag color={priorityColors[order.priority]}>{t(`field_service.priority_${order.priority}`)}</Tag>
- </Descriptions.Item>
- <Descriptions.Item label={t('field_service.address')} span={2}>
- {order.address || '-'}
- </Descriptions.Item>
- <Descriptions.Item label={t('field_service.scheduled_at')}>
- {order.scheduled_at ? dayjs(order.scheduled_at).format('YYYY-MM-DD HH:mm') : '-'}
- </Descriptions.Item>
- <Descriptions.Item label={t('field_service.technician')}>
- {order.assigned_worker_name || '-'}
- </Descriptions.Item>
- <Descriptions.Item label={t('field_service.description')} span={2}>
- {order.description || '-'}
- </Descriptions.Item>
- {order.latitude && (
- <Descriptions.Item label={t('field_service.latitude')}>{order.latitude}</Descriptions.Item>
- )}
- {order.longitude && (
- <Descriptions.Item label={t('field_service.longitude')}>{order.longitude}</Descriptions.Item>
- )}
- {order.started_at && (
- <Descriptions.Item label={t('field_service.started_at')} span={2}>
- {dayjs(order.started_at).format('YYYY-MM-DD HH:mm')}
- </Descriptions.Item>
- )}
- {order.completed_at && (
- <Descriptions.Item label={t('field_service.completed_at')} span={2}>
- {dayjs(order.completed_at).format('YYYY-MM-DD HH:mm')}
- </Descriptions.Item>
- )}
- {order.completion_notes && (
- <Descriptions.Item label={t('field_service.completion_notes')} span={2}>
- {order.completion_notes}
- </Descriptions.Item>
- )}
- {order.cancel_reason && (
- <Descriptions.Item label={t('field_service.cancel_reason')} span={2}>
- {order.cancel_reason}
- </Descriptions.Item>
- )}
- </Descriptions>
- ),
+ children: <KeyValueGrid columns={2} items={detailItems} />,
  },
  {
  key: 'time',
  label: t('field_service.time_log'),
- children: (
- <Card>
- <ComingSoon featureNameKey="field_service.time_log" />
- </Card>
- ),
+ children: <ComingSoon featureNameKey="field_service.time_log" />,
  },
  {
  key: 'parts',
  label: t('field_service.parts_used'),
- children: (
- <Card>
- <ComingSoon featureNameKey="field_service.parts_used" />
- </Card>
- ),
+ children: <ComingSoon featureNameKey="field_service.parts_used" />,
  },
  {
  key: 'signature',
  label: t('field_service.customer_signature'),
- children: (
- <Card>
- <ComingSoon featureNameKey="field_service.customer_signature" />
- </Card>
- ),
+ children: <ComingSoon featureNameKey="field_service.customer_signature" />,
  },
  ];
 
  return (
- <>
+ <DetailLayout
+ header={
  <PageHeader
  title={`${t('field_service.order_number')}: ${order.order_number || order.id.slice(0, 8)}`}
  subtitle={order.customer_name}
+ tag={<StatusTag status={statusKinds[order.status] || 'default'} label={t(`field_service.status_${order.status}`)} />}
  breadcrumb={[
  { label: t('dashboard'), to: '/' },
  { label: t('field_service.title') },
  { label: t('field_service.service_orders'), to: '/field-service/orders' },
  { label: order.order_number || order.id.slice(0, 8) },
  ]}
- extra={
+ />
+ }
+ toolbar={
  <Space>
  {canStart && (
  <Button type="primary" icon={<PlayCircleOutlined />} onClick={handleStart}>
@@ -248,11 +205,10 @@ const ServiceOrderDetail: React.FC = () => {
  )}
  </Space>
  }
- />
-
- <Card>
+ >
+ <SectionCard>
  <Tabs items={tabItems} />
- </Card>
+ </SectionCard>
 
  <FormDialog
  title={t('field_service.complete_order')}
@@ -285,7 +241,7 @@ const ServiceOrderDetail: React.FC = () => {
  </Form.Item>
  </Form>
  </FormDialog>
- </>
+ </DetailLayout>
  );
 };
 

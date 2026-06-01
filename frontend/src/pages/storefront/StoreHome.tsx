@@ -4,6 +4,7 @@ import { SearchOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
+import { StatusTag } from '../../design-system';
 import { LoadingSkeleton } from '../../design-system/LoadingSkeleton';
 import { useLoadingState } from '../../hooks/useLoadingState';
 
@@ -154,9 +155,9 @@ const StoreHome: React.FC = () => {
                         description={
                           <>
                             {product.category && (
-                              <Tag color="blue" style={{ marginBottom: 8 }}>
-                                {product.category}
-                              </Tag>
+                              <div style={{ marginBottom: 8 }}>
+                                <StatusTag status="info" label={product.category} />
+                              </div>
                             )}
                             <div>
                               <Text strong style={{ fontSize: 18, color: 'var(--accent-500)' }}>

@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Button, Form, Input, InputNumber, Select, message, Space, Tag, Popconfirm } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ArrowLeftOutlined, SettingOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard, StatusTag } from '../../design-system';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
-import { palette } from '../../theme/tokens';
 
 const { Option } = Select;
 
@@ -179,13 +178,13 @@ const NumberingSequences: React.FC = () => {
  title: t('numbering.format_template'),
  dataIndex: 'format',
  key: 'format',
- render: (format: string) => <code style={{ fontSize: 11 }}>{format}</code>,
+ render: (format: string) => <code style={{ fontSize: 11, color: 'var(--ink-700)' }}>{format}</code>,
  },
  {
  title: t('numbering.next_value'),
  dataIndex: 'next_value',
  key: 'next_value',
- render: (value: number) => <Tag color="blue">{value}</Tag>,
+ render: (value: number) => <StatusTag status="info" label={String(value)} />,
  },
  {
  title: t('numbering.example'),
@@ -202,7 +201,7 @@ const NumberingSequences: React.FC = () => {
  .replace('{year}', String(year))
  .replace('{seq}', seq);
  
- return <Tag color="green">{preview}</Tag>;
+ return <StatusTag status="success" label={preview} />;
  },
  },
  {
@@ -240,7 +239,7 @@ const NumberingSequences: React.FC = () => {
        background: 'none',
        border: 'none',
        cursor: 'pointer',
-       color: palette.primary500,
+       color: 'var(--accent-500)',
        fontSize: 13,
        fontWeight: 500,
        padding: '0 0 12px',
@@ -261,6 +260,7 @@ const NumberingSequences: React.FC = () => {
  }
  />
 
+ <SectionCard padded={false}>
  <ResponsiveTableAdapter
  columns={columns}
  dataSource={sequences}
@@ -268,6 +268,7 @@ const NumberingSequences: React.FC = () => {
  rowKey="id"
  pagination={false}
  />
+ </SectionCard>
 
  <FormDialog
  title={editingSequence ? t('numbering.edit_sequence') : t('numbering.create_sequence')}
@@ -346,9 +347,9 @@ const NumberingSequences: React.FC = () => {
  <InputNumber min={1} style={{ width: '100%' }} />
  </Form.Item>
 
- <div style={{ marginTop: 16, padding: 12, background: '#f0f2f5', borderRadius: 4 }}>
+ <div style={{ marginTop: 16, padding: 12, background: 'var(--surface-2)', borderRadius: 'var(--radius-md)' }}>
  <strong>{t('numbering.sequence_preview')}:</strong>
- <div style={{ marginTop: 8, fontSize: 16, color: '#52c41a' }}>
+ <div style={{ marginTop: 8, fontSize: 16, color: 'var(--success-fg)', fontVariantNumeric: 'tabular-nums' }}>
  {generatePreview()}
  </div>
  </div>

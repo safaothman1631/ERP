@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Statistic, Button, Typography, List } from 'antd';
+import { Button, Typography, List } from 'antd';
 import {
   FileTextOutlined,
   ShoppingOutlined,
@@ -10,8 +10,10 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
 import api from '../../api';
+import { PageHeader, SectionCard, KpiCard } from '../../design-system';
+import { space } from '../../theme/tokens';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 const PortalDashboard: React.FC = () => {
   const { t } = useTranslation();
@@ -77,85 +79,51 @@ const PortalDashboard: React.FC = () => {
   return (
     <div style={{ padding: '24px', background: 'var(--bg)', minHeight: '100vh' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-          <Col>
-            <Title level={2}>{t('portal.dashboard')}</Title>
-            <Text type="secondary">
-              {sessionStorage.getItem('portal_email')}
-            </Text>
-          </Col>
-          <Col>
+        <PageHeader
+          title={t('portal.dashboard')}
+          subtitle={sessionStorage.getItem('portal_email') || undefined}
+          extra={
             <Button
               icon={<LogoutOutlined />}
               onClick={logout}
             >
               {t('portal.logout')}
             </Button>
-          </Col>
-        </Row>
+          }
+        />
 
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title={t('portal.total_due')}
-                value={stats.total_due}
-                prefix={<DollarOutlined />}
-                suffix={t('currency')}
-                valueStyle={{ color: 'var(--info-500)' }}
-              />
-            </Card>
-          </Col>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: space.md, marginBottom: space.lg }}>
+          <KpiCard
+            title={t('portal.total_due')}
+            value={`${stats.total_due.toLocaleString()} ${t('currency')}`}
+            icon={<DollarOutlined />}
+            tone="info"
+          />
+          <KpiCard
+            title={t('portal.overdue')}
+            value={`${stats.overdue.toLocaleString()} ${t('currency')}`}
+            icon={<DollarOutlined />}
+            tone="danger"
+          />
+          <KpiCard
+            title={t('portal.invoices')}
+            value={stats.invoices_count}
+            icon={<FileTextOutlined />}
+            tone="primary"
+            onClick={() => navigate('/portal/invoices')}
+          />
+          <KpiCard
+            title={t('portal.orders')}
+            value={stats.orders_count}
+            icon={<ShoppingOutlined />}
+            tone="primary"
+            onClick={() => navigate('/portal/orders')}
+          />
+        </div>
 
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title={t('portal.overdue')}
-                value={stats.overdue}
-                prefix={<DollarOutlined />}
-                suffix={t('currency')}
-                valueStyle={{ color: 'var(--danger-500)' }}
-              />
-            </Card>
-          </Col>
-
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title={t('portal.invoices')}
-                value={stats.invoices_count}
-                prefix={<FileTextOutlined />}
-              />
-              <Button
-                type="link"
-                onClick={() => navigate('/portal/invoices')}
-                style={{ padding: 0, marginTop: 8 }}
-              >
-                {t('portal.view_all')}
-              </Button>
-            </Card>
-          </Col>
-
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title={t('portal.orders')}
-                value={stats.orders_count}
-                prefix={<ShoppingOutlined />}
-              />
-              <Button
-                type="link"
-                onClick={() => navigate('/portal/orders')}
-                style={{ padding: 0, marginTop: 8 }}
-              >
-                {t('portal.view_all')}
-              </Button>
-            </Card>
-          </Col>
-        </Row>
-
-        <Card title={t('portal.recent_invoices')} loading={loading}>
+        <SectionCard title={t('portal.recent_invoices')}>
           <List
+            loading={loading}
             dataSource={recentInvoices}
             renderItem={(invoice: any) => (
               <List.Item>
@@ -172,7 +140,7 @@ const PortalDashboard: React.FC = () => {
             )}
             locale={{ emptyText: t('portal.no_invoices') }}
           />
-        </Card>
+        </SectionCard>
       </div>
     </div>
   );

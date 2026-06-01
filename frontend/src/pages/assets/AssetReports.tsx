@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Statistic, Spin } from 'antd';
+import { Row, Col, Spin } from 'antd';
 import { DollarOutlined, FallOutlined, RiseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { PieChart, Pie, Cell, Legend, Tooltip } from 'recharts';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, KpiCard, SectionCard } from '../../design-system';
 import { message } from '../../utils/message';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
@@ -25,7 +25,8 @@ interface CategorySummary {
   nbv: number;
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658'];
+// Categorical data-viz palette — kit tokens that auto-flip for dark mode.
+const COLORS = ['var(--viz-1)', 'var(--viz-2)', 'var(--viz-3)', 'var(--viz-4)', 'var(--viz-5)', 'var(--viz-6)', 'var(--viz-7)'];
 
 const AssetReports: React.FC = () => {
   const { t } = useTranslation();
@@ -69,23 +70,17 @@ const AssetReports: React.FC = () => {
       <PageHeader title={t('assets.reports')} />
       <Row gutter={[16, 16]}>
         <Col span={8}>
-          <Card>
-            <Statistic title={t('assets.total_cost')} value={summary.total_cost} prefix={<DollarOutlined />} precision={0} />
-          </Card>
+          <KpiCard title={t('assets.total_cost')} value={summary.total_cost} icon={<DollarOutlined />} tone="primary" />
         </Col>
         <Col span={8}>
-          <Card>
-            <Statistic title={t('assets.accumulated_depreciation')} value={summary.total_accumulated_depreciation} prefix={<FallOutlined />} precision={0} valueStyle={{ color: '#cf1322' }} />
-          </Card>
+          <KpiCard title={t('assets.accumulated_depreciation')} value={summary.total_accumulated_depreciation} icon={<FallOutlined />} tone="danger" />
         </Col>
         <Col span={8}>
-          <Card>
-            <Statistic title={t('assets.net_book_value')} value={summary.net_book_value} prefix={<RiseOutlined />} precision={0} valueStyle={{ color: '#3f8600' }} />
-          </Card>
+          <KpiCard title={t('assets.net_book_value')} value={summary.net_book_value} icon={<RiseOutlined />} tone="success" />
         </Col>
       </Row>
 
-      <Card title={t('assets.by_category')} style={{ marginTop: 16 }}>
+      <SectionCard title={t('assets.by_category')} style={{ marginTop: 16 }}>
         <Row gutter={16}>
           <Col span={12}>
             <ResponsiveChart legendItems={[]} minMobileBlockSize={300}>
@@ -104,7 +99,7 @@ const AssetReports: React.FC = () => {
             <ResponsiveTableAdapter columns={categoryColumns} dataSource={summary.by_category} rowKey="category_id" pagination={false} />
           </Col>
         </Row>
-      </Card>
+      </SectionCard>
     </>
   );
 };

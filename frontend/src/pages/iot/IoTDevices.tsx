@@ -8,7 +8,7 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
-import { PageHeader, StatusTag } from '../../design-system';
+import { PageHeader, StatusTag, FilterBar } from '../../design-system';
 import { space } from '../../theme/tokens';
 
 dayjs.extend(relativeTime);
@@ -207,31 +207,33 @@ const IoTDevices: React.FC = () => {
  }
  />
 
- <Space style={{ marginBottom: 16 }}>
- <Select
- placeholder={t('iot.filter_status', 'Filter by status')}
- style={{ width: 150 }}
- allowClear
- onChange={val => setFilters({ ...filters, status: val })}
- >
- <Select.Option value="active">{t('iot.status_active', 'Active')}</Select.Option>
- <Select.Option value="inactive">{t('iot.status_inactive', 'Inactive')}</Select.Option>
- <Select.Option value="error">{t('iot.status_error', 'Error')}</Select.Option>
- </Select>
- <Select
- placeholder={t('iot.filter_type', 'Filter by type')}
- style={{ width: 150 }}
- allowClear
- onChange={val => setFilters({ ...filters, device_type: val })}
- >
- <Select.Option value="sensor">{t('iot.device_type_sensor', 'Sensor')}</Select.Option>
- <Select.Option value="printer">{t('iot.device_type_printer', 'Printer')}</Select.Option>
- <Select.Option value="camera">{t('iot.device_type_camera', 'Camera')}</Select.Option>
- <Select.Option value="scanner">{t('iot.device_type_scanner', 'Scanner')}</Select.Option>
- <Select.Option value="gateway">{t('iot.device_type_gateway', 'Gateway')}</Select.Option>
- <Select.Option value="other">{t('iot.device_type_other', 'Other')}</Select.Option>
- </Select>
- </Space>
+ <FilterBar
+ filters={[
+ {
+ key: 'status',
+ label: t('iot.filter_status', 'Filter by status'),
+ options: [
+ { value: 'active', label: t('iot.status_active', 'Active') },
+ { value: 'inactive', label: t('iot.status_inactive', 'Inactive') },
+ { value: 'error', label: t('iot.status_error', 'Error') },
+ ],
+ },
+ {
+ key: 'device_type',
+ label: t('iot.filter_type', 'Filter by type'),
+ options: [
+ { value: 'sensor', label: t('iot.device_type_sensor', 'Sensor') },
+ { value: 'printer', label: t('iot.device_type_printer', 'Printer') },
+ { value: 'camera', label: t('iot.device_type_camera', 'Camera') },
+ { value: 'scanner', label: t('iot.device_type_scanner', 'Scanner') },
+ { value: 'gateway', label: t('iot.device_type_gateway', 'Gateway') },
+ { value: 'other', label: t('iot.device_type_other', 'Other') },
+ ],
+ },
+ ]}
+ values={{ status: filters.status, device_type: filters.device_type }}
+ onChange={(v) => setFilters({ ...filters, status: v.status, device_type: v.device_type })}
+ />
 
  <ResponsiveTableAdapter
  dataSource={devices}

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { DataNode } from 'antd/es/tree';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard } from '../../design-system';
 import { space } from '../../theme/tokens';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -193,11 +193,11 @@ const DocumentVault: React.FC = () => {
  }, [files]);
 
  const getFileIcon = (mime: string) => {
- if (mime.includes('pdf')) return <FilePdfOutlined style={{ color: '#f5222d', fontSize: 20 }} />;
- if (mime.includes('image')) return <FileImageOutlined style={{ color: '#52c41a', fontSize: 20 }} />;
- if (mime.includes('spreadsheet') || mime.includes('excel')) return <FileExcelOutlined style={{ color: '#13c2c2', fontSize: 20 }} />;
- if (mime.includes('word') || mime.includes('document')) return <FileWordOutlined style={{ color: '#1890ff', fontSize: 20 }} />;
- return <FileTextOutlined style={{ fontSize: 20 }} />;
+ if (mime.includes('pdf')) return <FilePdfOutlined style={{ color: 'var(--danger-500)', fontSize: 20 }} />;
+ if (mime.includes('image')) return <FileImageOutlined style={{ color: 'var(--success-500)', fontSize: 20 }} />;
+ if (mime.includes('spreadsheet') || mime.includes('excel')) return <FileExcelOutlined style={{ color: 'var(--info-500)', fontSize: 20 }} />;
+ if (mime.includes('word') || mime.includes('document')) return <FileWordOutlined style={{ color: 'var(--accent-500)', fontSize: 20 }} />;
+ return <FileTextOutlined style={{ color: 'var(--ink-400)', fontSize: 20 }} />;
  };
 
  const columns = [
@@ -285,18 +285,18 @@ const DocumentVault: React.FC = () => {
 
  <Row gutter={16} style={{ marginTop: space.md }}>
  <Col span={5}>
- <Card title={t('dms.folders')}>
+ <SectionCard title={t('dms.folders')}>
  <Tree
  treeData={treeData}
  defaultExpandAll
  onSelect={(keys) => setSelectedFolder(keys[0] as string || null)}
  selectedKeys={selectedFolder ? [selectedFolder] : []}
  />
- </Card>
+ </SectionCard>
  </Col>
 
  <Col span={19}>
- <Card>
+ <SectionCard>
  <Space direction="vertical" style={{ width: '100%' }}>
  <Row gutter={16}>
  <Col span={10}>
@@ -370,7 +370,7 @@ const DocumentVault: React.FC = () => {
  <Card
  hoverable
  cover={
- <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafafa' }}>
+ <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-2)' }}>
  {getFileIcon(file.mime_type)}
  </div>
  }
@@ -390,7 +390,7 @@ const DocumentVault: React.FC = () => {
  </Row>
  )}
  </Space>
- </Card>
+ </SectionCard>
  </Col>
  </Row>
 

@@ -7,11 +7,10 @@ import { useListQuery } from '../api/queries/useListQuery';
 import { listQueryKeys } from '../api/queries/keys';
 import ExportButton from '../components/ExportButton';
 import ChatterWidget from '../components/chatter/ChatterWidget';
-import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { PageHeader, FilterBar, DataTable, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import type { ColumnDef } from '../design-system/DataTable';
 import { downloadCsv } from '../utils/exportCsv';
-import { space as spaceTk } from '../theme/tokens';
 import { useAuthStore } from '../store';
-import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 
 interface Lead {
@@ -98,7 +97,7 @@ export default function CRMLeads() {
 
  const stageName = (id?: string) => stages.find((s) => s.id === id)?.name || '—';
 
- const columns = [
+ const columns: ColumnDef<Lead>[] = [
  { title: t('name'), dataIndex: 'name', key: 'name' },
  { title: t('company'), dataIndex: 'company', key: 'company' },
  { title: t('email'), dataIndex: 'email', key: 'email' },
@@ -160,7 +159,9 @@ export default function CRMLeads() {
  }
  />
 
- <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: spaceTk.md }}>
+ <FilterBar
+ extra={
+ <>
  <ExportMenu
  formats={['csv']}
  onExport={(f: ExportFormat) => {
@@ -171,8 +172,10 @@ export default function CRMLeads() {
  }}
  />
  <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
- </div>
- <ResponsiveTableAdapter rowKey="id" loading={loading} dataSource={leads} columns={visibleColumns} pagination={{ pageSize: 20 }} />
+ </>
+ }
+ />
+ <DataTable rowKey="id" loading={loading} dataSource={leads} columns={visibleColumns} pagination={{ pageSize: 20 }} />
 
  <FormDialog
  title={viewLead?.name || t('lead')}

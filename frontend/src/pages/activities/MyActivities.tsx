@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Button, Space, Empty, Tag, Popconfirm, message, Row, Col } from 'antd';
+import { Card, Button, Space, Empty, Popconfirm, message, Row, Col } from 'antd';
 import { ReloadOutlined, CheckOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
-import { palette } from '../../theme/tokens';
+import { PageHeader, StatusTag } from '../../design-system';
 
 interface Activity {
   id: string;
@@ -19,14 +18,6 @@ interface Activity {
   created_by_name?: string;
   created_at?: string;
 }
-
-const activityTypeColor: Record<string, string> = {
-  todo: 'blue',
-  call: 'green',
-  meeting: 'purple',
-  email: 'orange',
-  upload: 'cyan',
-};
 
 const activityTypeLabel: Record<string, string> = {
   todo: 'مەرام',
@@ -105,9 +96,7 @@ export default function MyActivities() {
     >
       <Space direction="vertical" style={{ width: '100%' }}>
         <div>
-          <Tag color={activityTypeColor[act.activity_type] || 'default'}>
-            {activityTypeLabel[act.activity_type] || act.activity_type}
-          </Tag>
+          <StatusTag status="default" label={activityTypeLabel[act.activity_type] || act.activity_type} />
         </div>
         <div style={{ fontWeight: 600 }}>{act.summary}</div>
         {act.notes && <div style={{ color: 'var(--ink-500)', fontSize: 13 }}>{act.notes}</div>}
@@ -141,7 +130,7 @@ export default function MyActivities() {
         <Col xs={24} md={12} lg={6}>
           <Card
             title={
-              <span style={{ color: palette.danger }}>
+              <span style={{ color: 'var(--danger-fg)' }}>
                 {t('activities.overdue')} ({overdue.length})
               </span>
             }
@@ -158,7 +147,7 @@ export default function MyActivities() {
         <Col xs={24} md={12} lg={6}>
           <Card
             title={
-              <span style={{ color: palette.warning }}>
+              <span style={{ color: 'var(--warning-fg)' }}>
                 {t('activities.today')} ({todayItems.length})
               </span>
             }
@@ -175,7 +164,7 @@ export default function MyActivities() {
         <Col xs={24} md={12} lg={6}>
           <Card
             title={
-              <span style={{ color: palette.primary600 }}>
+              <span style={{ color: 'var(--accent-500)' }}>
                 {t('activities.upcoming')} ({upcoming.length})
               </span>
             }

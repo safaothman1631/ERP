@@ -44,10 +44,11 @@ const formatPrice = (amount: number, currency: string): string => {
   return `$${amount.toFixed(2)}`;
 };
 
+// Per-plan accent — kit tokens that auto-flip for dark mode.
 const PLAN_ACCENT: Record<string, string> = {
-  starter: '#7B61FF',
-  growth: '#52c41a',
-  pro: '#722ed1',
+  starter: 'var(--accent-500)',
+  growth: 'var(--success-500)',
+  pro: 'var(--viz-8)',
 };
 
 const FAQS: Array<{ q: string; a: string }> = [
@@ -165,7 +166,7 @@ export default function Pricing(): React.ReactElement {
         {plans.map((plan) => {
           const total = priceFor(plan);
           const monthly = cycle === 'annual' ? total / 12 : total;
-          const accent = PLAN_ACCENT[plan.slug] || '#7B61FF';
+          const accent = PLAN_ACCENT[plan.slug] || 'var(--accent-500)';
           return (
             <Col xs={24} md={8} key={plan.slug}>
               <Card style={{ height: '100%', borderTop: `4px solid ${accent}` }}>

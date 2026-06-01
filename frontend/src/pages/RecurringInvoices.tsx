@@ -1,18 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Tag, Dropdown, Form, Input, InputNumber, DatePicker, Space, Select, Divider } from 'antd';
+import { Button, Dropdown, Form, Input, InputNumber, DatePicker, Space, Select, Divider } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, MoreOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import dayjs from 'dayjs';
-import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { PageHeader, StatusTag, type StatusKind, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat, FilterBar } from '../design-system';
 import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { downloadCsv } from '../utils/exportCsv';
 import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 
-const statusColors: Record<string, string> = { active: 'green', paused: 'orange', expired: 'grey' };
+const statusKinds: Record<string, StatusKind> = { active: 'active', paused: 'warning', expired: 'default' };
 const freqOptions = ['daily', 'weekly', 'monthly', 'quarterly', 'yearly'];
 
 const RecurringInvoices: React.FC = () => {
@@ -96,7 +96,7 @@ const RecurringInvoices: React.FC = () => {
  { title: t('frequency'), dataIndex: 'frequency', key: 'frequency', render: (f: string) => t(f) },
  { title: t('next_date'), dataIndex: 'next_invoice_date', key: 'next_invoice_date', render: (d: string) => d?.substring(0, 10) },
  { title: t('total'), dataIndex: 'total', key: 'total', render: (v: number) => v?.toLocaleString() },
- { title: t('status'), dataIndex: 'status', key: 'status', render: (s: string) => <Tag color={statusColors[s]}>{t(s)}</Tag> },
+ { title: t('status'), dataIndex: 'status', key: 'status', render: (s: string) => <StatusTag status={statusKinds[s] || 'default'} label={t(s)} /> },
  {
  title: t('actions'), key: 'actions',
  render: (_: any, r: any) => {
@@ -124,7 +124,16 @@ const RecurringInvoices: React.FC = () => {
 
  return (
  <div>
- <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+ <PageHeader
+ title={t('recurring_invoices', 'Recurring Invoices')}
+ subtitle={t('recurring_invoices_subtitle', 'Automatically generated invoices')}
+ extra={
+ <Button type="primary" icon={<PlusOutlined />} onClick={openNew}>{t('new_recurring_invoice')}</Button>
+ }
+ />
+ <FilterBar
+ extra={
+ <>
  <ExportMenu
  formats={['csv']}
  onExport={(f: ExportFormat) => {
@@ -135,8 +144,9 @@ const RecurringInvoices: React.FC = () => {
  }}
  />
  <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
- <Button type="primary" icon={<PlusOutlined />} onClick={openNew}>{t('new_recurring_invoice')}</Button>
- </div>
+ </>
+ }
+ />
  <ResponsiveTableAdapter dataSource={data} columns={visibleColumns} rowKey="id" loading={loading} pagination={{ current: page, total, pageSize: 20, onChange: setPage }} />
  <FormDialog open={modalOpen} onClose={() => setModalOpen(false)} title={t('new_recurring_invoice')} hideFooter>
  <Form form={form} layout="vertical" onFinish={handleSave} initialValues={{ start_date: dayjs(), frequency: 'monthly', payment_terms_days: 30 }}>

@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Card, Button, Form, Select, DatePicker, Input, Space, message, Tabs } from 'antd';
+import { Button, Form, Select, DatePicker, Input, Space, message, Tabs } from 'antd';
 import { PlusOutlined, ReloadOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
-import { HelpIcon } from '../help/HelpIcon';
-import { StatusTag } from '../design-system';
-import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
+import { PageHeader, DataTable, StatusTag } from '../design-system';
+import type { ColumnDef } from '../design-system/DataTable';
 import { FormDialog } from '../components/responsive/FormDialog';
 
 interface TimeOff {
@@ -69,7 +68,7 @@ export default function HRTimeOff() {
  catch { message.error(t('error')); }
  };
 
- const cols = [
+ const cols: ColumnDef<TimeOff>[] = [
  { title: t('employee'), dataIndex: 'employee_id',
  render: (id: string) => emps.find(e => e.id === id)?.name || id },
  { title: t('leave_type'), dataIndex: 'leave_type_id',
@@ -90,25 +89,25 @@ export default function HRTimeOff() {
  },
  ];
 
- const typeCols = [
+ const typeCols: ColumnDef<LeaveType>[] = [
  { title: t('name'), dataIndex: 'name' },
  { title: t('days_per_year'), dataIndex: 'days_per_year' },
  { title: t('paid'), dataIndex: 'paid', render: (b?: boolean) => <StatusTag status={b ? 'active' : 'default'} label={b ? t('yes') : t('no')} /> },
  ];
 
  return (
- <div style={{ padding: 16 }} data-section-id="hr.time_off">
- <h2 style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>{t('time_off')}<HelpIcon sectionId="hr.time_off" /></h2>
+ <div data-section-id="hr.time_off">
+ <PageHeader title={t('time_off')} sectionId="hr.time_off" />
  <Tabs items={[
  {
  key: 'requests', label: t('requests'),
  children: (
  <>
- <Space style={{ marginBottom: 12 }}>
+ <Space style={{ marginBottom: 'var(--space-md)' }}>
  <Button icon={<ReloadOutlined />} onClick={load}>{t('refresh')}</Button>
  <Button type="primary" icon={<PlusOutlined />} onClick={() => setOpen(true)}>{t('new_request')}</Button>
  </Space>
- <Card><ResponsiveTableAdapter rowKey="id" dataSource={list} columns={cols} pagination={{ pageSize: 20 }} /></Card>
+ <DataTable rowKey="id" dataSource={list} columns={cols} pagination={{ pageSize: 20 }} />
  </>
  ),
  },
@@ -116,11 +115,11 @@ export default function HRTimeOff() {
  key: 'types', label: t('leave_types'),
  children: (
  <>
- <Space style={{ marginBottom: 12 }}>
+ <Space style={{ marginBottom: 'var(--space-md)' }}>
  <Button icon={<ReloadOutlined />} onClick={load}>{t('refresh')}</Button>
  <Button type="primary" icon={<PlusOutlined />} onClick={() => setTypeOpen(true)}>{t('new_leave_type')}</Button>
  </Space>
- <Card><ResponsiveTableAdapter rowKey="id" dataSource={types} columns={typeCols} pagination={false} /></Card>
+ <DataTable rowKey="id" dataSource={types} columns={typeCols} pagination={false} />
  </>
  ),
  },

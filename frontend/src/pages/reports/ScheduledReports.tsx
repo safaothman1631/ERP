@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { 
- Button, Form, Input, Select, Switch, 
+import {
+ Button, Form, Input, Select, Switch,
  Space, message, Popconfirm, Tag, Tooltip, TimePicker,
- InputNumber, Card 
+ InputNumber
 } from 'antd';
-import { 
- PlusOutlined, EditOutlined, DeleteOutlined, 
- PlayCircleOutlined, CalendarOutlined 
+import {
+ PlusOutlined, EditOutlined, DeleteOutlined,
+ PlayCircleOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import dayjs from 'dayjs';
+import { PageHeader, SectionCard } from '../../design-system';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
@@ -251,16 +252,17 @@ const ScheduledReports: React.FC = () => {
  const frequency = Form.useWatch('frequency', form);
 
  return (
- <Card>
- <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
- <h2>
- <CalendarOutlined /> {t('scheduled_reports.title')}
- </h2>
+ <div>
+ <PageHeader
+ title={t('scheduled_reports.title')}
+ extra={
  <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenModal()}>
  {t('scheduled_reports.new_report')}
  </Button>
- </div>
+ }
+ />
 
+ <SectionCard padded={false}>
  <ResponsiveTableAdapter
  dataSource={data}
  columns={columns}
@@ -268,6 +270,7 @@ const ScheduledReports: React.FC = () => {
  rowKey="id"
  pagination={{ pageSize: 20 }}
  />
+ </SectionCard>
 
  <FormDialog
  title={editingId ? t('scheduled_reports.edit_report') : t('scheduled_reports.new_report')}
@@ -325,7 +328,7 @@ const ScheduledReports: React.FC = () => {
  </Form.Item>
  </Form>
  </FormDialog>
- </Card>
+ </div>
  );
 };
 

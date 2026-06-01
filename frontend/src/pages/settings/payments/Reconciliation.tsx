@@ -12,22 +12,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Button,
-  Card,
   DatePicker,
-  Empty,
   Input,
   Modal,
   Select,
   Space,
-  Table,
-  Tag,
   Tooltip,
   Typography,
   message,
 } from 'antd';
 import type { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
-import { PageHeader } from '../../../design-system';
+import { PageHeader, FilterBar, SectionCard, StatusTag, DataTable, type StatusKind } from '../../../design-system';
 import api from '../../../api';
 
 const { Text } = Typography;
@@ -46,10 +42,10 @@ interface QueueIssue {
   status: 'open' | 'resolved';
 }
 
-const KIND_COLORS: Record<QueueIssue['kind'], string> = {
-  unmatched_inbound: 'orange',
-  unmatched_outbound: 'red',
-  amount_mismatch: 'gold',
+const KIND_KINDS: Record<QueueIssue['kind'], StatusKind> = {
+  unmatched_inbound: 'warning',
+  unmatched_outbound: 'error',
+  amount_mismatch: 'warning',
 };
 
 const ReconciliationPage: React.FC = () => {
@@ -109,12 +105,12 @@ const ReconciliationPage: React.FC = () => {
     {
       title: t('payments.recon.provider', 'Provider'),
       dataIndex: 'provider_slug',
-      render: (v: string) => <Tag>{v}</Tag>,
+      render: (v: string) => <StatusTag status="default" label={v} />,
     },
     {
       title: t('payments.recon.kind', 'Kind'),
       dataIndex: 'kind',
-      render: (v: QueueIssue['kind']) => <Tag color={KIND_COLORS[v]}>{v.replace('_', ' ')}</Tag>,
+      render: (v: QueueIssue['kind']) => <StatusTag status={KIND_KINDS[v]} label={v.replace('_', ' ')} />,
     },
     {
       title: t('payments.recon.description', 'Description'),
@@ -127,11 +123,13 @@ const ReconciliationPage: React.FC = () => {
     {
       title: t('payments.recon.expected', 'Expected'),
       dataIndex: 'expected_amount',
+      align: 'right' as const,
       render: (v?: string) => v ?? '—',
     },
     {
       title: t('payments.recon.actual', 'Actual'),
       dataIndex: 'actual_amount',
+      align: 'right' as const,
       render: (v?: string) => v ?? '—',
     },
     {
@@ -167,36 +165,40 @@ const ReconciliationPage: React.FC = () => {
           'Discrepancies between provider settlements and local Payments.',
         )}
       />
-      <Card style={{ marginBottom: 12 }}>
-        <Space wrap>
-          <Select
-            allowClear
-            placeholder={t('payments.recon.filterProvider', 'Filter by provider')}
-            value={providerFilter}
-            onChange={setProviderFilter}
-            style={{ minWidth: 180 }}
-            options={[
+      <FilterBar
+        filters={[
+          {
+            key: 'provider',
+            label: t('payments.recon.filterProvider', 'Filter by provider'),
+            options: [
               { value: 'cash', label: 'Cash' },
               { value: 'cod', label: 'COD' },
               { value: 'stripe', label: 'Stripe' },
               { value: 'fastpay', label: 'FastPay' },
               { value: 'qi', label: 'Qi Card' },
               { value: 'zain', label: 'Zain Cash' },
-            ]}
-          />
+            ],
+          },
+        ]}
+        values={{ provider: providerFilter }}
+        onChange={v => setProviderFilter(v.provider as string | undefined)}
+        extra={
           <RangePicker
             value={dateRange}
             onChange={v => setDateRange(v as [Dayjs, Dayjs] | null)}
           />
-        </Space>
-      </Card>
-      <Table<QueueIssue>
-        rowKey="id"
-        loading={loading}
-        dataSource={issues}
-        columns={columns}
-        locale={{ emptyText: <Empty description={t('payments.recon.empty', 'No open issues')} /> }}
+        }
       />
+      <SectionCard padded={false}>
+        <DataTable<QueueIssue>
+          rowKey="id"
+          loading={loading}
+          dataSource={issues}
+          columns={columns}
+          pagination={false}
+          emptyTitle={t('payments.recon.empty', 'No open issues')}
+        />
+      </SectionCard>
       <Modal
         open={!!actionTarget}
         title={t('payments.recon.resolveTitle', 'Resolve issue')}

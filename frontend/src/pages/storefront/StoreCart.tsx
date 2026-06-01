@@ -146,7 +146,7 @@ const StoreCart: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
+    <div style={{ padding: '24px', background: 'var(--surface-2)', minHeight: '100vh' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <Button
           icon={<LeftOutlined />}

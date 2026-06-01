@@ -1,13 +1,13 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { Button, Input, Form, Select, DatePicker, InputNumber, Tag } from 'antd';
+import { Button, Input, Form, Select, DatePicker, InputNumber } from 'antd';
 import { message } from '../../utils/message';
-import { PlusOutlined, SearchOutlined, EyeOutlined } from '@ant-design/icons';
+import { PlusOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, FilterBar, StatusTag } from '../../design-system';
 import { space } from '../../theme/tokens';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -79,10 +79,10 @@ const RentalContracts: React.FC = () => {
  };
 
  const getStatusTag = (status?: string) => {
- if (!status || status === 'draft') return <Tag>{t('rental.status_draft')}</Tag>;
- if (status === 'active') return <Tag color="green">{t('rental.status_active')}</Tag>;
- if (status === 'closed') return <Tag color="default">{t('rental.status_closed')}</Tag>;
- return <Tag>{status}</Tag>;
+ if (!status || status === 'draft') return <StatusTag status="default" label={t('rental.status_draft')} />;
+ if (status === 'active') return <StatusTag status="success" label={t('rental.status_active')} />;
+ if (status === 'closed') return <StatusTag status="default" label={t('rental.status_closed')} />;
+ return <StatusTag status="default" label={status} />;
  };
 
  const filteredData = data.filter((c) => {
@@ -160,35 +160,24 @@ const RentalContracts: React.FC = () => {
  }
  />
 
- <div
- style={{
- display: 'flex',
- justifyContent: 'space-between',
- marginBottom: space.md,
- gap: space.md,
- flexWrap: 'wrap',
- }}
- >
- <Input
- prefix={<SearchOutlined />}
- placeholder={t('search')}
- value={search}
- onChange={(e) => setSearch(e.target.value)}
- style={{ width: 280 }}
- allowClear
+ <FilterBar
+ searchValue={search}
+ onSearchChange={setSearch}
+ searchPlaceholder={t('search')}
+ filters={[
+ {
+ key: 'status',
+ label: t('rental.filter_by_status'),
+ options: [
+ { value: 'draft', label: t('rental.status_draft') },
+ { value: 'active', label: t('rental.status_active') },
+ { value: 'closed', label: t('rental.status_closed') },
+ ],
+ },
+ ]}
+ values={{ status: statusFilter || undefined }}
+ onChange={(v) => setStatusFilter((v.status as string) || '')}
  />
- <Select
- placeholder={t('rental.filter_by_status')}
- value={statusFilter}
- onChange={setStatusFilter}
- style={{ width: 180 }}
- allowClear
- >
- <Select.Option value="draft">{t('rental.status_draft')}</Select.Option>
- <Select.Option value="active">{t('rental.status_active')}</Select.Option>
- <Select.Option value="closed">{t('rental.status_closed')}</Select.Option>
- </Select>
- </div>
 
  <ResponsiveTableAdapter
  dataSource={filteredData}

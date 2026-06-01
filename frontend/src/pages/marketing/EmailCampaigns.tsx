@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Form, Input, Select, Statistic, Row, Col, Card, Popconfirm } from 'antd';
+import { Button, Space, Form, Input, Select, Row, Col, Popconfirm } from 'antd';
 
 import { message } from '../../utils/message';
 import { PlusOutlined, SendOutlined, EyeOutlined, CopyOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, KpiCard } from '../../design-system';
 import { formatDate } from '../../utils/formatters';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -205,34 +205,22 @@ const EmailCampaigns: React.FC = () => {
  ) : stats ? (
  <Row gutter={[16, 16]}>
  <Col span={12}>
- <Card>
- <Statistic title={t('marketing.sent')} value={stats.sent} />
- </Card>
+ <KpiCard title={t('marketing.sent')} value={stats.sent} />
  </Col>
  <Col span={12}>
- <Card>
- <Statistic title={t('marketing.delivered')} value={stats.delivered} />
- </Card>
+ <KpiCard title={t('marketing.delivered')} value={stats.delivered} tone="success" />
  </Col>
  <Col span={12}>
- <Card>
- <Statistic title={t('marketing.opened')} value={stats.opened} />
- </Card>
+ <KpiCard title={t('marketing.opened')} value={stats.opened} tone="info" />
  </Col>
  <Col span={12}>
- <Card>
- <Statistic title={t('marketing.clicked')} value={stats.clicked} />
- </Card>
+ <KpiCard title={t('marketing.clicked')} value={stats.clicked} tone="info" />
  </Col>
  <Col span={12}>
- <Card>
- <Statistic title={t('marketing.bounced')} value={stats.bounced} />
- </Card>
+ <KpiCard title={t('marketing.bounced')} value={stats.bounced} tone="warning" />
  </Col>
  <Col span={12}>
- <Card>
- <Statistic title={t('marketing.unsubscribed')} value={stats.unsubscribed} />
- </Card>
+ <KpiCard title={t('marketing.unsubscribed')} value={stats.unsubscribed} tone="danger" />
  </Col>
  </Row>
  ) : null}

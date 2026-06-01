@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Card, Button, Typography, Space, Tag, Empty } from 'antd';
+import { Button, Typography, Space, Empty } from 'antd';
 import { message } from '../../utils/message';
 import { ArrowLeftOutlined, InboxOutlined, CloudUploadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard, StatusTag } from '../../design-system';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
-import { palette } from '../../theme/tokens';
 
 const { Text } = Typography;
 
@@ -56,13 +55,13 @@ const BankImportHistory: React.FC = () => {
       title: t('format'),
       dataIndex: 'format',
       key: 'format',
-      render: (f: string) => <Tag color="blue">{f.toUpperCase()}</Tag>
+      render: (f: string) => <StatusTag status="info" label={f.toUpperCase()} />
     },
     {
       title: t('imported'),
       dataIndex: 'imported_count',
       key: 'imported',
-      render: (v: number) => <Text style={{ color: palette.success }}>{v}</Text>
+      render: (v: number) => <Text style={{ color: 'var(--success-fg)' }}>{v}</Text>
     },
     {
       title: t('skipped'),
@@ -94,7 +93,7 @@ const BankImportHistory: React.FC = () => {
         }
       />
 
-      <Card>
+      <SectionCard padded={false}>
         <ResponsiveTableAdapter
           dataSource={data}
           columns={columns}
@@ -103,7 +102,7 @@ const BankImportHistory: React.FC = () => {
           locale={{
             emptyText: (
               <Empty
-                image={<InboxOutlined style={{ fontSize: 48, color: palette.ink300 }} />}
+                image={<InboxOutlined style={{ fontSize: 48, color: 'var(--ink-300)' }} />}
                 description={
                   <Space direction="vertical" size={4}>
                     <Text strong>{t('no_import_history')}</Text>
@@ -118,7 +117,7 @@ const BankImportHistory: React.FC = () => {
             )
           }}
         />
-      </Card>
+      </SectionCard>
     </div>
   );
 };

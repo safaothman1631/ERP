@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Tag, Form, Input, InputNumber, Select, Space, DatePicker, Popconfirm, Row, Col } from 'antd';
+import { Button, Form, Input, InputNumber, Select, Space, DatePicker, Popconfirm, Row, Col } from 'antd';
 import { PlusOutlined, DeleteOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import dayjs, { Dayjs } from 'dayjs';
-import { PageHeader } from '../../design-system';
+import { PageHeader, FilterBar, StatusTag } from '../../design-system';
+import type { StatusKind } from '../../design-system';
 import { message } from '../../utils/message';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -30,11 +31,11 @@ interface Category {
  description?: string;
 }
 
-const statusColors: Record<string, string> = {
+const statusKinds: Record<string, StatusKind> = {
  idle: 'default',
- in_use: 'blue',
- maintenance: 'orange',
- broken: 'red',
+ in_use: 'info',
+ maintenance: 'warning',
+ broken: 'error',
 };
 
 const Equipment: React.FC = () => {
@@ -159,9 +160,7 @@ const Equipment: React.FC = () => {
  key: 'status',
  width: 120,
  render: (status: string) => (
- <Tag color={statusColors[status] || 'default'}>
- {t(`maintenance.status_${status}`, status)}
- </Tag>
+ <StatusTag status={statusKinds[status] || 'default'} label={t(`maintenance.status_${status}`, status)} />
  ),
  },
  {
@@ -208,37 +207,30 @@ const Equipment: React.FC = () => {
  </Button>
  }
  />
- <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
- <Col span={12}>
- <Select
- style={{ width: '100%' }}
- placeholder={t('maintenance.filter_status')}
- allowClear
- value={statusFilter || undefined}
- onChange={(val) => setStatusFilter(val || '')}
- >
- <Select.Option value="idle">{t('maintenance.status_idle')}</Select.Option>
- <Select.Option value="in_use">{t('maintenance.status_in_use')}</Select.Option>
- <Select.Option value="maintenance">{t('maintenance.status_maintenance')}</Select.Option>
- <Select.Option value="broken">{t('maintenance.status_broken')}</Select.Option>
- </Select>
- </Col>
- <Col span={12}>
- <Select
- style={{ width: '100%' }}
- placeholder={t('maintenance.filter_category')}
- allowClear
- value={categoryFilter || undefined}
- onChange={(val) => setCategoryFilter(val || '')}
- >
- {categories.map((cat) => (
- <Select.Option key={cat.id} value={cat.id}>
- {cat.name}
- </Select.Option>
- ))}
- </Select>
- </Col>
- </Row>
+ <FilterBar
+ filters={[
+ {
+ key: 'status',
+ label: t('maintenance.filter_status'),
+ options: [
+ { value: 'idle', label: t('maintenance.status_idle') },
+ { value: 'in_use', label: t('maintenance.status_in_use') },
+ { value: 'maintenance', label: t('maintenance.status_maintenance') },
+ { value: 'broken', label: t('maintenance.status_broken') },
+ ],
+ },
+ {
+ key: 'category',
+ label: t('maintenance.filter_category'),
+ options: categories.map((cat) => ({ value: cat.id, label: cat.name })),
+ },
+ ]}
+ values={{ status: statusFilter || undefined, category: categoryFilter || undefined }}
+ onChange={(v) => {
+ setStatusFilter((v.status as string) || '');
+ setCategoryFilter((v.category as string) || '');
+ }}
+ />
  <ResponsiveTableAdapter
  columns={columns}
  dataSource={data}

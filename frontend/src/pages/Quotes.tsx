@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Select, Dropdown, Space } from 'antd';
+import { Button, Dropdown, Space } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, MoreOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useListQuery } from '../api/queries/useListQuery';
 import { listQueryKeys } from '../api/queries/keys';
-import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat, FilterBar } from '../design-system';
 import { downloadCsv } from '../utils/exportCsv';
 import { space } from '../theme/tokens';
 import { useAuthStore } from '../store';
@@ -106,21 +106,29 @@ const Quotes: React.FC = () => {
           </Space>
         }
       />
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: space.md, alignItems: 'center', gap: space.md, flexWrap: 'wrap' }}>
-        <Select placeholder={t('status')} value={statusFilter || undefined} onChange={(v) => { setStatusFilter(v || ''); setPage(1); }} allowClear style={{ width: 200 }}>
-          {['draft', 'sent', 'accepted', 'declined', 'invoiced'].map(s => <Select.Option key={s} value={s}>{t(s)}</Select.Option>)}
-        </Select>
-        <ExportMenu
-          formats={['csv']}
-          onExport={(f: ExportFormat) => {
-            if (f === 'csv') {
-              const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
-              downloadCsv('quotes', data, cols);
-            }
-          }}
-        />
-        <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
-      </div>
+      <FilterBar
+        filters={[{
+          key: 'status',
+          label: t('status'),
+          options: ['draft', 'sent', 'accepted', 'declined', 'invoiced'].map(s => ({ label: t(s), value: s })),
+        }]}
+        values={{ status: statusFilter || undefined }}
+        onChange={(v) => { setStatusFilter((v.status as string) || ''); setPage(1); }}
+        extra={
+          <>
+            <ExportMenu
+              formats={['csv']}
+              onExport={(f: ExportFormat) => {
+                if (f === 'csv') {
+                  const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+                  downloadCsv('quotes', data, cols);
+                }
+              }}
+            />
+            <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
+          </>
+        }
+      />
       <ResponsiveTableAdapter dataSource={data} columns={visibleColumns} rowKey="id" loading={loading} pagination={{ current: page, total, pageSize: 20, onChange: setPage }} />
     </div>
   );

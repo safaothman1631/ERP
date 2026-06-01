@@ -4,8 +4,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import api from '../../api';
-import { PageHeader, StatusTag } from '../../design-system';
-import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { PageHeader, StatusTag, DataTable } from '../../design-system';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
 const { TextArea } = Input;
@@ -102,6 +101,7 @@ const MenuManager: React.FC = () => {
  title: t('restaurant.price'),
  dataIndex: 'price',
  key: 'price',
+ align: 'right',
  render: (val: number) => `${new Intl.NumberFormat('en-US').format(val || 0)} IQD`,
  },
  { title: t('restaurant.category'), dataIndex: 'category', key: 'category' },
@@ -145,11 +145,12 @@ const MenuManager: React.FC = () => {
  }
  />
 
- <ResponsiveTableAdapter
+ <DataTable<MenuItem>
  columns={columns}
  dataSource={items}
  rowKey="id"
  loading={loading}
+ stickyHeader={false}
  pagination={{ pageSize: 20 }}
  />
 

@@ -4,7 +4,7 @@ import { PlusOutlined, GiftOutlined, BarcodeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import api from '../../api';
-import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../../design-system';
+import { PageHeader, StatusTag, KeyValueGrid, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../../design-system';
 import { downloadCsv } from '../../utils/exportCsv';
 import { useAuthStore } from '../../store';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -150,21 +150,20 @@ const POSGiftCards: React.FC = () => {
  title: t('current_balance'),
  dataIndex: 'current_value',
  key: 'current_value',
- render: (val: number) => {
- const color = val > 0 ? 'green' : 'default';
- return <Tag color={color}>{val.toLocaleString()} {t('currency')}</Tag>;
- },
+ render: (val: number) => (
+ <StatusTag status={val > 0 ? 'active' : 'default'} label={`${val.toLocaleString()} ${t('currency')}`} />
+ ),
  },
  {
  title: t('status'),
  dataIndex: 'is_active',
  key: 'is_active',
  render: (val: boolean, record: GiftCard) => {
- if (!val) return <Tag>{t('not_activated')}</Tag>;
+ if (!val) return <StatusTag status="default" label={t('not_activated')} />;
  if (record.expiration_date && new Date(record.expiration_date) < new Date()) {
- return <Tag color="red">{t('expired')}</Tag>;
+ return <StatusTag status="error" label={t('expired')} />;
  }
- return <Tag color="green">{t('active')}</Tag>;
+ return <StatusTag status="active" label={t('active')} />;
  },
  },
  {
@@ -209,8 +208,9 @@ const POSGiftCards: React.FC = () => {
 
  return (
  <div style={{ padding: 24 }}>
- <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
- <h1>{t('gift_cards')}</h1>
+ <PageHeader
+ title={t('gift_cards')}
+ extra={
  <Space>
  <Button icon={<PlusOutlined />} onClick={handleIssueSingle}>
  {t('issue_single_card')}
@@ -229,7 +229,8 @@ const POSGiftCards: React.FC = () => {
  />
  <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
  </Space>
- </div>
+ }
+ />
 
  <ResponsiveTableAdapter
  columns={visibleColumns}
@@ -295,19 +296,18 @@ const POSGiftCards: React.FC = () => {
  onClose={() => setDrawerOpen(false)}
  >
  {selectedCard && (
- <div>
- <p><strong>{t('code')}:</strong> <code>{selectedCard.code}</code></p>
- <p><strong>{t('initial_value')}:</strong> {selectedCard.initial_value.toLocaleString()} {t('currency')}</p>
- <p><strong>{t('current_balance')}:</strong> {selectedCard.current_value.toLocaleString()} {t('currency')}</p>
- <p><strong>{t('status')}:</strong> {selectedCard.is_active ? t('active') : t('not_activated')}</p>
- {selectedCard.activated_at && (
- <p><strong>{t('activated_at')}:</strong> {dayjs(selectedCard.activated_at).format('YYYY-MM-DD HH:mm')}</p>
- )}
- {selectedCard.expiration_date && (
- <p><strong>{t('expires')}:</strong> {dayjs(selectedCard.expiration_date).format('YYYY-MM-DD')}</p>
- )}
- <p><strong>{t('created_at')}:</strong> {dayjs(selectedCard.created_at).format('YYYY-MM-DD HH:mm')}</p>
- </div>
+ <KeyValueGrid
+ columns={1}
+ items={[
+ { label: t('code'), value: <code>{selectedCard.code}</code> },
+ { label: t('initial_value'), value: `${selectedCard.initial_value.toLocaleString()} ${t('currency')}` },
+ { label: t('current_balance'), value: `${selectedCard.current_value.toLocaleString()} ${t('currency')}` },
+ { label: t('status'), value: <StatusTag status={selectedCard.is_active ? 'active' : 'default'} label={selectedCard.is_active ? t('active') : t('not_activated')} /> },
+ ...(selectedCard.activated_at ? [{ label: t('activated_at'), value: dayjs(selectedCard.activated_at).format('YYYY-MM-DD HH:mm') }] : []),
+ ...(selectedCard.expiration_date ? [{ label: t('expires'), value: dayjs(selectedCard.expiration_date).format('YYYY-MM-DD') }] : []),
+ { label: t('created_at'), value: dayjs(selectedCard.created_at).format('YYYY-MM-DD HH:mm') },
+ ]}
+ />
  )}
  </FormDialog>
  </div>

@@ -1,15 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Descriptions, Tabs, Button, Form, Input, InputNumber, Space, Tag } from 'antd';
+import { Tabs, Button, Form, Input, InputNumber, Space, Tag } from 'antd';
 import { ArrowLeftOutlined, PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import dayjs from 'dayjs';
-import { PageHeader } from '../../design-system';
+import { PageHeader, DetailLayout, SectionCard, KeyValueGrid, StatusTag } from '../../design-system';
+import type { StatusKind } from '../../design-system';
 import { message } from '../../utils/message';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { RelatedDataPanel } from '../../design-system/empty/RelatedDataPanel';
+
+const statusKinds: Record<string, StatusKind> = {
+ idle: 'default',
+ in_use: 'info',
+ maintenance: 'warning',
+ broken: 'error',
+};
 
 interface Equipment {
  id: string;
@@ -170,46 +178,39 @@ const EquipmentDetail: React.FC = () => {
  return null;
  }
 
- const statusColors: Record<string, string> = {
- idle: 'default',
- in_use: 'blue',
- maintenance: 'orange',
- broken: 'red',
- };
+ const eqStatus = equipment.status || 'idle';
 
  return (
- <>
+ <DetailLayout
+ header={
  <PageHeader
  title={equipment.name}
  subtitle={`${t('maintenance.equipment')} ${t('details')}`}
- extra={
+ tag={<StatusTag status={statusKinds[eqStatus] || 'default'} label={t(`maintenance.status_${eqStatus}`, eqStatus)} />}
+ />
+ }
+ toolbar={
  <Space>
- <Tag color={statusColors[equipment.status || 'idle']}>
- {t(`maintenance.status_${equipment.status || 'idle'}`, equipment.status || 'idle')}
- </Tag>
  <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/maintenance/equipment')}>
  {t('back')}
  </Button>
  </Space>
  }
+ >
+ <SectionCard title={t('details')}>
+ <KeyValueGrid
+ columns={2}
+ items={[
+ { label: t('maintenance.serial_no'), value: equipment.serial_no || '—' },
+ { label: t('maintenance.category'), value: category?.name || '—' },
+ { label: t('maintenance.location'), value: equipment.location || '—' },
+ { label: t('maintenance.purchase_date'), value: equipment.purchase_date ? dayjs(equipment.purchase_date).format('YYYY-MM-DD') : '—' },
+ { label: t('maintenance.purchase_value'), value: equipment.purchase_value?.toLocaleString() || '0' },
+ { label: t('maintenance.warranty_until'), value: equipment.warranty_until ? dayjs(equipment.warranty_until).format('YYYY-MM-DD') : '—' },
+ { label: t('status'), value: equipment.is_active ? t('active') : t('inactive') },
+ ]}
  />
- <Descriptions bordered column={2} style={{ marginBottom: 24 }}>
- <Descriptions.Item label={t('maintenance.serial_no')}>{equipment.serial_no || '—'}</Descriptions.Item>
- <Descriptions.Item label={t('maintenance.category')}>{category?.name || '—'}</Descriptions.Item>
- <Descriptions.Item label={t('maintenance.location')}>{equipment.location || '—'}</Descriptions.Item>
- <Descriptions.Item label={t('maintenance.purchase_date')}>
- {equipment.purchase_date ? dayjs(equipment.purchase_date).format('YYYY-MM-DD') : '—'}
- </Descriptions.Item>
- <Descriptions.Item label={t('maintenance.purchase_value')}>
- {equipment.purchase_value?.toLocaleString() || '0'}
- </Descriptions.Item>
- <Descriptions.Item label={t('maintenance.warranty_until')}>
- {equipment.warranty_until ? dayjs(equipment.warranty_until).format('YYYY-MM-DD') : '—'}
- </Descriptions.Item>
- <Descriptions.Item label={t('status')}>
- {equipment.is_active ? t('active') : t('inactive')}
- </Descriptions.Item>
- </Descriptions>
+ </SectionCard>
 
  <Tabs
  defaultActiveKey="requests"
@@ -312,7 +313,7 @@ const EquipmentDetail: React.FC = () => {
  </Form.Item>
  </Form>
  </FormDialog>
- </>
+ </DetailLayout>
  );
 };
 

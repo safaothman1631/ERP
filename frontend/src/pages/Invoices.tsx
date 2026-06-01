@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Tag, Space, Select, Form, InputNumber, Input, Typography, Dropdown } from 'antd';
+import { Button, Space, Select, Form, InputNumber, Input, Typography, Dropdown } from 'antd';
 
 import { message } from '../utils/message';
 import { PlusOutlined, SendOutlined, WalletOutlined, DollarOutlined, InboxOutlined, FilePdfOutlined, MailOutlined, BellOutlined, QrcodeOutlined, CloudUploadOutlined, InfoCircleOutlined, MoreOutlined } from '@ant-design/icons';
@@ -10,9 +10,8 @@ import ExportButton from '../components/ExportButton';
 import ChatterPanel from '../components/ChatterPanel';
 import { useListQuery } from '../api/queries/useListQuery';
 import { listQueryKeys } from '../api/queries/keys';
-import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat, FilterBar } from '../design-system';
 import { downloadCsv } from '../utils/exportCsv';
-import { palette, space } from '../theme/tokens';
 import { useAuthStore } from '../store';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
@@ -172,7 +171,7 @@ const Invoices: React.FC = () => {
  key: 'invoice_number',
  width: 132,
  ellipsis: true,
- render: (v: string) => <Text strong style={{ color: palette.primary500, ...noWrap }}>{v || '-'}</Text>,
+ render: (v: string) => <Text strong style={{ color: 'var(--accent-500)', ...noWrap }}>{v || '-'}</Text>,
  },
  { title: t('date'), dataIndex: 'date', key: 'date', width: 122, render: (d: string) => <span style={noWrap}>{d ? formatDate(d) : '-'}</span> },
  { title: t('due_date'), dataIndex: 'due_date', key: 'due_date', width: 122, render: (d: string) => <span style={noWrap}>{d ? formatDate(d) : '-'}</span> },
@@ -190,7 +189,7 @@ const Invoices: React.FC = () => {
  key: 'balance_due',
  width: 154,
  align: 'right',
- render: (v: number, r: any) => <Text strong style={{ color: v > 0 ? palette.danger : palette.success, ...noWrap }}>{formatCurrency(Number(v || 0), r.currency_code || 'IQD')}</Text>,
+ render: (v: number, r: any) => <Text strong style={{ color: v > 0 ? 'var(--danger-fg)' : 'var(--success-fg)', ...noWrap }}>{formatCurrency(Number(v || 0), r.currency_code || 'IQD')}</Text>,
  },
  {
  title: t('status'), dataIndex: 'status', key: 'status',
@@ -198,8 +197,8 @@ const Invoices: React.FC = () => {
  render: (s: string, r: any) => (
  <Space wrap style={{ minWidth: 0 }}>
  <StatusTag status={s} label={t(s)} />
- {r.is_retainer && <Tag color="purple" style={{ borderRadius: 6 }}>{t('retainerInvoice')}</Tag>}
- {r.is_progress && <Tag color="cyan" style={{ borderRadius: 6 }}>{t('progressInvoice')}</Tag>}
+ {r.is_retainer && <StatusTag status="viewed" label={t('retainerInvoice')} />}
+ {r.is_progress && <StatusTag status="info" label={t('progressInvoice')} />}
  </Space>
  ),
  },
@@ -268,20 +267,21 @@ const Invoices: React.FC = () => {
  </Space>
  }
  />
- <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: space.md, alignItems: 'center', gap: space.md, flexWrap: 'wrap' }}>
- <Select
- placeholder={t('status')}
- value={statusFilter || undefined}
- onChange={(v) => { setStatusFilter(v || ''); setPage(1); }}
- allowClear
- style={{ width: 200 }}
- >
- <Select.Option value="draft">{t('draft')}</Select.Option>
- <Select.Option value="sent">{t('sent')}</Select.Option>
- <Select.Option value="paid">{t('paid')}</Select.Option>
- <Select.Option value="overdue">{t('overdue')}</Select.Option>
- </Select>
- <Space>
+ <FilterBar
+ filters={[{
+ key: 'status',
+ label: t('status'),
+ options: [
+ { label: t('draft'), value: 'draft' },
+ { label: t('sent'), value: 'sent' },
+ { label: t('paid'), value: 'paid' },
+ { label: t('overdue'), value: 'overdue' },
+ ],
+ }]}
+ values={{ status: statusFilter || undefined }}
+ onChange={(v) => { setStatusFilter((v.status as string) || ''); setPage(1); }}
+ extra={
+ <>
  <ExportMenu
  formats={['csv']}
  onExport={(f: ExportFormat) => {
@@ -292,8 +292,9 @@ const Invoices: React.FC = () => {
  }}
  />
  <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
- </Space>
- </div>
+ </>
+ }
+ />
 
  <ResponsiveTableAdapter
  dataSource={data}

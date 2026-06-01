@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
- Card, Row, Col, Form, Select, Button, Space, 
- Input, message, Tag, Divider 
+import {
+ Row, Col, Form, Select, Button, Space,
+ Input, message, Divider
 } from 'antd';
 import { PlayCircleOutlined, SaveOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { useNavigate } from 'react-router-dom';
+import { PageHeader, SectionCard, StatusTag } from '../../design-system';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
@@ -177,10 +178,10 @@ const CustomReportBuilder: React.FC = () => {
 
  return (
  <div>
- <Card title={t('custom_reports.builder_title')}>
+ <PageHeader title={t('custom_reports.builder_title')} />
  <Row gutter={24}>
  <Col span={8}>
- <Card title={t('custom_reports.configuration')}>
+ <SectionCard title={t('custom_reports.configuration')}>
  <Form form={form} layout="vertical">
  <Form.Item name="source" label={t('custom_reports.data_source')}>
  <Select options={sourceOptions} placeholder={t('custom_reports.select_source')} />
@@ -273,20 +274,22 @@ const CustomReportBuilder: React.FC = () => {
  {t('custom_reports.save')}
  </Button>
  </Space>
- </Card>
+ </SectionCard>
  </Col>
 
  <Col span={16}>
- <Card title={t('custom_reports.results')}>
+ <SectionCard title={t('custom_reports.results')}>
  {summary.total_rows > 0 && (
  <div style={{ marginBottom: 16 }}>
- <Tag color="blue">{t('custom_reports.total_rows', { count: summary.total_rows })}</Tag>
+ <Space wrap size={[4, 4]}>
+ <StatusTag status="info" label={t('custom_reports.total_rows', { count: summary.total_rows })} />
  {Object.entries(summary).map(([key, value]) => {
  if (key !== 'total_rows' && typeof value === 'number') {
- return <Tag key={key}>{key}: {value.toLocaleString()}</Tag>;
+ return <StatusTag key={key} status="default" label={`${key}: ${value.toLocaleString()}`} />;
  }
  return null;
  })}
+ </Space>
  </div>
  )}
 
@@ -298,10 +301,9 @@ const CustomReportBuilder: React.FC = () => {
  pagination={{ pageSize: 20 }}
  scroll={{ x: 'max-content' }}
  />
- </Card>
+ </SectionCard>
  </Col>
  </Row>
- </Card>
 
  <FormDialog
  title={t('custom_reports.save_report')}

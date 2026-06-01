@@ -3,9 +3,8 @@ import { Tabs, Button, Space, Form, Input, Select, message, Popconfirm, Row, Col
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined, HomeOutlined, UserOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { PageHeader, StatusTag, KpiCard } from '../../design-system';
+import { PageHeader, StatusTag, KpiCard, DataTable } from '../../design-system';
 import api from '../../api';
-import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
 interface Ward {
@@ -256,7 +255,7 @@ const WardsAdmissions: React.FC = () => {
  {t('hospital.new_ward')}
  </Button>
  </Space>
- <ResponsiveTableAdapter dataSource={wards} columns={wardColumns} rowKey="id" loading={loading} />
+ <DataTable<Ward> dataSource={wards} columns={wardColumns} rowKey="id" loading={loading} stickyHeader={false} pagination={{ pageSize: 20 }} />
  </>
  ),
  },
@@ -270,7 +269,7 @@ const WardsAdmissions: React.FC = () => {
  {t('hospital.new_admission')}
  </Button>
  </Space>
- <ResponsiveTableAdapter dataSource={admissions} columns={admissionColumns} rowKey="id" loading={loading} />
+ <DataTable<Admission> dataSource={admissions} columns={admissionColumns} rowKey="id" loading={loading} stickyHeader={false} pagination={{ pageSize: 20 }} />
  </>
  ),
  },

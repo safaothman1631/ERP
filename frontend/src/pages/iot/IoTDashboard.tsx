@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Statistic, Button, Space } from 'antd';
+import { Card, Row, Col, Button, Space } from 'antd';
 import { HddOutlined, CheckCircleOutlined, CloseCircleOutlined, BellOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -7,7 +7,7 @@ import api from '../../api';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
-import { PageHeader, StatusTag } from '../../design-system';
+import { PageHeader, StatusTag, KpiCard, SectionCard } from '../../design-system';
 import { space } from '../../theme/tokens';
 
 dayjs.extend(relativeTime);
@@ -144,54 +144,45 @@ const IoTDashboard: React.FC = () => {
 
       <Row gutter={16} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title={t('iot.total_devices', 'Total Devices')}
-              value={stats.total}
-              prefix={<HddOutlined />}
-              loading={loading}
-            />
-          </Card>
+          <KpiCard
+            title={t('iot.total_devices', 'Total Devices')}
+            value={stats.total}
+            icon={<HddOutlined />}
+            loading={loading}
+          />
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title={t('iot.online', 'Online')}
-              value={stats.online}
-              prefix={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
-              valueStyle={{ color: '#52c41a' }}
-              loading={loading}
-            />
-          </Card>
+          <KpiCard
+            title={t('iot.online', 'Online')}
+            value={stats.online}
+            icon={<CheckCircleOutlined />}
+            tone="success"
+            loading={loading}
+          />
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title={t('iot.offline', 'Offline')}
-              value={stats.offline}
-              prefix={<CloseCircleOutlined />}
-              loading={loading}
-            />
-          </Card>
+          <KpiCard
+            title={t('iot.offline', 'Offline')}
+            value={stats.offline}
+            icon={<CloseCircleOutlined />}
+            loading={loading}
+          />
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title={t('iot.active_alerts', 'Active Alerts')}
-              value={stats.activeAlerts}
-              prefix={<BellOutlined style={{ color: '#ff4d4f' }} />}
-              valueStyle={{ color: '#ff4d4f' }}
-              loading={loading}
-            />
-          </Card>
+          <KpiCard
+            title={t('iot.active_alerts', 'Active Alerts')}
+            value={stats.activeAlerts}
+            icon={<BellOutlined />}
+            tone="danger"
+            loading={loading}
+          />
         </Col>
       </Row>
 
       <Row gutter={16}>
         <Col xs={24} lg={14}>
-          <Card 
-            title={t('iot.recent_alerts', 'Recent Alerts')} 
-            style={{ marginBottom: 16 }}
+          <SectionCard
+            title={t('iot.recent_alerts', 'Recent Alerts')}
             extra={<Button onClick={() => navigate('/iot/alerts')}>{t('common.view_all', 'View All')}</Button>}
           >
             <ResponsiveTableAdapter
@@ -202,11 +193,11 @@ const IoTDashboard: React.FC = () => {
               loading={loading}
               size="small"
             />
-          </Card>
+          </SectionCard>
         </Col>
 
         <Col xs={24} lg={10}>
-          <Card 
+          <SectionCard
             title={t('iot.recent_devices', 'Recent Devices')}
             extra={<Button onClick={() => navigate('/iot/devices')}>{t('common.view_all', 'View All')}</Button>}
           >
@@ -240,7 +231,7 @@ const IoTDashboard: React.FC = () => {
                 </Card>
               ))}
             </Space>
-          </Card>
+          </SectionCard>
         </Col>
       </Row>
 

@@ -1,13 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Button, Form, Input, DatePicker, InputNumber, Space, Tag, Modal } from 'antd';
+import { Button, Form, Input, DatePicker, InputNumber, Space, Modal } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SendOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import dayjs from 'dayjs';
-import { PageHeader, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat, FilterBar } from '../design-system';
 import { downloadCsv } from '../utils/exportCsv';
-import { space as spaceTk } from '../theme/tokens';
 import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
@@ -126,11 +125,11 @@ export default function ExpenseClaims() {
  setModalVisible(true);
  };
 
- const statusColors: Record<string, string> = {
- draft: 'default',
- submitted: 'blue',
- approved: 'green',
- rejected: 'red',
+ const statusKinds: Record<string, 'draft' | 'sent' | 'approved' | 'rejected'> = {
+ draft: 'draft',
+ submitted: 'sent',
+ approved: 'approved',
+ rejected: 'rejected',
  };
 
  const columns = [
@@ -153,7 +152,7 @@ export default function ExpenseClaims() {
  dataIndex: 'status',
  key: 'status',
  render: (status: string) => (
- <Tag color={statusColors[status] || 'default'}>{t(status)}</Tag>
+ <StatusTag status={statusKinds[status] || 'default'} label={t(status)} />
  ),
  },
  {
@@ -234,7 +233,9 @@ export default function ExpenseClaims() {
  </Space>
  }
  />
- <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: spaceTk.md }}>
+ <FilterBar
+ extra={
+ <>
  <ExportMenu
  formats={['csv']}
  onExport={(f: ExportFormat) => {
@@ -245,7 +246,9 @@ export default function ExpenseClaims() {
  }}
  />
  <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
- </div>
+ </>
+ }
+ />
  <ResponsiveTableAdapter
  dataSource={data}
  columns={visibleColumns}

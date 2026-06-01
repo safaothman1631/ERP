@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Form, Input, Select, Tag, message, Card, InputNumber, Switch, Modal } from 'antd';
+import { Button, Space, Form, Input, Select, InputNumber, Switch, Modal, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
-import { space } from '../../theme/tokens';
+import { PageHeader, SectionCard, StatusTag } from '../../design-system';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
@@ -124,9 +123,7 @@ const SubscriptionPlans: React.FC = () => {
  title: t('status'),
  key: 'active',
  render: (_: any, record: Plan) => (
- <Tag color={record.active ? 'green' : 'default'}>
- {record.active ? t('active') : t('inactive')}
- </Tag>
+ <StatusTag status={record.active ? 'active' : 'inactive'} label={record.active ? t('active') : t('inactive')} />
  ),
  width: 80,
  },
@@ -144,7 +141,7 @@ const SubscriptionPlans: React.FC = () => {
  ];
 
  return (
- <div style={{ padding: space.lg }}>
+ <div>
  <PageHeader
  title={t('subscription.plans')}
  subtitle={t('subscription.plans_subtitle')}
@@ -154,8 +151,8 @@ const SubscriptionPlans: React.FC = () => {
  </Button>
  }
  />
- 
- <Card style={{ marginTop: space.md }}>
+
+ <SectionCard padded={false}>
  <ResponsiveTableAdapter
  columns={columns}
  dataSource={plans}
@@ -163,7 +160,7 @@ const SubscriptionPlans: React.FC = () => {
  rowKey="id"
  pagination={{ pageSize: 20 }}
  />
- </Card>
+ </SectionCard>
 
  <FormDialog
  title={editing ? t('subscription.edit_plan') : t('subscription.new_plan')}

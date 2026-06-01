@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Card, Row, Col, Statistic, Empty } from 'antd';
+import { Row, Col, Empty } from 'antd';
 
 import { useTranslation } from 'react-i18next';
-import { PageHeader, LoadingSkeleton } from '../../design-system';
+import { PageHeader, LoadingSkeleton, KpiCard, ChartCard, SectionCard } from '../../design-system';
 import { InlineError } from '../../components/feedback/InlineError';
 import { useLoadingState } from '../../hooks/useLoadingState';
 import api from '../../api';
@@ -107,65 +107,62 @@ const MarketingDashboard: React.FC = () => {
 
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
           <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title={t('marketing.campaigns_sent_this_month')}
-                value={kpis.campaignsSentThisMonth}
-                prefix={<MailOutlined />}
-              />
-            </Card>
+            <KpiCard
+              title={t('marketing.campaigns_sent_this_month')}
+              value={kpis.campaignsSentThisMonth}
+              icon={<MailOutlined />}
+            />
           </Col>
           <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title={t('marketing.total_reach')}
-                value={kpis.totalReach}
-                prefix={<SendOutlined />}
-              />
-            </Card>
+            <KpiCard
+              title={t('marketing.total_reach')}
+              value={kpis.totalReach}
+              icon={<SendOutlined />}
+              tone="info"
+            />
           </Col>
           <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title={t('marketing.avg_open_rate')}
-                value={kpis.avgOpenRate}
-                suffix="%"
-                prefix={<EyeOutlined />}
-              />
-            </Card>
+            <KpiCard
+              title={t('marketing.avg_open_rate')}
+              value={kpis.avgOpenRate}
+              suffix="%"
+              icon={<EyeOutlined />}
+              tone="success"
+            />
           </Col>
           <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title={t('marketing.active_automations')}
-                value={kpis.activeAutomations}
-                prefix={<ThunderboltOutlined />}
-              />
-            </Card>
+            <KpiCard
+              title={t('marketing.active_automations')}
+              value={kpis.activeAutomations}
+              icon={<ThunderboltOutlined />}
+              tone="warning"
+            />
           </Col>
         </Row>
 
-        <Card title={t('marketing.sends_per_day')} style={{ marginBottom: 24 }}>
-          {chartData.length > 0 ? (
-            <ResponsiveChart
-              legendItems={[
-                { id: 'sent', labelKey: asTranslationKey('marketing.sent'), color: '#1890ff' },
-              ]}
-            >
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="sent" stroke="#1890ff" />
-              </LineChart>
-            </ResponsiveChart>
-          ) : (
-            <Empty description={t('no_data')} />
-          )}
-        </Card>
+        <div style={{ marginBottom: 24 }}>
+          <ChartCard title={t('marketing.sends_per_day')}>
+            {chartData.length > 0 ? (
+              <ResponsiveChart
+                legendItems={[
+                  { id: 'sent', labelKey: asTranslationKey('marketing.sent'), color: 'var(--accent-500)' },
+                ]}
+              >
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="date" tick={{ fill: 'var(--ink-400)' }} />
+                  <YAxis tick={{ fill: 'var(--ink-400)' }} />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="sent" stroke="var(--accent-500)" />
+                </LineChart>
+              </ResponsiveChart>
+            ) : (
+              <Empty description={t('no_data')} />
+            )}
+          </ChartCard>
+        </div>
 
-        <Card title={t('marketing.recent_campaigns')}>
+        <SectionCard title={t('marketing.recent_campaigns')}>
           <ResponsiveTableAdapter
             columns={columns}
             dataSource={campaigns}
@@ -174,7 +171,7 @@ const MarketingDashboard: React.FC = () => {
             onRow={(_rec) => ({ onClick: () => navigate(`/marketing/campaigns/email`) })}
             style={{ cursor: 'pointer' }}
           />
-        </Card>
+        </SectionCard>
     </div>
   );
 };

@@ -1,12 +1,13 @@
 import type React from 'react';
 import { useState } from 'react';
-import { Card, Button, Input, Space, Descriptions, Tag, Empty } from 'antd';
+import { Button, Input, Space, Empty } from 'antd';
 import { message } from '../../utils/message';
 import { SearchOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard, KeyValueGrid, StatusTag } from '../../design-system';
+import type { KeyValueItem } from '../../design-system';
 import { space } from '../../theme/tokens';
 
 const WarrantyCheck: React.FC = () => {
@@ -45,7 +46,7 @@ const WarrantyCheck: React.FC = () => {
         subtitle={t('repairs.warranty_check_subtitle')}
       />
 
-      <Card style={{ marginBottom: space.md }}>
+      <SectionCard style={{ marginBottom: space.md }}>
         <Space.Compact style={{ width: '100%', maxWidth: 500 }}>
           <Input
             prefix={<SearchOutlined />}
@@ -59,16 +60,16 @@ const WarrantyCheck: React.FC = () => {
             {t('search')}
           </Button>
         </Space.Compact>
-      </Card>
+      </SectionCard>
 
       {searched && (
-        <Card>
+        <SectionCard>
           {!warranty ? (
             <Empty
-              image={<CloseCircleOutlined style={{ fontSize: 64, color: '#ff4d4f' }} />}
+              image={<CloseCircleOutlined style={{ fontSize: 64, color: 'var(--danger-500)' }} />}
               description={
                 <Space direction="vertical">
-                  <Tag color="red">{t('repairs.warranty_not_found')}</Tag>
+                  <StatusTag status="error" label={t('repairs.warranty_not_found')} />
                   <div>{t('repairs.no_warranty_message')}</div>
                 </Space>
               }
@@ -77,38 +78,31 @@ const WarrantyCheck: React.FC = () => {
             <>
               <div style={{ textAlign: 'center', marginBottom: space.md }}>
                 {underWarranty ? (
-                  <CheckCircleOutlined style={{ fontSize: 64, color: '#52c41a' }} />
+                  <CheckCircleOutlined style={{ fontSize: 64, color: 'var(--success-500)' }} />
                 ) : (
-                  <CloseCircleOutlined style={{ fontSize: 64, color: '#ff4d4f' }} />
+                  <CloseCircleOutlined style={{ fontSize: 64, color: 'var(--danger-500)' }} />
                 )}
                 <div style={{ marginTop: space.sm, fontSize: 18, fontWeight: 600 }}>
                   {underWarranty ? (
-                    <Tag color="green">{t('repairs.warranty_valid')}</Tag>
+                    <StatusTag status="success" label={t('repairs.warranty_valid')} />
                   ) : (
-                    <Tag color="red">{t('repairs.warranty_expired')}</Tag>
+                    <StatusTag status="error" label={t('repairs.warranty_expired')} />
                   )}
                 </div>
               </div>
 
-              <Descriptions column={1} bordered>
-                <Descriptions.Item label={t('repairs.serial_no')}>
-                  {warranty.serial_no}
-                </Descriptions.Item>
-                <Descriptions.Item label={t('repairs.warranty_start')}>
-                  {warranty.start_date ? dayjs(warranty.start_date).format('YYYY-MM-DD') : '—'}
-                </Descriptions.Item>
-                <Descriptions.Item label={t('repairs.warranty_end')}>
-                  {warranty.end_date ? dayjs(warranty.end_date).format('YYYY-MM-DD') : '—'}
-                </Descriptions.Item>
-                {warranty.coverage_notes && (
-                  <Descriptions.Item label={t('repairs.coverage_notes')}>
-                    {warranty.coverage_notes}
-                  </Descriptions.Item>
-                )}
-              </Descriptions>
+              <KeyValueGrid
+                columns={1}
+                items={[
+                  { label: t('repairs.serial_no'), value: warranty.serial_no },
+                  { label: t('repairs.warranty_start'), value: warranty.start_date ? dayjs(warranty.start_date).format('YYYY-MM-DD') : '—' },
+                  { label: t('repairs.warranty_end'), value: warranty.end_date ? dayjs(warranty.end_date).format('YYYY-MM-DD') : '—' },
+                  ...(warranty.coverage_notes ? [{ label: t('repairs.coverage_notes'), value: warranty.coverage_notes } as KeyValueItem] : []),
+                ]}
+              />
             </>
           )}
-        </Card>
+        </SectionCard>
       )}
     </div>
   );

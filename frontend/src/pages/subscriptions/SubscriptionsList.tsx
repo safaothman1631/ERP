@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Form, Input, Select, Tag, message, Card, DatePicker, InputNumber, Modal } from 'antd';
+import { Button, Space, Form, Input, DatePicker, InputNumber, Modal, message } from 'antd';
 import { PlusOutlined, EyeOutlined, PauseOutlined, PlayCircleOutlined, StopOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
-import { space } from '../../theme/tokens';
+import { PageHeader, FilterBar, SectionCard, StatusTag, type StatusKind } from '../../design-system';
 import dayjs from 'dayjs';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -142,11 +141,11 @@ const SubscriptionsList: React.FC = () => {
  }
  };
 
- const statusColors: Record<string, string> = {
- trial: 'blue',
- active: 'green',
- past_due: 'orange',
- cancelled: 'red',
+ const statusKinds: Record<string, StatusKind> = {
+ trial: 'info',
+ active: 'active',
+ past_due: 'warning',
+ cancelled: 'error',
  paused: 'default',
  };
 
@@ -176,9 +175,7 @@ const SubscriptionsList: React.FC = () => {
  dataIndex: 'status',
  key: 'status',
  render: (status: string) => (
- <Tag color={statusColors[status] || 'default'}>
- {t(`subscription.status_${status}`)}
- </Tag>
+ <StatusTag status={statusKinds[status] || 'default'} label={t(`subscription.status_${status}`)} />
  ),
  width: 100,
  },
@@ -233,7 +230,7 @@ const SubscriptionsList: React.FC = () => {
  ];
 
  return (
- <div style={{ padding: space.lg }} data-addgate-section="subscriptions.list">
+ <div data-addgate-section="subscriptions.list">
  <PageHeader
  title={t('subscription.subscriptions')}
  subtitle={t('subscription.subscriptions_subtitle')}
@@ -244,34 +241,30 @@ const SubscriptionsList: React.FC = () => {
  }
  />
  
- <Card style={{ marginTop: space.md }}>
- <Space style={{ marginBottom: space.md }}>
- <Select
- placeholder={t('subscription.filter_status')}
- style={{ width: 150 }}
- allowClear
- value={statusFilter || undefined}
- onChange={setStatusFilter}
- >
- <Select.Option value="trial">{t('subscription.status_trial')}</Select.Option>
- <Select.Option value="active">{t('subscription.status_active')}</Select.Option>
- <Select.Option value="past_due">{t('subscription.status_past_due')}</Select.Option>
- <Select.Option value="paused">{t('subscription.status_paused')}</Select.Option>
- <Select.Option value="cancelled">{t('subscription.status_cancelled')}</Select.Option>
- </Select>
- <Select
- placeholder={t('subscription.filter_plan')}
- style={{ width: 200 }}
- allowClear
- value={planFilter || undefined}
- onChange={setPlanFilter}
- >
- {plans.map(p => (
- <Select.Option key={p.id} value={p.id}>{p.name}</Select.Option>
- ))}
- </Select>
- </Space>
- 
+ <FilterBar
+ filters={[
+ {
+ key: 'status',
+ label: t('subscription.filter_status'),
+ options: [
+ { label: t('subscription.status_trial'), value: 'trial' },
+ { label: t('subscription.status_active'), value: 'active' },
+ { label: t('subscription.status_past_due'), value: 'past_due' },
+ { label: t('subscription.status_paused'), value: 'paused' },
+ { label: t('subscription.status_cancelled'), value: 'cancelled' },
+ ],
+ },
+ {
+ key: 'plan',
+ label: t('subscription.filter_plan'),
+ options: plans.map((p) => ({ label: p.name, value: p.id })),
+ },
+ ]}
+ values={{ status: statusFilter || undefined, plan: planFilter || undefined }}
+ onChange={(v) => { setStatusFilter((v.status as string) || ''); setPlanFilter((v.plan as string) || ''); }}
+ />
+
+ <SectionCard padded={false}>
  <ListWithEmptyState
  entity="subscription"
  data={subscriptions}
@@ -288,7 +281,7 @@ const SubscriptionsList: React.FC = () => {
  />
  )}
  />
- </Card>
+ </SectionCard>
 
  <FormDialog
  title={t('subscription.new_subscription')}

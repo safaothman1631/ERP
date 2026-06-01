@@ -13,12 +13,13 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Card, Col, Row, Spin, Statistic, Table, Tag, Typography } from 'antd';
+import { Alert, Spin } from 'antd';
+import { DollarOutlined, FallOutlined, CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined, StopOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { message } from '../../utils/message';
-
-const { Title } = Typography;
+import { PageHeader, SectionCard, StatusTag, DataTable, KpiCard, type StatusKind } from '../../design-system';
+import { space } from '../../theme/tokens';
 
 interface Dashboard {
   mrr_iqd: number;
@@ -44,11 +45,11 @@ interface TenantRow {
   mrr_value: number;
 }
 
-const STATUS_COLOR: Record<string, string> = {
-  trialing: 'blue',
-  active: 'green',
-  past_due: 'orange',
-  suspended: 'red',
+const STATUS_KIND: Record<string, StatusKind> = {
+  trialing: 'info',
+  active: 'active',
+  past_due: 'warning',
+  suspended: 'error',
   cancelled: 'default',
 };
 
@@ -96,94 +97,28 @@ export default function SaasBillingDashboard(): React.ReactElement {
     );
   }
 
+  const numberFmt = (n: number) => n.toLocaleString('en-US');
+
   return (
-    <div style={{ padding: 24, maxWidth: 1400, margin: '0 auto' }}>
-      <Title level={2}>{t('admin.billing.title', 'SaaS Billing — Admin')}</Title>
+    <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+      <PageHeader title={t('admin.billing.title', 'SaaS Billing — Admin')} />
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title={t('admin.billing.mrr_iqd', 'MRR (IQD)')}
-              value={dash.mrr_iqd}
-              suffix="د.ع"
-              groupSeparator=","
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title={t('admin.billing.mrr_usd', 'MRR (USD)')}
-              value={dash.mrr_usd}
-              prefix="$"
-              precision={2}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title={t('admin.billing.arr_iqd', 'ARR (IQD)')}
-              value={dash.arr_iqd}
-              suffix="د.ع"
-              groupSeparator=","
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title={t('admin.billing.churn', 'Monthly churn')}
-              value={dash.churn_rate_monthly * 100}
-              precision={2}
-              suffix="%"
-            />
-          </Card>
-        </Col>
-      </Row>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: space.md, marginBottom: space.md }}>
+        <KpiCard title={t('admin.billing.mrr_iqd', 'MRR (IQD)')} value={`${numberFmt(dash.mrr_iqd)} د.ع`} icon={<DollarOutlined />} tone="primary" />
+        <KpiCard title={t('admin.billing.mrr_usd', 'MRR (USD)')} value={`$${dash.mrr_usd.toFixed(2)}`} icon={<DollarOutlined />} tone="primary" />
+        <KpiCard title={t('admin.billing.arr_iqd', 'ARR (IQD)')} value={`${numberFmt(dash.arr_iqd)} د.ع`} icon={<DollarOutlined />} tone="info" />
+        <KpiCard title={t('admin.billing.churn', 'Monthly churn')} value={`${(dash.churn_rate_monthly * 100).toFixed(2)}%`} icon={<FallOutlined />} tone="warning" />
+      </div>
 
-      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title={t('admin.billing.active', 'Active')}
-              value={dash.active_tenants}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title={t('admin.billing.trialing', 'Trialing')}
-              value={dash.trialing_tenants}
-              valueStyle={{ color: '#7B61FF' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title={t('admin.billing.past_due', 'Past due')}
-              value={dash.past_due_tenants}
-              valueStyle={{ color: '#fa8c16' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title={t('admin.billing.suspended', 'Suspended')}
-              value={dash.suspended_tenants}
-              valueStyle={{ color: '#cf1322' }}
-            />
-          </Card>
-        </Col>
-      </Row>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: space.md, marginBottom: space.lg }}>
+        <KpiCard title={t('admin.billing.active', 'Active')} value={dash.active_tenants} icon={<CheckCircleOutlined />} tone="success" />
+        <KpiCard title={t('admin.billing.trialing', 'Trialing')} value={dash.trialing_tenants} icon={<ClockCircleOutlined />} tone="primary" />
+        <KpiCard title={t('admin.billing.past_due', 'Past due')} value={dash.past_due_tenants} icon={<ExclamationCircleOutlined />} tone="warning" />
+        <KpiCard title={t('admin.billing.suspended', 'Suspended')} value={dash.suspended_tenants} icon={<StopOutlined />} tone="danger" />
+      </div>
 
-      <Card style={{ marginTop: 16 }} title={t('admin.billing.tenants', 'Tenants')}>
-        <Table<TenantRow>
+      <SectionCard title={t('admin.billing.tenants', 'Tenants')} padded={false}>
+        <DataTable<TenantRow>
           rowKey="tenant_id"
           dataSource={tenants}
           pagination={{ pageSize: 25 }}
@@ -195,7 +130,7 @@ export default function SaasBillingDashboard(): React.ReactElement {
               dataIndex: 'status',
               key: 'status',
               render: (s: string | null) => s ? (
-                <Tag color={STATUS_COLOR[s] || 'default'}>{s}</Tag>
+                <StatusTag status={STATUS_KIND[s] || 'default'} label={s} />
               ) : null,
             },
             { title: t('admin.billing.col.cycle', 'Cycle'), dataIndex: 'billing_cycle', key: 'billing_cycle' },
@@ -203,6 +138,7 @@ export default function SaasBillingDashboard(): React.ReactElement {
               title: t('admin.billing.col.mrr', 'MRR (IQD)'),
               dataIndex: 'mrr_value',
               key: 'mrr_value',
+              align: 'right',
               sorter: (a, b) => a.mrr_value - b.mrr_value,
               render: (v: number) => v.toLocaleString(),
             },
@@ -210,7 +146,7 @@ export default function SaasBillingDashboard(): React.ReactElement {
             { title: t('admin.billing.col.last_payment', 'Last payment'), dataIndex: 'last_payment_at', key: 'last_payment_at' },
           ]}
         />
-      </Card>
+      </SectionCard>
     </div>
   );
 }

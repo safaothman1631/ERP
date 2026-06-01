@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Button, Tag, message, Row, Col } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
+import { Button, message, Row, Col } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { PieChart, Pie, Cell, Legend, Tooltip } from 'recharts';
 import api from '../../api';
-import { PageHeader, KpiCard } from '../../design-system';
-import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { PageHeader, SectionCard, DataTable, KpiCard, StatusTag } from '../../design-system';
+import type { ColumnDef } from '../../design-system/DataTable';
 import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
 
 interface Activity {
@@ -29,7 +28,8 @@ const activityTypeLabel: Record<string, string> = {
   upload: 'بارکردن',
 };
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+// Kit data-viz palette — CSS-var tokens that auto-flip for dark mode.
+const COLORS = ['var(--viz-1)', 'var(--viz-2)', 'var(--viz-3)', 'var(--viz-4)', 'var(--viz-5)'];
 
 export default function ActivitiesDashboard() {
   const { t } = useTranslation();
@@ -98,7 +98,7 @@ export default function ActivitiesDashboard() {
     value: count,
   }));
 
-  const columns: ColumnsType<any> = [
+  const columns: ColumnDef<{ userId: string; userName: string; pending: number; done: number; total: number }>[] = [
     {
       title: t('activities.user'),
       dataIndex: 'userName',
@@ -109,14 +109,14 @@ export default function ActivitiesDashboard() {
       dataIndex: 'pending',
       key: 'pending',
       align: 'center',
-      render: (val: number) => <Tag color="blue">{val}</Tag>,
+      render: (val: number) => <StatusTag status="info" label={val} />,
     },
     {
       title: t('activities.done'),
       dataIndex: 'done',
       key: 'done',
       align: 'center',
-      render: (val: number) => <Tag color="green">{val}</Tag>,
+      render: (val: number) => <StatusTag status="success" label={val} />,
     },
     {
       title: t('activities.total'),
@@ -173,23 +173,24 @@ export default function ActivitiesDashboard() {
         </Col>
       </Row>
 
-      <Row gutter={16}>
+      <Row gutter={[16, 16]}>
         <Col xs={24} lg={12}>
-          <Card title={t('activities.by_user')} style={{ marginBottom: 16 }}>
-            <ResponsiveTableAdapter
+          <SectionCard title={t('activities.by_user')} padded={false} style={{ marginBottom: 0 }}>
+            <DataTable
               dataSource={userRows}
               columns={columns}
               rowKey="userId"
+              stickyHeader={false}
               pagination={false}
-              size="small"
+              style={{ border: 'none', boxShadow: 'none', borderRadius: 0 }}
             />
-          </Card>
+          </SectionCard>
         </Col>
 
         <Col xs={24} lg={12}>
-          <Card title={t('activities.by_type')} style={{ marginBottom: 16 }}>
+          <SectionCard title={t('activities.by_type')} style={{ marginBottom: 0 }}>
             {typeData.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 40 }}>{t('activities.no_data')}</div>
+              <div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-500)' }}>{t('activities.no_data')}</div>
             ) : (
               <ResponsiveChart legendItems={[]} minMobileBlockSize={300}>
                 <PieChart>
@@ -211,7 +212,7 @@ export default function ActivitiesDashboard() {
                 </PieChart>
               </ResponsiveChart>
             )}
-          </Card>
+          </SectionCard>
         </Col>
       </Row>
     </div>

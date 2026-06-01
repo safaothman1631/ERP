@@ -1,16 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Row, Col, Statistic, Button, Typography, Empty } from 'antd';
+import { Row, Col, Button, Empty } from 'antd';
 import { ShoppingOutlined, FileTextOutlined, DollarOutlined, WarningOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
 import vendorApi from '../../api/vendorPortal';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
-import { LoadingSkeleton } from '../../design-system/LoadingSkeleton';
+import { PageHeader, SectionCard, KpiCard, LoadingSkeleton } from '../../design-system';
+import { space } from '../../theme/tokens';
 import { InlineError } from '../../components/feedback/InlineError';
 import { useLoadingState } from '../../hooks/useLoadingState';
-
-const { Title, Text: _Text } = Typography;
 
 interface DashboardStats {
   open_pos_count: number;
@@ -79,6 +78,7 @@ const VendorPortalDashboard: React.FC = () => {
       title: t('vendor_portal.po_total'),
       dataIndex: 'total',
       key: 'total',
+      align: 'right' as const,
       render: (val: number) => `${val?.toFixed(2) || '0.00'}`,
     },
     {
@@ -127,76 +127,30 @@ const VendorPortalDashboard: React.FC = () => {
   }
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <Title level={2}>{t('vendor_portal.dashboard')}</Title>
-        <Button
-          icon={<LogoutOutlined />}
-          onClick={handleLogout}
-        >
-          {t('vendor_portal.logout')}
-        </Button>
+    <div>
+      <PageHeader
+        title={t('vendor_portal.dashboard')}
+        extra={
+          <Button
+            icon={<LogoutOutlined />}
+            onClick={handleLogout}
+          >
+            {t('vendor_portal.logout')}
+          </Button>
+        }
+      />
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: space.md, marginBottom: space.lg }}>
+        <KpiCard title={t('vendor_portal.open_pos_count')} value={stats?.open_pos_count || 0} icon={<ShoppingOutlined />} tone="success" />
+        <KpiCard title={t('vendor_portal.open_pos_value')} value={(stats?.open_pos_value || 0).toFixed(2)} icon={<DollarOutlined />} tone="info" />
+        <KpiCard title={t('vendor_portal.pending_bills')} value={stats?.pending_bills_count || 0} icon={<FileTextOutlined />} tone="warning" />
+        <KpiCard title={t('vendor_portal.payments_30d')} value={(stats?.paid_bills_total_30d || 0).toFixed(2)} icon={<DollarOutlined />} tone="success" />
+        <KpiCard title={t('vendor_portal.outstanding_balance')} value={(stats?.outstanding_balance || 0).toFixed(2)} icon={<WarningOutlined />} tone="danger" />
       </div>
 
-      <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
-        <Col xs={24} sm={12} lg={8}>
-          <Card>
-            <Statistic
-              title={t('vendor_portal.open_pos_count')}
-              value={stats?.open_pos_count || 0}
-              prefix={<ShoppingOutlined />}
-              valueStyle={{ color: 'var(--success-500)' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={8}>
-          <Card>
-            <Statistic
-              title={t('vendor_portal.open_pos_value')}
-              value={stats?.open_pos_value || 0}
-              prefix={<DollarOutlined />}
-              precision={2}
-              valueStyle={{ color: 'var(--info-500)' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={8}>
-          <Card>
-            <Statistic
-              title={t('vendor_portal.pending_bills')}
-              value={stats?.pending_bills_count || 0}
-              prefix={<FileTextOutlined />}
-              valueStyle={{ color: 'var(--warning-500)' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={8}>
-          <Card>
-            <Statistic
-              title={t('vendor_portal.payments_30d')}
-              value={stats?.paid_bills_total_30d || 0}
-              prefix={<DollarOutlined />}
-              precision={2}
-              valueStyle={{ color: 'var(--success-500)' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={8}>
-          <Card>
-            <Statistic
-              title={t('vendor_portal.outstanding_balance')}
-              value={stats?.outstanding_balance || 0}
-              prefix={<WarningOutlined />}
-              precision={2}
-              valueStyle={{ color: 'var(--danger-500)' }}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
+      <Row gutter={[16, 16]}>
         <Col xs={24} lg={12}>
-          <Card 
+          <SectionCard
             title={t('vendor_portal.my_pos')}
             extra={
               <Button type="link" onClick={() => navigate('/vendor-portal/purchase-orders')}>
@@ -215,10 +169,10 @@ const VendorPortalDashboard: React.FC = () => {
             ) : (
               <Empty description={t('vendor_portal.no_pos')} />
             )}
-          </Card>
+          </SectionCard>
         </Col>
         <Col xs={24} lg={12}>
-          <Card 
+          <SectionCard
             title={t('vendor_portal.my_bills')}
             extra={
               <Button type="link" onClick={() => navigate('/vendor-portal/bills')}>
@@ -237,7 +191,7 @@ const VendorPortalDashboard: React.FC = () => {
             ) : (
               <Empty description={t('vendor_portal.no_bills')} />
             )}
-          </Card>
+          </SectionCard>
         </Col>
       </Row>
     </div>

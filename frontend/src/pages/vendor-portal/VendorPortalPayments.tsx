@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Empty, Tag, Typography } from 'antd';
+import { Button, Empty } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
 import vendorApi from '../../api/vendorPortal';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
-
-const { Title } = Typography;
+import { PageHeader, SectionCard, StatusTag, type StatusKind } from '../../design-system';
 
 const VendorPortalPayments: React.FC = () => {
   const { t } = useTranslation();
@@ -58,6 +57,7 @@ const VendorPortalPayments: React.FC = () => {
       title: t('vendor_portal.payment_amount'),
       dataIndex: 'amount',
       key: 'amount',
+      align: 'right' as const,
       render: (val: number) => val?.toFixed(2) || '0.00',
     },
     {
@@ -65,30 +65,30 @@ const VendorPortalPayments: React.FC = () => {
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => {
-        const colors: any = {
-          completed: 'green',
-          pending: 'orange',
-          failed: 'red',
+        const kinds: Record<string, StatusKind> = {
+          completed: 'success',
+          pending: 'warning',
+          failed: 'error',
         };
         return (
-          <Tag color={colors[status] || 'default'}>
-            {status || t('completed')}
-          </Tag>
+          <StatusTag status={kinds[status] || 'default'} label={status || t('completed')} />
         );
       },
     },
   ];
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <Title level={2}>{t('vendor_portal.my_payments')}</Title>
-        <Button onClick={() => navigate('/vendor-portal')}>
-          {t('back')}
-        </Button>
-      </div>
+    <div>
+      <PageHeader
+        title={t('vendor_portal.my_payments')}
+        extra={
+          <Button onClick={() => navigate('/vendor-portal')}>
+            {t('back')}
+          </Button>
+        }
+      />
 
-      <Card style={{ marginTop: 24 }}>
+      <SectionCard padded={false}>
         <ResponsiveTableAdapter
           dataSource={payments}
           columns={columns}
@@ -98,7 +98,7 @@ const VendorPortalPayments: React.FC = () => {
             emptyText: <Empty description={t('vendor_portal.no_payments')} />,
           }}
         />
-      </Card>
+      </SectionCard>
     </div>
   );
 };

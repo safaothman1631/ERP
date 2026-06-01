@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import type { ColumnsType } from 'antd/es/table';
-import { Button, Space, Form, Input, Select, Tag } from 'antd';
+import { Button, Space, Form, Input, Select } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, LinkOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { message } from '../../utils/message';
-import { PageHeader } from '../../design-system';
+import { PageHeader, StatusTag } from '../../design-system';
+import type { StatusKind } from '../../design-system';
 import { Popconfirm } from 'antd';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -79,10 +80,10 @@ const NonConformances: React.FC = () => {
  }
  };
 
- const severityColor = (sev: string) => {
- if (sev === 'critical') return 'red';
- if (sev === 'high') return 'orange';
- if (sev === 'medium') return 'gold';
+ const severityKind = (sev: string): StatusKind => {
+ if (sev === 'critical') return 'error';
+ if (sev === 'high') return 'warning';
+ if (sev === 'medium') return 'warning';
  return 'default';
  };
 
@@ -96,7 +97,7 @@ const NonConformances: React.FC = () => {
  title: t('quality.severity'),
  dataIndex: 'severity',
  key: 'severity',
- render: (v) => <Tag color={severityColor(v)}>{t(`quality.severity_${v}`)}</Tag>,
+ render: (v) => <StatusTag status={severityKind(v)} label={t(`quality.severity_${v}`)} />,
  },
  {
  title: t('quality.product'),
@@ -120,7 +121,7 @@ const NonConformances: React.FC = () => {
  title: t('quality.capa_linked'),
  dataIndex: 'capa_id',
  key: 'capa_id',
- render: (v) => (v ? <Tag icon={<LinkOutlined />} color="blue">{t('yes')}</Tag> : '—'),
+ render: (v) => (v ? <StatusTag status="info" icon={<LinkOutlined />} label={t('yes')} /> : '—'),
  },
  {
  title: t('actions'),

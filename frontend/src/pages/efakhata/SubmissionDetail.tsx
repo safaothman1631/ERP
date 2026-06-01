@@ -10,20 +10,18 @@ import { useParams, Link } from 'react-router-dom';
 import {
   Alert,
   Button,
-  Card,
-  Descriptions,
   Popconfirm,
-  Space,
   Spin,
   Steps,
-  Tag,
   Typography,
   message,
 } from 'antd';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
+import { PageHeader, DetailLayout, SectionCard, KeyValueGrid, StatusTag } from '../../design-system';
+import type { StatusKind } from '../../design-system';
 
-const { Title, Text, Paragraph } = Typography;
+const { Text, Paragraph } = Typography;
 
 interface HistoryEntry {
   at: string;
@@ -51,13 +49,13 @@ const STATUS_ORDER = [
   'acknowledged',
 ];
 
-const STATUS_COLOR: Record<string, string> = {
+const STATUS_KIND: Record<string, StatusKind> = {
   pending: 'default',
-  submitting: 'processing',
-  submitted: 'blue',
-  acknowledged: 'green',
-  rejected: 'red',
-  failed: 'orange',
+  submitting: 'info',
+  submitted: 'info',
+  acknowledged: 'success',
+  rejected: 'error',
+  failed: 'warning',
   cancelled: 'default',
 };
 
@@ -101,43 +99,52 @@ const SubmissionDetailPage: React.FC = () => {
   const currentStep = STATUS_ORDER.indexOf(record.status);
   const errored = ['rejected', 'failed', 'cancelled'].includes(record.status);
 
-  return (
-    <div style={{ padding: 24 }}>
-      <Space style={{ marginBottom: 16 }}>
-        <Link to="/efakhata">← {t('back', 'Back to dashboard')}</Link>
-      </Space>
-      <Title level={3}>{t('detail_title', 'Submission')} {record.id.slice(0, 8)}</Title>
+  const canCancel = !['acknowledged', 'cancelled', 'rejected'].includes(record.status);
 
-      <Card style={{ marginBottom: 16 }}>
-        <Descriptions column={2} bordered size="small">
-          <Descriptions.Item label={t('invoice', 'Invoice')}>
-            <Link to={`/invoices/${record.invoice_id}`}>{record.invoice_id}</Link>
-          </Descriptions.Item>
-          <Descriptions.Item label={t('status', 'Status')}>
-            <Tag color={STATUS_COLOR[record.status]}>{record.status}</Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label={t('attempts', 'Attempts')}>
-            {record.attempts}
-          </Descriptions.Item>
-          <Descriptions.Item label={t('mof_ack', 'MoF Ack number')}>
-            {record.mof_ack_number ? <Text code>{record.mof_ack_number}</Text> : '—'}
-          </Descriptions.Item>
-          <Descriptions.Item label={t('created_at', 'Created')}>
-            {record.created_at ?? '—'}
-          </Descriptions.Item>
-          <Descriptions.Item label={t('next_attempt', 'Next retry')}>
-            {record.next_attempt_at ?? '—'}
-          </Descriptions.Item>
-        </Descriptions>
-      </Card>
+  return (
+    <DetailLayout
+      header={
+        <PageHeader
+          title={`${t('detail_title', 'Submission')} ${record.id.slice(0, 8)}`}
+          subtitle={<Link to="/efakhata">← {t('back', 'Back to dashboard')}</Link>}
+          tag={<StatusTag status={STATUS_KIND[record.status] ?? 'default'} label={record.status} />}
+        />
+      }
+      toolbar={
+        canCancel ? (
+          <Popconfirm
+            title={t(
+              'cancel_confirm',
+              'Cancel this submission? This stops retries permanently.',
+            )}
+            onConfirm={handleCancel}
+          >
+            <Button danger>{t('cancel_button', 'Cancel submission (admin only)')}</Button>
+          </Popconfirm>
+        ) : undefined
+      }
+    >
+      <SectionCard>
+        <KeyValueGrid
+          columns={2}
+          items={[
+            { label: t('invoice', 'Invoice'), value: <Link to={`/invoices/${record.invoice_id}`}>{record.invoice_id}</Link> },
+            { label: t('status', 'Status'), value: <StatusTag status={STATUS_KIND[record.status] ?? 'default'} label={record.status} /> },
+            { label: t('attempts', 'Attempts'), value: record.attempts },
+            { label: t('mof_ack', 'MoF Ack number'), value: record.mof_ack_number ? <Text code>{record.mof_ack_number}</Text> : '—' },
+            { label: t('created_at', 'Created'), value: record.created_at ?? '—' },
+            { label: t('next_attempt', 'Next retry'), value: record.next_attempt_at ?? '—' },
+          ]}
+        />
+      </SectionCard>
 
       {!errored && (
-        <Card style={{ marginBottom: 16 }}>
+        <SectionCard>
           <Steps
             current={currentStep >= 0 ? currentStep : 0}
             items={STATUS_ORDER.map((s) => ({ title: s }))}
           />
-        </Card>
+        </SectionCard>
       )}
 
       {record.error_message && (
@@ -154,7 +161,7 @@ const SubmissionDetailPage: React.FC = () => {
         />
       )}
 
-      <Card title={t('timeline', 'Timeline')}>
+      <SectionCard title={t('timeline', 'Timeline')}>
         {record.history.length === 0 ? (
           <Paragraph type="secondary">{t('no_history', 'No history yet')}</Paragraph>
         ) : (
@@ -162,28 +169,14 @@ const SubmissionDetailPage: React.FC = () => {
             {record.history.map((h, i) => (
               <li key={i}>
                 <Text type="secondary">{h.at}</Text>{' — '}
-                <Tag color={STATUS_COLOR[h.status] ?? 'default'}>{h.status}</Tag>
+                <StatusTag status={STATUS_KIND[h.status] ?? 'default'} label={h.status} />
                 {h.actor ? <Text type="secondary"> ({h.actor})</Text> : null}
               </li>
             ))}
           </ul>
         )}
-      </Card>
-
-      {!['acknowledged', 'cancelled', 'rejected'].includes(record.status) && (
-        <Card style={{ marginTop: 16 }}>
-          <Popconfirm
-            title={t(
-              'cancel_confirm',
-              'Cancel this submission? This stops retries permanently.',
-            )}
-            onConfirm={handleCancel}
-          >
-            <Button danger>{t('cancel_button', 'Cancel submission (admin only)')}</Button>
-          </Popconfirm>
-        </Card>
-      )}
-    </div>
+      </SectionCard>
+    </DetailLayout>
   );
 };
 
