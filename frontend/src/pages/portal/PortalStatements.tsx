@@ -42,7 +42,7 @@ const PortalStatements: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
+    <div style={{ padding: '24px', background: 'var(--bg)', minHeight: '100vh' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <Button
           icon={<LeftOutlined />}
@@ -63,25 +63,25 @@ const PortalStatements: React.FC = () => {
 
               <Row gutter={[24, 24]}>
                 <Col xs={24} md={12}>
-                  <Card style={{ background: '#f0f7ff', borderColor: '#1890ff' }}>
+                  <Card style={{ background: 'var(--info-bg)', borderColor: 'var(--info-500)' }}>
                     <Statistic
                       title={t('portal.total_outstanding')}
                       value={statement.total_due || 0}
                       prefix={<DollarOutlined />}
                       suffix={t('currency')}
-                      valueStyle={{ color: '#1890ff', fontSize: 32 }}
+                      valueStyle={{ color: 'var(--info-500)', fontSize: 32 }}
                     />
                   </Card>
                 </Col>
 
                 <Col xs={24} md={12}>
-                  <Card style={{ background: '#fff1f0', borderColor: '#ff4d4f' }}>
+                  <Card style={{ background: 'var(--danger-bg)', borderColor: 'var(--danger-500)' }}>
                     <Statistic
                       title={t('portal.overdue_amount')}
                       value={statement.overdue || 0}
                       prefix={<FileTextOutlined />}
                       suffix={t('currency')}
-                      valueStyle={{ color: '#ff4d4f', fontSize: 32 }}
+                      valueStyle={{ color: 'var(--danger-500)', fontSize: 32 }}
                     />
                   </Card>
                 </Col>
@@ -106,7 +106,7 @@ const PortalStatements: React.FC = () => {
                     <Text type="secondary">{t('portal.overdue')}:</Text>
                   </Col>
                   <Col span={12} style={{ textAlign: 'right' }}>
-                    <Text strong style={{ fontSize: 18, color: '#ff4d4f' }}>
+                    <Text strong style={{ fontSize: 18, color: 'var(--danger-500)' }}>
                       {statement.overdue?.toLocaleString()} {t('currency')}
                     </Text>
                   </Col>

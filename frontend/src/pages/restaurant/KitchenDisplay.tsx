@@ -74,11 +74,11 @@ const KitchenDisplay: React.FC = () => {
   const ticketColor = (status?: string) => {
     switch (status) {
       case 'preparing':
-        return '#faad14';
+        return 'var(--warning-500)';
       case 'ready':
-        return '#52c41a';
+        return 'var(--success-500)';
       default:
-        return '#d9d9d9';
+        return 'var(--border-strong)';
     }
   };
 
@@ -155,7 +155,7 @@ const KitchenDisplay: React.FC = () => {
                         type="primary"
                         size="small"
                         icon={<CheckOutlined />}
-                        style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                        style={{ backgroundColor: 'var(--success-500)', borderColor: 'var(--success-500)' }}
                         onClick={() => void handleReady(ticket.id)}
                       >
                         {t('restaurant.mark_ready')}

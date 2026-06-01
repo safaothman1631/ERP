@@ -9,6 +9,7 @@ import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTa
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
 import { asTranslationKey } from '../../i18n/types';
+import { palette } from '../../theme/tokens';
 
 const { Title, Text: _Text } = Typography;
 const { Option } = Select;
@@ -184,7 +185,7 @@ const CurrencyRates: React.FC = () => {
  <div style={{ marginBottom: '24px' }}>
  <ResponsiveChart
  legendItems={[
- { id: 'rate', labelKey: asTranslationKey('fx.rate'), color: '#1890ff' },
+ { id: 'rate', labelKey: asTranslationKey('fx.rate'), color: palette.primary500 },
  ]}
  minMobileBlockSize={300}
  >
@@ -193,7 +194,7 @@ const CurrencyRates: React.FC = () => {
  <XAxis dataKey="date" />
  <YAxis />
  <Tooltip />
- <Line type="monotone" dataKey="rate" stroke="#1890ff" name={t('fx.rate')} />
+ <Line type="monotone" dataKey="rate" stroke={palette.primary500} name={t('fx.rate')} />
  </LineChart>
  </ResponsiveChart>
  </div>

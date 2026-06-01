@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import dayjs, { Dayjs } from 'dayjs';
 import { PageHeader } from '../../design-system';
+import { space } from '../../theme/tokens';
 import { message } from '../../utils/message';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -155,7 +156,7 @@ const MaintenanceSchedules: React.FC = () => {
  if (!date) return '—';
  const isOverdue = dayjs(date).isBefore(dayjs(), 'day');
  return (
- <span style={{ color: isOverdue ? 'red' : undefined, fontWeight: isOverdue ? 'bold' : undefined }}>
+ <span style={{ color: isOverdue ? 'var(--danger-fg)' : undefined, fontWeight: isOverdue ? 'bold' : undefined }}>
  {dayjs(date).format('YYYY-MM-DD')}
  {isOverdue && ' ⚠️'}
  </span>
@@ -202,7 +203,7 @@ const MaintenanceSchedules: React.FC = () => {
  description={t('maintenance.overdue_description')}
  type="warning"
  showIcon
- style={{ marginBottom: 16 }}
+ style={{ marginBottom: space.md }}
  />
  )}
  <ResponsiveTableAdapter

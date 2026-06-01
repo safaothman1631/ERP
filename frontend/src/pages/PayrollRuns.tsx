@@ -3,7 +3,8 @@ import { Card, Button, Form, Input, DatePicker, Space, Tag, message, Description
 import { PlusOutlined, ReloadOutlined, CheckOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-import { HelpIcon } from '../help/HelpIcon';
+import { PageHeader } from '../design-system';
+import { palette } from '../theme/tokens';
 import api from '../api';
 import { useListQuery } from '../api/queries/useListQuery';
 import { listQueryKeys } from '../api/queries/keys';
@@ -114,12 +115,16 @@ export default function PayrollRuns() {
 
  return (
  <div style={{ padding: 16 }} data-section-id="hr.payroll_runs">
- <Space style={{ marginBottom: 12 }}>
- <h2 style={{ margin: 0 }}>{t('payroll_runs')}</h2>
- <HelpIcon sectionId="hr.payroll_runs" />
+ <PageHeader
+ title={t('payroll_runs')}
+ sectionId="hr.payroll_runs"
+ extra={
+ <Space>
  <Button icon={<ReloadOutlined />} onClick={load}>{t('refresh')}</Button>
  <Button type="primary" icon={<PlusOutlined />} onClick={() => setOpen(true)}>{t('new_run')}</Button>
  </Space>
+ }
+ />
  <Card><ResponsiveTableAdapter rowKey="id" dataSource={list} columns={cols} pagination={{ pageSize: 20 }} /></Card>
 
  <FormDialog open={open} onOk={submit} onClose={() => setOpen(false)} title={t('new_run')}>
@@ -169,7 +174,7 @@ export default function PayrollRuns() {
  { title: t('name'), dataIndex: 'name' },
  { title: t('type'), dataIndex: 'type' },
  { title: t('amount'), dataIndex: 'amount', align: 'right' as const,
- render: (n: number) => <span style={{ color: n < 0 ? '#dc2626' : undefined }}>{n.toLocaleString()}</span> },
+ render: (n: number) => <span style={{ color: n < 0 ? palette.danger : undefined }}>{n.toLocaleString()}</span> },
  ]}
  summary={() => (
  <Table.Summary.Row>

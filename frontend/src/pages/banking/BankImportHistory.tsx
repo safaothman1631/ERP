@@ -6,6 +6,7 @@ import { ArrowLeftOutlined, InboxOutlined, CloudUploadOutlined } from '@ant-desi
 import { useTranslation } from 'react-i18next';
 import { PageHeader } from '../../design-system';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { palette } from '../../theme/tokens';
 
 const { Text } = Typography;
 
@@ -61,7 +62,7 @@ const BankImportHistory: React.FC = () => {
       title: t('imported'),
       dataIndex: 'imported_count',
       key: 'imported',
-      render: (v: number) => <Text style={{ color: '#52c41a' }}>{v}</Text>
+      render: (v: number) => <Text style={{ color: palette.success }}>{v}</Text>
     },
     {
       title: t('skipped'),
@@ -102,7 +103,7 @@ const BankImportHistory: React.FC = () => {
           locale={{
             emptyText: (
               <Empty
-                image={<InboxOutlined style={{ fontSize: 48, color: '#d1d5db' }} />}
+                image={<InboxOutlined style={{ fontSize: 48, color: palette.ink300 }} />}
                 description={
                   <Space direction="vertical" size={4}>
                     <Text strong>{t('no_import_history')}</Text>

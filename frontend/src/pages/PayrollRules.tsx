@@ -3,6 +3,7 @@ import { Card, Button, Form, Input, InputNumber, Select, Space, Popconfirm, Tag,
 import { PlusOutlined, DeleteOutlined, EditOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
+import { PageHeader } from '../design-system';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 
@@ -65,13 +66,17 @@ export default function PayrollRules() {
 
  return (
  <div style={{ padding: 16 }}>
- <Space style={{ marginBottom: 12 }}>
- <h2 style={{ margin: 0 }}>{t('salary_rules')}</h2>
+ <PageHeader
+ title={t('salary_rules')}
+ extra={
+ <Space>
  <Button icon={<ReloadOutlined />} onClick={load}>{t('refresh')}</Button>
  <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setOpen(true); }}>
  {t('new_rule')}
  </Button>
  </Space>
+ }
+ />
  <Card><ResponsiveTableAdapter rowKey="id" dataSource={list} columns={cols} pagination={false} /></Card>
 
  <FormDialog open={open} onOk={save} onClose={() => setOpen(false)} title={editing ? t('edit_rule') : t('new_rule')}>

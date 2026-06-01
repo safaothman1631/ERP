@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Card, Button, Form, Select, DatePicker, Input, Space, Tag, message, Tabs } from 'antd';
+import { Card, Button, Form, Select, DatePicker, Input, Space, message, Tabs } from 'antd';
 import { PlusOutlined, ReloadOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { HelpIcon } from '../help/HelpIcon';
+import { StatusTag } from '../design-system';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 
@@ -77,7 +78,7 @@ export default function HRTimeOff() {
  { title: t('end_date'), dataIndex: 'end_date' },
  { title: t('days'), dataIndex: 'days' },
  { title: t('status'), dataIndex: 'status',
- render: (s: string) => <Tag color={s === 'approved' ? 'green' : s === 'rejected' ? 'red' : 'orange'}>{s}</Tag> },
+ render: (s: string) => <StatusTag status={s} label={t(s)} /> },
  {
  title: t('actions'),
  render: (_: unknown, r: TimeOff) => r.status === 'pending' ? (
@@ -92,7 +93,7 @@ export default function HRTimeOff() {
  const typeCols = [
  { title: t('name'), dataIndex: 'name' },
  { title: t('days_per_year'), dataIndex: 'days_per_year' },
- { title: t('paid'), dataIndex: 'paid', render: (b?: boolean) => b ? <Tag color="green">{t('yes')}</Tag> : <Tag>{t('no')}</Tag> },
+ { title: t('paid'), dataIndex: 'paid', render: (b?: boolean) => <StatusTag status={b ? 'active' : 'default'} label={b ? t('yes') : t('no')} /> },
  ];
 
  return (

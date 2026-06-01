@@ -9,6 +9,7 @@ import { listQueryKeys } from '../api/queries/keys';
 import dayjs from 'dayjs';
 import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
 import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
+import { formatCurrency } from '../utils/formatters';
 import { downloadCsv } from '../utils/exportCsv';
 import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
@@ -233,7 +234,7 @@ const CreditNotes: React.FC = () => {
  optionFilterProp="label"
  placeholder={t('placeholder_select')}
  options={availableInvoices.map((inv: any) => ({
- label: `${inv.invoice_number} — ${t('balance_due')}: ${(inv.balance_due || 0).toLocaleString()} ?.?`,
+ label: `${inv.invoice_number} — ${t('balance_due')}: ${formatCurrency(inv.balance_due || 0, 'IQD')}`,
  value: inv.id,
  }))}
  />
@@ -256,7 +257,7 @@ const CreditNotes: React.FC = () => {
  dataSource={appliedInvoices}
  columns={[
  { title: '#', dataIndex: 'invoice_number', key: 'invoice_number' },
- { title: t('amount'), dataIndex: 'amount', key: 'amount', render: (v: number) => (v || 0).toLocaleString() + ' ?.?' },
+ { title: t('amount'), dataIndex: 'amount', key: 'amount', render: (v: number) => formatCurrency(v || 0, 'IQD') },
  { title: t('date'), dataIndex: 'date', key: 'date', render: (d: string) => d?.substring(0, 10) },
  {
  title: t('actions'), key: 'actions',

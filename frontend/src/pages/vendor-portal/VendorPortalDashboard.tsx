@@ -145,7 +145,7 @@ const VendorPortalDashboard: React.FC = () => {
               title={t('vendor_portal.open_pos_count')}
               value={stats?.open_pos_count || 0}
               prefix={<ShoppingOutlined />}
-              valueStyle={{ color: '#3f8600' }}
+              valueStyle={{ color: 'var(--success-500)' }}
             />
           </Card>
         </Col>
@@ -156,7 +156,7 @@ const VendorPortalDashboard: React.FC = () => {
               value={stats?.open_pos_value || 0}
               prefix={<DollarOutlined />}
               precision={2}
-              valueStyle={{ color: '#1890ff' }}
+              valueStyle={{ color: 'var(--info-500)' }}
             />
           </Card>
         </Col>
@@ -166,7 +166,7 @@ const VendorPortalDashboard: React.FC = () => {
               title={t('vendor_portal.pending_bills')}
               value={stats?.pending_bills_count || 0}
               prefix={<FileTextOutlined />}
-              valueStyle={{ color: '#faad14' }}
+              valueStyle={{ color: 'var(--warning-500)' }}
             />
           </Card>
         </Col>
@@ -177,7 +177,7 @@ const VendorPortalDashboard: React.FC = () => {
               value={stats?.paid_bills_total_30d || 0}
               prefix={<DollarOutlined />}
               precision={2}
-              valueStyle={{ color: '#52c41a' }}
+              valueStyle={{ color: 'var(--success-500)' }}
             />
           </Card>
         </Col>
@@ -188,7 +188,7 @@ const VendorPortalDashboard: React.FC = () => {
               value={stats?.outstanding_balance || 0}
               prefix={<WarningOutlined />}
               precision={2}
-              valueStyle={{ color: '#ff4d4f' }}
+              valueStyle={{ color: 'var(--danger-500)' }}
             />
           </Card>
         </Col>

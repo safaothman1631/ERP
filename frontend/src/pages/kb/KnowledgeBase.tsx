@@ -141,7 +141,7 @@ export default function KnowledgeBase() {
               renderItem={(a) => (
                 <List.Item>
                   <a onClick={() => navigate(`/kb/articles/${a.id}`)}>{a.title}</a>
-                  <span style={{ marginLeft: space.sm, color: '#999' }}>
+                  <span style={{ marginInlineStart: space.sm, color: 'var(--ink-400)' }}>
                     ({a.view_count || 0} {t('kb.views')})
                   </span>
                 </List.Item>

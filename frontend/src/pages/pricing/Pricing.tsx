@@ -246,8 +246,8 @@ export default function Pricing(): React.ReactElement {
 function FeatureLine({ ok, children }: { ok: boolean; children: React.ReactNode }): React.ReactElement {
   return (
     <Space>
-      <CheckOutlined style={{ color: ok ? '#52c41a' : '#bfbfbf' }} />
-      <Text style={{ textDecoration: ok ? undefined : 'line-through', color: ok ? undefined : '#bfbfbf' }}>
+      <CheckOutlined style={{ color: ok ? 'var(--success-500)' : 'var(--ink-400)' }} />
+      <Text style={{ textDecoration: ok ? undefined : 'line-through', color: ok ? undefined : 'var(--ink-400)' }}>
         {children}
       </Text>
     </Space>

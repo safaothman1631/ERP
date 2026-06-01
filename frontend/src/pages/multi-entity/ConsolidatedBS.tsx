@@ -164,7 +164,7 @@ const ConsolidatedBS = () => {
                   value={bsData.totals.assets}
                   precision={0}
                   prefix={<BankOutlined />}
-                  valueStyle={{ color: '#1890ff' }}
+                  valueStyle={{ color: 'var(--info-500)' }}
                 />
               </Card>
             </Col>
@@ -175,7 +175,7 @@ const ConsolidatedBS = () => {
                   value={bsData.totals.liabilities}
                   precision={0}
                   prefix={<AccountBookOutlined />}
-                  valueStyle={{ color: '#cf1322' }}
+                  valueStyle={{ color: 'var(--danger-500)' }}
                 />
               </Card>
             </Col>
@@ -186,7 +186,7 @@ const ConsolidatedBS = () => {
                   value={bsData.totals.equity}
                   precision={0}
                   prefix={<WalletOutlined />}
-                  valueStyle={{ color: '#3f8600' }}
+                  valueStyle={{ color: 'var(--success-500)' }}
                 />
               </Card>
             </Col>
@@ -207,7 +207,7 @@ const ConsolidatedBS = () => {
               pagination={false}
             />
             <Divider />
-            <p style={{ textAlign: 'center', color: '#666' }}>
+            <p style={{ textAlign: 'center', color: 'var(--ink-500)' }}>
               {t('multi_entity.accounting_equation')}: {t('multi_entity.assets')} ={' '}
               {t('multi_entity.liabilities')} + {t('multi_entity.equity')}
             </p>

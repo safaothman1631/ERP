@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Tabs, Button, Form, Input, Select, Space, message, Popconfirm, Tag } from 'antd';
+import { Tabs, Button, Form, Input, Select, Space, message, Popconfirm } from 'antd';
 import type { TabsProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
@@ -192,7 +192,12 @@ const RoomsBookings: React.FC = () => {
  title: t('status'),
  dataIndex: 'status',
  key: 'status',
- render: (status: string) => <Tag color={status === 'confirmed' ? 'blue' : status === 'checked_in' ? 'green' : 'default'}>{t(`hotel.status_${status}`)}</Tag>,
+ render: (status: string) => (
+ <StatusTag
+ status={status === 'confirmed' ? 'info' : status === 'checked_in' ? 'success' : 'default'}
+ label={t(`hotel.status_${status}`)}
+ />
+ ),
  },
  {
  title: t('actions'),

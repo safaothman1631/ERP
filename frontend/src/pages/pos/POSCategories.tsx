@@ -40,12 +40,12 @@ const POSCategories: React.FC = () => {
  height: 16,
  borderRadius: '50%',
  backgroundColor: cat.color,
- border: '1px solid #d9d9d9',
+ border: '1px solid var(--border)',
  }}
  />
  )}
  <span>{cat.name}</span>
- {cat.name_ku && <span style={{ color: '#999' }}>({cat.name_ku})</span>}
+ {cat.name_ku && <span style={{ color: 'var(--ink-500)' }}>({cat.name_ku})</span>}
  <Space>
  <Button
  icon={<EditOutlined />}

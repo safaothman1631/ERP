@@ -85,15 +85,15 @@ const TablesView: React.FC = () => {
  const statusColor = (status: string) => {
  switch (status) {
  case 'free':
- return '#52c41a';
+ return 'var(--success-500)';
  case 'occupied':
- return '#1890ff';
+ return 'var(--info-500)';
  case 'reserved':
- return '#faad14';
+ return 'var(--warning-500)';
  case 'cleaning':
- return '#d9d9d9';
+ return 'var(--border-strong)';
  default:
- return '#d9d9d9';
+ return 'var(--border-strong)';
  }
  };
 
@@ -131,11 +131,11 @@ const TablesView: React.FC = () => {
  justifyContent: 'center',
  }}
  >
- <Text strong style={{ fontSize: 18, color: '#fff' }}>
+ <Text strong style={{ fontSize: 18, color: 'var(--on-accent)' }}>
  {table.number}
  </Text>
  <br />
- <Text style={{ fontSize: 12, color: '#fff' }}>
+ <Text style={{ fontSize: 12, color: 'var(--on-accent)' }}>
  {table.seats} {t('restaurant.seats')}
  </Text>
  </Card>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, DatePicker, Space, Button } from 'antd';
+import { DatePicker, Space, Button } from 'antd';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
 } from 'recharts';
@@ -8,6 +8,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { ReloadOutlined } from '@ant-design/icons';
 import { message } from '../utils/message';
 import api from '../api';
+import { PageHeader } from '../design-system';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { ResponsiveChart } from '../components/responsive/ResponsiveChart';
 import { asTranslationKey } from '../i18n/types';
@@ -54,20 +55,21 @@ export default function BranchesComparison() {
   ];
 
   return (
-    <Card
-      title={t('branch_comparison') || 'Branch Comparison'}
-      extra={
-        <Space>
-          <DatePicker.RangePicker
-            value={range}
-            onChange={(v) => v && v[0] && v[1] && setRange([v[0], v[1]])}
-          />
-          <Button icon={<ReloadOutlined />} onClick={load} loading={loading}>
-            {t('refresh') || 'Refresh'}
-          </Button>
-        </Space>
-      }
-    >
+    <div>
+      <PageHeader
+        title={t('branch_comparison')}
+        extra={
+          <Space>
+            <DatePicker.RangePicker
+              value={range}
+              onChange={(v) => v && v[0] && v[1] && setRange([v[0], v[1]])}
+            />
+            <Button icon={<ReloadOutlined />} onClick={load} loading={loading}>
+              {t('refresh')}
+            </Button>
+          </Space>
+        }
+      />
       <ResponsiveChart
         legendItems={[
           { id: 'revenue', labelKey: asTranslationKey('revenue'), color: '#52c41a' },
@@ -92,6 +94,6 @@ export default function BranchesComparison() {
         pagination={false}
         style={{ marginTop: 16 }}
       />
-    </Card>
+    </div>
   );
 }

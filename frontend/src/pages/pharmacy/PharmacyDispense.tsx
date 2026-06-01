@@ -255,7 +255,7 @@ const PharmacyDispense: React.FC = () => {
  </li>
  ))}
  </ul>
- <p style={{ color: 'red', marginTop: 16 }}>
+ <p style={{ color: 'var(--danger-500)', marginTop: 16 }}>
  {t('pharmacy.dispense_warning')}
  </p>
  </div>

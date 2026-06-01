@@ -106,7 +106,7 @@ const HotelDashboard: React.FC = () => {
     if (!active || !payload || !payload.length) return null;
     const pl = payload[0];
     return (
-      <Card size="small" style={{ border: '1px solid #e8e8e8' }}>
+      <Card size="small" style={{ border: '1px solid var(--border)' }}>
         <Text strong>{pl.payload.date}</Text>
         <br />
         <Text>{t('hotel.occupancy')}: {pl.value}%</Text>
@@ -170,7 +170,7 @@ const HotelDashboard: React.FC = () => {
         {data.daily_occupancy && data.daily_occupancy.length > 0 ? (
           <ResponsiveChart
             legendItems={[
-              { id: 'occupancy', labelKey: asTranslationKey('hotel.occupancy'), color: '#7B61FF' },
+              { id: 'occupancy', labelKey: asTranslationKey('hotel.occupancy'), color: 'var(--accent-500)' },
             ]}
           >
             <LineChart data={data.daily_occupancy}>
@@ -181,7 +181,7 @@ const HotelDashboard: React.FC = () => {
               <Line
                 type="monotone"
                 dataKey="occupancy"
-                stroke="#7B61FF"
+                stroke="var(--accent-500)"
                 strokeWidth={2}
                 dot={{ r: 4 }}
               />

@@ -105,7 +105,7 @@ const StoreProduct: React.FC = () => {
   const price = product.sale_price || product.price || 0;
 
   return (
-    <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
+    <div style={{ padding: '24px', background: 'var(--surface-2)', minHeight: '100vh' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <Button
           icon={<LeftOutlined />}
@@ -120,7 +120,7 @@ const StoreProduct: React.FC = () => {
             <Col xs={24} md={12}>
               <div
                 style={{
-                  background: '#f0f0f0',
+                  background: 'var(--surface-2)',
                   height: 400,
                   display: 'flex',
                   alignItems: 'center',
@@ -157,7 +157,7 @@ const StoreProduct: React.FC = () => {
                 </Text>
               )}
 
-              <Title level={3} style={{ color: '#1890ff', marginBottom: 16 }}>
+              <Title level={3} style={{ color: 'var(--accent-500)', marginBottom: 16 }}>
                 {price.toLocaleString()} {t('currency')}
               </Title>
 

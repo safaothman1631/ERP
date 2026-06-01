@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { ComingSoon } from '../../components/feedback/ComingSoon';
+import { palette } from '../../theme/tokens';
 
 const { RangePicker } = DatePicker;
 const { Text } = Typography;
@@ -238,7 +239,7 @@ export default function POSReports() {
                       <Progress
                         percent={Math.round((p.revenue / topProducts[0]?.revenue) * 100)}
                         showInfo={false}
-                        strokeColor="#52c41a"
+                        strokeColor={palette.success}
                       />
                     </div>
                   ))}

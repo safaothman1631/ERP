@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Descriptions, Tag, Button, Space, DatePicker, Row, Col, message, Form, Input, Select } from 'antd';
+import { Card, Descriptions, Button, Space, DatePicker, Row, Col, message, Form, Input, Select } from 'antd';
 import { EditOutlined, ReloadOutlined, EyeOutlined, EyeInvisibleOutlined, CopyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
@@ -8,11 +8,13 @@ import api from '../../api';
 import dayjs, { Dayjs } from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { FormDialog } from '../../components/responsive/FormDialog';
+import { PageHeader, StatusTag } from '../../design-system';
 import { LoadingSkeleton } from '../../design-system/LoadingSkeleton';
 import { RelatedDataPanel } from '../../design-system/empty/RelatedDataPanel';
 import { useLoadingState } from '../../hooks/useLoadingState';
 import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
 import { asTranslationKey } from '../../i18n/types';
+import { space } from '../../theme/tokens';
 
 dayjs.extend(relativeTime);
 
@@ -130,7 +132,7 @@ const DeviceDetail: React.FC = () => {
  }
  };
 
- const statusColor = (status: string) => {
+ const statusKind = (status: string) => {
  const map: Record<string, string> = {
  active: 'success',
  inactive: 'default',
@@ -144,14 +146,16 @@ const DeviceDetail: React.FC = () => {
  }
 
  return (
- <div style={{ padding: '24px' }}>
- <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
- <h1>
- {device.name} 
- <Tag color={statusColor(device.status)} style={{ marginLeft: 8 }}>
- {t(`iot.status_${device.status}`, device.status)}
- </Tag>
- </h1>
+ <div style={{ padding: space.lg }}>
+ <PageHeader
+ title={device.name}
+ tag={
+ <StatusTag
+ status={statusKind(device.status)}
+ label={t(`iot.status_${device.status}`, device.status)}
+ />
+ }
+ extra={
  <Space>
  <Button icon={<EditOutlined />} onClick={handleEdit}>
  {t('common.edit', 'Edit')}
@@ -164,7 +168,8 @@ const DeviceDetail: React.FC = () => {
  {t('common.refresh', 'Refresh')}
  </Button>
  </Space>
- </div>
+ }
+ />
 
  <Card title={t('iot.device_info', 'Device Information')} style={{ marginBottom: 16 }}>
  <Descriptions column={{ xs: 1, sm: 2, md: 3 }}>

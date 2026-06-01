@@ -677,3 +677,14 @@ frontend/src/
 - **ئۆنبۆردینگ — `OnboardingShell.tsx`**: پێشتر بەتەواوی theme-driven بوو (violet/slate/flat-button بە token)، بۆیە دیزاینی Vertex-ی هەبوو؛ زیادکردنی `font-display` بۆ سەردێڕ + ناونیشانی هەنگاو (signature-ی kit). + `vx.tsx`: ئایکۆنی `chevronLeft`.
 
 **گەیتەکان:** tsc ٠ · lint ٠ error · build exit 0 · rtl passed · glass-modals OK · ١٠٠ تێست (auth + dialog) سەرکەوتوو. **DOM (localhost:5173):** /login (بێ demo/role، Microsoft disabled)، /signup (٥ فیڵد)، /forgot-password (forgot mode + Back link) — هەمووی dark + violet.
+
+### 2026-06-01 — Vertex system-wide rollout (وۆرکفلۆی ١٦-ئەیگێنت: audit → safe P0 polish)
+
+داوای بەکارهێنەر: «ئۆنبۆردینگ و تەواوی سیستەمەکە بە تەواوی». بەکارهێنەر **وۆرکفلۆی فرە-ئەیگێنتی** هەڵبژارد (opt-in). **٠ گۆڕانکاری backend.** دیپلۆی نەکراوە.
+
+- **ئۆنبۆردینگ** (`OnboardingShell.tsx`، commit جیا): زیادکردنی ئەتمۆسفیری kit (گلۆی violet + گریدی نوقتەیی پشت ناوەڕۆک بە mask) — هاوئاهەنگ لەگەڵ auth/landing.
+- **وۆرکفلۆ `vertex-system-rollout`** (`wf_824dc86e-ab1`، ١٦ ئەیگێنت، ٣.١M توکن، ٨١٠ tool-use): pipeline-ی ٨ گرووپی مۆدیوول (shell، loose-pages، sales-finance، inventory-pos، people، platform-settings، verticals-A، verticals-B). هەر گرووپێک: **Audit** (تەنها خوێندنەوە → punch-list) → **Polish** (تەنها P0 سەلامەت، فایلی جیاواز بۆ هەر گرووپ → بێ ناکۆکی). یاسا توند: تەنها design-system primitive + token، RTL logical، i18n، بێ گۆڕینی API/لۆجیک/داتا/route.
+- **ئەنجام: ٥٩ فایل دەستکاریکران** — بەشێوەی additive/wrapping: PageHeader/KpiCard/SectionCard/StatusTag-ی primitive-ی جێگرەوەی markup-ی خاو، گۆڕینی هاردکۆد-ڕەنگ → token، و چاکی RTL (left/right → logical). نموونە: HRDashboard/Assets/CashflowForecast (KpiCard grid)، IoT/Payroll/PlanPicker/portal (StatusTag + PageHeader)، banking/fx/POS/storefront/restaurant/hotel/construction (token + SectionCard).
+- **پشتڕاستکردنەوەی orchestrator (هەمووی سەوز):** tsc ٠ · build exit 0 (474 PWA) · lint exit 0 (٠ error / **2606** warn — کەمبووەوە لە 2895 بەهۆی لابردنی هاردکۆد-ڕەنگ) · rtl:audit passed · glass-modals OK · i18n:purity:foundation ٠ · **test 1322/1322 سەرکەوتوو (٠ ڕیگرێشن؛ ٢٩ فایلی شکست هەمووی پێش-بوونیار: Playwright e2e + scanner-service + nav-preservation)**.
+
+**تێبینی:** هەموو ئەیگێنت تەنها P0-ی سەلامەت جێبەجێکرد؛ punch-list-ی P1/P2 (KpiCard grid فراوانتر، DataTable swap، DetailLayout/KeyValueGrid restructure، chart-color tokenization) بۆ شەپۆلی داهاتوو ماوە. CashflowForecast: KpiCard بێ decimal پیشان دەدات (نواندنی kit، نەک لۆجیک).

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Tag, Form, Input, InputNumber, Select, Space, DatePicker, Popconfirm, Row, Col, Empty } from 'antd';
+import { Button, Form, Input, InputNumber, Select, Space, DatePicker, Popconfirm, Row, Col, Empty } from 'antd';
 import { PlusOutlined, DeleteOutlined, EyeOutlined, FallOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import dayjs, { Dayjs } from 'dayjs';
-import { PageHeader } from '../../design-system';
+import { PageHeader, StatusTag } from '../../design-system';
 import { message } from '../../utils/message';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -37,14 +37,6 @@ interface AssetCategory {
  accumulated_depreciation_account_id: string;
  depreciation_expense_account_id: string;
 }
-
-const statusColors: Record<string, string> = {
- active: 'green',
- fully_depreciated: 'orange',
- disposed: 'red',
- sold: 'blue',
- draft: 'default',
-};
 
 const FixedAssets: React.FC = () => {
  const { t } = useTranslation();
@@ -200,7 +192,7 @@ const FixedAssets: React.FC = () => {
  title: t('status'),
  dataIndex: 'status',
  key: 'status',
- render: (s: string) => <Tag color={statusColors[s] || 'default'}>{t(`assets.status_${s}`)}</Tag>,
+ render: (s: string) => <StatusTag status={s} label={t(`assets.status_${s}`)} />,
  },
  {
  title: t('action'),

@@ -8,6 +8,7 @@ import api from '../api';
 import { PageHeader } from '../design-system';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
+import { palette } from '../theme/tokens';
 
 const { Text, Title } = Typography;
 
@@ -134,7 +135,7 @@ const BankReconciliation: React.FC = () => {
     { title: t('description'), dataIndex: 'description', key: 'description' },
     {
       title: t('amount'), dataIndex: 'amount', key: 'amount',
-      render: (v: number) => <span style={{ color: v >= 0 ? '#52c41a' : '#f5222d' }}>{fmtIQD(v)}</span>,
+      render: (v: number) => <span style={{ color: v >= 0 ? palette.success : palette.danger }}>{fmtIQD(v)}</span>,
     },
   ];
 
@@ -156,7 +157,7 @@ const BankReconciliation: React.FC = () => {
     { title: t('description'), dataIndex: 'description', key: 'description' },
     {
       title: t('amount'), dataIndex: 'amount', key: 'amount',
-      render: (v: number) => <span style={{ color: v >= 0 ? '#52c41a' : '#f5222d' }}>{fmtIQD(v)}</span>,
+      render: (v: number) => <span style={{ color: v >= 0 ? palette.success : palette.danger }}>{fmtIQD(v)}</span>,
     },
     { title: t('type'), dataIndex: 'type', key: 'type', render: (v: string) => <Tag>{v}</Tag> },
   ];
@@ -216,13 +217,13 @@ const BankReconciliation: React.FC = () => {
           <Card className="stat-card gradient-card-blue" style={{ borderRadius: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Statistic
-                title={<Text style={{ color: '#6b7280', fontSize: 13 }}>{t('closing_balance')}</Text>}
+                title={<Text style={{ color: palette.ink500, fontSize: 13 }}>{t('closing_balance')}</Text>}
                 value={summary.closing_balance}
                 suffix="د.ع"
-                styles={{ content: { color: '#2563eb', fontWeight: 700 } }}
+                styles={{ content: { color: palette.primary500, fontWeight: 700 } }}
               />
-              <div style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#2563eb14' }}>
-                <BankOutlined style={{ fontSize: 24, color: '#2563eb' }} />
+              <div style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: palette.primary50 }}>
+                <BankOutlined style={{ fontSize: 24, color: palette.primary500 }} />
               </div>
             </div>
           </Card>
@@ -231,13 +232,13 @@ const BankReconciliation: React.FC = () => {
           <Card className="stat-card gradient-card-green" style={{ borderRadius: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Statistic
-                title={<Text style={{ color: '#6b7280', fontSize: 13 }}>{t('system_balance')}</Text>}
+                title={<Text style={{ color: palette.ink500, fontSize: 13 }}>{t('system_balance')}</Text>}
                 value={summary.system_balance}
                 suffix="د.ع"
-                styles={{ content: { color: '#16a34a', fontWeight: 700 } }}
+                styles={{ content: { color: palette.success, fontWeight: 700 } }}
               />
-              <div style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#16a34a14' }}>
-                <DollarOutlined style={{ fontSize: 24, color: '#16a34a' }} />
+              <div style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: palette.successBg }}>
+                <DollarOutlined style={{ fontSize: 24, color: palette.success }} />
               </div>
             </div>
           </Card>
@@ -249,18 +250,18 @@ const BankReconciliation: React.FC = () => {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Statistic
-                title={<Text style={{ color: '#6b7280', fontSize: 13 }}>{t('difference')}</Text>}
+                title={<Text style={{ color: palette.ink500, fontSize: 13 }}>{t('difference')}</Text>}
                 value={summary.difference}
                 suffix="د.ع"
-                styles={{ content: { color: summary.difference === 0 ? '#16a34a' : '#dc2626', fontWeight: 700 } }}
+                styles={{ content: { color: summary.difference === 0 ? palette.success : palette.danger, fontWeight: 700 } }}
               />
               <div style={{
                 width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: summary.difference === 0 ? '#16a34a14' : '#dc262614',
+                background: summary.difference === 0 ? palette.successBg : palette.dangerBg,
               }}>
                 {summary.difference === 0
-                  ? <CheckCircleOutlined style={{ fontSize: 24, color: '#16a34a' }} />
-                  : <WarningOutlined style={{ fontSize: 24, color: '#dc2626' }} />}
+                  ? <CheckCircleOutlined style={{ fontSize: 24, color: palette.success }} />
+                  : <WarningOutlined style={{ fontSize: 24, color: palette.danger }} />}
               </div>
             </div>
           </Card>
@@ -270,9 +271,9 @@ const BankReconciliation: React.FC = () => {
       <Row gutter={16}>
         <Col xs={24} lg={12}>
           <Card
-            title={<Title level={5} style={{ margin: 0, color: '#2563eb' }}><BankOutlined /> {t('bank_statement')}</Title>}
+            title={<Title level={5} style={{ margin: 0, color: palette.primary500 }}><BankOutlined /> {t('bank_statement')}</Title>}
             size="small"
-            style={{ borderRadius: 12, borderTop: '3px solid #2563eb' }}
+            style={{ borderRadius: 12, borderTop: `3px solid ${palette.primary500}` }}
           >
             <ResponsiveTableAdapter
               dataSource={bankTransactions}
@@ -284,8 +285,8 @@ const BankReconciliation: React.FC = () => {
               locale={{
                 emptyText: (
                   <Empty
-                    image={<InboxOutlined style={{ fontSize: 36, color: '#d1d5db' }} />}
-                    description={<Text type="secondary">هیچ مامەڵەیەکی بانکی نییە</Text>}
+                    image={<InboxOutlined style={{ fontSize: 36, color: palette.ink300 }} />}
+                    description={<Text type="secondary">{t('no_data')}</Text>}
                   />
                 ),
               }}
@@ -294,9 +295,9 @@ const BankReconciliation: React.FC = () => {
         </Col>
         <Col xs={24} lg={12}>
           <Card
-            title={<Title level={5} style={{ margin: 0, color: '#16a34a' }}><DollarOutlined /> {t('system_transactions')}</Title>}
+            title={<Title level={5} style={{ margin: 0, color: palette.success }}><DollarOutlined /> {t('system_transactions')}</Title>}
             size="small"
-            style={{ borderRadius: 12, borderTop: '3px solid #16a34a' }}
+            style={{ borderRadius: 12, borderTop: `3px solid ${palette.success}` }}
           >
             <ResponsiveTableAdapter
               dataSource={systemTransactions}
@@ -308,8 +309,8 @@ const BankReconciliation: React.FC = () => {
               locale={{
                 emptyText: (
                   <Empty
-                    image={<InboxOutlined style={{ fontSize: 36, color: '#d1d5db' }} />}
-                    description={<Text type="secondary">هیچ مامەڵەیەکی سیستەمی نییە</Text>}
+                    image={<InboxOutlined style={{ fontSize: 36, color: palette.ink300 }} />}
+                    description={<Text type="secondary">{t('no_data')}</Text>}
                   />
                 ),
               }}

@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader } from '../../design-system';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { palette } from '../../theme/tokens';
 
 const { Text, Title } = Typography;
 
@@ -127,7 +128,7 @@ const SmartMatch: React.FC = () => {
       dataIndex: 'amount',
       key: 'amount',
       width: 150,
-      render: (v: number) => <span style={{ color: v >= 0 ? '#52c41a' : '#f5222d' }}>{fmtIQD(v)}</span>
+      render: (v: number) => <span style={{ color: v >= 0 ? palette.success : palette.danger }}>{fmtIQD(v)}</span>
     },
     {
       title: '',
@@ -216,7 +217,7 @@ const SmartMatch: React.FC = () => {
               marks={{ 50: '50%', 70: '70%', 90: '90%', 100: '100%' }}
             />
           </Col>
-          <Col span={12} style={{ textAlign: 'left' }}>
+          <Col span={12} style={{ textAlign: 'start' }}>
             <Button
               type="primary"
               size="large"
@@ -235,9 +236,9 @@ const SmartMatch: React.FC = () => {
             message={t('auto_match_result')}
             description={
               <Space direction="vertical">
-                <Text>{t('matched')}: <strong style={{ color: '#52c41a' }}>{autoResult.matched}</strong></Text>
-                <Text>{t('ambiguous')}: <strong style={{ color: '#faad14' }}>{autoResult.ambiguous}</strong></Text>
-                <Text>{t('no_match')}: <strong style={{ color: '#f5222d' }}>{autoResult.no_match}</strong></Text>
+                <Text>{t('matched')}: <strong style={{ color: palette.success }}>{autoResult.matched}</strong></Text>
+                <Text>{t('ambiguous')}: <strong style={{ color: palette.warning }}>{autoResult.ambiguous}</strong></Text>
+                <Text>{t('no_match')}: <strong style={{ color: palette.danger }}>{autoResult.no_match}</strong></Text>
                 <Text>{t('total')}: <strong>{autoResult.total}</strong></Text>
               </Space>
             }
@@ -267,7 +268,7 @@ const SmartMatch: React.FC = () => {
               locale={{
                 emptyText: (
                   <Empty
-                    image={<InboxOutlined style={{ fontSize: 48, color: '#d1d5db' }} />}
+                    image={<InboxOutlined style={{ fontSize: 48, color: palette.ink300 }} />}
                     description={<Text type="secondary">{t('all_matched')}</Text>}
                   />
                 )
@@ -284,7 +285,7 @@ const SmartMatch: React.FC = () => {
           >
             {!selectedTxn ? (
               <Empty
-                image={<LinkOutlined style={{ fontSize: 48, color: '#d1d5db' }} />}
+                image={<LinkOutlined style={{ fontSize: 48, color: palette.ink300 }} />}
                 description={<Text type="secondary">{t('select_transaction_first')}</Text>}
               />
             ) : (
@@ -293,7 +294,7 @@ const SmartMatch: React.FC = () => {
                   <Descriptions.Item label={t('date')}>{selectedTxn.date?.substring(0, 10)}</Descriptions.Item>
                   <Descriptions.Item label={t('description')}>{selectedTxn.description}</Descriptions.Item>
                   <Descriptions.Item label={t('amount')}>
-                    <span style={{ color: selectedTxn.amount >= 0 ? '#52c41a' : '#f5222d' }}>
+                    <span style={{ color: selectedTxn.amount >= 0 ? palette.success : palette.danger }}>
                       {fmtIQD(selectedTxn.amount)}
                     </span>
                   </Descriptions.Item>
@@ -310,7 +311,7 @@ const SmartMatch: React.FC = () => {
                   locale={{
                     emptyText: (
                       <Empty
-                        image={<CloseOutlined style={{ fontSize: 48, color: '#d1d5db' }} />}
+                        image={<CloseOutlined style={{ fontSize: 48, color: palette.ink300 }} />}
                         description={<Text type="secondary">{t('no_candidates')}</Text>}
                       />
                     )

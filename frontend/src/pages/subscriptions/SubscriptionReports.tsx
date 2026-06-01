@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Statistic, Tag } from 'antd';
+import { Card, Row, Col, Statistic } from 'antd';
 import { ArrowUpOutlined, ArrowDownOutlined, DollarOutlined, TeamOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, StatusTag } from '../../design-system';
 import { space } from '../../theme/tokens';
 import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
 import { asTranslationKey } from '../../i18n/types';
@@ -78,7 +78,7 @@ const SubscriptionReports: React.FC = () => {
       title: t('subscription.subscriber_count'),
       dataIndex: 'count',
       key: 'count',
-      render: (count: number) => <Tag color="blue">{count}</Tag>,
+      render: (count: number) => <StatusTag status="info" label={count} />,
     },
   ];
 
@@ -98,7 +98,7 @@ const SubscriptionReports: React.FC = () => {
               precision={2}
               prefix={<DollarOutlined />}
               suffix="IQD"
-              valueStyle={{ color: mrrData && mrrData.growth_pct > 0 ? '#3f8600' : '#cf1322' }}
+              valueStyle={{ color: mrrData && mrrData.growth_pct > 0 ? 'var(--success-500)' : 'var(--danger-500)' }}
             />
             {mrrData && (
               <div style={{ marginTop: space.sm }}>
@@ -140,10 +140,10 @@ const SubscriptionReports: React.FC = () => {
               value={churnData?.churn_pct || 0}
               precision={2}
               suffix="%"
-              valueStyle={{ color: churnData && churnData.churn_pct < 5 ? '#3f8600' : '#cf1322' }}
+              valueStyle={{ color: churnData && churnData.churn_pct < 5 ? 'var(--success-500)' : 'var(--danger-500)' }}
             />
             {churnData && (
-              <div style={{ marginTop: space.sm, fontSize: '12px', color: '#888' }}>
+              <div style={{ marginTop: space.sm, fontSize: '12px', color: 'var(--ink-500)' }}>
                 {t('subscription.last_30_days')}
               </div>
             )}
@@ -154,7 +154,7 @@ const SubscriptionReports: React.FC = () => {
       <Card title={t('subscription.mrr_trend')} loading={loading} style={{ marginTop: space.md }}>
         <ResponsiveChart
           legendItems={[
-            { id: 'mrr', labelKey: asTranslationKey('subscription.mrr'), color: '#1890ff' },
+            { id: 'mrr', labelKey: asTranslationKey('subscription.mrr'), color: 'var(--accent-500)' },
           ]}
         >
           <LineChart data={chartData}>
@@ -162,7 +162,7 @@ const SubscriptionReports: React.FC = () => {
             <XAxis dataKey="month" />
             <YAxis />
             <Tooltip />
-            <Line type="monotone" dataKey="mrr" stroke="#1890ff" name={t('subscription.mrr')} />
+            <Line type="monotone" dataKey="mrr" stroke="var(--accent-500)" name={t('subscription.mrr')} />
           </LineChart>
         </ResponsiveChart>
       </Card>
@@ -189,14 +189,14 @@ const SubscriptionReports: React.FC = () => {
               <Statistic
                 title={t('subscription.cancelled_in_period')}
                 value={churnData.cancelled}
-                valueStyle={{ color: '#cf1322' }}
+                valueStyle={{ color: 'var(--danger-500)' }}
               />
             </Col>
             <Col xs={24} sm={8}>
               <Statistic
                 title={t('subscription.remaining_active')}
                 value={churnData.remaining}
-                valueStyle={{ color: '#3f8600' }}
+                valueStyle={{ color: 'var(--success-500)' }}
               />
             </Col>
           </Row>

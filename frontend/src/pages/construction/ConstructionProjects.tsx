@@ -6,7 +6,7 @@ import { message } from '../../utils/message';
 import { PlusOutlined, SearchOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import { PageHeader, StatusTag, KpiCard } from '../../design-system';
+import { PageHeader, StatusTag, KpiCard, SectionCard } from '../../design-system';
 import { space } from '../../theme/tokens';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -150,7 +150,7 @@ const ConstructionProjects: React.FC = () => {
  }
  />
 
- <div style={{ background: '#fff', padding: space.lg, borderRadius: 8 }}>
+ <SectionCard>
  <Space style={{ marginBottom: space.md }}>
  <Input
  placeholder={t('search')}
@@ -170,7 +170,7 @@ const ConstructionProjects: React.FC = () => {
  pagination={{ pageSize: 20 }}
  scroll={{ x: 1000 }}
  />
- </div>
+ </SectionCard>
 
  <FormDialog title={t('construction.add_project')} open={drawer} onClose={() => setDrawer(false)}>
  <Form form={form} layout="vertical" onFinish={handleCreate}>

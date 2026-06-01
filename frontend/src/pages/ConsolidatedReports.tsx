@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, DatePicker, Space, Statistic, Row, Col, Tabs } from 'antd';
+import { DatePicker, Space, Statistic, Row, Col, Tabs, Button } from 'antd';
+import { ReloadOutlined } from '@ant-design/icons';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
 } from 'recharts';
 import dayjs, { Dayjs } from 'dayjs';
 import { message } from '../utils/message';
 import api from '../api';
+import { PageHeader } from '../design-system';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { ResponsiveChart } from '../components/responsive/ResponsiveChart';
 import { asTranslationKey } from '../i18n/types';
@@ -132,19 +134,22 @@ export default function ConsolidatedReports() {
   ];
 
   return (
-    <Card
-      title={t('consolidated_reports') || 'Consolidated Reports'}
-      extra={
-        <Space>
-          <DatePicker.RangePicker
-            value={range}
-            onChange={(v) => v && v[0] && v[1] && setRange([v[0], v[1]])}
-          />
-          <a onClick={load}>{loading ? '...' : t('refresh') || 'Refresh'}</a>
-        </Space>
-      }
-    >
+    <div>
+      <PageHeader
+        title={t('consolidated_reports')}
+        extra={
+          <Space>
+            <DatePicker.RangePicker
+              value={range}
+              onChange={(v) => v && v[0] && v[1] && setRange([v[0], v[1]])}
+            />
+            <Button icon={<ReloadOutlined />} onClick={load} loading={loading}>
+              {t('refresh')}
+            </Button>
+          </Space>
+        }
+      />
       <Tabs items={items} />
-    </Card>
+    </div>
   );
 }

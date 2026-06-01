@@ -60,7 +60,7 @@ const StoreHome: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
+    <div style={{ padding: '24px', background: 'var(--surface-2)', minHeight: '100vh' }}>
       <div style={{ maxWidth: 1400, margin: '0 auto' }}>
         <Row gutter={[16, 16]} align="middle" style={{ marginBottom: 24 }}>
           <Col flex="auto">
@@ -128,7 +128,7 @@ const StoreHome: React.FC = () => {
                         <div
                           style={{
                             height: 200,
-                            background: '#f0f0f0',
+                            background: 'var(--surface-2)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center'
@@ -159,7 +159,7 @@ const StoreHome: React.FC = () => {
                               </Tag>
                             )}
                             <div>
-                              <Text strong style={{ fontSize: 18, color: '#1890ff' }}>
+                              <Text strong style={{ fontSize: 18, color: 'var(--accent-500)' }}>
                                 {getPrice(product).toLocaleString()} {t('currency')}
                               </Text>
                             </div>

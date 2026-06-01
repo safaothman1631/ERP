@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Form, Input, InputNumber, Select, Space, Tag, message, Popconfirm } from 'antd';
+import { Button, Form, Input, InputNumber, Select, Space, message, Popconfirm } from 'antd';
 import { PlusOutlined, ReloadOutlined, SwapOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
@@ -7,7 +7,7 @@ import { useListQuery } from '../api/queries/useListQuery';
 import { listQueryKeys } from '../api/queries/keys';
 import ExportButton from '../components/ExportButton';
 import ChatterWidget from '../components/chatter/ChatterWidget';
-import { PageHeader, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
 import { downloadCsv } from '../utils/exportCsv';
 import { space as spaceTk } from '../theme/tokens';
 import { useAuthStore } from '../store';
@@ -110,7 +110,7 @@ export default function CRMLeads() {
  title: t('status'),
  dataIndex: 'status',
  key: 'status',
- render: (s?: string) => <Tag color={s === 'converted' ? 'green' : s === 'archived' ? 'default' : 'blue'}>{s || 'open'}</Tag>,
+ render: (s?: string) => <StatusTag status={s || 'open'} label={t(s || 'open')} />,
  },
  {
  title: t('actions'),

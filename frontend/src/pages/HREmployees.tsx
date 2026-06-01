@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Card, Button, Form, Input, Select, DatePicker, Space, Popconfirm, Tag, message, Alert } from 'antd';
+import { Card, Button, Form, Input, Select, DatePicker, Space, Popconfirm, message, Alert } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
@@ -11,6 +11,7 @@ import ChatterWidget from '../components/chatter/ChatterWidget';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 import { HelpIcon } from '../help/HelpIcon';
+import { StatusTag } from '../design-system';
 import { restoreReturnContext, readReturnToken } from '../utils/returnContext';
 
 interface Employee {
@@ -132,7 +133,7 @@ export default function HREmployees() {
  { title: t('hire_date'), dataIndex: 'hire_date', render: (d?: string) => d || '—' },
  {
  title: t('status'), dataIndex: 'status',
- render: (s?: string) => <Tag color={s === 'active' ? 'green' : 'default'}>{t(s || 'active')}</Tag>,
+ render: (s?: string) => <StatusTag status={s || 'active'} label={t(s || 'active')} />,
  },
  {
  title: t('actions'),

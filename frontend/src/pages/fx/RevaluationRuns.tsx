@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { palette } from '../../theme/tokens';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -410,7 +411,7 @@ const RevaluationRuns: React.FC = () => {
  title={t('fx.totalGain')}
  value={previewData.total_gain}
  precision={2}
- valueStyle={{ color: '#3f8600' }}
+ valueStyle={{ color: palette.success }}
  suffix="IQD"
  />
  </Card>
@@ -421,7 +422,7 @@ const RevaluationRuns: React.FC = () => {
  title={t('fx.totalLoss')}
  value={previewData.total_loss}
  precision={2}
- valueStyle={{ color: '#cf1322' }}
+ valueStyle={{ color: palette.danger }}
  suffix="IQD"
  />
  </Card>
@@ -433,7 +434,7 @@ const RevaluationRuns: React.FC = () => {
  value={previewData.net}
  precision={2}
  valueStyle={{
- color: previewData.net >= 0 ? '#3f8600' : '#cf1322',
+ color: previewData.net >= 0 ? palette.success : palette.danger,
  }}
  suffix="IQD"
  />

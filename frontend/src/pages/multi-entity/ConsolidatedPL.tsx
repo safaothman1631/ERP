@@ -110,7 +110,7 @@ const ConsolidatedPL = () => {
       key: 'profit',
       align: 'right',
       render: (val) => (
-        <span style={{ color: val >= 0 ? 'green' : 'red' }}>
+        <span style={{ color: val >= 0 ? 'var(--success-500)' : 'var(--danger-500)' }}>
           {val.toLocaleString()}
         </span>
       ),
@@ -180,7 +180,7 @@ const ConsolidatedPL = () => {
                   value={plData.totals.revenue}
                   precision={0}
                   prefix={<LineChartOutlined />}
-                  valueStyle={{ color: '#3f8600' }}
+                  valueStyle={{ color: 'var(--success-500)' }}
                 />
               </Card>
             </Col>
@@ -191,7 +191,7 @@ const ConsolidatedPL = () => {
                   value={plData.totals.expenses}
                   precision={0}
                   prefix={<DollarOutlined />}
-                  valueStyle={{ color: '#cf1322' }}
+                  valueStyle={{ color: 'var(--danger-500)' }}
                 />
               </Card>
             </Col>
@@ -202,7 +202,7 @@ const ConsolidatedPL = () => {
                   value={plData.totals.profit}
                   precision={0}
                   prefix={<FileTextOutlined />}
-                  valueStyle={{ color: plData.totals.profit >= 0 ? '#3f8600' : '#cf1322' }}
+                  valueStyle={{ color: plData.totals.profit >= 0 ? 'var(--success-500)' : 'var(--danger-500)' }}
                 />
               </Card>
             </Col>

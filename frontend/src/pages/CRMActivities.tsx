@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Form, Input, Select, Space, Tag, message, Popconfirm, Card, Row, Col } from 'antd';
+import { Button, Form, Input, Select, Space, message, Popconfirm, Card, Row, Col } from 'antd';
 import { PlusOutlined, ReloadOutlined, CheckOutlined, PhoneOutlined, MailOutlined, CalendarOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
-import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
 import { downloadCsv } from '../utils/exportCsv';
 import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
@@ -93,7 +93,7 @@ export default function CRMActivities() {
  { title: t('summary'), dataIndex: 'summary', key: 'summary' },
  { title: t('due_date'), dataIndex: 'due_date', key: 'due_date' },
  { title: t('status'), dataIndex: 'status', key: 'status',
- render: (s?: string) => <Tag color={s === 'done' ? 'green' : 'blue'}>{s || 'pending'}</Tag> },
+ render: (s?: string) => <StatusTag status={s || 'pending'} label={t(s || 'pending')} /> },
  {
  title: t('actions'),
  key: 'actions',

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Select, InputNumber, message, Space, Tag, Descriptions } from 'antd';
+import { Button, Select, InputNumber, message, Space, Descriptions } from 'antd';
 import { CheckOutlined, DollarOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { PageHeader } from '../../design-system';
+import { PageHeader, StatusTag } from '../../design-system';
 import api from '../../api';
 import { formatCurrency } from '../../utils/formatters';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -122,19 +122,13 @@ const VendorReturns: React.FC = () => {
  title: t('status'),
  dataIndex: 'status',
  key: 'status',
- render: (status: string) => {
- const colorMap: Record<string, string> = {
- pending: 'orange',
- approved: 'green',
- };
- return <Tag color={colorMap[status] || 'default'}>{t(`returns.${status}`)}</Tag>;
- },
+ render: (status: string) => <StatusTag status={status} label={t(`returns.${status}`)} />,
  },
  {
  title: t('returns.refund_status'),
  dataIndex: 'refund_status',
  key: 'refund_status',
- render: (status: string) => status ? <Tag color="blue">{t(`returns.${status}`)}</Tag> : <Tag>{t('not_refunded')}</Tag>,
+ render: (status: string) => status ? <StatusTag status={status} label={t(`returns.${status}`)} /> : <StatusTag status="default" label={t('not_refunded')} />,
  },
  {
  title: t('total'),
@@ -219,9 +213,7 @@ const VendorReturns: React.FC = () => {
  {formatCurrency(selectedReturn.total, selectedReturn.currency)}
  </Descriptions.Item>
  <Descriptions.Item label={t('status')}>
- <Tag color={selectedReturn.status === 'approved' ? 'green' : 'orange'}>
- {t(`returns.${selectedReturn.status}`)}
- </Tag>
+ <StatusTag status={selectedReturn.status} label={t(`returns.${selectedReturn.status}`)} />
  </Descriptions.Item>
  </Descriptions>
 
@@ -278,7 +270,7 @@ const VendorReturns: React.FC = () => {
  {
  title: t('status'),
  dataIndex: 'status',
- render: (status: string) => <Tag color="green">{t(`returns.${status}`)}</Tag>,
+ render: (status: string) => <StatusTag status={status} label={t(`returns.${status}`)} />,
  },
  ]}
  />

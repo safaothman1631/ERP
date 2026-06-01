@@ -4,6 +4,7 @@ import { PlusOutlined, ReloadOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import api from '../api';
+import { StatusTag } from '../design-system';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 
@@ -53,7 +54,7 @@ export default function HRContracts() {
  { title: t('start_date'), dataIndex: 'start_date' },
  { title: t('end_date'), dataIndex: 'end_date', render: (d?: string) => d || '—' },
  { title: t('status'), dataIndex: 'status',
- render: (s?: string) => <Tag color={s === 'active' ? 'green' : 'default'}>{s}</Tag> },
+ render: (s?: string) => <StatusTag status={s || 'active'} label={t(s || 'active')} /> },
  {
  title: t('actions'),
  render: (_: unknown, r: Contract) => (

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Button, Form, Input, Tabs, Space, Tag, Card, Select } from 'antd';
+import { Button, Form, Input, Tabs, Space, Card, Select } from 'antd';
 import { message } from '../../utils/message';
 import { CheckOutlined, CloseOutlined, SwapOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
+import { StatusTag } from '../../design-system';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
@@ -125,13 +126,7 @@ export default function MyApprovals() {
  };
 
  const getStatusTag = (status: string) => {
- const colors: Record<string, string> = {
- pending: 'blue',
- approved: 'green',
- rejected: 'red',
- cancelled: 'default',
- };
- return <Tag color={colors[status] || 'default'}>{t(`approvals.status_${status}`)}</Tag>;
+ return <StatusTag status={status} label={t(`approvals.status_${status}`)} />;
  };
 
  const inboxColumns = [

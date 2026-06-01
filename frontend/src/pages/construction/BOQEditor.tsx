@@ -7,8 +7,7 @@ import { PlusOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { Popconfirm } from 'antd';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
-import { space } from '../../theme/tokens';
+import { PageHeader, SectionCard } from '../../design-system';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
@@ -202,7 +201,7 @@ const BOQEditor: React.FC = () => {
  }
  />
 
- <div style={{ background: '#fff', padding: space.lg, borderRadius: 8 }}>
+ <SectionCard>
  <Space direction="vertical" style={{ width: '100%' }}>
  <Space style={{ width: '100%', justifyContent: 'space-between' }}>
  <Select
@@ -253,7 +252,7 @@ const BOQEditor: React.FC = () => {
  </>
  )}
  </Space>
- </div>
+ </SectionCard>
 
  <FormDialog title={t('construction.add_boq_item')} open={drawer} onClose={() => setDrawer(false)}>
  <Form form={form} layout="vertical" onFinish={handleCreate}>

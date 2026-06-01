@@ -210,7 +210,7 @@ const AppointmentsCalendar: React.FC = () => {
  </Popconfirm>
  </Space>
  </div>
- {apt.reason && <p style={{ margin: 0, color: '#666' }}>{apt.reason}</p>}
+ {apt.reason && <p style={{ margin: 0, color: 'var(--ink-500)' }}>{apt.reason}</p>}
  </Space>
  </Card>
  );

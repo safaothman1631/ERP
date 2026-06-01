@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import api from '../../api';
 import { PageHeader } from '../../design-system';
+import { palette } from '../../theme/tokens';
 
 interface Activity {
   id: string;
@@ -109,14 +110,14 @@ export default function MyActivities() {
           </Tag>
         </div>
         <div style={{ fontWeight: 600 }}>{act.summary}</div>
-        {act.notes && <div style={{ color: '#888', fontSize: 13 }}>{act.notes}</div>}
+        {act.notes && <div style={{ color: 'var(--ink-500)', fontSize: 13 }}>{act.notes}</div>}
         {act.due_date && (
-          <div style={{ fontSize: 12, color: '#888' }}>
+          <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>
             {t('activities.due')}: {dayjs(act.due_date).format('MMM D, YYYY')}
           </div>
         )}
         {act.entity_type && (
-          <div style={{ fontSize: 12, color: '#aaa' }}>
+          <div style={{ fontSize: 12, color: 'var(--ink-400)' }}>
             {t('activities.related_to')}: {act.entity_type} ({act.entity_id})
           </div>
         )}
@@ -140,7 +141,7 @@ export default function MyActivities() {
         <Col xs={24} md={12} lg={6}>
           <Card
             title={
-              <span style={{ color: '#f5222d' }}>
+              <span style={{ color: palette.danger }}>
                 {t('activities.overdue')} ({overdue.length})
               </span>
             }
@@ -157,7 +158,7 @@ export default function MyActivities() {
         <Col xs={24} md={12} lg={6}>
           <Card
             title={
-              <span style={{ color: '#faad14' }}>
+              <span style={{ color: palette.warning }}>
                 {t('activities.today')} ({todayItems.length})
               </span>
             }
@@ -174,7 +175,7 @@ export default function MyActivities() {
         <Col xs={24} md={12} lg={6}>
           <Card
             title={
-              <span style={{ color: '#1890ff' }}>
+              <span style={{ color: palette.primary600 }}>
                 {t('activities.upcoming')} ({upcoming.length})
               </span>
             }

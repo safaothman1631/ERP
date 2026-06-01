@@ -30,7 +30,7 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { palette, space, radius, layout } from '../theme/tokens';
+import { palette, space, radius, layout, shadow } from '../theme/tokens';
 import { MotionButton } from '../components/MotionButton';
 import { ConfirmDialog } from './ConfirmDialog';
 import { SaveSplitButton, type SaveAction } from './SaveSplitButton';
@@ -315,7 +315,7 @@ export const FormLayout: React.FC<FormLayoutProps> = ({
               background: surface,
               borderTop: `1px solid ${sep}`,
               borderRadius: `${radius.md}px ${radius.md}px 0 0`,
-              boxShadow: '0 -4px 12px rgba(15,23,42,0.04)',
+              boxShadow: isDark ? shadow.dark.md : shadow.md,
             }}
           >
             {/* Left side: status indicators + extra actions */}

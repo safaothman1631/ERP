@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Statistic, Tag, Button, Space } from 'antd';
+import { Card, Row, Col, Statistic, Button, Space } from 'antd';
 import { HddOutlined, CheckCircleOutlined, CloseCircleOutlined, BellOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +7,8 @@ import api from '../../api';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { PageHeader, StatusTag } from '../../design-system';
+import { space } from '../../theme/tokens';
 
 dayjs.extend(relativeTime);
 
@@ -85,16 +87,16 @@ const IoTDashboard: React.FC = () => {
     }
   };
 
-  const severityColor = (severity: string) => {
+  const severityStatus = (severity: string) => {
     const map: Record<string, string> = {
-      info: 'blue',
-      warn: 'orange',
-      critical: 'red'
+      info: 'info',
+      warn: 'warning',
+      critical: 'error'
     };
     return map[severity] || 'default';
   };
 
-  const statusColor = (status: string) => {
+  const statusKind = (status: string) => {
     const map: Record<string, string> = {
       active: 'success',
       inactive: 'default',
@@ -123,7 +125,7 @@ const IoTDashboard: React.FC = () => {
       title: t('iot.severity', 'Severity'),
       dataIndex: 'severity',
       key: 'severity',
-      render: (val: string) => <Tag color={severityColor(val)}>{t(`iot.${val}`, val)}</Tag>
+      render: (val: string) => <StatusTag status={severityStatus(val)} label={t(`iot.${val}`, val)} />
     },
     {
       title: t('iot.action', 'Action'),
@@ -137,8 +139,8 @@ const IoTDashboard: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
-      <h1>{t('iot.dashboard', 'IoT Dashboard')}</h1>
+    <div style={{ padding: space.lg }}>
+      <PageHeader title={t('iot.dashboard', 'IoT Dashboard')} />
 
       <Row gutter={16} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} md={6}>
@@ -220,16 +222,17 @@ const IoTDashboard: React.FC = () => {
                   <Space direction="vertical" size={0} style={{ width: '100%' }}>
                     <Space style={{ justifyContent: 'space-between', width: '100%' }}>
                       <strong>{device.name}</strong>
-                      <Tag color={statusColor(device.status)}>
-                        {t(`iot.status_${device.status}`, device.status)}
-                      </Tag>
+                      <StatusTag
+                        status={statusKind(device.status)}
+                        label={t(`iot.status_${device.status}`, device.status)}
+                      />
                     </Space>
-                    <div style={{ fontSize: 12, color: '#8c8c8c' }}>
-                      {t(`iot.device_type_${device.device_type}`, device.device_type)} 
+                    <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>
+                      {t(`iot.device_type_${device.device_type}`, device.device_type)}
                       {device.location && ` · ${device.location}`}
                     </div>
                     {device.last_seen_at && (
-                      <div style={{ fontSize: 11, color: '#bfbfbf' }}>
+                      <div style={{ fontSize: 11, color: 'var(--ink-400)' }}>
                         {t('iot.last_seen', 'Last seen')}: {dayjs(device.last_seen_at).fromNow()}
                       </div>
                     )}

@@ -75,7 +75,7 @@ const PortalDashboard: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
+    <div style={{ padding: '24px', background: 'var(--bg)', minHeight: '100vh' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
           <Col>
@@ -102,7 +102,7 @@ const PortalDashboard: React.FC = () => {
                 value={stats.total_due}
                 prefix={<DollarOutlined />}
                 suffix={t('currency')}
-                valueStyle={{ color: '#1890ff' }}
+                valueStyle={{ color: 'var(--info-500)' }}
               />
             </Card>
           </Col>
@@ -114,7 +114,7 @@ const PortalDashboard: React.FC = () => {
                 value={stats.overdue}
                 prefix={<DollarOutlined />}
                 suffix={t('currency')}
-                valueStyle={{ color: '#ff4d4f' }}
+                valueStyle={{ color: 'var(--danger-500)' }}
               />
             </Card>
           </Col>

@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Tag, Select, DatePicker, message } from 'antd';
+import { Button, Space, Select, DatePicker, message } from 'antd';
 import { ReloadOutlined, CheckOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { PageHeader, StatusTag } from '../../design-system';
+import { space } from '../../theme/tokens';
 
 dayjs.extend(relativeTime);
 
@@ -95,11 +97,11 @@ const AlertHistory: React.FC = () => {
     }
   };
 
-  const severityColor = (severity: string) => {
+  const severityStatus = (severity: string) => {
     const map: Record<string, string> = {
-      info: 'blue',
-      warn: 'orange',
-      critical: 'red'
+      info: 'info',
+      warn: 'warning',
+      critical: 'error'
     };
     return map[severity] || 'default';
   };
@@ -112,7 +114,7 @@ const AlertHistory: React.FC = () => {
       render: (val: string) => (
         <Space direction="vertical" size={0}>
           <span>{dayjs(val).format('YYYY-MM-DD HH:mm:ss')}</span>
-          <span style={{ fontSize: 11, color: '#8c8c8c' }}>{dayjs(val).fromNow()}</span>
+          <span style={{ fontSize: 11, color: 'var(--ink-500)' }}>{dayjs(val).fromNow()}</span>
         </Space>
       )
     },
@@ -144,7 +146,7 @@ const AlertHistory: React.FC = () => {
       title: t('iot.severity', 'Severity'),
       dataIndex: 'severity',
       key: 'severity',
-      render: (val: string) => <Tag color={severityColor(val)}>{t(`iot.${val}`, val)}</Tag>
+      render: (val: string) => <StatusTag status={severityStatus(val)} label={t(`iot.${val}`, val)} />
     },
     {
       title: t('iot.status', 'Status'),
@@ -152,11 +154,12 @@ const AlertHistory: React.FC = () => {
       key: 'acknowledged',
       render: (acked: boolean, record: Alert) => (
         <Space direction="vertical" size={0}>
-          <Tag color={acked ? 'success' : 'warning'}>
-            {acked ? t('iot.acknowledged', 'Acknowledged') : t('iot.pending', 'Pending')}
-          </Tag>
+          <StatusTag
+            status={acked ? 'success' : 'warning'}
+            label={acked ? t('iot.acknowledged', 'Acknowledged') : t('iot.pending', 'Pending')}
+          />
           {acked && record.acknowledged_by && (
-            <span style={{ fontSize: 11, color: '#8c8c8c' }}>
+            <span style={{ fontSize: 11, color: 'var(--ink-500)' }}>
               {t('common.by', 'by')} {record.acknowledged_by}
             </span>
           )}
@@ -168,7 +171,7 @@ const AlertHistory: React.FC = () => {
       key: 'actions',
       render: (_: any, record: Alert) => (
         record.acknowledged ? (
-          <span style={{ color: '#52c41a' }}>
+          <span style={{ color: 'var(--success-fg)' }}>
             <CheckOutlined /> {t('iot.acked', 'Acked')}
           </span>
         ) : (
@@ -181,18 +184,20 @@ const AlertHistory: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <h1>{t('iot.alert_history', 'Alert History')}</h1>
-        <Space>
-          <Button 
-            icon={<ReloadOutlined />} 
-            onClick={loadAlerts}
-          >
-            {autoRefresh && `(${t('iot.auto_refresh', 'auto')})`}
-          </Button>
-        </Space>
-      </div>
+    <div style={{ padding: space.lg }}>
+      <PageHeader
+        title={t('iot.alert_history', 'Alert History')}
+        extra={
+          <Space>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={loadAlerts}
+            >
+              {autoRefresh && `(${t('iot.auto_refresh', 'auto')})`}
+            </Button>
+          </Space>
+        }
+      />
 
       <Space style={{ marginBottom: 16 }} wrap>
         <Select

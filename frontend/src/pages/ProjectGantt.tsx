@@ -220,7 +220,7 @@ const ProjectGantt: React.FC = () => {
  <div style={{ overflowX: 'auto' }}>
  {/* Header */}
  <div style={{ marginBottom: space.md, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
- <div style={{ fontSize: 14, color: '#888' }}>
+ <div style={{ fontSize: 14, color: 'var(--ink-500)' }}>
  {minDate.format('YYYY-MM-DD')} → {maxDate.format('YYYY-MM-DD')} ({totalDays} {t('days')})
  </div>
  </div>
@@ -233,19 +233,19 @@ const ProjectGantt: React.FC = () => {
  <div style={{ width: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer' }} onClick={() => openTaskDrawer(task)}>
  {task.name}
  </div>
- <div style={{ flex: 1, height: 32, background: '#f0f0f0', position: 'relative', borderRadius: 4, marginLeft: space.sm }}>
+ <div style={{ flex: 1, height: 32, background: 'var(--surface-2)', position: 'relative', borderRadius: 4, marginLeft: space.sm }}>
  <div
  style={{
  position: 'absolute',
  left: `${leftPercent}%`,
  width: `${widthPercent}%`,
  height: '100%',
- background: task.billable ? '#52c41a' : '#1890ff',
+ background: task.billable ? 'var(--success-500)' : 'var(--accent-500)',
  borderRadius: 4,
  display: 'flex',
  alignItems: 'center',
  justifyContent: 'center',
- color: '#fff',
+ color: 'var(--on-accent)',
  fontSize: 12,
  cursor: 'pointer',
  }}
@@ -263,7 +263,7 @@ const ProjectGantt: React.FC = () => {
  {data.milestones.map(ms => (
  <div key={ms.id} style={{ marginBottom: space.xs, display: 'flex', alignItems: 'center', gap: space.sm }}>
  <Tag color={ms.done ? 'green' : 'orange'}>{ms.name}</Tag>
- <span style={{ fontSize: 12, color: '#888' }}>{ms.due_date}</span>
+ <span style={{ fontSize: 12, color: 'var(--ink-500)' }}>{ms.due_date}</span>
  {!ms.done && (
  <Button type="link" onClick={() => completeMilestone(ms.id)}>
  {t('mark_complete')}
@@ -273,7 +273,7 @@ const ProjectGantt: React.FC = () => {
  ))}
 
  <Divider titlePlacement="left">{t('dependencies')}</Divider>
- {data.dependencies.length === 0 && <div style={{ color: '#888' }}>{t('no_dependencies')}</div>}
+ {data.dependencies.length === 0 && <div style={{ color: 'var(--ink-500)' }}>{t('no_dependencies')}</div>}
  {data.dependencies.map(dep => {
  const pred = data.tasks.find(t => t.id === dep.predecessor_task_id);
  const succ = data.tasks.find(t => t.id === dep.successor_task_id);
@@ -285,7 +285,7 @@ const ProjectGantt: React.FC = () => {
  })}
  </div>
  ) : (
- <div style={{ textAlign: 'center', color: '#888', padding: space.xl }}>{t('no_tasks_gantt')}</div>
+ <div style={{ textAlign: 'center', color: 'var(--ink-500)', padding: space.xl }}>{t('no_tasks_gantt')}</div>
  )}
  </Card>
 

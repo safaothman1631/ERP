@@ -7,7 +7,7 @@ import { PlusOutlined, SearchOutlined, DeleteOutlined, FileTextOutlined } from '
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import api from '../../api';
-import { PageHeader, StatusTag } from '../../design-system';
+import { PageHeader, StatusTag, SectionCard } from '../../design-system';
 import { space } from '../../theme/tokens';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -280,7 +280,7 @@ const PropertiesAndLeases: React.FC = () => {
  }
  />
 
- <div style={{ background: '#fff', padding: space.lg, borderRadius: 8 }}>
+ <SectionCard>
  <Space style={{ marginBottom: space.md, width: '100%', justifyContent: 'space-between' }}>
  <Input
  placeholder={t('search')}
@@ -314,7 +314,7 @@ const PropertiesAndLeases: React.FC = () => {
  />
  </Tabs.TabPane>
  </Tabs>
- </div>
+ </SectionCard>
 
  <FormDialog
  title={drawerType === 'property' ? t('real_estate.add_property') : t('real_estate.add_lease')}

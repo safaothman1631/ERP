@@ -374,7 +374,7 @@ const POSProducts: React.FC = () => {
  {showEmptyState ? (
  <div style={{ padding: '48px 16px' }}>
  <Empty
- image={<AppstoreAddOutlined style={{ fontSize: 64, color: '#bfbfbf' }} />}
+ image={<AppstoreAddOutlined style={{ fontSize: 64, color: 'var(--ink-400)' }} />}
  description={
  <div style={{ marginTop: 12 }}>
  <Text strong style={{ fontSize: 16, display: 'block', marginBottom: 4 }}>
@@ -483,7 +483,7 @@ const POSProducts: React.FC = () => {
  style={{
  maxHeight: 360,
  overflowY: 'auto',
- border: '1px solid #f0f0f0',
+ border: '1px solid var(--border)',
  borderRadius: 6,
  padding: 8,
  }}
@@ -512,7 +512,7 @@ const POSProducts: React.FC = () => {
  padding: '8px 10px',
  borderRadius: 6,
  cursor: 'pointer',
- background: checked ? 'rgba(22, 119, 255, 0.06)' : 'transparent',
+ background: checked ? 'var(--accent-soft)' : 'transparent',
  }}
  >
  <input
@@ -528,7 +528,7 @@ const POSProducts: React.FC = () => {
  />
  <div style={{ flex: 1, minWidth: 0 }}>
  <div style={{ fontWeight: 500 }}>{item.name}</div>
- <div style={{ fontSize: 12, color: '#8c8c8c' }}>
+ <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>
  {item.sku ? `${t('sku')}: ${item.sku}` : ''}
  {item.price != null
  ? ` · ${Number(item.price).toLocaleString('en-IQ')} IQD`

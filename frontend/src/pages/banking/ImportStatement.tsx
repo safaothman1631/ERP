@@ -8,6 +8,7 @@ import api from '../../api';
 import { PageHeader } from '../../design-system';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
+import { palette } from '../../theme/tokens';
 
 const { Dragger } = Upload;
 const { Text, Title } = Typography;
@@ -146,7 +147,7 @@ const ImportStatement: React.FC = () => {
       title: t('amount'), 
       dataIndex: 'amount', 
       key: 'amount',
-      render: (v: number) => <span style={{ color: v >= 0 ? '#52c41a' : '#f5222d' }}>{fmtIQD(v)}</span>
+      render: (v: number) => <span style={{ color: v >= 0 ? palette.success : palette.danger }}>{fmtIQD(v)}</span>
     },
     { 
       title: t('type'), 
@@ -187,7 +188,7 @@ const ImportStatement: React.FC = () => {
             accept=".csv,.ofx,.qfx,.sta,.mt940"
           >
             <p className="ant-upload-drag-icon">
-              <InboxOutlined style={{ fontSize: 48, color: '#2563eb' }} />
+              <InboxOutlined style={{ fontSize: 48, color: palette.primary500 }} />
             </p>
             <p className="ant-upload-text">{t('click_or_drag')}</p>
             <p className="ant-upload-hint">{t('supported_formats')}: CSV, OFX, MT940</p>
@@ -210,7 +211,7 @@ const ImportStatement: React.FC = () => {
                 <thead>
                   <tr>
                     {csvHeaders.map((h, i) => (
-                      <th key={i} style={{ border: '1px solid #ddd', padding: 4, background: '#f5f5f5' }}>{h}</th>
+                      <th key={i} style={{ border: '1px solid var(--border)', padding: 4, background: 'var(--surface-2)' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -218,7 +219,7 @@ const ImportStatement: React.FC = () => {
                   {csvPreviewRows.map((row, ri) => (
                     <tr key={ri}>
                       {row.map((cell, ci) => (
-                        <td key={ci} style={{ border: '1px solid #ddd', padding: 4 }}>{cell}</td>
+                        <td key={ci} style={{ border: '1px solid var(--border)', padding: 4 }}>{cell}</td>
                       ))}
                     </tr>
                   ))}
@@ -314,8 +315,8 @@ const ImportStatement: React.FC = () => {
                 <Space direction="vertical">
                   <Text>{t('format')}: <Tag color="blue">{preview.format.toUpperCase()}</Tag></Text>
                   <Text>{t('total_parsed')}: <strong>{preview.total_parsed}</strong></Text>
-                  <Text>{t('unique_transactions')}: <strong style={{ color: '#52c41a' }}>{preview.unique_count}</strong></Text>
-                  <Text>{t('duplicates_skipped')}: <strong style={{ color: '#f5222d' }}>{preview.duplicate_count}</strong></Text>
+                  <Text>{t('unique_transactions')}: <strong style={{ color: palette.success }}>{preview.unique_count}</strong></Text>
+                  <Text>{t('duplicates_skipped')}: <strong style={{ color: palette.danger }}>{preview.duplicate_count}</strong></Text>
                 </Space>
               }
               type="success"
@@ -343,7 +344,7 @@ const ImportStatement: React.FC = () => {
 
         {current === 3 && (
           <div style={{ textAlign: 'center', padding: 32 }}>
-            <CheckCircleOutlined style={{ fontSize: 64, color: '#52c41a', marginBottom: 16 }} />
+            <CheckCircleOutlined style={{ fontSize: 64, color: palette.success, marginBottom: 16 }} />
             <Title level={3}>{t('import_complete')}</Title>
             <Text type="secondary">{t('import_complete_message')}</Text>
             <div style={{ marginTop: 24 }}>

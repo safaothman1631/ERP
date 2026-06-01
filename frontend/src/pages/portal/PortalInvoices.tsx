@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Tag, Button, Typography } from 'antd';
+import { Card, Button, Typography } from 'antd';
 import { LeftOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
+import { StatusTag } from '../../design-system';
 import api from '../../api';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
@@ -49,7 +50,7 @@ const PortalInvoices: React.FC = () => {
       key: 'invoice_number',
       render: (text: string) => (
         <span>
-          <FileTextOutlined style={{ marginRight: 8 }} />
+          <FileTextOutlined style={{ marginInlineEnd: 8 }} />
           {text}
         </span>
       ),
@@ -82,21 +83,12 @@ const PortalInvoices: React.FC = () => {
       title: t('portal.status'),
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => {
-        const colorMap: Record<string, string> = {
-          draft: 'default',
-          sent: 'blue',
-          paid: 'green',
-          partial: 'orange',
-          overdue: 'red',
-        };
-        return <Tag color={colorMap[status] || 'default'}>{status}</Tag>;
-      },
+      render: (status: string) => <StatusTag status={status} />,
     },
   ];
 
   return (
-    <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
+    <div style={{ padding: '24px', background: 'var(--surface-2)', minHeight: '100vh' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <Button
           icon={<LeftOutlined />}

@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Tabs, Button, Tag, Form, Input, InputNumber, Select, Space, DatePicker, Popconfirm, Row, Col, Card, Statistic, Progress, Empty, Typography } from 'antd';
+import { Tabs, Button, Tag, Form, Input, InputNumber, Select, Space, DatePicker, Popconfirm, Row, Col, Progress, Empty, Typography } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, DeleteOutlined, ToolOutlined, DollarOutlined, FallOutlined, CheckCircleOutlined, ClockCircleOutlined, InboxOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import dayjs from 'dayjs';
-import { PageHeader, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { PageHeader, KpiCard, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
 import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { downloadCsv } from '../utils/exportCsv';
 import { space as spaceTk } from '../theme/tokens';
@@ -255,49 +255,31 @@ const Assets: React.FC = () => {
  {/* Stats Bar */}
  <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
  <Col xs={24} sm={8}>
- <Card className="stat-card gradient-card-blue" style={{ borderRadius: 12 }}>
- <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
- <Statistic
- title={<Text style={{ color: '#6b7280', fontSize: 13 }}>{t('purchasePrice')}</Text>}
+ <KpiCard
+ title={t('purchasePrice')}
  value={data.reduce((sum, a) => sum + (a.purchase_price || 0), 0)}
- suffix="IQD"
- styles={{ content: { color: '#2563eb', fontWeight: 700 } }}
+ suffix=" IQD"
+ icon={<DollarOutlined />}
+ tone="primary"
  />
- <div style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#2563eb14' }}>
- <DollarOutlined style={{ fontSize: 24, color: '#2563eb' }} />
- </div>
- </div>
- </Card>
  </Col>
  <Col xs={24} sm={8}>
- <Card className="stat-card gradient-card-orange" style={{ borderRadius: 12 }}>
- <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
- <Statistic
- title={<Text style={{ color: '#6b7280', fontSize: 13 }}>{t('currentValue')}</Text>}
+ <KpiCard
+ title={t('currentValue')}
  value={data.reduce((sum, a) => sum + (a.current_value || 0), 0)}
- suffix="IQD"
- styles={{ content: { color: '#ea580c', fontWeight: 700 } }}
+ suffix=" IQD"
+ icon={<FallOutlined />}
+ tone="warning"
  />
- <div style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ea580c14' }}>
- <FallOutlined style={{ fontSize: 24, color: '#ea580c' }} />
- </div>
- </div>
- </Card>
  </Col>
  <Col xs={24} sm={8}>
- <Card className="stat-card gradient-card-green" style={{ borderRadius: 12 }}>
- <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
- <Statistic
- title={<Text style={{ color: '#6b7280', fontSize: 13 }}>{t('fully_depreciated')}</Text>}
+ <KpiCard
+ title={t('fully_depreciated')}
  value={data.filter(a => a.status === 'fully_depreciated').length}
  suffix={`/ ${data.length}`}
- styles={{ content: { color: '#16a34a', fontWeight: 700 } }}
+ icon={<CheckCircleOutlined />}
+ tone="success"
  />
- <div style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#16a34a14' }}>
- <CheckCircleOutlined style={{ fontSize: 24, color: '#16a34a' }} />
- </div>
- </div>
- </Card>
  </Col>
  </Row>
 

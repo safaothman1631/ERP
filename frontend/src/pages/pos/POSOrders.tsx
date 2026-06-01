@@ -12,6 +12,7 @@ import { downloadCsv } from '../../utils/exportCsv';
 import { useAuthStore } from '../../store';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
+import { palette } from '../../theme/tokens';
 
 const { Title, Text } = Typography;
 
@@ -90,7 +91,7 @@ const POSOrders: React.FC = () => {
  title: t('pos.order_number'),
  dataIndex: 'order_number',
  key: 'order_number',
- render: (text: string) => <Text strong style={{ color: '#7B61FF' }}>{text}</Text>,
+ render: (text: string) => <Text strong style={{ color: palette.primary600 }}>{text}</Text>,
  },
  {
  title: t('date'),

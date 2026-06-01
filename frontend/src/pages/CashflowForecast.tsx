@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Statistic, Select, Space } from 'antd';
+import { Card, Row, Col, Select, Space } from 'antd';
 import { message } from '../utils/message';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
-import { PageHeader } from '../design-system';
+import { PageHeader, KpiCard } from '../design-system';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { ResponsiveChart } from '../components/responsive/ResponsiveChart';
 import { asTranslationKey } from '../i18n/types';
@@ -48,46 +48,22 @@ const CashflowForecast: React.FC = () => {
       />
 
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        <Row gutter={16}>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title={t('starting_cash')}
-                value={data?.starting_cash || 0}
-                precision={2}
-                valueStyle={{ color: '#3f8600' }}
-              />
-            </Card>
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={12} lg={6}>
+            <KpiCard title={t('starting_cash')} value={data?.starting_cash || 0} tone="success" />
           </Col>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title={t('projected_inflow')}
-                value={data?.projected_inflow || 0}
-                precision={2}
-                valueStyle={{ color: '#1890ff' }}
-              />
-            </Card>
+          <Col xs={24} sm={12} lg={6}>
+            <KpiCard title={t('projected_inflow')} value={data?.projected_inflow || 0} tone="info" />
           </Col>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title={t('projected_outflow')}
-                value={data?.projected_outflow || 0}
-                precision={2}
-                valueStyle={{ color: '#cf1322' }}
-              />
-            </Card>
+          <Col xs={24} sm={12} lg={6}>
+            <KpiCard title={t('projected_outflow')} value={data?.projected_outflow || 0} tone="danger" />
           </Col>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title={t('ending_cash')}
-                value={data?.ending_cash || 0}
-                precision={2}
-                valueStyle={{ color: (data?.ending_cash || 0) > (data?.starting_cash || 0) ? '#3f8600' : '#cf1322' }}
-              />
-            </Card>
+          <Col xs={24} sm={12} lg={6}>
+            <KpiCard
+              title={t('ending_cash')}
+              value={data?.ending_cash || 0}
+              tone={(data?.ending_cash || 0) > (data?.starting_cash || 0) ? 'success' : 'danger'}
+            />
           </Col>
         </Row>
 

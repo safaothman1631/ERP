@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Tag, Form, Input, Select, message, Popconfirm, Badge } from 'antd';
+import { Button, Space, Form, Input, Select, message, Popconfirm, Badge } from 'antd';
 import { PlusOutlined, EyeOutlined, EditOutlined, DeleteOutlined, ReloadOutlined, KeyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,8 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
+import { PageHeader, StatusTag } from '../../design-system';
+import { space } from '../../theme/tokens';
 
 dayjs.extend(relativeTime);
 
@@ -115,7 +117,7 @@ const IoTDevices: React.FC = () => {
  }
  };
 
- const statusColor = (status: string) => {
+ const statusKind = (status: string) => {
  const map: Record<string, string> = {
  active: 'success',
  inactive: 'default',
@@ -159,7 +161,7 @@ const IoTDevices: React.FC = () => {
  dataIndex: 'status',
  key: 'status',
  render: (val: string) => (
- <Tag color={statusColor(val)}>{t(`iot.status_${val}`, val)}</Tag>
+ <StatusTag status={statusKind(val)} label={t(`iot.status_${val}`, val)} />
  )
  },
  {
@@ -192,16 +194,18 @@ const IoTDevices: React.FC = () => {
  ];
 
  return (
- <div style={{ padding: '24px' }}>
- <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
- <h1>{t('iot.devices', 'IoT Devices')}</h1>
+ <div style={{ padding: space.lg }}>
+ <PageHeader
+ title={t('iot.devices', 'IoT Devices')}
+ extra={
  <Space>
  <Button icon={<ReloadOutlined />} onClick={loadDevices} />
  <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
  {t('iot.register_device', 'Register Device')}
  </Button>
  </Space>
- </div>
+ }
+ />
 
  <Space style={{ marginBottom: 16 }}>
  <Select

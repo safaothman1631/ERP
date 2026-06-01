@@ -5,6 +5,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { palette } from '../../theme/tokens';
 
 const { Title, Text } = Typography;
 
@@ -105,7 +106,7 @@ const FXExposure: React.FC = () => {
       dataIndex: 'currency',
       key: 'currency',
       width: 120,
-      render: (currency: string) => <Tag color="blue">{currency}</Tag>,
+      render: (currency: string) => <Tag color={palette.info}>{currency}</Tag>,
     },
     {
       title: t('fx.foreignBalance'),
@@ -173,7 +174,7 @@ const FXExposure: React.FC = () => {
                 value={exposure?.total_unrealized || 0}
                 precision={2}
                 valueStyle={{
-                  color: (exposure?.total_unrealized || 0) >= 0 ? '#3f8600' : '#cf1322',
+                  color: (exposure?.total_unrealized || 0) >= 0 ? palette.success : palette.danger,
                 }}
                 prefix={<DollarOutlined />}
                 suffix="IQD"
