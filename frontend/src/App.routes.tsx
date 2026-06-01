@@ -171,6 +171,8 @@ const LoginPage = lazyWithRetry(() => import('./pages/auth/LoginPage'), 'login-p
 // Task 16: Login Page Redesign — features/auth/LoginPage with split-screen, Particles, glass morphism
 const LoginPageRedesign = lazyWithRetry(() => import('./features/auth/LoginPage'), 'auth-login-page');
 const MFAPage = lazyWithRetry(() => import('./pages/auth/MFAPage'), 'mfa-page');
+// Vertex "Slate & Signal" full-kit PROOF — standalone preview at /vertex.
+const VertexProof = lazyWithRetry(() => import('./vertex-proof/VertexProof'), 'vertex-proof-page');
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'not-found');
 const ServerError = lazyWithRetry(() => import('./pages/ServerError'), 'server-error');
 // POS Pages
@@ -439,6 +441,8 @@ export const routes: RouteObject[] = [
   { path: '/', element: <LandingRoute /> },
   // Task 16: Login Page Redesign — modern split-screen with Particles, glass morphism, attempt tracking
   { path: '/login', element: <Suspense fallback={FeatureFallback}><PageTransition><LoginPageRedesign /></PageTransition></Suspense> },
+  // Vertex "Slate & Signal" full-kit PROOF — standalone, full-fidelity kit rebuild preview.
+  { path: '/vertex', element: <Suspense fallback={FeatureFallback}><VertexProof /></Suspense> },
   { path: '/signup', element: <Suspense fallback={FeatureFallback}><PageTransition><SignUp /></PageTransition></Suspense> },
   { path: '/forgot-password', element: <Suspense fallback={FeatureFallback}><PageTransition><ForgotPassword /></PageTransition></Suspense> },
   { path: '/reset-password', element: <Suspense fallback={FeatureFallback}><PageTransition><ResetPassword /></PageTransition></Suspense> },

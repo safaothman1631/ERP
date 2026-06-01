@@ -1,0 +1,111 @@
+/* ============================================================================
+   vx-kit.css — Vertex kit component styles, ported verbatim from
+   ui_kits/vertex-next/kit.css and SCOPED under `.vx-root` so the proof page can
+   use the kit's real `.vx-*` components without leaking styles into the rest of
+   the app. Tokens come from theme/vertex-tokens.css (already global).
+   ============================================================================ */
+
+.vx-root {
+  font-family: var(--font-ui);
+  color: var(--ink-900);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+[dir='rtl'] .vx-root { font-family: var(--font-rtl); }
+.vx-root *, .vx-root *::before, .vx-root *::after { box-sizing: border-box; }
+.vx-root button, .vx-root input, .vx-root select { font: inherit; }
+.vx-root button { cursor: pointer; }
+.vx-root :focus-visible { outline: 2px solid var(--accent-500); outline-offset: 2px; border-radius: 6px; }
+.vx-root a { color: inherit; text-decoration: none; }
+
+/* ---- scrollbars ---- */
+.vx-root .vx-scroll { scrollbar-width: thin; scrollbar-color: var(--slate-400) transparent; }
+.vx-root .vx-scroll::-webkit-scrollbar { width: 9px; height: 9px; }
+.vx-root .vx-scroll::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+[data-theme='dark'] .vx-root .vx-scroll::-webkit-scrollbar-thumb { background: var(--slate-700); background-clip: padding-box; }
+
+/* ---- buttons ---- */
+.vx-root .vx-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 36px; padding: 0 15px;
+  border-radius: var(--radius-md); font-size: 14px; font-weight: 600; border: 1px solid transparent; white-space: nowrap;
+  transition: transform .12s var(--ease-standard), border-color .14s, color .14s, box-shadow .18s; }
+.vx-root .vx-btn-sm { height: 30px; padding: 0 11px; font-size: 13px; }
+.vx-root .vx-btn-lg { height: 46px; padding: 0 22px; font-size: 15px; border-radius: var(--radius-lg); }
+.vx-root .vx-btn-accent { background: var(--accent-500); color: #fff; box-shadow: var(--accent-glow); }
+.vx-root .vx-btn-accent:hover { background: var(--accent-400); transform: translateY(-1px); }
+.vx-root .vx-btn-accent:active { transform: translateY(0); }
+.vx-root .vx-btn-default { background: var(--surface); color: var(--ink-700); border-color: var(--border-strong); }
+.vx-root .vx-btn-default:hover { border-color: var(--accent-500); color: var(--ink-900); }
+.vx-root .vx-btn-ghost { background: transparent; color: var(--ink-500); }
+.vx-root .vx-btn-ghost:hover { background: var(--accent-soft); color: var(--accent-400); }
+.vx-root .vx-btn-danger { background: transparent; color: var(--danger-fg); border-color: color-mix(in srgb, var(--danger-500) 45%, transparent); }
+.vx-root .vx-btn-danger:hover { background: var(--danger-500); color: #fff; border-color: var(--danger-500); }
+.vx-root .vx-btn:disabled { opacity: .5; pointer-events: none; }
+
+.vx-root .vx-icon { width: 34px; height: 34px; border-radius: 9px; border: none; background: transparent; color: var(--ink-500);
+  display: inline-flex; align-items: center; justify-content: center; position: relative; transition: background .14s, color .14s; }
+.vx-root .vx-icon:hover { background: var(--accent-soft); color: var(--accent-400); }
+
+/* ---- card ---- */
+.vx-root .vx-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+.vx-root .vx-card-h { transition: transform .16s var(--ease-standard), border-color .16s, box-shadow .2s; }
+.vx-root .vx-card-h:hover { transform: translateY(-2px); border-color: var(--border-strong); box-shadow: var(--shadow-md); }
+
+/* ---- tag ---- */
+.vx-root .vx-tag { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; border-radius: var(--radius-sm);
+  font-size: 11.5px; font-weight: 600; letter-spacing: .01em; }
+.vx-root .vx-tag .d { width: 5px; height: 5px; border-radius: 50%; }
+
+/* ---- input ---- */
+.vx-root .vx-input { height: 38px; border-radius: var(--radius-md); border: 1px solid var(--border-strong); background: var(--surface);
+  display: flex; align-items: center; gap: 8px; padding: 0 12px; color: var(--ink-900); font-size: 14px;
+  transition: border-color .14s, box-shadow .14s; }
+.vx-root .vx-input:focus-within { border-color: var(--accent-500); box-shadow: 0 0 0 3px var(--accent-soft); }
+.vx-root .vx-input input { border: none; outline: none; background: transparent; flex: 1; min-width: 0; color: inherit; font: inherit; }
+.vx-root .vx-input input::placeholder { color: var(--ink-300); }
+.vx-root .vx-input .ic { color: var(--ink-300); display: flex; }
+.vx-root .vx-input.lg { height: 46px; border-radius: var(--radius-lg); }
+
+/* ---- nav item ---- */
+.vx-root .vx-nav { display: flex; align-items: center; gap: 11px; height: 36px; padding: 0 11px; border-radius: var(--radius-md);
+  font-size: 14px; font-weight: 500; color: var(--ink-500); background: none; border: none; width: 100%; text-align: start;
+  transition: background .12s, color .12s; position: relative; }
+.vx-root .vx-nav:hover { background: var(--surface-2); color: var(--ink-900); }
+[data-theme='dark'] .vx-root .vx-nav:hover { background: rgba(255,255,255,0.04); }
+.vx-root .vx-nav.on { color: var(--ink-900); background: var(--accent-soft); font-weight: 600; }
+.vx-root .vx-nav.on::before { content: ''; position: absolute; inset-inline-start: -12px; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: var(--accent-500); }
+.vx-root .vx-nav-sec { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-300); padding: 14px 11px 5px; }
+
+/* ---- table ---- */
+.vx-root .vx-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.vx-root .vx-table thead th { text-align: start; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--ink-500); padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.vx-root .vx-table tbody td { padding: 12px 14px; border-bottom: 1px solid var(--border); color: var(--ink-700); }
+.vx-root .vx-table tbody tr { transition: background .1s, transform .12s var(--ease-standard); cursor: pointer; }
+.vx-root .vx-table tbody tr:hover { background: var(--surface-2); }
+.vx-root .vx-table tbody tr:active { transform: scale(.997); }
+.vx-root .vx-table tbody tr.sel { background: var(--accent-soft); }
+.vx-root .vx-num { text-align: end; font-variant-numeric: tabular-nums; }
+
+/* ---- misc / motion (capture-safe: transform only) ---- */
+@keyframes vx-in { from { transform: translateY(7px); } to { transform: translateY(0); } }
+.vx-root .vx-page { animation: vx-in .32s var(--ease-out); }
+.vx-root .vx-divider { height: 1px; background: var(--border); }
+.vx-root .vx-btn:active { transform: translateY(0) scale(.955); }
+.vx-root .vx-icon:active { transform: scale(.86); }
+.vx-root .vx-nav:active { transform: scale(.985); }
+@keyframes vx-pop { from { opacity: 0; transform: translateY(-6px) scale(.975); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.vx-root .vx-pop { animation: vx-pop .18s var(--ease-out); transform-origin: top; }
+@media (prefers-reduced-motion: reduce) { .vx-root *, .vx-root *::before, .vx-root *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+/* ---- responsive: sidebar → drawer ---- */
+.vx-root .vx-hamburger { display: none; }
+@media (max-width: 880px) {
+  .vx-root .vx-side { position: fixed; top: 0; bottom: 0; inset-inline-start: 0; height: 100vh; width: 280px; z-index: 60;
+    transform: translateX(-100%); transition: transform .26s var(--ease-standard); box-shadow: var(--shadow-xl); }
+  [dir='rtl'] .vx-root .vx-side { transform: translateX(100%); }
+  .vx-root .vx-side.open { transform: translateX(0); }
+  .vx-root .vx-backdrop { display: block; position: fixed; inset: 0; background: rgba(8,10,15,0.5); z-index: 55; }
+  .vx-root .vx-hamburger { display: inline-flex; }
+  .vx-root .vx-topsearch, .vx-root .vx-crumb-zone { display: none; }
+}
