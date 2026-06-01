@@ -1,6 +1,4 @@
 import React from 'react';
-import { Tag } from 'antd';
-import { palette } from '../theme/tokens';
 
 export type StatusKind =
   | 'draft' | 'pending' | 'approved' | 'rejected'
@@ -9,30 +7,45 @@ export type StatusKind =
   | 'active' | 'inactive' | 'archived'
   | 'success' | 'warning' | 'error' | 'info' | 'default';
 
-const MAP: Record<StatusKind, { color: string; bg: string; label?: string }> = {
-  draft:     { color: palette.ink700, bg: palette.ink100 },
-  pending:   { color: palette.warning, bg: palette.warningBg },
-  approved:  { color: palette.success, bg: palette.successBg },
-  rejected:  { color: palette.danger,  bg: palette.dangerBg },
-  paid:      { color: palette.success, bg: palette.successBg },
-  partial:   { color: palette.info,    bg: palette.infoBg },
-  unpaid:    { color: palette.warning, bg: palette.warningBg },
-  overdue:   { color: palette.danger,  bg: palette.dangerBg },
-  sent:      { color: palette.info,    bg: palette.infoBg },
-  viewed:    { color: palette.primary600, bg: palette.primary50 },
-  open:      { color: palette.primary600, bg: palette.primary50 },
-  closed:    { color: palette.ink500,  bg: palette.ink100 },
-  cancelled: { color: palette.danger,  bg: palette.dangerBg },
-  void:      { color: palette.ink500,  bg: palette.ink100 },
-  posted:    { color: palette.success, bg: palette.successBg },
-  active:    { color: palette.success, bg: palette.successBg },
-  inactive:  { color: palette.ink500,  bg: palette.ink100 },
-  archived:  { color: palette.ink500,  bg: palette.ink100 },
-  success:   { color: palette.success, bg: palette.successBg },
-  warning:   { color: palette.warning, bg: palette.warningBg },
-  error:     { color: palette.danger,  bg: palette.dangerBg },
-  info:      { color: palette.info,    bg: palette.infoBg },
-  default:   { color: palette.ink700,  bg: palette.ink100 },
+/**
+ * Status palette — kit `vx-tag` triplet: [background, foreground, dot].
+ * Each value is a Vertex CSS-var token (`src/theme/vertex-tokens.css`) that
+ * auto-flips for dark mode via `[data-theme="dark"]` on <html>, so the tag is
+ * correct in BOTH light and dark with no JS palette branching.
+ */
+type TagTokens = { bg: string; fg: string; dot: string };
+
+const SUCCESS: TagTokens = { bg: 'var(--success-bg)', fg: 'var(--success-fg)', dot: 'var(--success-500)' };
+const WARNING: TagTokens = { bg: 'var(--warning-bg)', fg: 'var(--warning-fg)', dot: 'var(--warning-500)' };
+const DANGER:  TagTokens = { bg: 'var(--danger-bg)',  fg: 'var(--danger-fg)',  dot: 'var(--danger-500)' };
+const INFO:    TagTokens = { bg: 'var(--info-bg)',    fg: 'var(--info-fg)',    dot: 'var(--info-500)' };
+const ACCENT:  TagTokens = { bg: 'var(--accent-soft)', fg: 'var(--accent-500)', dot: 'var(--accent-500)' };
+const NEUTRAL: TagTokens = { bg: 'var(--surface-2)',  fg: 'var(--ink-500)',    dot: 'var(--ink-300)' };
+
+const MAP: Record<StatusKind, TagTokens> = {
+  draft:     NEUTRAL,
+  pending:   WARNING,
+  approved:  SUCCESS,
+  rejected:  DANGER,
+  paid:      SUCCESS,
+  partial:   WARNING,
+  unpaid:    WARNING,
+  overdue:   DANGER,
+  sent:      INFO,
+  viewed:    ACCENT,
+  open:      ACCENT,
+  closed:    NEUTRAL,
+  cancelled: DANGER,
+  void:      NEUTRAL,
+  posted:    SUCCESS,
+  active:    SUCCESS,
+  inactive:  NEUTRAL,
+  archived:  NEUTRAL,
+  success:   SUCCESS,
+  warning:   WARNING,
+  error:     DANGER,
+  info:      INFO,
+  default:   NEUTRAL,
 };
 
 export interface StatusTagProps {
@@ -44,7 +57,9 @@ export interface StatusTagProps {
 }
 
 /**
- * StatusTag — tag یەکسان بۆ هەموو دۆخ. بەرامبەر AntD Tag، token-driven.
+ * StatusTag — Vertex kit `vx-tag` chip: 22px tall, 11.5px / 600, a small status
+ * dot, status-tinted bg/fg via semantic tokens. Token-driven and fully
+ * theme-aware (light + dark) — no AntD `Tag`, no hardcoded colors.
  * role="status" per WCAG AA — Requirements: 17.6
  * React.memo applied per Requirements 18.4.
  */
@@ -53,23 +68,39 @@ const StatusTagInner: React.FC<StatusTagProps> = ({ status, label, icon, ariaLab
   const cfg = MAP[key];
   const displayLabel = label ?? status;
   return (
-    <Tag
-      variant="filled"
-      icon={icon}
+    <span
       role="status"
       aria-label={ariaLabel ?? (typeof displayLabel === 'string' ? displayLabel : String(status))}
       style={{
-        color: cfg.color,
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        height: 22,
+        paddingInline: 9,
+        borderRadius: 'var(--radius-sm)',
+        fontSize: 11.5,
+        fontWeight: 600,
+        letterSpacing: '.01em',
+        lineHeight: 1,
+        whiteSpace: 'nowrap',
+        color: cfg.fg,
         background: cfg.bg,
-        fontWeight: 500,
-        paddingInline: 10,
-        paddingBlock: 2,
-        borderRadius: 6,
-        margin: 0,
       }}
     >
+      {icon ?? (
+        <span
+          aria-hidden
+          style={{
+            width: 5,
+            height: 5,
+            borderRadius: '50%',
+            background: cfg.dot,
+            flexShrink: 0,
+          }}
+        />
+      )}
       {displayLabel}
-    </Tag>
+    </span>
   );
 };
 

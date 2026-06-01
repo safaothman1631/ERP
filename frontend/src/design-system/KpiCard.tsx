@@ -18,7 +18,6 @@ import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import {
   AreaChart, Area, ResponsiveContainer, Tooltip as RechartsTooltip,
 } from 'recharts';
-import { palette, radius, shadow, space, fontSize, fontWeight } from '../theme/tokens';
 import { cardVariants } from '../utils/animations';
 import { LoadingSkeleton } from './LoadingSkeleton';
 import { MotionGate } from '../components/MotionGate';
@@ -61,29 +60,32 @@ export interface KpiCardProps {
 }
 
 // ─── Tone maps ────────────────────────────────────────────────────────────────
+// CSS-var tokens (defined in theme/vertex-tokens.css) auto-flip for dark mode via
+// [data-theme="dark"] on <html>, so the card is correct in BOTH themes with no JS
+// palette branching. `primary` matches the kit's accent-soft / accent-400 badge.
 
 const TONE_BG: Record<NonNullable<KpiCardProps['tone']>, string> = {
-  primary: palette.primary50,
-  success: palette.successBg,
-  warning: palette.warningBg,
-  danger:  palette.dangerBg,
-  info:    palette.infoBg,
+  primary: 'var(--accent-soft)',
+  success: 'var(--success-bg)',
+  warning: 'var(--warning-bg)',
+  danger:  'var(--danger-bg)',
+  info:    'var(--info-bg)',
 };
 
 const TONE_COLOR: Record<NonNullable<KpiCardProps['tone']>, string> = {
-  primary: palette.primary600,
-  success: palette.success,
-  warning: palette.warning,
-  danger:  palette.danger,
-  info:    palette.info,
+  primary: 'var(--accent-400)',
+  success: 'var(--success-fg)',
+  warning: 'var(--warning-fg)',
+  danger:  'var(--danger-fg)',
+  info:    'var(--info-fg)',
 };
 
 const TONE_SPARKLINE: Record<NonNullable<KpiCardProps['tone']>, string> = {
-  primary: palette.primary400,
-  success: palette.success,
-  warning: palette.warning,
-  danger:  palette.danger,
-  info:    palette.info,
+  primary: 'var(--accent-500)',
+  success: 'var(--success-500)',
+  warning: 'var(--warning-500)',
+  danger:  'var(--danger-500)',
+  info:    'var(--info-500)',
 };
 
 // ─── Sparkline ────────────────────────────────────────────────────────────────
@@ -95,21 +97,24 @@ interface SparklineProps {
 
 const Sparkline: React.FC<SparklineProps> = ({ data, color }) => {
   const chartData = data.map((v, i) => ({ i, v }));
+  // `color` is a CSS var (e.g. var(--accent-500)) so the SVG fill/stroke flip with
+  // the theme. Derive a DOM-safe gradient id from the var name (not a hex string).
+  const gradId = `spark-${color.replace(/[^a-zA-Z0-9]/g, '')}`;
   return (
     <ResponsiveContainer width="100%" height={40}>
       <AreaChart data={chartData} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
         <defs>
-          <linearGradient id={`spark-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={color} stopOpacity={0.3} />
-            <stop offset="95%" stopColor={color} stopOpacity={0} />
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+            <stop offset="100%" stopColor={color} stopOpacity={0} />
           </linearGradient>
         </defs>
         <Area
           type="monotone"
           dataKey="v"
           stroke={color}
-          strokeWidth={1.5}
-          fill={`url(#spark-${color.replace('#', '')})`}
+          strokeWidth={2}
+          fill={`url(#${gradId})`}
           dot={false}
           isAnimationActive={false}
         />
@@ -165,13 +170,15 @@ const KpiCardInner: React.FC<KpiCardProps> = ({
 
   const cardContent = (
     <Card
-      className="premium-card"
+      className="vx-card vx-card-h"
       hoverable={!!onClick}
       onClick={onClick}
-      styles={{ body: { padding: space.lg } }}
+      styles={{ body: { padding: 16 } }}
       style={{
-        borderRadius: radius.lg,
-        boxShadow: shadow.sm,
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-sm)',
         height: '100%',
         cursor: onClick ? 'pointer' : 'default',
         minHeight: 160,
@@ -185,48 +192,50 @@ const KpiCardInner: React.FC<KpiCardProps> = ({
         <LoadingSkeleton variant="card" />
       ) : (
         <>
-          {/* Header: title + icon */}
+          {/* Header: title + icon badge (kit: accent-soft / accent-400) */}
           <div style={{
             display: 'flex',
-            alignItems: 'flex-start',
+            alignItems: 'center',
             justifyContent: 'space-between',
-            marginBottom: space.sm,
+            marginBottom: 12,
           }}>
             <Tooltip title={hint}>
               <span style={{
-                color: palette.ink500,
-                fontSize: fontSize.sm,
-                fontWeight: fontWeight.medium,
+                color: 'var(--ink-500)',
+                fontSize: 12.5,
+                fontWeight: 500,
                 lineHeight: 1.4,
               }}>
                 {title}
               </span>
             </Tooltip>
             {icon && (
-              <div style={{
-                width: 36,
-                height: 36,
-                borderRadius: radius.md,
+              <span style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 background: TONE_BG[tone],
                 color: TONE_COLOR[tone],
-                fontSize: 18,
+                fontSize: 16,
                 flexShrink: 0,
               }}>
                 {icon}
-              </div>
+              </span>
             )}
           </div>
 
-          {/* Value with CountUp animation */}
+          {/* Value — kit display font, 26px, tabular-nums, ink-900 (flips for dark) */}
           <div style={{
-            fontSize: fontSize['3xl'],
-            fontWeight: fontWeight.bold,
-            color: palette.ink900,
+            fontFamily: 'var(--font-display)',
+            fontSize: 26,
+            fontWeight: 700,
+            letterSpacing: '-0.02em',
+            color: 'var(--ink-900)',
             lineHeight: 1.2,
-            marginBottom: space.xs,
+            fontVariantNumeric: 'tabular-nums',
           }}>
             {prefix && typeof prefix !== 'string' && prefix}
             {isNumericValue ? (
@@ -237,7 +246,7 @@ const KpiCardInner: React.FC<KpiCardProps> = ({
                 separator=","
                 prefix={valuePrefix}
                 suffix={valueSuffix}
-                style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}
+                style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit', fontFamily: 'inherit' }}
                 fallback={
                   <span>
                     {valuePrefix}{new Intl.NumberFormat('en-US').format(value as number)}{valueSuffix}
@@ -252,27 +261,27 @@ const KpiCardInner: React.FC<KpiCardProps> = ({
             {suffix && typeof suffix !== 'string' && suffix}
           </div>
 
-          {/* Delta indicator */}
+          {/* Delta indicator — success/danger fg tokens (flip for dark) */}
           {typeof resolvedDelta === 'number' && (
             <div style={{
               display: 'flex',
               alignItems: 'center',
               gap: 4,
-              fontSize: fontSize.xs,
-              color: deltaUp ? palette.success : palette.danger,
-              marginBottom: sparklineData && sparklineData.length > 0 ? space.sm : 0,
+              fontSize: 12,
+              color: deltaUp ? 'var(--success-fg)' : 'var(--danger-fg)',
+              marginTop: 6,
             }}>
               {deltaUp ? <ArrowUpOutlined aria-hidden /> : <ArrowDownOutlined aria-hidden />}
-              <span aria-label={`${deltaUp ? 'up' : 'down'} ${Math.abs(resolvedDelta).toFixed(1)} percent`}>
+              <span style={{ fontWeight: 600 }} aria-label={`${deltaUp ? 'up' : 'down'} ${Math.abs(resolvedDelta).toFixed(1)} percent`}>
                 {Math.abs(resolvedDelta).toFixed(1)}%
               </span>
-              {trendLabel && <span style={{ color: palette.ink500 }}>· {trendLabel}</span>}
+              {trendLabel && <span style={{ color: 'var(--ink-500)', fontWeight: 400 }}>· {trendLabel}</span>}
             </div>
           )}
 
           {/* Sparkline */}
           {sparklineData && sparklineData.length > 1 && (
-            <div style={{ marginTop: space.xs }} aria-hidden="true">
+            <div style={{ marginTop: 10 }} aria-hidden="true">
               <Sparkline data={sparklineData} color={sparkColor} />
             </div>
           )}

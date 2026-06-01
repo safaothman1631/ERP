@@ -1,6 +1,13 @@
 /**
  * EditableLineItems — drag-reorder editable table for form line items.
  *
+ * Vertex "Slate & Signal" styling: flat var(--surface) card on a hairline
+ * 1px var(--border) border, UPPERCASE 11px var(--ink-500) header on a
+ * var(--surface-2) band, 12px/14px cell padding, row hover var(--surface-2),
+ * tabular-nums for numeric/money columns, kit inputs (theme-driven via
+ * vertex-kit.css). Fully theme-aware in both light and dark via CSS var tokens
+ * that auto-flip on [data-theme="dark"]; `isDark` defaults from useIsDark().
+ *
  * Features:
  *   - Drag-and-drop row reordering via @dnd-kit/sortable
  *   - Keyboard navigation: Tab moves between cells, Enter confirms inline edit
@@ -35,7 +42,7 @@ import {
   PlusOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { palette, space, radius } from '../theme/tokens';
+import { useIsDark } from '../hooks/useIsDark';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -80,11 +87,17 @@ export interface EditableLineItemsProps<T extends LineItem = LineItem> {
   showDragHandle?: boolean;
   /** Whether to show the delete column */
   showDelete?: boolean;
-  /** Dark mode */
+  /** Dark mode (defaults to live app theme via useIsDark) */
   isDark?: boolean;
   /** Max rows (disables Add when reached) */
   maxRows?: number;
 }
+
+// ─── Layout constants ───────────────────────────────────────────────────────
+// Mirror the kit's .vx-table rhythm (header 10px/14px, body 12px/14px).
+const HANDLE_COL_W = 28;
+const DELETE_COL_W = 36;
+const isNumericType = (t?: LineItemColumnType) => t === 'number' || t === 'money';
 
 // ─── Sortable Row ─────────────────────────────────────────────────────────────
 
@@ -99,6 +112,7 @@ interface SortableRowProps<T extends LineItem> {
   readOnly: boolean;
   isDark: boolean;
   isRTL: boolean;
+  isLast: boolean;
   /** ref to first focusable cell in this row (for keyboard nav) */
   firstCellRef?: React.RefObject<HTMLElement | null>;
 }
@@ -114,24 +128,35 @@ function SortableRow<T extends LineItem>({
   readOnly,
   isDark,
   isRTL,
+  isLast,
 }: SortableRowProps<T>) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: row.id });
+  const [hovered, setHovered] = React.useState(false);
 
+  // Kit row rhythm: flat surface, hairline divider, hover lifts to surface-2.
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    background: isDark ? palette.darkSurface : palette.surface,
-    borderBottom: `1px solid ${isDark ? palette.darkBorder : palette.border}`,
+    background: isDragging || hovered ? 'var(--surface-2)' : 'var(--surface)',
+    borderBottom: isLast ? 'none' : '1px solid var(--border)',
     display: 'flex',
     alignItems: 'center',
-    gap: space.xs,
-    padding: `${space.xs}px ${space.sm}px`,
+    gap: 10,
+    padding: '8px 14px',
+    boxShadow: isDragging ? 'var(--shadow-md)' : 'none',
   };
 
   return (
-    <div ref={setNodeRef} style={style} role="row" aria-rowindex={rowIndex + 2}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      role="row"
+      aria-rowindex={rowIndex + 2}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       {/* Drag handle */}
       {showDragHandle && !readOnly && (
         <span
@@ -139,10 +164,13 @@ function SortableRow<T extends LineItem>({
           {...listeners}
           style={{
             cursor: 'grab',
-            color: isDark ? palette.darkInkMuted : palette.ink400,
+            color: 'var(--ink-300)',
             flexShrink: 0,
             touchAction: 'none',
-            padding: '0 4px',
+            width: HANDLE_COL_W,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
           aria-label="Drag to reorder"
           role="button"
@@ -158,8 +186,9 @@ function SortableRow<T extends LineItem>({
           key={col.key}
           role="gridcell"
           style={{
-            flex: col.width ? `0 0 ${col.width}` : 1,
+            flex: col.width ? `0 0 ${typeof col.width === 'number' ? `${col.width}px` : col.width}` : 1,
             minWidth: 0,
+            textAlign: isNumericType(col.type) ? 'end' : 'start',
           }}
         >
           {col.render ? (
@@ -187,7 +216,7 @@ function SortableRow<T extends LineItem>({
             icon={<DeleteOutlined />}
             onClick={() => onDelete(row.id)}
             aria-label="Remove row"
-            style={{ flexShrink: 0 }}
+            style={{ flexShrink: 0, width: DELETE_COL_W }}
           />
         </Tooltip>
       )}
@@ -230,9 +259,20 @@ function CellEditor<T extends LineItem>({
     []
   );
 
+  const numeric = isNumericType(column.type);
+
   if (readOnly) {
     return (
-      <span style={{ padding: '4px 8px', display: 'block' }}>
+      <span
+        style={{
+          padding: '4px 0',
+          display: 'block',
+          fontSize: 13.5,
+          color: 'var(--ink-900)',
+          fontVariantNumeric: numeric ? 'tabular-nums' : undefined,
+          textAlign: numeric ? 'end' : 'start',
+        }}
+      >
         {String(value ?? '')}
       </span>
     );
@@ -247,7 +287,7 @@ function CellEditor<T extends LineItem>({
           min={column.min}
           precision={column.precision ?? 2}
           controls={false}
-          style={{ width: '100%' }}
+          style={{ width: '100%', fontVariantNumeric: 'tabular-nums' }}
           onKeyDown={handleKeyDown}
           dir={isRTL ? 'rtl' : 'ltr'}
         />
@@ -261,7 +301,7 @@ function CellEditor<T extends LineItem>({
           min={column.min ?? 0}
           precision={column.precision ?? 2}
           controls={false}
-          style={{ width: '100%' }}
+          style={{ width: '100%', fontVariantNumeric: 'tabular-nums' }}
           onKeyDown={handleKeyDown}
           dir={isRTL ? 'rtl' : 'ltr'}
         />
@@ -306,9 +346,11 @@ export function EditableLineItems<T extends LineItem = LineItem>({
   readOnly = false,
   showDragHandle = true,
   showDelete = true,
-  isDark = false,
+  isDark: isDarkProp,
   maxRows,
 }: EditableLineItemsProps<T>) {
+  const themeDark = useIsDark();
+  const isDark = isDarkProp ?? themeDark;
   const { t, i18n } = useTranslation();
   const isRTL = ['ku', 'ar'].includes(i18n.language);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -361,9 +403,6 @@ export function EditableLineItems<T extends LineItem = LineItem>({
 
   const canAdd = !readOnly && (maxRows === undefined || value.length < maxRows);
 
-  const headerBg = isDark ? palette.darkSurface : '#fafafa';
-  const borderColor = isDark ? palette.darkBorder : palette.border;
-
   return (
     <div
       ref={containerRef}
@@ -371,44 +410,49 @@ export function EditableLineItems<T extends LineItem = LineItem>({
       aria-label={t('line_items.table_label', 'Line items')}
       aria-rowcount={value.length + 1}
       style={{
-        border: `1px solid ${borderColor}`,
-        borderRadius: radius.md,
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-lg)',
+        background: 'var(--surface)',
         overflow: 'hidden',
+        boxShadow: 'var(--shadow-xs)',
       }}
     >
-      {/* Header row */}
+      {/* Header row — kit uppercase 11px on the surface-2 band */}
       <div
         role="row"
         aria-rowindex={1}
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: space.xs,
-          padding: `${space.xs}px ${space.sm}px`,
-          background: headerBg,
-          borderBottom: `1px solid ${borderColor}`,
+          gap: 10,
+          padding: '10px 14px',
+          background: 'var(--surface-2)',
+          borderBottom: '1px solid var(--border)',
           fontWeight: 600,
-          fontSize: 13,
-          color: isDark ? palette.darkInkMuted : palette.ink500,
+          fontSize: 11,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          color: 'var(--ink-500)',
         }}
       >
         {showDragHandle && !readOnly && (
-          <span style={{ width: 24, flexShrink: 0 }} />
+          <span style={{ width: HANDLE_COL_W, flexShrink: 0 }} />
         )}
         {columns.map((col) => (
           <div
             key={col.key}
             role="columnheader"
             style={{
-              flex: col.width ? `0 0 ${col.width}` : 1,
+              flex: col.width ? `0 0 ${typeof col.width === 'number' ? `${col.width}px` : col.width}` : 1,
               minWidth: 0,
+              textAlign: isNumericType(col.type) ? 'end' : 'start',
             }}
           >
             {col.title}
           </div>
         ))}
         {showDelete && !readOnly && (
-          <span style={{ width: 32, flexShrink: 0 }} />
+          <span style={{ width: DELETE_COL_W, flexShrink: 0 }} />
         )}
       </div>
 
@@ -435,6 +479,7 @@ export function EditableLineItems<T extends LineItem = LineItem>({
               readOnly={readOnly}
               isDark={isDark}
               isRTL={isRTL}
+              isLast={idx === value.length - 1 && !canAdd}
             />
           ))}
         </SortableContext>
@@ -444,9 +489,9 @@ export function EditableLineItems<T extends LineItem = LineItem>({
       {value.length === 0 && (
         <div
           style={{
-            padding: `${space.lg}px`,
+            padding: '24px 16px',
             textAlign: 'center',
-            color: isDark ? palette.darkInkMuted : palette.ink400,
+            color: 'var(--ink-400)',
             fontSize: 13,
           }}
         >
@@ -458,8 +503,9 @@ export function EditableLineItems<T extends LineItem = LineItem>({
       {canAdd && (
         <div
           style={{
-            padding: `${space.xs}px ${space.sm}px`,
-            borderTop: value.length > 0 ? `1px solid ${borderColor}` : undefined,
+            padding: '8px 14px',
+            borderTop: value.length > 0 ? '1px solid var(--border)' : undefined,
+            background: 'var(--surface)',
           }}
         >
           <Space>
