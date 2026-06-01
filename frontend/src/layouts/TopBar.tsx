@@ -53,7 +53,6 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
   const setNotificationsOpen = useUiStore((s) => s.setNotificationsOpen);
   const setQuickCreateOpen = useUiStore((s) => s.setQuickCreateOpen);
   const { theme } = useRoleUx();
-  const setShortcutsOpen = useUiStore((s) => s.setShortcutsOpen);
   const density = useUiStore((s) => s.density);
   const setDensity = useUiStore((s) => s.setDensity);
   const unread = useUnreadCount();
@@ -369,14 +368,15 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
           </Badge>
         </Tooltip>
 
-        {/* Help / shortcuts */}
-        <Tooltip title={t('topbar.help', 'Help')}>
+        {/* Help & support — opens the HelpPanel (moved here from a floating button,
+            kit-style). Keyboard shortcuts remain available via the "?" key. */}
+        <Tooltip title={t('help.openHelp', 'Help & support')}>
           <Button
             type="text"
             shape="circle"
             icon={<QuestionCircleOutlined />}
-            onClick={() => setShortcutsOpen(true)}
-            aria-label={t('topbar.help', 'Help')}
+            onClick={() => window.dispatchEvent(new Event('open-help-panel'))}
+            aria-label={t('help.openHelp', 'Help & support')}
             className="tb-icon-btn"
           />
         </Tooltip>
