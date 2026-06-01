@@ -45,7 +45,7 @@ const formatPrice = (amount: number, currency: string): string => {
 };
 
 const PLAN_ACCENT: Record<string, string> = {
-  starter: '#1677ff',
+  starter: '#7B61FF',
   growth: '#52c41a',
   pro: '#722ed1',
 };
@@ -165,7 +165,7 @@ export default function Pricing(): React.ReactElement {
         {plans.map((plan) => {
           const total = priceFor(plan);
           const monthly = cycle === 'annual' ? total / 12 : total;
-          const accent = PLAN_ACCENT[plan.slug] || '#1677ff';
+          const accent = PLAN_ACCENT[plan.slug] || '#7B61FF';
           return (
             <Col xs={24} md={8} key={plan.slug}>
               <Card style={{ height: '100%', borderTop: `4px solid ${accent}` }}>

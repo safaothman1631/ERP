@@ -141,7 +141,7 @@ const css = `
   .dh-glow-1 {
     top: -60px; inset-inline-end: -40px;
     width: 220px; height: 220px;
-    background: radial-gradient(circle, rgba(91,141,239,0.45) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(146,117,255,0.45) 0%, transparent 70%);
   }
   .dh-glow-2 {
     bottom: -80px; inset-inline-start: 20%;
@@ -166,7 +166,7 @@ const css = `
   }
   .dh-cta {
     background: rgba(255,255,255,0.96) !important;
-    color: #114393 !important;
+    color: #5638D6 !important;
     border: none !important;
     font-weight: 700 !important;
     border-radius: 12px !important;
@@ -177,7 +177,7 @@ const css = `
   .dh-cta:hover {
     transform: translateY(-1px);
     box-shadow: 0 12px 28px rgba(0,0,0,0.24) !important;
-    color: #0B2F66 !important;
+    color: #2C1B73 !important;
   }
 `;
 
@@ -186,11 +186,11 @@ const styles: Record<string, React.CSSProperties> = {
     position: 'relative',
     overflow: 'hidden',
     borderRadius: radius.xl,
-    background: 'linear-gradient(135deg, #1F6FEB 0%, #114393 55%, #0B2F66 100%)',
+    background: 'linear-gradient(135deg, #7B61FF 0%, #5638D6 55%, #2C1B73 100%)',
     color: '#fff',
     padding: `${space.xl}px ${space.xl}px`,
     marginBottom: space.lg,
-    boxShadow: '0 12px 32px rgba(31,111,235,0.22)',
+    boxShadow: '0 12px 32px rgba(123,97,255,0.22)',
   },
   inner: {
     position: 'relative',

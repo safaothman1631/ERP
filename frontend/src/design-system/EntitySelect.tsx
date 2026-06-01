@@ -187,14 +187,14 @@ export const EntitySelect: React.FC<EntitySelectProps> = ({
             gap: 6,
             padding: '6px 12px',
             cursor: 'pointer',
-            color: 'var(--ant-color-primary, #1F6FEB)',
+            color: 'var(--ant-color-primary, #7B61FF)',
             fontWeight: 500,
             fontSize: 13,
             borderRadius: 6,
             transition: 'background 150ms',
           }}
           onClick={() => onCreateNew(query)}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(31,111,235,0.06)'; }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(123,97,255,0.06)'; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
         >
           <PlusOutlined />
@@ -221,14 +221,14 @@ export const EntitySelect: React.FC<EntitySelectProps> = ({
             gap: 6,
             padding: '6px 12px',
             cursor: 'pointer',
-            color: 'var(--ant-color-primary, #1F6FEB)',
+            color: 'var(--ant-color-primary, #7B61FF)',
             fontWeight: 500,
             fontSize: 13,
             borderRadius: 6,
             transition: 'background 150ms',
           }}
           onClick={() => onCreateNew(query)}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(31,111,235,0.06)'; }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(123,97,255,0.06)'; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
         >
           <PlusOutlined />

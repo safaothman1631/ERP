@@ -52,7 +52,7 @@ const DEFAULTS: BrandingConfig = {
   logo_url: '',
   logo_dark_url: '',
   favicon_url: '',
-  primary_color: '#1F6FEB',
+  primary_color: '#7B61FF',
   accent_color: '#22C55E',
   theme_mode: 'system',
 };

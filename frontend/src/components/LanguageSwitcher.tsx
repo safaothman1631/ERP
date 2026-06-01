@@ -126,7 +126,7 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
         {/* Active-language indicator — checkmark (Requirement 3.9) */}
         {code === currentLang && (
           <CheckOutlined
-            style={{ color: '#1F6FEB', fontSize: 12 }}
+            style={{ color: '#7B61FF', fontSize: 12 }}
             aria-label={t('language_active', 'Active language')}
           />
         )}

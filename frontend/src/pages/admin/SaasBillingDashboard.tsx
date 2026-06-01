@@ -158,7 +158,7 @@ export default function SaasBillingDashboard(): React.ReactElement {
             <Statistic
               title={t('admin.billing.trialing', 'Trialing')}
               value={dash.trialing_tenants}
-              valueStyle={{ color: '#1677ff' }}
+              valueStyle={{ color: '#7B61FF' }}
             />
           </Card>
         </Col>

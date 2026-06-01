@@ -1475,7 +1475,7 @@ const NotificationSettings: React.FC = () => {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.md }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: space.md }}>
-                      <div style={{ width: 36, height: 36, borderRadius: radius.md, background: 'rgba(31,111,235,0.10)', color: palette.primary500, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: radius.md, background: 'rgba(123,97,255,0.10)', color: palette.primary500, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
                         {ch.icon}
                       </div>
                       <div>
@@ -2208,7 +2208,7 @@ const InvoiceTemplates: React.FC = () => {
               ]}
             />
           </Form.Item>
-          <Form.Item label="Colors" name="colors"><Input placeholder="#1677ff" /></Form.Item>
+          <Form.Item label="Colors" name="colors"><Input placeholder="#7B61FF" /></Form.Item>
           <Form.Item label={t('show_logo')} name="show_logo" valuePropName="checked"><Switch /></Form.Item>
           <Form.Item label={t('footer_text')} name="footer_text"><Input.TextArea rows={2} /></Form.Item>
           </ResponsiveForm>
@@ -2773,7 +2773,7 @@ const SystemInfo: React.FC = () => {
                 width: 32, height: 32,
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 borderRadius: radius.sm,
-                background: 'rgba(31,111,235,0.10)',
+                background: 'rgba(123,97,255,0.10)',
                 color: palette.primary500,
               }}>
                 {it.icon}
@@ -3202,7 +3202,7 @@ type BrandingBag = { logo_url: string; logo_dark_url: string; favicon_url: strin
 const BrandingSettings: React.FC = () => {
   const { t } = useTranslation();
   const { values, setValue, save, dirty, saving, loading } = useSettingsBag<BrandingBag>('branding', {
-    logo_url: '', logo_dark_url: '', favicon_url: '', primary_color: '#1F6FEB', accent_color: '#22C55E',
+    logo_url: '', logo_dark_url: '', favicon_url: '', primary_color: '#7B61FF', accent_color: '#22C55E',
     font_family: 'Inter', document_theme: 'modern', email_theme: 'modern', login_bg_url: '',
   });
   return (

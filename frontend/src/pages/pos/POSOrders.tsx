@@ -90,7 +90,7 @@ const POSOrders: React.FC = () => {
  title: t('pos.order_number'),
  dataIndex: 'order_number',
  key: 'order_number',
- render: (text: string) => <Text strong style={{ color: '#1677ff' }}>{text}</Text>,
+ render: (text: string) => <Text strong style={{ color: '#7B61FF' }}>{text}</Text>,
  },
  {
  title: t('date'),

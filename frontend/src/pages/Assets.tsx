@@ -176,7 +176,7 @@ const Assets: React.FC = () => {
  return (
  <Space orientation="vertical" style={{ minWidth: 120 }}>
  <Text strong>{fmtIQD(v)}</Text>
- <Progress percent={pct} strokeColor={pct >= 100 ? '#f59e0b' : '#1677ff'} showInfo={false} className="depreciation-progress" />
+ <Progress percent={pct} strokeColor={pct >= 100 ? '#f59e0b' : '#7B61FF'} showInfo={false} className="depreciation-progress" />
  <Text type="secondary" style={{ fontSize: 11 }}>{pct}% {t('depreciation')}</Text>
  </Space>
  );

@@ -233,7 +233,7 @@ export const SideNav: React.FC<SideNavProps> = ({
   const inkMuted   = isDark ? '#7B8497' : '#64748B';
   const inkDim     = isDark ? '#5A6275' : '#94A3B8';
   const _hoverBg    = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.04)';
-  const activeBg   = isDark ? 'rgba(31,111,235,0.16)' : 'rgba(31,111,235,0.08)';
+  const activeBg   = isDark ? 'rgba(123,97,255,0.16)' : 'rgba(123,97,255,0.08)';
 
   const toggleSection = (key: string) => {
     if (isSearching) return;
@@ -334,8 +334,8 @@ export const SideNav: React.FC<SideNavProps> = ({
               position: 'absolute', top: 6, bottom: 6,
               [isRTL ? 'insetInlineEnd' : 'insetInlineStart']: 4,
               width: 3, borderRadius: 3,
-              background: 'linear-gradient(180deg, #6366F1 0%, #4F46E5 100%)',
-              boxShadow: '0 0 8px rgba(99,102,241,0.5)',
+              background: 'linear-gradient(180deg, #7B61FF 0%, #6A4DF0 100%)',
+              boxShadow: '0 0 8px rgba(123,97,255,0.5)',
             }}
           />
         )}
@@ -399,16 +399,16 @@ export const SideNav: React.FC<SideNavProps> = ({
         gap: 10, borderBottom: `1px solid ${borderCol}`,
         flexShrink: 0,
         background: isDark
-          ? 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, transparent 60%)'
-          : 'linear-gradient(135deg, rgba(99,102,241,0.04) 0%, transparent 60%)',
+          ? 'linear-gradient(135deg, rgba(123,97,255,0.08) 0%, transparent 60%)'
+          : 'linear-gradient(135deg, rgba(123,97,255,0.04) 0%, transparent 60%)',
       }}>
         <div style={{
           width: 28, height: 28,
           borderRadius: 8,
-          background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 50%, #1F6FEB 100%)',
+          background: 'linear-gradient(135deg, #7B61FF 0%, #6A4DF0 50%, #5638D6 100%)',
           display: 'grid', placeItems: 'center', color: '#fff',
           fontWeight: 800, fontSize: 13,
-          boxShadow: '0 2px 8px rgba(99,102,241,0.40)',
+          boxShadow: '0 2px 8px rgba(123,97,255,0.40)',
           flexShrink: 0,
           letterSpacing: '-0.5px',
         }}>Z</div>
@@ -537,7 +537,7 @@ export const SideNav: React.FC<SideNavProps> = ({
                         width: isMobile ? 18 : 22, height: isMobile ? 18 : 22,
                         borderRadius: isMobile ? 4 : 6,
                         background: isOpen
-                          ? (isDark ? 'rgba(99,102,241,0.18)' : 'rgba(99,102,241,0.10)')
+                          ? (isDark ? 'rgba(123,97,255,0.18)' : 'rgba(123,97,255,0.10)')
                           : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.05)'),
                         flexShrink: 0,
                         transition: 'background 0.15s, color 0.15s',
@@ -785,10 +785,10 @@ const sn3Css = `
   }
   @media (hover: hover) {
     .sn3-section-toggle:hover::before {
-      background: rgba(99,102,241,0.06);
+      background: rgba(123,97,255,0.06);
     }
     [data-theme='dark'] .sn3-section-toggle:hover::before {
-      background: rgba(99,102,241,0.10);
+      background: rgba(123,97,255,0.10);
     }
   }
 
@@ -814,13 +814,13 @@ const sn3Css = `
     }
   }
   .sn3-leaf.is-active {
-    background: linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(31,111,235,0.10) 100%) !important;
-    color: #4F46E5 !important;
+    background: linear-gradient(135deg, rgba(123,97,255,0.12) 0%, rgba(123,97,255,0.10) 100%) !important;
+    color: #6A4DF0 !important;
     font-weight: 600 !important;
   }
   [data-theme='dark'] .sn3-leaf.is-active {
-    background: linear-gradient(135deg, rgba(99,102,241,0.20) 0%, rgba(31,111,235,0.16) 100%) !important;
-    color: #818CF8 !important;
+    background: linear-gradient(135deg, rgba(123,97,255,0.20) 0%, rgba(123,97,255,0.16) 100%) !important;
+    color: #9275FF !important;
   }
 
   /* ── Favorite star ───────────────────────────────────────────── */
@@ -833,11 +833,11 @@ const sn3Css = `
     transition: background 0.15s, color 0.15s, transform 0.12s !important;
   }
   .sn3-collapsed-btn:hover {
-    background: rgba(99,102,241,0.08) !important;
+    background: rgba(123,97,255,0.08) !important;
     transform: scale(1.05);
   }
   [data-theme='dark'] .sn3-collapsed-btn:hover {
-    background: rgba(99,102,241,0.14) !important;
+    background: rgba(123,97,255,0.14) !important;
   }
 
   /* ── Search input ────────────────────────────────────────────── */
@@ -857,25 +857,25 @@ const sn3Css = `
     background: rgba(255,255,255,0.05) !important;
   }
   .sn3-search.ant-input-affix-wrapper:hover {
-    border-color: rgba(99,102,241,0.28) !important;
+    border-color: rgba(123,97,255,0.28) !important;
     background: rgba(15,23,42,0.07) !important;
     box-shadow: none !important;
   }
   [data-theme='dark'] .sn3-search.ant-input-affix-wrapper:hover {
     background: rgba(255,255,255,0.08) !important;
-    border-color: rgba(99,102,241,0.22) !important;
+    border-color: rgba(123,97,255,0.22) !important;
   }
   .sn3-search.ant-input-affix-wrapper-focused,
   .sn3-search.ant-input-affix-wrapper:focus-within {
-    border-color: rgba(99,102,241,0.50) !important;
-    box-shadow: 0 0 0 3px rgba(99,102,241,0.09) !important;
+    border-color: rgba(123,97,255,0.50) !important;
+    box-shadow: 0 0 0 3px rgba(123,97,255,0.09) !important;
     background: rgba(15,23,42,0.03) !important;
     outline: none !important;
   }
   [data-theme='dark'] .sn3-search.ant-input-affix-wrapper-focused,
   [data-theme='dark'] .sn3-search.ant-input-affix-wrapper:focus-within {
     background: rgba(255,255,255,0.07) !important;
-    box-shadow: 0 0 0 3px rgba(99,102,241,0.14) !important;
+    box-shadow: 0 0 0 3px rgba(123,97,255,0.14) !important;
   }
   /* Placeholder color — subtle */
   .sn3-search input::placeholder {
@@ -948,7 +948,7 @@ const sn3Css = `
 
     /* Active leaf — stronger gradient */
     .sn3-leaf.is-active {
-      background: linear-gradient(135deg, rgba(99,102,241,0.14) 0%, rgba(31,111,235,0.11) 100%) !important;
+      background: linear-gradient(135deg, rgba(123,97,255,0.14) 0%, rgba(123,97,255,0.11) 100%) !important;
     }
 
     /* Search input */

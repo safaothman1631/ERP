@@ -11,7 +11,7 @@ export interface TrendChartProps {
  * TrendChart — Sprint 10 — minimal inline svg line+area chart (no external dep).
  * React.memo applied per Requirements 18.4.
  */
-const TrendChartInner: React.FC<TrendChartProps> = ({ data, width = 240, height = 80, color = '#1F6FEB' }) => {
+const TrendChartInner: React.FC<TrendChartProps> = ({ data, width = 240, height = 80, color = '#7B61FF' }) => {
   if (!data || data.length === 0) return null;
   const max = Math.max(...data.map((d) => d.value));
   const min = Math.min(...data.map((d) => d.value));

@@ -27,7 +27,7 @@ const RoleIdentityChip: React.FC<Props> = ({ isDark, onLogout }) => {
   const searchBg = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.04)';
   const searchBorder = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)';
   const userInk = isDark ? palette.darkInk : palette.ink900;
-  const accentBorder = theme.isOwnerAccent ? theme.accent : 'var(--role-accent, #1F6FEB)';
+  const accentBorder = theme.isOwnerAccent ? theme.accent : 'var(--role-accent, #7B61FF)';
 
   const userMenu = {
     items: [

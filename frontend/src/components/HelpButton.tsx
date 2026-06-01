@@ -26,7 +26,7 @@ const HelpButton: React.FC<HelpButtonProps> = ({ pageKey, size = 'middle' }) => 
         <Button
           type="text"
           size={size}
-          icon={<QuestionCircleOutlined style={{ color: '#6366f1' }} />}
+          icon={<QuestionCircleOutlined style={{ color: '#7B61FF' }} />}
           onClick={() => setOpen(true)}
           aria-label={t('help')}
         />

@@ -24,7 +24,7 @@ const AvatarGroupInner: React.FC<AvatarGroupProps> = ({ users, max = 4, size = 2
     <Avatar.Group size={size} maxCount={max}>
       {visible.map((u, i) => (
         <Tooltip key={i} title={u.name}>
-          <Avatar src={u.src} style={{ backgroundColor: u.color ?? '#1F6FEB' }}>
+          <Avatar src={u.src} style={{ backgroundColor: u.color ?? '#7B61FF' }}>
             {u.name?.charAt(0).toUpperCase()}
           </Avatar>
         </Tooltip>

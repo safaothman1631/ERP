@@ -43,9 +43,9 @@ const SubAreaCard: React.FC<{ area: SubArea; isDark: boolean }> = ({ area, isDar
  marginTop: 8,
  padding: '4px 8px',
  borderRadius: 5,
- background: isDark ? 'rgba(31,111,235,0.12)' : 'rgba(31,111,235,0.06)',
+ background: isDark ? 'rgba(123,97,255,0.12)' : 'rgba(123,97,255,0.06)',
  fontSize: 11,
- color: isDark ? '#7eb3ff' : '#1a6bd0',
+ color: isDark ? '#AC97FF' : '#6A4DF0',
  fontFamily: 'monospace',
  lineHeight: 1.6,
  whiteSpace: 'pre-wrap',
@@ -111,7 +111,7 @@ const SectionDocsDrawer: React.FC<SectionDocsDrawerProps> = ({
  title={
  doc ? (
  <Space>
- <InfoCircleOutlined style={{ color: '#1f6feb' }} />
+ <InfoCircleOutlined style={{ color: '#7B61FF' }} />
  <span style={{ fontWeight: 700, fontSize: 15 }}>{doc.title}</span>
  </Space>
  ) : null

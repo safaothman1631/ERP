@@ -28,11 +28,11 @@ const StudioHome: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   const baseEntities: Omit<EntityCard, 'customFieldCount' | 'hasCustomizations'>[] = [
-    { key: 'invoice', label: t('invoices'), icon: <FileTextOutlined />, color: '#6366f1' },
+    { key: 'invoice', label: t('invoices'), icon: <FileTextOutlined />, color: '#7B61FF' },
     { key: 'quote', label: t('quotes'), icon: <FileTextOutlined />, color: '#10b981' },
     { key: 'contact', label: t('contacts'), icon: <TeamOutlined />, color: '#f59e0b' },
     { key: 'item', label: t('items'), icon: <ShoppingOutlined />, color: '#ec4899' },
-    { key: 'sales_order', label: t('sales_orders'), icon: <FileTextOutlined />, color: '#8b5cf6' },
+    { key: 'sales_order', label: t('sales_orders'), icon: <FileTextOutlined />, color: '#9275FF' },
     { key: 'purchase_order', label: t('purchase_orders'), icon: <ShoppingOutlined />, color: '#06b6d4' },
     { key: 'bill', label: t('bills'), icon: <FileTextOutlined />, color: '#ef4444' },
     { key: 'lead', label: t('leads'), icon: <TeamOutlined />, color: '#3b82f6' },
@@ -119,7 +119,7 @@ const StudioHome: React.FC = () => {
 
       <Card style={{ marginTop: space.lg }}>
         <div style={{ textAlign: 'center', padding: space.lg }}>
-          <AppstoreOutlined style={{ fontSize: 48, color: '#6366f1', marginBottom: space.md }} />
+          <AppstoreOutlined style={{ fontSize: 48, color: '#7B61FF', marginBottom: space.md }} />
           <h3>{t('studio.what_can_you_do', 'What can you do in Studio?')}</h3>
           <Row gutter={[space.md, space.md]} style={{ marginTop: space.md }}>
             <Col xs={24} md={8}>

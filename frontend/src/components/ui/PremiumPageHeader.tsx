@@ -48,7 +48,7 @@ const PremiumPageHeader: React.FC<PremiumPageHeaderProps> = ({
               justifyContent: 'center',
               width: 44, height: 44,
               borderRadius: radius.md,
-              background: 'linear-gradient(135deg, rgba(31,111,235,0.16), rgba(31,111,235,0.06))',
+              background: 'linear-gradient(135deg, rgba(123,97,255,0.16), rgba(123,97,255,0.06))',
               color: palette.primary500,
               fontSize: 22,
               flexShrink: 0,

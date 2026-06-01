@@ -321,7 +321,7 @@ function CompletionScreen({ onExit }: { onExit?: () => void }) {
 
 function ConfettiBurst() {
   // CSS-only confetti: 24 absolutely-positioned colored dots that fall + rotate.
-  const colors = ['#f43f5e', '#fb923c', '#facc15', '#22c55e', '#06b6d4', '#6366f1', '#a855f7'];
+  const colors = ['#f43f5e', '#fb923c', '#facc15', '#22c55e', '#06b6d4', '#7B61FF', '#a855f7'];
   const pieces = Array.from({ length: 24 }, (_, i) => ({
     left: `${(i / 24) * 100}%`, /* rtl-ignore */
     delay: `${(i % 8) * 0.12}s`,

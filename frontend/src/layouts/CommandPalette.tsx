@@ -514,7 +514,7 @@ const CommandItemRow: React.FC<CommandItemRowProps> = ({
   onMouseEnter,
   onClick,
 }) => {
-  const activeBg = isDark ? 'rgba(31,111,235,0.18)' : palette.primary50;
+  const activeBg = isDark ? 'rgba(123,97,255,0.18)' : palette.primary50;
   const hoverBg = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(15,23,42,0.04)';
 
   const categoryIcon =

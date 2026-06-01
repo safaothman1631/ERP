@@ -39,7 +39,7 @@ const GlassConfirm: React.FC<GlassConfirmProps> = ({
       styles={{ content: { borderRadius: 16 } }}
     >
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-        <ExclamationCircleOutlined style={{ fontSize: 22, color: danger ? '#DC2626' : 'var(--role-accent, #1F6FEB)', marginTop: 2 }} />
+        <ExclamationCircleOutlined style={{ fontSize: 22, color: danger ? '#DC2626' : 'var(--role-accent, #7B61FF)', marginTop: 2 }} />
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 6 }}>{title ?? t('confirm', 'Confirm')}</div>
           {description && <div style={{ opacity: 0.75, marginBottom: 16 }}>{description}</div>}

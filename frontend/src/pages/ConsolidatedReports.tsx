@@ -87,7 +87,7 @@ export default function ConsolidatedReports() {
             legendItems={[
               { id: 'revenue', labelKey: asTranslationKey('revenue'), color: '#52c41a' },
               { id: 'expenses', labelKey: asTranslationKey('expenses'), color: '#ff4d4f' },
-              { id: 'profit', labelKey: asTranslationKey('profit'), color: '#1677ff' },
+              { id: 'profit', labelKey: asTranslationKey('profit'), color: '#7B61FF' },
             ]}
           >
             <BarChart data={pl?.rows || []}>
@@ -97,7 +97,7 @@ export default function ConsolidatedReports() {
               <Tooltip />
               <Bar dataKey="revenue" fill="#52c41a" name={t('revenue') || 'Revenue'} />
               <Bar dataKey="expenses" fill="#ff4d4f" name={t('expenses') || 'Expenses'} />
-              <Bar dataKey="profit" fill="#1677ff" name={t('profit') || 'Profit'} />
+              <Bar dataKey="profit" fill="#7B61FF" name={t('profit') || 'Profit'} />
             </BarChart>
           </ResponsiveChart>
           <ResponsiveTableAdapter

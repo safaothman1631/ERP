@@ -305,7 +305,7 @@ export const HardwarePairingWizard: React.FC<Props> = ({ t = defaultT, terminalI
             <button
               type="button"
               onClick={() => update({ step: 5 })}
-              style={{ background: '#1677ff', color: '#fff', padding: '8px 16px', borderRadius: 6, border: 'none' }}
+              style={{ background: '#7B61FF', color: '#fff', padding: '8px 16px', borderRadius: 6, border: 'none' }}
             >
               {t('pos.hardware.continue', 'Continue')} →
             </button>
@@ -332,7 +332,7 @@ export const HardwarePairingWizard: React.FC<Props> = ({ t = defaultT, terminalI
                   style={{
                     padding: 12,
                     borderRadius: 6,
-                    border: state.dialectId === d.id ? '2px solid #1677ff' : '1px solid #d9d9d9',
+                    border: state.dialectId === d.id ? '2px solid #7B61FF' : '1px solid #d9d9d9',
                     background: '#fff',
                     cursor: 'pointer',
                     textAlign: 'start',
@@ -413,7 +413,7 @@ export const HardwarePairingWizard: React.FC<Props> = ({ t = defaultT, terminalI
             <button
               type="button"
               onClick={save}
-              style={{ background: '#1677ff', color: '#fff', padding: '8px 16px', borderRadius: 6, border: 'none' }}
+              style={{ background: '#7B61FF', color: '#fff', padding: '8px 16px', borderRadius: 6, border: 'none' }}
             >
               {t('pos.hardware.save', 'Save & finish')}
             </button>

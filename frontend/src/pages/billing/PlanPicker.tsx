@@ -189,7 +189,7 @@ export default function PlanPicker({
                     hoverable
                     onClick={() => { setSelectedPlan(plan.slug); setPreview(null); }}
                     style={{
-                      border: selected ? '2px solid #1677ff' : undefined,
+                      border: selected ? '2px solid #7B61FF' : undefined,
                       position: 'relative',
                     }}
                   >
@@ -198,7 +198,7 @@ export default function PlanPicker({
                         style={{
                           position: 'absolute',
                           top: 12, insetInlineEnd: 12,
-                          color: '#1677ff', fontSize: 20,
+                          color: '#7B61FF', fontSize: 20,
                         }}
                       />
                     )}

@@ -11,7 +11,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store';
 import { useUiStore } from '../stores/uiStore';
 import { useNavStore } from '../stores/navStore';
-import { palette, space, radius, layout, transitions, glass, zIndex } from '../theme/tokens';
+import { palette, space, radius, transitions, glass, zIndex } from '../theme/tokens';
 import Breadcrumb from './Breadcrumb';
 import { useUnreadCount } from './NotificationsDrawer';
 import OrgSwitcher from './OrgSwitcher';
@@ -242,7 +242,8 @@ export const TopBar: React.FC<TopBarProps> = ({ collapsed, onToggle, isRTL, isDa
         top: 0,
         // z-index 1100 per spec — Requirement 4.5
         zIndex: zIndex.sticky,
-        height: layout.topbarHeight,
+        // Vertex shell: 56px glass top bar (mobile header is already 56)
+        height: 56,
         // Glass morphism blur — Requirement 4.6, 12.1
         backdropFilter: glassTokens.blur,
         WebkitBackdropFilter: glassTokens.blur,
@@ -443,29 +444,29 @@ function topbarCss(solidFallbackBg: string, _isDark: boolean): string {
       transition: background 0.18s, transform 0.12s !important;
     }
     .tb-icon-btn:hover {
-      background: rgba(31,111,235,0.08) !important;
+      background: rgba(123,97,255,0.08) !important;
       transform: translateY(-1px);
     }
     .tb-icon-btn:active { transform: translateY(0); }
 
     .tb-cta-btn:hover {
       transform: translateY(-1px) scale(1.04);
-      box-shadow: 0 6px 18px rgba(31,111,235,0.42) !important;
+      box-shadow: 0 6px 18px rgba(123,97,255,0.42) !important;
     }
     .tb-cta-btn { transition: transform 0.15s, box-shadow 0.2s !important; }
 
     .tb-search:hover {
-      border-color: rgba(31,111,235,0.32) !important;
-      background: rgba(31,111,235,0.05) !important;
+      border-color: rgba(123,97,255,0.32) !important;
+      background: rgba(123,97,255,0.05) !important;
     }
     .tb-search:focus-visible {
-      outline: 2px solid rgba(31,111,235,0.45);
+      outline: 2px solid rgba(123,97,255,0.45);
       outline-offset: 2px;
     }
 
     .tb-user-btn:hover {
-      border-color: rgba(31,111,235,0.32) !important;
-      background: rgba(31,111,235,0.06) !important;
+      border-color: rgba(123,97,255,0.32) !important;
+      background: rgba(123,97,255,0.06) !important;
     }
 
     .tb-divider {

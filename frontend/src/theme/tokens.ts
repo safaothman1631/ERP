@@ -338,8 +338,8 @@ export const typography = {
 // ───────────────────────────── Data Viz Palette ─────────────────────────────
 export const dataViz = {
   categorical: ['#7B61FF', '#16A34A', '#F59E0B', '#DC2626', '#0EA5E9', '#2E8FE0', '#EC4899', '#14B8A6'],
-  sequential:  ['#EBF2FF', '#D6E4FF', '#ADC8FF', '#84A9FF', '#5B8DEF', '#1F6FEB', '#1858BF', '#114393'],
-  diverging:   ['#DC2626', '#F59E0B', '#FCD34D', '#E5E7EB', '#7DD3FC', '#0EA5E9', '#1F6FEB'],
+  sequential:  ['#F1EEFF', '#E4DEFF', '#C9BCFF', '#AC97FF', '#9275FF', '#7B61FF', '#6A4DF0', '#5638D6'],
+  diverging:   ['#DC2626', '#F59E0B', '#FCD34D', '#E5E7EB', '#AC97FF', '#9275FF', '#7B61FF'],
 } as const;
 
 // ───────────────────────────── Elevation (depth scale) ─────────────────────────────
@@ -369,8 +369,8 @@ export const transitions = {
 // ───────────────────────────── Layout dimensions ─────────────────────────────
 /** Sprint 1 v2 — fixed layout dimensions (px). */
 export const layout = {
-  topbarHeight:        60,
-  topbarHeightCompact: 52,
+  topbarHeight:        56,
+  topbarHeightCompact: 56,
   footerHeight:        32,
   sidebarWidth:        320,
   sidebarWidthCompact: 272,

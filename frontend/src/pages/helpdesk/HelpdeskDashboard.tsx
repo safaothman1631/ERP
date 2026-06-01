@@ -29,7 +29,7 @@ interface Ticket {
   assigned_to?: string;
 }
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+const COLORS = ['#7B61FF', '#10b981', '#f59e0b', '#ef4444', '#9275FF'];
 
 export default function HelpdeskDashboard() {
   const { t } = useTranslation();

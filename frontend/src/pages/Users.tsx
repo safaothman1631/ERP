@@ -292,7 +292,7 @@ export default function Users() {
  key: 'user',
  render: (_, u) => (
  <Space>
- <Avatar style={{ backgroundColor: '#6366f1' }} icon={<UserOutlined />}>
+ <Avatar style={{ backgroundColor: '#7B61FF' }} icon={<UserOutlined />}>
  {(u.name || u.email || '?').charAt(0).toUpperCase()}
  </Avatar>
  <div>

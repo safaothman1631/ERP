@@ -47,10 +47,10 @@ import { usePermission } from '../hooks/usePermission';
 
 /**
  * Sidebar width constants per spec requirements 4.2, 4.3.
- * Expanded: 240px, Collapsed: 64px.
+ * Expanded: 248px (Vertex), Collapsed: 64px.
  */
-const SIDER_WIDTH_COMFORTABLE = 240;
-const SIDER_WIDTH_COMPACT = 240;
+const SIDER_WIDTH_COMFORTABLE = 248;
+const SIDER_WIDTH_COMPACT = 248;
 const SIDER_COLLAPSED = 64;
 
 /**
@@ -211,8 +211,8 @@ export const AppShell: React.FC = () => {
     setSidebarCollapsed(!collapsed);
   }, [isMobile, forceCollapsed, collapsed, setSidebarCollapsed]);
   const shellBg = isDark
-    ? `radial-gradient(circle at top ${isRTL ? 'right' : 'left'}, rgba(31, 111, 235, 0.14), transparent 32%), ${palette.darkBg}`
-    : `radial-gradient(circle at top ${isRTL ? 'right' : 'left'}, rgba(31, 111, 235, 0.09), transparent 28%), ${palette.bg}`;
+    ? `radial-gradient(circle at top ${isRTL ? 'right' : 'left'}, rgba(123, 97, 255, 0.14), transparent 32%), ${palette.darkBg}`
+    : `radial-gradient(circle at top ${isRTL ? 'right' : 'left'}, rgba(123, 97, 255, 0.09), transparent 28%), ${palette.bg}`;
 
   // Pending module approval — hide app chrome; only wizard + account controls.
   if (isPendingLocked) {

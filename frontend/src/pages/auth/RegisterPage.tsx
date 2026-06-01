@@ -56,7 +56,7 @@ function getStrengthScore(checks: PasswordChecks): number {
 function getStrengthColor(score: number): string {
   if (score <= 1) return '#ff4d4f';
   if (score === 2) return '#faad14';
-  if (score === 3) return '#1677ff';
+  if (score === 3) return '#7B61FF';
   return '#52c41a';
 }
 
@@ -433,7 +433,7 @@ const RegisterPage: React.FC = () => {
 
       <div style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: '#666' }}>
         {t('auth_has_account')}{' '}
-        <Link to="/login" style={{ color: '#667EEA', fontWeight: 600 }}>
+        <Link to="/login" style={{ color: '#7B61FF', fontWeight: 600 }}>
           {t('auth_login')}
         </Link>
       </div>

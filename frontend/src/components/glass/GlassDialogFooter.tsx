@@ -34,8 +34,8 @@ const GlassDialogFooter: React.FC<GlassDialogFooterProps> = ({
         loading={primaryLoading}
         onClick={onPrimary}
         style={{
-          background: primaryDanger ? undefined : 'var(--role-accent, #1F6FEB)',
-          borderColor: primaryDanger ? undefined : 'var(--role-accent, #1F6FEB)',
+          background: primaryDanger ? undefined : 'var(--role-accent, #7B61FF)',
+          borderColor: primaryDanger ? undefined : 'var(--role-accent, #7B61FF)',
         }}
       >
         {primaryLabel ?? t('save')}

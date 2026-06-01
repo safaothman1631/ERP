@@ -217,7 +217,7 @@ const PreviewTabs: React.FC = () => (
 
 /* 8. Apps launcher home (Odoo apps grid) */
 const PreviewLauncher: React.FC = () => (
- <div style={{ width: PREVIEW_W, height: PREVIEW_H, background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', borderRadius: 6, padding: 14, overflow: 'hidden' }}>
+ <div style={{ width: PREVIEW_W, height: PREVIEW_H, background: 'linear-gradient(135deg,#7B61FF,#9275FF)', borderRadius: 6, padding: 14, overflow: 'hidden' }}>
  <Bar w={70} h={10} bg="rgba(255,255,255,0.9)" mb={10} />
  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 8 }}>
  {['#fff', '#fde68a', '#fca5a5', '#86efac', '#93c5fd', '#fff', '#c4b5fd', '#fdba74', '#67e8f9', '#fff'].map((c, i) => (
@@ -432,7 +432,7 @@ const UIGallery: React.FC = () => {
  <Card
  hoverable
  style={{
- border: isCurrent ? '2px solid #1f6feb' : undefined,
+ border: isCurrent ? '2px solid #7B61FF' : undefined,
  position: 'relative',
  }}
  cover={

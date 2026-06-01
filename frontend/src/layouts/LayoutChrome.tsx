@@ -37,7 +37,7 @@ export const TopMegaMenu: React.FC<{ isDark: boolean; isRTL: boolean; onOpenPale
             onMouseEnter={() => setOpenSection(sec.key)}
             onClick={() => setOpenSection(openSection === sec.key ? null : sec.key)}
             style={{
-              background: openSection === sec.key ? (isDark ? '#1f2937' : '#eef2ff') : 'transparent',
+              background: openSection === sec.key ? (isDark ? '#1f2937' : '#F1EEFF') : 'transparent',
               border: 'none', padding: '6px 12px', borderRadius: radius.sm, cursor: 'pointer',
               color: isDark ? '#e5e7eb' : INK, fontWeight: 600, fontSize: 13,
               whiteSpace: 'nowrap',
@@ -220,10 +220,10 @@ export const BottomNav: React.FC<{ isDark: boolean; onOpenPalette: () => void }>
                         ? `2px solid ${BRAND}`
                         : `1px solid ${isDark ? 'rgba(255,255,255,0.09)' : 'rgba(15,23,42,0.09)'}`,
                       background: isCurrent
-                        ? (isDark ? 'rgba(31,111,235,0.18)' : 'rgba(31,111,235,0.07)')
+                        ? (isDark ? 'rgba(123,97,255,0.18)' : 'rgba(123,97,255,0.07)')
                         : (isDark ? 'rgba(255,255,255,0.04)' : '#fff'),
                       boxShadow: isCurrent
-                        ? `0 0 0 3px rgba(31,111,235,0.12)`
+                        ? `0 0 0 3px rgba(123,97,255,0.12)`
                         : (isDark ? 'none' : '0 1px 3px rgba(15,23,42,0.06)'),
                       cursor: isSelected ? 'not-allowed' : 'pointer',
                       opacity: isSelected ? 0.30 : 1,
@@ -242,7 +242,7 @@ export const BottomNav: React.FC<{ isDark: boolean; onOpenPalette: () => void }>
                       height: 36,
                       borderRadius: 10,
                       background: isCurrent
-                        ? (isDark ? 'rgba(31,111,235,0.25)' : 'rgba(31,111,235,0.12)')
+                        ? (isDark ? 'rgba(123,97,255,0.25)' : 'rgba(123,97,255,0.12)')
                         : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.05)'),
                       fontSize: 18,
                       lineHeight: 1,
@@ -561,7 +561,7 @@ export const LayoutQuickDock: React.FC<{ isDark: boolean; isRTL: boolean; topOff
       <Tooltip title={t('nav.home', 'Home')}>
         <Link
           to="/"
-          style={{ ...itemBase, background: isHome ? (isDark ? '#1f2937' : '#eef2ff') : 'transparent', color: isHome ? BRAND : itemBase.color }}
+          style={{ ...itemBase, background: isHome ? (isDark ? '#1f2937' : '#F1EEFF') : 'transparent', color: isHome ? BRAND : itemBase.color }}
         >
           <HomeOutlined />
           <span>{t('nav.home', 'Home')}</span>
@@ -570,7 +570,7 @@ export const LayoutQuickDock: React.FC<{ isDark: boolean; isRTL: boolean; topOff
       <Tooltip title={t('ui_gallery', 'Layout Gallery')}>
         <Link
           to="/ui-gallery"
-          style={{ ...itemBase, background: isGallery ? (isDark ? '#1f2937' : '#eef2ff') : 'transparent', color: isGallery ? BRAND : itemBase.color }}
+          style={{ ...itemBase, background: isGallery ? (isDark ? '#1f2937' : '#F1EEFF') : 'transparent', color: isGallery ? BRAND : itemBase.color }}
         >
           <AppstoreOutlined />
           <span>{t('ui_gallery', 'Layouts')}</span>
@@ -772,7 +772,7 @@ export const SplitMasterPanel: React.FC<{ isDark: boolean; isRTL: boolean }> = (
                   padding: `${space.sm}px ${space.md}px`,
                   borderRadius: radius.md,
                   border: 'none',
-                  background: active ? (isDark ? 'rgba(31,111,235,0.18)' : palette.primary50) : 'transparent',
+                  background: active ? (isDark ? 'rgba(123,97,255,0.18)' : palette.primary50) : 'transparent',
                   color: active ? BRAND : (isDark ? '#e5e7eb' : INK),
                   cursor: 'pointer',
                   marginBottom: 2,

@@ -426,13 +426,13 @@ const LoginPage: React.FC = () => {
           text-align: start !important;
         }
         .login-form .ant-input-affix-wrapper:hover {
-          border-color: rgba(31,111,235,0.40) !important;
+          border-color: rgba(123,97,255,0.40) !important;
           box-shadow: none !important;
         }
         .login-form .ant-input-affix-wrapper:focus,
         .login-form .ant-input-affix-wrapper-focused {
           border-color: ${palette.primary500} !important;
-          box-shadow: 0 0 0 3px rgba(31,111,235,0.12) !important;
+          box-shadow: 0 0 0 3px rgba(123,97,255,0.12) !important;
           outline: none !important;
         }
         .login-form .ant-input {

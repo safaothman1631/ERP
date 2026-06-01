@@ -53,7 +53,7 @@ const SupportWidget: React.FC = () => {
  insetInlineEnd: 20,
  bottom: 20,
  zIndex: 200,
- boxShadow: '0 6px 16px rgba(99,102,241,0.4)',
+ boxShadow: '0 6px 16px rgba(123,97,255,0.4)',
  }}
  aria-label={t('need_help')}
  />

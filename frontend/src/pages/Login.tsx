@@ -104,7 +104,7 @@ const Login: React.FC = () => {
         </Form.Item>
 
         <div style={{ textAlign: 'start', marginBottom: 16 }}>
-          <Link to="/forgot-password" style={{ fontSize: 13, color: '#1F6FEB' }}>
+          <Link to="/forgot-password" style={{ fontSize: 13, color: '#7B61FF' }}>
             {t('auth_forgot_password')}
           </Link>
         </div>
@@ -152,7 +152,7 @@ const Login: React.FC = () => {
 
       <div style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: '#666' }}>
         {t('auth_no_account')}{' '}
-        <Link to="/signup" style={{ color: '#667EEA', fontWeight: 600 }}>
+        <Link to="/signup" style={{ color: '#7B61FF', fontWeight: 600 }}>
           {t('auth_signup')}
         </Link>
       </div>

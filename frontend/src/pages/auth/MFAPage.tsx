@@ -107,12 +107,12 @@ const OtpInput: React.FC<OtpInputProps> = ({ value, onChange, disabled }) => {
             fontSize: 22,
             fontWeight: 700,
             borderRadius: 12,
-            border: digits[i] ? '2px solid #1F6FEB' : '1.5px solid #E5E7EB',
+            border: digits[i] ? '2px solid #7B61FF' : '1.5px solid #E5E7EB',
             outline: 'none',
-            background: digits[i] ? 'rgba(31,111,235,0.06)' : '#FAFBFC',
+            background: digits[i] ? 'rgba(123,97,255,0.06)' : '#FAFBFC',
             color: '#0F172A',
             transition: 'border-color 0.18s, background 0.18s, box-shadow 0.18s',
-            boxShadow: digits[i] ? '0 0 0 3px rgba(31,111,235,0.12)' : 'none',
+            boxShadow: digits[i] ? '0 0 0 3px rgba(123,97,255,0.12)' : 'none',
             cursor: disabled ? 'not-allowed' : 'text',
             opacity: disabled ? 0.6 : 1,
           }}
@@ -216,12 +216,12 @@ const MFAPage: React.FC = () => {
               width: 64,
               height: 64,
               borderRadius: 20,
-              background: 'linear-gradient(135deg, rgba(31,111,235,0.12) 0%, rgba(17,67,147,0.08) 100%)',
-              border: '1.5px solid rgba(31,111,235,0.18)',
+              background: 'linear-gradient(135deg, rgba(123,97,255,0.12) 0%, rgba(86,56,214,0.08) 100%)',
+              border: '1.5px solid rgba(123,97,255,0.18)',
               marginBottom: 8,
             }}
           >
-            <SafetyCertificateOutlined style={{ fontSize: 28, color: '#1F6FEB' }} />
+            <SafetyCertificateOutlined style={{ fontSize: 28, color: '#7B61FF' }} />
           </div>
         </div>
 
@@ -273,7 +273,7 @@ const MFAPage: React.FC = () => {
         <div style={{ textAlign: 'center', marginTop: 8 }}>
           <Link
             to="/login"
-            style={{ color: '#667EEA', fontWeight: 600, fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+            style={{ color: '#7B61FF', fontWeight: 600, fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 4 }}
             onClick={() => {
               sessionStorage.removeItem('mfa_session_token');
               sessionStorage.removeItem('mfa_user_id');

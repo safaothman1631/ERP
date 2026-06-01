@@ -609,3 +609,18 @@ frontend/src/
 **تێبینی:** screenshot-ی preview بۆ landing/login timeout دەبوو بەهۆی particle/glass animation-ی بەردەوام (سنووری tooling، نەک باگ)؛ ڕەنگەکان بە eval/inspect پشتڕاستکران (ڕێگەی پێشنیارکراوی خودی tool بۆ ڕەنگ). app shell-ی authenticated پێشتر violet بوو بەهۆی premium.css + `--role-accent`؛ ئەم هەنگاوە ناوچەکانی دەرەوەی `.role-accent-root`-یشی (login/auth/landing/platform) violet کرد.
 
 **ماوە:** Step 2 (role nav/settings filtering per kit `roles.js`/`settingsKeysForRole`)؛ Step 3 (shell: TopBar 56px glass + SideNav 248px + role badge + active-nav styling — `SideNav.tsx` هێشتا چەند hardcoded blue-ی ماوە)؛ Step 4 (components: charts/glass/design-system-ی hardcoded blue → token).
+
+### 2026-06-01 — Vertex "Slate & Signal" — Steps 2–4 (role theming + shell + component sweep, ٥ ئەیگێنتی پاراڵێل)
+
+تەواوکردنی هەنگاوەکانی ٢/٣/٤ بە ٥ ئەیگێنتی پاراڵێل لەسەر lane-ی فایلی جیاواز (disjoint، هیچ ناکۆکی). **٠ گۆڕانکاری backend.** هەموو هاردکۆد-بلووی براندی کۆن (Zoho `#1F6FEB` + indigo `#6366f1`) لە ~٥٠ فایلی .tsx/.ts گۆڕدرا بۆ Vertex violet.
+
+- **Lane A — Shell (`layouts/`):** `AppShell.tsx` SIDER_WIDTH 240→**248**؛ `SideNav.tsx` active-rail/logo gradient blue→violet (ئیتر دژی `--role-accent` ناوەستێت)؛ `TopBar.tsx` height→**56**، role badge (`RoleIdentityChip`) پێشتر mount کرابوو؛ `LayoutChrome/CommandPalette/NotificationsDrawer/pwa-config` sweep. **نا-فلتەری ڕۆڵ پێشتر هەبوو** (`useRoleUx().theme.navProfile` → `applyNavProfile`، `personas/navProfiles.ts`).
+- **Lane B — Settings:** `SettingsShell.tsx` فلتەری بەشەکان بەپێی ڕۆڵ (thin guarded predicate — owner/admin/super_admin/unknown → **هەمووی** نیشان دەدات؛ ڕۆڵی تر → personal + domain، per kit `ROLE_SETTINGS`؛ deep-link/`getSection` پارێزراو، هیچ بەشێک بۆ admin ناشاردرێتەوە)؛ `settingsStyles.ts` (٢٠)/`bodies.tsx`/`Branding.tsx` sweep؛ `settingsStore.ts` default `primary_color` `#1677ff`→`#7B61FF` + `settingsStore.test.ts` نوێکرایەوە.
+- **Lane C — design-system:** `TrendChart`/`MiniSparkline` (default chart color violet)، `AvatarGroup`/`EntitySelect`/`UserSelect` sweep.
+- **Lane D — components (١٨ فایل):** `glass/*` + `ui/Premium*`/`SectionCard` + `role/*` + `react-bits/GradientText` + `DashboardHero` + `LanguageSwitcher` + help widgets + `pos/Hardware*` + `OnboardingShell` — sweep. semantic (info/green/amber/red) پارێزراو.
+- **Lane E — pages/auth (٢٢ فایل):** `LandingPage` (٢٨ hit)، auth layouts (×٢)، `pages/auth/*`، dashboard hero، چەند چارت/پەڕە (Assets/Branches/Reports/HR/Users/billing/pricing/studio...) — sweep. already-violet (`#7C3AED`/`#722ed1`) و categorical دەستلێنەدراو.
+- **Orchestrator (theme source — تەنها من، lane-ەکان theme/ دەستلێنادەن):** `tokens.ts` dataViz `sequential`/`diverging` → violet ramp + `layout.topbarHeight` 60→**56** (هاوسەنگی sticky-offset-ی `DetailLayout`)؛ `theme/glassStyles.ts` glow → violet.
+
+**ئەنجام:** هاردکۆد-بلووی براند لە ~٥٠ فایل چارەسەرکرا (ئێستا تەنها **١** ماوە — categorical rainbow-ی AppsLauncher لە `LayoutChrome.tsx`، بەمەبەست پارێزراوە). **گەیتەکان:** tsc ٠ · test **1322/1322** (٠ ڕیگرێشن، هەمان ٢٩ fail-ی فایلی پێش-بوونیار) · lint exit 0 (٠ error / 2895 warn، بێ creep) · rtl:audit ٠ · glass-modals OK · build exit 0 (473 PWA). live preview: login button violet (`rgb(123,97,255)`)، ٠ console error.
+
+**تێبینی:** شێوازی Button/Input/Table/Tag/Card ئێستا تەواو theme-driven-ن (Step 1)، بۆیە Step 4 زۆرتر = sweep-ی هاردکۆدەکان + پشتڕاستکردنەوە. شێلی authenticated (sidebar 248/role badge/settings filter) بە g— tsc/build/test — پشتڕاستکرا (بەبێ login-ی backend ناتوانرێت بە چاو ببینرێت لە sandbox).

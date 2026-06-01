@@ -39,9 +39,9 @@ export default function HRDashboard() {
   if (showSkeleton) return <LoadingSkeleton variant="card" />;
 
   const cards = [
-    { title: t('employees_total'), value: stats?.employees_total ?? 0, icon: <TeamOutlined />, color: '#1677ff', go: '/hr/employees' },
+    { title: t('employees_total'), value: stats?.employees_total ?? 0, icon: <TeamOutlined />, color: '#7B61FF', go: '/hr/employees' },
     { title: t('employees_active'), value: stats?.employees_active ?? 0, icon: <UserOutlined />, color: '#16a34a', go: '/hr/employees?status=active' },
-    { title: t('active_contracts'), value: stats?.active_contracts ?? 0, icon: <FileProtectOutlined />, color: '#8b5cf6', go: '/hr/contracts' },
+    { title: t('active_contracts'), value: stats?.active_contracts ?? 0, icon: <FileProtectOutlined />, color: '#9275FF', go: '/hr/contracts' },
     { title: t('pending_time_off'), value: stats?.pending_time_off ?? 0, icon: <CalendarOutlined />, color: '#f59e0b', go: '/hr/time-off' },
     { title: t('checked_in_today'), value: stats?.checked_in_today ?? 0, icon: <CheckCircleOutlined />, color: '#16a34a', go: '/hr/attendance' },
   ];

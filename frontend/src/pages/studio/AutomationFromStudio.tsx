@@ -35,7 +35,7 @@ const AutomationFromStudio: React.FC = () => {
 
       <Card style={{ textAlign: 'center', padding: space.xl }}>
         <Space direction="vertical" size={space.lg} style={{ width: '100%' }}>
-          <ThunderboltOutlined style={{ fontSize: 64, color: '#6366f1' }} />
+          <ThunderboltOutlined style={{ fontSize: 64, color: '#7B61FF' }} />
           <div>
             <h2>{t('studio.create_workflows', 'Create Workflows')}</h2>
             <p style={{ fontSize: 16, color: '#64748b', maxWidth: 500, margin: '0 auto' }}>

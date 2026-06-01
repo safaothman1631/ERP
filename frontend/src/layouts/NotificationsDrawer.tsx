@@ -105,13 +105,13 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({ isDark
  width: '100%', textAlign: isRTL ? 'right' : 'left',
  display: 'flex', alignItems: 'flex-start', gap: space.sm,
  padding: `${space.sm}px ${space.md}px`,
- background: n.read ? 'transparent' : (isDark ? 'rgba(31,111,235,0.08)' : 'rgba(31,111,235,0.04)'),
+ background: n.read ? 'transparent' : (isDark ? 'rgba(123,97,255,0.08)' : 'rgba(123,97,255,0.04)'),
  border: 'none', borderBottom: `1px solid ${isDark ? palette.darkBorder : palette.border}`,
  cursor: 'pointer', color: 'inherit',
  transition: 'background 150ms',
  }}
  onMouseEnter={(e) => { e.currentTarget.style.background = isDark ? palette.darkElevated : palette.bg; }}
- onMouseLeave={(e) => { e.currentTarget.style.background = n.read ? 'transparent' : (isDark ? 'rgba(31,111,235,0.08)' : 'rgba(31,111,235,0.04)'); }}
+ onMouseLeave={(e) => { e.currentTarget.style.background = n.read ? 'transparent' : (isDark ? 'rgba(123,97,255,0.08)' : 'rgba(123,97,255,0.04)'); }}
  >
  <Avatar
  style={{ background: `${COLOR_MAP[n.module]}22`, color: COLOR_MAP[n.module], flexShrink: 0 }}
