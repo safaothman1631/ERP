@@ -226,14 +226,14 @@ export const SideNav: React.FC<SideNavProps> = ({
     hoverTimers.current = {};
   }, []);
 
-  // ── Theme tokens ───────────────────────────────────────────────
-  const sidebarBg  = isDark ? '#0B1220' : '#FAFBFC';
-  const borderCol  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)';
-  const ink        = isDark ? '#E5E9F2' : '#0F172A';
-  const inkMuted   = isDark ? '#7B8497' : '#64748B';
-  const inkDim     = isDark ? '#5A6275' : '#94A3B8';
+  // ── Theme tokens — Vertex kit: surface sidebar + hairline border, token inks ──
+  const sidebarBg  = 'var(--surface)';
+  const borderCol  = 'var(--border)';
+  const ink        = 'var(--ink-900)';
+  const inkMuted   = 'var(--ink-500)';
+  const inkDim     = 'var(--ink-400)';
   const _hoverBg    = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.04)';
-  const activeBg   = isDark ? 'rgba(123,97,255,0.16)' : 'rgba(123,97,255,0.08)';
+  const activeBg   = 'var(--accent-soft)';
 
   const toggleSection = (key: string) => {
     if (isSearching) return;
