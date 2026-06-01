@@ -167,7 +167,7 @@ export function vertexCssVars(roleOrAccent = 'owner'): string {
   --font-ui:${FONT_UI};--font-display:${FONT_DISPLAY};--font-mono:${FONT_MONO};
   --radius-md:8px;--radius-lg:12px;--radius-sm:6px;
 }
-[data-theme="dark"]{
+html[data-theme="dark"]{
   --bg:#0B0E14;--surface:#11151F;--surface-2:#161B27;--border:rgba(255,255,255,0.08);
   --ink-900:#ECEEF2;--ink-700:#C2C8D2;--ink-500:#8A93A3;--ink-300:#5C6473;
 }`;

@@ -140,7 +140,9 @@
 }
 
 /* ============================ DARK MODE (slate-led, the hero look) ============================ */
-[data-theme='dark'] {
+/* html[...] (specificity 0,1,1) so the dark token overrides always beat any
+   later :root (0,1,0) block from other theme CSS or the runtime-injected vars. */
+html[data-theme='dark'] {
   --bg:        #0B0E14;
   --bg-deep:   #080A0F;
   --surface:   #11151F;
