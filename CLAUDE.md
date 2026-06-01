@@ -636,3 +636,17 @@ frontend/src/
 - **گەیتەکان (پێش دیپلۆی):** tsc ٠ · test **1322/1322** · lint exit 0 (٠ error / 2895 warn) · rtl:audit ٠ · glass-modals OK · build exit 0.
 
 **فێربوون:** بۆ sweep-ی ڕەنگ، هەمیشە case-insensitive + هەردوو فۆرمی rgba (بۆشایی/بێ-بۆشایی) + سکانی **dist bundle** (نەک تەنها source) بکە، چونکە minifier فۆرمەکان دەگۆڕێت (`rgba(R,G,B,A)` → `#RRGGBBAA`).
+
+### 2026-06-01 — Vertex full-replacement: token foundation + kit component layer (Steps 0–2)
+
+داوای بەکارهێنەر: گۆڕینی تەواوی دیزاینی کۆن بۆ Vertex بە ئامانجی **identical** لەگەڵ kit. هەنگاوی فراوانتر لە theme-recolor-ی پێشوو. **فرۆنتئیند تەنها — ٠ backend.**
+
+- **Step 0 (folder hygiene):** kit-ی reference (ئێستا `frontend/src/design-system/Vertex Design System (1)/`، دوای re-extract) gitignore کرا + لە eslint (wildcard `Vertex Design System*/**` + `vertex/**`) و rtl-audit دەرکرا. reference-only، port دەکرێت، هەرگیز build/lint/deploy ناکرێت. (rename بۆ `vertex/` بەهۆی OS-lock-ی Vite watcher سەرنەکەوت — بۆیە tooling name-agnostic کرا.)
+- **Step 1 (full token foundation):** `frontend/src/theme/vertex-tokens.css` (نوێ) — پۆرتی تەواوی `colors_and_type.css`: هەموو CSS var (`--accent-50..900`, `--slate-*`, semantic `*-bg/-fg`, `--space-*`, `--fs-*`, `--shadow-*`, `--radius-*`, layout, glass) + کلاسەکانی `.t-*`. import-ی یەکەم لە `main.tsx`. (theme/ConfigProvider/vertexCssVars/fonts پێشتر زیندوو بوون؛ ئەمە ئەو بەشەی نەماوەی foundation تەواو دەکات کە kit.css پێویستیەتی.)
+- **Step 2 (kit component layer):** `frontend/src/theme/vertex-kit.css` (نوێ) — شێوازی تەواوی kit (`kit.css` + `shell.jsx`) بۆ کلاسە ڕاستەقینەکانی AntD مەپ کرا، بۆیە هەموو ٢٩٥ پەڕە شێوازی kit وەردەگرن: buttons (flat accent + glow + hover-lift، variants)، cards (hairline + hover-lift — premium-card gradient/stripe لابرا)، tags (22px chip)، inputs/select (38px + 3px ring)، tables (uppercase 11px header + tabular-nums + row hover)، menu (accent-soft + 3px leading bar)، topbar (56px glass)، sider، modal/dropdown radii، scrollbar. import پاش premium.css (بۆ ئەوەی glass-embellishment-ەکان بەرەو kit-ی flat ئاشت بکاتەوە)، پێش a11y/reduced-motion (بۆ ئەوەی focus + reduced-motion هێشتا براوە بن).
+
+**پشتڕاستکردنەوە:** tsc ٠ · build exit 0 · test **1322/1322** · lint exit 0 (٠ error) · rtl:audit ٠. live (public /login): primary button ئێستا **flat** accent `rgb(123,97,255)` (نەک gradient-ی premium) — بەڵگەی کارکردنی kit layer.
+
+**تێبینی ڕاشکاوانە:** پەڕە authenticated-ەکان (شێل/تەیبڵ/کارت لە ناوەوەی login) لە sandbox بە چاو پشکنین نەکران (login-ی backend نییە) — پشت بە build/gates + هاوتایی لەگەڵ kit.css بەسترا. پەڕەی login خۆی bespoke-ە (runtime `<style>` خۆی هەیە کە هەندێک شێوازی kit-layer دەشارێتەوە). uppercase-کردنی هەموو header-ی تەیبڵ + flat-کردنی هەموو card گۆڕانکاریی opinionated-ی gلۆباڵن (kit-accurate) — بە live-review پێویستن. هەموو لە یەک CSS layer-دان، بۆیە iterate/revert ئاسانە.
+
+**ماوە (Step 3–5):** structural-ی shell (SideNav/TopBar markup per shell.jsx)، per-screen parity (screens.jsx/records.jsx)، role verify — زۆربەیان بە vertex-kit.css پەخش بوون؛ ماوەکە live-iteration پێویستە.

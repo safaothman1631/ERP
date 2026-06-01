@@ -30,6 +30,11 @@ import './polish.css'
 // Loaded after polish.css so its role-accent glass/motion rules take precedence;
 // reduced-motion.css (below) still wins for prefers-reduced-motion users.
 import './theme/premium.css'
+// Vertex "Slate & Signal" component layer — applies the kit's exact component
+// styling (kit.css + shell.jsx) to AntD's real classes. Loaded AFTER premium.css
+// so it reconciles the prior glass embellishments toward the flatter kit look;
+// a11y.css + reduced-motion.css load after, so focus + reduced-motion still win.
+import './theme/vertex-kit.css'
 import './print.css'
 import './a11y.css'
 import './reduced-motion.css'

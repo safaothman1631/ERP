@@ -1,0 +1,245 @@
+/* ============================================================================
+   vertex-kit.css — Vertex "Slate & Signal" COMPONENT layer.
+
+   Applies the kit's exact component styling (ui_kits/vertex-next/kit.css +
+   shell.jsx) to Ant Design's real classes + our custom classes, on top of the
+   vertex-tokens.css foundation. Loaded AFTER polish.css/premium.css so the app
+   matches the kit as closely as possible (kit is flatter/cleaner than the prior
+   "premium glass" layer — this gently reconciles the two toward the kit).
+
+   Mirrors kit.css 1:1 in values. All colors via tokens; all direction logical.
+   a11y.css + reduced-motion.css load AFTER this, so focus + reduced-motion win.
+   ============================================================================ */
+
+/* ───────────────────────────── Base ───────────────────────────── */
+body { font-family: var(--font-ui); color: var(--ink-900); background: var(--bg); -webkit-font-smoothing: antialiased; }
+[dir='rtl'] body { font-family: var(--font-rtl); }
+/* Display font for headings (kit uses Inter Tight; Vazirmatn carries RTL) */
+h1, h2, h3, .ant-typography h1, .ant-typography h2, .ant-typography h3,
+.ant-page-header-heading-title, .ant-modal-title, .ant-card-head-title {
+  font-family: var(--font-display); letter-spacing: -0.015em;
+}
+[dir='rtl'] h1, [dir='rtl'] h2, [dir='rtl'] h3,
+[dir='rtl'] .ant-page-header-heading-title, [dir='rtl'] .ant-modal-title, [dir='rtl'] .ant-card-head-title {
+  font-family: var(--font-rtl); letter-spacing: normal;
+}
+
+/* ───────────────────────────── Buttons (kit .vx-btn) ─────────────────────────────
+   Kit accent button is FLAT accent-500 + glow, hover lightens to accent-400 and
+   lifts 1px. We override the prior premium gradient/sheen toward this flat look. */
+.ant-btn {
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  box-shadow: none;
+}
+.ant-btn-lg { border-radius: var(--radius-lg); }
+
+.role-accent-root .ant-btn-primary:not(:disabled):not(.ant-btn-disabled),
+.ant-btn-primary:not(:disabled):not(.ant-btn-disabled) {
+  background: var(--accent-500) !important;
+  border-color: transparent !important;
+  color: var(--on-accent) !important;
+  box-shadow: var(--accent-glow) !important;
+  transition: transform .12s var(--ease-standard), background .14s var(--ease-standard), box-shadow .2s var(--ease-standard);
+}
+.role-accent-root .ant-btn-primary:not(:disabled):not(.ant-btn-disabled):hover,
+.ant-btn-primary:not(:disabled):not(.ant-btn-disabled):hover {
+  background: var(--accent-400) !important;
+  transform: translateY(-1px);
+}
+.role-accent-root .ant-btn-primary:not(:disabled):not(.ant-btn-disabled):active,
+.ant-btn-primary:not(:disabled):not(.ant-btn-disabled):active {
+  transform: translateY(0) scale(.97);
+}
+/* Kill the prior moving sheen pseudo so the button reads flat like the kit. */
+.role-accent-root .ant-btn-primary::after { content: none !important; animation: none !important; }
+
+/* Default button — surface + strong hairline; hover borrows the accent border. */
+.ant-btn-default:not(:disabled):not(.ant-btn-dangerous) {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  color: var(--ink-700);
+}
+.ant-btn-default:not(:disabled):not(.ant-btn-dangerous):hover {
+  border-color: var(--accent-500);
+  color: var(--ink-900);
+}
+/* Ghost / text — kit ghost: tint + accent text on hover. */
+.ant-btn-text:not(:disabled), .ant-btn-link:not(:disabled) { color: var(--ink-500); }
+.ant-btn-text:not(:disabled):hover { background: var(--accent-soft); color: var(--accent-400); }
+.ant-btn-link:not(:disabled):hover { color: var(--accent-400); }
+/* Danger (default variant) — kit: outline danger → filled on hover. */
+.ant-btn-dangerous:not(.ant-btn-primary) {
+  color: var(--danger-fg);
+  border-color: color-mix(in srgb, var(--danger-500) 45%, transparent);
+  background: transparent;
+}
+.ant-btn-dangerous:not(.ant-btn-primary):hover {
+  background: var(--danger-500); color: #fff; border-color: var(--danger-500);
+}
+.ant-btn:disabled, .ant-btn.ant-btn-disabled { opacity: .5; box-shadow: none !important; }
+
+/* ───────────────────────────── Cards (kit .vx-card) ─────────────────────────────
+   Flat surface, hairline border, 12px radius, gentle hover-lift. Neutralise the
+   prior premium-card gradient + accent top-stripe so cards read like the kit. */
+.ant-card {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: none;
+}
+.role-accent-root .premium-card.ant-card,
+.role-accent-root .ant-card:not(.premium-card) {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-xs) !important;
+  transition: transform .16s var(--ease-standard), border-color .16s, box-shadow .2s;
+}
+.role-accent-root .premium-card.ant-card::before { content: none !important; }  /* remove top accent stripe */
+.role-accent-root .premium-card.ant-card:hover,
+.role-accent-root .ant-card.is-interactive:hover,
+.role-accent-root .ant-card:not(.premium-card):hover {
+  transform: translateY(-2px);
+  border-color: var(--border-strong) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* ───────────────────────────── Tags (kit .vx-tag) ─────────────────────────────
+   Compact 22px chips, 6px radius, 11.5px semibold. */
+.ant-tag {
+  height: 22px; line-height: 20px; padding: 0 9px; margin-inline-end: 6px;
+  border-radius: var(--radius-sm);
+  font-size: 11.5px; font-weight: 600; letter-spacing: .01em;
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid transparent;
+}
+
+/* ───────────────────────────── Inputs / Select (kit .vx-input) ─────────────────────────────
+   38px controls, 8px radius, strong hairline, 3px accent-soft focus ring. */
+.ant-input, .ant-input-affix-wrapper,
+.ant-input-number, .ant-input-number-affix-wrapper,
+.ant-select-selector, .ant-picker {
+  border-radius: var(--radius-md) !important;
+  border-color: var(--border-strong);
+  background: var(--surface);
+}
+.ant-input:focus, .ant-input-focused,
+.ant-input-affix-wrapper:focus, .ant-input-affix-wrapper-focused,
+.ant-input-number-focused,
+.ant-select-focused .ant-select-selector,
+.ant-picker-focused {
+  border-color: var(--accent-500) !important;
+  box-shadow: 0 0 0 3px var(--accent-soft) !important;
+}
+.ant-input::placeholder { color: var(--ink-300); }
+/* Custom Select dropdown panel — kit surface + hairline + soft shadow. */
+.ant-select-dropdown, .ant-picker-dropdown .ant-picker-panel-container, .ant-cascader-menus {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+.ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background: var(--accent-soft); color: var(--accent-500); font-weight: 600;
+}
+.ant-select-item-option-active:not(.ant-select-item-option-disabled) { background: var(--surface-2); }
+
+/* ───────────────────────────── Tables (kit .vx-table) ─────────────────────────────
+   Uppercase 11px headers on surface-2, 12px cells, hairline rows, hover tint,
+   tabular-nums money. */
+.ant-table { font-size: 13.5px; }
+.ant-table-thead > tr > th {
+  background: var(--surface-2) !important;
+  color: var(--ink-500) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border) !important;
+  padding: 10px 14px !important;
+}
+.ant-table-tbody > tr > td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink-700);
+}
+.ant-table-tbody > tr { transition: background .12s var(--ease-standard); }
+.ant-table-tbody > tr:hover > td { background: var(--surface-2) !important; }
+.ant-table-tbody > tr.ant-table-row-selected > td { background: var(--accent-soft) !important; }
+/* tabular-nums for money/number columns (DataTable adds .vx-num / align-right) */
+.ant-table-cell.vx-num, td.ant-table-cell[class*="align-right"], .ant-table-cell-ellipsis.vx-num {
+  font-variant-numeric: tabular-nums; text-align: end;
+}
+
+/* ───────────────────────────── Menu / nav (kit .vx-nav) ─────────────────────────────
+   Active item = accent-soft tint + 3px inline-start accent bar. */
+.ant-menu-light .ant-menu-item, .ant-menu-light .ant-menu-submenu-title,
+.ant-menu .ant-menu-item, .ant-menu .ant-menu-submenu-title {
+  border-radius: var(--radius-md);
+  height: 36px; line-height: 36px;
+  color: var(--ink-500);
+  font-weight: 500;
+}
+.ant-menu .ant-menu-item:hover, .ant-menu .ant-menu-submenu-title:hover { color: var(--ink-900); background: var(--surface-2); }
+.ant-menu .ant-menu-item-selected {
+  background: var(--accent-soft) !important;
+  color: var(--ink-900) !important;
+  font-weight: 600;
+  position: relative;
+}
+.ant-menu .ant-menu-item-selected::before {
+  content: ''; position: absolute; inset-inline-start: -4px; top: 8px; bottom: 8px;
+  width: 3px; border-radius: 3px; background: var(--accent-500);
+}
+.ant-menu .ant-menu-item-selected .anticon, .ant-menu .ant-menu-item-selected a { color: var(--accent-500) !important; }
+/* The kit's bar is on the LEADING edge (::before, above); hide AntD's default
+   trailing-edge active indicator so we don't get two bars. */
+.ant-menu .ant-menu-item-selected::after { display: none !important; }
+
+/* ───────────────────────────── Shell — TopBar (shell.jsx) ─────────────────────────────
+   56px glass top bar + hairline bottom. Targets AntD header and our shell header. */
+.ant-layout-header {
+  height: var(--topbar-h) !important;
+  line-height: var(--topbar-h) !important;
+  padding-inline: 18px;
+  background: var(--glass-bg) !important;
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--border);
+}
+/* SideNav container — surface + hairline inline-end (width set in AppShell = 248). */
+.ant-layout-sider { background: var(--surface) !important; border-inline-end: 1px solid var(--border); }
+[data-theme='dark'] .ant-layout-sider { background: var(--surface) !important; }
+
+/* Role badge chip (kit .vx-rolebadge) if present */
+.vx-rolebadge {
+  display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px;
+  border-radius: var(--radius-pill); background: var(--accent-soft); color: var(--accent-400);
+  font-size: 12px; font-weight: 600;
+  border: 1px solid color-mix(in srgb, var(--accent-500) 28%, transparent);
+}
+
+/* ───────────────────────────── Modals / dropdowns / popovers ─────────────────────────────
+   Kit radii: modal 16, dropdown/popover 12, soft shadow + hairline. */
+.ant-modal-content { border-radius: var(--radius-xl) !important; box-shadow: var(--shadow-xl) !important; }
+.ant-drawer-content { background: var(--surface); }
+.ant-dropdown-menu, .ant-popover-inner {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+.ant-dropdown-menu-item:hover { background: var(--surface-2); }
+
+/* ───────────────────────────── Tabs / Segmented ───────────────────────────── */
+.ant-tabs-ink-bar { background: var(--accent-500) !important; }
+.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn { color: var(--accent-500) !important; }
+.ant-segmented .ant-segmented-item-selected { background: var(--accent-soft); color: var(--accent-500); }
+
+/* ───────────────────────────── Scrollbars (kit .vx-scroll) ───────────────────────────── */
+.role-accent-root *::-webkit-scrollbar { width: 9px; height: 9px; }
+.role-accent-root *::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+[data-theme='dark'] .role-accent-root *::-webkit-scrollbar-thumb { background: var(--slate-700); background-clip: padding-box; }
+
+/* ───────────────────────────── Capture-safe entrance (kit .vx-page) ─────────────────────────────
+   transform-only; never opacity-from-0 (keeps screenshot/PDF/PPTX capture intact). */
+@keyframes vx-in { from { transform: translateY(7px); } to { transform: translateY(0); } }
+.vx-page { animation: vx-in .32s var(--ease-out); }
