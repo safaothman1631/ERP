@@ -1,261 +1,379 @@
 /**
  * LandingPage.tsx — Vertex "Slate & Signal" marketing landing.
  *
- * Fully rebuilt on the Vertex kit design language: dark slate canvas (#0B0E14),
- * a masked dotted grid + soft violet/cyan glow orbs, Inter Tight display
- * headings, the kit's electric-violet accent, hairline slate cards and the
- * flat-accent CTA. All colours resolve from the global Vertex tokens
- * (theme/vertex-tokens.css) via a `data-theme="dark"` wrapper, so it stays in
- * lock-step with the rest of the app.
+ * Faithful port of the kit's landing (design-system/.../landing/index.html):
+ * glass nav, hero + product mock, modules grid, product split, "Built for Iraq"
+ * band, stats, gradient CTA, footer — with the dotted grid + violet/blue glow
+ * orbs and Inter Tight display type. All colours resolve from the global Vertex
+ * tokens (theme/vertex-tokens.css) via a `data-theme="dark"` wrapper.
  *
- * Bilingual (en/ku) via `t()` — zero hardcoded copy. Responsive via `useViewport`
- * (no UA sniffing). Logical properties only (RTL-safe). Respects reduced-motion.
+ * Bilingual (en/ku) via an inline T() helper, RTL-correct (logical properties),
+ * CTAs wired to /signup + /login. Responsive via useViewport.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { motion, useMotionValue, useSpring, AnimatePresence } from 'framer-motion';
-import {
-  RocketOutlined, BarChartOutlined, TeamOutlined, SafetyOutlined, GlobalOutlined,
-  ThunderboltOutlined, CheckCircleOutlined, StarFilled,
-} from '@ant-design/icons';
 import { useViewport } from '../hooks/useViewport';
 
-/* ── Custom cursor (desktop only, via useViewport) ── */
-const CustomCursor: React.FC = () => {
-  const cursorX = useMotionValue(-100); const cursorY = useMotionValue(-100);
-  const dotX = useMotionValue(-100); const dotY = useMotionValue(-100);
-  const springX = useSpring(cursorX, { stiffness: 150, damping: 20 });
-  const springY = useSpring(cursorY, { stiffness: 150, damping: 20 });
-  const [hover, setHover] = useState(false);
-  useEffect(() => {
-    const move = (e: MouseEvent) => { cursorX.set(e.clientX - 16); cursorY.set(e.clientY - 16); dotX.set(e.clientX - 4); dotY.set(e.clientY - 4); };
-    const over = (e: MouseEvent) => { const tg = e.target as HTMLElement; setHover(tg.tagName === 'BUTTON' || tg.tagName === 'A' || !!tg.closest('button') || !!tg.closest('a') || !!tg.closest('[data-hoverable]')); };
-    window.addEventListener('mousemove', move); window.addEventListener('mouseover', over);
-    return () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseover', over); };
-  }, [cursorX, cursorY, dotX, dotY]);
-  return (
-    <>
-      <motion.div style={{ position: 'fixed', top: 0, left: 0, /* rtl-ignore: cursor coords are physical */ x: springX, y: springY, width: 32, height: 32, borderRadius: '50%', border: '2px solid rgba(123,97,255,0.7)', pointerEvents: 'none', zIndex: 99999, mixBlendMode: 'difference' }} animate={{ scale: hover ? 1.6 : 1 }} transition={{ duration: 0.2 }} />
-      <motion.div style={{ position: 'fixed', top: 0, left: 0, /* rtl-ignore */ x: dotX, y: dotY, width: 8, height: 8, borderRadius: '50%', backgroundColor: '#7B61FF', pointerEvents: 'none', zIndex: 99999 }} />
-    </>
-  );
+const T = (ku: boolean, en: string, k: string) => (ku ? k : en);
+
+/* stacked-vertex logo mark (from the kit asset) */
+const LogoMark: React.FC<{ size?: number }> = ({ size = 28 }) => (
+  <svg width={size} height={size} viewBox="0 0 20 40" style={{ display: 'block', flexShrink: 0 }} aria-hidden>
+    <path d="M10 0 L20 6 L10 12 L0 6 Z" fill="#7B61FF" />
+    <path d="M10 14 L20 20 L10 26 L0 20 Z" fill="#9275FF" />
+    <path d="M10 28 L20 34 L10 40 L0 34 Z" fill="#AC97FF" />
+  </svg>
+);
+
+/* inline icon set used across the page (kit SVG paths) */
+const I: Record<string, React.ReactNode> = {
+  arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
+  play: <><circle cx="12" cy="12" r="9" /><path d="m10 9 5 3-5 3z" fill="currentColor" /></>,
+  check: <path d="M20 6 9 17l-5-5" />,
+  accounting: <><path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" /><path d="M8 7h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15v2" /></>,
+  sales: <><path d="M2.5 3h2l2.6 13h11.4l1.5-8H6" /><circle cx="9" cy="20" r="1" /><circle cx="18" cy="20" r="1" /></>,
+  inventory: <><path d="M3 9 12 4l9 5v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="M3 9l9 5 9-5M12 14v8" /></>,
+  pos: <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />,
+  hr: <><path d="M20 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2ZM16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /></>,
+  reports: <path d="M3 21h18M7 21V11M12 21V5M17 21v-7" />,
+  cmd: <path d="M9 6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3Z" />,
+  globe: <><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.5 3.8 5.7 3.8 9s-1.3 6.5-3.8 9" /></>,
+  shield: <><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z" /><path d="m9 12 2 2 4-4" /></>,
+  offline: <><path d="M12 3a9 9 0 1 0 9 9" /><path d="M21 3v6h-6" /></>,
+  file: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></>,
+  whatsapp: <path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5Z" />,
+  dash: <><rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" /></>,
 };
+const Svg: React.FC<{ p: string; w?: number }> = ({ p, w = 22 }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: w, height: w }}>{I[p]}</svg>
+);
 
-const heroContainer: import('framer-motion').Variants = { hidden: {}, visible: { transition: { staggerChildren: 0.16, delayChildren: 0.08 } } };
-// Capture-safe: animate transform only (never opacity-from-0) per the kit rule.
-const heroItem: import('framer-motion').Variants = { hidden: { y: 28 }, visible: { y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } } };
-const rise = { hidden: { y: 24 }, visible: (i = 0) => ({ y: 0, transition: { duration: 0.5, delay: i * 0.08, ease: 'easeOut' as const } }) };
-
-const featureIcons = [
-  <BarChartOutlined style={{ fontSize: 26 }} />, <TeamOutlined style={{ fontSize: 26 }} />,
-  <RocketOutlined style={{ fontSize: 26 }} />, <GlobalOutlined style={{ fontSize: 26 }} />,
-  <SafetyOutlined style={{ fontSize: 26 }} />, <ThunderboltOutlined style={{ fontSize: 26 }} />,
-];
-const featureKeys = [
-  { title: 'landing_feature_accounting_title', desc: 'landing_feature_accounting_desc' },
-  { title: 'landing_feature_hr_title', desc: 'landing_feature_hr_desc' },
-  { title: 'landing_feature_sales_title', desc: 'landing_feature_sales_desc' },
-  { title: 'landing_feature_inventory_title', desc: 'landing_feature_inventory_desc' },
-  { title: 'landing_feature_security_title', desc: 'landing_feature_security_desc' },
-  { title: 'landing_feature_performance_title', desc: 'landing_feature_performance_desc' },
-];
-const planKeys = [
-  { name: 'landing_plan_starter', price: '$29', period: '/mo', features: ['landing_plan_starter_f1', 'landing_plan_starter_f2', 'landing_plan_starter_f3', 'landing_plan_starter_f4'], highlighted: false },
-  { name: 'landing_plan_business', price: '$79', period: '/mo', features: ['landing_plan_business_f1', 'landing_plan_business_f2', 'landing_plan_business_f3', 'landing_plan_business_f4'], highlighted: true },
-  { name: 'landing_plan_enterprise', price: '$199', period: '/mo', features: ['landing_plan_enterprise_f1', 'landing_plan_enterprise_f2', 'landing_plan_enterprise_f3', 'landing_plan_enterprise_f4'], highlighted: false },
-];
-const testimonialKeys = [
-  { name: 'landing_testimonial_1_name', role: 'landing_testimonial_1_role', text: 'landing_testimonial_1_text', rating: 5 },
-  { name: 'landing_testimonial_2_name', role: 'landing_testimonial_2_role', text: 'landing_testimonial_2_text', rating: 5 },
-  { name: 'landing_testimonial_3_name', role: 'landing_testimonial_3_role', text: 'landing_testimonial_3_text', rating: 5 },
-];
-
-/* shared inline styles built from kit tokens */
-const accentBtn: React.CSSProperties = { background: 'var(--accent-500)', border: '1px solid transparent', borderRadius: 'var(--radius-md)', color: '#fff', padding: '13px 28px', fontSize: 15, fontWeight: 600, cursor: 'inherit', boxShadow: 'var(--accent-glow)' };
-const ghostBtn: React.CSSProperties = { background: 'color-mix(in srgb, var(--surface) 60%, transparent)', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-md)', color: 'var(--ink-700)', padding: '13px 28px', fontSize: 15, fontWeight: 600, cursor: 'inherit', backdropFilter: 'blur(8px)' };
-const card: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)' };
-const display: React.CSSProperties = { fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-0.025em', color: 'var(--ink-900)' };
+const LANDING_CSS = `
+.vx-landing { background: var(--bg); color: var(--ink-900); font-family: var(--font-ui); -webkit-font-smoothing: antialiased; overflow-x: hidden; min-height: 100vh; position: relative; }
+.vx-landing[dir="rtl"] { font-family: var(--font-rtl); }
+.vx-landing *, .vx-landing *::before, .vx-landing *::after { box-sizing: border-box; }
+.vx-landing a { color: inherit; text-decoration: none; }
+.vx-landing ::selection { background: var(--accent-soft); }
+.vx-landing .wrap { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+.vx-landing svg { display: block; }
+.vx-landing .bg-fx { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.vx-landing .orb { position: absolute; border-radius: 50%; filter: blur(90px); }
+.vx-landing .orb-1 { width: 600px; height: 600px; top: -240px; left: -120px; /* rtl-ignore decorative */ background: radial-gradient(circle, var(--accent-500) 0%, transparent 68%); opacity: .4; }
+.vx-landing .orb-2 { width: 520px; height: 520px; top: 120px; right: -160px; /* rtl-ignore decorative */ background: radial-gradient(circle, #2E8FE0 0%, transparent 70%); opacity: .2; }
+.vx-landing .grid-fx { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px); background-size: 56px 56px; -webkit-mask-image: radial-gradient(ellipse 80% 50% at 50% 0%, #000 40%, transparent 100%); mask-image: radial-gradient(ellipse 80% 50% at 50% 0%, #000 40%, transparent 100%); }
+.vx-landing nav { position: sticky; top: 0; z-index: 50; background: var(--glass-bg); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); border-bottom: 1px solid var(--glass-border); }
+.vx-landing .nav-in { height: 64px; display: flex; align-items: center; gap: 28px; }
+.vx-landing .brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 800; font-size: 19px; letter-spacing: -0.02em; }
+.vx-landing .nav-links { display: flex; gap: 26px; margin-inline-start: 12px; }
+.vx-landing .nav-links a { font-size: 14px; color: var(--ink-500); font-weight: 500; transition: color .15s, transform .14s; }
+.vx-landing .nav-links a:hover { color: var(--ink-900); transform: translateY(-1px); }
+.vx-landing .nav-cta { margin-inline-start: auto; display: flex; align-items: center; gap: 14px; }
+.vx-landing .btn { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px; border-radius: var(--radius-md); font-size: 14px; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: transform .14s var(--ease-standard), box-shadow .2s, border-color .15s, color .15s, background-color .15s; white-space: nowrap; }
+.vx-landing .btn:active { transform: translateY(0) scale(.96); }
+.vx-landing .btn-accent { background-color: var(--accent-500); color: #fff; box-shadow: var(--accent-glow); }
+.vx-landing .btn-accent:hover { transform: translateY(-1px); background-color: var(--accent-400); }
+.vx-landing .btn-ghost { background: transparent; color: var(--ink-700); border-color: var(--border-strong); }
+.vx-landing .btn-ghost:hover { border-color: var(--accent-500); color: var(--ink-900); }
+.vx-landing .btn-lg { height: 50px; padding: 0 26px; font-size: 15.5px; border-radius: var(--radius-lg); }
+.vx-landing .btn-text { background: transparent; color: var(--ink-700); padding: 0; height: auto; border: none; font-size: 14px; font-weight: 600; cursor: pointer; }
+.vx-landing .btn-text:hover { color: var(--accent-400); }
+.vx-landing section { position: relative; z-index: 1; }
+.vx-landing .hero { padding: 88px 0 72px; }
+.vx-landing .chip { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 14px; border-radius: var(--radius-pill); background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent-500) 30%, transparent); color: var(--accent-300); font-size: 12.5px; font-weight: 600; margin-bottom: 26px; }
+.vx-landing .chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-400); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-500) 25%, transparent); }
+.vx-landing .hero h1 { font-family: var(--font-display); font-size: clamp(40px, 6.4vw, 76px); line-height: 1.02; font-weight: 800; letter-spacing: -0.035em; max-width: 16ch; margin: 0; }
+.vx-landing .hero h1 .hl { background: linear-gradient(110deg, var(--accent-300), var(--accent-500) 55%, #5FB0F0); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.vx-landing .hero p.sub { font-size: 19px; line-height: 1.6; color: var(--ink-500); max-width: 56ch; margin: 26px 0 34px; }
+.vx-landing .hero-cta { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+.vx-landing .hero-note { display: flex; gap: 20px; margin-top: 26px; font-size: 13px; color: var(--ink-500); flex-wrap: wrap; }
+.vx-landing .hero-note span { display: flex; align-items: center; gap: 7px; }
+.vx-landing .hero-note svg { width: 15px; height: 15px; color: var(--success-fg); }
+.vx-landing .mock-wrap { margin-top: 64px; position: relative; }
+.vx-landing .mock-glow { position: absolute; inset-block-start: -1px; inset-inline: -1px; height: 200px; background: radial-gradient(ellipse 60% 100% at 50% 0%, color-mix(in srgb, var(--accent-500) 40%, transparent), transparent 70%); filter: blur(40px); z-index: 0; }
+.vx-landing .mock { position: relative; z-index: 1; border-radius: 16px; border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow-xl); overflow: hidden; }
+.vx-landing .mock-bar { height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.vx-landing .tl { width: 11px; height: 11px; border-radius: 50%; }
+.vx-landing .mock-body { display: flex; min-height: 420px; }
+.vx-landing .mk-side { width: 200px; border-inline-end: 1px solid var(--border); padding: 16px 12px; flex-shrink: 0; background: var(--surface-2); }
+.vx-landing .mk-logo { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 800; font-size: 15px; margin-bottom: 18px; padding: 0 6px; }
+.vx-landing .mk-nav { display: flex; flex-direction: column; gap: 2px; }
+.vx-landing .mk-item { display: flex; align-items: center; gap: 10px; height: 32px; padding: 0 10px; border-radius: 7px; font-size: 13px; color: var(--ink-500); font-weight: 500; }
+.vx-landing .mk-item.on { background: var(--accent-soft); color: var(--accent-300); }
+.vx-landing .mk-item svg { width: 15px; height: 15px; }
+.vx-landing .mk-main { flex: 1; padding: 20px; min-width: 0; }
+.vx-landing .mk-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+.vx-landing .mk-kpi { border: 1px solid var(--border); border-radius: 10px; padding: 14px; background: var(--surface); }
+.vx-landing .mk-kpi .lab { font-size: 11px; color: var(--ink-500); }
+.vx-landing .mk-kpi .val { font-family: var(--font-display); font-size: 22px; font-weight: 700; margin-top: 4px; letter-spacing: -0.02em; }
+.vx-landing .mk-kpi .d { font-size: 11px; margin-top: 4px; color: var(--success-fg); font-weight: 600; }
+.vx-landing .mk-chart { border: 1px solid var(--border); border-radius: 10px; padding: 16px; background: var(--surface); }
+.vx-landing .mk-chart .ct { font-size: 12px; color: var(--ink-500); margin-bottom: 12px; }
+.vx-landing .strip { padding: 28px 0 8px; }
+.vx-landing .strip .lbl { text-align: center; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-500); margin-bottom: 20px; }
+.vx-landing .logos { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px 40px; opacity: .7; }
+.vx-landing .logos span { font-family: var(--font-display); font-weight: 700; font-size: 18px; color: var(--ink-500); letter-spacing: -0.01em; }
+.vx-landing .sec { padding: 96px 0; }
+.vx-landing .sec-head { max-width: 640px; margin-bottom: 52px; }
+.vx-landing .sec-head .ey, .vx-landing .ey { color: var(--accent-400); font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 14px; }
+.vx-landing .sec-head h2 { font-family: var(--font-display); font-size: clamp(30px, 4vw, 46px); line-height: 1.08; font-weight: 800; letter-spacing: -0.025em; margin: 0; }
+.vx-landing .sec-head p { font-size: 17px; color: var(--ink-500); line-height: 1.6; margin-top: 16px; }
+.vx-landing .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.vx-landing .feat { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; background: var(--surface); transition: transform .18s var(--ease-standard), border-color .18s, box-shadow .2s; }
+.vx-landing .feat:hover { transform: translateY(-3px); border-color: var(--accent-500); box-shadow: var(--shadow-md); }
+.vx-landing .feat .ic { width: 44px; height: 44px; border-radius: 11px; background: var(--accent-soft); color: var(--accent-300); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+.vx-landing .feat h3 { font-family: var(--font-display); font-size: 18px; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+.vx-landing .feat p { font-size: 14px; color: var(--ink-500); line-height: 1.6; margin-top: 8px; }
+.vx-landing .split { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+.vx-landing .split h2 { font-family: var(--font-display); font-size: clamp(28px,3.6vw,42px); line-height: 1.1; font-weight: 800; letter-spacing: -0.025em; margin: 0; }
+.vx-landing .split-list { display: flex; flex-direction: column; gap: 22px; margin-top: 28px; }
+.vx-landing .split-li { display: flex; gap: 14px; }
+.vx-landing .split-li .b { width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0; background: var(--accent-soft); color: var(--accent-300); display: flex; align-items: center; justify-content: center; }
+.vx-landing .split-li h4 { font-size: 15px; font-weight: 600; color: var(--ink-900); margin: 0; }
+.vx-landing .split-li p { font-size: 14px; color: var(--ink-500); line-height: 1.55; margin-top: 3px; }
+.vx-landing .panel { border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--shadow-lg); overflow: hidden; }
+.vx-landing .iraq { border: 1px solid var(--border); border-radius: var(--radius-2xl); background: linear-gradient(135deg, var(--surface), var(--surface-2)); padding: 48px; }
+.vx-landing .iraq h2 { font-family: var(--font-display); font-size: clamp(28px,3.6vw,42px); font-weight: 800; letter-spacing: -0.025em; max-width: 18ch; margin: 0; }
+.vx-landing .iraq-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; margin-top: 36px; }
+.vx-landing .iraq-it .n { font-family: var(--font-display); font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 9px; }
+.vx-landing .iraq-it .n svg { width: 18px; height: 18px; color: var(--accent-400); }
+.vx-landing .iraq-it p { font-size: 13.5px; color: var(--ink-500); line-height: 1.55; margin-top: 8px; }
+.vx-landing .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+.vx-landing .stat { text-align: center; padding: 12px; }
+.vx-landing .stat .num { font-family: var(--font-display); font-size: 46px; font-weight: 800; letter-spacing: -0.03em; background: linear-gradient(120deg, var(--accent-300), var(--accent-500)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.vx-landing .stat .cap { font-size: 13.5px; color: var(--ink-500); margin-top: 6px; }
+.vx-landing .cta-band { border-radius: var(--radius-2xl); padding: 72px 48px; text-align: center; position: relative; overflow: hidden; background: linear-gradient(135deg, var(--accent-700), var(--accent-600) 55%, var(--accent-500)); }
+.vx-landing .cta-band::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 100% at 50% 0%, rgba(255,255,255,0.18), transparent 60%); }
+.vx-landing .cta-band h2 { position: relative; font-family: var(--font-display); font-size: clamp(30px, 4vw, 48px); font-weight: 800; letter-spacing: -0.025em; color: #fff; margin: 0; }
+.vx-landing .cta-band p { position: relative; font-size: 18px; color: rgba(255,255,255,0.82); margin: 16px auto 32px; max-width: 52ch; }
+.vx-landing .cta-band .btn-accent { background: #fff; color: var(--accent-700); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+.vx-landing .cta-band .btn-ghost { color: #fff; border-color: rgba(255,255,255,0.4); }
+.vx-landing footer { border-top: 1px solid var(--border); padding: 56px 0 36px; position: relative; z-index: 1; }
+.vx-landing .foot-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 32px; margin-bottom: 40px; }
+.vx-landing .foot-col h5 { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-500); margin-bottom: 14px; }
+.vx-landing .foot-col a { display: block; font-size: 14px; color: var(--ink-700); margin-bottom: 10px; transition: color .15s; }
+.vx-landing .foot-col a:hover { color: var(--accent-400); }
+.vx-landing .foot-about p { font-size: 13.5px; color: var(--ink-500); line-height: 1.6; margin-top: 14px; max-width: 30ch; }
+.vx-landing .foot-bot { display: flex; justify-content: space-between; align-items: center; padding-top: 24px; border-top: 1px solid var(--border); font-size: 13px; color: var(--ink-500); gap: 14px; flex-wrap: wrap; }
+.vx-landing .lp-mob { display: none; }
+@media (max-width: 860px) {
+  .vx-landing .nav-links { display: none; }
+  .vx-landing .mock-body { min-height: 0; } .vx-landing .mk-side { display: none; }
+  .vx-landing .feat-grid, .vx-landing .iraq-grid, .vx-landing .stats, .vx-landing .foot-grid { grid-template-columns: 1fr 1fr; }
+  .vx-landing .split { grid-template-columns: 1fr; gap: 32px; }
+  .vx-landing .lp-mob { display: inline-flex; }
+}
+@media (max-width: 640px) {
+  .vx-landing .wrap { padding: 0 18px; }
+  .vx-landing .hero { padding: 46px 0 38px; } .vx-landing .hero p.sub { font-size: 16px; margin: 22px 0 28px; }
+  .vx-landing .hero-cta { flex-direction: column; align-items: stretch; } .vx-landing .hero-cta .btn { width: 100%; justify-content: center; }
+  .vx-landing .sec { padding: 54px 0; } .vx-landing .sec-head { margin-bottom: 36px; }
+  .vx-landing .feat-grid, .vx-landing .iraq-grid, .vx-landing .stats, .vx-landing .foot-grid { grid-template-columns: 1fr; }
+  .vx-landing .iraq { padding: 30px 20px; } .vx-landing .cta-band { padding: 46px 22px; }
+  .vx-landing .mk-kpis { grid-template-columns: 1fr 1fr; }
+  .vx-landing .foot-bot { flex-direction: column; gap: 14px; text-align: center; }
+}
+@media (prefers-reduced-motion: reduce) { .vx-landing * { transition: none !important; } }
+`;
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
-  const { isMobile, isDesktop } = useViewport();
-  const isKu = i18n.language === 'ku';
-  const isRTL = isKu;
-  const showCursor = isDesktop;
-  const [isExiting, setIsExiting] = useState(false);
-  const exitTarget = useRef<string>('/signup');
-  const go = useCallback((to: string) => { if (isExiting) return; exitTarget.current = to; setIsExiting(true); setTimeout(() => navigate(to), 300); }, [isExiting, navigate]);
-  const getStarted = useCallback(() => go('/signup'), [go]);
-  const login = useCallback(() => go('/login'), [go]);
-  const toggleLang = () => i18n.changeLanguage(isKu ? 'en' : 'ku');
-  const [menuOpen, setMenuOpen] = useState(false);
-  useEffect(() => { if (!isMobile) setMenuOpen(false); }, [isMobile]);
-  const cur = showCursor ? 'none' : 'auto';
+  const { i18n } = useTranslation();
+  const { isMobile } = useViewport();
+  const ku = i18n.language === 'ku';
+  const goSignup = useCallback(() => navigate('/signup'), [navigate]);
+  const goLogin = useCallback(() => navigate('/login'), [navigate]);
+  const toggleLang = () => i18n.changeLanguage(ku ? 'en' : 'ku');
+  const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+
+  const modules = [
+    ['accounting', 'Accounting', 'ژمێریاری', 'Double-entry GL, journals, chart of accounts and statements that always reconcile.', 'GL دووجاره‌یی، تۆمار، پێرستی هەژمار و ڕاپۆرتی دارایی کە هەمیشە دەگونجێن.'],
+    ['sales', 'Sales & CRM', 'فرۆشتن و CRM', 'Quotes, sales orders, invoices and a pipeline — from first lead to collected payment.', 'نرخنامە، داواکاری فرۆشتن، پسووڵە و پایپلاین — لە یەکەم لیدەوە تا وەرگرتنی پارە.'],
+    ['inventory', 'Inventory', 'کۆگا', 'Multi-warehouse stock, items, cycle counts and reorder points that update on every sale.', 'ستۆکی فرە-کۆگا، کاڵا، ژماردن و خاڵی دووبارە داواکردن کە لەگەڵ هەر فرۆشتنێک نوێ دەبن.'],
+    ['pos', 'Point of Sale', 'خاڵی فرۆشتن', 'A fast retail terminal that works offline and syncs the moment you are back online.', 'تێرمیناڵی خێرا کە ئۆفلاین کاردەکات و هاوکات دەبێت کاتێک ئۆنلاین دەبیتەوە.'],
+    ['hr', 'HR & Payroll', 'کارمەند و مووچە', 'Employees, attendance, leave and Iraq-ready payroll with payslips in a couple of clicks.', 'کارمەند، ئامادەبوون، پشوو و مووچەی ئامادە بۆ عێراق لەگەڵ پسووڵەی مووچە بە چەند کلیکێک.'],
+    ['reports', 'Reports', 'ڕاپۆرتەکان', 'Live dashboards and drill-down reports across every module — no exports, no waiting.', 'داشبۆردی زیندوو و ڕاپۆرتی ورد بەسەر هەموو مۆدیوولێکدا — بێ هەناردن، بێ چاوەڕوانی.'],
+  ];
+  const splitFeatures = [
+    ['cmd', 'Command palette (⌘K)', 'پالێتی فەرمان (⌘K)', 'Jump to any record, run any action, in a keystroke. Built for power users.', 'بە یەک کلیل بچۆ بۆ هەر تۆمارێک و هەر کارێک ئەنجام بدە. بۆ بەکارهێنەرە بەهێزەکان.'],
+    ['globe', 'Arabic · Kurdish · English', 'عەرەبی · کوردی · ئینگلیزی', 'Full right-to-left support and live language switching, with no compromise on layout.', 'پشتگیری تەواوی RTL و گۆڕینی زمانی زیندوو، بەبێ زیان بە ڕووکار.'],
+    ['shield', 'Role-based access', 'دەستڕاگەیشتنی ڕۆڵ-بنەما', 'Owners, accountants, cashiers and managers each see exactly what they need — nothing more.', 'خاوەن، ژمێریار، فرۆشیار و بەڕێوەبەر هەریەکە تەنها ئەوە دەبینێت کە پێویستیەتی — نە زیاتر.'],
+    ['offline', 'Works offline', 'ئۆفلاین کاردەکات', 'Keep selling and recording during outages — Vertex syncs automatically when you reconnect.', 'لە کاتی پچڕانی کارەبادا بەردەوام بفرۆشە و تۆمار بکە — Vertex خۆکارانە هاوکات دەبێت.'],
+  ];
+  const iraqItems = [
+    ['pos', 'IQD & USD', 'IQD و USD', 'Dual-currency everywhere, with live rates and clean reporting in both.', 'دوو دراو لە هەموو شوێنێک، لەگەڵ نرخی زیندوو و ڕاپۆرتی پاک بە هەردووکیان.'],
+    ['file', 'E-invoicing', 'e-فاکتورە', 'Generate and submit compliant electronic invoices straight from the app.', 'پسووڵەی ئەلیکترۆنی یاسایی دروست بکە و ڕاستەوخۆ لە ئەپەکەوە بینێرە.'],
+    ['globe', '3 languages', '٣ زمان', 'Arabic, Kurdish and English — switch instantly, fully right-to-left.', 'عەرەبی، کوردی و ئینگلیزی — دەستبەجێ بگۆڕە، بە تەواوی RTL.'],
+    ['whatsapp', 'WhatsApp', 'واتساپ', 'Send invoices, quotes and reminders to customers over WhatsApp.', 'پسووڵە، نرخنامە و بیرخستنەوە بۆ کڕیاران بە واتساپ بنێرە.'],
+  ];
+  const stats = [['6+', 'Modules in one app', 'مۆدیوول لە یەک ئەپدا'], ['3', 'Languages, full RTL', 'زمان، RTL تەواو'], ['99.9%', 'Uptime, cloud-hosted', 'بەردەوامی، کلاود'], ['<5min', 'To first invoice', 'بۆ یەکەم پسووڵە']];
 
   return (
-    <AnimatePresence mode="wait">
-      {!isExiting && (
-        <motion.div key="landing" data-theme="dark" dir={isRTL ? 'rtl' : 'ltr'}
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3 }}
-          style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--ink-900)', fontFamily: isRTL ? 'var(--font-rtl)' : 'var(--font-ui)', cursor: cur, overflowX: 'hidden', position: 'relative' }}>
-          {showCursor && <CustomCursor />}
-          {/* dotted grid + glow orbs (kit marketing atmosphere) */}
-          <div aria-hidden style={{ position: 'fixed', inset: 0, pointerEvents: 'none', backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '34px 34px', WebkitMaskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%, #000 35%, transparent 75%)', maskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%, #000 35%, transparent 75%)' }} />
-          <div aria-hidden style={{ position: 'fixed', top: '-10%', insetInlineStart: '8%', width: 460, height: 460, borderRadius: '50%', background: 'radial-gradient(circle, color-mix(in srgb, var(--accent-500) 30%, transparent), transparent 70%)', filter: 'blur(80px)', pointerEvents: 'none' }} />
-          <div aria-hidden style={{ position: 'fixed', bottom: '0%', insetInlineEnd: '6%', width: 420, height: 420, borderRadius: '50%', background: 'radial-gradient(circle, rgba(46,143,224,0.22), transparent 70%)', filter: 'blur(90px)', pointerEvents: 'none' }} />
+    <div className="vx-landing" data-theme="dark" dir={ku ? 'rtl' : 'ltr'}>
+      <style>{LANDING_CSS}</style>
+      <div className="bg-fx"><div className="grid-fx" /><div className="orb orb-1" /><div className="orb orb-2" /></div>
 
-          <style>{`
-            .lp-nav-d { display: flex !important; } .lp-nav-m { display: none !important; }
-            @media (max-width: 639px) { .lp-nav-d { display: none !important; } .lp-nav-m { display: flex !important; } }
-          `}</style>
+      <nav><div className="wrap nav-in">
+        <a className="brand" href="#" onClick={(e) => e.preventDefault()}><LogoMark />Vertex</a>
+        <div className="nav-links">
+          <a onClick={() => scrollTo('modules')}>{T(ku, 'Modules', 'مۆدیوولەکان')}</a>
+          <a onClick={() => scrollTo('product')}>{T(ku, 'Product', 'بەرهەم')}</a>
+          <a onClick={() => scrollTo('iraq')}>{T(ku, 'Built for Iraq', 'بۆ عێراق')}</a>
+          <a onClick={() => scrollTo('pricing')}>{T(ku, 'Pricing', 'نرخ')}</a>
+        </div>
+        <div className="nav-cta">
+          <button className="btn-text" onClick={toggleLang}>{ku ? 'English' : 'کوردی'}</button>
+          <button className="btn-text" onClick={goLogin}>{T(ku, 'Sign in', 'چوونەژوورەوە')}</button>
+          {!isMobile && <button className="btn btn-accent" onClick={goSignup}>{T(ku, 'Get started', 'دەستپێبکە')}</button>}
+        </div>
+      </div></nav>
 
-          {/* Navbar — kit glass top bar */}
-          <nav style={{ position: 'fixed', top: 0, insetInline: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 clamp(16px, 5vw, 72px)', height: 60, background: 'var(--glass-bg)', WebkitBackdropFilter: 'var(--glass-blur)', backdropFilter: 'var(--glass-blur)', borderBottom: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ width: 34, height: 34, borderRadius: 9, background: 'linear-gradient(135deg, var(--accent-400), var(--accent-700))', boxShadow: 'var(--accent-glow)', flexShrink: 0 }} />
-              <span style={{ ...display, fontSize: 19, letterSpacing: '-0.02em' }}>ERP<span style={{ color: 'var(--accent-400)' }}>IQ</span></span>
+      {/* HERO */}
+      <section className="hero"><div className="wrap">
+        <span className="chip"><span className="dot" />{T(ku, 'Built for Iraqi business · IQD & USD', 'دروستکراو بۆ بزنسی عێراقی · IQD و USD')}</span>
+        <h1>{T(ku, 'Run your whole business on ', 'هەموو بزنسەکەت بەڕێوەببە لەسەر ')}<span className="hl">{T(ku, 'one platform.', 'یەک پلاتفۆرم.')}</span></h1>
+        <p className="sub">{T(ku, 'Vertex unifies accounting, sales, inventory, POS, and payroll into a single, fast, Arabic-Kurdish-English system — engineered for how SMBs in Iraq actually operate.', 'Vertex ژمێریاری، فرۆشتن، کۆگا، POS و مووچە یەکدەخات لە یەک سیستەمی خێرا و عەرەبی-کوردی-ئینگلیزیدا — دروستکراو بۆ چۆنیەتی کارکردنی ڕاستەقینەی بزنسەکانی عێراق.')}</p>
+        <div className="hero-cta">
+          <button className="btn btn-accent btn-lg" onClick={goSignup}>{T(ku, 'Start free trial', 'تاقیکردنەوەی بێبەرامبەر')}<Svg p="arrow" w={20} /></button>
+          <button className="btn btn-ghost btn-lg" onClick={() => scrollTo('product')}><Svg p="play" w={20} />{T(ku, 'Watch demo', 'بینینی نمایش')}</button>
+        </div>
+        <div className="hero-note">
+          {[['No card required', 'بێ پێویستی کارت'], ['Set up in minutes', 'ڕێکخستن لە چەند خولەکدا'], ['E-invoice ready', 'ئامادە بۆ e-فاکتورە']].map((n, i) => (
+            <span key={i}><Svg p="check" w={15} />{T(ku, n[0], n[1])}</span>
+          ))}
+        </div>
+        <div className="mock-wrap">
+          <div className="mock-glow" />
+          <div className="mock">
+            <div className="mock-bar"><span className="tl" style={{ background: '#E23D5C' }} /><span className="tl" style={{ background: '#E0900B' }} /><span className="tl" style={{ background: '#1FAE63' }} /><span style={{ marginInlineStart: 14, fontSize: 12, color: 'var(--ink-500)', fontFamily: 'var(--font-mono)' }}>app.vertex.iq/dashboard</span></div>
+            <div className="mock-body">
+              <div className="mk-side">
+                <div className="mk-logo"><LogoMark size={20} />Vertex</div>
+                <div className="mk-nav">
+                  {[['dash', 'Dashboard', 'داشبۆرد', true], ['file', 'Invoices', 'پسووڵە', false], ['sales', 'Sales', 'فرۆشتن', false], ['inventory', 'Inventory', 'کۆگا', false], ['accounting', 'Accounting', 'ژمێریاری', false]].map((m, i) => (
+                    <div key={i} className={`mk-item${m[3] ? ' on' : ''}`}><Svg p={m[0] as string} w={15} />{T(ku, m[1] as string, m[2] as string)}</div>
+                  ))}
+                </div>
+              </div>
+              <div className="mk-main">
+                <div className="mk-kpis">
+                  <div className="mk-kpi"><div className="lab">{T(ku, 'Revenue', 'داهات')}</div><div className="val">182.4M</div><div className="d">↑ 12.4%</div></div>
+                  <div className="mk-kpi"><div className="lab">{T(ku, 'Outstanding', 'ماوە')}</div><div className="val">38.7M</div><div className="d" style={{ color: 'var(--warning-fg)' }}>↓ 3.2%</div></div>
+                  <div className="mk-kpi"><div className="lab">{T(ku, 'Paid invoices', 'پسووڵەی دراو')}</div><div className="val">312</div><div className="d">↑ 8.1%</div></div>
+                </div>
+                <div className="mk-chart">
+                  <div className="ct">{T(ku, 'Revenue · last 12 months · IQD', 'داهات · ١٢ مانگی ڕابردوو · IQD')}</div>
+                  <svg viewBox="0 0 600 150" preserveAspectRatio="none" style={{ width: '100%', height: 150 }}>
+                    <defs><linearGradient id="mg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--accent-500)" stopOpacity="0.35" /><stop offset="100%" stopColor="var(--accent-500)" stopOpacity="0" /></linearGradient></defs>
+                    <path d="M0 120 L55 110 L110 116 L165 92 L220 98 L275 74 L330 82 L385 58 L440 64 L495 40 L550 30 L600 22 L600 150 L0 150 Z" fill="url(#mg)" />
+                    <path d="M0 120 L55 110 L110 116 L165 92 L220 98 L275 74 L330 82 L385 58 L440 64 L495 40 L550 30 L600 22" fill="none" stroke="var(--accent-500)" strokeWidth="2.5" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              </div>
             </div>
-            <div className="lp-nav-d" style={{ alignItems: 'center', gap: 10 }}>
-              <button data-hoverable onClick={toggleLang} aria-label={t('landing_nav_switch_lang')} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', color: 'var(--ink-700)', padding: '7px 14px', fontSize: 13, cursor: cur, fontWeight: 600 }}>{isKu ? 'English' : 'کوردی'}</button>
-              <button data-hoverable onClick={login} style={{ background: 'transparent', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-md)', color: 'var(--ink-900)', padding: '7px 18px', fontSize: 14, cursor: cur, fontWeight: 600 }}>{t('auth_login')}</button>
-              <button data-hoverable onClick={getStarted} style={{ ...accentBtn, padding: '8px 18px', fontSize: 14, cursor: cur }}>{t('landing_cta_get_started')}</button>
-            </div>
-            <button onClick={() => setMenuOpen(v => !v)} aria-label={menuOpen ? t('landing_nav_close_menu') : t('landing_nav_open_menu')} aria-expanded={menuOpen} className="lp-nav-m" style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', color: 'var(--ink-700)', width: 40, height: 40, flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5, cursor: cur, padding: 0 }}>
-              <span style={{ width: 18, height: 2, background: 'currentColor', borderRadius: 2, transition: 'transform .2s', transform: menuOpen ? 'translateY(7px) rotate(45deg)' : 'none' }} />
-              <span style={{ width: 18, height: 2, background: 'currentColor', borderRadius: 2, transition: 'opacity .2s', opacity: menuOpen ? 0 : 1 }} />
-              <span style={{ width: 18, height: 2, background: 'currentColor', borderRadius: 2, transition: 'transform .2s', transform: menuOpen ? 'translateY(-7px) rotate(-45deg)' : 'none' }} />
-            </button>
-          </nav>
+          </div>
+        </div>
+      </div></section>
 
-          <AnimatePresence>
-            {menuOpen && (
-              <motion.div key="m" initial={{ y: -8 }} animate={{ y: 0 }} exit={{ y: -8 }} transition={{ duration: 0.2 }} style={{ position: 'fixed', top: 60, insetInline: 0, zIndex: 999, background: 'var(--surface)', borderBottom: '1px solid var(--border)', padding: '16px clamp(16px, 5vw, 72px)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <button onClick={() => { toggleLang(); setMenuOpen(false); }} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', color: 'var(--ink-700)', padding: '10px 16px', fontSize: 14, cursor: 'pointer', textAlign: 'start' }}>{isKu ? 'English' : 'کوردی'}</button>
-                <button onClick={() => { setMenuOpen(false); login(); }} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', color: 'var(--ink-900)', padding: '10px 16px', fontSize: 14, cursor: 'pointer', textAlign: 'start' }}>{t('auth_login')}</button>
-                <button onClick={() => { setMenuOpen(false); getStarted(); }} style={{ ...accentBtn, padding: '10px 16px', fontSize: 14, textAlign: 'start' }}>{t('landing_cta_get_started')}</button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+      {/* LOGOS */}
+      <section className="strip"><div className="wrap">
+        <div className="lbl">{T(ku, 'Trusted by growing businesses across Iraq', 'متمانەی بزنسە گەشەسەندووەکانی سەرتاسەری عێراق')}</div>
+        <div className="logos">{['Zagros Trading', 'Tigris Electronics', 'Al-Rafidain', 'Babylon Hardware', 'Erbil Motors', 'Najaf Pharma'].map(s => <span key={s}>{s}</span>)}</div>
+      </div></section>
 
-          {/* Hero */}
-          <section style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 'clamp(96px, 12vw, 140px) clamp(16px, 5vw, 72px) 60px', position: 'relative', zIndex: 1 }}>
-            <motion.div variants={heroContainer} initial="hidden" animate="visible" style={{ maxWidth: 820 }}>
-              <motion.div variants={heroItem}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'var(--accent-soft)', border: '1px solid color-mix(in srgb, var(--accent-500) 30%, transparent)', borderRadius: 100, padding: '5px 16px', fontSize: 13, fontWeight: 600, color: 'var(--accent-300)', marginBottom: 24 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-400)' }} />{t('landing_badge')}
-                </span>
-              </motion.div>
-              <motion.h1 variants={heroItem} style={{ ...display, fontSize: 'clamp(38px, 6vw, 72px)', lineHeight: 1.05, margin: '0 0 22px', background: 'linear-gradient(135deg, var(--ink-900) 0%, var(--accent-300) 55%, #C9BCFF 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{t('landing_hero_title')}</motion.h1>
-              <motion.p variants={heroItem} style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: 'var(--ink-500)', lineHeight: 1.65, margin: '0 0 40px', maxWidth: 600, marginInline: 'auto' }}>{t('landing_hero_subtitle')}</motion.p>
-              <motion.div variants={heroItem} style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-                <motion.button data-hoverable onClick={getStarted} whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} style={{ ...accentBtn, padding: '15px 36px', fontSize: 16, cursor: cur }}>{t('landing_cta_start_free')}</motion.button>
-                <motion.button data-hoverable onClick={login} whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} style={{ ...ghostBtn, padding: '15px 36px', fontSize: 16, cursor: cur }}>{t('landing_cta_signin')}</motion.button>
-              </motion.div>
-              <motion.div variants={heroItem} style={{ display: 'flex', gap: 'clamp(24px, 4vw, 48px)', justifyContent: 'center', marginTop: 56, flexWrap: 'wrap' }}>
-                {[{ num: '500+', key: 'landing_stat_companies' }, { num: '50K+', key: 'landing_stat_users' }, { num: '99.9%', key: 'landing_stat_uptime' }].map(s => (
-                  <div key={s.num} style={{ textAlign: 'center' }}>
-                    <div style={{ ...display, fontSize: 'clamp(24px, 3vw, 36px)', color: 'var(--accent-400)', fontVariantNumeric: 'tabular-nums' }}>{s.num}</div>
-                    <div style={{ fontSize: 13, color: 'var(--ink-400)', marginTop: 4 }}>{t(s.key)}</div>
-                  </div>
-                ))}
-              </motion.div>
-            </motion.div>
-          </section>
+      {/* MODULES */}
+      <section className="sec" id="modules"><div className="wrap">
+        <div className="sec-head">
+          <div className="ey">{T(ku, 'One system', 'یەک سیستەم')}</div>
+          <h2>{T(ku, 'Every part of your business, connected.', 'هەموو بەشێکی بزنسەکەت، پەیوەستکراو.')}</h2>
+          <p>{T(ku, 'Stop stitching together spreadsheets and disconnected apps. Vertex runs your operations end-to-end, with every module sharing the same data in real time.', 'وازبهێنە لە یەکخستنی spreadsheet و ئەپی جیاواز. Vertex کارەکانت سەرتاسەری بەڕێوەدەبات، هەموو مۆدیوولێک هەمان داتا بە کاتی ڕاستەقینە بەکاردەهێنن.')}</p>
+        </div>
+        <div className="feat-grid">
+          {modules.map((m, i) => (
+            <div className="feat" key={i}><div className="ic"><Svg p={m[0]} /></div><h3>{T(ku, m[1], m[2])}</h3><p>{T(ku, m[3], m[4])}</p></div>
+          ))}
+        </div>
+      </div></section>
 
-          {/* Features */}
-          <section style={{ padding: 'clamp(60px, 8vw, 100px) clamp(16px, 5vw, 72px)', background: 'var(--surface-2)', position: 'relative', zIndex: 1 }}>
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={rise} style={{ textAlign: 'center', marginBottom: 52 }}>
-              <h2 style={{ ...display, fontSize: 'clamp(28px, 4vw, 46px)', margin: '0 0 14px' }}>{t('landing_features_title')}</h2>
-              <p style={{ color: 'var(--ink-500)', fontSize: 16, maxWidth: 520, margin: '0 auto' }}>{t('landing_features_subtitle')}</p>
-            </motion.div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 18, maxWidth: 1180, margin: '0 auto' }}>
-              {featureKeys.map((f, i) => (
-                <motion.div key={i} data-hoverable custom={i} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }} variants={rise} whileHover={{ y: -4 }} style={{ ...card, padding: '26px 24px', cursor: cur }}>
-                  <span style={{ display: 'inline-flex', width: 48, height: 48, borderRadius: 'var(--radius-md)', background: 'var(--accent-soft)', color: 'var(--accent-400)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>{featureIcons[i]}</span>
-                  <h3 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 8px', color: 'var(--ink-900)' }}>{t(f.title)}</h3>
-                  <p style={{ fontSize: 14, color: 'var(--ink-500)', margin: 0, lineHeight: 1.6 }}>{t(f.desc)}</p>
-                </motion.div>
+      {/* PRODUCT SPLIT */}
+      <section className="sec" id="product"><div className="wrap">
+        <div className="split">
+          <div>
+            <div className="ey">{T(ku, 'Built to move fast', 'دروستکراو بۆ خێرایی')}</div>
+            <h2>{T(ku, 'A console your team actually enjoys using.', 'کۆنسۆڵێک کە تیمەکەت بەڕاستی حەزی لێیە.')}</h2>
+            <div className="split-list">
+              {splitFeatures.map((f, i) => (
+                <div className="split-li" key={i}><div className="b"><Svg p={f[0]} w={18} /></div><div><h4>{T(ku, f[1], f[2])}</h4><p>{T(ku, f[3], f[4])}</p></div></div>
               ))}
             </div>
-          </section>
-
-          {/* Plans */}
-          <section style={{ padding: 'clamp(60px, 8vw, 100px) clamp(16px, 5vw, 72px)', position: 'relative', zIndex: 1 }}>
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={rise} style={{ textAlign: 'center', marginBottom: 52 }}>
-              <h2 style={{ ...display, fontSize: 'clamp(28px, 4vw, 46px)', margin: '0 0 14px' }}>{t('landing_plans_title')}</h2>
-              <p style={{ color: 'var(--ink-500)', fontSize: 16 }}>{t('landing_plans_subtitle')}</p>
-            </motion.div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 18, maxWidth: 1000, margin: '0 auto' }}>
-              {planKeys.map((p, i) => (
-                <motion.div key={i} data-hoverable custom={i} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }} variants={rise} whileHover={{ y: -6 }} style={{ ...card, padding: '30px 26px', cursor: cur, position: 'relative', overflow: 'hidden', borderColor: p.highlighted ? 'color-mix(in srgb, var(--accent-500) 45%, transparent)' : 'var(--border)', background: p.highlighted ? 'linear-gradient(180deg, color-mix(in srgb, var(--accent-500) 12%, var(--surface)), var(--surface) 60%)' : 'var(--surface)' }}>
-                  {p.highlighted && <div style={{ position: 'absolute', top: 16, insetInlineEnd: 16, background: 'var(--accent-500)', borderRadius: 100, padding: '3px 12px', fontSize: 11, fontWeight: 700, color: '#fff' }}>{t('landing_plan_popular')}</div>}
-                  <h3 style={{ fontSize: 19, fontWeight: 700, margin: '0 0 8px', color: 'var(--ink-900)' }}>{t(p.name)}</h3>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 22 }}>
-                    <span style={{ ...display, fontSize: 38, color: p.highlighted ? 'var(--accent-400)' : 'var(--ink-900)' }}>{p.price}</span>
-                    <span style={{ fontSize: 14, color: 'var(--ink-400)' }}>{p.period}</span>
-                  </div>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 26px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {p.features.map((fk, fi) => (
-                      <li key={fi} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--ink-700)' }}>
-                        <CheckCircleOutlined style={{ color: p.highlighted ? 'var(--accent-400)' : 'var(--success-fg)', fontSize: 14 }} />{t(fk)}
-                      </li>
-                    ))}
-                  </ul>
-                  <motion.button data-hoverable onClick={getStarted} whileTap={{ scale: 0.97 }} style={p.highlighted ? { ...accentBtn, width: '100%', padding: 12 } : { ...ghostBtn, width: '100%', padding: 12 }}>{t('landing_cta_get_started')}</motion.button>
-                </motion.div>
-              ))}
+          </div>
+          <div className="panel">
+            <div className="mock-bar"><span className="tl" style={{ background: '#E23D5C' }} /><span className="tl" style={{ background: '#E0900B' }} /><span className="tl" style={{ background: '#1FAE63' }} /></div>
+            <div style={{ padding: 22 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}><div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 17 }}>{T(ku, 'Invoices', 'پسووڵەکان')}</div><span className="btn btn-accent" style={{ height: 32, fontSize: 13 }}>+ {T(ku, 'New', 'نوێ')}</span></div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <tbody>
+                  <tr style={{ color: 'var(--ink-500)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em' }}><td style={{ padding: '8px 6px' }}>{T(ku, 'Invoice', 'پسووڵە')}</td><td>{T(ku, 'Customer', 'کڕیار')}</td><td>{T(ku, 'Status', 'دۆخ')}</td><td style={{ textAlign: 'end' }}>{T(ku, 'Amount', 'بڕ')}</td></tr>
+                  {[['INV-0042', 'Al-Rafidain', 'paid', '4,200,000'], ['INV-0041', 'Zagros Foods', 'pending', '1,875,000'], ['INV-0040', 'Tigris', 'overdue', '9,650,000'], ['INV-0039', 'Babylon', 'paid', '2,340,000']].map((r, i) => {
+                    const tag = r[2] === 'paid' ? ['var(--success-bg)', 'var(--success-fg)', T(ku, 'Paid', 'دراو')] : r[2] === 'pending' ? ['var(--warning-bg)', 'var(--warning-fg)', T(ku, 'Pending', 'چاوەڕوان')] : ['var(--danger-bg)', 'var(--danger-fg)', T(ku, 'Overdue', 'دواکەوتوو')];
+                    return (
+                      <tr key={i} style={{ borderTop: '1px solid var(--border)' }}>
+                        <td style={{ padding: '11px 6px', fontFamily: 'var(--font-mono)' }}>{r[0]}</td><td>{r[1]}</td>
+                        <td><span style={{ background: tag[0], color: tag[1], padding: '2px 9px', borderRadius: 999, fontSize: 11, fontWeight: 600 }}>{tag[2]}</span></td>
+                        <td style={{ textAlign: 'end', fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>{r[3]}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          </section>
+          </div>
+        </div>
+      </div></section>
 
-          {/* Testimonials */}
-          <section style={{ padding: 'clamp(60px, 8vw, 100px) clamp(16px, 5vw, 72px)', background: 'var(--surface-2)', position: 'relative', zIndex: 1 }}>
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={rise} style={{ textAlign: 'center', marginBottom: 52 }}>
-              <h2 style={{ ...display, fontSize: 'clamp(28px, 4vw, 46px)', margin: '0 0 14px' }}>{t('landing_testimonials_title')}</h2>
-              <p style={{ color: 'var(--ink-500)', fontSize: 16 }}>{t('landing_testimonials_subtitle')}</p>
-            </motion.div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 18, maxWidth: 1100, margin: '0 auto' }}>
-              {testimonialKeys.map((tm, i) => (
-                <motion.div key={i} data-hoverable custom={i} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }} variants={rise} whileHover={{ y: -4 }} style={{ ...card, padding: '26px 24px', cursor: cur }}>
-                  <div style={{ display: 'flex', gap: 4, marginBottom: 14 }}>{Array.from({ length: tm.rating }).map((_, si) => <StarFilled key={si} style={{ color: 'var(--warning-500)', fontSize: 14 }} />)}</div>
-                  <p style={{ fontSize: 15, color: 'var(--ink-700)', lineHeight: 1.7, margin: '0 0 20px' }}>&ldquo;{t(tm.text)}&rdquo;</p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, var(--accent-400), var(--accent-600))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16, color: '#fff' }}>{t(tm.name).charAt(0)}</div>
-                    <div><div style={{ fontWeight: 600, fontSize: 14, color: 'var(--ink-900)' }}>{t(tm.name)}</div><div style={{ fontSize: 12, color: 'var(--ink-400)' }}>{t(tm.role)}</div></div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </section>
+      {/* BUILT FOR IRAQ */}
+      <section className="sec" id="iraq"><div className="wrap"><div className="iraq">
+        <div className="ey">{T(ku, 'Local by design', 'خۆماڵی بە دیزاین')}</div>
+        <h2>{T(ku, 'Made for the way Iraq does business.', 'دروستکراو بۆ شێوازی بازرگانی عێراق.')}</h2>
+        <div className="iraq-grid">
+          {iraqItems.map((it, i) => (
+            <div className="iraq-it" key={i}><div className="n"><Svg p={it[0]} w={18} />{T(ku, it[1], it[2])}</div><p>{T(ku, it[3], it[4])}</p></div>
+          ))}
+        </div>
+      </div></div></section>
 
-          {/* CTA */}
-          <section style={{ padding: 'clamp(60px, 8vw, 100px) clamp(16px, 5vw, 72px)', textAlign: 'center', position: 'relative', zIndex: 1 }}>
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={heroContainer} style={{ maxWidth: 700, margin: '0 auto', background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent-500) 14%, var(--surface)), var(--surface))', border: '1px solid color-mix(in srgb, var(--accent-500) 28%, transparent)', borderRadius: 'var(--radius-2xl)', padding: 'clamp(40px, 6vw, 68px) clamp(24px, 4vw, 56px)' }}>
-              <motion.h2 variants={heroItem} style={{ ...display, fontSize: 'clamp(28px, 4vw, 44px)', margin: '0 0 14px' }}>{t('landing_cta_title')}</motion.h2>
-              <motion.p variants={heroItem} style={{ color: 'var(--ink-500)', fontSize: 16, margin: '0 0 34px', lineHeight: 1.65 }}>{t('landing_cta_subtitle')}</motion.p>
-              <motion.div variants={heroItem} style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-                <motion.button data-hoverable onClick={getStarted} whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} style={{ ...accentBtn, padding: '15px 40px', fontSize: 16, cursor: cur }}>{t('landing_cta_signup_now')}</motion.button>
-                <motion.button data-hoverable onClick={login} whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} style={{ ...ghostBtn, padding: '15px 40px', fontSize: 16, cursor: cur }}>{t('landing_cta_signin')}</motion.button>
-              </motion.div>
-            </motion.div>
-          </section>
+      {/* STATS */}
+      <section className="sec" style={{ paddingTop: 0 }}><div className="wrap"><div className="stats">
+        {stats.map((s, i) => <div className="stat" key={i}><div className="num">{s[0]}</div><div className="cap">{T(ku, s[1], s[2])}</div></div>)}
+      </div></div></section>
 
-          {/* Footer */}
-          <footer style={{ borderTop: '1px solid var(--border)', padding: '28px clamp(16px, 5vw, 72px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, color: 'var(--ink-400)', fontSize: 13, position: 'relative', zIndex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ width: 26, height: 26, borderRadius: 7, background: 'linear-gradient(135deg, var(--accent-400), var(--accent-700))', flexShrink: 0 }} />
-              <span style={{ fontWeight: 600, color: 'var(--ink-500)' }}>ERPIQ © {new Date().getFullYear()}</span>
-            </div>
-            <div style={{ display: 'flex', gap: 24 }}>
-              {['landing_footer_features', 'landing_footer_pricing', 'landing_footer_contact'].map(k => (
-                <span key={k} data-hoverable style={{ cursor: cur }}>{t(k)}</span>
-              ))}
-            </div>
-          </footer>
-        </motion.div>
-      )}
-    </AnimatePresence>
+      {/* CTA */}
+      <section className="sec" id="pricing" style={{ paddingTop: 0 }}><div className="wrap"><div className="cta-band">
+        <h2>{T(ku, 'Ready to run Vertex?', 'ئامادەیت بۆ بەکارهێنانی Vertex؟')}</h2>
+        <p>{T(ku, 'Start a free trial today — no credit card, no setup fees. Be invoicing within minutes.', 'ئەمڕۆ تاقیکردنەوەی بێبەرامبەر دەستپێبکە — بێ کارتی بانکی، بێ کرێی ڕێکخستن. لە چەند خولەکدا پسووڵە دەکەیت.')}</p>
+        <div style={{ position: 'relative', display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button className="btn btn-accent btn-lg" onClick={goSignup}>{T(ku, 'Start free trial', 'تاقیکردنەوەی بێبەرامبەر')}</button>
+          <button className="btn btn-ghost btn-lg" onClick={goLogin}>{T(ku, 'Talk to sales', 'پەیوەندی بە فرۆشتن')}</button>
+        </div>
+      </div></div></section>
+
+      {/* FOOTER */}
+      <footer><div className="wrap">
+        <div className="foot-grid">
+          <div className="foot-about">
+            <a className="brand" href="#" onClick={(e) => e.preventDefault()}><LogoMark />Vertex</a>
+            <p>{T(ku, 'The all-in-one ERP built for small and mid-sized businesses across Iraq.', 'ERP-ی هەمەلایەنە دروستکراو بۆ بزنسە بچووک و مامناوەندەکانی سەرتاسەری عێراق.')}</p>
+          </div>
+          <div className="foot-col"><h5>{T(ku, 'Product', 'بەرهەم')}</h5><a onClick={() => scrollTo('modules')}>{T(ku, 'Modules', 'مۆدیوولەکان')}</a><a onClick={() => scrollTo('product')}>{T(ku, 'Product tour', 'گەشتی بەرهەم')}</a><a onClick={() => scrollTo('pricing')}>{T(ku, 'Pricing', 'نرخ')}</a><a onClick={goLogin}>{T(ku, 'Sign in', 'چوونەژوورەوە')}</a></div>
+          <div className="foot-col"><h5>{T(ku, 'Company', 'کۆمپانیا')}</h5><a href="#" onClick={e => e.preventDefault()}>{T(ku, 'About', 'دەربارە')}</a><a href="#" onClick={e => e.preventDefault()}>{T(ku, 'Careers', 'هەلی کار')}</a><a href="#" onClick={e => e.preventDefault()}>{T(ku, 'Contact', 'پەیوەندی')}</a><a href="#" onClick={e => e.preventDefault()}>{T(ku, 'Blog', 'بلۆگ')}</a></div>
+          <div className="foot-col"><h5>{T(ku, 'Resources', 'سەرچاوەکان')}</h5><a href="#" onClick={e => e.preventDefault()}>{T(ku, 'Documentation', 'دۆکیومێنت')}</a><a href="#" onClick={e => e.preventDefault()}>{T(ku, 'Help center', 'ناوەندی یارمەتی')}</a><a href="#" onClick={e => e.preventDefault()}>{T(ku, 'Status', 'دۆخ')}</a><a href="#" onClick={e => e.preventDefault()}>API</a></div>
+        </div>
+        <div className="foot-bot">
+          <span>© {new Date().getFullYear()} Vertex · {T(ku, 'Baghdad, Iraq', 'بەغدا، عێراق')}</span>
+          <span>IQD / USD · {T(ku, 'Operational', 'چالاک')}</span>
+        </div>
+      </div></footer>
+    </div>
   );
 };
 
