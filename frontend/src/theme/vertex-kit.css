@@ -79,6 +79,27 @@ h1, h2, h3, .ant-typography h1, .ant-typography h2, .ant-typography h3,
 }
 .ant-btn:disabled, .ant-btn.ant-btn-disabled { opacity: .5; box-shadow: none !important; }
 
+/* ── FloatButton (help widget) ── The global .ant-btn rules (radius/flex) +
+   theme layers were stretching it into a full-height violet slab on the page
+   edge. Pin it back to a clean kit circle FAB (accent, soft shadow, theme-aware). */
+.ant-float-btn {
+  inline-size: 48px !important;
+  block-size: 48px !important;
+  min-inline-size: 48px !important;
+  inset-block-start: auto !important;
+  border-radius: 999px !important;
+  padding: 0 !important;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg) !important;
+}
+.ant-float-btn .ant-float-btn-body,
+.ant-float-btn .ant-float-btn-content {
+  inline-size: 100% !important;
+  block-size: 100% !important;
+  border-radius: 999px !important;
+}
+.ant-float-btn-group { inline-size: 48px !important; }
+
 /* ───────────────────────────── Cards (kit .vx-card) ─────────────────────────────
    Flat surface, hairline border, 12px radius, gentle hover-lift. Neutralise the
    prior premium-card gradient + accent top-stripe so cards read like the kit. */
