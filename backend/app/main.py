@@ -121,6 +121,13 @@ from app.api import nps as nps_api
 from app.api.internal import health_emit as health_emit_api
 # growth-to-100 § G3 (hardware): per-tenant printer/scanner/drawer/display config.
 from app.api import tenant_hardware as tenant_hardware_api
+# Pool 3 §3.5/§3.6: WMS bins, TMS freight/route, MDM golden-record, BPMN workflow.
+from app.api import wms as wms_api
+from app.api import tms as tms_api
+from app.api import mdm as mdm_api
+from app.api import bpmn as bpmn_api
+# Pool 3 §3.6: public, API-key-authenticated gateway (/api/public/v1) + key mgmt.
+from app.api import public_gateway as public_gateway_api
 from app.api.v1.errors import register_error_handlers
 import os
 
@@ -442,6 +449,14 @@ app.include_router(payroll.router)
 app.include_router(manufacturing.router)
 # Sprint 9.1: Multi-Company
 app.include_router(companies.router)
+# Pool 3 §3.5/§3.6: WMS / TMS / MDM / BPMN modules (engine-backed)
+app.include_router(wms_api.router)
+app.include_router(tms_api.router)
+app.include_router(mdm_api.router)
+app.include_router(bpmn_api.router)
+# Pool 3 §3.6: public API gateway (versioned, API-key auth) + key management.
+for _pub_router in public_gateway_api.ALL_ROUTERS:
+    app.include_router(_pub_router)
 
 # ── Wave A: Sprints 36-44 (P0 generic enterprise modules) ──
 app.include_router(helpdesk.router)

@@ -854,5 +854,28 @@
     "autoSaveFailed": "فشل الحفظ التلقائي. يرجى الحفظ يدوياً."
   },
   "contact_details": "تفاصيل جهة الاتصال",
-  "tax_info": "المعلومات الضريبية"
+  "tax_info": "المعلومات الضريبية",
+  "filters": "عوامل التصفية",
+  "print_list": "طباعة القائمة",
+  "manage_columns": "إدارة الأعمدة",
+  "any_status": "أي حالة",
+  "filter_bar_v2": {
+    "remove_filter": "إزالة الفلتر"
+  },
+  "help.openHelp": "المساعدة والدعم",
+  "role.current": "الدور الحالي: {{role}}",
+  "notifications_v2": {
+    "mock": {
+      "new_invoice_title": "فاتورة جديدة",
+      "new_invoice_body": "‏INV-000007 جاهزة للإرسال",
+      "bill_received_title": "تم استلام فاتورة مورد",
+      "bill_received_body": "تمت الموافقة على ‏BILL-000012",
+      "bank_sync_title": "مزامنة البنك",
+      "bank_sync_body": "٧ سجلات مطابقة جديدة",
+      "return_title": "إرجاع بضاعة",
+      "return_body": "إرجاع للطلب ‏SO-22",
+      "new_lead_title": "عميل محتمل جديد",
+      "new_lead_body": "عميل محتمل جديد في إدارة علاقات العملاء"
+    }
+  }
 }

@@ -58,6 +58,10 @@ def create_invoice_from_pos_order(org_id: str, order: dict, lines: list[dict], u
     invoice = inv_repo.create({
         "id": str(uuid.uuid4()),
         "org_id": org_id,
+        # Pool 3.2: tag the entity so the auto-posted JE rolls up to the right
+        # company in consolidation. POS is single-entity per shop -> the order's
+        # company_id if present, else the org's primary (head) entity.
+        "company_id": order.get("company_id") or org_id,
         "contact_id": contact_id,
         "invoice_number": inv_number,
         "date": today,
@@ -98,6 +102,7 @@ def create_invoice_from_pos_order(org_id: str, order: dict, lines: list[dict], u
                     "id": invoice["id"],
                     "reference": invoice.get("invoice_number") or invoice["id"],
                     "date": invoice.get("date"),
+                    "company_id": invoice.get("company_id") or org_id,
                     "_je_entry_id": str(_uuid.uuid5(_uuid.NAMESPACE_URL, f"pos-cogs:{invoice['id']}")),
                     "created_by": user_id,
                 },

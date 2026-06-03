@@ -22,6 +22,8 @@ class AccountingService:
         exchange_rate: float = 1.0,
         created_by: str = None,
         entry_id: str = None,
+        company_id: str = None,
+        emit_event: dict = None,
     ) -> dict:
         """
         Create a balanced double-entry journal entry.
@@ -62,8 +64,10 @@ class AccountingService:
             currency_code=currency_code,
             exchange_rate=exchange_rate,
             created_by=created_by,
+            company_id=company_id,
             entry_id=entry_id,
             status="posted",
+            emit_event=emit_event,
         )
 
     @staticmethod
@@ -147,6 +151,22 @@ class AccountingService:
             exchange_rate=float(invoice.get("exchange_rate", 1.0)),
             entry_id=invoice.get("_je_entry_id"),
             created_by=invoice.get("created_by"),
+            company_id=invoice.get("company_id"),
+            # Pool 3.3: couple an "invoice.confirmed" event to the JE write so
+            # downstream handlers (e-invoice/inventory/notification) fire once iff
+            # the JE commits. Ignored unless OUTBOX_HOTPATH_ENABLED is on.
+            emit_event={
+                "event_type": "invoice.confirmed",
+                "payload": {
+                    "invoice_id": invoice["id"],
+                    "org_id": org_id,
+                    "invoice_number": invoice.get("invoice_number"),
+                    "total": float(invoice.get("total") or 0),
+                    "contact_id": invoice.get("contact_id"),
+                    "company_id": invoice.get("company_id") or org_id,
+                },
+                "idempotency_key": f"invoice-confirmed:{invoice['id']}",
+            },
         )
 
     @staticmethod
@@ -174,6 +194,7 @@ class AccountingService:
             source_id=source.get("id"),
             entry_id=source.get("_je_entry_id"),
             created_by=source.get("created_by"),
+            company_id=source.get("company_id"),
         )
 
     @staticmethod
@@ -276,6 +297,7 @@ class AccountingService:
             exchange_rate=float(bill.get("exchange_rate", 1.0)),
             entry_id=bill.get("_je_entry_id"),
             created_by=bill.get("created_by"),
+            company_id=bill.get("company_id"),
         )
 
     @staticmethod

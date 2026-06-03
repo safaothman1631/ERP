@@ -820,6 +820,10 @@
   "deductions": "کەمکراوەکان",
   "net": "پاک",
   "manufacturing": "بەرهەمهێنان",
+  "wms": "بەڕێوەبردنی کۆگا",
+  "tms": "بەڕێوەبردنی گواستنەوە",
+  "mdm": "داتای بنەڕەتی",
+  "bpmn": "ووردفلۆی کار",
   "boms": "لیستی پێکهێنەرەکان",
   "new_bom": "BOM-ی نوێ",
   "edit_bom": "دەستکاری BOM",
@@ -2026,7 +2030,19 @@
     "tab_read": "خوێندراو",
     "mark_all_read": "هەمووی وەک خوێندراو دانێ",
     "empty": "هیچ ئاگادارییەک نییە",
-    "view_all": "بینینی هەموو"
+    "view_all": "بینینی هەموو",
+    "mock": {
+      "new_invoice_title": "پسووڵەی نوێ",
+      "new_invoice_body": "INV-000007 ئامادەیە بۆ ناردن",
+      "bill_received_title": "دانان وەرگیراوە",
+      "bill_received_body": "BILL-000012 پەسەند کرا",
+      "bank_sync_title": "هاوکاتکردنی بانک",
+      "bank_sync_body": "٧ تۆمار هاوکاتی نوێ",
+      "return_title": "گەڕانەوەی کاڵا",
+      "return_body": "گەڕانەوەی کاڵای SO-22",
+      "new_lead_title": "لیدی نوێ",
+      "new_lead_body": "لیدی نوێ لە CRM"
+    }
   },
   "quick_create": {
     "title": "دروستکردنی خێرا",
@@ -2078,7 +2094,8 @@
     "reset": "ڕێکخستنەوە",
     "apply": "جێبەجێکردن",
     "save_preset": "پاشەکەوتکردن",
-    "active_filters": "فلتەرە چالاکەکان"
+    "active_filters": "فلتەرە چالاکەکان",
+    "remove_filter": "لابردنی فلتەر"
   },
   "form_layout": {
     "unsaved_changes": "گۆڕانکارییە پاشەکەوت نەکراوەکان",
@@ -5745,5 +5762,11 @@
   "platform.kpi.locked_users": "بەکارهێنەرە داخراوەکان",
   "platform.orgs.title": "ڕێکخراوەکان",
   "platform.orgs.subtitle": "بەڕێوەبردنی هەموو ڕێکخراوەکانی سەر پلاتفۆرم",
-  "platform.create_org": "دروستکردنی ڕێکخراو"
+  "platform.create_org": "دروستکردنی ڕێکخراو",
+  "filters": "فلتەرەکان",
+  "print_list": "چاپی لیست",
+  "manage_columns": "بەڕێوەبردنی ستوونەکان",
+  "any_status": "هەر دۆخێک",
+  "help.openHelp": "یارمەتی و پشتگیری",
+  "role.current": "ڕۆڵی ئێستا: {{role}}"
 }

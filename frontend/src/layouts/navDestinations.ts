@@ -84,6 +84,10 @@ const SIDE_NAV_LEAVES: ReadonlyArray<readonly [section: string, path: string]> =
   ['manufacturing', '/manufacturing/boms'],
   ['manufacturing', '/manufacturing/orders'],
   ['manufacturing', '/manufacturing/work-centers'],
+  // wms
+  ['wms', '/wms'],
+  // tms
+  ['tms', '/tms'],
   // quality
   ['quality', '/quality'],
   ['quality', '/quality/plans'],
@@ -161,6 +165,10 @@ const SIDE_NAV_LEAVES: ReadonlyArray<readonly [section: string, path: string]> =
   ['multi-entity', '/multi-entity/consolidated-pl'],
   ['multi-entity', '/multi-entity/consolidated-bs'],
   ['multi-entity', '/multi-entity/eliminations'],
+  // mdm
+  ['mdm', '/mdm'],
+  // bpmn
+  ['bpmn', '/bpmn'],
   // iraq-int
   ['iraq-int', '/l10n-iq'],
   ['iraq-int', '/einvoice/dashboard'],

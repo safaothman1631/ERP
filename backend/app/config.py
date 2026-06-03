@@ -130,6 +130,20 @@ class Settings(BaseSettings):
     FS_METRICS_ENABLED: bool = True
     IDEMPOTENCY_ENABLED: bool = True
     GL_MATERIALISATION_ENABLED: bool = False
+    # Accounting reports aggregate JE lines via a single collection_group('lines')
+    # query on the denormalized (org_id, je_date) index instead of an N+1 scan.
+    # Index deployed (zoho-83cda) + line docs backfilled; validated on real data
+    # (journal_balances_cg == legacy, byte-for-byte). Auto-falls-back to the
+    # legacy path on any error, so a missing index/line can never break a report.
+    REPORTS_USE_COLLECTION_GROUP: bool = True
+    # Perpetual inventory valuation (FIFO / moving-average) for COGS instead of
+    # standard cost (item.cost_price). Off = standard-cost behavior preserved.
+    PERPETUAL_VALUATION_ENABLED: bool = False
+    # Pool 3.3: couple an outbox event to the JE write (same transaction) so
+    # downstream handlers (e-invoice, inventory, notification) fire exactly-once.
+    # Off = no event is enqueued from the hot JE/invoice path (zero behavior
+    # change); the create_journal_entry_* `emit_event` arg is simply ignored.
+    OUTBOX_HOTPATH_ENABLED: bool = False
     GENERIC_WRITE_VALIDATION: bool = True
     AUDIT_RETENTION_MONTHS: int = 24
 

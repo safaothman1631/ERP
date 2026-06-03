@@ -38,15 +38,17 @@ const COLOR_MAP: Record<NotificationItem['module'], string> = {
  system: palette.ink500,
 };
 
-// Mock seed — replaced by /api/notifications when backend ready
-function makeMockNotifications(): NotificationItem[] {
+// Mock seed — replaced by /api/notifications when backend ready.
+// Titles/bodies are localized via t() so the demo content honours the active
+// language (ku/ar/en) instead of leaking hardcoded Kurdish into the en UI.
+function makeMockNotifications(t: ReturnType<typeof useTranslation>['t']): NotificationItem[] {
  const now = Date.now();
  return [
- { id: '1', title: 'پسووڵەی نوێ', body: 'INV-000007 ئامادەیە بۆ ناردن', ts: new Date(now - 5 * 60_000), read: false, module: 'invoice', link: '/invoices' },
- { id: '2', title: 'دانان وەرگیراوە', body: 'BILL-000012 پەسەند کرا', ts: new Date(now - 45 * 60_000), read: false, module: 'bill', link: '/bills' },
- { id: '3', title: 'هاوکاتکردنی بانک', body: '٧ تۆمار هاوکاتی نوێ', ts: new Date(now - 3 * 60 * 60_000), read: false, module: 'banking', link: '/banking' },
- { id: '4', title: 'گەڕانەوەی کاڵا', body: 'گەڕانەوەی کاڵای SO-22', ts: new Date(now - 26 * 60 * 60_000), read: true, module: 'inventory', link: '/inventory' },
- { id: '5', title: 'لیدی نوێ', body: 'لیدی نوێ لە CRM', ts: new Date(now - 48 * 60 * 60_000), read: true, module: 'crm', link: '/crm/leads' },
+ { id: '1', title: t('notifications_v2.mock.new_invoice_title', 'New invoice'), body: t('notifications_v2.mock.new_invoice_body', 'INV-000007 is ready to send'), ts: new Date(now - 5 * 60_000), read: false, module: 'invoice', link: '/invoices' },
+ { id: '2', title: t('notifications_v2.mock.bill_received_title', 'Bill received'), body: t('notifications_v2.mock.bill_received_body', 'BILL-000012 was approved'), ts: new Date(now - 45 * 60_000), read: false, module: 'bill', link: '/bills' },
+ { id: '3', title: t('notifications_v2.mock.bank_sync_title', 'Bank sync'), body: t('notifications_v2.mock.bank_sync_body', '7 new matched records'), ts: new Date(now - 3 * 60 * 60_000), read: false, module: 'banking', link: '/banking' },
+ { id: '4', title: t('notifications_v2.mock.return_title', 'Goods return'), body: t('notifications_v2.mock.return_body', 'Return for SO-22'), ts: new Date(now - 26 * 60 * 60_000), read: true, module: 'inventory', link: '/inventory' },
+ { id: '5', title: t('notifications_v2.mock.new_lead_title', 'New lead'), body: t('notifications_v2.mock.new_lead_body', 'New lead in CRM'), ts: new Date(now - 48 * 60 * 60_000), read: true, module: 'crm', link: '/crm/leads' },
  ];
 }
 
@@ -73,7 +75,7 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({ isDark
  const navigate = useNavigate();
  const open = useUiStore((s) => s.notificationsOpen);
  const setOpen = useUiStore((s) => s.setNotificationsOpen);
- const [items, setItems] = React.useState<NotificationItem[]>(makeMockNotifications);
+ const [items, setItems] = React.useState<NotificationItem[]>(() => makeMockNotifications(t));
 
  const today = items.filter((n) => !n.read && isToday(n.ts));
  const earlier = items.filter((n) => !n.read && !isToday(n.ts));
@@ -173,8 +175,10 @@ export default NotificationsDrawer;
 
 // Helper for TopBar to read unread count
 export function useUnreadCount(): number {
+ const { t } = useTranslation();
  const open = useUiStore((s) => s.notificationsOpen);
  // Re-derive on every drawer toggle (cheap). For real backend, replace with store.
- const [n] = React.useState(() => makeMockNotifications().filter((x) => !x.read).length);
+ // The unread count depends only on the `read` flags, not the localized text.
+ const [n] = React.useState(() => makeMockNotifications(t).filter((x) => !x.read).length);
  return open ? 0 : n;
 }

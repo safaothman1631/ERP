@@ -31,6 +31,29 @@ def _account_balance_delta(account_type: str, debit: float, credit: float) -> fl
     return credit - debit
 
 
+def _normalize_je_date(date_val: "datetime | str") -> datetime:
+    """Normalize a JE date (datetime or 'YYYY-MM-DD'[T...]) to a tz-naive datetime.
+
+    Denormalized onto each line doc as ``je_date`` so reports can answer with a
+    single ``collection_group('lines')`` range query instead of an N+1 scan
+    (one subcollection read per journal entry). Mirrors
+    ``report_queries.parse_report_date`` so the line-based range filter matches
+    the legacy header-based filter exactly.
+    """
+    if isinstance(date_val, datetime):
+        return date_val.replace(tzinfo=None) if date_val.tzinfo else date_val
+    if isinstance(date_val, str):
+        try:
+            s = date_val.replace(" ", "T").rstrip("Z")
+            if len(s) == 10:
+                s += "T00:00:00"
+            parsed = datetime.fromisoformat(s)
+            return parsed.replace(tzinfo=None) if parsed.tzinfo else parsed
+        except Exception:
+            pass
+    return datetime.utcnow()
+
+
 def _allocate_sequence_number(
     transaction: fs.Transaction,
     db: Any,
@@ -77,13 +100,18 @@ def create_journal_entry_in_transaction(
     currency_code: str = "IQD",
     exchange_rate: float = 1.0,
     created_by: str | None = None,
+    company_id: str | None = None,
     entry_id: str | None = None,
     entry_number: str | None = None,
     status: str = "posted",
     extra_header: dict[str, Any] | None = None,
+    emit_event: dict[str, Any] | None = None,
 ) -> tuple[dict, list[str]]:
     now = datetime.utcnow()
     journal_id = entry_id or str(uuid.uuid4())
+    # Consolidation: each JE belongs to a legal entity (company) within the org.
+    # Defaults to org_id so single-entity orgs are unchanged (primary entity).
+    entity_id = company_id or org_id
     journal_ref = db.collection("journal_entries").document(journal_id)
 
     # Build account refs + line entries (pure — no transaction ops yet).
@@ -128,6 +156,7 @@ def create_journal_entry_in_transaction(
 
     header = {
         "org_id": org_id,
+        "company_id": entity_id,
         "entry_number": number,
         "date": date,
         "description": description,
@@ -153,12 +182,19 @@ def create_journal_entry_in_transaction(
     # === WRITES (only after every read above) ===
     transaction.set(journal_ref, header)
 
+    # Denormalized onto each line so accounting reports can aggregate with ONE
+    # collection_group('lines') range query (org_id + je_date) instead of an
+    # N+1 scan. Void entries are excluded report-side via the header status.
+    je_date_norm = _normalize_je_date(date)
     for line in line_entries:
         payload = dict(line["line_payload"])
         payload["sort_order"] = line["sort_order"]
         payload["account_id"] = line["account_id"]
         payload["debit"] = line["debit"]
         payload["credit"] = line["credit"]
+        payload["org_id"] = org_id
+        payload["company_id"] = entity_id
+        payload["je_date"] = je_date_norm
         transaction.set(journal_ref.collection("lines").document(line["line_id"]), payload)
 
     per_account_delta: dict[str, float] = {}
@@ -201,6 +237,25 @@ def create_journal_entry_in_transaction(
             )
             raise
 
+    # Pool 3.3: optionally couple an outbox event to this JE write so a downstream
+    # handler fires exactly-once iff the JE commits. LAST write in the transaction
+    # (after gl_materialisation's own reads) to preserve Firestore's reads-first
+    # rule. Flag-gated: off => emit_event is ignored (zero behavior change).
+    if emit_event and emit_event.get("event_type"):
+        from app.config import settings as _settings
+
+        if getattr(_settings, "OUTBOX_HOTPATH_ENABLED", False):
+            from app.firestore.outbox import enqueue_in_transaction
+
+            enqueue_in_transaction(
+                transaction,
+                db,
+                org_id,
+                emit_event["event_type"],
+                emit_event.get("payload") or {},
+                idempotency_key=emit_event.get("idempotency_key"),
+            )
+
     return {"id": journal_id, **header}, list(account_refs.keys())
 
 
@@ -216,10 +271,12 @@ def create_journal_entry_atomic(
     currency_code: str = "IQD",
     exchange_rate: float = 1.0,
     created_by: str | None = None,
+    company_id: str | None = None,
     entry_id: str | None = None,
     entry_number: str | None = None,
     status: str = "posted",
     extra_header: dict[str, Any] | None = None,
+    emit_event: dict[str, Any] | None = None,
 ) -> dict:
     db = get_db()
 
@@ -238,10 +295,12 @@ def create_journal_entry_atomic(
             currency_code=currency_code,
             exchange_rate=exchange_rate,
             created_by=created_by,
+            company_id=company_id,
             entry_id=entry_id,
             entry_number=entry_number,
             status=status,
             extra_header=extra_header,
+            emit_event=emit_event,
         )
 
     journal, touched_accounts = _create(db.transaction())

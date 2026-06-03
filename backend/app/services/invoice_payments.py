@@ -140,6 +140,7 @@ def create_payment_received_with_je_atomic(
     created_by: str | None = None,
     currency_code: str = "IQD",
     exchange_rate: float = 1.0,
+    company_id: str | None = None,
 ) -> dict:
     """P0 Fix 2 — create payments_received doc + invoice balances + a
     ``Dr Cash/Bank / Cr Accounts Receivable`` journal entry, all in ONE Firestore
@@ -189,6 +190,13 @@ def create_payment_received_with_je_atomic(
             inv_refs.append((ref, inv_id))
             inv_snaps.append(ref.get(transaction=transaction))
 
+        # Pool 3.2: tag the receipt JE with the paid invoice's entity so it rolls
+        # up to the right company in consolidation. Explicit company_id wins; else
+        # inherit from the (already-read) first invoice; else default to org head.
+        je_company_id = company_id
+        if je_company_id is None and inv_snaps and inv_snaps[0].exists:
+            je_company_id = (inv_snaps[0].to_dict() or {}).get("company_id")
+
         journal, _touched = create_journal_entry_in_transaction(
             transaction, db, org_id,
             date=payment_data.get("date") or now,
@@ -199,6 +207,7 @@ def create_payment_received_with_je_atomic(
             currency_code=currency_code,
             exchange_rate=exchange_rate,
             created_by=created_by,
+            company_id=je_company_id,
             entry_id=str(uuid.uuid5(uuid.NAMESPACE_URL, f"receipt-je:{payment_id}")),
         )
         payload["journal_entry_id"] = journal["id"]

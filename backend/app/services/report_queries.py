@@ -77,11 +77,14 @@ def stream_journal_entries(
     yield from collect_journal_entries(org_id, start=start, end=end, max_docs=max_docs)
 
 
-def journal_balances(
+def _journal_balances_legacy(
     org_id: str,
     start: datetime | None = None,
     end: datetime | None = None,
 ) -> dict[str, dict[str, float]]:
+    """Legacy aggregation: stream JE headers + read each entry's lines
+    subcollection (1 + N reads). Kept as the correctness oracle and the
+    automatic fallback for ``journal_balances``."""
     from app.firestore.journals import JournalEntryRepository
 
     repo = JournalEntryRepository(org_id)
@@ -100,6 +103,88 @@ def journal_balances(
                 balances[account_id]["debit"] += float(line.get("debit", 0) or 0)
                 balances[account_id]["credit"] += float(line.get("credit", 0) or 0)
     return balances
+
+
+def journal_balances_cg(
+    org_id: str,
+    start: datetime | None = None,
+    end: datetime | None = None,
+) -> dict[str, dict[str, float]]:
+    """Fast aggregation via a SINGLE ``collection_group('lines')`` query over the
+    denormalized ``(org_id, je_date)`` index — replaces the legacy 1 + N read
+    pattern. ``order_by('je_date')`` scopes the collection-group to journal-entry
+    lines only (bill/PO/cart 'lines' subcollections carry no ``je_date``). Lines
+    of voided entries are excluded so the result equals
+    ``_journal_balances_legacy`` exactly."""
+    import logging
+
+    from app.firebase_client import get_db
+
+    db = get_db()
+
+    # Voided JE ids (rare) — excluded to match the legacy skip of status=="void".
+    # Queried directly (indexed) rather than streaming every header.
+    void_ids: set[str] = set()
+    try:
+        vq = (
+            db.collection("journal_entries")
+            .where("org_id", "==", org_id)
+            .where("status", "==", "void")
+        )
+        void_ids = {snap.id for snap in vq.stream()}
+    except Exception:
+        logging.getLogger(__name__).warning(
+            "void-header query failed; scanning headers", exc_info=True
+        )
+        from app.firestore.journals import JournalEntryRepository
+
+        for entry in JournalEntryRepository(org_id).stream_org_docs():
+            if entry.get("status") == "void":
+                void_ids.add(entry.get("id"))
+
+    query = db.collection_group("lines").where("org_id", "==", org_id).order_by("je_date")
+    if start is not None:
+        query = query.where("je_date", ">=", start)
+    if end is not None:
+        query = query.where("je_date", "<=", end)
+
+    balances: dict[str, dict[str, float]] = defaultdict(
+        lambda: {"debit": 0.0, "credit": 0.0}
+    )
+    for snap in query.stream():
+        parent_doc = snap.reference.parent.parent  # journal_entries/{id}
+        if parent_doc is not None and parent_doc.id in void_ids:
+            continue
+        line = snap.to_dict() or {}
+        account_id = line.get("account_id", "")
+        balances[account_id]["debit"] += float(line.get("debit", 0) or 0)
+        balances[account_id]["credit"] += float(line.get("credit", 0) or 0)
+    return balances
+
+
+def journal_balances(
+    org_id: str,
+    start: datetime | None = None,
+    end: datetime | None = None,
+) -> dict[str, dict[str, float]]:
+    """Account debit/credit totals from posted journal entries in ``[start, end]``.
+
+    Dispatches to the fast collection-group path when
+    ``REPORTS_USE_COLLECTION_GROUP`` is enabled, with an automatic fallback to
+    the legacy 1 + N implementation on any error — so a missing index or
+    un-backfilled line can never break a report."""
+    from app.config import settings
+
+    if getattr(settings, "REPORTS_USE_COLLECTION_GROUP", False):
+        try:
+            return journal_balances_cg(org_id, start=start, end=end)
+        except Exception:
+            import logging
+
+            logging.getLogger(__name__).exception(
+                "journal_balances_cg failed; falling back to legacy"
+            )
+    return _journal_balances_legacy(org_id, start=start, end=end)
 
 
 def journal_balances_for_range(

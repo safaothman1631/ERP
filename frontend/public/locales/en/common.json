@@ -453,7 +453,8 @@
     "placeholder": "Search…"
   },
   "filter_bar_v2": {
-    "clear_all": "Clear all"
+    "clear_all": "Clear all",
+    "remove_filter": "Remove filter"
   },
   "form_layout": {
     "save_and_new": "Save & New",
@@ -496,7 +497,19 @@
     "resize": "Drag to resize"
   },
   "notifications_v2": {
-    "unread_count": "{{n}} unread notifications"
+    "unread_count": "{{n}} unread notifications",
+    "mock": {
+      "new_invoice_title": "New invoice",
+      "new_invoice_body": "INV-000007 is ready to send",
+      "bill_received_title": "Bill received",
+      "bill_received_body": "BILL-000012 was approved",
+      "bank_sync_title": "Bank sync",
+      "bank_sync_body": "7 new matched records",
+      "return_title": "Goods return",
+      "return_body": "Return for SO-22",
+      "new_lead_title": "New lead",
+      "new_lead_body": "New lead in CRM"
+    }
   },
   "marketing": {
     "marketing": "Marketing",
@@ -814,6 +827,14 @@
     "desc_price_lists": "Flexible pricing catalogs by channel",
     "desc_serials": "Track individual units by serial / IMEI",
     "manufacturing_blurb": "Bills of materials, orders, and work centers",
+    "wms_blurb": "Bins, put-away, and picking across warehouses",
+    "desc_wms": "Storage bins, put-away, and pick allocation",
+    "tms_blurb": "Carriers, shipments, freight rating, and routing",
+    "desc_tms": "Carriers, shipments, freight quotes, and routes",
+    "mdm_blurb": "Golden records, deduplication, and data governance",
+    "desc_mdm": "Golden records, duplicate detection, and merge",
+    "bpmn_blurb": "Process definitions, instances, and approvals",
+    "desc_bpmn": "Process definitions, running instances, and steps",
     "desc_boms": "Product structures and material recipes",
     "desc_mfg_orders": "Production runs and execution status",
     "desc_work_centers": "Capacity, routings, and workstations",
@@ -2346,5 +2367,11 @@
   },
   "pwa": {
     "update_available": "Update available — click to reload"
-  }
+  },
+  "filters": "Filters",
+  "print_list": "Print list",
+  "manage_columns": "Manage columns",
+  "any_status": "Any status",
+  "help.openHelp": "Help & support",
+  "role.current": "Current role: {{role}}"
 }

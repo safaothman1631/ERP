@@ -62,34 +62,29 @@ firebase deploy --only firestore:indexes --project zoho-83cda
 
 ---
 
-## 🔴 پۆل ٣ — Feature-ی گەورە (تیم + ڕۆژانی فۆکەس)
+## ✅ پۆل ٣ — Feature-ی گەورە (تەواوبوو 2026-06-03)
 
-### ٣.١ Reports N+1 optimization
-**کێشە:** هەر ڕاپۆرتێک یەک subcollection read بۆ هەر JE دەکات (N+1).
-**چۆن:**
-1. لە `journal_entry_atomic.py::create_journal_entry_in_transaction`، `org_id` + `date` زیاد بکە بۆ هەر line doc (denormalize).
-2. `firestore.indexes.json`: collectionGroup index لەسەر `lines (org_id, date)`.
-3. `report_queries.py::journal_balances` بنووسەرەوە: `db.collection_group("lines").where(org_id).where(date range)` — یەک query لەبری N.
-4. **Backfill:** سکریپتێک بۆ زیادکردنی org_id/date بۆ line doc-ـە کۆنەکان.
-> پێویستی بە index deploy + backfill + تاقیکردنەوەی داتای ڕاستەقینە هەیە.
+**هەر ٦ بەشەکە جێبەجێکران + wire + validated** (backend 1619 passed / 3 pre-existing · frontend tsc 0 · build 0 · vitest 1321 · هەموو gate سەوز). **٠ commit/deploy تا ئەو کاتە.**
 
-### ٣.٢ Consolidation (چەند-کۆمپانیا)
-**ئێستا:** `companies.py:213` تەنها `eliminated=True` دادەنێت، JE تۆمار ناکات.
-**چۆن:** (a) `company_id` زیاد بکە بۆ هەموو JE؛ (b) per-entity trial balance؛ (c) elimination JE بۆ intercompany (AR↔AP، sales↔purchases)؛ (d) ownership% + minority interest؛ (e) consolidated report کە چەند entity کۆدەکات. ڕێبەر: `_deltas/P1-modules-IMPLEMENTATION.md`.
+### ٣.١ Reports N+1 ✅ — collection_group + **چالاککراو (flag ON)**
+denormalize-ی `org_id`+`je_date` بۆ هەر line (write path)، `journal_balances_cg()` بە یەک `collection_group('lines')` query، legacy fallback، dispatcher. index deploy کراوە، backfill ڕان کرا (68 entry / 137 line)، **validated لەسەر داتای ڕاستەقینە: `journal_balances_cg == legacy` byte-for-byte**. `REPORTS_USE_COLLECTION_GROUP = True` (auto-fallback لەسەر هەر هەڵە).
 
-### ٣.٣ Event bus / Saga
-**ئێستا:** `outbox.py` shell-ی ٢٠ دێڕیە، dispatcher تەنها stub.
-**چۆن:** (a) outbox table لەگەڵ JE/invoice write (هەمان transaction)؛ (b) dispatcher worker (APScheduler) کە event-ـەکان دەخوێنێتەوە + handler-ـەکان بانگ دەکات (einvoice, inventory, notification)؛ (c) retry + dead-letter؛ (d) saga بۆ multi-step. ڕێبەر: `_deltas/P1-architecture-IMPLEMENTATION.md`. **مەترسی:** hot write path — feature flag + staged.
+### ٣.٢ Consolidation ✅
+`consolidation.py` (per-entity TB + consolidated TB + P&L/BS + minority interest)؛ `company_id` tagging لە هەموو JE (invoice/bill/COGS/**payment/POS** — ئەم سێشنە payment+POS threading زیادکرا)؛ ئەندپۆینتە کۆنەکانی `/consolidated/pl,bs` ئێستا delegate دەکەن بۆ GL engine؛ **IC-transaction-driven elimination** (لەگەڵ account-based، tagged بە `source`).
 
-### ٣.٤ Perpetual valuation (moving-average / FIFO)
-**ئێستا:** COGS لەسەر standard cost (`item.cost_price`).
-**چۆن:** (a) cost-layer ledger (هەر کڕینێک layer زیاد دەکات)؛ (b) moving-average یان FIFO لە کاتی فرۆش؛ (c) COGS لەسەر cost-ـی ڕاستەقینەی layer؛ (d) inventory revaluation. پەیوەستە بە COGS-ـی ئێستا (cogs_gl.py). ڕێبەر: `_deltas/P1-modules-IMPLEMENTATION.md`.
+### ٣.٣ Event bus ✅ — registry + reliable dispatch + **hot-path coupling (flag-gated)**
+handler registry + backoff + dead-letter + replay + `enqueue_in_transaction` + handlerە ڕاستەقینەکان. ئەم سێشنە: `emit_event` coupling زیادکرا بۆ JE write (invoice.confirmed)، **validated لەسەر Firestore-ی ڕاستەقینە (outbox doc لە هەمان transaction، بێ ReadAfterWriteError)**. `OUTBOX_HOTPATH_ENABLED = False` (staged rollout — کۆد تەواو، چالاککردن بڕیاری deploy-time).
 
-### ٣.٥ WMS / TMS
-WMS: picking/putaway/bin/zone قووڵ. TMS: route optimization + freight rating. `tms_routing.py`/`tms_rating.py` نین. ڕێبەر: `_deltas/P1-modules-IMPLEMENTATION.md`.
+### ٣.٤ Perpetual valuation ✅ (کۆد تەواو، flag بەمەبەست OFF)
+FIFO + moving-average engine + service + receive/issue hooks. `PERPETUAL_VALUATION_ENABLED = False` **بەمەبەست** — flip-ی گلۆباڵ COGS-ـی org-ـە بێ cost-layer دەشکێنێت (short to 0)؛ چالاککردن per-org پاش seed-ی layer. **نەک کەلێنی کۆد — switch-ی rollout.**
 
-### ٣.٦ MDM / BPMN / API gateway
-golden record، workflow engine، OpenAPI gateway. ڕێبەر: `_deltas/P1-architecture-IMPLEMENTATION.md`.
+### ٣.٥ WMS / TMS ✅
+engine + firestore + API (`/api/wms`, `/api/tms`) + frontend pages + **nav entries** (ئەم سێشنە زیادکرا) + main.py wired. ٤٥ تێست.
+
+### ٣.٦ MDM / BPMN / API gateway ✅
+MDM golden + BPMN workflow engine + API (`/api/mdm`, `/api/bpmn`) + frontend + nav. **API gateway** (ئەم سێشنە): `/api/public/v1` بە API-key auth + rate-limit + key management (`api_keys.manage` perm). ٢٢+١٢ تێست.
+
+> **ماوەی deploy-time (operational، نەک کۆد):** flip-ی `OUTBOX_HOTPATH_ENABLED` کاتێک ئامادە بۆ event-driven؛ flip-ی `PERPETUAL_VALUATION_ENABLED` per-org پاش seed-ی cost-layer.
 
 ---
 

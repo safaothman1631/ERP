@@ -30,7 +30,13 @@ def test_journal_balances_reads_lines_per_entry():
         {"id": "j1", "date": "2026-01-10", "status": "posted"},
         {"id": "j2", "date": "2026-01-11", "status": "posted"},
     ]
-    with patch("app.firestore.journals.JournalEntryRepository") as repo_cls:
+    # This test pins the LEGACY 1+N path (get_lines per entry). The fast
+    # collection_group path (REPORTS_USE_COLLECTION_GROUP, now on by default) is
+    # covered separately in test_reports_cg.py + validated on real data, so force
+    # the flag off here to exercise the legacy aggregation deterministically.
+    with patch("app.firestore.journals.JournalEntryRepository") as repo_cls, patch(
+        "app.config.settings.REPORTS_USE_COLLECTION_GROUP", False
+    ):
         repo = repo_cls.return_value
         repo.stream_org_docs.return_value = iter(docs)
         repo.get_lines.side_effect = [

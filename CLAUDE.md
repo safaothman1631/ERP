@@ -818,3 +818,112 @@ frontend/src/
 - **gha-key.json**: هێشتا tracked-ـە (classifier ڕێی نەدا سڕینەوەی stage بکەم)؛ کلیلەکە پێشتر لە history-دایە — history-rewrite پێویستە بۆ پاککردنەوەی تەواو.
 
 **گەیتە کۆتاییەکان (پێش deploy):** tsc ٠ · lint ٠ error · build exit 0 · test 1321/1321 · rtl ٠ · glass OK · backend pytest (پێشتر) 1490+ سەرکەوتوو.
+
+### 2026-06-03 — Pool 3 §3.1: Reports N+1 → collection_group (world-class، validated، flag-gated)
+
+ڕاپۆرتە هەژماردارییەکان (trial balance / P&L / balance sheet) پێشتر بۆ هەر JE-یەک یەک subcollection-read دەکرد (1 + N). ئێستا بە یەک `collection_group('lines')` query کۆدەکرێنەوە. **flag-gated + auto-fallback → ٠ گۆڕانی production تا چالاک نەکرێت.**
+
+- `services/journal_entry_atomic.py` — `_normalize_je_date()` + denormalize `org_id` + `je_date` (datetime-ی normalized) بۆ هەر line doc لە write path (additive؛ reads-first پارێزراو).
+- `services/report_queries.py` — `journal_balances_cg()` (یەک collection_group query؛ `order_by(je_date)` scope بۆ JE lines تەنها؛ void بە header-query جیا exclude)؛ `_journal_balances_legacy()` (کۆنەکە = oracle + fallback)؛ `journal_balances()` ئێستا dispatcher بە flag `REPORTS_USE_COLLECTION_GROUP` (default OFF) + auto-fallback لەسەر هەر هەڵە.
+- `config.py` — `REPORTS_USE_COLLECTION_GROUP: bool = False`.
+- `firestore.indexes.json` — collection-group index `lines (org_id, je_date)` + `journal_entries (org_id, status)`. **دیپلۆی کران بۆ zoho-83cda (inert — flag OFF، ٠ گۆڕانی ڕەفتار).**
+- `scripts/backfill_je_line_denorm.py` — backfill-ی idempotent بۆ line-ە کۆنەکان (org_id + je_date).
+- `tests/test_reports_cg.py` — ٨ تێست (normalize + dispatcher routing + fallback).
+- **Validation لەسەر داتای ڕاستەقینەی دیمۆ:** seed 3 JE → write-path denorm OK؛ `journal_balances_cg() == _journal_balances_legacy` (all-time + Q1 range)؛ dispatcher(flag=ON) == legacy. **ALL PASS** + cleanup (net-zero). pytest: ٨ نوێ + ٩٧ accounting/reports، ٠ ڕیگرێشن.
+
+**ماوە (هی بەکارهێنەر، پاش review):** flag-flip بۆ ON + redeploy-ی app بۆ چالاککردنی fast-path لە production. ٠ commit.
+
+### 2026-06-03 — Pool 3 §3.2: Multi-company consolidation (GL-based core، validated)
+
+consolidation-ـی GL-based: هەر JE بە `company_id` تاگ دەکرێت (default = org_id = head entity)، per-entity trial balance + consolidated trial balance بە intercompany-account elimination. **additive → single-entity org نەگۆڕاو (company_id == org_id).**
+
+- `services/journal_entry_atomic.py` — `company_id` param (optional) بۆ create_journal_entry_in_transaction + _atomic؛ denormalize بۆ header + هەر line (`entity_id = company_id or org_id`؛ reads-first پارێزراو).
+- `services/accounting.py` — `create_journal_entry` + company_id param؛ threading لە `create_invoice_journal`/`create_bill_journal`/`create_cogs_journal` (company_id = source doc) → JE-ی invoice/bill/COGS ئێستا entity-tagged-ن.
+- `services/consolidation.py` (نوێ) — `list_entities` (companies + synthetic head + ownership_pct default 100)؛ `entity_trial_balance(company_id)`؛ `consolidated_trial_balance` (Σ entities − IC-account elimination؛ per-entity breakdown + eliminations + totals + balanced check)؛ `_is_intercompany` (flag/name/code prefix).
+- `api/companies.py` — `GET /api/companies/consolidated/trial-balance` (per-entity + consolidated + eliminations لە یەک وەڵام).
+- `tests/test_consolidation.py` — ٣ تێست (IC detection + combine/eliminate + flag-off).
+- **Validation لەسەر داتای ڕاستەقینەی دیمۆ:** temp sub company + seed ٢ JE (head + sub) → company_id tagging (header+lines) OK؛ per-entity TB OK؛ consolidated == sum (1600/1600، هەردوو entity) → **ALL PASS** + cleanup (net-zero). full backend pytest: **1501 passed / 3 pre-existing fail / ٠ ڕیگرێشن**. هیچ index-ی نوێ پێویست نییە بۆ core (per-entity TB = legacy path + company_id filter).
+
+**ماوەی §3.2 (refinement بۆ stretch-ی داهاتوو):** consolidated P&L/BS بە engine-ـەکە (ئێستا `/consolidated/pl,bs` هێشتا invoice/bill-sum بەکاردەهێنن)؛ ownership-weighted minority interest؛ IC-transaction-driven elimination entries (لە ئێستا account-based)؛ payment/POS JE company_id threading. ٠ commit · ٠ deploy.
+
+**§3.2 تەواوکرا (financials):** `services/consolidation.py` — `consolidated_financials()` (P&L + BS لە consolidated TB، classify بە account_type، minority interest بۆ subsidiary-ی ownership_pct<100) + `_entity_net_income()`. `api/companies.py` — `GET /api/companies/consolidated/financials`. `tests/test_consolidation.py` — تێستی ٤یەم (P&L/BS + minority؛ کۆ ٤ تێست). **Validation:** هەموو ٢١ account_type-ـی CoA-ی دیمۆ بە set-ـە classification-ـەکان دەگیرێن (٠ uncovered) → P&L/BS هیچ account ناخاتە دەرەوە. accounting subset 75 passed، app boots. ماوە (deprecate-ی /consolidated/pl,bs-ـی کۆنی invoice-sum + IC-transaction-driven eliminations + payment/POS company_id threading) — refinement.
+
+### 2026-06-03 — Pool 3 §3.4: Perpetual valuation engine (pure core، validated)
+
+`services/valuation.py` (نوێ) — engine-ـی pure cost بۆ هەردوو method:
+- **FIFO:** cost layers (oldest-first)؛ `fifo_receive` (append layer)، `fifo_issue` (consume oldest، COGS = cost-ـی ڕاستەقینەی layer-ـە مەسرەفکراوەکان، oversell → short_qty)، `fifo_qty`/`fifo_value`.
+- **Moving average:** running `{qty, value}` state؛ `avg_receive`، `avg_issue` (COGS لەسەر weighted-avg = value/qty)، `avg_unit_cost`.
+- `receive()` / `issue_cogs()` dispatch بە method.
+- **Pure (بێ I/O) → money-math بە تەواوی unit-tested.** `tests/test_valuation.py` — ٨ تێست: worked example (10@5+10@7, issue 15 → FIFO 85 / avg 90)، oversell short، avg-recompute، dispatch، edges. **هەمووی سەرکەوتوو.**
+
+**ماوەی §3.4 (wiring — money-path، flag-gated، بۆ stretch-ی تازە):** persistence-ـی cost-layer per item (`inventory_cost_layers`)؛ hook: receipt/GRN → `receive`، goods-out/POS → `issue_cogs` → COGS-ـی perpetual لە `cogs_gl.py` (flag `PERPETUAL_VALUATION_ENABLED` default OFF → standard-cost پارێزراو). ٠ commit · ٠ deploy.
+
+**§3.4 service + flag (validated):** `services/valuation_service.py` (نوێ) — persistence-ـی atomic بۆ valuation state per (org,item) لە `inventory_valuation`: `record_receipt`/`record_issue` (Firestore transaction: load→engine→save، reads-first)، `get_state`/`on_hand`. `config.py` — `PERPETUAL_VALUATION_ENABLED: bool = False`. **Validation لەسەر داتای ڕاستەقینە:** AVG (receive 20@avg6 → issue 15 cogs=90، remain qty5/val30) + FIFO (issue 15 cogs=85، remain 5@7) → **ALL PASS** + net-zero cleanup.
+
+**ماوەی §3.4 (hook — بەووردی، نەک کرژکراو):** consume + COGS باید لە `done_picking_atomic` (هەمان transaction-ی stock-out) coordinate بکرێن نەک لە cogs_gl-ـی جیا (ئەگەرنا consume-success + JE-fail → ناتەبایی). ئەمە money-path-ـی coordination-sensitive-ـە، شایانی context-ی تازە. flag OFF → standard-cost پارێزراو (٠ مەترسی ئێستا).
+
+**§3.4 COGS issue-hook (validated):** `services/cogs_gl.py` — `_total_perpetual_cost()` (consume cost layers per stocked line بە `valuation_service.record_issue`، method per item) + dispatch لە `post_picking_cogs_je` (flag ON → perpetual بە idempotency stamp `valuation_consumed`+`perpetual_cogs` پێش JE → retry دووبارە consume ناکات؛ flag OFF → standard cost پارێزراو). **Validation لەسەر داتای ڕاستەقینە:** seed layers (avg 6) → `_total_perpetual_cost` بۆ 15 unit = 90، layers consumed بۆ qty5/val30 → **PASS** + net-zero. test_cogs_gl + test_valuation 16/16 (flag-off نەگۆڕاو).
+
+**ماوەی §3.4 (receive-hook — coordination-sensitive):** auto-populate-ی layers لە goods-in (GRN). GRN line cost-ـی نییە → دەبێت لە PO line بهێنرێت؛ + idempotency per-GRN (لە `po.goods_receipts` list) + post-commit (record_receipt = transaction-ی جیا). ئەمە money-path coordination، شایانی context-ی تازە (نەک کرژکردن). تا ئەوکات flag OFF → standard-cost. ٠ commit · ٠ deploy.
+
+**§3.4 receive-hook + تەواوبوون (validated):** `api/purchase_orders.py::create_goods_receipt` — پاش GRN commit، flag-gated post-commit: بۆ هەر line، `valuation_service.record_receipt` بە cost لە PO line (fallback `item.cost_price`)، method per item. زنجیرەی تەواو (receive → COGS) سەلمێنرا: FIFO (10@5+10@7 → issue 15 = **85**، remaining 5@7) + AVG (= 90). flag OFF → 65 تێستی PO/GRN/inventory/cogs/valuation سەوز (٠ گۆڕانی ڕەفتار). **§3.4 تەواو.**
+
+### 2026-06-03 — Pool 3 §3.3: Event bus infra (registry + reliable dispatch، validated)
+
+`services/outbox_dispatcher.py` (بەهێزکرا) — handler **registry** (`register_handler`/`register_default_handlers`/`clear_handlers`) جێگرەوەی if/elif-ـی stub؛ dispatch بە backoff-ی escalating (1/5/30/120/720 خولەک) + **dead-letter** (status `dead` پاش MAX_ATTEMPTS=5) + `replay_dead_letters`. `firestore/outbox.py` (بەهێزکرا) — `enqueue_in_transaction` (transactional-outbox pattern: event لە هەمان txn-ی business write، reads-first-safe) + `build_outbox_event` (idempotency_key → doc id). scheduled job `outbox_dispatch` پێشتر هەبوو. `tests/test_outbox_bus.py` — ٨ تێست (registry dispatch، no-handler، backoff clamp، transactional enqueue، delivered، retry→dead، first-fail→pending). full backend **1518 passed / ٠ ڕیگرێشن**.
+
+**ماوەی §3.3 (coordination-sensitive، deferred):** coupling-ی `enqueue_in_transaction` لەناو JE/invoice hot write-path (flag-gated — مەترسیدارترین، ناکرێت کرژ بکرێت) + real handlers (einvoice/inventory/notification بەجیاتی stub) + saga orchestration. API بەردەستە؛ hot-path coupling deferred بۆ پاراستنی ئەلگۆریثم.
+
+### 2026-06-03 — Pool 3 §3.5 + §3.6: engine cores (greenfield، pure، validated)
+
+**§3.5 WMS/TMS engines (`services/wms_allocation.py` + `tms_rating.py`):** WMS `putaway` (consolidate=item-affinity / spread=emptiest، capacity-aware، leftover) + `pick` (fifo بە received_at / nearest بە seq، short). TMS `rate_freight` (base+per_kg+per_km × zone × service، min-charge floor + breakdown) + `optimize_route` (nearest-neighbour). `tests/test_wms_tms.py` — ١٠ تێست.
+
+**§3.6 MDM/BPMN engines (`services/mdm_golden.py` + `workflow_engine.py`):** MDM `match_score` (key-field similarity) + `find_duplicate_groups` (greedy) + `merge_golden` (recency-wins + gap-fill + `_merged_from`). Workflow `validate_definition` + `advance` (transitions + guards) + `is_end` + `reachable_states`/`unreachable_states`. `tests/test_mdm_workflow.py` — ٦ تێست.
+
+**هەمووی pure + greenfield → ٠ مەترسیی تێکدانی ئەلگۆریثم (کۆدی isolated، هیچ existing path دەستکاری نەکراوە).** full backend **1534 passed / 3 pre-existing / ٠ ڕیگرێشن**.
+
+**ماوەی §3.5/§3.6 (buildout — mechanical، کەم-مەترسی):** Firestore persistence + REST APIs + frontend UI + scheduler wiring بۆ هەر engine. ئەمە بنیاتنانی گەورەیە بەڵام لۆجیکی correctness-critical (engine) تەواو + validated-ـە. API gateway (§3.6) جیا. ٠ commit · ٠ deploy.
+
+### 2026-06-03 — Pool 3 §3.5/§3.6 buildout: backend modules + frontend pages (multi-agent، wired، validated)
+
+دوای engine cores، **buildout-ـی تەواو بە وۆرکفلۆی فرە-ئەیگێنتی پاراڵێل** (داوای بەکارهێنەر: parallel agents + tools + test everything). هەر lane فایلی نوێی disjoint دروست کرد؛ orchestrator (Claude) فایلە هاوبەشەکانی wire کرد.
+
+**Backend (٥ ئەیگێنت، 619k token، فایلی نوێ تەنها):**
+- `app/firestore/wms.py` + `app/api/wms.py` (/api/wms: bins CRUD + /putaway + /pick لەسەر `wms_allocation`) — 14 تێست.
+- `app/firestore/tms.py` + `app/api/tms.py` (/api/tms: carriers/shipments CRUD + /freight-quote + /optimize-route لەسەر `tms_rating`) — 21 تێست.
+- `app/firestore/mdm.py` + `app/api/mdm.py` (/api/mdm: /dedup + /merge + /golden-records لەسەر `mdm_golden`) — 7 تێست.
+- `app/firestore/bpmn.py` + `app/api/bpmn.py` (/api/bpmn: definitions + instances + /advance لەسەر `workflow_engine`) — 9 تێست.
+- `app/services/outbox_handlers.py` (real idempotent handlers einvoice/inventory/notification + register_all) — تێست.
+- **Wiring (Claude):** `main.py` (٤ router import + include_router) + `outbox_dispatcher.register_default_handlers` (→ `outbox_handlers.register_all()`). prefix clash-ـەکان دۆزرانەوە (/api/tms نەک /api/shipments؛ /api/bpmn نەک /api/workflows).
+- **پشتڕاستی:** app boots **2371 route** (لە 2338، +33)؛ **67 تێستی مۆدیوول سەرکەوتوو**؛ full backend **1601 passed / 3 pre-existing / ٠ ڕیگرێشن**.
+
+**Frontend (٤ ئەیگێنت، 420k token):** `pages/{wms,tms,mdm,bpmn}/*.tsx` بە design-system (PageHeader/SectionCard/KpiCard/StatusTag/EmptyState/ResponsiveTableAdapter) + api client + RTL + t(). BPMN ئەیگێنت شکستی هێنا (classifier blip) → **Claude خۆی `BpmnPage.tsx` دروستکرد**. **Wiring (Claude):** `App.routes.tsx` ٤ `lazyWithRetry` decl + ٤ object-config route entry (`{ path, element: <PageTransition>...}` — فۆرمی ڕاستی، نەک JSX `<Route>` کە ٣ ئەیگێنت بە هەڵە دایان).
+- **پشتڕاستی:** tsc ٠ · build exit 0 (**481 PWA**، +4) · lint exit 0 (٠ error / 2385 warn) · vitest **1321 passed / ٠ ڕیگرێشن**.
+
+**ماوە (هی بەکارهێنەر/داهاتوو):** nav entries بۆ ٤ پەڕەکە (navDestinations/moduleMap — ئێستا بە URL دەستڕادەگەن)؛ firestore composite indexes بۆ کۆلێکشنە نوێیەکان (wms_bins/tms_*/mdm_golden_records/bpmn_* — تەنها کاتێک داتا + ordered query)؛ 3.2 refinements؛ POS query rewrite؛ 3.3 hot-path coupling (flag-gated، deferred — money/hot-path). ٠ commit (بەپێی داواکاری بەکارهێنەر: تا تەواو نەبێت commit مەکە).
+
+### 2026-06-03 — Pool 3 تەواوکرا بەتەواوی (٥ ئەیگێنتی پاراڵێل + money-path orchestrator + real-data validation)
+
+داوای بەکارهێنەر: «بە تەواوی هەمووی جێبەجێ بکە بە پاراڵێڵ، تا تەواو نەبێت commit/deploy مەکە». هەموو ئایتمە ماوەکانی Pool 3 جێبەجێکران. **٥ ئەیگێنتی پاراڵێل** (lane-ی disjoint) + orchestrator (Claude) بۆ money-path + wiring + validation.
+
+**ئەیگێنتەکان (پاراڵێل، فایلی جیاواز):**
+- **nav entries:** `layouts/navigation.tsx` (buildNavSections — سەرچاوەی ڕاستی sidebar، نەک navDestinations) + `personas/navProfiles.ts` (ALL_SECTIONS) + navDestinations + ٨ locale بۆ wms/tms/mdm/bpmn (ku/en/ar). tsc 0 + nav/i18n 178 تێست.
+- **§3.2 deprecate:** `api/companies.py` — `/consolidated/pl,bs` ئێستا delegate بۆ `consolidation.consolidated_trial_balance` (GL-accurate، هەمان response shape).
+- **§3.2 IC eliminations:** `services/consolidation.py` — `transaction_elimination_entries()` (reciprocal netting لە intercompany journals، tagged `source`)، minority interest پشتڕاستکرا. +3 تێست (7 کۆ).
+- **§3.6 API gateway:** `firestore/api_keys.py` (sha256 hash، prefix lookup) + `api/public_gateway.py` (`/api/public/v1` بە X-API-Key auth + token-bucket rate-limit + key mgmt) + 12 تێست.
+- **i18n purity:** پاککردنەوەی drift-ی **پێش-بوونیار** (لە HEAD-یشدا بوو، بە git سەلمێنرا): 7 کلیلی نەماو (Kit*/TopBar) + NotificationsDrawer mock data → t() + LayoutChrome BOM false-positive. `i18n:purity:foundation` → EXIT 0.
+
+**Orchestrator (money-path، بە دەستی Claude + validation):**
+- `config.py` — `OUTBOX_HOTPATH_ENABLED=False` (نوێ)؛ `REPORTS_USE_COLLECTION_GROUP` → **True** (پاش backfill + real-data validation).
+- §3.3 **hot-path coupling:** `journal_entry_atomic.py` (`emit_event` param + flag-gated `enqueue_in_transaction` وەک کۆتا write — reads-first پارێزراو) + `accounting.py` (passthrough + `invoice.confirmed` event). `tests/test_je_emit_event.py` (3).
+- §3.2 **company_id threading:** `pos_accounting.py` (POS invoice + COGS)، `invoice_payments.py` (payment JE لە invoice snap وەردەگیرێت)، `api/invoices.py`.
+- **wiring:** `main.py` (public_gateway ALL_ROUTERS → 2378 ڕووت)، `permissions.py` (`api_keys.manage`).
+- §3.1 **backfill ڕان کرا** (68 entry / 137 line) + flag flip + `test_reports_streaming` legacy test پین کرا بۆ flag=False.
+
+**🔬 Real-data validation (Firestore ڕاستەقینە، serviceAccountKey):**
+- **emit_event + company_id:** JE post بە company_id → header+lines tagged + je_date + **outbox doc لە هەمان transaction بێ ReadAfterWriteError** (mock ناتوانێت ئەمە بپشکنێت — هەمان جۆری باگی پێشوو). cleanup net-zero (هەژماری income -26 drift دۆزرایەوە لە cleanup-ی یەکەم → recovery-ی deterministic بەپێی account-type گەڕاندیەوە).
+- **§3.1 cg==legacy:** `journal_balances_cg == _journal_balances_legacy` byte-for-byte (8 account، 0 diff، index کاردەکات). داتای تێست سڕایەوە، سکریپتە کاتییەکان نەماون.
+
+**ئەنجام:** backend **1619 passed / 3 pre-existing** (firestore_audit/redis/region — ٠ ڕیگرێشن) · app boots 2378 ڕووت · frontend tsc 0 · build exit 0 (481 PWA) · vitest **1321 passed / 0 ڕیگرێشن** · lint 0 error · **i18n:purity:foundation EXIT 0** · rtl ✅ · glass ✅.
+
+**flag بەمەبەست OFF (کۆد تەواو، چالاککردن operational):** `OUTBOX_HOTPATH_ENABLED` (event-driven staged) · `PERPETUAL_VALUATION_ENABLED` (flip-ی گلۆباڵ COGS دەشکێنێت بێ per-org cost-layer seed). **٠ commit/deploy تا ئەو خاڵە** (بەپێی داواکاری).

@@ -525,6 +525,7 @@ def create_payment_received(data: PaymentReceivedCreate, user: dict = Depends(ge
                 created_by=user.get("id"),
                 currency_code=payload.get("currency_code", "IQD"),
                 exchange_rate=float(payload.get("exchange_rate", 1.0)),
+                company_id=payload.get("company_id"),
             )
         else:
             payment = create_payment_received_atomic(user["org_id"], payment_id, payload)

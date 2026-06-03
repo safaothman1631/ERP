@@ -101,6 +101,11 @@ const MfgBOMs = lazyWithRetry(() => import('./pages/MfgBOMs'), 'mfg-bo-ms');
 const MfgOrders = lazyWithRetry(() => import('./pages/MfgOrders'), 'mfg-orders');
 const MfgWorkCenters = lazyWithRetry(() => import('./pages/MfgWorkCenters'), 'mfg-work-centers');
 const Companies = lazyWithRetry(() => import('./pages/Companies'), 'companies');
+// Pool 3 §3.5/§3.6 module pages
+const WmsPage = lazyWithRetry(() => import('./pages/wms/WmsPage'), 'wms');
+const TmsPage = lazyWithRetry(() => import('./pages/tms/TmsPage'), 'tms');
+const MdmPage = lazyWithRetry(() => import('./pages/mdm/MdmPage'), 'mdm');
+const BpmnPage = lazyWithRetry(() => import('./pages/bpmn/BpmnPage'), 'bpmn');
 const ConsolidatedReports = lazyWithRetry(() => import('./pages/ConsolidatedReports'), 'consolidated-reports');
 const BranchesComparison = lazyWithRetry(() => import('./pages/BranchesComparison'), 'branches-comparison');
 const Projects = lazyWithRetry(() => import('./pages/Projects'), 'projects');
@@ -616,6 +621,10 @@ export const routes: RouteObject[] = [
       { path: 'mileage', element: <PageTransition><MileageLog /></PageTransition> },
       { path: 'mileage/rates', element: <PageTransition><MileageRates /></PageTransition> },
       { path: 'companies', element: <PageTransition><Companies /></PageTransition> },
+      { path: 'wms', element: <PageTransition><WmsPage /></PageTransition> },
+      { path: 'tms', element: <PageTransition><TmsPage /></PageTransition> },
+      { path: 'mdm', element: <PageTransition><MdmPage /></PageTransition> },
+      { path: 'bpmn', element: <PageTransition><BpmnPage /></PageTransition> },
       { path: 'reports/consolidated', element: <PageTransition><ConsolidatedReports /></PageTransition> },
       { path: 'reports/branches', element: <PageTransition><BranchesComparison /></PageTransition> },
       // Wave AA: Multi-Entity Management
