@@ -694,9 +694,11 @@ def root():
 
 
 
-@app.get("/api/live")
+@app.api_route("/api/live", methods=["GET", "HEAD"])
 def liveness():
-    """Sprint 19 (FIX-266): Liveness probe — process is alive (always returns ok unless dead)."""
+    """Sprint 19 (FIX-266): Liveness probe — process is alive (always returns ok
+    unless dead). Accepts HEAD too: most uptime monitors (UptimeRobot, Pingdom,
+    ...) default to HEAD, and a GET-only route would answer 405 → false 'down'."""
     return {"status": "alive"}
 
 
