@@ -64,6 +64,13 @@ def init_tracing(app: Any) -> bool:
     if _INITIALIZED:
         return True
 
+    # Standard OTel kill-switch — honour it so dev/test/CI can opt out cleanly
+    # (also silences the BatchSpanProcessor flush at interpreter exit).
+    if os.environ.get("OTEL_SDK_DISABLED", "").strip().lower() in ("1", "true", "yes"):
+        log.info("otel.disabled_via_env")
+        _TRACER = _NoOpTracer()
+        return False
+
     try:
         from opentelemetry import trace  # type: ignore
         from opentelemetry.sdk.trace import TracerProvider  # type: ignore
@@ -77,25 +84,30 @@ def init_tracing(app: Any) -> bool:
         _TRACER = _NoOpTracer()
         return False
 
-    # Optional GCP exporter — present in prod, may be missing locally.
+    # Optional GCP exporter — present in prod, may be missing locally. Pin the
+    # destination project EXPLICITLY from the app's configured project so spans
+    # always land in the live project (zoho-83cda) and never a stale ADC/metadata
+    # default (a deleted project would make every export fail + spam the logs).
     exporter: Any
+    gcp_project = (
+        os.environ.get("GCP_PROJECT_ID")
+        or os.environ.get("FIREBASE_PROJECT_ID")
+        or os.environ.get("GOOGLE_CLOUD_PROJECT")
+    )
     try:
         from opentelemetry.exporter.cloud_trace import (  # type: ignore
             CloudTraceSpanExporter,
         )
-        exporter = CloudTraceSpanExporter()
-    except Exception:  # noqa: BLE001
-        # Fall back to stdout exporter for local dev.
-        try:
-            from opentelemetry.sdk.trace.export import (  # type: ignore
-                ConsoleSpanExporter,
-            )
-            exporter = ConsoleSpanExporter()
-            log.info("otel.using_console_exporter (no GCP exporter installed)")
-        except Exception:  # noqa: BLE001
-            log.warning("otel.no_exporter_available")
-            _TRACER = _NoOpTracer()
-            return False
+        if not gcp_project:
+            # No project configured (typical local/test) — don't guess via ADC,
+            # which can resolve to an old/deleted project. Run trace-less.
+            raise RuntimeError("no GCP project configured for Cloud Trace")
+        exporter = CloudTraceSpanExporter(project_id=gcp_project)
+        log.info("otel.cloud_trace_exporter", extra={"project": gcp_project})
+    except Exception as exc:  # noqa: BLE001
+        log.info("otel.exporter_unavailable_noop", extra={"err": str(exc)})
+        _TRACER = _NoOpTracer()
+        return False
 
     service_name = os.environ.get("OTEL_SERVICE_NAME", "zoho-backend")
     resource = Resource.create({"service.name": service_name})

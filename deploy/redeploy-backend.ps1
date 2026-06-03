@@ -28,7 +28,7 @@ gcloud run deploy zoho-erp-backend `
   --no-cpu-throttling `
   --memory 1Gi --cpu 1 --min-instances 1 --max-instances 3 --concurrency 20 --timeout 300 `
   --env-vars-file cloudrun-deploy-env.yaml `
-  --set-secrets "SECRET_KEY=zoho-secret-key:latest,FIELD_ENCRYPTION_KEY=field-encryption-key:latest"
+  --set-secrets "SECRET_KEY=zoho-secret-key:latest,FIELD_ENCRYPTION_KEY=field-encryption-key:latest,SENTRY_DSN=sentry-dsn:latest"
 
 if ($LASTEXITCODE -ne 0) { Write-Host "`nDEPLOY FAILED (exit $LASTEXITCODE)" -ForegroundColor Red; exit 1 }
 
