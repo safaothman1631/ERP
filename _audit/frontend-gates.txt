@@ -1,0 +1,64 @@
+# FRONTEND GATES (started Wed Jun  3 01:26:29 AST 2026)
+
+## tsc error count
+0
+
+## eslint (summary)
+
+✖ 2535 problems (5 errors, 2530 warnings)
+  0 errors and 19 warnings potentially fixable with the `--fix` option.
+
+
+## rtl:audit
+
+> frontend@0.0.0 rtl:audit
+> node ./scripts/rtl-audit.mjs
+
+✅ RTL audit passed — no physical directional CSS properties found outside tokens.ts
+
+## i18n:purity:foundation
+     src/locales/ku.json  "smtp_password"  -> SMTP
+     src/locales/ku.json  "einvoice_dashboard"  -> Invoice
+     src/locales/ku.json  "ocr_receipts"  -> OCR
+     src/locales/ku.json  "ocr_engine_not_configured"  -> OCR
+
+
+## build
+rendering chunks...
+computing gzip size...
+dist/sw.mjs  34.58 kB │ gzip: 10.28 kB
+
+[32m✓ built in 99ms[39m
+
+PWA v1.3.0
+mode      injectManifest
+format:   es
+precache  478 entries (9132.73 KiB)
+files generated
+  dist/sw.js
+
+## vitest
+    221|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/32]⎯
+
+ FAIL  src/components/responsive/ResponsiveTable.test.tsx > ResponsiveTable — Mobile (card list) > marks the show-more button as aria-expanded after clicking
+AssertionError: expected null not to be null
+ ❯ src/components/responsive/ResponsiveTable.test.tsx:243:29
+    241|     const firstCard = wrapper.querySelector('li.responsive-table__card…
+    242|     const showMoreBtn = firstCard!.querySelector('.responsive-table__s…
+    243|     expect(showMoreBtn).not.toBeNull();
+       |                             ^
+    244|
+    245|     // Before click: aria-expanded is false, text is "more"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/32]⎯
+
+
+ Test Files  30 failed | 65 passed (95)
+      Tests  3 failed | 1319 passed (1322)
+   Start at  01:27:16
+   Duration  65.01s (transform 33.59s, setup 49.15s, import 312.42s, tests 115.18s, environment 569.65s)
+
+
+# DONE Wed Jun  3 01:28:22 AST 2026

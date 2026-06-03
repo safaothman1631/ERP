@@ -1,0 +1,167 @@
+TOTAL ITEMS: 38 | SAFE_NOW+CONFIRMED: 18
+
+LOGS: Verifying 6 lanes against current code + guides → safe-to-implement-now manifest... | Verified 38 items; 18 are CONFIRMED_REAL + SAFE_NOW.
+
+
+################# SAFE_NOW (23) #################
+
+[CONFIRMED_REAL] Storefront magic-link returns login token in HTTP response
+   @ backend/app/api/storefront.py:339-343
+   portal_request_link returns {"token": token} (comment: 'remove in production'). Knowing a customer email yields the magic token w/o email -> /verify-link -> portal JWT. JWT is type='portal' (customer-portal scope, not full ERP), so it's portal-account takeover. Safe fix: drop token/verify_url from the response body (keep server-side; email-send is the intended channel).
+
+[CONFIRMED_REAL] validate_upload() built but never called by upload endpoints
+   @ backend/app/api/attachments.py:21-43
+   upload_attachment only size-checks (10MB) then stores raw file.filename/content_type; no magic-byte, extension blocklist, or filename sanitize. validate_upload is referenced only in config.py/tests. Safe fix: call validate_upload(category='any') in attachments (and ideally ocr/imports/banking) and use safe_filename.
+
+[CONFIRMED_REAL] RBAC: rbac.manage can mint roles with perms actor lacks / assign admin
+   @ backend/app/api/rbac.py:88-104,189-209
+   create_role/update_role persist data['permissions'] with no check the actor holds them; set_user_roles assigns any role_id incl 'default:owner'/'default:admin'. Holder of rbac.manage can self-escalate to all perms. Safe fix: intersect requested perms with caller's get_user_permissions() and block assigning privileged default roles unless caller has them.
+
+[CONFIRMED_REAL] "New Bill" command 404 — /bills/new has no route
+   @ frontend/src/App.routes.tsx:533-538
+   Bills routes are only bills, bills/list, bills/create, bills/:id/edit — no bills/new. CommandPalette.tsx:61 + BillsList.tsx:242,280 navigate to /bills/new → 404. (invoices/new DOES exist at :522.) Fix: add 'bills/new' route -> BillFormRedesign (mirror invoices/create) or repoint the 3 callers to /bills/create.
+
+[CONFIRMED_REAL] Mobile SideNav drawer top:56 ignores safe-area-inset-top
+   @ frontend/src/layouts/AppShell.tsx:276-278
+   rootStyle={{top:56}} + maskStyle={{top:56}} hardcoded; Drawer portals to body (outside the Layout that adds paddingBlockStart:env(safe-area-inset-top) at :247), so on notched devices it underlaps the bar. Fix: top: calc(56px + env(safe-area-inset-top,0px)) for both + matching height.
+
+[CONFIRMED_REAL] EmptyState reads undefined CSS vars → invisible text in dark mode
+   @ frontend/src/design-system/empty/EmptyState.css:20-53
+   --text-primary/--text-secondary/--surface-muted defined NOWHERE (no css/ts). Dark theme uses --ink-900/700/500 + --surface (vertex-tokens.css:145). So title/desc always fall back to rgba(0,0,0,.85)=near-black on dark. Fix: swap to --ink-900/--ink-500/--accent-soft. Class applied (EmptyState.tsx:135).
+
+[CONFIRMED_REAL] List fetches swallow errors via .catch(()=>{}) → failure looks empty
+   @ frontend/src/pages/Inventory.tsx:33,68,93,160
+   Inventory.tsx (4 tabs) + TaxSettings.tsx:30,81 do api.get(...).catch(()=>{}).finally(setLoading(false)); network/permission errors render as empty list, not error. Fix: set error flag in catch, render error EmptyState. Bounded per-file but spans many files.
+
+[CONFIRMED_REAL] Duplicate live InvoiceForm + dead pages/*Form.tsx orphans
+   @ frontend/src/App.routes.tsx:522,526,537
+   invoices/new->OLD pages/InvoiceForm(:522); invoices/create->NEW features/.../InvoiceForm(:526); 'New Invoice' cmd hits OLD. pages/BillForm.tsx, pages/ContactForm.tsx, pages/ExpenseForm.tsx have NO importer (only features/* imported)=dead. Fix: repoint /invoices/new to redesign + delete 3 orphans.
+
+[ALREADY_FIXED] dashboards.py P0 fixes (timedelta import, _d10 at date comparisons, get_counters(org_id))
+   @ backend/app/api/dashboards.py:5,103,145,156,164
+   Verified correct: `from datetime import datetime, timedelta` (L5); _d10() defined L103-115; used both sides of comparisons L145-146 & L156; get_counters(org_id) at L164/170/190 (not user['org_id']); timedelta used L320. No regressions.
+
+[CONFIRMED_REAL] pos.py print_receipt: order.get('created_at','')[:16] unguarded slice
+   @ backend/app/api/pos.py:3908
+   Straggler: _date10() exists (L4067) and is applied everywhere incl. the other receipt template (L1394), but L3908 still raw-slices. If created_at is a Firestore datetime, [:16] raises TypeError. Fix: Date: {_date10(order.get('created_at'))}.
+
+[CONFIRMED_REAL] invoices.py recurring cron: unguarded date slices under bare `except Exception: pass` (data loss)
+   @ backend/app/api/invoices.py:809,816,857
+   start_date/end_date written as str (L766-767), so normal path works; but L857 bare except swallows ALL errors (slice/fromisoformat/create) -> that recurring invoice silently skipped, no log. Fix: add _date10-style guard on L809/816 + log the exception instead of pass.
+
+[PARTIAL] subscriptions.py generate_invoice: current_period_start/end[:10] + unguarded fromisoformat
+   @ backend/app/api/subscriptions.py:156,164
+   Fields written as isoformat str (L362-363), so own-write path is safe; latent only for externally-written/migrated datetime. L156 [:10] slice and L164 datetime.fromisoformat() (no try/except) would TypeError. Fix: _date10 for L156, isinstance-guard for L164.
+
+[NOT_REPRODUCIBLE] fiscal.py close_fiscal_year: end_raw[:10]/start_raw[:10] TypeError not caught by `except ValueError`
+   @ backend/app/api/fiscal.py:103,106,121
+   start_date/end_date are schema-constrained str (FiscalYearIn min/max_length=10) and defaults are strings (f'{year}-12-31'); no write path stores a datetime, so slice never TypeErrors in practice. except ValueError correctly catches malformed-str fromisoformat. Defensive _date10 guard is bounded if wanted.
+
+[NOT_REPRODUCIBLE] hr.py list_attendance: check_in[:10] slice
+   @ backend/app/api/hr.py:307
+   check_in written as datetime.utcnow().isoformat() str at L269 (and L286 check_out); read path L307 .get('check_in','')[:10] always operates on a str -> no TypeError via this module's writes. Latent only on migrated datetime data. Optional _date10 guard is bounded.
+
+[CONFIRMED_REAL] Server paginator applies range/!=/in filters AFTER the limit -> short/empty pages
+   @ backend/app/firestore/query.py:63-115
+   Only '==' goes to Firestore (L63,71-72); >,>=,<,<=,!=,in split to python_filters and applied at L110-111 AFTER q.limit fetched the page (L78). Pages can be partly/fully empty with wrong has_more/cursor. SAFE: push one ranged order_by field (matching existing date indexes) into the query; keep residual ineq client-side. Add unit test.
+
+[CONFIRMED_REAL] Latent crash: by-hour block calls len() on a DatetimeWithNanoseconds
+   @ backend/app/api/pos.py:4161
+   `created=o.get('created_at','')` then `if len(created)>=13` (also L4435 >=19). _date10 docstring (L4070) confirms Firestore returns DatetimeWithNanoseconds, which has no len() — raises TypeError OUTSIDE the inner try (L4162). SAFE: reuse _date10/_iso-ize created_at or guard isinstance(str) before len().
+
+[ALREADY_FIXED] Double-entry engine + AP reference pattern already exist (guide prerequisites)
+   @ backend/app/services/accounting.py
+   create_invoice_journal (L68), create_payment_received_journal (L149), reverse_journal_entry (L360) all build balanced lines; journal_entry_atomic accepts entry_id (L80/L211); AP bill_payments.create_payment_made_with_je_atomic (L110) exists. Engine is ready; only wiring is missing.
+
+[CONFIRMED_REAL] Fix 3a: withholding._round uses non-deterministic 1e-9 epsilon hack (not Decimal)
+   @ backend/app/tax/withholding.py
+   L127-131 still `round(value+1e-9,2)`. Replace _round body with Decimal/quantize(0.01,ROUND_HALF_UP) and compute withheld/net in Decimal (L275-276). Isolated; test_withholding.py (20 tests) runs green here via `pytest -o addopts=''`.
+
+[CONFIRMED_REAL] Fix 3b: invoice_payments balance math in float; closes at <=0 (sub-cent residue)
+   @ backend/app/services/invoice_payments.py
+   _invoice_balance_after (L13-17) float, closes `<=0` (AP closes `<=0.01`). Add _money() Decimal helper + change close rule to `<=0.01`, keep float return at persistence boundary. Bounded; test_atomic_money_paths.py passes here.
+
+[CONFIRMED_REAL] §2.4 optional entry_id pass-through in AccountingService.create_journal_entry not applied
+   @ backend/app/services/accounting.py
+   create_journal_entry (L13-24) has no entry_id param, so create_invoice_journal can't forward a deterministic id. Add optional `entry_id: str=None` and forward to create_journal_entry_atomic (already accepts it). Additive, low-risk; only meaningful once Fix 1 lands.
+
+[CONFIRMED_REAL] OpenAPI contract export script (build-time spec dump)
+   @ backend/scripts/api_routes.py (exists); scripts/export_openapi.py (absent)
+   App emits /api/openapi.json at runtime but no checked-in export script. SAFE: add scripts/export_openapi.py mirroring api_routes.py (import app.main, json.dump(app.openapi())). Bounded, no infra; enables gateway config + contract diffing. Gateway itself is NEEDS_INFRA.
+
+[CONFIRMED_REAL] account_defaults.py helper (is_default_for ↔ account_type bridge)
+   @ backend/app/services/accounting.py:282 (_get_account_by_type by account_type); backend/app/data/coa_templates/retail.yaml (is_default_for tags)
+   Confirmed mismatch: COA YAML tags accounts via is_default_for, accounting.py looks up by account_type. account_defaults.py absent. SAFE: add pure read helper get_default_account() + repo-mocked tests. Prereq for COGS/mfg/IC JE, but the helper alone is bounded & low-risk.
+
+[CONFIRMED_REAL] TMS route optimization + freight rating (pure-function engine slice)
+   @ backend/app/api/logistics.py (CRUD only); tms_routing.py / tms_rating.py (absent)
+   Confirmed: logistics is scaffold CRUD; freight_rates not used for pricing, no route optimization. SAFE: add tms_routing.py (nearest-neighbour, no map API) + tms_rating.py as pure/repo-mocked functions with pytest. Wiring endpoints into logistics.py is additive; no infra.
+
+
+################# NEEDS_INFRA (3) #################
+
+[CONFIRMED_REAL] POS reports stream whole collections unordered, 5000-cap, filter in Python
+   @ backend/app/api/pos.py:4099-4144
+   12 collect_stream(max_docs=5000) sites. collect_stream->stream_org_filtered->stream_org_docs = where(org_id) only, NO order_by/date where; date+state filtered in Python. Full fix (push date+state into query+order_by) needs the pos_orders composite index. SAFE partial = add index JSON.
+
+[CONFIRMED_REAL] Missing composite index (org_id,status,created_at) for pos_orders
+   @ firestore.indexes.json:1-274
+   No pos_orders collectionGroup at all (only payments/invoices/etc). Adding the JSON entry is a SAFE_NOW code edit; the `firebase deploy --only firestore:indexes` to zoho-83cda is NEEDS_INFRA. Caveat: index is inert until finding #1's unordered stream is rewritten to actually issue the ordered/filtered query.
+
+[CONFIRMED_REAL] Analytics/BigQuery warehouse + CDC + BPMN workflow engine + AI/MLOps
+   @ backend/app/api/analytics.py (absent); workflow_engine.py (absent); ai_features.py docstring 'pure data scaffolding'
+   Confirmed: reports fold OLTP at 10k cap, no warehouse/CDC; automation_workflows only simulated (no executor); AI is preview-only CRUD, zero ML deps in requirements.txt. All require BigQuery dataset/CDC, ML worker, or env+indices — infra/external, not code-only.
+
+
+################# NEEDS_TEAM_OR_REALDATA (12) #################
+
+[CONFIRMED_REAL] CSP allows 'unsafe-inline' + 'unsafe-eval' in script-src
+   @ backend/app/main.py:316-317
+   script-src and script-src-elem both include 'unsafe-inline' and 'unsafe-eval', weakening XSS defense. Not bounded-safe: live app relies on inline scripts (GA/GTM/Firebase) and likely eval in vendored bundles; removing without nonces/hashes + full regression risks breaking production. Needs staged CSP rollout.
+
+[PARTIAL] Iraq payments: shared webhook secret + unauthenticated org_id query -> any tenant marked paid
+   @ backend/app/api/iraq_payments.py:197-231
+   Already hardened: _verify_and_parse_webhook reads raw body, requires IRAQ_PAYMENT_WEBHOOK_SECRET (503 if unset), HMAC-SHA256 verifies before processing (401 on bad/missing sig), compare_digest. org_id is still a query param but body must be signed, so external/cross-tenant forgery is blocked. Residual: single global secret (not per-org) means a secret-holder could target any org_id — a multi-tenant design issue, not a SAFE_NOW code fix.
+
+[CONFIRMED_REAL] POS Terminal desktop-only on mobile + hardcoded colors/borders
+   @ frontend/src/components/pos/POSTerminalShell.tsx:110-149
+   No useMediaQuery/viewport branch; Sider width="40%" + Content side-by-side always. Hardcoded #fff(:67), #f0f0f0(:69,113), physical borderRight(:113). Color/RTL tokenization alone is SAFE; a real mobile-stacked POS layout needs design+device validation so overall not bounded.
+
+[CONFIRMED_REAL] Financial reports N+1: one lines-subcollection read per journal entry
+   @ backend/app/services/report_queries.py:96-101
+   journal_balances does pool.map(get_lines(e.id), entries) — 1 subcollection read per entry over up to 10k scan (LIST_HARD_CAP). Lines live in per-entry 'lines' subcollection (journals.py:40, base.py:489). Parallelized but still N reads; eliminating needs denormalization/collection-group redesign + real-data validation.
+
+[CONFIRMED_REAL] Fix 1: invoice confirm/void/cancel posts NO journal entry
+   @ backend/app/api/invoices.py
+   send_invoice(L264), void_invoice(L234), cancel_invoice(L246) never post/reverse a JE. invoice_gl.py absent; create_invoice_journal wired ONLY into pos_accounting.py:82. GL Revenue/AR diverge silently. Touches money + GL; needs full-suite/staged validation.
+
+[CONFIRMED_REAL] Fix 2: customer payment received posts NO Dr Cash / Cr AR entry
+   @ backend/app/api/invoices.py
+   create_payment_received (L450) calls create_payment_received_atomic (no JE). create_payment_received_with_je_atomic absent; create_payment_received_journal wired ONLY into bank_matching_service.py:406. Cash & AR never move on receipts. Money path; needs staged validation.
+
+[CONFIRMED_REAL] Fix 2 (Decimal-aware) create_payment_received_with_je_atomic not added
+   @ backend/app/services/invoice_payments.py
+   Function absent; `import uuid` not present. Must mirror AP bill_payments transaction (payment+balance+JE in one tx, uuid5 idempotent entry_id). Writes GL in a money path; mock test reproducible here but needs full-suite + staged reconcile before deploy.
+
+[CONFIRMED_REAL] §4.3 optional: tax_calc._round 1e-9 hack feeds invoice totals app-wide
+   @ backend/app/services/tax_calc.py
+   L17-19 same epsilon hack. Same Decimal fix is mechanically trivial, but TaxCalculationService computes invoice line/total tax consumed across the app (test_phase1_tax.py, 18 refs); rounding change is a behavior shift the guide defers to a separate validated commit.
+
+[CONFIRMED_REAL] Transactional outbox + internal event bus + saga (event backbone)
+   @ backend/app/services/outbox_dispatcher.py:46; backend/app/firestore/outbox.py:9
+   Confirmed: outbox.py is the 20-line shell; dispatcher _handle_event only stubs 'einvoice_dispatch', all else hits 'outbox_no_handler'. No app/events/ pkg, no saga.py. Touches hot write path (base.py), money flows (invoices/sales_orders); needs full Windows pytest + staged flags.
+
+[CONFIRMED_REAL] Manufacturing cost roll-up + WIP/backflush JE
+   @ backend/app/services/mo_complete_atomic.py:53; backend/app/api/manufacturing.py:53 (cost_per_hour declared, never read)
+   Confirmed: MO completion moves qty only — no FG cost_price, no JE; cost_per_hour unused anywhere. compute_mo_cost pure-fn is testable, but the value is the GL posting on money/atomic paths → needs full Windows pytest + accounting validation against real COA.
+
+[CONFIRMED_REAL] Perpetual valuation (moving-avg/FIFO) + COGS-on-issue JE
+   @ backend/app/services/accounting.py (no create_cogs_journal); inventory_costing.py (absent)
+   Confirmed: COGS never posted on sale (only bill/POS account lookups exist); no avg-cost ledger. Cross-links P0 revenue-JE (also unbuilt). Money-correctness on invoice/POS/GRN paths; Decimal alignment required. Not a bounded sandbox change.
+
+[CONFIRMED_REAL] Multi-company consolidation + real intercompany elimination JE
+   @ backend/app/api/companies.py:213-221 (eliminate = flag only, 'no journal reversal yet'); :178 (IC create posts no JE)
+   Confirmed: eliminate just sets eliminated=True; IC create writes no journal; JEs lack company_id. Per-entity ledger + elimination reversal touch the GL across entities → needs real multi-entity data + staged validation, not a sandbox-safe edit.
+
+
+################# HUMAN_TASK (0) #################

@@ -1,0 +1,257 @@
+DIMENSIONS RETURNED: 8
+
+========== Visual design & Vertex-kit fidelity | score=74 ==========
+SUMMARY: The Vertex token foundation is genuinely strong and well-architected: vertex-tokens.css + vertexTheme.ts + vertex-kit.css give the app flat violet buttons, kit-style tables, glass overlays, slate dark surfaces and live role-accents, all token-driven; the global shell (SideNav, TopBar), CSS files and design-system primitives (TrendChart, MiniSparkline) are clean. Fidelity breaks down in the long tail: ~289 inline hardcoded hex colors across 80 .tsx files, with a real cluster of user-facing finance dashboards, POS, onboarding and charts rendering in recharts-default and legacy-AntD palettes that clash with the violet/slate kit. The most off-brand surfaces are the HardwarePairingWizard (raw unstyled HTML buttons), the live MFA page (still on the OLD auth shell, not VertexAuthShell), and the POS Customer Display. There are also a dark-mode invisible-text bug in EmptyState and a CSS specificity conflict that leaves the old button sheen active. These are correctness/consistency issues on screens real users hit daily, not just polish.
+  [P1] Finance dashboards & charts render in recharts-default / legacy-AntD palette, not Vertex tokens
+     @ frontend/src/pages/CashflowForecast.tsx:73-86; BranchesComparison.tsx:75-87; ConsolidatedReports.tsx:90-101
+     fix: Route all recharts series through tokens.ts dataViz.categorical (or CSS var equivalents): revenue/positive → var(--success-500) #1FAE63, expense/negative → var(--danger-500) #E23D5C, primary series → var(--accent-500). Build a small chartCo
+  [P1] HardwarePairingWizard uses raw unstyled <button> HTML with hardcoded colors — fully off-brand
+     @ frontend/src/components/pos/HardwarePairingWizard.tsx:363-431
+     fix: Rebuild the wizard with antd Button (type=primary for Save, danger for Cut failed, default for the rest) and the design-system Stepper/SectionCard, or at minimum apply Vertex tokens (var(--accent-500), var(--success-500), var(--danger-500))
+  [P1] MFA page (in the active login flow) still renders the OLD AuthLayout, not the Vertex split-screen
+     @ frontend/src/pages/auth/MFAPage.tsx:21,200; App.routes.tsx:456
+     fix: Port MFAPage onto VertexAuthShell (add an 'mfa' mode or pass the OTP form as children) so the whole login→MFA flow is one consistent Vertex shell, and replace the hardcoded OTP greys with --border-strong/--surface-2/--ink-900/--ink-500. Del
+  [P1] EmptyState text uses undefined CSS vars → near-black, invisible in dark mode
+     @ frontend/src/design-system/empty/EmptyState.css:32,45,53,130-131
+     fix: Repoint EmptyState to the real Vertex tokens: color var(--ink-900) / var(--ink-500), illustration bg var(--accent-soft), and error variant var(--danger-fg)/var(--danger-bg). This is a dark-mode regression on every empty list/dropdown/error 
+  [P2] POS Customer Display (customer-facing) mixes Vertex violet with old-AntD green and hardcoded greys
+     @ frontend/src/pages/pos/POSCustomerDisplay.tsx:87-154
+     fix: Swap to tokens: total → var(--success-500) #1FAE63, panel → var(--accent-soft), muted text → var(--ink-500), dashed border → var(--border). Add a dark variant since customer displays are often dark.
+  [P2] Button-sheen specificity conflict: premium.css keeps the animated white sheen the kit tried to remove
+     @ frontend/src/theme/premium.css:112-125 vs frontend/src/theme/vertex-kit.css:174
+     fix: Either remove the sheen ::after block from premium.css, or raise vertex-kit.css's kill rule to match specificity ('.role-accent-root .ant-btn-primary:not(:disabled):not(.ant-btn-disabled)::after { content:none!important; animation:none!impo
+  [P2] Statistic/Card value colors across modules use legacy AntD palette instead of semantic tokens
+     @ frontend/src/pages/WhatsApp.tsx:146-149; EInvoiceDashboard.tsx:174-175; components/pos/GiftCardChargeDialog.tsx:122,128; components/activities/MyActivitiesWidget.tsx:81
+     fix: Map all of these to semantic tokens: positive/accepted → var(--success-500), error/failed → var(--danger-500), neutral/info accent → var(--accent-500), warning → var(--warning-500); panel greys → var(--surface-2). A lint rule (no-hardcoded-
+  [P2] Onboarding flow uses old-AntD green throughout — inconsistent with the violet onboarding shell
+     @ frontend/src/pages/onboarding/OnboardingChecklist.tsx:147,188; onboarding/steps/StepChartOfAccounts.tsx; StepIraqRegion.tsx
+     fix: Use var(--success-500) #1FAE63 for completion states (or var(--accent-500) to keep the onboarding monochromatic-violet), and tokenize the step hexes. Onboarding is the highest-stakes first impression and should be pixel-consistent with the 
+  [P3] roleThemes 'projects' accent and WorkflowBuilder node colors drift off the Vertex ramp
+     @ frontend/src/theme/roleThemes.ts:59; pages/automation/WorkflowBuilder.tsx:28-31
+     fix: Set projects accent to a Vertex ROLE_ACCENT (e.g. blue #2E8FE0 or violet). Reconcile the two semantic palettes — tokens.ts (#16A34A/#F59E0B/#DC2626) vs vertex-tokens.css (#1FAE63/#E0900B/#E23D5C) currently disagree, so 'success green' rende
+  [P3] Dead legacy darkBorder token in tokens.ts would re-introduce white frames if buildAntTokens is ever used
+     @ frontend/src/theme/tokens.ts:113,582-583
+     fix: Either delete buildAntTokens/buildAntComponents/palette.darkBorder if truly unused, or update darkBorder to 'rgba(0,0,0,0.55)' to match vertexTheme.ts so the two theme builders can't diverge.
+  -- verified P0/P1: 3/4 confirmed real
+
+========== Layout, spacing, typography & hierarchy | score=68 ==========
+SUMMARY: The Vertex token foundation (vertex-tokens.css + tokens.ts) is well-structured and the core page templates (PageHeader, FormLayout, DetailLayout, KeyValueGrid, KpiCard, KitListCard) are token-driven and composed cleanly with consistent card surfaces and a sticky-save pattern. However, the design system has drifted from its own rules in practice: a documented semantic type ramp (`typography`) exists but is consumed by zero production components — every heading hardcodes ad-hoc px sizes (26/16/13.5) that map to no token; ~63 legacy Ant-era hardcoded hex colors (#3f8600/#cf1322/#1890ff) survive across 25 page files (esp. financial reports), so KPI figures render off-brand and do not flip in dark mode; content has no max-width on ultra-wide screens despite the kit shipping a `--content-max` wrapper; the density token system only resizes the sidebar (page padding and table cell density are hardcoded); and the global RTL-blind `text-transform: uppercase`/`letter-spacing:.06em` on table headers harms Arabic/Kurdish cursive script. These are real, cross-cutting defects, not polish.
+  [P1] Semantic typography ramp is dead code — every heading hardcodes ad-hoc px sizes that match no token
+     @ frontend/src/theme/tokens.ts:325-336 + design-system/PageHeader.tsx:63, FormLayout.tsx:294, KpiCard.tsx:233
+     fix: Either delete the unused `typography` ramp or (better) make the templates consume it: PageHeader title → typography.h1 (or a new `pageTitle` token), FormLayout section title → typography.h3, KpiCard value → a dedicated `metric` token. Repla
+  [P1] ~63 legacy Ant-Design hex colors survive across 25 pages — financial figures are off-brand and don't flip in dark mode
+     @ frontend/src/pages/Reports.tsx:166-168, AdvancedReports.tsx:152-153,296-297, CashflowForecast.tsx (+22 more files)
+     fix: Replace every `#3f8600`/`#cf1322`/`#1890ff`/etc. with the token equivalents (`var(--success-fg)`, `var(--danger-fg)`, `var(--accent-500)`). For the report `Statistic`s, route through KpiCard or a token-colored wrapper. Add `no-hardcoded-col
+  [P1] No content max-width on wide screens — kit ships a `--content-max` centering wrapper that the app shell drops
+     @ frontend/src/layouts/AppShell.tsx:325-346
+     fix: Wrap `<Outlet />` (or the Content inner) in a `maxWidth: var(--content-max); margin-inline: auto` container, matching the kit's app.jsx. This is a one-line structural fix that immediately improves readability and KPI/card proportions on lar
+  [P2] Density control only resizes the sidebar — page padding and table cell density are hardcoded, so 'compact' ERP density is mostly a no-op
+     @ frontend/src/layouts/AppShell.tsx:330-336 + theme/vertex-kit.css:319,376 + tokens.ts:535-541
+     fix: Drive `Layout.Content` padding from `densityPagePadding[density]` and add density-scoped table cell padding (e.g. compact 6px/10px, comfortable 10px/14px) via a `[data-density]` attribute on the shell so the density toggle actually changes 
+  [P2] Table column headers force uppercase + 0.06em letter-spacing globally — breaks Arabic/Kurdish cursive script (the default UI language)
+     @ frontend/src/theme/vertex-kit.css:311-320
+     fix: Add an RTL guard mirroring the headings rule: `[dir='rtl'] .ant-table-thead > tr > th { text-transform: none; letter-spacing: normal; }`. Keep uppercase/tracking for LTR only.
+  [P2] Core report/dashboard pages bypass design-system primitives — raw antd Card/Row/Col/Statistic create inconsistent grids and metric typography
+     @ frontend/src/pages/Reports.tsx:106-223 (+157 pages use raw Row/Col)
+     fix: Standardize report/dashboard metric blocks on KpiCard (or a shared MetricStat) and wrap sections in SectionCard with a single token gutter (e.g. `space.lg`). Fix the 4-card grid to a responsive auto-flow grid so the last card aligns rather 
+  [P2] Mobile list rows wrap every record in a heavy violet glow halo + tinted border — contradicts the flat/hairline desktop kit and destroys list scannability
+     @ frontend/src/components/responsive/responsiveTable.css:43-67,168-195
+     fix: Demote mobile cards to a flat `--surface-2` with a single hairline `--border` and `--shadow-sm`, reserving the accent glow/border for the selected or pressed row only. Replace the hardcoded `rgba(15,23,42)`/`#ffffff`/`rgba(0,0,0)` with `var
+  [P3] Ad-hoc off-grid spacing/size values scattered through templates break the 4pt rhythm
+     @ frontend/src/design-system/PageHeader.tsx:79-82 + KitListCard.tsx:105, EditableLineItems.tsx:270
+     fix: Snap these to token values (subtitle → 13/fontSize.sm with a 4px margin, tab/cell → 13 or 14, KPI title → 12 or 13) so all text sizes come from `--fs-*` and all gaps are multiples of 4px.
+  -- verified P0/P1: 3/3 confirmed real
+
+========== Frontend code quality & architecture | score=58 ==========
+SUMMARY: The design-system foundation is genuinely strong — 55 reusable primitives, ~192 pages on ResponsiveTable/DataTable vs 26 raw antd Table, and theme-aware components correctly default isDark via the useIsDark hook. But underneath sits heavy untyped/dead-code debt: ~845 `any` usages (1,083 eslint warnings), 220 `useState<any[]>` in pages that throw away the real types in types/index.ts, a 4,655-line settings monolith, duplicate live InvoiceForm/BillForm implementations, and a systemic effect/fetch anti-pattern flagged 300+ times by the React Compiler rules. The lint gate is actually RED (5 errors + 2 stale directives), contradicting the documented green state. Solid bones, sloppy interior.
+  [P1] Lint gate is RED — 5 errors + 2 stale disable directives (contradicts documented "0 error" state)
+     @ frontend/src/pages/field-service/ServiceOrders.tsx:8, IntercompanyTransactions.tsx:7, ResponsiveTable.tsx:64, dms/SignatureRequests.tsx:23, pos/POSOrders.tsx:2, Dashboard.tsx:253, pos/POSProducts.tsx:106
+     fix: Delete the 5 dead imports/vars (or prefix with `_`) and remove the 2 obsolete eslint-disable comments. Re-run `npx eslint src` to confirm 0 errors, then wire `eslint src --max-warnings <baseline>` into CI so the gate can't silently regress 
+  [P1] Untyped data layer: 220 `useState<any[]>` in pages discard the real domain types
+     @ frontend/src/pages/Accounts.tsx:27, AuditLog.tsx:21, AnalyticReport.tsx:15-17, approvals/MyApprovals.tsx:45 (+216 more)
+     fix: Type the list state against the existing domain types (`useState<Account[]>`) and type the axios responses (`api.get<ApiListResponse<Invoice>>(...)`). Start with the 20 worst-offender files. This is mechanical and high-leverage — it convert
+  [P1] Two live, divergent InvoiceForm/BillForm implementations — primary "New" button hits the OLD one
+     @ frontend/src/pages/InvoiceForm.tsx (223 lines) vs frontend/src/features/sales/invoices/InvoiceForm.tsx (502 lines); App.routes.tsx:522/526/527; Invoices.tsx:302
+     fix: Pick the canonical form (the 502-line feature version), repoint `/invoices/new` and all nav/command/quick-create targets to it, and delete the old `pages/InvoiceForm.tsx` + `pages/BillForm.tsx`. Users currently get an inconsistent create-vs
+  [P2] settings/sections/bodies.tsx is a 4,655-line, 61-component monolith
+     @ frontend/src/settings/sections/bodies.tsx (4,655 lines)
+     fix: Split into `settings/sections/<area>/<Name>.tsx` (one component per file) and re-export from a barrel. No behavior change, large maintainability/HMR win. The section registry already keys sections by name, so the split is low-risk.
+  [P2] Systemic effect anti-pattern: `useEffect(() => { fetchX() }, [...])` with fetchX declared later — React-Compiler-hostile
+     @ frontend/src/pages/approvals/MyApprovals.tsx:47-55, ApprovalDetail.tsx:52-57, ApprovalRules.tsx:44, pos/POSCategories.tsx:22-30 (pattern repeats 300+ times)
+     fix: Standardize a typed data-fetch hook (the project already has useCRUD) so pages declare `const { data, loading } = useResource<Invoice>('/api/invoices')` instead of hand-rolling fetch-in-effect. As an interim, wrap fetchers in useCallback an
+  [P2] `isDark` prop-drilled through 34 component interfaces despite an existing useIsDark() hook
+     @ frontend/src/hooks/useIsDark.ts; consumers in SectionDocsDrawer.tsx:21/25, RoleIdentityChip.tsx:14, layouts/AppShell.tsx:260/297/306, +31 more
+     fix: Make `isDark` an optional prop that defaults to `useIsDark()` in the leaf components (same pattern the design-system already uses), then stop threading it from AppShell. Removes ~34 prop hops with zero behavior change.
+  [P2] Dead/no-op logic in ResponsiveTableAdapter (the AntD→responsive migration shim)
+     @ frontend/src/components/responsive/ResponsiveTableAdapter.tsx:259-275, 296
+     fix: Delete the dead `actionsColumn`/`_rowActions` memos and the tautological `rowActions` prop; tighten the ~30 `any` props to the relevant AntD types. This is a core migration component (~192 pages depend on it), so the dead code is actively m
+  [P2] Single global ErrorBoundary with no reset-on-navigation — one thrown route locks the whole content area
+     @ frontend/src/layouts/AppShell.tsx:347-357; frontend/src/components/ErrorBoundary.tsx
+     fix: Reset the boundary on route change — pass `location.pathname` as a key/resetKey (react-error-boundary) or reset hasError in an effect keyed on pathname. Optionally add boundaries around the heaviest feature areas (POS, dashboards) so one wi
+  [P3] Internal UIGallery showcase (567 lines, 115 lint warnings) shipped into production nav
+     @ frontend/src/pages/UIGallery.tsx (567 lines); App.routes.tsx:127/645; layouts/navigation.tsx:491
+     fix: Gate the route and nav entry behind `import.meta.env.DEV` (or an internal-only flag) so the gallery and its 567 lines / 115 warnings don't ship to customers. Same treatment for dev-gallery/ and /kit-preview if present.
+  [P3] Two parallel Zustand store roots (src/store/ and src/stores/) with overlapping concerns
+     @ frontend/src/store/ (settingsStore) vs frontend/src/stores/ (authStore, uiStore, navStore, posCart, ...)
+     fix: Consolidate to a single `src/stores/` directory and move settingsStore in (or document the boundary explicitly). Minor, but two near-identically-named dirs is a footgun for new contributors and for import autocompletion.
+  -- verified P0/P1: 2/3 confirmed real
+
+========== Performance | score=62 ==========
+SUMMARY: The foundation is solid: route-level code-splitting via lazyWithRetry, AntD Table auto-virtualization ≥200 rows, a properly virtualized POS product grid, OptimizedImage with lazy/decoding/CLS hints, and server-paginated list pages (page_size 20). But there are real scalability landmines. The biggest is the backend POS/dashboard reporting layer, which performs unfiltered full-collection scans in Python (collect_stream with NO filters, capped at an UNORDERED 5000 docs) — multiple scans per request — which is both a latency bomb and a correctness bug once an org exceeds 5000 orders. On the frontend, App.tsx instantiates its own QueryClient (refetchOnWindowFocus:true) and orphans the carefully-built centralized client + IndexedDB persister (setupPersistence is never called), so offline cache restore and the query-class tuning are dead. A 1 MB undifferentiated catch-all vendor chunk also escapes the shell-size budget check entirely.
+  [P0] POS reports stream the entire orders/lines collections into Python with no date/state filter and an UNORDERED 5000-doc cap (latency + silent data loss)
+     @ backend/app/api/pos.py:4099-4144 (reports_dashboard); also 4217,4226,4272-4291,4340,4389,4422
+     fix: Push the date range and state into Firestore: query `org_id == ... AND created_at >= date_from AND created_at <= date_to AND state in [...]` via list_page/composite index, paginating by cursor instead of an arbitrary cap. At minimum pass `f
+  [P1] App.tsx defines a second QueryClient (refetchOnWindowFocus:true) and orphans the centralized client + IndexedDB persister
+     @ frontend/src/App.tsx:29-38 & 116; frontend/src/data/queryClient.ts:54; frontend/src/data/persister.ts:60
+     fix: Delete the inline client in App.tsx and import the singleton from data/queryClient.ts; call setupPersistence(queryClient) at boot (main.tsx) so cache survives reload. Set the global default to refetchOnWindowFocus:false and let useClassedQu
+  [P1] dashboards.py widget queries pull up to 10,000 docs and filter in Python; several branches also reference an undefined `user` (NameError) and compare str slices to datetimes
+     @ backend/app/api/dashboards.py:179-186, 205-258, 124-170
+     fix: Pass `user` (or compute org-scoped counters without it), and convert date_from/date_to to 'YYYY-MM-DD' strings before the string-slice comparisons. Replace the limit=10000 scans with cursor-paginated indexed range queries or cached org_coun
+  [P1] 1 MB catch-all `vendor` chunk escapes manualChunks splitting AND the shell-size budget check
+     @ frontend/dist/assets/vendor-*.js (1033 KB); frontend/vite.config.ts:309-310; frontend/scripts/check-shell-size.mjs:43-50
+     fix: Run `npm run build` with the visualizer (dist/stats.html) to enumerate the vendor chunk's contents, then add explicit manualChunks buckets for the heavy offenders (and confirm none are eagerly imported by the shell). Either add `vendor` to 
+  [P2] DataTable advertises React.memo but is not memoized; wraps every render in a framer-motion mount animation
+     @ frontend/src/design-system/DataTable.tsx:266-270, 415-418
+     fix: Wrap DataTable in React.memo (or memoize DataTableInner) and document that callers must pass stable (useMemo'd) `columns`/`dataSource`. Gate the mount animation behind a prop or render it only once (not on data updates) to avoid re-animatin
+  [P2] session detail / close / summary aggregate up to 10,000 orders+payments+cash-moves in Python on every call
+     @ backend/app/api/pos.py:410-422 (get_session), 510-537 (close_session), 692-713 (session_summary)
+     fix: Maintain running session totals (total_sales/total_tax/order_count/cash_in/out) via Firestore increments on each order-pay/cash-move write, so session detail and Z-report read O(1) fields instead of rescanning. If full recompute is needed, 
+  [P2] orders/search loads 1000 orders then issues an N+1 fan-out of per-line + per-item reads for barcode search
+     @ backend/app/api/pos.py:828-860
+     fix: Denormalize a searchable `barcodes`/`item_skus` array onto the order document at write time and query/filter on that, or back POS order search with a search index. Avoid per-line `item_repo.get` in a loop; batch-fetch items once if truly ne
+  [P3] Monolithic locale chunks (ku.json 361 KB, en.json 249 KB) are built as separate fallback chunks alongside the active per-namespace HTTP loader
+     @ frontend/dist/assets/ku-*.js (361 KB), en-*.js (249 KB); frontend/src/i18n.ts:3,34-36; frontend/src/main.tsx:16-20
+     fix: Once the namespaced HTTP loader is the committed path, drop the monolithic src/locales/*.json dynamic imports (or move the legacy fallback behind a build flag) so the duplicate large locale chunks are not produced. Convert the static `impor
+  -- verified P0/P1: 4/4 confirmed real
+
+========== Database/Firestore data layer & scalability | score=38 ==========
+SUMMARY: Tenant isolation is solid (every BaseRepository query is scoped by `.where("org_id","==",...)` and reads re-check org_id), and there is genuine resilience plumbing (quota fallback, channel-reset timeout, ListMeta degradation). But the read/scalability layer is the weak point: all four core financial reports (trial balance, P&L, balance sheet, cash flow) and the general ledger run an N+1 that issues one Firestore subcollection query per journal entry on top of a 10k full-collection scan; dozens of report/dashboard endpoints load up to 5,000–10,000 docs and filter/sort in Python instead of using the composite indexes that already exist; customer-statement bulk email re-reads the entire invoice collection once per contact (O(contacts×invoices)); the server-side paginator applies range filters AFTER the limit, so filtered pages can return empty and dead-end; and the custom-dashboard endpoint is largely broken (NameError + TypeError in 5 data sources, budget-variance reads journal lines from the wrong place and always computes 0). These are real correctness and cost/latency risks at production scale.
+  [P0] Custom dashboard data sources crash: NameError (undefined `user`) + TypeError (datetime vs str)
+     @ backend/app/api/dashboards.py:149,155,175,130-131,140-141
+     fix: Pass `org_id` into the counter calls (it is already the function's first parameter — replace `user["org_id"]` with `org_id`). For the date filters, compare like-for-like: use `_parse_date(p.get("date"))` and compare datetimes, or compare `d
+  [P0] All core financial reports run an N+1: one subcollection read per journal entry over a 10k scan
+     @ backend/app/services/report_queries.py:80-102 (consumed by backend/app/api/reports.py:107,146,198,538,302)
+     fix: Stop storing posted journal lines only in a subcollection for reporting. Either (a) maintain a denormalized GL/account-balance rollup collection updated on JE post (the `gl_materialisation`/`org_counters` services already hint at this patte
+  [P1] Bulk customer-statement email re-reads the ENTIRE invoice collection once per contact (O(contacts × invoices))
+     @ backend/app/api/customer_statements.py:254-262 → 141 → 51
+     fix: Query per contact with the existing `(org_id, contact_id, date DESC)` index: `invoice_repo.list(filters=[{field:'contact_id',op:'==',value:contact_id}, date range], ...)`. Standardize on the `date` field. For bulk, fetch invoices once group
+  [P1] Server-side paginator applies range/extra filters AFTER the page limit → filtered pages return empty and dead-end
+     @ backend/app/firestore/query.py:63-71,78,106-116
+     fix: Push range filters into the Firestore query (Firestore supports range on a single field plus equality on others, given a composite index). When a query needs a second equality + range, require/add the matching composite index rather than po
+  [P1] Budget variance reads journal lines from the header doc (always empty) → 'actual' is silently always 0; also O(lines × journals)
+     @ backend/app/api/budgets.py:167,171-195
+     fix: Use the same line source as the reports layer (`get_lines` per entry, or better the materialized GL). Pre-aggregate actuals once into a `{(account_id, year, month): amount}` dict in a single pass over journals+lines, then look up per budget
+  [P1] account-transactions scans ALL history (2000–2099) with per-entry line fetch to show one account
+     @ backend/app/api/reports.py:339-344,296-306
+     fix: Query `stock_movements`-style: maintain per-account postings (or use a `lines` collection-group query filtered by org_id + account_id + date with an index) so a single account's transactions are fetched directly. Default the date range to a
+  [P2] Widespread 'load up to 5,000–10,000 docs then filter/sort in Python' instead of using existing composite indexes
+     @ backend/app/firestore/base.py:214-342 (list); backend/app/api/dashboards.py:179-322; cashflow_forecast.py:48,56; crm.py:464; einvoice.py:286,307; payroll.py:419,421; pos.py:4101-4226; customer_statements.py:51
+     fix: Route aggregate/count widgets through indexed `list_page`/aggregation queries (Firestore `count()` aggregation for counts; date-bounded indexed queries for sums). Reserve full-collection streaming for true exports. Audit every `limit=10000`
+  [P2] Missing composite index for the common (org_id, status, created_at) query → silent client-side fallback for POS/order queries
+     @ backend/app/api/dashboards.py:207-213; firestore.indexes.json (invoices/bills have (org_id,status,date) but no pos_orders (org_id,status,created_at))
+     fix: Add the POS-order composite index `(org_id ASC, status ASC, created_at DESC)` (and audit other status+date queries across modules). Emit a metric/log alarm when `meta.degraded`/index-fallback fires so silent full-scan degradation is visible
+  [P2] Platform stats does an N+1 license lookup across up to 5,000 organizations on one request
+     @ backend/app/api/platform/stats.py:20,35-37
+     fix: Precompute org/license/user aggregate counts in a periodically-refreshed `platform_stats` rollup doc (the scheduler already runs nightly jobs), or use Firestore aggregation queries + a single batched license read. Avoid per-doc reads inside
+  [P3] Inconsistent journal-line data model between reporting paths invites future correctness drift
+     @ backend/app/api/budgets.py:191 vs backend/app/services/report_queries.py:96-101 vs backend/app/firestore/journals.py:13-17,40
+     fix: Centralize line access behind one repository method (e.g. `JournalEntryRepository.iter_lines_for_range`) and forbid `.get('lines')` on raw header docs in reporting code. Document the canonical source-of-truth for posted lines in CLAUDE.md a
+  -- verified P0/P1: 6/6 confirmed real
+
+========== Security | score=62 ==========
+SUMMARY: The auth core is genuinely solid: bcrypt + signed HS256 JWTs with jti revocation, brute-force lockout (account + IP), tenant org_id taken only from the verified token (no IDOR on the main API), CORS restricted to explicit origins, Firestore rules with default-deny and per-role tenant isolation, and serviceAccountKey.json/.env are correctly gitignored and were never committed. However there are several real holes that undermine that foundation: (1) a public customer-portal magic-link endpoint returns the login token directly in its HTTP response, giving anyone account takeover of any customer's portal (PII + financials); (2) the CSP ships 'unsafe-inline' + 'unsafe-eval', nullifying XSS defense while the JWT lives in localStorage; (3) a hardened upload-validation choke-point (validate_upload) was built but is never called by any upload endpoint, so the real attachment handler stores attacker-controlled filenames/content-types with no sniffing or path-traversal guard. RBAC also allows rbac.manage holders to mint roles with permissions they don't possess (privilege-escalation boundary). None of these are forgeable-token or cross-tenant-data-read holes, but the portal token leak is effectively a P0 for a production system handling real customer data.
+  [P0] Customer-portal magic-link endpoint returns the login token in its HTTP response → account takeover of any customer
+     @ backend/app/api/storefront.py:316-343
+     fix: Stop returning `token`/`verify_url` in the response — deliver the link only via email (the email pipeline already exists in auth.py `_send_reset_email`). Add `@limiter.limit("3/hour")` per-IP and per-email. Always return a generic 200 (do n
+  [P1] Content-Security-Policy includes 'unsafe-inline' and 'unsafe-eval' — XSS protection is effectively disabled while JWT sits in localStorage
+     @ backend/app/main.py:314-325
+     fix: Remove `'unsafe-eval'` entirely and replace `'unsafe-inline'` for scripts with a per-response nonce (`script-src 'self' 'nonce-<random>'`) or hashes; Vite can emit nonce-able bundles. Keep `'unsafe-inline'` only for style-src if unavoidable
+  [P2] Hardened upload validator (validate_upload) is dead code — real upload endpoints store attacker-controlled filename + content-type with no sniffing or path-traversal guard
+     @ backend/app/api/attachments.py:21-43 (and app/services/upload_validation.py)
+     fix: Call `validate_upload(file_bytes=contents, filename=file.filename, declared_content_type=file.content_type, category='document')` in attachments.py, imports.py, ocr.py, banking.py, efakhata.py, migration.py before persisting, and store `res
+  [P2] Privilege escalation via RBAC: rbac.manage holders can mint roles with permissions they do not hold and assign default:admin/owner
+     @ backend/app/api/rbac.py:88-104, 189-209
+     fix: On create_role/update_role, reject any requested permission the actor does not already hold (subset check against get_user_permissions(actor)). In set_user_roles, forbid assigning `default:owner`/`default:admin`/`default:super_admin` unless
+  [P2] Storefront catalog/checkout trusts attacker-controlled X-Org-Id with no storefront-enabled check → cross-tenant product enumeration & data injection
+     @ backend/app/api/storefront.py:90-122, 156-307
+     fix: Resolve the storefront tenant from a server-side host→org mapping (subdomain/custom domain), not a client header. Gate every storefront route behind an explicit `org.storefront_enabled` flag and 404 if absent. Never fall back to a hardcoded
+  [P2] Single shared Iraq-payment webhook secret + unauthenticated org_id query param lets a holder of the global secret mark any tenant's invoice paid
+     @ backend/app/api/iraq_payments.py:197-231
+     fix: Use a per-tenant webhook secret stored on the gateway config (IraqGatewayConfigRepository) and look it up by the org_id, rejecting if the signature doesn't match that tenant's secret. Additionally verify the referenced payment/invoice belon
+  [P3] /auth/2fa/disable docstring claims password verification but only checks a TOTP code (contract/security mismatch)
+     @ backend/app/api/auth.py:719-742
+     fix: Require the account password (verify_password against password_hash) in addition to a valid TOTP before disabling 2FA, matching the docstring. Keep the policy guard (user_must_keep_2fa) already present at line 732.
+  [P3] Firestore-quota auth fallback rebuilds the user from JWT claims, retaining a stale/elevated role during outages
+     @ backend/app/services/auth.py:564-584, 595-603
+     fix: On quota fallback, cap effective privileges (e.g. never grant is_platform_admin from JWT alone; deny suspended/sensitive operations) or shorten access-token TTL further so stale elevated claims expire quickly. Consider failing closed for su
+  -- verified P0/P1: 2/2 confirmed real
+
+========== Test coverage & quality | score=52 ==========
+SUMMARY: The suite is broad in count (backend 1391 collected / 1388 pass; frontend 1322) and genuinely strong on accounting atomics, RBAC/IDOR repo guards, payment-webhook HMAC, and e-Fakhata XAdES signing. But coverage is structurally blind to the single most common production bug class — Firestore returning datetime objects where tests feed ISO strings — which already shipped one 500 (pos.py _date10) and STILL has a live, untested P0 in dashboards.py (datetime &lt;= str TypeError). The HTTP surface is badly under-tested (pos.py: 119 endpoints, ~0 endpoint tests; dashboards.py: 10 endpoints, 0 tests), the documented `pytest` command is broken (pytest-cov missing but hardcoded in addopts), and the changelog's "all green" baselines are now false on both ends (backend 3 fails not 2; frontend 3 fails not 0, in a just-modified component).
+  [P0] Live untested 500: dashboards.py compares datetime <= str (same bug class as the pos.py _date10 fix, never caught)
+     @ backend/app/api/dashboards.py:130,141
+     fix: Fix the comparison to compare like types (normalize both sides to 'YYYY-MM-DD' strings, e.g. reuse a _date10-style helper, OR parse the doc date to datetime). THEN add a TestClient/unit test for get_widget_data with keys total_revenue/total
+  [P0] Systemic coverage blind spot: no test ever feeds the production Firestore datetime type into date-range filters
+     @ backend/tests/test_reports_streaming.py, test_aged_reports.py, test_report_snapshots.py (+ fakes/repo.py)
+     fix: Add a shared fixture/parametrization that runs the date-filtering report & dashboard queries twice: once with ISO-string dates and once with real `datetime`/Firestore-like timestamp objects. Make the fake Firestore (tests/fakes/repo.py) opt
+  [P1] Documented `pytest` command is broken out-of-the-box: pytest-cov hardcoded in addopts but not installed
+     @ backend/pytest.ini:7-11
+     fix: Either add `pytest-cov` to requirements.txt (and pin it), or move the --cov flags out of the committed addopts into an opt-in command. Then actually set a non-zero `--cov-fail-under` for the high-risk modules (api/pos.py, api/dashboards.py,
+  [P1] POS & dashboard HTTP endpoints are almost entirely untested (the layer where the real 500s live)
+     @ backend/app/api/pos.py (119 routes), app/api/dashboards.py (10 routes)
+     fix: Stand up a TestClient harness for the POS report endpoints (reports/dashboard, z-report, sales-summary, session close) and the dashboard widget-data endpoint, following the repo-mock pattern already proven in test_iraq_payment_webhook_secur
+  [P1] Frontend baseline regressed: ResponsiveTable mobile 'Show more' broke 3 tests in a just-modified component (changelog claims 1322/1322 green)
+     @ frontend/src/components/responsive/ResponsiveTable.tsx (vs ResponsiveTable.test.tsx:218,243)
+     fix: Re-run `npm run test` after responsive edits and treat it as a required gate. Either restore the show-more affordance for the trimmed-columns case or update the test+changelog to reflect the intended behavior — but do not leave the claimed 
+  [P1] Undocumented backend failure: region-alignment guard catches a real firebase.json config drift (changelog says only 2 known fails)
+     @ backend/tests/test_region_alignment_tool.py::test_verify_region_alignment_exits_zero (vs firebase.json + tools/verify_region_alignment.py:47)
+     fix: Fix firebase.json to declare the Cloud Run hosting rewrite region (or update EXPECTED in the tool to match the real deploy region) so the guard goes green, and correct the CLAUDE.md baseline to '3 known fails' until resolved. Treat this gua
+  [P2] Phantom module breaks scanner test AND silently dead-ends the camera barcode-scan path
+     @ frontend/src/hardware/scanner/scanner-service.ts:250 (import '../../workers/barcode')
+     fix: Either create the referenced worker (src/workers/barcode.ts) or repoint the import to the real worker location, then make scanner-service.test.ts pass (it's already written). Add one test that the camera path degrades visibly (not silently)
+  [P2] Frontend has zero tests for payments, reports, invoices, or e-invoice flows
+     @ frontend/src/**/*.test.tsx (67 files)
+     fix: Add component tests for at least InvoiceForm (line-item totals/tax math), the POS payment picker (amount validation, change calc), and PayLink (signed-token states). These are user-facing money flows where a silent calc regression is costly
+  [P2] Test runs emit telemetry to a DELETED GCP project, flooding output and masking real failures
+     @ backend (OTel cloud-trace exporter) → project erp-system-494716
+     fix: Disable the Cloud Trace/OTel exporter under test (env flag or pytest fixture that nulls the exporter), or point it at a noop. A clean test log is a prerequisite for anyone trusting the pass/fail summary.
+  [P3] Two real source files are excluded from the vitest run as opaque 'failures' (node:test runner + missing worker)
+     @ frontend/src/utils/buildAddOption.test.tsx, src/hardware/scanner/tests/scanner-service.test.ts
+     fix: Delete or migrate buildAddOption.test.tsx into vitest (the .vitest variant already exists), and fix/skip scanner-service.test.ts, so `npm run test` reaches a clean 0-failing-files state. Persistent expected-red erodes the signal value of th
+  -- verified P0/P1: 4/6 confirmed real
+
+========== Cross-cutting consistency & architecture | score=52 ==========
+SUMMARY: The codebase carries a half-finished "legacy → Modern/redesign" migration: for Invoices, Bills, Items, and Purchase-Orders there are TWO complete, divergent implementations (pages/*.tsx vs features/**), and the redesigned versions are orphaned on /list and /create URLs that no navigation surface links to — so users always get the old UI while ~2,500 LOC of newer code is dead. The same migration left a live 404 ("New Bill" from the command palette routes to /bills/new, which has no route) plus several broken create-links and 3+ dead page files. Two registries (moduleConfigs ↔ moduleMap ↔ backend ext routers) are actually coherent, but the nav-audit CI quality gate that is supposed to catch route/nav drift is itself broken (exits 2, matches ~10 of 347 destinations), and config is duplicated (two vercel.json, the CSP-bearing one is dead). Solid bones, but real architectural drift and dead/duplicate modules erode trust in the structure.
+  [P0] "New Bill" command-palette action 404s — /bills/new has no route
+     @ frontend/src/layouts/CommandPalette.tsx:61 + frontend/src/App.routes.tsx:533-538
+     fix: Either add `{ path: 'bills/new', element: <BillFormRedesign /> }` aliasing /bills/create, or change CommandPalette.tsx:61 and BillsList.tsx to navigate to '/bills/create'. Audit every '*/new' link against the route table (see the nav-audit 
+  [P1] Duplicate parallel modules: legacy pages/* vs orphaned features/** redesign — users get the OLD UI everywhere
+     @ frontend/src/App.routes.tsx:521-544 (and features/sales/invoices, features/purchases/bills, features/purchases/purchase-orders, features/inventory/items)
+     fix: Pick one implementation per module. Repoint nav to the redesigned routes (or delete the redesign), then remove the now-dead variant. Until then the 'Modern list/form' work is shipped but invisible, and the two code paths drift (e.g. legacy 
+  [P1] nav-audit required CI gate is broken — exits 2 and mis-matches ~337 of 347 destinations
+     @ frontend/scripts/nav-audit.mjs + .github/workflows/ci-quality.yml:76-98
+     fix: Fix the route-skeleton builder to nest children under the '/' parent (or feed matchRoutes the real route tree), re-baseline navDestinations.ts, and confirm the gate goes green. A green-by-accident or bypassed required gate gives false 404-r
+  [P1] Dead page files: pages/BillForm.tsx, pages/ContactForm.tsx, pages/ExpenseForm.tsx imported nowhere
+     @ frontend/src/pages/BillForm.tsx (227 lines), pages/ContactForm.tsx, pages/ExpenseForm.tsx
+     fix: Delete the three orphaned *Form.tsx files (and any sibling once the legacy/redesign module split above is resolved). Add a dead-export lint (knip/ts-prune) to CI so orphaned modules surface automatically.
+  [P1] Production ships with NO CSP — the CSP lives in a dead root vercel.json, not the deployed frontend/vercel.json
+     @ vercel.json:26-30 (root, dead) vs frontend/vercel.json:16-35 (deployed)
+     fix: Move the CSP + security headers from root vercel.json into frontend/vercel.json (or set rootDirectory to repo root with a corrected build path). Delete whichever vercel.json is not used to end the sprawl. Verify with `curl -I https://erpiq.
+  [P2] 3.6MB reference design kit shipped inside src/ (gitignored but in working tree), with a stale path reference
+     @ frontend/src/design-system/Vertex Design System (1)/ (56 files, 3.6MB) + frontend/src/theme/vertexTheme.ts:4
+     fix: Move the reference kit out of src/ entirely (e.g. to /design-reference or a separate repo) so it cannot be accidentally imported and stops bloating tool/IDE indexing; fix the stale path comment in vertexTheme.ts:4.
+  [P2] Same broken-create-link class repeats: /purchase-orders/new has no route
+     @ frontend/src/features/purchases/purchase-orders/PurchaseOrdersList.tsx:264,302 + App.routes.tsx:539-544
+     fix: Standardize on one create-suffix ('/new' or '/create') across all modules and grep-enforce it. Resolving the legacy/redesign split (finding above) will naturally fix this.
+  [P3] Docs-vs-reality: CLAUDE.md changelog records three conflicting backend regions/URLs
+     @ CLAUDE.md (deploy changelog entries) vs deploy/cloudrun-url.txt
+     fix: Add a single 'Current deployment' section at the top of CLAUDE.md (region, Cloud Run URL, Vercel project) and treat the dated changelog as history only; reconcile the me-central1 vs europe-west1 wording.
+  -- verified P0/P1: 4/5 confirmed real
+
+
+===== SEVERITY TALLY =====
+  P0: 7
+  P1: 26
+  P2: 28
+  P3: 11
+  TOTAL: 72

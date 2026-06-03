@@ -688,3 +688,110 @@ frontend/src/
 - **پشتڕاستکردنەوەی orchestrator (هەمووی سەوز):** tsc ٠ · build exit 0 (474 PWA) · lint exit 0 (٠ error / **2606** warn — کەمبووەوە لە 2895 بەهۆی لابردنی هاردکۆد-ڕەنگ) · rtl:audit passed · glass-modals OK · i18n:purity:foundation ٠ · **test 1322/1322 سەرکەوتوو (٠ ڕیگرێشن؛ ٢٩ فایلی شکست هەمووی پێش-بوونیار: Playwright e2e + scanner-service + nav-preservation)**.
 
 **تێبینی:** هەموو ئەیگێنت تەنها P0-ی سەلامەت جێبەجێکرد؛ punch-list-ی P1/P2 (KpiCard grid فراوانتر، DataTable swap، DetailLayout/KeyValueGrid restructure، chart-color tokenization) بۆ شەپۆلی داهاتوو ماوە. CashflowForecast: KpiCard بێ decimal پیشان دەدات (نواندنی kit، نەک لۆجیک).
+
+### 2026-06-03 — جێبەجێکردنی P0 (٥ ئەیگێنتی پاراڵێل، بێ مەترسی، بێ commit/deploy)
+
+دوای هەڵسەنگاندنی قووڵ + پلانی world-class، کاری P0ـی ئەندازیاریی سەلامەت جێبەجێکرا بە ٥ ئەیگێنتی پاراڵێل لەسەر فایلی جیاواز (disjoint). **هیچ commit/deploy نەکراوە؛ کۆنترۆڵ لای بەکارهێنەر.** sandbox-ی Linux نەیتوانی تەواوی pytest-ی backend ڕان بکات (venv ـی Windows + بێ deps)، بۆیە دۆخی پشتڕاستکردنەوە بە ڕاستگۆیی نیشانە کراوە.
+
+- **ئاسایشی webhook (backend):** `app/api/iraq_payments.py` — زیادکردنی HMAC-SHA256 verification بۆ `/webhook/fib` و `/webhook/zain-cash` (پێشتر بێ-واژۆ، مەترسیی فراد). نهێنی نەبوو→503، واژۆ هەڵە→401. + `IRAQ_PAYMENT_WEBHOOK_SECRET` لە `app/config.py` + `env_docs.py` + `.env.example` + `tests/test_iraq_payment_webhook_security.py`. فایلەکان بە Read پشتڕاستکران دروستن (bash py_compile بەهۆی mount-ی کۆنەوە شکستی هێنا، نەک کۆد).
+- **یەکخستنی نرخ (marketing):** `PricingSection.astro`/`StructuredData.astro` + ٢ بلۆگ → یەکدەخرێن لەگەڵ `plans.py` (٣٠k/٨٠k/٢٠٠k IQD، $٢٥/$٦٠/$١٥٠). grep پاک.
+- **پاکی ڕیپۆ:** `git rm --cached` بۆ `gha-key.json` (ناوی کلیلی CI) + `deploy/TEST*.txt` + نوێکردنەوەی `.gitignore`. commit نەکراوە.
+- **Coverage + تێست (backend):** `pytest.ini` (+`--cov=app --cov-fail-under=0`، بێ شکاندنی CI) + `pytest-cov` لە requirements + ٣ فایلی تێستی پاک (`je_validation` ٩٤٪، `currency` ١٠٠٪، `withholding` calc ٨٦٪). **٤٠ تێست لێرە ڕان کران: سەرکەوتوو.**
+- **ڕێنمایی دروستیی دارایی:** `_deltas/P0-finance-correctness-IMPLEMENTATION.md` — GL خۆکار لە فاکتورا/پارەی ستاندارد + Decimal، بە کۆدی ڕاستەقینە و پلانی تێست. **بەمەبەست جێبەجێ نەکرا** (پارە نابێت بێ تێست بگۆڕدرێت).
+
+**ماوە بۆ بەکارهێنەر (Windows):** `pytest` تەواو + `tsc/build/lint`؛ review + commit؛ redeploy-ی marketing؛ دانانی `IRAQ_PAYMENT_WEBHOOK_SECRET`؛ جێبەجێکردنی ڕێنمایی دارایی. **دەرەکی:** کیانی یاسایی، سەرمایە، تیم، سپێسی MoF، credential-ی FastPay/Qi/Zain، SOC2/ISO/pentest، کڕیار. وردەکاری: `P0_EXECUTION_REPORT_KU.md`.
+
+### 2026-06-03 — هەڵسەنگاندنی تەواوی سیستەم + جێبەجێکردنی SAFE_NOW (audit → verify → implement)
+
+داوای بەکارهێنەر: «گەورەترین چێک + تێست» پاشان «بە پاراڵێڵ ئەیگێنت پشتڕاست بکەوە و هەمووی جێبەجێ بکە». **وۆرکفلۆی ٤٤-ئەیگێنتی audit** (٤.٣M توکن، ١١ بەهرە، ٨٠+ دۆزینەوە، ٢٨ adversarially-verified) + **وۆرکفلۆی ٦-ئەیگێنتی verify** (مانیفێستی SAFE_NOW). پاشان جێبەجێکردنی هەموو ئایتمە سەلامەتەکان بە batch + گەیتی تەواو. **٠ گۆڕانکاری بۆ کۆدی NEEDS_TEAM/INFRA** (بەمەبەست، ڕاشکاوانە).
+
+**باکئیند (security + correctness):**
+- `api/storefront.py` — کونی account-takeover: portal magic-link چیتر token/verify_url لە وەڵامی HTTP ناگەڕێنێتەوە (server-log + email-channel)؛ enumeration (404→generic 200) چاککرا.
+- `api/attachments.py` — `validate_upload()` (magic-byte sniff + extension blocklist + `safe_filename`) wire کرا (پێشتر تەنها size-check).
+- `api/rbac.py` — privilege-escalation guards: `_assert_can_grant_permissions` (subset-check دژی `get_user_permissions`، `"*"` بۆ owner) لە create/update role؛ بلۆککردنی assign-ـی `default:owner/admin/super_admin` بۆ غەیری-`"*"`.
+- `api/dashboards.py` (هەمان سێشن) — ٣ P0 crash: `timedelta` import، `_d10()` بۆ datetime≤str، `get_counters(org_id)` (NameError).
+- `api/pos.py` — `_iso()` helper؛ receipt `created_at[:16]`→`_date10`؛ `len()` لەسەر DatetimeWithNanoseconds ×٢→`_iso`.
+- `api/invoices.py` — recurring-cron `except: pass` (data-loss بێدەنگ) → log + continue + slice guards.
+- `api/subscriptions.py` — date slice + `fromisoformat` لەسەر datetime guard.
+- `tax/withholding.py` + `services/invoice_payments.py` — money: `round(x+1e-9,2)` hack + float balance → **Decimal/quantize(ROUND_HALF_UP)**؛ close `<=0.01`.
+- **pytest = 1463 سەرکەوتوو / ٣ شکست** (هەر ٣ پێش-بوونیار: firestore_audit, redis, region — ٠ ڕیگرێشن).
+
+**فرۆنتئیند:**
+- `design-system/empty/EmptyState.css` — dark-mode: token-ی پێناسەنەکراو → `--ink-900/--ink-500/--accent-soft/--danger-fg/-bg`.
+- `layouts/AppShell.tsx` — mobile Drawer `top:56` → `calc(56px + env(safe-area-inset-top))` (notch).
+- `App.routes.tsx` — `/invoices/new`→`InvoiceFormRedesign`؛ زیادکردنی `/bills/new` (404 fix)؛ + سڕینەوەی ٤ فایلی مردوو (`pages/{InvoiceForm,BillForm,ContactForm,ExpenseForm}.tsx`).
+- `components/pos/POSTerminalShell.tsx` — `#fff/#f0f0f0/borderRight` → token + `borderInlineEnd` (dark + RTL).
+- `pages/Inventory.tsx` — `.catch(()=>{})` بێدەنگ → `message.error`.
+- **tsc ٠ · eslint ٠ · build exit 0 (477 PWA) · vitest 1321 سەرکەوتوو / ٠ شکستی تێست.**
+
+**Config:** `firestore.indexes.json` — `pos_orders (org_id, state, created_at DESC)` (prep؛ deploy + query-rewrite هی تیمە).
+
+**جێبەجێ نەکراو بەمەبەست (NEEDS_TEAM/INFRA/HUMAN):** GL auto-post (Fix1/2 — پارە، staged validation)، CSP staged rollout، Iraq per-org webhook secret، POS Terminal mobile layout، reports N+1 denormalization، event backbone/MDM/WMS/valuation/consolidation/BigQuery/AI، query.py paginator، error-handling sweep-ی فراوان + ئەرکە مرۆڤییەکان. مانیفێست: `_audit/verify-manifest.txt` + `_audit/audit-summary.txt`. **٠ deploy، ٠ commit** (بەپێی پۆلیسی).
+
+### 2026-06-03 — GL Auto-Post جێبەجێکرا (P0 Fix 1 + Fix 2 — پارە، تێستی تەواو)
+
+دوای داوای دووبارەی بەکارهێنەر، **گرنگترین کەلێنی دروستیی دارایی** جێبەجێکرا بەپێی `_deltas/P0-finance-correctness-IMPLEMENTATION.md` — ئینجنی double-entry پێشتر ئامادە بوو، تەنها wiring + idempotency + reversal + تێست ماوە. **پارە بوو، بۆیە بە تێستی تەواو + full suite-ی سەوز جێبەجێکرا (٠ ڕیگرێشن).**
+
+- `services/accounting.py` — `create_journal_entry` + `create_invoice_journal`: زیادکردنی `entry_id` pass-through (additive، `create_journal_entry_atomic` پێشتر قبوڵی دەکرد).
+- `services/invoice_gl.py` (نوێ) — `post_invoice_confirmation_je` (Dr AR / Cr Revenue، idempotent بە `gl_posted` + uuid5 deterministic id، soft-skip ئەگەر CoA نەبوو) + `reverse_invoice_je`.
+- `api/invoices.py` — wiring: `send_invoice` → GL post (هەرگیز confirm ناشکێنێت)؛ `void_invoice` + `cancel_invoice` → reversal (idempotent).
+- `services/invoice_payments.py` — `create_payment_received_with_je_atomic` (نوێ): Dr Cash / Cr AR لە **هەمان transaction**-ی balance update، uuid5 idempotent، AR mirror-ی `bill_payments`.
+- `api/invoices.py` — `create_payment_received`: resolve-ی deposit+AR account + soft-fallback بۆ no-JE path ئەگەر CoA نەبوو (payment هەرگیز 500 نادات).
+- `tests/test_invoice_gl.py` (٩ تێست) + `tests/test_invoice_payments_je.py` (٣ تێست): idempotency، draft-skip، missing-CoA soft-skip، reversal، balanced-JE-in-same-transaction، close-to-paid.
+- **تاقیکردنەوە: full suite 1475 سەرکەوتوو / ٣ شکست** (هەر ٣ پێش-بوونیار؛ ٠ ڕیگرێشن، +١٢ تێستی نوێ). app boot 2338 ڕووت.
+
+**COGS (Fix 2.5) — جێبەجێ نەکرا، هۆکاری دیاریکراو دۆزرایەوە:** picking state machine `draft→confirmed→done`ـە — hook-ـی دروستی COGS `done` (goods-out)ـە نەک `confirm` (ڕێبەرەکە بە هەڵە "confirm"ـی نووسیبوو). + POS فرۆشتنەکان picking بەکارناهێنن، بۆیە COGS تەنها لەسەر picking → ناتەبا (POS-ـی ون). ئەم بڕیارە (کام event + هاوتایی POS/picking/invoice) **دۆمەینە، پێویستی بە تیم + داتای ڕاستەقینە هەیە** — مەترسیی ژمارەی قازانجی هەڵە. بۆیە جێبەجێ نەکرا. (`accounts cost_of_goods_sold` + `inventory` پێشتر هەن، ئامادە بۆ wiring کاتێک hook دیاری کرا.)
+
+### 2026-06-03 — 🔴 باگی گەورەی پێش-بوونیار: JE posting لەسەر Firestore-ـی ڕاستەقینە هەرگیز کاری نەکردووە (read-after-write) — چاکرا + بە داتای ڕاستەقینە سەلمێنرا
+
+بەکارهێنەر مۆڵەتی دا بۆ بەکارهێنانی داتای ڕاستەقینەی **org-ـی دیمۆ** بۆ validation. کاتێک GL auto-post-ـم لەسەر Firestore-ـی ڕاستەقینە تاقیکردەوە (بە `serviceAccountKey.json` + service layer)، **باگێکی کوشندەی پێش-بوونیار** دۆزرایەوە:
+
+- **`services/journal_entry_atomic.py::create_journal_entry_in_transaction`** — ڕیزبەندی هەڵە: `_allocate_sequence_number` (read+write) + `transaction.set(journal_ref)` (write) **پێش** خوێندنەوەی account snapshots (`account_refs[aid].get(transaction=...)`) دەهاتن → `google.cloud.firestore_v1._helpers.ReadAfterWriteError`. Firestore داوا دەکات هەموو read-ـەکان پێش هەموو write-ـەکان بن.
+- **کاریگەری:** تێستە mock-کراوەکان ئەم ڕیزبەندییە جێبەجێ ناکەن، بۆیە نەدۆزرابووەوە — بەڵام لەسەر Firestore-ـی ڕاستەقینە **هیچ JE-یەک هەرگیز post نەبووە** (هەموو ٥ org: `JEs=0`، تەنانەت org-ـێک خاوەن فاکتورا بەڵام ٠ JE). ئەمە **هەموو JE posting** دەشکاند — POS، bill payment، manual JE، نەک تەنها فاکتورا.
+- **چاکسازی:** بناغەی account-refs + خوێندنەوەی account snapshots + sequence read **گوازرایەوە بۆ پێش هەموو `transaction.set`-ـەکان** (reads-first). هیچ گۆڕانکارییەکی لۆجیک نییە، تەنها ڕیزبەندی.
+- **تاقیکردنەوەی داتای ڕاستەقینە (org-ـی دیمۆ، 69-account CoA):** فاکتورا confirm → **Dr AR 1,000,000 / Cr Sales 1,000,000** ✓؛ پارە → **Dr Cash / Cr AR** ✓؛ فاکتورا داخرا (paid, balance 0) ✓؛ trial balance ΣDr 2M == ΣCr 2M ✓. پاشان **reverse + delete** (account balances net-to-zero، هیچ test-doc نەماوە). RESULT: **ALL PASS**.
+- **ڕیگرێشن:** mocked JE/accounting tests **20 سەرکەوتوو**؛ full suite **1475 سەرکەوتوو / ٣ پێش-بوونیار** (٠ ڕیگرێشن). باکئیند boot.
+
+> **دەرسی گرنگ:** mock-ـی Firestore transaction read-after-write جێبەجێ ناکات. هەر کۆدێکی atomic-transaction دەبێت لانیکەم جارێک بە Firestore-ـی ڕاستەقینە (یان emulator) تاقی بکرێتەوە. ئەم باگە بەرپرسیار بوو لەوەی GL هەرگیز کاری نەکردبوو — validation-ـی داتای ڕاستەقینەی بەکارهێنەر ئەوەی ئاشکرا کرد.
+
+**تەواوکردن — ڕاپۆرتە دارایییەکان لەسەر داتای ڕاستەقینە سەلمێنران:** پاش فیکسی read-after-write، تەواوی زنجیرە (فاکتورا→GL→ڕاپۆرت) لەسەر org-ـی دیمۆ تاقیکرایەوە: seed ٢ فاکتورا (٨٠٠k داهات) + ١ پارە → بانگکردنی `reports.trial_balance` / `profit_loss` / `balance_sheet` ڕاستەوخۆ → **هەموو سەرکەوتوو**: Trial Balance balanced (Dr 800k==Cr 800k)، Balance Sheet equation (Assets==Liab+Equity)، P&L داهات/قازانج delta +800k، Balance Sheet assets +800k (AR 300k + Cash 500k). پاشان reverse+delete (net-zero). **واتە: زنجیرەی هەژمارداری ئێستا بەتەواوی کاردەکات + دروستە لەسەر داتای ڕاستەقینە** — پێشتر هیچ GL-یەک نەبوو، ئێستا فاکتورا/پارە → JE → ڕاپۆرتی دروست. (سکریپتە کاتییەکان سڕانەوە؛ ٠ commit/deploy؛ داتای دیمۆ پاککرایەوە.)
+
+### 2026-06-03 — COGS Auto-Post جێبەجێکرا (Dr COGS / Cr Inventory) + لەسەر داتای ڕاستەقینە سەلمێنرا
+
+پاش تەواوکردنی GL، **COGS (تێچووی کاڵای فرۆشراو)** زیادکرا — لەسەر standard cost (`item.cost_price`). hook-ـەکان **پشتڕاستکراون** (نەک گریمان): `done_picking` (دەرچوونی کاڵای کۆگا، نەک `confirm`) + POS sale (لە `pos_accounting`؛ POS picking بەکارناهێنێت → disjoint، بێ double-post).
+
+- `services/accounting.py` — `create_cogs_journal(org_id, source, total_cost)`: Dr `cost_of_goods_sold` / Cr `inventory` (هەردوو account-type لە CoA-ـی دیمۆ resolve دەبن)، None ئەگەر cost<=0، entry_id pass-through.
+- `services/cogs_gl.py` (نوێ) — `post_picking_cogs_je`: `_total_standard_cost` (Σ `item.cost_price` × qty بەسەر line-ـە stocked-ـەکان؛ service item-ـەکان [track_inventory=False] دەردەکرێن) + idempotent (`gl_posted_cogs` + uuid5 deterministic id) + soft-skip.
+- `api/inventory.py::done_picking` — پاش `done_picking_atomic`، COGS post + stamp-ـی flag (هەرگیز picking ناشکێنێت).
+- `services/pos_accounting.py::create_invoice_from_pos_order` — پاش revenue JE، COGS post بۆ POS (deterministic `pos-cogs:{id}`).
+- `tests/test_cogs_gl.py` (٨ تێست): standard-cost computation، service-item skip، idempotency، zero-cost None، missing-CoA soft-skip، balanced builder.
+- **پشتڕاستکردنەوەی داتای ڕاستەقینە:** seed item (cost 800k) + picking qty 2 → COGS JE = **Dr COGS 1,600,000 / Cr Inventory 1,600,000** balanced، account types resolve، idempotent re-post skips؛ پاشان reverse+delete (net-zero). **ALL PASS.**
+- **پشتڕاستکردنەوە:** full suite **1483 سەرکەوتوو / ٣ پێش-بوونیار** (٠ ڕیگرێشن، +٨ COGS). باکئیند زیندوو 2338 ڕووت.
+
+**تێبینی cost model:** ئێستا standard cost (`item.cost_price`). moving-average/FIFO perpetual valuation هێشتا جیاوازە (پارچەیەکی گەورەتر)؛ بەڵام بۆ damezrandи standard-cost ئەمە COGS-ـی دروست دەدات و reversible-ـە ئەگەر model گۆڕا.
+
+### 2026-06-03 — AP-side GL تەواوکرا (پسوولە→JE) + لەسەر داتای ڕاستەقینە سەلمێنرا
+
+تەواوکردنی لای کڕینی هەژمارداری — mirror-ـی AR Fix 1. کەلێنی هاوشێوە: `create_bill_journal` بوونی هەبوو بەڵام **هیچ caller-ێکی نەبوو** (وەک create_invoice_journal پێش فیکس). bill approve/void/cancel هیچ JE-یەک post/reverse نەدەکرد.
+
+- `services/accounting.py::create_bill_journal` — entry_id + created_by pass-through (idempotency)؛ line-amount ڕەق کرا (`line_total`/`total`/`amount` fallback).
+- `services/bill_gl.py` (نوێ) — `post_bill_approval_je` (Dr Expense/Inventory / Cr AP، idempotent بە `gl_posted` + uuid5، soft-skip) + `reverse_bill_je`.
+- `api/expenses.py` — wiring: `approve_bill` → JE post (بە `repo.get_with_lines`)؛ `cancel_bill` + `void_bill` → reversal.
+- `tests/test_bill_gl.py` (٧ تێست).
+- **پشتڕاستی داتای ڕاستەقینە:** seed bill 700k → approve → **Dr Expense 700,000 / Cr AP 700,000** balanced، Cr AP present، idempotent؛ reverse+delete (net-zero). **ALL PASS.**
+- **پشتڕاستی:** full suite **1490 سەرکەوتوو / ٣ پێش-بوونیار** (٠ ڕیگرێشن؛ ئەو «٤»ـەی کاتی flaky بوو). باکئیند زیندوو.
+
+**🏆 ئەنجام: زنجیرەی double-entry-ـی تەواو ئێستا کاردەکات + سەلمێنراوە لەسەر داتای ڕاستەقینە** — AR (فاکتورا→GL، پارە→GL)، AP (پسوولە→GL)، COGS (کۆگا + POS)، financial statements (TB/P&L/BS)، + فیکسی read-after-write کە بناغەی هەمووی بوو. سکریپتە کاتییەکان سڕانەوە؛ ٠ commit/deploy؛ داتای دیمۆ پاککرایەوە.
+
+### 2026-06-03 — پۆلی ١ (Pool 1) Polish-ـی سەلامەت — جێبەجێکراو + پشتڕاستکراوەوە (٠ commit/deploy)
+
+دوای ڕووتمەپی `docs/REMAINING-WORK-ROADMAP-KU.md`، هەموو ٦ ئایتمی پۆلی ١ جێبەجێکران. **فرۆنتئیند تەنها — ٠ گۆڕانکاری backend.**
+
+- **1.1 Design tokens (وۆرکفلۆی ٧-lane پاراڵێل):** ~١١٥ ڕەنگی hardcode → CSS-var token لە ~٣٦ فایل (finance/reports, POS, onboarding/auth, verticals, components/design-system). recharts → `dataViz` (hex) لە `tokens.ts` (var() لە recharts props کارناکات). ئاگاداریی `no-hardcoded-colors`: 2895→2392 (~٥٠٠ لابرا). پارێزراو بەمەبەست: color-picker DB values، KDS/kiosk fixed-theme، print receipts، SVG fill props، categorical/rainbow، براندی violet `#7B61FF`.
+- **1.2 Typography:** پشتڕاستکرا کە پێشتر token-driven-ـە بە Vertex CSS-var system (`--fs-*`، `--font-display`، `.t-*`). `PageHeader`/`KpiCard` px (26/13.5/12.5) kit-spec-ی مەبەستدارن (font+ڕەنگ token-ـن، تەنها size literal، بێ `--fs-*`-ی هاوتا). `FormLayout.tsx`: `16`→`fontSize.lg` (exact-match، ٠ گۆڕانی ڤیژوەل).
+- **1.3 Density:** `layouts/AppShell.tsx` — `pagePad = densityPagePadding[densityFull]` (compact 16 / comfortable 20 / spacious 24) لەبری `space.xl`-ـی hardcode. density ئێستا کاریگەری لەسەر gutter-ی ناوەڕۆک هەیە، نەک تەنها controlHeight + sider width.
+- **1.4 DataTable memo** ✅ (پێشتر).
+- **1.5 error-handling:** پشتڕاستکرا کە `api.ts` response-interceptor هەموو هەڵە toast دەکات (network/403/404/422/500) — بۆیە `.catch(() => {})`-ـەکان idiom-ی دروستن (نەک باگ؛ زیادکردنی `message.error` دەبووە double-toast). ٢ باگی **false-success** چاککرا لە `settings/sections/bodies.tsx` (appearance-save هێڵ 336 + notification-test هێڵ 1216 — inline `.catch` outer try/catch-ـی پووچ دەکردەوە → success-ی درۆ + interceptor error toast بەیەکەوە). 15 load-ـی benign + 2 useCRUD background-refetch بەمەبەست بێدەنگ مانەوە.
+- **1.6 dead code:** `frontend/scripts/deadcode-audit.mjs` + `npm run audit:deadcode` (convention-matched، report-only، static + dynamic `import()` + `require` + `new URL` resolve). ٧٩ orphan دۆزرانەوە، بەڵام زۆربەیان **scaffolding-ی pending-feature** (payments/billing/hardware/PayLink — لە CLAUDE.md وەک pending) یان barrel/template/dev-tool-ی مەبەستدارن — نەک کۆدی مردوو. تەنها ٢ duplicate-ی superseded سڕایەوە: `pages/Login.tsx` + `pages/SignUp.tsx` (auth-ی کۆنی پێش-Vertex؛ active-ەکە `features/auth/LoginPage` + `VertexAuthShell`). کۆدبەیس `import.meta.glob`/template-literal import **بەکارناهێنێت** → "0 refs"-ـی سکریپتەکە بەڵگەی تەواوە، tsc+build وەک oracle.
+
+**گەیتەکان (Windows):** tsc ٠ · lint exit 0 (٠ error / 2392 warn) · build exit 0 (477 PWA) · test 1321/1321 (٠ ڕیگرێشن؛ هەمان ٢٩ suite-load-ی پێش-بوونیار: Playwright e2e + scanner-service `workers/barcode` + buildAddOption) · rtl:audit passed · audit:glass-modals OK. **٠ commit · ٠ deploy** (بەپێی پۆلیسی — بەکارهێنەر review + commit دەکات).

@@ -1,0 +1,37 @@
+# BACKEND GATES (started Wed Jun  3 01:26:39 AST 2026)
+
+## app import (route count)
+\u26a0  ENV WARNING: Missing required environment variable: SECRET_KEY
+\u26a0  ENV WARNING: Missing required environment variable: DATABASE_URL
+\u26a0  ENV WARNING: Missing required environment variable: CORS_ORIGINS
+\u26a0  ENV WARNING: Missing required environment variable: ENVIRONMENT
+\u26a0  ENV WARNING: SECRET_KEY is using the insecure development default — set a strong random value before deploying
+\u26a0  ENV WARNING: DATABASE_URL is using the insecure development default ('sqlite:///./zoho_books.db') — override before deploying
+\u26a0  ENV WARNING: Missing required environment variable: SECRET_KEY
+\u26a0  ENV WARNING: Missing required environment variable: DATABASE_URL
+\u26a0  ENV WARNING: Missing required environment variable: CORS_ORIGINS
+\u26a0  ENV WARNING: Missing required environment variable: ENVIRONMENT
+\u26a0  ENV WARNING: SECRET_KEY is using the insecure development default — set a strong random value before deploying
+\u26a0  ENV WARNING: DATABASE_URL is using the insecure development default ('sqlite:///./zoho_books.db') — override before deploying
+{"timestamp": "2026-06-02T22:26:43.167616Z", "severity": "INFO", "request_id": null, "tenant_id": null, "user_id": null, "route": null, "latency_ms": null, "status_code": null, "message": "sentry.skipped (no DSN in development)", "taskName": null}
+{"timestamp": "2026-06-02T22:26:46.267053Z", "severity": "INFO", "request_id": null, "tenant_id": null, "user_id": null, "route": null, "latency_ms": null, "status_code": null, "message": "otel.initialized", "taskName": null, "service": "zoho-backend"}
+{"timestamp": "2026-06-02T22:26:46.267179Z", "severity": "INFO", "request_id": null, "tenant_id": null, "user_id": null, "route": null, "latency_ms": null, "status_code": null, "message": "observability.initialized", "taskName": null, "status": {"logging": true, "sentry": false, "otel": true}}
+{"timestamp": "2026-06-02T22:26:47.560100Z", "severity": "INFO", "request_id": null, "tenant_id": null, "user_id": null, "route": null, "latency_ms": null, "status_code": null, "message": "Mounted e-Fakhata routers (G4a)", "taskName": null}
+{"timestamp": "2026-06-02T22:26:47.597347Z", "severity": "INFO", "request_id": null, "tenant_id": null, "user_id": null, "route": null, "latency_ms": null, "status_code": null, "message": "payment providers registered: cash, cod, stripe, fastpay, qi, zain, asia_pay", "taskName": null}
+{"timestamp": "2026-06-02T22:26:47.606935Z", "severity": "INFO", "request_id": null, "tenant_id": null, "user_id": null, "route": null, "latency_ms": null, "status_code": null, "message": "Mounted /api/rum/vitals (P0)", "taskName": null}
+{"timestamp": "2026-06-02T22:26:47.610330Z", "severity": "INFO", "request_id": null, "tenant_id": null, "user_id": null, "route": null, "latency_ms": null, "status_code": null, "message": "Mounted /api/csp-report (P6)", "taskName": null}
+{"timestamp": "2026-06-02T22:26:47.612410Z", "severity": "INFO", "request_id": null, "tenant_id": null, "user_id": null, "route": null, "latency_ms": null, "status_code": null, "message": "Mounted /api/health (P4 \u2014 enriched)", "taskName": null}
+{"timestamp": "2026-06-02T22:26:47.620724Z", "severity": "INFO", "request_id": null, "tenant_id": null, "user_id": null, "route": null, "latency_ms": null, "status_code": null, "message": "Mounted /api/admin/tenants/{id}/export + /delete (P4)", "taskName": null}
+{"timestamp": "2026-06-02T22:26:47.678618Z", "severity": "INFO", "request_id": null, "tenant_id": null, "user_id": null, "route": null, "latency_ms": null, "status_code": null, "message": "Mounted /metrics (P4)", "taskName": null}
+{"timestamp": "2026-06-02T22:26:47.683853Z", "severity": "INFO", "request_id": null, "tenant_id": null, "user_id": null, "route": null, "latency_ms": null, "status_code": null, "message": "Mounted /api/health/offline-sync (V-PR.4)", "taskName": null}
+{"timestamp": "2026-06-02T22:26:47.687884Z", "severity": "INFO", "request_id": null, "tenant_id": null, "user_id": null, "route": null, "latency_ms": null, "status_code": null, "message": "Mounted /api/health/synthetic-summary (V-PR.1)", "taskName": null}
+routes= 2338
+
+## pytest -q (tail)
+ERROR: usage: __main__.py [options] [file_or_dir] [file_or_dir] [...]
+__main__.py: error: unrecognized arguments: --cov=app --cov-report=term-missing --cov-report=html --cov-fail-under=0
+  inifile: C:\Users\SAFA\zoho\backend\pytest.ini
+  rootdir: C:\Users\SAFA\zoho\backend
+
+
+# DONE Wed Jun  3 01:26:50 AST 2026
