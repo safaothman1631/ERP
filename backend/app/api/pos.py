@@ -1391,7 +1391,7 @@ def send_receipt(
     # Build receipt text/HTML
     receipt_text = f"""
 Receipt #{order.get('order_number')}
-Date: {order.get('created_at', '')[:10]}
+Date: {_date10(order.get('created_at'))}
 ---
 """
     for line in lines:
@@ -3905,7 +3905,7 @@ def print_receipt(
     <body>
     <div class="center"><h3>پسوولەی فرۆشتن</h3></div>
     <div class="center">Order: {order.get('order_ref', 'N/A')}</div>
-    <div class="center">Date: {order.get('created_at', '')[:16]}</div>
+    <div class="center">Date: {_date10(order.get('created_at'))}</div>
     <div class="line"></div>
     <table>
     """
@@ -4064,6 +4064,39 @@ def iot_device_status(
 
 # --- Reports Endpoints (6) ---
 
+def _date10(value) -> str:
+    """Normalize a created_at/opened_at value to a 'YYYY-MM-DD' string.
+
+    Firestore returns timestamps as DatetimeWithNanoseconds objects (a datetime
+    subclass), NOT ISO strings — so the old ``(value or "")[:10]`` slice raised
+    ``TypeError: 'DatetimeWithNanoseconds' object is not subscriptable``. This
+    accepts a datetime, an ISO string, or None and always returns a sliceable
+    'YYYY-MM-DD' string ('' when missing) for date-range comparisons.
+    """
+    if not value:
+        return ""
+    if isinstance(value, str):
+        return value[:10]
+    try:
+        return value.strftime("%Y-%m-%d")
+    except Exception:
+        return str(value)[:10]
+
+
+def _iso(value) -> str:
+    """Normalize created_at/opened_at to a full ISO datetime STRING (keeps time)
+    so len(...)/[11:13] hour-slicing works whether Firestore returns a
+    DatetimeWithNanoseconds or an ISO string. Returns '' when missing."""
+    if not value:
+        return ""
+    if isinstance(value, str):
+        return value
+    try:
+        return value.isoformat()
+    except Exception:
+        return str(value)
+
+
 @router.get("/reports/dashboard")
 def reports_dashboard(
     date_from: str = Query(...),
@@ -4082,7 +4115,7 @@ def reports_dashboard(
     orders = collect_stream(order_repo, max_docs=5000)
     filtered_orders = [
         o for o in orders
-        if date_from <= (o.get("created_at") or "")[:10] <= date_to
+        if date_from <= _date10(o.get("created_at")) <= date_to
         and (not config_id or o.get("config_id") == config_id)
         and o.get("state") in ["paid", "invoiced"]
     ]
@@ -4138,8 +4171,8 @@ def reports_dashboard(
     # By hour (24-hour breakdown)
     by_hour = [0] * 24
     for o in filtered_orders:
-        created = o.get("created_at", "")
-        if len(created) >= 13:
+        created = _iso(o.get("created_at"))
+        if len(created) >=13:
             try:
                 hour = int(created[11:13])
                 by_hour[hour] += o.get("amount_total", 0)
@@ -4153,7 +4186,7 @@ def reports_dashboard(
     
     prev_orders = [
         o for o in orders
-        if prev_date_from.strftime("%Y-%m-%d") <= (o.get("created_at") or "")[:10] < date_from
+        if prev_date_from.strftime("%Y-%m-%d") <= _date10(o.get("created_at")) < date_from
         and (not config_id or o.get("config_id") == config_id)
         and o.get("state") in ["paid", "invoiced"]
     ]
@@ -4198,7 +4231,7 @@ def sales_by_product_report(
     orders = collect_stream(order_repo, max_docs=5000)
     filtered_orders = [
         o for o in orders
-        if date_from <= (o.get("created_at") or "")[:10] <= date_to
+        if date_from <= _date10(o.get("created_at")) <= date_to
         and (not config_id or o.get("config_id") == config_id)
         and o.get("state") in ["paid", "invoiced"]
     ]
@@ -4253,7 +4286,7 @@ def sales_by_category_report(
     orders = collect_stream(order_repo, max_docs=5000)
     filtered_orders = [
         o for o in orders
-        if date_from <= (o.get("created_at") or "")[:10] <= date_to
+        if date_from <= _date10(o.get("created_at")) <= date_to
         and (not config_id or o.get("config_id") == config_id)
         and o.get("state") in ["paid", "invoiced"]
     ]
@@ -4321,7 +4354,7 @@ def sales_by_cashier_report(
     orders = collect_stream(order_repo, max_docs=5000)
     filtered_orders = [
         o for o in orders
-        if date_from <= (o.get("created_at") or "")[:10] <= date_to
+        if date_from <= _date10(o.get("created_at")) <= date_to
         and (not config_id or o.get("config_id") == config_id)
         and o.get("state") in ["paid", "invoiced"]
     ]
@@ -4360,7 +4393,7 @@ def sessions_summary_report(
     sessions, _ = session_repo.list(limit=1000)
     filtered_sessions = [
         s for s in sessions
-        if date_from <= (s.get("opened_at") or s.get("created_at") or "")[:10] <= date_to
+        if date_from <= _date10(s.get("opened_at") or s.get("created_at")) <= date_to
         and (not config_id or s.get("config_id") == config_id)
     ]
     
@@ -4403,7 +4436,7 @@ def hourly_heatmap_report(
     orders = collect_stream(order_repo, max_docs=5000)
     filtered_orders = [
         o for o in orders
-        if date_from <= (o.get("created_at") or "")[:10] <= date_to
+        if date_from <= _date10(o.get("created_at")) <= date_to
         and (not config_id or o.get("config_id") == config_id)
         and o.get("state") in ["paid", "invoiced"]
     ]
@@ -4412,8 +4445,8 @@ def hourly_heatmap_report(
     heatmap = [[0 for _ in range(24)] for _ in range(7)]
     
     for o in filtered_orders:
-        created = o.get("created_at", "")
-        if len(created) >= 19:
+        created = _iso(o.get("created_at"))
+        if len(created) >=19:
             try:
                 dt = datetime.fromisoformat(created[:19])
                 day = dt.weekday()  # Monday=0, Sunday=6
@@ -4453,7 +4486,7 @@ def generate_iraq_einvoice(
     seller_tax_id = config.get("iraq_seller_tax_id") if config else "UNKNOWN"
     
     # Generate deterministic QR payload
-    qr_payload = f"IQ|{seller_tax_id}|{order.get('order_ref')}|{order.get('amount_total')}|{order.get('created_at')[:10]}"
+    qr_payload = f"IQ|{seller_tax_id}|{order.get('order_ref')}|{order.get('amount_total')}|{_date10(order.get('created_at'))}"
     
     # Generate fiscal_id (stub)
     fiscal_id = f"IQ-{order.get('order_ref')}-{uuid.uuid4().hex[:8].upper()}"

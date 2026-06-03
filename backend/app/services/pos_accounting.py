@@ -83,6 +83,29 @@ def create_invoice_from_pos_order(org_id: str, order: dict, lines: list[dict], u
     except Exception as exc:
         logger.warning("POS invoice JE skipped for %s: %s", invoice["id"], exc)
 
+    # P0 COGS: Dr COGS / Cr Inventory at standard cost for the sold stocked items.
+    # POS sales never go through pickings, so this is the POS goods-out hook
+    # (disjoint from done_picking — no double-post). Deterministic id + never
+    # breaks the sale.
+    try:
+        import uuid as _uuid
+        from app.services.cogs_gl import _total_standard_cost
+        _total = _total_standard_cost(org_id, {"lines": lines})
+        if _total > 0:
+            AccountingService.create_cogs_journal(
+                org_id,
+                {
+                    "id": invoice["id"],
+                    "reference": invoice.get("invoice_number") or invoice["id"],
+                    "date": invoice.get("date"),
+                    "_je_entry_id": str(_uuid.uuid5(_uuid.NAMESPACE_URL, f"pos-cogs:{invoice['id']}")),
+                    "created_by": user_id,
+                },
+                _total,
+            )
+    except Exception as exc:
+        logger.warning("POS COGS JE skipped for %s: %s", invoice["id"], exc)
+
     return invoice
 
 

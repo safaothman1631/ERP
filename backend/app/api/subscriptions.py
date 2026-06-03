@@ -153,7 +153,7 @@ def _generate_invoice_for_sub(org_id: str, sub_id: str) -> dict:
     line = {
         "id": str(uuid.uuid4()),
         "item_id": plan.get("item_id") or "",
-        "description": f"{plan.get('name')} - {sub.get('current_period_start', '')[:10]} بۆ {sub.get('current_period_end', '')[:10]}",
+        "description": f"{plan.get('name')} - {str(sub.get('current_period_start') or '')[:10]} بۆ {str(sub.get('current_period_end') or '')[:10]}",
         "quantity": 1,
         "rate": float(plan.get("price", 0)),
         "amount": float(plan.get("price", 0)),
@@ -161,7 +161,10 @@ def _generate_invoice_for_sub(org_id: str, sub_id: str) -> dict:
     inv_repo.set_lines(invoice["id"], [line])
     
     # Update subscription
-    period_end = datetime.fromisoformat(sub.get("current_period_end", now.isoformat()))
+    _cpe = sub.get("current_period_end")
+    period_end = _cpe if isinstance(_cpe, datetime) else (
+        datetime.fromisoformat(_cpe) if isinstance(_cpe, str) and _cpe else now
+    )
     cycle = plan.get("billing_cycle", "monthly")
     interval = plan.get("billing_interval", 1)
     if cycle == "monthly":
@@ -460,7 +463,10 @@ def upgrade_sub(
     # Calculate proration
     now = datetime.utcnow()
     period_start = datetime.fromisoformat(sub.get("current_period_start", now.isoformat()))
-    period_end = datetime.fromisoformat(sub.get("current_period_end", now.isoformat()))
+    _cpe = sub.get("current_period_end")
+    period_end = _cpe if isinstance(_cpe, datetime) else (
+        datetime.fromisoformat(_cpe) if isinstance(_cpe, str) and _cpe else now
+    )
     total_days = (period_end - period_start).days
     remaining_days = (period_end - now).days
     

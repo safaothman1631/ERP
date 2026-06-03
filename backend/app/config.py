@@ -87,6 +87,14 @@ class Settings(BaseSettings):
     # clamd daemon is reachable). CLAMAV_HOST/CLAMAV_PORT honored by upload_validation.
     UPLOAD_CLAMAV_ENABLED: bool = False
 
+    # ── Payments (Iraq gateways) ────────────────────────────────────────────────
+    # HMAC-SHA256 shared secret used to verify the PUBLIC FIB / Zain Cash payment
+    # webhooks (POST /api/iraq-payments/webhook/{fib,zain-cash}). Empty by default:
+    # when unset the public webhooks are disabled (return 503) so forged callbacks
+    # cannot mark invoices paid. Set to a strong random value in production and
+    # configure the provider to sign requests with the X-Webhook-Signature header.
+    IRAQ_PAYMENT_WEBHOOK_SECRET: str = ""
+
     # ── Observability ─────────────────────────────────────────────────────────
     SENTRY_DSN: str = ""
 

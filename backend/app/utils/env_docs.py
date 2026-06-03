@@ -232,6 +232,25 @@ ENV_VAR_REGISTRY: list[EnvVarDoc] = [
         sensitive=False,
         category="Payments",
     ),
+    EnvVarDoc(
+        name="IRAQ_PAYMENT_WEBHOOK_SECRET",
+        description=(
+            "HMAC-SHA256 shared secret used to verify the PUBLIC Iraq payment "
+            "webhooks (POST /api/iraq-payments/webhook/fib and /webhook/zain-cash). "
+            "When empty/unset, those webhooks are disabled and return 503 so forged "
+            "callbacks cannot mark invoices paid (safe-by-default)."
+        ),
+        required=False,
+        example="change-me-iraq-payment-webhook-secret",
+        default="",
+        sensitive=True,
+        category="Payments",
+        notes=(
+            "Generate with: python -c \"import secrets; print(secrets.token_hex(32))\"\n"
+            "Configure FIB/Zain Cash to sign each request with the X-Webhook-Signature "
+            "header (hex digest of the raw request body). Never commit the real value."
+        ),
+    ),
     # ── Support stack (growth-to-100 § G2) ──────────────────────────────────────
     EnvVarDoc(
         name="CRISP_WEBSITE_ID",

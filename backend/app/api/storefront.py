@@ -315,32 +315,42 @@ _magic_tokens: dict[str, dict] = {}
 
 @router.post("/api/portal/request-link")
 def portal_request_link(data: PortalLinkRequest):
-    """Request magic link by email. In production, send email. For demo, return token."""
+    """Request a customer-portal magic link.
+
+    SECURITY: the token is delivered out-of-band (email) and is NEVER returned in
+    the HTTP response. Returning it (the previous "demo" behaviour) let anyone who
+    knew a customer's email mint a portal session — account takeover. The response
+    is also always a generic 200 so the endpoint can't enumerate which emails are
+    customers.
+    """
     org = get_default_org()
     contact_repo = ContactRepository(org)
     contacts, _ = contact_repo.list(
         filters=[{"field": "email", "op": "==", "value": data.email}],
         limit=1
     )
-    if not contacts:
-        raise HTTPException(404, "No customer found with this email")
-    
-    contact = contacts[0]
-    token = secrets.token_urlsafe(32)
-    _magic_tokens[token] = {
-        "email": data.email,
-        "org_id": org,
-        "contact_id": contact["id"],
-        "expires_at": datetime.utcnow() + timedelta(minutes=15),
-    }
-    
-    # In production: send email with link like https://yourdomain.com/portal/verify?token=...
-    # For demo, return token
-    return {
-        "message": "Magic link sent (demo: token returned)",
-        "token": token,  # remove in production
-        "verify_url": f"/portal/verify?token={token}",
-    }
+    if contacts:
+        contact = contacts[0]
+        token = secrets.token_urlsafe(32)
+        _magic_tokens[token] = {
+            "email": data.email,
+            "org_id": org,
+            "contact_id": contact["id"],
+            "expires_at": datetime.utcnow() + timedelta(minutes=15),
+        }
+        verify_path = f"/portal/verify?token={token}"
+        # Delivered by email in production. Logged server-side (not returned) so
+        # operators/dev can retrieve it until the portal email channel is wired.
+        try:
+            import logging
+            logging.getLogger("storefront").info(
+                "portal.magic_link issued for %s -> %s", data.email, verify_path
+            )
+        except Exception:
+            pass
+        # TODO(prod): email `verify_path` to data.email via the org SMTP pipeline
+        # (see auth.py:_send_reset_email for the pattern).
+    return {"message": "If an account exists for this email, a sign-in link has been sent."}
 
 
 @router.post("/api/portal/verify-link")

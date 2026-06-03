@@ -85,8 +85,29 @@ def list_roles(user: dict = Depends(get_current_user)):
     return _dedupe_roles(roles)
 
 
+# ── Privilege-escalation guards ─────────────────────────────────────────────
+# An rbac.manage holder must not be able to (a) put permissions on a role that
+# they do not themselves hold, nor (b) assign the privileged default roles.
+# Owner/admin/super_admin resolve to the "*" wildcard and may grant anything.
+_PRIVILEGED_DEFAULT_ROLES = {"default:owner", "default:admin", "default:super_admin"}
+
+
+def _assert_can_grant_permissions(user: dict, requested) -> None:
+    from app.services.permissions import get_user_permissions
+    requested = set(requested or [])
+    if not requested:
+        return
+    held = get_user_permissions(user) or set()
+    if "*" in held:
+        return
+    missing = requested - held
+    if missing:
+        raise HTTPException(403, f"Cannot grant permissions you do not hold: {sorted(missing)[:10]}")
+
+
 @router.post("/roles", dependencies=[Depends(require_perm("rbac.manage"))])
 def create_role(data: dict, user: dict = Depends(get_current_user)):
+    _assert_can_grant_permissions(user, data.get("permissions", []))
     repo = RoleRepository(user["org_id"])
     code = (data.get("code") or "").strip()
     if not code:
@@ -112,6 +133,7 @@ def update_role(role_id: str, data: dict, user: dict = Depends(get_current_user)
     existing = repo.get(role_id)
     if not existing:
         raise HTTPException(404, "Role not found")
+    _assert_can_grant_permissions(user, data.get("permissions", []))
     next_code = (data.get("code") or existing.get("code") or "").strip()
     if not next_code:
         raise HTTPException(400, "Role code is required")
@@ -190,6 +212,13 @@ def get_user_roles(user_id: str, user: dict = Depends(get_current_user)):
 def set_user_roles(user_id: str, data: dict, user: dict = Depends(get_current_user)):
     """Replace user's roles with the provided list."""
     role_ids = _unique_values(data.get("role_ids", []))
+    # Privilege guard: only a full-access actor ("*") may assign the privileged
+    # default roles — otherwise an rbac.manage holder could grant themselves owner.
+    from app.services.permissions import get_user_permissions
+    if "*" not in (get_user_permissions(user) or set()):
+        blocked = [rid for rid in role_ids if rid in _PRIVILEGED_DEFAULT_ROLES]
+        if blocked:
+            raise HTTPException(403, f"Cannot assign privileged role(s): {blocked}")
     repo = UserRoleRepository(user["org_id"])
     # Remove existing
     existing, _ = repo.list(

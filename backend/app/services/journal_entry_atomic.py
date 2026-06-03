@@ -86,7 +86,43 @@ def create_journal_entry_in_transaction(
     journal_id = entry_id or str(uuid.uuid4())
     journal_ref = db.collection("journal_entries").document(journal_id)
 
+    # Build account refs + line entries (pure — no transaction ops yet).
+    account_ids: list[str] = []
+    account_refs: dict[str, Any] = {}
+    line_entries: list[dict[str, Any]] = []
+    for idx, raw_line in enumerate(lines):
+        line = dict(raw_line or {})
+        account_id = line.get("account_id")
+        if not account_id:
+            continue
+        account_ids.append(account_id)
+        if account_id not in account_refs:
+            account_refs[account_id] = db.collection("accounts").document(account_id)
+        debit = float(line.get("debit", 0) or 0)
+        credit = float(line.get("credit", 0) or 0)
+        line_id = line.pop("id", None) or str(uuid.uuid4())
+        line_entries.append(
+            {
+                "line_id": line_id,
+                "sort_order": idx,
+                "account_id": account_id,
+                "debit": debit,
+                "credit": credit,
+                "line_payload": line,
+            }
+        )
+
+    # === ALL READS FIRST — Firestore transactions forbid read-after-write. ===
+    # The account snapshots AND the sequence read must precede every
+    # transaction.set below. The mocked unit tests never enforced this ordering,
+    # so this read-after-write went unnoticed — and NO journal entry had ever
+    # actually posted to live Firestore (every org showed JEs=0). Reordered so
+    # all reads happen before the first write.
+    account_snaps = {
+        aid: account_refs[aid].get(transaction=transaction) for aid in account_refs.keys()
+    }
     number = entry_number or _allocate_sequence_number(transaction, db, org_id, "journal")
+
     total_debit = round(sum(float(line.get("debit", 0) or 0) for line in lines), 2)
     total_credit = round(sum(float(line.get("credit", 0) or 0) for line in lines), 2)
 
@@ -114,36 +150,8 @@ def create_journal_entry_in_transaction(
     if extra_header:
         header.update(extra_header)
 
+    # === WRITES (only after every read above) ===
     transaction.set(journal_ref, header)
-
-    account_ids: list[str] = []
-    account_refs: dict[str, Any] = {}
-    line_entries: list[dict[str, Any]] = []
-    for idx, raw_line in enumerate(lines):
-        line = dict(raw_line or {})
-        account_id = line.get("account_id")
-        if not account_id:
-            continue
-        account_ids.append(account_id)
-        if account_id not in account_refs:
-            account_refs[account_id] = db.collection("accounts").document(account_id)
-        debit = float(line.get("debit", 0) or 0)
-        credit = float(line.get("credit", 0) or 0)
-        line_id = line.pop("id", None) or str(uuid.uuid4())
-        line_entries.append(
-            {
-                "line_id": line_id,
-                "sort_order": idx,
-                "account_id": account_id,
-                "debit": debit,
-                "credit": credit,
-                "line_payload": line,
-            }
-        )
-
-    account_snaps = {
-        aid: account_refs[aid].get(transaction=transaction) for aid in account_refs.keys()
-    }
 
     for line in line_entries:
         payload = dict(line["line_payload"])

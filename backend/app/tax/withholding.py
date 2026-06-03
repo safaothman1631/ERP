@@ -125,10 +125,14 @@ def placeholder_rate_count() -> int:
 
 
 def _round(value: float) -> float:
-    """Round to 2 decimals, half away from zero — matches ``tax_calc._round``."""
-    if value >= 0:
-        return round(value + 1e-9, 2)
-    return -round(-value + 1e-9, 2)
+    """Round to 2 decimals, half away from zero — matches ``tax_calc._round``.
+
+    Deterministic Decimal quantize: replaces the float ``round(x + 1e-9, 2)``
+    epsilon hack, which drifted non-deterministically at the sub-cent boundary
+    and could fail audit reconciliation.
+    """
+    from decimal import Decimal, ROUND_HALF_UP
+    return float(Decimal(str(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
 
 
 @dataclass
