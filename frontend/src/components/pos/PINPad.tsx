@@ -68,7 +68,7 @@ const PINPad: React.FC<PINPadProps> = ({
  marginBottom: 24,
  height: 50,
  lineHeight: '50px',
- background: '#f0f0f0',
+ background: 'var(--surface-2)',
  borderRadius: 8,
  }}
  >

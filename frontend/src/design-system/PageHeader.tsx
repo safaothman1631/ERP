@@ -86,7 +86,7 @@ const PageHeaderInner: React.FC<PageHeaderProps> = ({ title, subtitle, breadcrum
           </p>
         )}
       </div>
-      {extra && <Space size={space.sm} wrap>{extra}</Space>}
+      {extra && <Space className="vx-pageheader-actions" size={space.sm} wrap>{extra}</Space>}
     </div>
   </motion.div>
   );

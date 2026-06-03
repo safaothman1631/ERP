@@ -41,8 +41,6 @@
   button,
   [role="button"],
   a,
-  input[type="checkbox"],
-  input[type="radio"],
   input[type="submit"],
   input[type="button"],
   input[type="reset"],
@@ -55,6 +53,20 @@
   .ant-input-affix-wrapper {
     min-height: 44px !important;
     min-width: 44px !important;
+  }
+
+  /* Native <input type=checkbox/radio>: the 44px touch target comes from the
+     WRAPPING LABEL, never by inflating the control itself — forcing min-44 on
+     the box turned it into a giant violet square (e.g. login "Remember me").
+     Keep the control its natural visual size; expand the label's tap height. */
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 0 !important;
+    min-width: 0 !important;
+  }
+  label:has(> input[type="checkbox"]),
+  label:has(> input[type="radio"]) {
+    min-height: 44px;
   }
 
   /* Switch: keep visual size but expand tap area via padding */

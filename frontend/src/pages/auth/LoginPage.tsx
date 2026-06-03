@@ -193,7 +193,7 @@ const LoginPage: React.FC = () => {
         </Form.Item>
 </Form>
 
-      <Divider style={{ margin: '8px 0', color: '#aaa', fontSize: 12 }}>
+      <Divider style={{ margin: '8px 0', color: 'var(--ink-500)', fontSize: 12 }}>
         {t('or') || 'یان'}
       </Divider>
 
@@ -217,7 +217,7 @@ const LoginPage: React.FC = () => {
         }}
       />
 
-      <div style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: '#666' }}>
+      <div style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: 'var(--ink-500)' }}>
         {t('auth_no_account')}{' '}
         <Link to="/signup" style={{ color: '#7B61FF', fontWeight: 600 }}>
           {t('auth_signup')}

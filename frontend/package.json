@@ -26,6 +26,7 @@
     "help:coverage": "node ./scripts/verify-settings-help-coverage.mjs",
     "check:settings-registry": "node ../scripts/check-settings-registry-sync.mjs",
     "audit:glass-modals": "node ../scripts/audit-glass-modals.mjs",
+    "audit:deadcode": "node ./scripts/deadcode-audit.mjs",
     "test:preservation": "node --test \"tests/preservation/*.spec.ts\" \"tests/preservation/*.spec.mjs\"",
     "lint": "eslint .",
     "preview": "vite preview",

@@ -9,9 +9,9 @@ export default function POSEmptyCart() {
   return (
     <div style={{ padding: '48px 24px', textAlign: 'center' }}>
       <Empty
-        image={<ShoppingCartOutlined style={{ fontSize: 64, color: '#d9d9d9' }} />}
+        image={<ShoppingCartOutlined style={{ fontSize: 64, color: 'var(--border)' }} />}
         description={
-          <span style={{ fontSize: 16, color: '#8c8c8c' }}>
+          <span style={{ fontSize: 16, color: 'var(--ink-500)' }}>
             {t('pos.emptyCart', 'Add product to start')}
           </span>
         }

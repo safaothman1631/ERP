@@ -61,7 +61,7 @@ import {
   type TranslationKey,
 } from '../../i18n/types';
 import { useViewport } from '../../hooks/useViewport';
-import { palette, space } from '../../theme/tokens';
+import { space } from '../../theme/tokens';
 
 import './clickable.css';
 import './responsiveTable.css';
@@ -410,17 +410,38 @@ function MobileCard<T>({
           </div>
         ) : null}
 
-        <dl className="responsive-table__rows">
-          {visibleColumns.map((col) => (
-            <div
-              key={col.id}
-              className={`responsive-table__row responsive-table__row--align-${col.align ?? 'start'}`}
-            >
-              <dt className="responsive-table__label">{t(col.headerKey)}</dt>
-              <dd className="responsive-table__value">{col.render(row)}</dd>
-            </div>
-          ))}
-        </dl>
+        {/* If a column with id "actions" exists, lift it OUT of the body
+            label/value list and render its content in an absolutely-positioned
+            top-inline-end slot (the kit's mobile rhythm — the "⋯" menu hugs
+            the card corner instead of sitting awkwardly under the data). */}
+        {(() => {
+          const actionsCol = visibleColumns.find(
+            (c) => c.id === 'actions' || c.id === 'action' || c.id.startsWith('actions-'),
+          );
+          const bodyCols = actionsCol
+            ? visibleColumns.filter((c) => c !== actionsCol)
+            : visibleColumns;
+          return (
+            <>
+              {actionsCol ? (
+                <div className="responsive-table__card-action-corner">
+                  {actionsCol.render(row)}
+                </div>
+              ) : null}
+              <dl className="responsive-table__rows">
+                {bodyCols.map((col) => (
+                  <div
+                    key={col.id}
+                    className={`responsive-table__row responsive-table__row--align-${col.align ?? 'start'}`}
+                  >
+                    <dt className="responsive-table__label">{t(col.headerKey)}</dt>
+                    <dd className="responsive-table__value">{col.render(row)}</dd>
+                  </div>
+                ))}
+              </dl>
+            </>
+          );
+        })()}
 
         {trimRows && columns.length > visibleColumns.length ? (
           <Button
@@ -511,10 +532,11 @@ export function ResponsiveTable<T>({
                 rowKey={key}
                 columns={columns}
                 rowActions={rowActions}
-                // On mobile we only force per-card trimming when the table
-                // would have been trimmed on Tablet (i.e. > 5 columns). At
-                // ≤ 5 columns every label/value pair fits comfortably.
-                trimRows={columns.length > COLUMN_TRIM_THRESHOLD}
+                // Always show every label/value pair on mobile — no
+                // per-card trimming and no "More" toggle button below the
+                // card (the user explicitly asked us to remove the violet
+                // "More" link at the bottom of each card).
+                trimRows={false}
               />
             );
           })}
@@ -617,13 +639,15 @@ export function ResponsiveTable<T>({
     cancelSort: t(TKEY_CLOSE),
   };
 
-  // Border colour comes from `theme/tokens.ts` so visual treatment stays
-  // consistent with the rest of the umbrella runtime layer.
+  // Use the live CSS-var tokens (NOT the static `palette` constants from
+  // tokens.ts, which are hardcoded light-mode values `#FFFFFF` + `#E2E6EC`
+  // and were painting a WHITE wrapper around the table in dark mode — the
+  // user's recurring "هەر ماوە، هێشتا چوارچێوەی سپی هەیە" report). CSS vars
+  // resolve to the correct theme at runtime via `html[data-theme="dark"]`.
   const tableBorderStyle: CSSProperties = {
-    border: `1px solid ${palette.border}`,
     borderRadius: 14,
     overflow: 'hidden',
-    background: palette.surface,
+    background: 'var(--surface)',
   };
 
   return (

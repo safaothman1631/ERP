@@ -39,7 +39,7 @@ export const ImpersonationBanner: React.FC = () => {
         insetInlineStart: 0,
         insetInlineEnd: 0,
         height: BANNER_HEIGHT,
-        background: '#cf1322',
+        background: 'var(--danger-500)',
         color: '#fff',
         zIndex: 2000,
         display: 'flex',

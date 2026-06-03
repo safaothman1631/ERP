@@ -286,7 +286,7 @@ export default function ChatterPanel({ entityType, entityId }: ChatterPanelProps
  justifyContent: 'space-between',
  alignItems: 'center',
  padding: 8,
- border: '1px solid #e8e8e8',
+ border: '1px solid var(--border)',
  borderRadius: 4,
  }}
  >

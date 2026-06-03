@@ -1,8 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Button, Form, Input, InputNumber, Select, message, Space, Tag, Popconfirm } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, ArrowLeftOutlined, SettingOutlined } from '@ant-design/icons';
+import React, { useMemo, useState, useEffect } from 'react';
+import { Button, Form, Input, InputNumber, Select, message, Radio } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, CopyOutlined, ArrowLeftOutlined, SettingOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { PageHeader, SectionCard, StatusTag } from '../../design-system';
+import { PageHeader, StatusTag, type ColumnVisibilityItem } from '../../design-system';
+import KitListCard, { type KitListTab } from '../../design-system/KitListCard';
+import KitListToolbarActions from '../../design-system/KitListToolbarActions';
+import KitRowActions from '../../design-system/KitRowActions';
+import KitFiltersButton from '../../design-system/KitFiltersButton';
+import KitStatusFilter from '../../design-system/KitStatusFilter';
+import KitSearchInput from '../../design-system/KitSearchInput';
+import { downloadCsv } from '../../utils/exportCsv';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -45,6 +52,14 @@ const NumberingSequences: React.FC = () => {
  const [branches, setBranches] = useState<Branch[]>([]);
  const [modalVisible, setModalVisible] = useState(false);
  const [editingSequence, setEditingSequence] = useState<NumberingSequence | null>(null);
+ // Client-side doc_type segment (no server filter param exists; filters the
+ // already-fetched in-memory list — pure presentation, no query/logic change).
+ const [docTypeFilter, setDocTypeFilter] = useState<string>('all');
+ // Client-side free-text search (purely in-memory; no backend search param exists).
+ const [search, setSearch] = useState('');
+ const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
+ try { return JSON.parse(localStorage.getItem('numbering_sequences.hiddenCols') || '[]'); } catch { return []; }
+ });
 
  useEffect(() => {
  fetchSequences();
@@ -89,6 +104,14 @@ const NumberingSequences: React.FC = () => {
  const handleEdit = (record: NumberingSequence) => {
  setEditingSequence(record);
  form.setFieldsValue(record);
+ setModalVisible(true);
+ };
+
+ // Duplicate: open the create form pre-filled with this record's values (no id).
+ const handleDuplicate = (record: NumberingSequence) => {
+ setEditingSequence(null);
+ const { id: _id, created_at: _createdAt, ...rest } = record;
+ form.setFieldsValue(rest);
  setModalVisible(true);
  };
 
@@ -155,30 +178,53 @@ const NumberingSequences: React.FC = () => {
  return preview;
  };
 
- const columns = [
+ const allColumns = [
  {
  title: t('numbering.branch'),
  dataIndex: 'branch_id',
  key: 'branch_id',
- render: (branchId: string) => getBranchName(branchId),
+ render: (branchId: string) => {
+ const name = getBranchName(branchId);
+ return (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{String(name || '?').trim().slice(0, 2).toUpperCase()}</span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{name}</span>
+ </div>
+ );
+ },
  },
  {
  title: t('numbering.doc_type'),
  dataIndex: 'doc_type',
  key: 'doc_type',
- render: (docType: string) => t(`numbering.${docType}`),
+ render: (docType: string) => (
+ <span style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--surface-2)', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-600)',
+ }}>{t(`numbering.${docType}`)}</span>
+ ),
  },
  {
  title: t('numbering.prefix'),
  dataIndex: 'prefix',
  key: 'prefix',
- render: (prefix: string) => <Tag>{prefix}</Tag>,
+ render: (prefix: string) => (
+ <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-900)', fontWeight: 500 }}>{prefix}</span>
+ ),
  },
  {
  title: t('numbering.format_template'),
  dataIndex: 'format',
  key: 'format',
- render: (format: string) => <code style={{ fontSize: 11, color: 'var(--ink-700)' }}>{format}</code>,
+ render: (format: string) => (
+ <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5, color: 'var(--ink-500)' }}>{format}</span>
+ ),
  },
  {
  title: t('numbering.next_value'),
@@ -194,38 +240,66 @@ const NumberingSequences: React.FC = () => {
  const branchCode = branch?.code || 'BR';
  const year = new Date().getFullYear();
  const seq = String(record.next_value).padStart(record.padding, '0');
- 
+
  const preview = record.format
  .replace('{prefix}', record.prefix)
  .replace('{branch_code}', branchCode)
  .replace('{year}', String(year))
  .replace('{seq}', seq);
- 
+
  return <StatusTag status="success" label={preview} />;
  },
  },
  {
- title: t('actions'),
+ title: '',
  key: 'actions',
+ width: 56,
+ align: 'center' as const,
  render: (_: any, record: NumberingSequence) => (
- <Space>
- <Button
- icon={<EditOutlined />}
- onClick={() => handleEdit(record)}
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'edit', icon: <EditOutlined />, label: t('edit'), onClick: () => handleEdit(record) },
+ { key: 'duplicate', icon: <CopyOutlined />, label: t('duplicate', 'Duplicate'), onClick: () => handleDuplicate(record) },
+ { type: 'divider' },
+ { key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true, onClick: () => handleDelete(record.id) },
+ ]}
  />
- <Popconfirm
- title={t('confirm.delete')}
- onConfirm={() => handleDelete(record.id)}
- >
- <Button
- icon={<DeleteOutlined />}
- danger
- />
- </Popconfirm>
- </Space>
  ),
  },
  ];
+
+ // Client-side doc_type segment + free-text search applied to the already-fetched list.
+ const filteredSequences = useMemo(() => {
+ const byType = docTypeFilter === 'all' ? sequences : sequences.filter((s) => s.doc_type === docTypeFilter);
+ if (!search) return byType;
+ const q = search.toLowerCase();
+ return byType.filter((row: any) =>
+ Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(q)),
+ );
+ }, [sequences, docTypeFilter, search]);
+
+ const columns = useMemo(
+ () => allColumns.filter((c) => !hiddenCols.includes(c.key)),
+ // eslint-disable-next-line react-hooks/exhaustive-deps
+ [hiddenCols, t, branches],
+ );
+ const columnsMeta: ColumnVisibilityItem[] = allColumns.map((c) => ({
+ key: c.key,
+ label: typeof c.title === 'string' && c.title ? c.title : c.key,
+ pinned: c.key === 'branch_id' || c.key === 'actions',
+ }));
+ const persistHidden = (next: string[]) => {
+ setHiddenCols(next);
+ try { localStorage.setItem('numbering_sequences.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
+ };
+
+ // Tabs + Status filter share the same client-side doc_type segment.
+ const tabs: KitListTab[] = [
+ { key: 'all', label: t('all', 'All') },
+ ...DOC_TYPES.map((dt) => ({ key: dt, label: t(`numbering.${dt}`) })),
+ ];
+ const docTypeOptions = DOC_TYPES.map((dt) => ({ value: dt, label: t(`numbering.${dt}`) }));
 
  return (
  <div>
@@ -260,15 +334,69 @@ const NumberingSequences: React.FC = () => {
  }
  />
 
- <SectionCard padded={false}>
+ <KitListCard
+ tabs={tabs}
+ activeTab={docTypeFilter}
+ onTabChange={(k) => setDocTypeFilter(k)}
+ toolbar={
+ <>
+ <KitSearchInput
+ value={search}
+ onChange={(v) => setSearch(v)}
+ placeholder={t('search')}
+ />
+ {/* Group Filters + Status in a single flex unit so they ALWAYS wrap
+ together to the same line — never one stranded on a row by itself. */}
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={docTypeFilter !== 'all' ? 1 : 0}
+ onClear={() => setDocTypeFilter('all')}
+ >
+ <Radio.Group
+ value={docTypeFilter}
+ onChange={(e) => setDocTypeFilter(e.target.value)}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="all">{t('all', 'All')}</Radio>
+ {DOC_TYPES.map((dt) => (
+ <Radio key={dt} value={dt}>{t(`numbering.${dt}`)}</Radio>
+ ))}
+ </Radio.Group>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('numbering.doc_type')}
+ anyLabel={t('all', 'All')}
+ value={docTypeFilter === 'all' ? '' : docTypeFilter}
+ onChange={(v) => setDocTypeFilter(v || 'all')}
+ options={docTypeOptions}
+ />
+ </div>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('numbering_sequences', filteredSequences, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ </div>
+ </>
+ }
+ >
  <ResponsiveTableAdapter
  columns={columns}
- dataSource={sequences}
+ dataSource={filteredSequences}
  loading={loading}
  rowKey="id"
  pagination={false}
  />
- </SectionCard>
+ </KitListCard>
 
  <FormDialog
  title={editingSequence ? t('numbering.edit_sequence') : t('numbering.create_sequence')}

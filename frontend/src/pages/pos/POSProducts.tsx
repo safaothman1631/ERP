@@ -4,13 +4,27 @@ import { useTranslation } from 'react-i18next';
 import { EditOutlined, SearchOutlined, PlusOutlined, ImportOutlined, AppstoreAddOutlined } from '@ant-design/icons';
 import api from '../../api';
 import { message } from '../../utils/message';
-import { PageHeader, StatusTag, EmptyState, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../../design-system';
+import { PageHeader, StatusTag, EmptyState, type ColumnVisibilityItem } from '../../design-system';
+import KitListCard from '../../design-system/KitListCard';
+import KitSearchInput from '../../design-system/KitSearchInput';
+import KitListToolbarActions from '../../design-system/KitListToolbarActions';
+import KitRowActions from '../../design-system/KitRowActions';
+import KitFiltersButton from '../../design-system/KitFiltersButton';
 import { downloadCsv } from '../../utils/exportCsv';
-import { useAuthStore } from '../../store';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
 const { Text } = Typography;
+
+/** Initials for the kit's avatar cell (first letters of the first two words). */
+const initialsOf = (name: string): string =>
+ String(name || '?')
+ .trim()
+ .split(/\s+/)
+ .map((w) => w[0])
+ .join('')
+ .slice(0, 2)
+ .toUpperCase();
 
 const POSProducts: React.FC = () => {
  const { t } = useTranslation();
@@ -53,7 +67,6 @@ const POSProducts: React.FC = () => {
  const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
  try { return JSON.parse(localStorage.getItem('posProducts.hiddenCols') || '[]'); } catch { return []; }
  });
- const isDark = useAuthStore((s) => s.theme === 'dark');
 
  const fetchCategories = async () => {
  try {
@@ -90,13 +103,16 @@ const POSProducts: React.FC = () => {
 
  useEffect(() => {
  fetchCategories();
- fetchData();
  // eslint-disable-next-line react-hooks/exhaustive-deps
  }, []);
 
- const handleSearch = () => {
- fetchData(1);
- };
+ // Re-fetch when toolbar filters change (kit search is live, no submit button).
+ // Debounced so typing doesn't hammer the API. Also covers the initial load.
+ useEffect(() => {
+ const handle = setTimeout(() => { fetchData(1); }, 300);
+ return () => clearTimeout(handle);
+ // eslint-disable-next-line react-hooks/exhaustive-deps
+ }, [filters.q, filters.category_id]);
 
  const openEditModal = (record: any) => {
  setEditingItem(record);
@@ -249,27 +265,49 @@ const POSProducts: React.FC = () => {
  title: t('name'),
  dataIndex: 'name',
  key: 'name',
+ render: (v: string) => (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{initialsOf(v)}</span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{v}</span>
+ </div>
+ ),
  },
  {
  title: t('name_ku'),
  dataIndex: 'name_ku',
  key: 'name_ku',
+ render: (v: string) => <span style={{ color: 'var(--ink-700)' }}>{v || '—'}</span>,
  },
  {
  title: t('sku'),
  dataIndex: 'sku',
  key: 'sku',
+ render: (v: string) => v
+ ? <span style={{ color: 'var(--ink-900)', fontFamily: 'var(--font-mono)', fontWeight: 500, fontSize: 12.5 }}>{v}</span>
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>,
  },
  {
  title: t('barcode'),
  dataIndex: 'barcode',
  key: 'barcode',
+ render: (v: string) => v
+ ? <span style={{ color: 'var(--ink-700)', fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>{v}</span>
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>,
  },
  {
  title: t('price'),
  dataIndex: 'price',
  key: 'price',
- render: (val: number) => (val ?? 0).toLocaleString('en-IQ') + ' IQD',
+ render: (val: number) => (
+ <span style={{ color: 'var(--ink-900)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+ {(val ?? 0).toLocaleString('en-IQ') + ' IQD'}
+ </span>
+ ),
  },
  {
  title: t('pos.category'),
@@ -277,7 +315,13 @@ const POSProducts: React.FC = () => {
  key: 'category_id',
  render: (catId: string) => {
  const cat = categories.find((c) => c.id === catId);
- return cat ? cat.name : '—';
+ return cat ? (
+ <span style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--surface-2)', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-600)',
+ }}>{cat.name}</span>
+ ) : <span style={{ color: 'var(--ink-400)' }}>—</span>;
  },
  },
  {
@@ -289,12 +333,17 @@ const POSProducts: React.FC = () => {
  ),
  },
  {
- title: t('actions'),
+ title: '',
  key: 'actions',
+ width: 56,
+ align: 'center' as const,
  render: (_: any, record: any) => (
- <Button icon={<EditOutlined />} onClick={() => openEditModal(record)}>
- {t('edit')}
- </Button>
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'edit', icon: <EditOutlined />, label: t('edit'), onClick: () => openEditModal(record) },
+ ]}
+ />
  ),
  },
  ];
@@ -340,53 +389,6 @@ const POSProducts: React.FC = () => {
  </Space>
  }
  />
- <div
- style={{
- display: 'flex',
- gap: 'var(--space-sm)',
- flexWrap: 'wrap',
- alignItems: 'center',
- marginBlockEnd: 'var(--space-lg)',
- paddingBlock: 'var(--space-sm)',
- paddingInline: 'var(--space-md)',
- background: 'var(--surface)',
- border: '1px solid var(--border)',
- borderRadius: 'var(--radius-lg)',
- boxShadow: 'var(--shadow-sm)',
- }}
- >
- <Input
- placeholder={t('search')}
- value={filters.q}
- onChange={(e) => setFilters({ ...filters, q: e.target.value })}
- onPressEnter={handleSearch}
- style={{ width: 200 }}
- prefix={<SearchOutlined />}
- />
- <Select
- placeholder={t('pos.category')}
- value={filters.category_id || undefined}
- onChange={(val) => setFilters({ ...filters, category_id: val || '' })}
- options={[{ value: '', label: t('all') }, ...categoryOptions]}
- style={{ width: 200 }}
- allowClear
- />
- <Button type="primary" onClick={handleSearch}>
- {t('search')}
- </Button>
- <div style={{ flex: 1, minWidth: 0 }} />
- <ExportMenu
- formats={['csv']}
- onExport={(f: ExportFormat) => {
- if (f === 'csv') {
- const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
- downloadCsv('pos-products', data, cols);
- }
- }}
- />
- <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
- </div>
-
  {showEmptyState ? (
  <EmptyState
  icon={<AppstoreAddOutlined />}
@@ -404,6 +406,53 @@ const POSProducts: React.FC = () => {
  }
  />
  ) : (
+ <KitListCard
+ toolbar={
+ <>
+ <KitSearchInput
+ value={filters.q}
+ onChange={(v) => {
+ setFilters((prev) => ({ ...prev, q: v }));
+ setPagination((prev) => ({ ...prev, current: 1 }));
+ }}
+ placeholder={t('search')}
+ />
+ <KitFiltersButton
+ activeCount={filters.category_id ? 1 : 0}
+ onClear={() => { setFilters({ ...filters, category_id: '' }); fetchData(1); }}
+ >
+ <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 6, color: 'var(--ink-700)' }}>
+ {t('pos.category')}
+ </div>
+ <Select
+ placeholder={t('pos.category')}
+ value={filters.category_id || undefined}
+ onChange={(val) => setFilters({ ...filters, category_id: val || '' })}
+ options={[{ value: '', label: t('all') }, ...categoryOptions]}
+ style={{ width: '100%' }}
+ allowClear
+ showSearch
+ optionFilterProp="label"
+ />
+ </KitFiltersButton>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('pos-products', data, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ </div>
+ </>
+ }
+ >
  <ResponsiveTableAdapter
  dataSource={data}
  columns={visibleColumns}
@@ -417,6 +466,7 @@ const POSProducts: React.FC = () => {
  showSizeChanger: false,
  }}
  />
+ </KitListCard>
  )}
 
  {/* ── Edit modal ────────────────────────────────────────────────── */}

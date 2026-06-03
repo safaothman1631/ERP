@@ -322,7 +322,7 @@ const OnboardingWizardInner: FC = () => {
                 >
                   <Space direction="vertical" style={{ width: '100%' }}>
                     {CURRENCIES.map((c) => (
-                      <Radio key={c.code} value={c.code} style={{ width: '100%', padding: 12, border: '1px solid #d9d9d9', borderRadius: 6 }}>
+                      <Radio key={c.code} value={c.code} style={{ width: '100%', padding: 12, border: '1px solid var(--border)', borderRadius: 6 }}>
                         <strong>{c.code}</strong> — {c.name} ({c.symbol})
                       </Radio>
                     ))}
@@ -352,7 +352,7 @@ const OnboardingWizardInner: FC = () => {
                 >
                   <Space direction="vertical" style={{ width: '100%' }}>
                     {INDUSTRY_PRESETS.map((p) => (
-                      <Radio key={p.id} value={p.id} style={{ width: '100%', padding: 12, border: '1px solid #d9d9d9', borderRadius: 6 }}>
+                      <Radio key={p.id} value={p.id} style={{ width: '100%', padding: 12, border: '1px solid var(--border)', borderRadius: 6 }}>
                         <strong>{p.name}</strong>
                       </Radio>
                     ))}
@@ -372,11 +372,11 @@ const OnboardingWizardInner: FC = () => {
                     key={m.key}
                     checked={enabledModules.includes(m.key)}
                     onChange={(e) => handleModuleChange(e, m.key)}
-                    style={{ width: '100%', padding: 12, border: '1px solid #d9d9d9', borderRadius: 6 }}
+                    style={{ width: '100%', padding: 12, border: '1px solid var(--border)', borderRadius: 6 }}
                   >
                     <div>
                       <strong>{m.label}</strong>
-                      <div style={{ fontSize: 12, color: '#666' }}>{m.description}</div>
+                      <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>{m.description}</div>
                     </div>
                   </Checkbox>
                 ))}

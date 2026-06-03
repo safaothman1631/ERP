@@ -107,10 +107,10 @@ const OtpInput: React.FC<OtpInputProps> = ({ value, onChange, disabled }) => {
             fontSize: 22,
             fontWeight: 700,
             borderRadius: 12,
-            border: digits[i] ? '2px solid #7B61FF' : '1.5px solid #E5E7EB',
+            border: digits[i] ? '2px solid #7B61FF' : '1.5px solid var(--border)',
             outline: 'none',
-            background: digits[i] ? 'rgba(123,97,255,0.06)' : '#FAFBFC',
-            color: '#0F172A',
+            background: digits[i] ? 'rgba(123,97,255,0.06)' : 'var(--surface-2)',
+            color: 'var(--ink-900)',
             transition: 'border-color 0.18s, background 0.18s, box-shadow 0.18s',
             boxShadow: digits[i] ? '0 0 0 3px rgba(123,97,255,0.12)' : 'none',
             cursor: disabled ? 'not-allowed' : 'text',
@@ -228,7 +228,7 @@ const MFAPage: React.FC = () => {
         {/* Instruction */}
         <p style={{
           textAlign: 'center',
-          color: '#64748B',
+          color: 'var(--ink-500)',
           fontSize: 13,
           lineHeight: 1.7,
           margin: '0 0 4px',
@@ -287,7 +287,7 @@ const MFAPage: React.FC = () => {
         {/* Help text */}
         <p style={{
           textAlign: 'center',
-          color: '#94A3B8',
+          color: 'var(--ink-300)',
           fontSize: 11,
           marginTop: 20,
           lineHeight: 1.6,

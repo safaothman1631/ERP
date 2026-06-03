@@ -78,7 +78,7 @@ export default function MyActivitiesWidget() {
           {badgeCount > 0 && (
             <Badge
               count={badgeCount}
-              style={{ backgroundColor: overdueCount > 0 ? '#f5222d' : '#faad14' }}
+              style={{ backgroundColor: overdueCount > 0 ? 'var(--danger-500)' : 'var(--warning-500)' }}
             />
           )}
           <HelpIcon sectionId="dashboard.activities" />

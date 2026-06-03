@@ -148,8 +148,13 @@ html[data-theme='dark'] {
   --surface:   #11151F;
   --surface-2: #161B27;
   --raised:    #161B27;
-  --border:    rgba(255,255,255,0.08);
-  --border-strong: rgba(255,255,255,0.14);
+  /* Borders are DARK in dark mode — never light. Earlier the dark theme used
+     `rgba(255,255,255,0.08)` for `--border`, which painted a visible WHITE
+     hairline on every button, input, chip and divider. The user explicitly
+     asked: NO white frames anywhere except text and icons. We now use a
+     near-black ink so borders act as a subtle DARKENING separator instead. */
+  --border:    rgba(0,0,0,0.55);
+  --border-strong: rgba(0,0,0,0.75);
   --ink-900:   #ECEEF2;
   --ink-700:   #C2C8D2;
   --ink-500:   #8A93A3;

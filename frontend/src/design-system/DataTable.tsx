@@ -265,9 +265,12 @@ function QuickActionsCell<T extends object>({
  * Requirements: 14.1–14.9
  * React.memo applied per Requirements 18.4.
  */
-export function DataTable<T extends object>(props: DataTableProps<T>) {
-  return <DataTableInner<T> {...props} />;
-}
+// Memoized so a stable (useMemo'd) columns/dataSource skips re-rendering the
+// whole table — the "React.memo applied" the docstring promised but the wrapper
+// never delivered. React.memo strips the generic, so the cast restores the call
+// signature; callers passing fresh array literals each render simply re-render
+// as before (shallow-unequal props) — no behaviour change.
+export const DataTable = React.memo(DataTableInner) as typeof DataTableInner;
 
 function DataTableInner<T extends object>({
   columns,

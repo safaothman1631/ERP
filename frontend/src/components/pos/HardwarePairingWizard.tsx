@@ -197,13 +197,13 @@ export const HardwarePairingWizard: React.FC<Props> = ({ t = defaultT, terminalI
     <div role="dialog" aria-label="Hardware pairing wizard" style={{ maxWidth: 720, margin: '0 auto', padding: 24 }}>
       <header style={{ marginBottom: 16 }}>
         <h2 style={{ margin: 0 }}>{t('pos.hardware.wizard.title', 'Pair hardware / یەکخستنی ئامێر')}</h2>
-        <div style={{ fontSize: 13, color: '#666' }}>
+        <div style={{ fontSize: 13, color: 'var(--ink-500)' }}>
           {t('pos.hardware.wizard.subtitle', 'Step')} {state.step} / 7
         </div>
       </header>
 
       {state.error && (
-        <div role="alert" style={{ background: '#fff1f0', border: '1px solid #ffa39e', padding: 12, borderRadius: 6, marginBottom: 12 }}>
+        <div role="alert" style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger-500)', padding: 12, borderRadius: 6, marginBottom: 12 }}>
           {state.error}
         </div>
       )}
@@ -217,7 +217,7 @@ export const HardwarePairingWizard: React.FC<Props> = ({ t = defaultT, terminalI
                 key={dt}
                 type="button"
                 onClick={() => update({ deviceType: dt, step: 2 })}
-                style={{ padding: 16, borderRadius: 8, border: '1px solid #d9d9d9', background: '#fff', cursor: 'pointer' }}
+                style={{ padding: 16, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', cursor: 'pointer' }}
               >
                 {t(`pos.hardware.deviceType.${dt}`, dt)}
               </button>
@@ -244,15 +244,15 @@ export const HardwarePairingWizard: React.FC<Props> = ({ t = defaultT, terminalI
                 style={{
                   padding: 16,
                   borderRadius: 8,
-                  border: '1px solid #d9d9d9',
-                  background: c.avail ? '#fff' : '#fafafa',
+                  border: '1px solid var(--border)',
+                  background: c.avail ? 'var(--surface)' : 'var(--surface-2)',
                   cursor: c.avail ? 'pointer' : 'not-allowed',
                   opacity: c.avail ? 1 : 0.5,
                 }}
               >
                 {t(`pos.hardware.connection.${c.id}`, c.label)}
                 {!c.avail && (
-                  <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
+                  <div style={{ fontSize: 11, color: 'var(--ink-500)', marginTop: 4 }}>
                     {t('pos.hardware.notSupported', 'not supported on this device')}
                   </div>
                 )}
@@ -305,7 +305,7 @@ export const HardwarePairingWizard: React.FC<Props> = ({ t = defaultT, terminalI
             <button
               type="button"
               onClick={() => update({ step: 5 })}
-              style={{ background: '#7B61FF', color: '#fff', padding: '8px 16px', borderRadius: 6, border: 'none' }}
+              style={{ background: 'var(--accent-500)', color: 'var(--on-accent)', padding: '8px 16px', borderRadius: 6, border: 'none' }}
             >
               {t('pos.hardware.continue', 'Continue')} →
             </button>
@@ -320,7 +320,7 @@ export const HardwarePairingWizard: React.FC<Props> = ({ t = defaultT, terminalI
             {t('pos.hardware.detectAuto', 'Detect automatically')}
           </button>
           <div style={{ marginTop: 16 }}>
-            <label style={{ fontSize: 13, color: '#555' }}>
+            <label style={{ fontSize: 13, color: 'var(--ink-500)' }}>
               {t('pos.hardware.manualOverride', 'Or pick manually:')}
             </label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
@@ -332,14 +332,14 @@ export const HardwarePairingWizard: React.FC<Props> = ({ t = defaultT, terminalI
                   style={{
                     padding: 12,
                     borderRadius: 6,
-                    border: state.dialectId === d.id ? '2px solid #7B61FF' : '1px solid #d9d9d9',
-                    background: '#fff',
+                    border: state.dialectId === d.id ? '2px solid var(--accent-500)' : '1px solid var(--border)',
+                    background: 'var(--surface)',
                     cursor: 'pointer',
                     textAlign: 'start',
                   }}
                 >
                   <div style={{ fontWeight: 600 }}>{d.displayName}</div>
-                  <div style={{ fontSize: 12, color: '#888' }}>{d.id} • {d.width}mm</div>
+                  <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>{d.id} • {d.width}mm</div>
                 </button>
               ))}
             </div>
@@ -366,14 +366,14 @@ export const HardwarePairingWizard: React.FC<Props> = ({ t = defaultT, terminalI
             <button
               type="button"
               onClick={() => update({ testPrintCutOk: true, step: state.deviceType === 'printer' ? 7 : 7 })}
-              style={{ background: '#52c41a', color: '#fff', padding: '8px 16px', borderRadius: 6, border: 'none' }}
+              style={{ background: 'var(--success-500)', color: 'var(--on-accent)', padding: '8px 16px', borderRadius: 6, border: 'none' }}
             >
               {t('pos.hardware.cutOk', 'Cut OK')}
             </button>
             <button
               type="button"
               onClick={() => update({ testPrintCutOk: false, step: 7 })}
-              style={{ background: '#ff4d4f', color: '#fff', padding: '8px 16px', borderRadius: 6, border: 'none' }}
+              style={{ background: 'var(--danger-500)', color: 'var(--on-accent)', padding: '8px 16px', borderRadius: 6, border: 'none' }}
             >
               {t('pos.hardware.cutFail', 'Cut failed')}
             </button>
@@ -413,7 +413,7 @@ export const HardwarePairingWizard: React.FC<Props> = ({ t = defaultT, terminalI
             <button
               type="button"
               onClick={save}
-              style={{ background: '#7B61FF', color: '#fff', padding: '8px 16px', borderRadius: 6, border: 'none' }}
+              style={{ background: 'var(--accent-500)', color: 'var(--on-accent)', padding: '8px 16px', borderRadius: 6, border: 'none' }}
             >
               {t('pos.hardware.save', 'Save & finish')}
             </button>
@@ -425,7 +425,7 @@ export const HardwarePairingWizard: React.FC<Props> = ({ t = defaultT, terminalI
             </button>
           </div>
           {state.savedAt && (
-            <div style={{ marginTop: 12, color: '#52c41a' }}>
+            <div style={{ marginTop: 12, color: 'var(--success-fg)' }}>
               {t('pos.hardware.savedAt', 'Saved at')} {state.savedAt}
             </div>
           )}

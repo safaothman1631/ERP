@@ -1,12 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Space, Tag, Form, Input, InputNumber, App, DatePicker, Modal } from 'antd';
-import { PlusOutlined, GiftOutlined, BarcodeOutlined } from '@ant-design/icons';
+import { Button, Space, Form, Input, InputNumber, App, DatePicker, Modal, Radio } from 'antd';
+import { PlusOutlined, GiftOutlined, BarcodeOutlined, EyeOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import api from '../../api';
-import { PageHeader, StatusTag, KeyValueGrid, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../../design-system';
+import { PageHeader, StatusTag, KeyValueGrid, type ColumnVisibilityItem } from '../../design-system';
+import KitListCard, { type KitListTab } from '../../design-system/KitListCard';
+import KitListToolbarActions from '../../design-system/KitListToolbarActions';
+import KitRowActions from '../../design-system/KitRowActions';
+import KitFiltersButton from '../../design-system/KitFiltersButton';
+import KitStatusFilter from '../../design-system/KitStatusFilter';
+import KitSearchInput from '../../design-system/KitSearchInput';
 import { downloadCsv } from '../../utils/exportCsv';
-import { useAuthStore } from '../../store';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
@@ -23,21 +28,30 @@ interface GiftCard {
  created_at: string;
 }
 
+/** Status segment value derived client-side from is_active + expiration_date. */
+type CardStatus = 'active' | 'not_activated' | 'expired';
+const statusOf = (card: GiftCard): CardStatus => {
+ if (!card.is_active) return 'not_activated';
+ if (card.expiration_date && new Date(card.expiration_date) < new Date()) return 'expired';
+ return 'active';
+};
+
 const POSGiftCards: React.FC = () => {
  const { t } = useTranslation();
  const { message } = App.useApp();
  const [form] = Form.useForm();
- 
+
  const [cards, setCards] = useState<GiftCard[]>([]);
  const [loading, setLoading] = useState(false);
  const [modalOpen, setModalOpen] = useState(false);
  const [batchModalOpen, setBatchModalOpen] = useState(false);
  const [drawerOpen, setDrawerOpen] = useState(false);
  const [selectedCard, setSelectedCard] = useState<GiftCard | null>(null);
+ const [tab, setTab] = useState<'all' | CardStatus>('all');
+ const [search, setSearch] = useState('');
  const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
  try { return JSON.parse(localStorage.getItem('posGiftCards.hiddenCols') || '[]'); } catch { return []; }
  });
- const isDark = useAuthStore((s) => s.theme === 'dark');
 
  useEffect(() => {
  loadCards();
@@ -79,7 +93,7 @@ const POSGiftCards: React.FC = () => {
  expiration_date: values.expiration_date ? values.expiration_date.toISOString() : undefined,
  batch_count: 1,
  };
- 
+
  const _res = await api.post('/api/pos/gift-cards', data);
  message.success(t('gift_card_created'));
  setModalOpen(false);
@@ -96,7 +110,7 @@ const POSGiftCards: React.FC = () => {
  ...values,
  expiration_date: values.expiration_date ? values.expiration_date.toISOString() : undefined,
  };
- 
+
  const res = await api.post('/api/pos/gift-cards', data);
  const count = res.data.count || 0;
  message.success(t('gift_cards_created', { count }));
@@ -134,24 +148,30 @@ const POSGiftCards: React.FC = () => {
  dataIndex: 'code',
  key: 'code',
  render: (code: string) => (
- <Space>
- <BarcodeOutlined />
- <code style={{ fontSize: 14, fontWeight: 'bold' }}>{code}</code>
- </Space>
+ <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+ <BarcodeOutlined style={{ color: 'var(--ink-500)' }} />
+ <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--ink-900)' }}>{code}</span>
+ </span>
  ),
  },
  {
  title: t('initial_value'),
  dataIndex: 'initial_value',
  key: 'initial_value',
- render: (val: number) => `${val.toLocaleString()} ${t('currency')}`,
+ render: (val: number) => (
+ <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--ink-900)' }}>
+ {`${val.toLocaleString()} ${t('currency')}`}
+ </span>
+ ),
  },
  {
  title: t('current_balance'),
  dataIndex: 'current_value',
  key: 'current_value',
  render: (val: number) => (
- <StatusTag status={val > 0 ? 'active' : 'default'} label={`${val.toLocaleString()} ${t('currency')}`} />
+ <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--ink-900)' }}>
+ {`${val.toLocaleString()} ${t('currency')}`}
+ </span>
  ),
  },
  {
@@ -170,28 +190,37 @@ const POSGiftCards: React.FC = () => {
  title: t('batch'),
  dataIndex: 'batch_id',
  key: 'batch_id',
- render: (batch?: string) => batch ? <Tag>{batch.slice(0, 8)}</Tag> : '-',
+ render: (batch?: string) => batch ? (
+ <span style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--surface-2)', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-600)', fontFamily: 'var(--font-mono)',
+ }}>{batch.slice(0, 8)}</span>
+ ) : <span style={{ color: 'var(--ink-400)' }}>—</span>,
  },
  {
  title: t('expiration'),
  dataIndex: 'expiration_date',
  key: 'expiration_date',
- render: (date?: string) => date ? dayjs(date).format('YYYY-MM-DD') : t('no_expiration'),
+ render: (date?: string) => date
+ ? <span style={{ color: 'var(--ink-700)' }}>{dayjs(date).format('YYYY-MM-DD')}</span>
+ : <span style={{ color: 'var(--ink-400)' }}>{t('no_expiration')}</span>,
  },
  {
- title: t('actions'),
+ title: '',
  key: 'actions',
+ width: 56,
+ align: 'center' as const,
  render: (_: any, record: GiftCard) => (
- <Space>
- {!record.is_active && (
- <Button type="primary" onClick={() => handleActivate(record)}>
- {t('activate')}
- </Button>
- )}
- <Button onClick={() => handleViewDetails(record)}>
- {t('view')}
- </Button>
- </Space>
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'view', icon: <EyeOutlined />, label: t('view'), onClick: () => handleViewDetails(record) },
+ ...(!record.is_active
+ ? [{ key: 'activate', icon: <CheckCircleOutlined />, label: t('activate'), onClick: () => handleActivate(record) }]
+ : []),
+ ]}
+ />
  ),
  },
  ];
@@ -206,6 +235,25 @@ const POSGiftCards: React.FC = () => {
  try { localStorage.setItem('posGiftCards.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
+ // Status segments derived client-side from the loaded cards (presentation only).
+ const filteredCards = useMemo(
+ () => {
+ const byTab = tab === 'all' ? cards : cards.filter((c) => statusOf(c) === tab);
+ if (!search) return byTab;
+ const q = search.toLowerCase();
+ return byTab.filter((row: any) =>
+ Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(q)),
+ );
+ },
+ [cards, tab, search],
+ );
+ const tabs: KitListTab[] = [
+ { key: 'all', label: t('all', 'All') },
+ { key: 'active', label: t('active', 'Active') },
+ { key: 'not_activated', label: t('not_activated', 'Not activated') },
+ { key: 'expired', label: t('expired', 'Expired') },
+ ];
+
  return (
  <div style={{ padding: 24 }}>
  <PageHeader
@@ -218,27 +266,75 @@ const POSGiftCards: React.FC = () => {
  <Button type="primary" icon={<GiftOutlined />} onClick={handleIssueBatch}>
  {t('issue_batch')}
  </Button>
- <ExportMenu
- formats={['csv']}
- onExport={(f: ExportFormat) => {
- if (f === 'csv') {
- const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
- downloadCsv('pos-gift-cards', cards, cols);
- }
- }}
- />
- <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
  </Space>
  }
  />
 
+ <KitListCard
+ tabs={tabs}
+ activeTab={tab}
+ onTabChange={(k) => setTab(k as typeof tab)}
+ toolbar={
+ <>
+ <KitSearchInput
+ value={search}
+ onChange={(v) => setSearch(v)}
+ placeholder={t('search')}
+ />
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={tab !== 'all' ? 1 : 0}
+ onClear={() => setTab('all')}
+ >
+ <Radio.Group
+ value={tab}
+ onChange={(e) => setTab(e.target.value)}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="all">{t('all', 'All')}</Radio>
+ <Radio value="active">{t('active', 'Active')}</Radio>
+ <Radio value="not_activated">{t('not_activated', 'Not activated')}</Radio>
+ <Radio value="expired">{t('expired', 'Expired')}</Radio>
+ </Radio.Group>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('status', 'Status')}
+ anyLabel={t('all', 'All')}
+ value={tab === 'all' ? '' : tab}
+ onChange={(v) => setTab((v || 'all') as typeof tab)}
+ options={[
+ { value: 'active', label: t('active', 'Active') },
+ { value: 'not_activated', label: t('not_activated', 'Not activated') },
+ { value: 'expired', label: t('expired', 'Expired') },
+ ]}
+ />
+ </div>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('pos-gift-cards', filteredCards, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ </div>
+ </>
+ }
+ >
  <ResponsiveTableAdapter
  columns={visibleColumns}
- dataSource={cards}
+ dataSource={filteredCards}
  rowKey="id"
  loading={loading}
  pagination={{ pageSize: 20 }}
  />
+ </KitListCard>
 
  <FormDialog
  title={t('issue_single_gift_card')}

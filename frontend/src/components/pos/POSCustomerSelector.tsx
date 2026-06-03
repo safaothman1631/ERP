@@ -115,7 +115,7 @@ const POSCustomerSelector: React.FC<POSCustomerSelectorProps> = ({
  )}
 
  {showQuickCreate ? (
- <div style={{ padding: '16px', background: '#f5f5f5', borderRadius: 8 }}>
+ <div style={{ padding: '16px', background: 'var(--surface-2)', borderRadius: 8 }}>
  <Form
  form={form}
  layout="vertical"
@@ -181,13 +181,13 @@ const POSCustomerSelector: React.FC<POSCustomerSelectorProps> = ({
  }}
  style={{
  cursor: 'pointer',
- border: '1px solid #f0f0f0',
+ border: '1px solid var(--border)',
  borderRadius: 8,
  padding: '12px 14px',
  }}
  >
  <div style={{ fontWeight: 600 }}>{customer.display_name || customer.company_name}</div>
- <Space orientation="vertical" style={{ marginTop: 4, color: '#666' }}>
+ <Space orientation="vertical" style={{ marginTop: 4, color: 'var(--ink-500)' }}>
  {customer.phone && <span>📞 {customer.phone}</span>}
  {customer.email && <span>✉️ {customer.email}</span>}
  </Space>

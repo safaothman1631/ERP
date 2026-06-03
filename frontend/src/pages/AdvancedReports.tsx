@@ -149,8 +149,8 @@ const AdvancedReports: React.FC = () => {
                 {cashFlow ? (
                   <>
                     <Row gutter={16} style={{ marginTop: 24 }}>
-                      <Col span={8}><Statistic title={t('inflows')} value={cashFlow.total_inflows} precision={0} suffix="IQD" styles={{ content: { color: '#3f8600' } }} /></Col>
-                      <Col span={8}><Statistic title={t('outflows')} value={cashFlow.total_outflows} precision={0} suffix="IQD" styles={{ content: { color: '#cf1322' } }} /></Col>
+                      <Col span={8}><Statistic title={t('inflows')} value={cashFlow.total_inflows} precision={0} suffix="IQD" styles={{ content: { color: 'var(--success-500)' } }} /></Col>
+                      <Col span={8}><Statistic title={t('outflows')} value={cashFlow.total_outflows} precision={0} suffix="IQD" styles={{ content: { color: 'var(--danger-500)' } }} /></Col>
                       <Col span={8}><Statistic title={t('net_cash_flow')} value={cashFlow.net_cash_flow} precision={0} suffix="IQD" /></Col>
                     </Row>
                     <ResponsiveTableAdapter
@@ -293,8 +293,8 @@ const AdvancedReports: React.FC = () => {
                 <DateRangeForm loading={loading} onSubmit={loadTax} />
                 {taxSummary ? (
                   <Row gutter={16} style={{ marginTop: 24 }}>
-                    <Col span={8}><Statistic title={t('output_tax')} value={taxSummary.output_tax} precision={2} suffix="IQD" styles={{ content: { color: '#3f8600' } }} /></Col>
-                    <Col span={8}><Statistic title={t('input_tax')} value={taxSummary.input_tax} precision={2} suffix="IQD" styles={{ content: { color: '#cf1322' } }} /></Col>
+                    <Col span={8}><Statistic title={t('output_tax')} value={taxSummary.output_tax} precision={2} suffix="IQD" styles={{ content: { color: 'var(--success-500)' } }} /></Col>
+                    <Col span={8}><Statistic title={t('input_tax')} value={taxSummary.input_tax} precision={2} suffix="IQD" styles={{ content: { color: 'var(--danger-500)' } }} /></Col>
                     <Col span={8}><Statistic title={t('net_tax')} value={taxSummary.net_tax} precision={2} suffix="IQD" /></Col>
                   </Row>
                 ) : <Empty style={{ marginTop: 24 }} />}

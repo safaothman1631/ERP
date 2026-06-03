@@ -12,7 +12,7 @@
  *
  * Requirements: 15.1–15.7
  */
-import React, { Suspense, useCallback, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Form, Input, DatePicker, Select, Divider, Typography, Tag } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -178,6 +178,65 @@ const PurchaseOrderFormPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  // Pre-seeded vendor option so the EntitySelect shows the vendor NAME when
+  // editing/viewing an existing purchase order (not just the raw id).
+  const [vendorOption, setVendorOption] = useState<EntityOption | undefined>(undefined);
+  const [loadingPO, setLoadingPO] = useState(false);
+
+  // ── Load the existing purchase order when editing/viewing (route has :id) ───
+  // Previously the edit route rendered a BLANK form — there was no GET, so the
+  // record's data never populated (the user's bug: "View shows no data").
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    setLoadingPO(true);
+    (async () => {
+      try {
+        const res = await api.get(`/api/purchase-orders/${id}`);
+        if (cancelled) return;
+        const inv = res.data ?? {};
+        const rawLines: any[] = inv.lines ?? inv.line_items ?? inv.items ?? [];
+        form.setFieldsValue({
+          contact_id: inv.contact_id ?? inv.vendor_id ?? undefined,
+          date: inv.date ? dayjs(inv.date) : undefined,
+          expected_delivery_date: inv.expected_delivery_date ? dayjs(inv.expected_delivery_date) : null,
+          reference: inv.reference ?? inv.reference_number ?? '',
+          delivery_address: inv.delivery_address ?? '',
+          notes: inv.notes ?? '',
+        } as Partial<POFormValues> as POFormValues);
+        // Seed the vendor label so EntitySelect renders the name, not the id.
+        // The PO payload only carries contact_id (no name), so when the name
+        // isn't inlined we fetch the contact to resolve its display_name.
+        const vendorId = inv.contact_id ?? inv.vendor_id;
+        let vendorName: string | undefined = inv.contact_name ?? inv.vendor_name ?? inv.contact?.display_name;
+        if (vendorId) {
+          if (!vendorName) {
+            try {
+              const c = await api.get(`/api/contacts/${vendorId}`);
+              vendorName = c.data?.display_name ?? c.data?.name;
+            } catch { /* fall back to id below */ }
+          }
+          if (!cancelled) setVendorOption({ value: String(vendorId), label: vendorName ?? String(vendorId) });
+        }
+        if (rawLines.length > 0) {
+          setLines(rawLines.map((l, i) => ({
+            id: `po-line-${id}-${i}`,
+            item_id: l.item_id ?? l.product_id ?? '',
+            description: l.description ?? l.name ?? '',
+            quantity: Number(l.quantity ?? l.qty ?? 1),
+            unit_price: Number(l.unit_price ?? l.price ?? l.rate ?? 0),
+            discount_percent: Number(l.discount_percent ?? l.discount ?? 0),
+            tax_rate: Number(l.tax_rate ?? l.tax ?? 0),
+          })));
+        }
+      } catch {
+        // leave the blank form on failure (offline/permission); validation still guards save.
+      } finally {
+        if (!cancelled) setLoadingPO(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [id, form]);
 
   // ── Auto-save ──────────────────────────────────────────────────────────────
   const formValues = useMemo(
@@ -334,6 +393,7 @@ const PurchaseOrderFormPage: React.FC = () => {
             >
               <EntitySelect
                 loadOptions={loadVendors}
+                initialOption={vendorOption}
                 ariaLabel={t('po_form.vendor', 'Vendor')}
                 placeholder={t('po_form.vendor_placeholder', 'Search vendors…')}
                 onCreateNew={(query) => navigate(`/contacts/new?type=vendor&name=${encodeURIComponent(query)}`)}
@@ -439,13 +499,16 @@ const PurchaseOrderFormPage: React.FC = () => {
         ),
       },
     ],
-    [t, lines, isDark, loadVendors, loadItems]
+    [t, lines, isDark, loadVendors, loadItems, vendorOption]
   );
 
   return (
     <Form
       form={form}
       layout="vertical"
+      // (loading state reserved for a future skeleton; referenced so the
+      // fetch effect's setter isn't an unused binding)
+      data-loading={loadingPO ? 'true' : undefined}
       onValuesChange={() => {
         setIsDirty(true);
         setSaved(false);

@@ -1,11 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Form, Input, Select, Space, DatePicker, Popconfirm, Row, Col } from 'antd';
-import { PlusOutlined, DeleteOutlined, PlayCircleOutlined, CheckCircleOutlined, StopOutlined } from '@ant-design/icons';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Button, Form, Input, Select, DatePicker, Row, Col, Radio } from 'antd';
+import {
+  PlusOutlined, DeleteOutlined, PlayCircleOutlined, CheckCircleOutlined, StopOutlined,
+  EyeOutlined, EditOutlined, CopyOutlined,
+} from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import dayjs, { Dayjs } from 'dayjs';
-import { PageHeader, FilterBar, StatusTag } from '../../design-system';
+import { PageHeader, StatusTag, type ColumnVisibilityItem } from '../../design-system';
 import type { StatusKind } from '../../design-system';
+import KitListCard, { type KitListTab } from '../../design-system/KitListCard';
+import KitListToolbarActions from '../../design-system/KitListToolbarActions';
+import KitRowActions, { type KitRowEntry } from '../../design-system/KitRowActions';
+import KitFiltersButton from '../../design-system/KitFiltersButton';
+import KitStatusFilter from '../../design-system/KitStatusFilter';
+import KitSearchInput from '../../design-system/KitSearchInput';
+import { downloadCsv } from '../../utils/exportCsv';
 import { message } from '../../utils/message';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -50,10 +60,14 @@ const MaintenanceRequests: React.FC = () => {
  const [statusFilter, setStatusFilter] = useState('');
  const [typeFilter, setTypeFilter] = useState('');
  const [priorityFilter, setPriorityFilter] = useState('');
+ const [search, setSearch] = useState('');
  const [modalOpen, setModalOpen] = useState(false);
  const [editingId, setEditingId] = useState<string | null>(null);
  const [form] = Form.useForm();
  const [saving, setSaving] = useState(false);
+ const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
+ try { return JSON.parse(localStorage.getItem('maintenance_requests.hiddenCols') || '[]'); } catch { return []; }
+ });
 
  const fetchData = async () => {
  setLoading(true);
@@ -93,6 +107,26 @@ const MaintenanceRequests: React.FC = () => {
  setEditingId(null);
  form.resetFields();
  form.setFieldsValue({ type: 'corrective', priority: 'medium' });
+ setModalOpen(true);
+ };
+
+ const openEdit = (record: MaintRequest) => {
+ setEditingId(record.id);
+ form.setFieldsValue({
+ ...record,
+ scheduled_at: record.scheduled_at ? dayjs(record.scheduled_at) : undefined,
+ });
+ setModalOpen(true);
+ };
+
+ // Duplicate: open the create form pre-filled with this record's values (no id).
+ const openDuplicate = (record: MaintRequest) => {
+ setEditingId(null);
+ const { id: _id, ...rest } = record;
+ form.setFieldsValue({
+ ...rest,
+ scheduled_at: record.scheduled_at ? dayjs(record.scheduled_at) : undefined,
+ });
  setModalOpen(true);
  };
 
@@ -160,24 +194,47 @@ const MaintenanceRequests: React.FC = () => {
  }
  };
 
- const columns = [
+ const allColumns = [
  {
  title: t('maintenance.equipment'),
  dataIndex: 'equipment_id',
  key: 'equipment_id',
- width: 150,
+ width: 180,
  render: (eqId: string) => {
  const eq = equipment.find((e) => e.id === eqId);
- return eq ? eq.name : '—';
+ const name = eq ? eq.name : '—';
+ return (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{String(name || '?').trim().slice(0, 2).toUpperCase()}</span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{name}</span>
+ </div>
+ );
  },
  },
- { title: t('maintenance.title'), dataIndex: 'title', key: 'title', width: 200 },
+ {
+ title: t('maintenance.title'),
+ dataIndex: 'title',
+ key: 'title',
+ width: 200,
+ render: (v: string) => <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{v}</span>,
+ },
  {
  title: t('maintenance.type'),
  dataIndex: 'type',
  key: 'type',
  width: 120,
- render: (type: string) => t(`maintenance.type_${type}`, type),
+ render: (type: string) => (
+ <span style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--surface-2)', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-600)',
+ }}>{t(`maintenance.type_${type}`, type)}</span>
+ ),
  },
  {
  title: t('maintenance.priority'),
@@ -197,44 +254,92 @@ const MaintenanceRequests: React.FC = () => {
  <StatusTag status={statusKinds[status] || 'default'} label={t(`maintenance.status_${status}`, status)} />
  ),
  },
- { title: t('maintenance.requested_by'), dataIndex: 'requested_by', key: 'requested_by', width: 130 },
- { title: t('maintenance.assigned_to'), dataIndex: 'assigned_to', key: 'assigned_to', width: 130 },
+ {
+ title: t('maintenance.requested_by'),
+ dataIndex: 'requested_by',
+ key: 'requested_by',
+ width: 130,
+ render: (v: string) => <span style={{ color: 'var(--ink-700)' }}>{v || '—'}</span>,
+ },
+ {
+ title: t('maintenance.assigned_to'),
+ dataIndex: 'assigned_to',
+ key: 'assigned_to',
+ width: 130,
+ render: (v: string) => <span style={{ color: 'var(--ink-700)' }}>{v || '—'}</span>,
+ },
  {
  title: t('maintenance.scheduled_at'),
  dataIndex: 'scheduled_at',
  key: 'scheduled_at',
- width: 140,
- render: (date: string) => (date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '—'),
+ width: 160,
+ render: (date: string) => date
+ ? <span style={{ color: 'var(--ink-700)', fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>{dayjs(date).format('YYYY-MM-DD HH:mm')}</span>
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>,
  },
  {
- title: t('actions'),
+ title: '',
  key: 'actions',
- width: 220,
+ width: 56,
+ align: 'center' as const,
  fixed: 'right' as const,
- render: (_: unknown, record: MaintRequest) => (
- <Space>
- {record.status === 'new' && (
- <Button type="primary" icon={<PlayCircleOutlined />} onClick={() => handleStart(record.id)}>
- {t('maintenance.start')}
- </Button>
- )}
- {record.status === 'in_progress' && (
- <Button type="primary" icon={<CheckCircleOutlined />} onClick={() => handleComplete(record.id)}>
- {t('maintenance.complete')}
- </Button>
- )}
- {record.status !== 'done' && record.status !== 'cancelled' && (
- <Button danger icon={<StopOutlined />} onClick={() => handleCancel(record.id)}>
- {t('cancel')}
- </Button>
- )}
- <Popconfirm title={t('are_you_sure')} onConfirm={() => handleDelete(record.id)}>
- <Button danger icon={<DeleteOutlined />} />
- </Popconfirm>
- </Space>
- ),
+ render: (_: unknown, record: MaintRequest) => {
+ const actions: KitRowEntry[] = [
+ { key: 'view', icon: <EyeOutlined />, label: t('view', 'View'), onClick: () => openEdit(record) },
+ { key: 'edit', icon: <EditOutlined />, label: t('edit'), onClick: () => openEdit(record) },
+ { key: 'duplicate', icon: <CopyOutlined />, label: t('duplicate', 'Duplicate'), onClick: () => openDuplicate(record) },
+ ];
+ const transitions: KitRowEntry[] = [];
+ if (record.status === 'new') {
+ transitions.push({ key: 'start', icon: <PlayCircleOutlined />, label: t('maintenance.start'), onClick: () => handleStart(record.id) });
+ }
+ if (record.status === 'in_progress') {
+ transitions.push({ key: 'complete', icon: <CheckCircleOutlined />, label: t('maintenance.complete'), onClick: () => handleComplete(record.id) });
+ }
+ if (record.status !== 'done' && record.status !== 'cancelled') {
+ transitions.push({ key: 'cancel_req', icon: <StopOutlined />, label: t('cancel'), onClick: () => handleCancel(record.id) });
+ }
+ if (transitions.length) {
+ actions.push({ type: 'divider' }, ...transitions);
+ }
+ actions.push(
+ { type: 'divider' },
+ { key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true, onClick: () => handleDelete(record.id) },
+ );
+ return <KitRowActions ariaLabel={t('actions')} actions={actions} />;
+ },
  },
  ];
+
+ const columns = useMemo(() => allColumns.filter((c) => !hiddenCols.includes(c.key)), [hiddenCols, t, equipment]);
+ const filteredData = useMemo(() => {
+ if (!search) return data;
+ const q = search.toLowerCase();
+ return data.filter((row: any) => Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(q)));
+ }, [data, search]);
+ const columnsMeta: ColumnVisibilityItem[] = allColumns.map((c) => ({
+ key: c.key,
+ label: typeof c.title === 'string' ? c.title : c.key,
+ pinned: c.key === 'equipment_id' || c.key === 'actions',
+ }));
+ const persistHidden = (next: string[]) => {
+ setHiddenCols(next);
+ try { localStorage.setItem('maintenance_requests.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
+ };
+
+ const statusOptions = [
+ { value: 'new', label: t('maintenance.status_new') },
+ { value: 'in_progress', label: t('maintenance.status_in_progress') },
+ { value: 'done', label: t('maintenance.status_done') },
+ { value: 'cancelled', label: t('maintenance.status_cancelled') },
+ ];
+
+ const tabs: KitListTab[] = [
+ { key: 'all', label: t('all', 'All') },
+ ...statusOptions.map((o) => ({ key: o.value, label: o.label })),
+ ];
+
+ const filtersActiveCount = (typeFilter ? 1 : 0) + (priorityFilter ? 1 : 0);
 
  return (
  <>
@@ -247,53 +352,87 @@ const MaintenanceRequests: React.FC = () => {
  </Button>
  }
  />
- <FilterBar
- filters={[
- {
- key: 'status',
- label: t('maintenance.filter_status'),
- options: [
- { value: 'new', label: t('maintenance.status_new') },
- { value: 'in_progress', label: t('maintenance.status_in_progress') },
- { value: 'done', label: t('maintenance.status_done') },
- { value: 'cancelled', label: t('maintenance.status_cancelled') },
- ],
- },
- {
- key: 'type',
- label: t('maintenance.filter_type'),
- options: [
- { value: 'corrective', label: t('maintenance.type_corrective') },
- { value: 'preventive', label: t('maintenance.type_preventive') },
- { value: 'inspection', label: t('maintenance.type_inspection') },
- ],
- },
- {
- key: 'priority',
- label: t('maintenance.filter_priority'),
- options: [
- { value: 'low', label: t('maintenance.priority_low') },
- { value: 'medium', label: t('maintenance.priority_medium') },
- { value: 'high', label: t('maintenance.priority_high') },
- { value: 'urgent', label: t('maintenance.priority_urgent') },
- ],
- },
- ]}
- values={{ status: statusFilter || undefined, type: typeFilter || undefined, priority: priorityFilter || undefined }}
- onChange={(v) => {
- setStatusFilter((v.status as string) || '');
- setTypeFilter((v.type as string) || '');
- setPriorityFilter((v.priority as string) || '');
- }}
+ <KitListCard
+ tabs={tabs}
+ activeTab={statusFilter || 'all'}
+ onTabChange={(k) => setStatusFilter(k === 'all' ? '' : k)}
+ toolbar={
+ <>
+ <KitSearchInput value={search} onChange={(v) => setSearch(v)} placeholder={t('search')} />
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={filtersActiveCount}
+ onClear={() => { setTypeFilter(''); setPriorityFilter(''); }}
+ >
+ <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+ <div>
+ <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, color: 'var(--ink-700)' }}>
+ {t('maintenance.filter_type')}
+ </div>
+ <Radio.Group
+ value={typeFilter}
+ onChange={(e) => setTypeFilter(e.target.value)}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="">{t('all', 'All')}</Radio>
+ <Radio value="corrective">{t('maintenance.type_corrective')}</Radio>
+ <Radio value="preventive">{t('maintenance.type_preventive')}</Radio>
+ <Radio value="inspection">{t('maintenance.type_inspection')}</Radio>
+ </Radio.Group>
+ </div>
+ <div>
+ <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, color: 'var(--ink-700)' }}>
+ {t('maintenance.filter_priority')}
+ </div>
+ <Radio.Group
+ value={priorityFilter}
+ onChange={(e) => setPriorityFilter(e.target.value)}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="">{t('all', 'All')}</Radio>
+ <Radio value="low">{t('maintenance.priority_low')}</Radio>
+ <Radio value="medium">{t('maintenance.priority_medium')}</Radio>
+ <Radio value="high">{t('maintenance.priority_high')}</Radio>
+ <Radio value="urgent">{t('maintenance.priority_urgent')}</Radio>
+ </Radio.Group>
+ </div>
+ </div>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('maintenance.filter_status')}
+ anyLabel={t('all', 'All')}
+ value={statusFilter}
+ onChange={(v) => setStatusFilter(v)}
+ options={statusOptions}
  />
+ </div>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('maintenance_requests', data, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ </div>
+ </>
+ }
+ >
  <ResponsiveTableAdapter
  columns={columns}
- dataSource={data}
+ dataSource={filteredData}
  loading={loading}
  rowKey="id"
  pagination={{ pageSize: 50, showSizeChanger: true }}
  scroll={{ x: 1500 }}
  />
+ </KitListCard>
  <FormDialog
  open={modalOpen}
  title={editingId ? t('maintenance.edit_request') : t('maintenance.new_request')}

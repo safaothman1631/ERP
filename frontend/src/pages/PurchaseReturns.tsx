@@ -1,16 +1,31 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Button, Form, Input, Select, DatePicker, Space, Tag, Modal } from 'antd';
+import { Button, Form, Input, Select, DatePicker, Space, Radio, Modal } from 'antd';
 import { message } from '../utils/message';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, CopyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import dayjs from 'dayjs';
-import { PageHeader, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { PageHeader, type ColumnVisibilityItem } from '../design-system';
+import KitListCard, { type KitListTab } from '../design-system/KitListCard';
+import KitListToolbarActions from '../design-system/KitListToolbarActions';
+import KitRowActions from '../design-system/KitRowActions';
+import KitFiltersButton from '../design-system/KitFiltersButton';
+import KitStatusFilter from '../design-system/KitStatusFilter';
+import KitSearchInput from '../design-system/KitSearchInput';
+import StatusTag from '../design-system/StatusTag';
 import { downloadCsv } from '../utils/exportCsv';
-import { space as spaceTk } from '../theme/tokens';
-import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
+
+/** Initials for the kit's avatar cell (first letters of the first two words). */
+const initialsOf = (name: string): string =>
+  String(name || '?')
+    .trim()
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
 export default function PurchaseReturns() {
  const { t } = useTranslation();
@@ -23,10 +38,10 @@ export default function PurchaseReturns() {
  const [contacts, setContacts] = useState<any[]>([]);
  const [bills, setBills] = useState<any[]>([]);
  const [filterStatus, setFilterStatus] = useState<string | undefined>(undefined);
+ const [search, setSearch] = useState('');
  const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
  try { return JSON.parse(localStorage.getItem('purchaseReturns.hiddenCols') || '[]'); } catch { return []; }
  });
- const isDark = useAuthStore((s) => s.theme === 'dark');
 
  const fetchData = async (page = 1) => {
  setLoading(true);
@@ -108,21 +123,58 @@ export default function PurchaseReturns() {
  setModalVisible(true);
  };
 
- const statusColors: Record<string, string> = {
- draft: 'default',
- open: 'blue',
- closed: 'green',
+ // Duplicate: open the create form pre-filled with this record's values (no id).
+ const handleDuplicate = (record: any) => {
+ setEditId(null);
+ const { id: _id, return_number: _rn, ...rest } = record;
+ form.setFieldsValue({
+ ...rest,
+ date: record.date ? dayjs(record.date) : null,
+ });
+ setModalVisible(true);
  };
 
+ // Kit list tabs (All / Draft / Open / Closed) — wired to the server `status` param.
+ const tabs: KitListTab[] = [
+ { key: 'all', label: t('all', 'All') },
+ { key: 'draft', label: t('draft') },
+ { key: 'open', label: t('open') },
+ { key: 'closed', label: t('closed') },
+ ];
+ const activeTab = filterStatus ?? 'all';
+
+ const statusOptions = [
+ { value: 'draft', label: t('draft') },
+ { value: 'open', label: t('open') },
+ { value: 'closed', label: t('closed') },
+ ];
+
  const columns = [
- { title: t('return_number'), dataIndex: 'return_number', key: 'return_number' },
+ {
+ title: t('return_number'), dataIndex: 'return_number', key: 'return_number',
+ render: (v: string) => (
+ <span style={{ color: 'var(--ink-900)', fontFamily: 'var(--font-mono)', fontWeight: 500 }}>{v || '—'}</span>
+ ),
+ },
  {
  title: t('vendor'),
  dataIndex: 'contact_id',
  key: 'contact',
  render: (contactId: string) => {
  const contact = contacts.find(c => c.id === contactId);
- return contact?.name || '-';
+ const name = contact?.name;
+ if (!name) return <span style={{ color: 'var(--ink-400)' }}>—</span>;
+ return (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{initialsOf(name)}</span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{name}</span>
+ </div>
+ );
  },
  },
  {
@@ -131,7 +183,9 @@ export default function PurchaseReturns() {
  key: 'bill',
  render: (billId: string) => {
  const bill = bills.find(b => b.id === billId);
- return bill?.bill_number || '-';
+ return bill?.bill_number
+ ? <span style={{ color: 'var(--ink-700)', fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>{bill.bill_number}</span>
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>;
  },
  },
  {
@@ -144,27 +198,39 @@ export default function PurchaseReturns() {
  title: t('status'),
  dataIndex: 'status',
  key: 'status',
- render: (status: string) => (
- <Tag color={statusColors[status] || 'default'}>{t(status)}</Tag>
- ),
+ render: (status: string) => <StatusTag status={status} label={t(status)} />,
  },
  {
  title: t('total'),
  dataIndex: 'total',
  key: 'total',
- render: (v: number) => v?.toLocaleString() || '0',
+ render: (v: number) => (
+ <span style={{ color: 'var(--ink-900)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+ {v?.toLocaleString() || '0'}
+ </span>
+ ),
  },
  {
- title: t('actions'),
- key: 'actions',
+ title: '', key: 'actions', width: 56, align: 'center' as const,
  render: (_: any, record: any) => (
- <Space>
- <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} />
- <Button danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} />
- </Space>
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'view', icon: <EyeOutlined />, label: t('view', 'View'), onClick: () => handleEdit(record) },
+ { key: 'edit', icon: <EditOutlined />, label: t('edit'), onClick: () => handleEdit(record) },
+ { key: 'duplicate', icon: <CopyOutlined />, label: t('duplicate', 'Duplicate'), onClick: () => handleDuplicate(record) },
+ { type: 'divider' },
+ { key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true, onClick: () => handleDelete(record.id) },
+ ]}
+ />
  ),
  },
  ];
+ const filteredData = useMemo(() => {
+ if (!search) return data;
+ const q = search.toLowerCase();
+ return data.filter((row: any) => Object.values(row).some(v => String(v ?? '').toLowerCase().includes(q)));
+ }, [data, search]);
  const visibleColumns = useMemo(() => columns.filter((c) => !hiddenCols.includes(c.key as string)), [hiddenCols, columns]);
  const columnsMeta: ColumnVisibilityItem[] = columns.map((c) => ({
  key: c.key as string,
@@ -184,17 +250,6 @@ export default function PurchaseReturns() {
  sectionId="purchases.returns"
  extra={
  <Space>
- <Select
- placeholder={t('filter_status')}
- allowClear
- style={{ width: 160 }}
- onChange={setFilterStatus}
- options={[
- { label: t('draft'), value: 'draft' },
- { label: t('open'), value: 'open' },
- { label: t('closed'), value: 'closed' },
- ]}
- />
  <Button
  type="primary"
  icon={<PlusOutlined />}
@@ -209,25 +264,63 @@ export default function PurchaseReturns() {
  </Space>
  }
  />
- <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: spaceTk.md }}>
- <ExportMenu
- formats={['csv']}
- onExport={(f: ExportFormat) => {
- if (f === 'csv') {
+ <KitListCard
+ tabs={tabs}
+ activeTab={activeTab}
+ onTabChange={(k) => { setFilterStatus(k === 'all' ? undefined : k); setPagination(p => ({ ...p, current: 1 })); }}
+ toolbar={
+ <>
+ <KitSearchInput value={search} onChange={(v) => { setSearch(v); setPagination(p => ({ ...p, current: 1 })); }} placeholder={t('search')} />
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={filterStatus ? 1 : 0}
+ onClear={() => { setFilterStatus(undefined); setPagination(p => ({ ...p, current: 1 })); }}
+ >
+ <Radio.Group
+ value={activeTab}
+ onChange={(e) => { setFilterStatus(e.target.value === 'all' ? undefined : e.target.value); setPagination(p => ({ ...p, current: 1 })); }}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="all">{t('all', 'All')}</Radio>
+ <Radio value="draft">{t('draft')}</Radio>
+ <Radio value="open">{t('open')}</Radio>
+ <Radio value="closed">{t('closed')}</Radio>
+ </Radio.Group>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('status')}
+ anyLabel={t('all', 'All')}
+ value={filterStatus ?? ''}
+ onChange={(v) => { setFilterStatus(v || undefined); setPagination(p => ({ ...p, current: 1 })); }}
+ options={statusOptions}
+ />
+ </div>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
  const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
  downloadCsv('purchase-returns', data, cols);
- }
  }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
  />
- <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
  </div>
+ </>
+ }
+ >
  <ResponsiveTableAdapter
- dataSource={data}
+ dataSource={filteredData}
  columns={visibleColumns}
  rowKey="id"
  loading={loading}
  pagination={{ ...pagination, onChange: fetchData }}
  />
+ </KitListCard>
  <FormDialog
  title={editId ? t('edit') : t('add')}
  open={modalVisible}

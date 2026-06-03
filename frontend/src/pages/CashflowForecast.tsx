@@ -7,6 +7,7 @@ import { PageHeader, KpiCard } from '../design-system';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { ResponsiveChart } from '../components/responsive/ResponsiveChart';
 import { asTranslationKey } from '../i18n/types';
+import { dataViz } from '../theme/tokens';
 
 const { Option } = Select;
 
@@ -70,9 +71,9 @@ const CashflowForecast: React.FC = () => {
         <Card title={t('daily_breakdown')}>
           <ResponsiveChart
             legendItems={[
-              { id: 'balance', labelKey: asTranslationKey('balance'), color: '#8884d8' },
-              { id: 'inflow', labelKey: asTranslationKey('inflow'), color: '#82ca9d' },
-              { id: 'outflow', labelKey: asTranslationKey('outflow'), color: '#ff7875' },
+              { id: 'balance', labelKey: asTranslationKey('balance'), color: dataViz.categorical[0] },
+              { id: 'inflow', labelKey: asTranslationKey('inflow'), color: dataViz.categorical[1] },
+              { id: 'outflow', labelKey: asTranslationKey('outflow'), color: dataViz.categorical[3] },
             ]}
             minMobileBlockSize={300}
           >
@@ -81,9 +82,9 @@ const CashflowForecast: React.FC = () => {
               <XAxis dataKey="date" />
               <YAxis />
               <Tooltip />
-              <Line type="monotone" dataKey="balance" stroke="#8884d8" name={t('balance')} />
-              <Line type="monotone" dataKey="inflow" stroke="#82ca9d" name={t('inflow')} />
-              <Line type="monotone" dataKey="outflow" stroke="#ff7875" name={t('outflow')} />
+              <Line type="monotone" dataKey="balance" stroke={dataViz.categorical[0]} name={t('balance')} />
+              <Line type="monotone" dataKey="inflow" stroke={dataViz.categorical[1]} name={t('inflow')} />
+              <Line type="monotone" dataKey="outflow" stroke={dataViz.categorical[3]} name={t('outflow')} />
             </LineChart>
           </ResponsiveChart>
         </Card>

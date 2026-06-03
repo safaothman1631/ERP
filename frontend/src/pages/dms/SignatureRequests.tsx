@@ -1,11 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Space, Tabs, Form, Input, Select, message, Steps, Avatar, Tooltip, Checkbox, Modal } from 'antd';
-import { PlusOutlined, CheckCircleOutlined, CloseCircleOutlined, FileTextOutlined, UserOutlined, BellOutlined, EyeOutlined } from '@ant-design/icons';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Button, Space, Form, Input, Select, message, Steps, Avatar, Tooltip, Checkbox, Modal, Radio } from 'antd';
+import { PlusOutlined, FileTextOutlined, UserOutlined, EyeOutlined, BellOutlined, CloseCircleOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import { PageHeader, StatusTag } from '../../design-system';
+import { PageHeader, StatusTag, type ColumnVisibilityItem } from '../../design-system';
 import type { StatusKind } from '../../design-system';
+import KitListCard, { type KitListTab } from '../../design-system/KitListCard';
+import KitListToolbarActions from '../../design-system/KitListToolbarActions';
+import KitRowActions from '../../design-system/KitRowActions';
+import KitFiltersButton from '../../design-system/KitFiltersButton';
+import KitStatusFilter from '../../design-system/KitStatusFilter';
+import KitSearchInput from '../../design-system/KitSearchInput';
 import { space } from '../../theme/tokens';
+import { downloadCsv } from '../../utils/exportCsv';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { ComingSoon } from '../../components/feedback/ComingSoon';
@@ -24,6 +31,12 @@ const SignatureRequests: React.FC = () => {
  const [_signForm] = Form.useForm();
  const [requestForm] = Form.useForm();
  const [currentStep, setCurrentStep] = useState(0);
+ const [tab, setTab] = useState<'sent' | 'received' | 'templates'>('sent');
+ const [statusFilter, setStatusFilter] = useState('');
+ const [search, setSearch] = useState('');
+ const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
+ try { return JSON.parse(localStorage.getItem('signature_requests.hiddenCols') || '[]'); } catch { return []; }
+ });
 
  const fetchRequests = async () => {
  setLoading(true);
@@ -129,20 +142,29 @@ const SignatureRequests: React.FC = () => {
  return <StatusTag status={config.kind} label={config.label} />;
  };
 
+ // Kit primary cell — initials circle + document name (mirrors Contacts).
+ const renderDocument = (v: string) => {
+ const file = files.find((f) => f.id === v);
+ const name = file?.name || v;
+ return (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 12,
+ }}><FileTextOutlined /></span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{name}</span>
+ </div>
+ );
+ };
+
  const sentColumns = [
  {
  title: t('dms.document'),
  dataIndex: 'file_id',
  key: 'file_id',
- render: (v: string) => {
- const file = files.find((f) => f.id === v);
- return (
- <Space>
- <FileTextOutlined />
- {file?.name || v}
- </Space>
- );
- },
+ render: renderDocument,
  },
  {
  title: t('dms.signers'),
@@ -159,27 +181,26 @@ const SignatureRequests: React.FC = () => {
  ),
  },
  { title: t('status'), dataIndex: 'status', key: 'status', render: getStatusTag },
- { title: t('dms.sent_at'), dataIndex: 'created_at', key: 'created_at', render: (v: string) => new Date(v).toLocaleDateString() },
  {
- title: t('actions'),
- key: 'actions',
- width: 200,
+ title: t('dms.sent_at'), dataIndex: 'created_at', key: 'created_at',
+ render: (v: string) => <span style={{ color: 'var(--ink-500)' }}>{new Date(v).toLocaleDateString()}</span>,
+ },
+ {
+ title: '', key: 'actions', width: 56, align: 'center' as const,
  render: (_: any, record: any) => (
- <Space>
- <Tooltip title={t('dms.view')}>
- <Button icon={<EyeOutlined />} onClick={() => handleView(record.id)} />
- </Tooltip>
- {record.status === 'pending' && (
- <>
- <Tooltip title={t('dms.send_reminder')}>
- <Button icon={<BellOutlined />} onClick={() => handleRemind(record.id)} />
- </Tooltip>
- <Tooltip title={t('dms.cancel')}>
- <Button icon={<CloseCircleOutlined />} danger onClick={() => handleCancel(record.id)} />
- </Tooltip>
- </>
- )}
- </Space>
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'view', icon: <EyeOutlined />, label: t('dms.view', 'View'), onClick: () => handleView(record.id) },
+ ...(record.status === 'pending'
+ ? [
+ { key: 'remind', icon: <BellOutlined />, label: t('dms.send_reminder'), onClick: () => handleRemind(record.id) },
+ { type: 'divider' as const },
+ { key: 'cancel', icon: <CloseCircleOutlined />, label: t('dms.cancel'), danger: true, onClick: () => handleCancel(record.id) },
+ ]
+ : []),
+ ]}
+ />
  ),
  },
  ];
@@ -189,45 +210,77 @@ const SignatureRequests: React.FC = () => {
  title: t('dms.document'),
  dataIndex: 'file_id',
  key: 'file_id',
- render: (v: string) => {
- const file = files.find((f) => f.id === v);
- return (
- <Space>
- <FileTextOutlined />
- {file?.name || v}
- </Space>
- );
+ render: renderDocument,
  },
- },
- { title: t('dms.requested_by'), dataIndex: 'created_by', key: 'created_by' },
- { title: t('status'), dataIndex: 'status', key: 'status', render: getStatusTag },
- { title: t('dms.received_at'), dataIndex: 'created_at', key: 'created_at', render: (v: string) => new Date(v).toLocaleDateString() },
  {
- title: t('actions'),
- key: 'actions',
- width: 150,
+ title: t('dms.requested_by'), dataIndex: 'created_by', key: 'created_by',
+ render: (v: string) => v
+ ? <span style={{ color: 'var(--ink-500)', fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>{v}</span>
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>,
+ },
+ { title: t('status'), dataIndex: 'status', key: 'status', render: getStatusTag },
+ {
+ title: t('dms.received_at'), dataIndex: 'created_at', key: 'created_at',
+ render: (v: string) => <span style={{ color: 'var(--ink-500)' }}>{new Date(v).toLocaleDateString()}</span>,
+ },
+ {
+ title: '', key: 'actions', width: 56, align: 'center' as const,
  render: (_: any, record: any) => (
- <Space>
- {record.status === 'pending' && (
- <Button
- type="primary"
- icon={<CheckCircleOutlined />}
- onClick={() => {
- setSelectedRequest(record);
- setSignDrawerOpen(true);
- }}
- >
- {t('dms.sign_now')}
- </Button>
- )}
- {record.status !== 'pending' && (
- <Button icon={<EyeOutlined />} onClick={() => handleView(record.id)}>
- {t('dms.view')}
- </Button>
- )}
- </Space>
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={
+ record.status === 'pending'
+ ? [
+ {
+ key: 'sign', icon: <CheckCircleOutlined />, label: t('dms.sign_now'),
+ onClick: () => { setSelectedRequest(record); setSignDrawerOpen(true); },
+ },
+ { key: 'view', icon: <EyeOutlined />, label: t('dms.view', 'View'), onClick: () => handleView(record.id) },
+ ]
+ : [
+ { key: 'view', icon: <EyeOutlined />, label: t('dms.view', 'View'), onClick: () => handleView(record.id) },
+ ]
+ }
+ />
  ),
  },
+ ];
+
+ // Status options shared by both datasets (client-side display filter only — no query/endpoint change).
+ const statusOptions = [
+ { value: 'pending', label: t('dms.status_pending') },
+ { value: 'completed', label: t('dms.status_signed') },
+ { value: 'cancelled', label: t('dms.status_cancelled') },
+ { value: 'declined', label: t('dms.status_declined') },
+ ];
+
+ const activeColumns = tab === 'received' ? receivedColumns : sentColumns;
+ const columns = useMemo(
+ () => activeColumns.filter((c) => !hiddenCols.includes(c.key)),
+ [activeColumns, hiddenCols],
+ );
+ const columnsMeta: ColumnVisibilityItem[] = activeColumns.map((c) => ({
+ key: c.key,
+ label: typeof c.title === 'string' ? c.title : c.key,
+ pinned: c.key === 'file_id' || c.key === 'actions',
+ }));
+ const persistHidden = (next: string[]) => {
+ setHiddenCols(next);
+ try { localStorage.setItem('signature_requests.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
+ };
+
+ const sourceRows = tab === 'received' ? receivedRequests : sentRequests;
+ const visibleRows = statusFilter ? sourceRows.filter((r) => r.status === statusFilter) : sourceRows;
+ const filteredRows = useMemo(() => {
+ if (!search) return visibleRows;
+ const q = search.toLowerCase();
+ return visibleRows.filter((row: any) => Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(q)));
+ }, [visibleRows, search]);
+
+ const tabs: KitListTab[] = [
+ { key: 'sent', label: t('dms.sent') },
+ { key: 'received', label: t('dms.received') },
+ { key: 'templates', label: t('dms.templates') },
  ];
 
  return (
@@ -243,25 +296,67 @@ const SignatureRequests: React.FC = () => {
  />
 
  <div style={{ marginTop: space.md }}>
- <Tabs
- items={[
- {
- key: 'sent',
- label: t('dms.sent'),
- children: <ResponsiveTableAdapter dataSource={sentRequests} columns={sentColumns} loading={loading} rowKey="id" pagination={{ pageSize: 20 }} />,
- },
- {
- key: 'received',
- label: t('dms.received'),
- children: <ResponsiveTableAdapter dataSource={receivedRequests} columns={receivedColumns} loading={loading} rowKey="id" pagination={{ pageSize: 20 }} />,
- },
- {
- key: 'templates',
- label: t('dms.templates'),
- children: <ComingSoon featureNameKey="dms.templates" />,
- },
- ]}
+ <KitListCard
+ tabs={tabs}
+ activeTab={tab}
+ onTabChange={(k) => { setTab(k as typeof tab); setStatusFilter(''); }}
+ toolbar={tab === 'templates' ? undefined : (
+ <>
+ <KitSearchInput value={search} onChange={(v) => { setSearch(v); }} placeholder={t('search')} />
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={statusFilter ? 1 : 0}
+ onClear={() => setStatusFilter('')}
+ >
+ <Radio.Group
+ value={statusFilter}
+ onChange={(e) => setStatusFilter(e.target.value)}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="">{t('all', 'All')}</Radio>
+ {statusOptions.map((o) => (
+ <Radio key={o.value} value={o.value}>{o.label}</Radio>
+ ))}
+ </Radio.Group>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('status', 'Status')}
+ anyLabel={t('all', 'All')}
+ value={statusFilter}
+ onChange={(v) => setStatusFilter(v)}
+ options={statusOptions}
  />
+ </div>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('signature_requests', filteredRows, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ </div>
+ </>
+ )}
+ >
+ {tab === 'templates' ? (
+ <ComingSoon featureNameKey="dms.templates" />
+ ) : (
+ <ResponsiveTableAdapter
+ dataSource={filteredRows}
+ columns={columns}
+ loading={loading}
+ rowKey="id"
+ pagination={{ pageSize: 20 }}
+ />
+ )}
+ </KitListCard>
  </div>
 
  {/* New Signature Request Drawer */}

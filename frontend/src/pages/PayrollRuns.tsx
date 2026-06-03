@@ -1,10 +1,17 @@
-import { useEffect, useState } from 'react';
-import { Button, Form, Input, DatePicker, Space, message, Descriptions, Table } from 'antd';
-import { PlusOutlined, ReloadOutlined, CheckOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useEffect, useMemo, useState } from 'react';
+import { Button, Form, Input, DatePicker, Space, message, Descriptions, Table, Radio } from 'antd';
+import { PlusOutlined, ReloadOutlined, CheckOutlined, EyeOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-import { PageHeader, DataTable, StatusTag } from '../design-system';
+import { PageHeader, DataTable, StatusTag, type ColumnVisibilityItem } from '../design-system';
 import type { ColumnDef } from '../design-system/DataTable';
+import KitListCard, { type KitListTab } from '../design-system/KitListCard';
+import KitSearchInput from '../design-system/KitSearchInput';
+import KitListToolbarActions from '../design-system/KitListToolbarActions';
+import KitRowActions from '../design-system/KitRowActions';
+import KitFiltersButton from '../design-system/KitFiltersButton';
+import KitStatusFilter from '../design-system/KitStatusFilter';
+import { downloadCsv } from '../utils/exportCsv';
 import api from '../api';
 import { useListQuery } from '../api/queries/useListQuery';
 import { listQueryKeys } from '../api/queries/keys';
@@ -20,12 +27,28 @@ interface Payslip {
  lines?: { code?: string; name?: string; type?: string; amount: number }[];
 }
 
+/** Initials for the kit's avatar cell (first letters of the first two words). */
+const initialsOf = (name: string): string =>
+ String(name || '?')
+ .trim()
+ .split(/\s+/)
+ .map((w) => w[0])
+ .join('')
+ .slice(0, 2)
+ .toUpperCase();
+
 export default function PayrollRuns() {
  const { t } = useTranslation();
  const [open, setOpen] = useState(false);
  const [form] = Form.useForm();
  const [drawer, setDrawer] = useState<{ run: Run; payslips: Payslip[] } | null>(null);
  const [active, setActive] = useState<Payslip | null>(null);
+ // Client-side status segment (this endpoint exposes no server filter param).
+ const [tab, setTab] = useState<'all' | 'confirmed' | 'pending'>('all');
+ const [search, setSearch] = useState('');
+ const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
+ try { return JSON.parse(localStorage.getItem('payrollRuns.hiddenCols') || '[]'); } catch { return []; }
+ });
  const payrollRunsQuery = useListQuery<Run, { items?: Run[]; total?: number }>({
  queryKey: listQueryKeys.payrollRuns(),
  queryFn: () => api.get('/api/payroll/runs'),
@@ -68,29 +91,91 @@ export default function PayrollRuns() {
  catch { message.error(t('error')); }
  };
 
- const cols: ColumnDef<Run>[] = [
- { title: t('name'), dataIndex: 'name' },
- { title: t('period'), key: 'period',
- render: (_: unknown, r: Run) => `${r.period_start || ''} → ${r.period_end || ''}` },
- { title: t('employees'), dataIndex: 'employee_count' },
- { title: t('total_gross'), dataIndex: 'total_gross', align: 'right' as const,
- render: (n?: number) => (n || 0).toLocaleString() },
- { title: t('total_net'), dataIndex: 'total_net', align: 'right' as const,
- render: (n?: number) => (n || 0).toLocaleString() },
- { title: t('status'), dataIndex: 'status',
- render: (s?: string) => <StatusTag status={s === 'confirmed' ? 'posted' : 'pending'} label={s ? t(s, s) : '—'} /> },
+ // Kit list tabs (All / Confirmed / Pending) — client-side over the loaded runs.
+ const tabs: KitListTab[] = [
+ { key: 'all', label: t('all', 'All') },
+ { key: 'confirmed', label: t('confirmed', 'Confirmed') },
+ { key: 'pending', label: t('pending', 'Pending') },
+ ];
+ const filteredList = useMemo(() => {
+ let rows = list;
+ if (tab === 'confirmed') rows = rows.filter((r) => r.status === 'confirmed');
+ else if (tab === 'pending') rows = rows.filter((r) => r.status !== 'confirmed');
+ if (search) {
+ const q = search.toLowerCase();
+ rows = rows.filter((row: any) => Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(q)));
+ }
+ return rows;
+ }, [list, tab, search]);
+
+ const allCols: ColumnDef<Run>[] = [
  {
- title: t('actions'),
+ title: t('name'), dataIndex: 'name', key: 'name',
+ render: (v: string) => (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{initialsOf(v)}</span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{v}</span>
+ </div>
+ ),
+ },
+ {
+ title: t('period'), key: 'period',
  render: (_: unknown, r: Run) => (
- <Space>
- <Button onClick={() => showRun(r.id)}>{t('view')}</Button>
- {r.status !== 'confirmed' && (
- <Button type="primary" icon={<DeleteOutlined />} danger onClick={() => removeRun(r.id)} />
- )}
- </Space>
+ <span style={{ color: 'var(--ink-700)', fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>
+ {`${r.period_start || ''} → ${r.period_end || ''}`}
+ </span>
+ ),
+ },
+ { title: t('employees'), dataIndex: 'employee_count', key: 'employee_count' },
+ {
+ title: t('total_gross'), dataIndex: 'total_gross', key: 'total_gross', align: 'right' as const,
+ render: (n?: number) => (
+ <span style={{ color: 'var(--ink-900)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{(n || 0).toLocaleString()}</span>
+ ),
+ },
+ {
+ title: t('total_net'), dataIndex: 'total_net', key: 'total_net', align: 'right' as const,
+ render: (n?: number) => (
+ <span style={{ color: 'var(--ink-900)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{(n || 0).toLocaleString()}</span>
+ ),
+ },
+ {
+ title: t('status'), dataIndex: 'status', key: 'status',
+ render: (s?: string) => <StatusTag status={s === 'confirmed' ? 'posted' : 'pending'} label={s ? t(s, s) : '—'} />,
+ },
+ {
+ title: '', key: 'actions', width: 56, align: 'center' as const,
+ render: (_: unknown, r: Run) => (
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'view', icon: <EyeOutlined />, label: t('view', 'View'), onClick: () => showRun(r.id) },
+ ...(r.status !== 'confirmed'
+ ? [
+ { type: 'divider' as const },
+ { key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true, onClick: () => removeRun(r.id) },
+ ]
+ : []),
+ ]}
+ />
  ),
  },
  ];
+ const cols = useMemo(() => allCols.filter((c) => !hiddenCols.includes(c.key as string)), [hiddenCols, t]);
+ const columnsMeta: ColumnVisibilityItem[] = allCols.map((c) => ({
+ key: c.key as string,
+ label: typeof c.title === 'string' ? c.title : (c.key as string),
+ pinned: c.key === 'name' || c.key === 'actions',
+ }));
+ const persistHidden = (next: string[]) => {
+ setHiddenCols(next);
+ try { localStorage.setItem('payrollRuns.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
+ };
 
  const slipCols: ColumnDef<Payslip>[] = [
  { title: t('employee'), dataIndex: 'employee_name' },
@@ -124,7 +209,63 @@ export default function PayrollRuns() {
  </Space>
  }
  />
- <DataTable rowKey="id" dataSource={list} columns={cols} pagination={{ pageSize: 20 }} />
+ <KitListCard
+ tabs={tabs}
+ activeTab={tab}
+ onTabChange={(k) => setTab(k as typeof tab)}
+ toolbar={
+ <>
+ <KitSearchInput
+ value={search}
+ onChange={(v) => setSearch(v)}
+ placeholder={t('search')}
+ />
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={tab !== 'all' ? 1 : 0}
+ onClear={() => setTab('all')}
+ >
+ <Radio.Group
+ value={tab}
+ onChange={(e) => setTab(e.target.value)}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="all">{t('all', 'All')}</Radio>
+ <Radio value="confirmed">{t('confirmed', 'Confirmed')}</Radio>
+ <Radio value="pending">{t('pending', 'Pending')}</Radio>
+ </Radio.Group>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('status')}
+ anyLabel={t('all', 'All')}
+ value={tab === 'all' ? '' : tab}
+ onChange={(v) => setTab((v || 'all') as typeof tab)}
+ options={[
+ { value: 'confirmed', label: t('confirmed', 'Confirmed') },
+ { value: 'pending', label: t('pending', 'Pending') },
+ ]}
+ />
+ </div>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const exportCols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('payroll-runs', filteredList, exportCols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ </div>
+ </>
+ }
+ >
+ <DataTable rowKey="id" dataSource={filteredList} columns={cols} pagination={{ pageSize: 20 }} />
+ </KitListCard>
 
  <FormDialog open={open} onOk={submit} onClose={() => setOpen(false)} title={t('new_run')}>
  <Form form={form} layout="vertical">

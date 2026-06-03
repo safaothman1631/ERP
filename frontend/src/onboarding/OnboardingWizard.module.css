@@ -6,8 +6,8 @@
   --onb-glass-border: rgba(255, 255, 255, 0.62);
   --onb-glass-border-soft: rgba(255, 255, 255, 0.35);
   --onb-glass-shadow: 0 32px 80px -20px rgba(15, 23, 42, 0.35);
-  --onb-text-primary: #0f172a;
-  --onb-text-muted: #64748b;
+  --onb-text-primary: var(--ink-900);
+  --onb-text-muted: var(--ink-500);
   --onb-surface-soft: rgba(248, 250, 252, 0.72);
   --onb-hero-bg: linear-gradient(135deg, color-mix(in srgb, var(--role-accent, #7B61FF) 88%, transparent) 0%, rgba(106, 77, 240, 0.82) 45%, rgba(44, 27, 115, 0.9) 100%);
   --onb-alert-warn-bg: rgba(255, 251, 235, 0.82);
@@ -374,7 +374,7 @@
 
 .stepDotDone {
   background: rgba(255, 255, 255, 0.95);
-  color: #16a34a;
+  color: var(--success-500);
 }
 
 .stepLine {
@@ -512,14 +512,14 @@
 .industryName {
   font-weight: 700;
   font-size: 0.9375rem;
-  color: #0f172a;
+  color: var(--ink-900);
   line-height: 1.35;
   margin-bottom: 4px;
 }
 
 .industryDesc {
   font-size: 0.8125rem;
-  color: #64748b;
+  color: var(--ink-500);
   line-height: 1.45;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -662,13 +662,13 @@
 .moduleCardTitle {
   font-weight: 600;
   font-size: 0.8125rem;
-  color: #0f172a;
+  color: var(--ink-900);
   line-height: 1.3;
 }
 
 .moduleCardDesc {
   font-size: 11px;
-  color: #64748b;
+  color: var(--ink-500);
   line-height: 1.4;
   margin-top: 4px;
   display: -webkit-box;
@@ -682,7 +682,7 @@
   margin-top: 6px;
   font-size: 10px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--ink-500);
   background: #f1f5f9;
   padding: 2px 8px;
   border-radius: 6px;
@@ -782,9 +782,9 @@
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
 }
 
-.glassStatus_pending .glassStatusIcon { color: #d97706; }
-.glassStatus_error .glassStatusIcon { color: #dc2626; }
-.glassStatus_success .glassStatusIcon { color: #16a34a; }
+.glassStatus_pending .glassStatusIcon { color: var(--warning-500); }
+.glassStatus_error .glassStatusIcon { color: var(--danger-500); }
+.glassStatus_success .glassStatusIcon { color: var(--success-500); }
 .glassStatus_info .glassStatusIcon { color: #2563eb; }
 
 .glassStatusPulse {

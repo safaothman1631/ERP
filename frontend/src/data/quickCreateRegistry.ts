@@ -723,7 +723,10 @@ export const QUICK_CREATE_REGISTRY: Record<EntitySlug, QuickCreateConfig> = {
     loadOptions: (search) => loadOptionsGeneric('/api/locations', search, 'name'),
     queryClass: 'C',
     permission: 'locations.create',
-    fullFormHref: '/settings/locations/new',
+    // Full form → the real Stock Locations management page (warehouse + bin/zone
+    // tree, add/edit/delete). The old '/settings/locations/new' had no route and
+    // dead-ended. This is the working destination the user expects.
+    fullFormHref: '/inventory/locations',
   },
 
   // ===================================================================

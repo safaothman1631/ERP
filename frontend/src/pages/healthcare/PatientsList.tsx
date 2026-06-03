@@ -1,9 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Space, Input, Form, message, Popconfirm, Tag } from 'antd';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Button, Input, Form, message, Modal, Tag } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, CopyOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { PageHeader, FilterBar, DataTable } from '../../design-system';
+import { PageHeader, type ColumnVisibilityItem } from '../../design-system';
+import KitListCard from '../../design-system/KitListCard';
+import KitListToolbarActions from '../../design-system/KitListToolbarActions';
+import KitRowActions from '../../design-system/KitRowActions';
+import KitFiltersButton from '../../design-system/KitFiltersButton';
+import KitSearchInput from '../../design-system/KitSearchInput';
+import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { downloadCsv } from '../../utils/exportCsv';
 import api from '../../api';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
@@ -19,6 +26,16 @@ interface Patient {
  created_at?: string;
 }
 
+/** Initials for the kit's avatar cell (first letters of the first two words). */
+const initialsOf = (name: string): string =>
+ String(name || '?')
+ .trim()
+ .split(/\s+/)
+ .map((w) => w[0])
+ .join('')
+ .slice(0, 2)
+ .toUpperCase();
+
 const PatientsList: React.FC = () => {
  const { t } = useTranslation();
  const [form] = Form.useForm();
@@ -27,6 +44,9 @@ const PatientsList: React.FC = () => {
  const [searchText, setSearchText] = useState('');
  const [modalVisible, setModalVisible] = useState(false);
  const [editingId, setEditingId] = useState<string | null>(null);
+ const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
+ try { return JSON.parse(localStorage.getItem('patients.hiddenCols') || '[]'); } catch { return []; }
+ });
 
  useEffect(() => {
  void fetchPatients();
@@ -57,6 +77,14 @@ const PatientsList: React.FC = () => {
  setModalVisible(true);
  };
 
+ // Duplicate: open the create form pre-filled with this record's values (no id).
+ const handleDuplicate = (record: Patient) => {
+ setEditingId(null);
+ const { id: _id, ...rest } = record;
+ form.setFieldsValue({ ...rest, name: `${record.name ?? ''} (${t('copy', 'copy')})` });
+ setModalVisible(true);
+ };
+
  const handleSave = async () => {
  try {
  const values = await form.validateFields();
@@ -75,7 +103,11 @@ const PatientsList: React.FC = () => {
  }
  };
 
- const handleDelete = async (id: string) => {
+ const handleDelete = (id: string) => {
+ Modal.confirm({
+ title: t('confirm_delete'),
+ okButtonProps: { danger: true },
+ onOk: async () => {
  try {
  await api.delete(`/api/healthcare/patients/${id}`);
  void message.success(t('deleted'));
@@ -84,6 +116,8 @@ const PatientsList: React.FC = () => {
  console.error(error);
  void message.error(t('error'));
  }
+ },
+ });
  };
 
  const filteredPatients = patients.filter(
@@ -92,61 +126,108 @@ const PatientsList: React.FC = () => {
  p.phone?.toLowerCase().includes(searchText.toLowerCase())
  );
 
- const columns: ColumnsType<Patient> = [
+ const allColumns: ColumnsType<Patient> = [
  {
  title: t('healthcare.name'),
  dataIndex: 'name',
  key: 'name',
  sorter: (a, b) => (a.name || '').localeCompare(b.name || ''),
+ render: (v: string) => (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{initialsOf(v)}</span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{v}</span>
+ </div>
+ ),
  },
  {
  title: t('healthcare.phone'),
  dataIndex: 'phone',
  key: 'phone',
+ render: (v: string) => v
+ ? <span style={{ color: 'var(--ink-700)', fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>{v}</span>
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>,
  },
  {
  title: t('healthcare.dob'),
  dataIndex: 'dob',
  key: 'dob',
+ render: (v: string) => v
+ ? <span style={{ color: 'var(--ink-700)', fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>{v}</span>
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>,
  },
  {
  title: t('healthcare.gender'),
  dataIndex: 'gender',
  key: 'gender',
- render: (gender: string) => t(`healthcare.gender_${gender}`),
+ render: (gender: string) => (
+ <span style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--surface-2)', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-600)',
+ }}>{t(`healthcare.gender_${gender}`)}</span>
+ ),
  },
  {
  title: t('healthcare.blood_type'),
  dataIndex: 'blood_type',
  key: 'blood_type',
+ render: (v: string) => v
+ ? <span style={{ color: 'var(--ink-900)', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12.5 }}>{v}</span>
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>,
  },
  {
  title: t('healthcare.allergies'),
  dataIndex: 'allergies',
  key: 'allergies',
  render: (allergies?: string[]) =>
- allergies && allergies.length > 0 ? allergies.map((a) => <Tag key={a}>{a}</Tag>) : '—',
+ allergies && allergies.length > 0 ? allergies.map((a) => <Tag key={a}>{a}</Tag>) : <span style={{ color: 'var(--ink-400)' }}>—</span>,
  },
  {
  title: t('healthcare.last_visit'),
  dataIndex: 'last_visit',
  key: 'last_visit',
- render: (date?: string) => date?.substring(0, 10) || '—',
+ render: (date?: string) => date
+ ? <span style={{ color: 'var(--ink-700)', fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>{date.substring(0, 10)}</span>
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>,
  },
  {
  title: '',
  key: 'actions',
- width: 120,
+ width: 56,
+ align: 'center' as const,
  render: (_: unknown, record: Patient) => (
- <Space>
- <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} />
- <Popconfirm title={t('confirm_delete')} onConfirm={() => void handleDelete(record.id)}>
- <Button icon={<DeleteOutlined />} danger />
- </Popconfirm>
- </Space>
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'view', icon: <EyeOutlined />, label: t('view', 'View'), onClick: () => handleEdit(record) },
+ { key: 'edit', icon: <EditOutlined />, label: t('edit'), onClick: () => handleEdit(record) },
+ { key: 'duplicate', icon: <CopyOutlined />, label: t('duplicate', 'Duplicate'), onClick: () => handleDuplicate(record) },
+ { type: 'divider' },
+ { key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true, onClick: () => handleDelete(record.id) },
+ ]}
+ />
  ),
  },
  ];
+
+ const columns = useMemo(
+ () => allColumns.filter((c) => !hiddenCols.includes(String(c.key))),
+ [hiddenCols, t]
+ );
+ const columnsMeta: ColumnVisibilityItem[] = allColumns.map((c) => ({
+ key: String(c.key),
+ label: typeof c.title === 'string' ? c.title : String(c.key),
+ pinned: c.key === 'name' || c.key === 'actions',
+ }));
+ const persistHidden = (next: string[]) => {
+ setHiddenCols(next);
+ try { localStorage.setItem('patients.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
+ };
 
  return (
  <div>
@@ -160,24 +241,54 @@ const PatientsList: React.FC = () => {
  }
  />
 
- <FilterBar
- searchPlaceholder={t('healthcare.search_patient')}
- searchValue={searchText}
- onSearchChange={setSearchText}
+ <KitListCard
+ toolbar={
+ <>
+ <KitSearchInput
+ value={searchText}
+ onChange={(v) => setSearchText(v)}
+ placeholder={t('search')}
  />
-
- <DataTable<Patient>
- columns={columns}
+ <KitFiltersButton
+ activeCount={searchText ? 1 : 0}
+ onClear={() => setSearchText('')}
+ >
+ <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 220 }}>
+ <span style={{ fontSize: 12, color: 'var(--ink-500)' }}>{t('search', 'Search')}</span>
+ <Input
+ placeholder={t('healthcare.search_patient')}
+ value={searchText}
+ onChange={(e) => setSearchText(e.target.value)}
+ allowClear
+ />
+ </div>
+ </KitFiltersButton>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('patients', filteredPatients, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ </div>
+ </>
+ }
+ >
+ <ResponsiveTableAdapter
  dataSource={filteredPatients}
+ columns={columns}
  rowKey="id"
  loading={loading}
- stickyHeader={false}
- emptyIcon={<TeamOutlined />}
- emptyTitle={t('healthcare.patients')}
- emptyActionLabel={t('healthcare.new_patient')}
- onEmptyAction={handleCreate}
  pagination={{ pageSize: 50, showSizeChanger: true }}
  />
+ </KitListCard>
 
  <FormDialog
  title={editingId ? t('healthcare.edit_patient') : t('healthcare.new_patient')}

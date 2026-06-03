@@ -175,16 +175,41 @@ export function ResponsiveTableAdapter<T extends Record<string, any> = any>({
 }: ResponsiveTableAdapterProps<T>): React.ReactElement {
   const { t: _t } = useTranslation();
 
-  // Convert AntD columns to ResponsiveColumn format
+  // Convert AntD columns to ResponsiveColumn format.
+  //
+  // Historically this adapter STRIPPED the actions column on the assumption a
+  // caller would translate it into ResponsiveTable's `rowActions` prop, but the
+  // translation was never implemented (see line below — _rowActions returns []),
+  // so the column silently vanished. With the Vertex kit conversion, every
+  // converted page now renders its row "⋯" menu via a `KitRowActions` cell
+  // *inside* the actions column's `render`, so the column must be passed
+  // through like any other column. We mark it high-priority so it never gets
+  // hidden on small viewports.
   const responsiveColumns: ResponsiveColumn<T>[] = useMemo(() => {
-    const nonActionCols = columns.filter(
-      (col) => {
-        const key = String(col.key || col.dataIndex || '');
-        return key !== 'actions' && key !== 'action' && key !== '__row_actions__';
+    return columns.map((col, index) => {
+      const colKey = String(col.key || col.dataIndex || '');
+      const isActions = colKey === 'actions' || colKey === 'action' || colKey === '__row_actions__';
+      if (isActions) {
+        // Pass actions through; the column's own `render` produces KitRowActions.
+        return {
+          id: colKey || `actions-${index}`,
+          headerKey: '' as never,
+          priority: 'high' as const,
+          render: (row: T) => {
+            if (col.render) {
+              const idx = dataSource.indexOf(row);
+              return col.render(undefined, row, idx >= 0 ? idx : 0);
+            }
+            return null;
+          },
+          align: 'center' as const,
+          width: col.width ?? 56,
+        } satisfies ResponsiveColumn<T>;
       }
-    );
+      return _mapCol(col, index);
+    });
 
-    return nonActionCols.map((col, index) => {
+    function _mapCol(col: AntDColumnDef<T>, index: number): ResponsiveColumn<T> {
       const key = String(col.key || col.dataIndex || `col-${index}`);
       const dataIdx = Array.isArray(col.dataIndex)
         ? col.dataIndex.join('.')
@@ -227,7 +252,7 @@ export function ResponsiveTableAdapter<T extends Record<string, any> = any>({
         sorter: typeof col.sorter === 'function' ? col.sorter : undefined,
         width: col.width,
       } satisfies ResponsiveColumn<T>;
-    });
+    }
   }, [columns, dataSource]);
 
   // Extract actions column and convert to rowActions

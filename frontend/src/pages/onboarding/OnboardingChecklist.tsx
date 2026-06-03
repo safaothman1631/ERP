@@ -144,10 +144,10 @@ const OnboardingChecklistInner: FC = () => {
           <h3>{t('onboarding.setup_progress')}</h3>
           <Progress
             percent={completionPercent}
-            strokeColor="#52c41a"
+            strokeColor="var(--success-500)"
             format={() => `${completedCount} / ${items.length}`}
           />
-          <p style={{ marginTop: 8, color: '#666' }}>
+          <p style={{ marginTop: 8, color: 'var(--ink-500)' }}>
             {completionPercent === 100
               ? t('onboarding.all_done')
               : t('onboarding.complete_tasks_help')}
@@ -185,14 +185,14 @@ const OnboardingChecklistInner: FC = () => {
                 <List.Item.Meta
                   avatar={
                     item.completed ? (
-                      <CheckCircleOutlined style={{ fontSize: 24, color: '#52c41a' }} />
+                      <CheckCircleOutlined style={{ fontSize: 24, color: 'var(--success-500)' }} />
                     ) : (
                       <div
                         style={{
                           width: 24,
                           height: 24,
                           borderRadius: '50%',
-                          border: '2px solid #d9d9d9',
+                          border: '2px solid var(--border)',
                         }}
                       />
                     )

@@ -70,6 +70,14 @@ export interface EntitySelectProps
    * Minimum characters before triggering search — defaults to 1
    */
   minChars?: number;
+
+  /**
+   * A pre-seeded option for the current `value` — so an edit form can display
+   * the already-selected entity's LABEL (e.g. the customer name) before the
+   * user searches. Without it, AntD Select would render the raw id for a value
+   * not present in the loaded search results.
+   */
+  initialOption?: EntityOption;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -84,6 +92,7 @@ export const EntitySelect: React.FC<EntitySelectProps> = ({
   createNewLabel,
   debounceMs = 300,
   minChars = 1,
+  initialOption,
   onChange,
   value,
   style,
@@ -139,9 +148,14 @@ export const EntitySelect: React.FC<EntitySelectProps> = ({
     [onChange, onCreateNew, query]
   );
 
-  // Build antd options list
+  // Build antd options list. Seed `initialOption` first (so a preset value
+  // shows its label), unless the live search results already include it.
+  const mergedOptions: EntityOption[] =
+    initialOption && !options.some((o) => o.value === initialOption.value)
+      ? [initialOption, ...options]
+      : options;
   const antdOptions: SelectProps['options'] = [
-    ...options.map((opt) => ({
+    ...mergedOptions.map((opt) => ({
       value: opt.value,
       label: opt.description ? (
         <span>

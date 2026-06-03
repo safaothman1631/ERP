@@ -1,14 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Form, Input, InputNumber, DatePicker, Space } from 'antd';
+import { Button, Form, Input, InputNumber, DatePicker, Space, Modal } from 'antd';
 import { message } from '../utils/message';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, CopyOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import dayjs from 'dayjs';
-import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat, FilterBar } from '../design-system';
+import { PageHeader, StatusTag, type ColumnVisibilityItem } from '../design-system';
+import KitListCard from '../design-system/KitListCard';
+import KitSearchInput from '../design-system/KitSearchInput';
+import KitListToolbarActions from '../design-system/KitListToolbarActions';
+import KitRowActions from '../design-system/KitRowActions';
 import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { downloadCsv } from '../utils/exportCsv';
-import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 import { useAddGate } from '../components/AddGate/useAddGate';
@@ -18,13 +21,13 @@ const Expenses: React.FC = () => {
  const [loading, setLoading] = useState(false);
  const [total, setTotal] = useState(0);
  const [page, setPage] = useState(1);
+ const [search, setSearch] = useState('');
  const [modal, setModal] = useState(false);
  const [form] = Form.useForm();
  const [_accounts, setAccounts] = useState<any[]>([]);
  const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
  try { return JSON.parse(localStorage.getItem('expenses.hiddenCols') || '[]'); } catch { return []; }
  });
- const isDark = useAuthStore((s) => s.theme === 'dark');
 
  // AddGate: wire Selective Add for expenses section (R9.1, R9.5)
  const addGate = useAddGate('purchases.expenses');
@@ -64,18 +67,87 @@ const Expenses: React.FC = () => {
  } catch { message.error(t('error')); }
  };
 
+ // Duplicate: open the create form pre-filled with this record's values (no id),
+ // converting the stored ISO date back into a dayjs value for the DatePicker.
+ const openDuplicate = (record: any) => {
+ const { id: _id, expense_number: _en, ...rest } = record;
+ form.resetFields();
+ form.setFieldsValue({
+ ...rest,
+ date: record.date ? dayjs(record.date) : dayjs(),
+ });
+ setModal(true);
+ };
+
+ // Delete: void the expense via the existing DELETE endpoint, then refresh.
+ const handleDelete = (id: string) => {
+ Modal.confirm({
+ title: t('are_you_sure'),
+ okButtonProps: { danger: true },
+ onOk: async () => {
+ try {
+ await api.delete(`/api/expenses/${id}`);
+ message.success(t('success'));
+ fetchData();
+ } catch { message.error(t('error')); }
+ },
+ });
+ };
+
+ // Kit cell renderers — mono ref/number, muted date, mono amount + IQD unit, StatusTag.
  const columns = [
- { title: '#', dataIndex: 'expense_number', key: 'expense_number' },
- { title: t('date'), dataIndex: 'date', key: 'date', render: (d: string) => d?.substring(0, 10) },
- { title: t('description'), dataIndex: 'description', key: 'description' },
- { title: t('amount'), dataIndex: 'amount', key: 'amount', render: (v: number) => v?.toLocaleString() },
- { title: t('status'), dataIndex: 'status', key: 'status', render: (s: string) => <StatusTag status={s} label={t(s)} /> },
+ {
+ title: '#', dataIndex: 'expense_number', key: 'expense_number',
+ render: (v: string) => (
+ <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-900)', fontWeight: 500 }}>{v}</span>
+ ),
+ },
+ {
+ title: t('date'), dataIndex: 'date', key: 'date',
+ render: (d: string) => (
+ <span style={{ color: 'var(--ink-500)', fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>{d?.substring(0, 10) || '—'}</span>
+ ),
+ },
+ {
+ title: t('description'), dataIndex: 'description', key: 'description',
+ render: (v: string) => <span style={{ color: 'var(--ink-700)' }}>{v || '—'}</span>,
+ },
+ {
+ title: t('amount'), dataIndex: 'amount', key: 'amount',
+ render: (v: number) => (
+ <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--ink-900)' }}>
+ {v?.toLocaleString()} <span style={{ color: 'var(--ink-400)', fontSize: 11 }}>IQD</span>
+ </span>
+ ),
+ },
+ {
+ title: t('status'), dataIndex: 'status', key: 'status',
+ render: (s: string) => <StatusTag status={s} label={t(s)} />,
+ },
+ {
+ title: '', key: 'actions', width: 56, align: 'center' as const,
+ render: (_: any, record: any) => (
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'duplicate', icon: <CopyOutlined />, label: t('duplicate', 'Duplicate'), onClick: () => openDuplicate(record) },
+ { type: 'divider' },
+ { key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true, onClick: () => handleDelete(record.id) },
+ ]}
+ />
+ ),
+ },
  ];
  const visibleColumns = useMemo(() => columns.filter((c) => !hiddenCols.includes(c.key as string)), [hiddenCols, columns]);
+ const filteredData = useMemo(() => {
+ if (!search) return data;
+ const q = search.toLowerCase();
+ return data.filter((row: any) => Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(q)));
+ }, [data, search]);
  const columnsMeta: ColumnVisibilityItem[] = columns.map((c) => ({
  key: c.key as string,
  label: typeof c.title === 'string' ? c.title : (c.key as string),
- pinned: c.key === 'expense_number',
+ pinned: c.key === 'expense_number' || c.key === 'actions',
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
@@ -96,23 +168,34 @@ const Expenses: React.FC = () => {
  }
  />
 
- <FilterBar
- extra={
+ <KitListCard
+ toolbar={
  <>
- <ExportMenu
- formats={['csv']}
- onExport={(f: ExportFormat) => {
- if (f === 'csv') {
+ <KitSearchInput
+ value={search}
+ onChange={(v) => { setSearch(v); setPage(1); }}
+ placeholder={t('search')}
+ />
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
  const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
  downloadCsv('expenses', data, cols);
- }
  }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
  />
- <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
+ </div>
  </>
  }
- />
- <ResponsiveTableAdapter dataSource={data} columns={visibleColumns} rowKey="id" loading={loading} pagination={{ current: page, total, pageSize: 20, onChange: setPage }} />
+ >
+ <ResponsiveTableAdapter dataSource={filteredData} columns={visibleColumns} rowKey="id" loading={loading} pagination={{ current: page, total, pageSize: 20, onChange: setPage }} />
+ </KitListCard>
 
  <FormDialog title={t('new_expense')} open={modal} onClose={() => setModal(false)} onOk={() => form.submit()}>
  <Form form={form} layout="vertical" onFinish={handleSave} initialValues={{ date: dayjs(), currency_code: 'IQD', exchange_rate: 1 }}>

@@ -1,15 +1,28 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, type ReactNode } from 'react';
 import { Button, Form, Input, DatePicker, InputNumber, Space, Modal } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SendOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import dayjs from 'dayjs';
-import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat, FilterBar } from '../design-system';
+import { PageHeader, StatusTag, type ColumnVisibilityItem } from '../design-system';
+import KitListCard from '../design-system/KitListCard';
+import KitListToolbarActions from '../design-system/KitListToolbarActions';
+import KitRowActions from '../design-system/KitRowActions';
+import KitSearchInput from '../design-system/KitSearchInput';
 import { downloadCsv } from '../utils/exportCsv';
-import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
+
+/** Initials for the kit's avatar cell (first letters of the first two words). */
+const initialsOf = (name: string): string =>
+ String(name || '?')
+ .trim()
+ .split(/\s+/)
+ .map((w) => w[0])
+ .join('')
+ .slice(0, 2)
+ .toUpperCase();
 
 export default function ExpenseClaims() {
  const { t } = useTranslation();
@@ -21,11 +34,11 @@ export default function ExpenseClaims() {
  const [reasonForm] = Form.useForm();
  const [editId, setEditId] = useState<string | null>(null);
  const [selectedClaim, setSelectedClaim] = useState<string | null>(null);
+ const [search, setSearch] = useState('');
  const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 });
  const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
  try { return JSON.parse(localStorage.getItem('expenseClaims.hiddenCols') || '[]'); } catch { return []; }
  });
- const isDark = useAuthStore((s) => s.theme === 'dark');
 
  const fetchData = async (page = 1) => {
  setLoading(true);
@@ -133,8 +146,30 @@ export default function ExpenseClaims() {
  };
 
  const columns = [
- { title: t('claim_number'), dataIndex: 'claim_number', key: 'claim_number' },
- { title: t('employee'), dataIndex: 'employee', key: 'employee' },
+ {
+ title: t('claim_number'),
+ dataIndex: 'claim_number',
+ key: 'claim_number',
+ render: (v: string) => (
+ <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-900)', fontWeight: 500 }}>{v || '—'}</span>
+ ),
+ },
+ {
+ title: t('employee'),
+ dataIndex: 'employee',
+ key: 'employee',
+ render: (v: string) => (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{initialsOf(v)}</span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{v || '—'}</span>
+ </div>
+ ),
+ },
  {
  title: t('date'),
  dataIndex: 'date',
@@ -145,7 +180,11 @@ export default function ExpenseClaims() {
  title: t('total'),
  dataIndex: 'total',
  key: 'total',
- render: (v: number) => v?.toLocaleString() || '0',
+ render: (v: number) => (
+ <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--ink-900)' }}>
+ {v?.toLocaleString() || '0'}
+ </span>
+ ),
  },
  {
  title: t('status'),
@@ -156,50 +195,38 @@ export default function ExpenseClaims() {
  ),
  },
  {
- title: t('actions'),
+ title: '',
  key: 'actions',
- render: (_: any, record: any) => (
- <Space>
- {record.status === 'draft' && (
- <>
- <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} />
- <Button
- type="primary"
- icon={<SendOutlined />}
- onClick={() => handleSubmitClaim(record.id)}
- >
- {t('submit')}
- </Button>
- </>
- )}
- {record.status === 'submitted' && (
- <>
- <Button
- type="primary"
- icon={<CheckOutlined />}
- onClick={() => handleApproveClaim(record.id)}
- >
- {t('approve')}
- </Button>
- <Button
- danger
- icon={<CloseOutlined />}
- onClick={() => {
- setSelectedClaim(record.id);
- setReasonModal(true);
- }}
- >
- {t('reject')}
- </Button>
- </>
- )}
- {record.status === 'draft' && (
- <Button danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} />
- )}
- </Space>
- ),
+ width: 56,
+ align: 'center' as const,
+ render: (_: any, record: any) => {
+ const actions: Array<
+ | { key: string; label: string; icon: ReactNode; danger?: boolean; onClick: () => void }
+ | { type: 'divider' }
+ > = [];
+ if (record.status === 'draft') {
+ actions.push({ key: 'edit', icon: <EditOutlined />, label: t('edit'), onClick: () => handleEdit(record) });
+ actions.push({ key: 'submit', icon: <SendOutlined />, label: t('submit'), onClick: () => handleSubmitClaim(record.id) });
+ }
+ if (record.status === 'submitted') {
+ actions.push({ key: 'approve', icon: <CheckOutlined />, label: t('approve'), onClick: () => handleApproveClaim(record.id) });
+ actions.push({ key: 'reject', icon: <CloseOutlined />, label: t('reject'), danger: true, onClick: () => { setSelectedClaim(record.id); setReasonModal(true); } });
+ }
+ if (record.status === 'draft') {
+ if (actions.length > 0) actions.push({ type: 'divider' });
+ actions.push({ key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true, onClick: () => handleDelete(record.id) });
+ }
+ if (actions.length === 0) return null;
+ return <KitRowActions ariaLabel={t('actions')} actions={actions} />;
+ },
  },
  ];
+ const filteredData = useMemo(() => {
+ if (!search) return data;
+ const q = search.toLowerCase();
+ return data.filter((row: any) => Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(q)));
+ }, [data, search]);
+ const setPage = (p: number) => setPagination((prev) => ({ ...prev, current: p }));
  const visibleColumns = useMemo(() => columns.filter((c) => !hiddenCols.includes(c.key as string)), [hiddenCols, columns]);
  const columnsMeta: ColumnVisibilityItem[] = columns.map((c) => ({
  key: c.key as string,
@@ -233,29 +260,36 @@ export default function ExpenseClaims() {
  </Space>
  }
  />
- <FilterBar
- extra={
+ <KitListCard
+ toolbar={
  <>
- <ExportMenu
- formats={['csv']}
- onExport={(f: ExportFormat) => {
- if (f === 'csv') {
+ <KitSearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder={t('search')} />
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
  const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
  downloadCsv('expense-claims', data, cols);
- }
  }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
  />
- <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
+ </div>
  </>
  }
- />
+ >
  <ResponsiveTableAdapter
- dataSource={data}
+ dataSource={filteredData}
  columns={visibleColumns}
  rowKey="id"
  loading={loading}
- pagination={{ ...pagination, onChange: fetchData }}
+ pagination={{ ...pagination, total: search ? filteredData.length : pagination.total, onChange: fetchData }}
  />
+ </KitListCard>
  <FormDialog
  title={editId ? t('edit') : t('add')}
  open={modalVisible}

@@ -1,12 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Space, Select, DatePicker, Form, Input, InputNumber, Modal } from 'antd';
-import { PlusOutlined, SendOutlined } from '@ant-design/icons';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Button, Space, Select, DatePicker, Form, Input, InputNumber, Modal, Radio } from 'antd';
+import { PlusOutlined, SendOutlined, EyeOutlined, CopyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import api from '../../api';
-import { PageHeader, FilterBar, SectionCard, StatusTag } from '../../design-system';
+import { PageHeader, StatusTag, type ColumnVisibilityItem } from '../../design-system';
 import type { StatusKind } from '../../design-system';
+import KitListCard, { type KitListTab } from '../../design-system/KitListCard';
+import KitListToolbarActions from '../../design-system/KitListToolbarActions';
+import KitRowActions from '../../design-system/KitRowActions';
+import KitFiltersButton from '../../design-system/KitFiltersButton';
+import KitStatusFilter from '../../design-system/KitStatusFilter';
+import KitSearchInput from '../../design-system/KitSearchInput';
+import { downloadCsv } from '../../utils/exportCsv';
 import { message } from '../../utils/message';
 import type { ColumnsType } from 'antd/es/table';
 import type { Dayjs } from 'dayjs';
@@ -14,6 +21,16 @@ import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTa
 import { FormDialog } from '../../components/responsive/FormDialog';
 
 const { RangePicker } = DatePicker;
+
+/** Initials for the kit's avatar cell (first letters of the first two words). */
+const initialsOf = (name: string): string =>
+  String(name || '?')
+    .trim()
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
 interface ServiceOrder {
  id: string;
@@ -34,18 +51,24 @@ interface Worker {
  is_active: boolean;
 }
 
+const STATUS_VALUES = ['draft', 'scheduled', 'in_progress', 'done', 'cancelled'];
+
 const ServiceOrders: React.FC = () => {
  const { t } = useTranslation();
  const navigate = useNavigate();
  const [loading, setLoading] = useState(false);
  const [orders, setOrders] = useState<ServiceOrder[]>([]);
  const [workers, setWorkers] = useState<Worker[]>([]);
+ const [search, setSearch] = useState('');
  const [filterStatus, setFilterStatus] = useState<string | undefined>();
  const [filterTechnician, setFilterTechnician] = useState<string | undefined>();
  const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
  const [showCreateModal, setShowCreateModal] = useState(false);
  const [form] = Form.useForm();
+ const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
+ try { return JSON.parse(localStorage.getItem('service_orders.hiddenCols') || '[]'); } catch { return []; }
+ });
 
  const fetchOrders = async () => {
  setLoading(true);
@@ -54,10 +77,10 @@ const ServiceOrders: React.FC = () => {
  api.get('/api/field-service/orders', { params: { limit: 500 } }),
  api.get('/api/field-service/workers', { params: { limit: 100 } }),
  ]);
- 
+
  const ordersData = ordersRes.data.items || [];
  const workersData = workersRes.data.items || [];
- 
+
  // Enrich orders with worker names
  const enriched = ordersData.map((o: Record<string, unknown>) => ({
  ...o,
@@ -65,7 +88,7 @@ const ServiceOrders: React.FC = () => {
  (w: Record<string, unknown>) => w.id === o.assigned_worker_id
  )?.name,
  }));
- 
+
  setOrders(enriched);
  setWorkers(workersData);
  } catch {
@@ -89,6 +112,13 @@ const ServiceOrders: React.FC = () => {
  } catch {
  message.error(t('error'));
  }
+ };
+
+ // Duplicate: open the create form pre-filled with this record's values (no id).
+ const openDuplicate = (record: ServiceOrder) => {
+ const { id: _id, assigned_worker_name: _wn, scheduled_at, ...rest } = record;
+ form.setFieldsValue({ ...rest, scheduled_at: scheduled_at ? dayjs(scheduled_at) : undefined });
+ setShowCreateModal(true);
  };
 
  const handleBulkDispatch = () => {
@@ -117,7 +147,8 @@ const ServiceOrders: React.FC = () => {
  });
  };
 
- const filteredOrders = orders.filter((o) => {
+ const filteredOrders = useMemo(() => {
+ const base = orders.filter((o) => {
  if (filterStatus && o.status !== filterStatus) return false;
  if (filterTechnician && o.assigned_worker_id !== filterTechnician) return false;
  if (dateRange && o.scheduled_at) {
@@ -126,6 +157,12 @@ const ServiceOrders: React.FC = () => {
  }
  return true;
  });
+ if (!search) return base;
+ const q = search.toLowerCase();
+ return base.filter((row: any) =>
+ Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(q))
+ );
+ }, [orders, filterStatus, filterTechnician, dateRange, search]);
 
  const statusKinds: Record<string, StatusKind> = {
  draft: 'default',
@@ -142,25 +179,48 @@ const ServiceOrders: React.FC = () => {
  urgent: 'error',
  };
 
- const columns: ColumnsType<ServiceOrder> = [
+ // Kit list tabs (All + each status) — wired to the same client-side status filter.
+ const tabs: KitListTab[] = [
+ { key: 'all', label: t('all', 'All') },
+ ...STATUS_VALUES.map((s) => ({ key: s, label: t(`field_service.status_${s}`) })),
+ ];
+
+ const allColumns = [
  {
  title: t('field_service.order_number'),
  dataIndex: 'order_number',
  key: 'order_number',
  render: (num: string, record: ServiceOrder) => (
- <a onClick={() => navigate(`/field-service/orders/${record.id}`)}>{num || record.id.slice(0, 8)}</a>
+ <span
+ onClick={() => navigate(`/field-service/orders/${record.id}`)}
+ style={{ cursor: 'pointer', fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--ink-900)' }}
+ >
+ {num || record.id.slice(0, 8)}
+ </span>
  ),
  },
  {
  title: t('field_service.customer_name'),
  dataIndex: 'customer_name',
  key: 'customer_name',
+ render: (v: string) => (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{initialsOf(v)}</span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{v}</span>
+ </div>
+ ),
  },
  {
  title: t('field_service.address'),
  dataIndex: 'address',
  key: 'address',
  ellipsis: true,
+ render: (v: string) => <span style={{ color: 'var(--ink-700)' }}>{v || '—'}</span>,
  },
  {
  title: t('field_service.scheduled_at'),
@@ -172,7 +232,13 @@ const ServiceOrders: React.FC = () => {
  title: t('field_service.technician'),
  dataIndex: 'assigned_worker_name',
  key: 'assigned_worker_name',
- render: (name: string) => name || '-',
+ render: (name: string) => name
+ ? <span style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--surface-2)', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-600)',
+ }}>{name}</span>
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>,
  },
  {
  title: t('field_service.status'),
@@ -190,7 +256,37 @@ const ServiceOrders: React.FC = () => {
  <StatusTag status={priorityKinds[priority] || 'default'} label={t(`field_service.priority_${priority}`)} />
  ),
  },
+ {
+ title: '', key: 'actions', width: 56, align: 'center' as const,
+ render: (_: unknown, record: ServiceOrder) => (
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'view', icon: <EyeOutlined />, label: t('view', 'View'), onClick: () => navigate(`/field-service/orders/${record.id}`) },
+ { key: 'duplicate', icon: <CopyOutlined />, label: t('duplicate', 'Duplicate'), onClick: () => openDuplicate(record) },
+ ]}
+ />
+ ),
+ },
  ];
+
+ const columns = useMemo(
+ () => allColumns.filter((c) => !hiddenCols.includes(c.key)) as ColumnsType<ServiceOrder>,
+ // eslint-disable-next-line react-hooks/exhaustive-deps
+ [hiddenCols, t, workers, navigate],
+ );
+ const columnsMeta: ColumnVisibilityItem[] = allColumns.map((c) => ({
+ key: c.key,
+ label: typeof c.title === 'string' ? c.title : c.key,
+ pinned: c.key === 'order_number' || c.key === 'actions',
+ }));
+ const persistHidden = (next: string[]) => {
+ setHiddenCols(next);
+ try { localStorage.setItem('service_orders.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
+ };
+
+ const activeFilterCount =
+ (filterStatus ? 1 : 0) + (filterTechnician ? 1 : 0) + (dateRange ? 1 : 0);
 
  return (
  <>
@@ -203,36 +299,75 @@ const ServiceOrders: React.FC = () => {
  { label: t('field_service.service_orders') },
  ]}
  extra={
- <Button type="primary" icon={<PlusOutlined />} onClick={() => setShowCreateModal(true)}>
+ <Button type="primary" icon={<PlusOutlined />} onClick={() => { form.resetFields(); setShowCreateModal(true); }}>
  {t('field_service.new_order')}
  </Button>
  }
  />
 
- <FilterBar
- filters={[
- {
- key: 'status',
- label: t('field_service.filter_status'),
- options: ['draft', 'scheduled', 'in_progress', 'done', 'cancelled'].map((s) => ({
- label: t(`field_service.status_${s}`),
- value: s,
- })),
- },
- {
- key: 'technician',
- label: t('field_service.filter_technician'),
- options: workers.map((w) => ({ value: w.id, label: w.name })),
- },
- ]}
- values={{ status: filterStatus, technician: filterTechnician }}
- onChange={(v) => {
- setFilterStatus((v.status as string) || undefined);
- setFilterTechnician((v.technician as string) || undefined);
- }}
- extra={
- <Space wrap>
- <RangePicker value={dateRange} onChange={(d) => setDateRange(d as [Dayjs, Dayjs] | null)} />
+ <KitListCard
+ tabs={tabs}
+ activeTab={filterStatus ?? 'all'}
+ onTabChange={(k) => { setFilterStatus(k === 'all' ? undefined : k); setSelectedRowKeys([]); }}
+ toolbar={
+ <>
+ <KitSearchInput value={search} onChange={(v) => setSearch(v)} placeholder={t('search')} />
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={activeFilterCount}
+ onClear={() => { setFilterStatus(undefined); setFilterTechnician(undefined); setDateRange(null); }}
+ >
+ <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+ <div>
+ <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, color: 'var(--ink-700)' }}>
+ {t('field_service.filter_status')}
+ </div>
+ <Radio.Group
+ value={filterStatus ?? 'all'}
+ onChange={(e) => setFilterStatus(e.target.value === 'all' ? undefined : e.target.value)}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="all">{t('all', 'All')}</Radio>
+ {STATUS_VALUES.map((s) => (
+ <Radio key={s} value={s}>{t(`field_service.status_${s}`)}</Radio>
+ ))}
+ </Radio.Group>
+ </div>
+ <div>
+ <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, color: 'var(--ink-700)' }}>
+ {t('field_service.filter_technician')}
+ </div>
+ <Select
+ allowClear
+ style={{ width: '100%' }}
+ placeholder={t('field_service.filter_technician')}
+ value={filterTechnician}
+ onChange={(v) => setFilterTechnician(v || undefined)}
+ options={workers.map((w) => ({ value: w.id, label: w.name }))}
+ />
+ </div>
+ <div>
+ <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, color: 'var(--ink-700)' }}>
+ {t('field_service.scheduled_at')}
+ </div>
+ <RangePicker
+ style={{ width: '100%' }}
+ value={dateRange}
+ onChange={(d) => setDateRange(d as [Dayjs, Dayjs] | null)}
+ />
+ </div>
+ </div>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('field_service.status')}
+ anyLabel={t('all', 'All')}
+ value={filterStatus ?? ''}
+ onChange={(v) => setFilterStatus(v || undefined)}
+ options={STATUS_VALUES.map((s) => ({ value: s, label: t(`field_service.status_${s}`) }))}
+ />
+ </div>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <Space>
  <Button
  icon={<SendOutlined />}
  onClick={handleBulkDispatch}
@@ -240,11 +375,24 @@ const ServiceOrders: React.FC = () => {
  >
  {t('field_service.bulk_dispatch')}
  </Button>
- </Space>
- }
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('service-orders', filteredOrders, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
  />
-
- <SectionCard padded={false}>
+ </Space>
+ </div>
+ </>
+ }
+ >
  <ResponsiveTableAdapter
  dataSource={filteredOrders}
  columns={columns}
@@ -256,7 +404,7 @@ const ServiceOrders: React.FC = () => {
  }}
  pagination={{ pageSize: 20, showSizeChanger: true }}
  />
- </SectionCard>
+ </KitListCard>
 
  <FormDialog
  title={t('field_service.new_order')}

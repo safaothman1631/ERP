@@ -29,7 +29,7 @@ import {
   SplitMasterPanel, DashboardKpiStrip,
   SIDEBAR_HIDDEN_MODES, FORCE_COLLAPSED_MODES, SHOW_TABS_MODES,
 } from './LayoutChrome';
-import { palette, space, motion } from '../theme/tokens';
+import { palette, space, motion, densityPagePadding } from '../theme/tokens';
 import ImpersonationBanner from '../platform/components/ImpersonationBanner';
 import PlatformAnnouncementBanner from '../platform/components/PlatformAnnouncementBanner';
 // growth-to-100 § G2 (support): global help launcher + NPS survey. Both defer
@@ -156,6 +156,10 @@ export const AppShell: React.FC = () => {
   const setDensity = useUiStore(s => s.setDensity);
   // SideNav only supports compact|comfortable; spacious widens like comfortable
   const density: 'compact' | 'comfortable' = densityFull === 'compact' ? 'compact' : 'comfortable';
+  // Page padding follows the density token (compact 16 / comfortable 20 / spacious 24)
+  // so the user's density setting actually affects the content gutter, not just
+  // control height + sider width. Falls back to space.xl (24) for any unknown value.
+  const pagePad = densityPagePadding[densityFull] ?? space.xl;
   const handleSideDensity = (d: 'compact' | 'comfortable') => setDensity(d);
   // Command palette state — driven by commandStore (session-only, no persist)
   const paletteOpen = useCommandStore(s => s.open);
@@ -273,9 +277,9 @@ export const AppShell: React.FC = () => {
           placement={isRTL ? 'right' : 'left'}
           width={Math.min(320, window.innerWidth * 0.92)}
           closable={false}
-          rootStyle={{ top: 56, height: 'calc(100% - 56px)' }}
+          rootStyle={{ top: 'calc(56px + env(safe-area-inset-top, 0px))', height: 'calc(100% - 56px - env(safe-area-inset-top, 0px))' }}
           mask={true}
-          maskStyle={{ top: 56 }}
+          maskStyle={{ top: 'calc(56px + env(safe-area-inset-top, 0px))' }}
           styles={{
             body: {
               padding: 0,
@@ -327,13 +331,13 @@ export const AppShell: React.FC = () => {
           // Cards/tables inside (var(--surface)) provide the raised surfaces.
           margin: 0,
           marginBottom: showBottomNav ? 80 : 0,
-          paddingInlineStart: isMobile ? `max(16px, env(safe-area-inset-left, 0px))` : `max(${space.xl}px, env(safe-area-inset-left, 0px))`,
-          paddingInlineEnd:   isMobile ? `max(16px, env(safe-area-inset-right, 0px))` : `max(${space.xl}px, env(safe-area-inset-right, 0px))`,
-          paddingBlockStart:  isMobile ? '16px' : `${space.xl}px`,
+          paddingInlineStart: isMobile ? `max(16px, env(safe-area-inset-left, 0px))` : `max(${pagePad}px, env(safe-area-inset-left, 0px))`,
+          paddingInlineEnd:   isMobile ? `max(16px, env(safe-area-inset-right, 0px))` : `max(${pagePad}px, env(safe-area-inset-right, 0px))`,
+          paddingBlockStart:  isMobile ? '16px' : `${pagePad}px`,
           // On mobile: extra bottom padding to clear BottomNav + safe-area
           paddingBlockEnd: isMobile
             ? 'calc(80px + env(safe-area-inset-bottom, 0px))'
-            : `${space.xl}px`,
+            : `${pagePad}px`,
           background: isDark ? palette.darkBg : palette.bg,
           borderRadius: 0,
           minHeight: isMobile ? 'calc(100dvh - 56px)' : 'calc(100vh - 56px)',

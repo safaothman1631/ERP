@@ -119,13 +119,13 @@ const GiftCardChargeDialog: React.FC<GiftCardChargeDialogProps> = ({
  </Button>
 
  {card && (
- <div style={{ marginTop: 16, padding: 16, background: '#f0f0f0', borderRadius: 8 }}>
+ <div style={{ marginTop: 16, padding: 16, background: 'var(--surface-2)', borderRadius: 8 }}>
  <p>
  <strong>{t('card_code')}:</strong> <code>{card.code}</code>
  </p>
  <p>
  <strong>{t('current_balance')}:</strong>{' '}
- <Text strong style={{ fontSize: 18, color: '#1890ff' }}>
+ <Text strong style={{ fontSize: 18, color: 'var(--accent-500)' }}>
  {card.current_value.toLocaleString()} {t('currency')}
  </Text>
  </p>

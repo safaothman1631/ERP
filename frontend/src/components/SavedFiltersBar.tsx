@@ -150,7 +150,7 @@ const SavedFiltersBar: React.FC<SavedFiltersBarProps> = ({
  >
  {filters.map(filter => (
  <Select.Option key={filter.id} value={filter.id}>
- {filter.is_default && <StarOutlined style={{ marginLeft: 4, color: '#faad14' }} />}
+ {filter.is_default && <StarOutlined style={{ marginLeft: 4, color: 'var(--warning-500)' }} />}
  {filter.name}
  </Select.Option>
  ))}

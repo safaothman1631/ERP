@@ -66,7 +66,7 @@ const SupportWidget: React.FC = () => {
  insetInlineEnd: 80,
  bottom: 28,
  zIndex: 200,
- background: '#fff',
+ background: 'var(--surface)',
  border: '1px solid #fde68a',
  borderRadius: 12,
  padding: '10px 14px',
@@ -77,7 +77,7 @@ const SupportWidget: React.FC = () => {
  gap: 8,
  }}
  >
- <WarningOutlined style={{ color: '#f59e0b', fontSize: 18, marginTop: 2 }} />
+ <WarningOutlined style={{ color: 'var(--warning-500)', fontSize: 18, marginTop: 2 }} />
  <div style={{ flex: 1 }}>
  <Text strong style={{ display: 'block' }}>{t('need_help_q')}</Text>
  <Text type="secondary" style={{ fontSize: 12 }}>{t('repeated_errors_hint')}</Text>
@@ -118,7 +118,7 @@ const SupportWidget: React.FC = () => {
  />
  <Space direction="vertical" style={{ width: '100%' }}>
  {recent.slice(-5).reverse().map((e, i) => (
- <div key={i} style={{ padding: 8, borderRadius: 8, background: '#fafafa' }}>
+ <div key={i} style={{ padding: 8, borderRadius: 8, background: 'var(--surface-2)' }}>
  <Tag color="red" style={{ borderRadius: 8 }}>{new Date(e.ts).toLocaleTimeString()}</Tag>
  <div style={{ marginTop: 4, fontSize: 12 }}>{e.message}</div>
  {e.source && <Text type="secondary" style={{ fontSize: 11 }}>{e.source}</Text>}

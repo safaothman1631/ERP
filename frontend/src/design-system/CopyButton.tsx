@@ -32,7 +32,7 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ text, size = 'small', to
       <Button
         type="text"
         size={size}
-        icon={copied ? <CheckOutlined style={{ color: '#16A34A' }} /> : <CopyOutlined />}
+        icon={copied ? <CheckOutlined style={{ color: 'var(--success-500)' }} /> : <CopyOutlined />}
         onClick={handleCopy}
         aria-label={t('copy', 'Copy')}
       />

@@ -1,13 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Space, Form, Input, Select, InputNumber, Card, Tag, DatePicker, Modal } from 'antd';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Button, Space, Form, Input, Select, InputNumber, Card, DatePicker, Modal, Radio } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { PlusOutlined, EditOutlined, DeleteOutlined, MinusCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, MinusCircleOutlined, EyeOutlined, CopyOutlined } from '@ant-design/icons';
 import api from '../../api';
 import { message } from '../../utils/message';
 import dayjs from 'dayjs';
-import { PageHeader, StatusTag } from '../../design-system';
+import { PageHeader, StatusTag, type ColumnVisibilityItem } from '../../design-system';
+import KitListCard, { type KitListTab } from '../../design-system/KitListCard';
+import KitListToolbarActions from '../../design-system/KitListToolbarActions';
+import KitRowActions from '../../design-system/KitRowActions';
+import KitFiltersButton from '../../design-system/KitFiltersButton';
+import KitStatusFilter from '../../design-system/KitStatusFilter';
+import KitSearchInput from '../../design-system/KitSearchInput';
+import { downloadCsv } from '../../utils/exportCsv';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
+
+/** Initials for the kit's avatar cell (first letters of the first two words). */
+const initialsOf = (name: string): string =>
+  String(name || '?')
+    .trim()
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
 const POSPricelists: React.FC = () => {
  const { t } = useTranslation();
@@ -16,6 +33,12 @@ const POSPricelists: React.FC = () => {
  const [modalVisible, setModalVisible] = useState(false);
  const [editingId, setEditingId] = useState<string | null>(null);
  const [form] = Form.useForm();
+ // Kit list tab / status filter (client-side — page fetches all rows at once).
+ const [tab, setTab] = useState<'all' | 'active' | 'inactive'>('all');
+ const [search, setSearch] = useState('');
+ const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
+ try { return JSON.parse(localStorage.getItem('pos_pricelists.hiddenCols') || '[]'); } catch { return []; }
+ });
 
  const fetchData = async () => {
  setLoading(true);
@@ -50,6 +73,19 @@ const POSPricelists: React.FC = () => {
  rules: [],
  });
  }
+ setModalVisible(true);
+ };
+
+ // Duplicate: open the create form pre-filled with this record's values (no id).
+ const openDuplicate = (record: any) => {
+ setEditingId(null);
+ form.resetFields();
+ const { id: _id, ...rest } = record;
+ form.setFieldsValue({
+ ...rest,
+ name: `${record.name ?? ''} (${t('copy', 'copy')})`,
+ rules: record.rules || [],
+ });
  setModalVisible(true);
  };
 
@@ -94,22 +130,58 @@ const POSPricelists: React.FC = () => {
  });
  };
 
- const columns = [
+ // Kit list tabs (All / Active / Inactive) — client-side filtered on is_active.
+ const tabs: KitListTab[] = [
+ { key: 'all', label: t('all', 'All') },
+ { key: 'active', label: t('active', 'Active') },
+ { key: 'inactive', label: t('inactive', 'Inactive') },
+ ];
+
+ const filteredData = useMemo(() => {
+ let rows = data;
+ if (tab === 'active') rows = rows.filter((r) => r.is_active);
+ else if (tab === 'inactive') rows = rows.filter((r) => !r.is_active);
+ if (search) {
+ const q = search.toLowerCase();
+ rows = rows.filter((row: any) => Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(q)));
+ }
+ return rows;
+ }, [data, tab, search]);
+
+ const allColumns = [
  {
  title: t('name'),
  dataIndex: 'name',
  key: 'name',
+ render: (v: string) => (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{initialsOf(v)}</span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{v}</span>
+ </div>
+ ),
  },
  {
  title: t('name_ku'),
  dataIndex: 'name_ku',
  key: 'name_ku',
+ render: (v: string) => <span style={{ color: 'var(--ink-700)' }}>{v || '—'}</span>,
  },
  {
  title: t('pos.currency'),
  dataIndex: 'currency',
  key: 'currency',
- render: (val: string) => <Tag>{val}</Tag>,
+ render: (val: string) => (
+ <span style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--surface-2)', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-600)',
+ }}>{val}</span>
+ ),
  },
  {
  title: t('pos.rules_count'),
@@ -126,16 +198,34 @@ const POSPricelists: React.FC = () => {
  ),
  },
  {
- title: t('actions'),
+ title: '',
  key: 'actions',
+ width: 56,
+ align: 'center' as const,
  render: (_: any, record: any) => (
- <Space>
- <Button icon={<EditOutlined />} onClick={() => openModal(record)} />
- <Button icon={<DeleteOutlined />} danger onClick={() => handleDelete(record.id)} />
- </Space>
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'view', icon: <EyeOutlined />, label: t('view', 'View'), onClick: () => openModal(record) },
+ { key: 'edit', icon: <EditOutlined />, label: t('edit'), onClick: () => openModal(record) },
+ { key: 'duplicate', icon: <CopyOutlined />, label: t('duplicate', 'Duplicate'), onClick: () => openDuplicate(record) },
+ { type: 'divider' },
+ { key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true, onClick: () => handleDelete(record.id) },
+ ]}
+ />
  ),
  },
  ];
+ const columns = useMemo(() => allColumns.filter((c) => !hiddenCols.includes(c.key)), [hiddenCols, t]);
+ const columnsMeta: ColumnVisibilityItem[] = allColumns.map((c) => ({
+ key: c.key,
+ label: typeof c.title === 'string' ? c.title : c.key,
+ pinned: c.key === 'name' || c.key === 'actions',
+ }));
+ const persistHidden = (next: string[]) => {
+ setHiddenCols(next);
+ try { localStorage.setItem('pos_pricelists.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
+ };
 
  return (
  <>
@@ -147,7 +237,59 @@ const POSPricelists: React.FC = () => {
  </Button>
  }
  />
- <ResponsiveTableAdapter dataSource={data} columns={columns} rowKey="id" loading={loading} pagination={false} />
+ <KitListCard
+ tabs={tabs}
+ activeTab={tab}
+ onTabChange={(k) => setTab(k as typeof tab)}
+ toolbar={
+ <>
+ <KitSearchInput value={search} onChange={(v) => setSearch(v)} placeholder={t('search')} />
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={tab !== 'all' ? 1 : 0}
+ onClear={() => setTab('all')}
+ >
+ <Radio.Group
+ value={tab}
+ onChange={(e) => setTab(e.target.value)}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="all">{t('all', 'All')}</Radio>
+ <Radio value="active">{t('active', 'Active')}</Radio>
+ <Radio value="inactive">{t('inactive', 'Inactive')}</Radio>
+ </Radio.Group>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('status')}
+ anyLabel={t('all', 'All')}
+ value={tab === 'all' ? '' : tab}
+ onChange={(v) => setTab((v || 'all') as typeof tab)}
+ options={[
+ { value: 'active', label: t('active', 'Active') },
+ { value: 'inactive', label: t('inactive', 'Inactive') },
+ ]}
+ />
+ </div>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('pos_pricelists', filteredData, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ </div>
+ </>
+ }
+ >
+ <ResponsiveTableAdapter dataSource={filteredData} columns={columns} rowKey="id" loading={loading} pagination={false} />
+ </KitListCard>
 
  <FormDialog
  open={modalVisible}

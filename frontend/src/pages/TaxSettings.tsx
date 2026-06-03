@@ -27,7 +27,7 @@ const TaxRates: React.FC = () => {
 
  const fetchData = () => {
  setLoading(true);
- api.get('/api/taxes/rates').then(r => setData(Array.isArray(r.data) ? r.data : (r.data.items || [] || []))).catch(() => {}).finally(() => setLoading(false));
+ api.get('/api/taxes/rates').then(r => setData(Array.isArray(r.data) ? r.data : (r.data.items || [] || []))).catch((e) => console.error(e)).finally(() => setLoading(false));
  };
 
  useEffect(() => { fetchData(); }, []);
@@ -78,7 +78,7 @@ const TaxGroups: React.FC = () => {
 
  const fetchData = () => {
  setLoading(true);
- api.get('/api/taxes/groups').then(r => setData(Array.isArray(r.data) ? r.data : (r.data.items || [] || []))).catch(() => {}).finally(() => setLoading(false));
+ api.get('/api/taxes/groups').then(r => setData(Array.isArray(r.data) ? r.data : (r.data.items || [] || []))).catch((e) => console.error(e)).finally(() => setLoading(false));
  };
 
  useEffect(() => { fetchData(); }, []);

@@ -41,8 +41,8 @@ export const HardwareDeviceCard: React.FC<Props> = ({ label, sublabel, transport
         gap: 12,
         padding: 12,
         borderRadius: 8,
-        border: selected ? '2px solid #7B61FF' : '1px solid #e0e0e0',
-        background: selected ? '#F1EEFF' : '#fff',
+        border: selected ? '2px solid var(--accent-500)' : '1px solid var(--border)',
+        background: selected ? 'var(--accent-soft)' : 'var(--surface)',
         width: '100%',
         cursor: 'pointer',
         textAlign: 'start',
@@ -53,14 +53,14 @@ export const HardwareDeviceCard: React.FC<Props> = ({ label, sublabel, transport
         style={{
           width: 40,
           height: 40,
-          background: '#f5f5f5',
+          background: 'var(--surface-2)',
           borderRadius: 6,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontFamily: 'monospace',
           fontSize: 12,
-          color: '#555',
+          color: 'var(--ink-500)',
         }}
       >
         {TRANSPORT_ICON[transport]}
@@ -68,11 +68,11 @@ export const HardwareDeviceCard: React.FC<Props> = ({ label, sublabel, transport
       <span style={{ flex: 1 }}>
         <span style={{ display: 'block', fontWeight: 600 }}>{label}</span>
         {sublabel && (
-          <span style={{ display: 'block', fontSize: 12, color: '#888' }}>{sublabel}</span>
+          <span style={{ display: 'block', fontSize: 12, color: 'var(--ink-500)' }}>{sublabel}</span>
         )}
       </span>
       {rssi !== undefined && (
-        <span style={{ fontFamily: 'monospace', fontSize: 12, color: '#555' }}>
+        <span style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--ink-500)' }}>
           {rssiBars(rssi)} {rssi} dBm
         </span>
       )}

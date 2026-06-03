@@ -1,12 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Tag, Form, Input, Select, Space, Popconfirm, InputNumber } from 'antd';
+import { Button, Form, Input, Select, Space, Modal, InputNumber, Radio } from 'antd';
 import { message } from '../utils/message';
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
-import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { type ColumnVisibilityItem } from '../design-system';
+import KitListCard, { type KitListTab } from '../design-system/KitListCard';
+import KitListToolbarActions from '../design-system/KitListToolbarActions';
+import KitRowActions from '../design-system/KitRowActions';
+import KitFiltersButton from '../design-system/KitFiltersButton';
+import KitStatusFilter from '../design-system/KitStatusFilter';
+import KitSearchInput from '../design-system/KitSearchInput';
 import { downloadCsv } from '../utils/exportCsv';
-import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 
@@ -25,6 +30,16 @@ interface PriceList {
  items: PriceListItem[];
 }
 
+/** Initials for the kit's avatar cell (first letters of the first two words). */
+const initialsOf = (name: string): string =>
+  String(name || '?')
+    .trim()
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
 const PriceLists: React.FC = () => {
  const { t } = useTranslation();
  const [data, setData] = useState<PriceList[]>([]);
@@ -35,10 +50,11 @@ const PriceLists: React.FC = () => {
  const [form] = Form.useForm();
  const [saving, setSaving] = useState(false);
  const [priceItems, setPriceItems] = useState<{ key: number; item_id: string; custom_rate: number }[]>([]);
+ const [tab, setTab] = useState<'all' | 'fixed' | 'markdown'>('all');
+ const [search, setSearch] = useState('');
  const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
  try { return JSON.parse(localStorage.getItem('priceLists.hiddenCols') || '[]'); } catch { return []; }
  });
- const isDark = useAuthStore((s) => s.theme === 'dark');
 
  const fetchData = () => {
  setLoading(true);
@@ -90,7 +106,11 @@ const PriceLists: React.FC = () => {
  }
  };
 
- const handleDelete = async (id: string) => {
+ const handleDelete = (id: string) => {
+ Modal.confirm({
+ title: t('are_you_sure'),
+ okButtonProps: { danger: true },
+ onOk: async () => {
  try {
  await api.delete(`/api/inventory/price-lists/${id}`);
  message.success(t('success'));
@@ -98,6 +118,8 @@ const PriceLists: React.FC = () => {
  } catch {
  message.error(t('error'));
  }
+ },
+ });
  };
 
  const updatePriceItem = (key: number, field: string, value: unknown) => {
@@ -106,31 +128,81 @@ const PriceLists: React.FC = () => {
 
  const fmtIQD = (v: number) => `${new Intl.NumberFormat('en-US').format(v || 0)} IQD`;
 
- const columns = [
- { title: t('name'), dataIndex: 'name', key: 'name' },
+ // Client-side filter by tab + search (no server param exists for type).
+ const filteredData = useMemo(() => {
+ const byTab = tab === 'all' ? data : data.filter((r) => r.type === tab);
+ if (!search) return byTab;
+ const q = search.toLowerCase();
+ return byTab.filter((row: any) =>
+ Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(q)),
+ );
+ }, [data, tab, search]);
+
+ // Kit list tabs (All / Fixed / Markdown) — type segments.
+ const tabs: KitListTab[] = [
+ { key: 'all', label: t('all', 'All') },
+ { key: 'fixed', label: t('fixed', 'Fixed') },
+ { key: 'markdown', label: t('markdown', 'Markdown') },
+ ];
+
+ const allColumns = [
+ {
+ title: t('name'), dataIndex: 'name', key: 'name',
+ render: (v: string) => (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{initialsOf(v)}</span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{v}</span>
+ </div>
+ ),
+ },
  {
  title: t('type'), dataIndex: 'type', key: 'type',
- render: (v: string) => <Tag color={v === 'markdown' ? 'orange' : 'blue'}>{v}</Tag>,
+ render: (v: string) => (
+ <span style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--surface-2)', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-600)',
+ }}>{t(v, v)}</span>
+ ),
  },
- { title: t('currency'), dataIndex: 'currency_code', key: 'currency_code' },
+ {
+ title: t('currency'), dataIndex: 'currency_code', key: 'currency_code',
+ render: (v: string) => v
+ ? <span style={{ color: 'var(--ink-900)', fontFamily: 'var(--font-mono)', fontWeight: 500 }}>{v}</span>
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>,
+ },
  {
  title: t('default'), dataIndex: 'is_default', key: 'is_default',
- render: (v: boolean) => v ? <Tag color="green">{t('default')}</Tag> : null,
+ render: (v: boolean) => v
+ ? <span style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--success-bg, var(--accent-soft))', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--success-fg, var(--accent-500))',
+ }}>{t('default')}</span>
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>,
  },
  {
- title: t('actions'), key: 'actions',
+ title: '', key: 'actions', width: 56, align: 'center' as const,
  render: (_: unknown, r: PriceList) => (
- <Space>
- <Button onClick={() => openEdit(r)}>{t('edit')}</Button>
- <Popconfirm title={t('are_you_sure')} onConfirm={() => handleDelete(r.id)}>
- <Button danger icon={<DeleteOutlined />} />
- </Popconfirm>
- </Space>
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'view', icon: <EyeOutlined />, label: t('view', 'View'), onClick: () => openEdit(r) },
+ { key: 'edit', icon: <EditOutlined />, label: t('edit'), onClick: () => openEdit(r) },
+ { type: 'divider' },
+ { key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true, onClick: () => handleDelete(r.id) },
+ ]}
+ />
  ),
  },
  ];
- const visibleColumns = useMemo(() => columns.filter((c) => !hiddenCols.includes(c.key as string)), [hiddenCols, columns]);
- const columnsMeta: ColumnVisibilityItem[] = columns.map((c) => ({
+ const visibleColumns = useMemo(() => allColumns.filter((c) => !hiddenCols.includes(c.key as string)), [hiddenCols, allColumns]);
+ const columnsMeta: ColumnVisibilityItem[] = allColumns.map((c) => ({
  key: c.key as string,
  label: typeof c.title === 'string' ? c.title : (c.key as string),
  pinned: c.key === 'name' || c.key === 'actions',
@@ -147,22 +219,67 @@ const PriceLists: React.FC = () => {
 
  return (
  <div>
- <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16, gap: 8 }}>
- <ExportMenu
- formats={['csv']}
- onExport={(f: ExportFormat) => {
- if (f === 'csv') {
- const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
- downloadCsv('price-lists', data, cols);
- }
- }}
- />
- <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
+ <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
  <Button type="primary" icon={<PlusOutlined />} onClick={openNew}>{t('create')}</Button>
  </div>
 
+ <KitListCard
+ tabs={tabs}
+ activeTab={tab}
+ onTabChange={(k) => { setTab(k as typeof tab); }}
+ toolbar={
+ <>
+ <KitSearchInput
+ value={search}
+ onChange={(v) => { setSearch(v); }}
+ placeholder={t('search')}
+ />
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={tab !== 'all' ? 1 : 0}
+ onClear={() => { setTab('all'); }}
+ >
+ <Radio.Group
+ value={tab}
+ onChange={(e) => { setTab(e.target.value); }}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="all">{t('all', 'All')}</Radio>
+ <Radio value="fixed">{t('fixed', 'Fixed')}</Radio>
+ <Radio value="markdown">{t('markdown', 'Markdown')}</Radio>
+ </Radio.Group>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('type', 'Type')}
+ anyLabel={t('all', 'All')}
+ value={tab === 'all' ? '' : tab}
+ onChange={(v) => { setTab((v || 'all') as typeof tab); }}
+ options={[
+ { value: 'fixed', label: t('fixed', 'Fixed') },
+ { value: 'markdown', label: t('markdown', 'Markdown') },
+ ]}
+ />
+ </div>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('price-lists', filteredData, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ </div>
+ </>
+ }
+ >
  <ResponsiveTableAdapter
- dataSource={data}
+ dataSource={filteredData}
  columns={visibleColumns}
  rowKey="id"
  loading={loading}
@@ -172,6 +289,7 @@ const PriceLists: React.FC = () => {
  ),
  }}
  />
+ </KitListCard>
 
  <FormDialog open={modalOpen} onClose={() => setModalOpen(false)} title={editingId ? t('edit') : t('priceLists')} hideFooter>
  <Form form={form} layout="vertical" onFinish={handleSave} initialValues={{ currency_code: 'IQD', type: 'fixed' }}>

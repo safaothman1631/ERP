@@ -84,10 +84,10 @@ export default function POSCustomerDisplay() {
           bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column' }}
         >
           <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-            <Title level={1} style={{ fontSize: '4rem', margin: 0, color: '#7B61FF' }}>
+            <Title level={1} style={{ fontSize: '4rem', margin: 0, color: 'var(--accent-500)' }}>
               {t('welcome')}
             </Title>
-            <Text style={{ fontSize: '2rem', color: '#666' }}>
+            <Text style={{ fontSize: '2rem', color: 'var(--ink-500)' }}>
               {t('your_order')}
             </Text>
           </div>
@@ -98,7 +98,7 @@ export default function POSCustomerDisplay() {
                 key={idx}
                 style={{
                   padding: '20px',
-                  borderBottom: '2px dashed #d9d9d9',
+                  borderBottom: '2px dashed var(--border)',
                   fontSize: '2.5rem',
                 }}
                 justify="space-between"
@@ -110,10 +110,10 @@ export default function POSCustomerDisplay() {
                   </Text>
                 </Col>
                 <Col>
-                  <Text style={{ fontSize: '2rem', color: '#666', marginLeft: '20px', marginRight: '20px' }}>
+                  <Text style={{ fontSize: '2rem', color: 'var(--ink-500)', marginLeft: '20px', marginRight: '20px' }}>
                     {line.qty} ×
                   </Text>
-                  <Text strong style={{ fontSize: '2.5rem', color: '#7B61FF' }}>
+                  <Text strong style={{ fontSize: '2.5rem', color: 'var(--accent-500)' }}>
                     {(line.price_unit || line.price || 0).toLocaleString()} {t('iqd')}
                   </Text>
                 </Col>
@@ -121,7 +121,7 @@ export default function POSCustomerDisplay() {
             ))}
           </div>
 
-          <div style={{ borderTop: '3px solid #7B61FF', paddingTop: '30px' }}>
+          <div style={{ borderTop: '3px solid var(--accent-500)', paddingTop: '30px' }}>
             <Row justify="space-between" style={{ marginBottom: '15px' }}>
               <Col>
                 <Text style={{ fontSize: '2.5rem' }}>{t('subtotal')}:</Text>
@@ -146,12 +146,12 @@ export default function POSCustomerDisplay() {
               </Row>
             )}
 
-            <Row justify="space-between" style={{ marginTop: '20px', padding: '20px', background: '#F0EDFF', borderRadius: '10px' }}>
+            <Row justify="space-between" style={{ marginTop: '20px', padding: '20px', background: 'var(--accent-soft)', borderRadius: '10px' }}>
               <Col>
                 <Text style={{ fontSize: '3.5rem', fontWeight: 'bold' }}>{t('total')}:</Text>
               </Col>
               <Col>
-                <Text strong style={{ fontSize: '3.5rem', color: '#52c41a' }}>
+                <Text strong style={{ fontSize: '3.5rem', color: 'var(--success-500)' }}>
                   {(order.amount_total || order.total || 0).toLocaleString()} {t('iqd')}
                 </Text>
               </Col>

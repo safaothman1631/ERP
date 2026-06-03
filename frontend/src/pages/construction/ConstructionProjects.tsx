@@ -1,12 +1,19 @@
 import type React from 'react';
-import { useEffect, useState } from 'react';
-import { Button, Space, Input, Form, Select, InputNumber } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import { Button, Space, Input, Form, Select, InputNumber, Radio } from 'antd';
 
 import { message } from '../../utils/message';
 import { PlusOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import { PageHeader, StatusTag, KpiCard, SectionCard, KeyValueGrid, FilterBar, DataTable } from '../../design-system';
+import { PageHeader, StatusTag, KpiCard, SectionCard, KeyValueGrid, DataTable, type ColumnVisibilityItem } from '../../design-system';
+import KitListCard, { type KitListTab } from '../../design-system/KitListCard';
+import KitListToolbarActions from '../../design-system/KitListToolbarActions';
+import KitRowActions from '../../design-system/KitRowActions';
+import KitFiltersButton from '../../design-system/KitFiltersButton';
+import KitStatusFilter from '../../design-system/KitStatusFilter';
+import KitSearchInput from '../../design-system/KitSearchInput';
+import { downloadCsv } from '../../utils/exportCsv';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
 interface Project {
@@ -30,17 +37,32 @@ interface CostSummary {
  overhead_cost: number;
 }
 
+/** Initials for the kit's avatar cell (first letters of the first two words). */
+const initialsOf = (name: string): string =>
+ String(name || '?')
+ .trim()
+ .split(/\s+/)
+ .map((w) => w[0])
+ .join('')
+ .slice(0, 2)
+ .toUpperCase();
+
 const ConstructionProjects: React.FC = () => {
  const { t } = useTranslation();
  const [data, setData] = useState<Project[]>([]);
  const [loading, setLoading] = useState(false);
  const [search, setSearch] = useState('');
+ const [tab, setTab] = useState<'all' | 'planning' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled'>('all');
+ const [page, setPage] = useState(1);
  const [drawer, setDrawer] = useState(false);
  const [detailDrawer, setDetailDrawer] = useState(false);
  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
  const [costSummary, setCostSummary] = useState<CostSummary | null>(null);
  const [loadingCost, setLoadingCost] = useState(false);
  const [form] = Form.useForm();
+ const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
+ try { return JSON.parse(localStorage.getItem('construction_projects.hiddenCols') || '[]'); } catch { return []; }
+ });
 
  const fetchData = async () => {
  setLoading(true);
@@ -96,46 +118,146 @@ const ConstructionProjects: React.FC = () => {
  return map[status] || 'info';
  };
 
- const getStatusTag = (status: string) => <StatusTag status={getStatusKind(status)} />;
+ const getStatusTag = (status: string) => <StatusTag status={getStatusKind(status)} label={t(`construction.status_${status}`)} />;
 
- const filteredData = data.filter((p) =>
+ // Kit list tabs (All / Planning / In Progress / On Hold / Completed / Cancelled) — client-side filtered.
+ const tabs: KitListTab[] = [
+ { key: 'all', label: t('all', 'All') },
+ { key: 'planning', label: t('construction.status_planning') },
+ { key: 'in_progress', label: t('construction.status_in_progress') },
+ { key: 'on_hold', label: t('construction.status_on_hold') },
+ { key: 'completed', label: t('construction.status_completed') },
+ { key: 'cancelled', label: t('construction.status_cancelled') },
+ ];
+
+ const filteredData = useMemo(
+ () =>
+ data
+ .filter((p) => (tab === 'all' ? true : p.status === tab))
+ .filter(
+ (p) =>
  !search ||
  p.name?.toLowerCase().includes(search.toLowerCase()) ||
  p.client?.toLowerCase().includes(search.toLowerCase())
+ ),
+ [data, tab, search]
  );
 
- const columns: any[] = [
- { title: t('construction.project_name'), dataIndex: 'name', key: 'name', width: 200 },
- { title: t('construction.client'), dataIndex: 'client', key: 'client', width: 150 },
- { title: t('construction.start_date'), dataIndex: 'start_date', key: 'start_date', width: 120 },
- { title: t('construction.end_date'), dataIndex: 'end_date', key: 'end_date', width: 120 },
+ const allColumns: any[] = [
+ {
+ title: t('construction.project_name'),
+ dataIndex: 'name',
+ key: 'name',
+ width: 240,
+ render: (v: string) => (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span
+ style={{
+ width: 28,
+ height: 28,
+ borderRadius: '50%',
+ flexShrink: 0,
+ background: 'var(--accent-soft)',
+ color: 'var(--accent-500)',
+ display: 'inline-flex',
+ alignItems: 'center',
+ justifyContent: 'center',
+ fontSize: 11,
+ fontWeight: 700,
+ }}
+ >
+ {initialsOf(v)}
+ </span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{v}</span>
+ </div>
+ ),
+ },
+ {
+ title: t('construction.client'),
+ dataIndex: 'client',
+ key: 'client',
+ width: 180,
+ render: (v: string) =>
+ v ? (
+ <span style={{ color: 'var(--ink-700)' }}>{v}</span>
+ ) : (
+ <span style={{ color: 'var(--ink-400)' }}>—</span>
+ ),
+ },
+ {
+ title: t('construction.start_date'),
+ dataIndex: 'start_date',
+ key: 'start_date',
+ width: 130,
+ render: (v: string) =>
+ v ? (
+ <span style={{ color: 'var(--ink-700)', fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>{v}</span>
+ ) : (
+ <span style={{ color: 'var(--ink-400)' }}>—</span>
+ ),
+ },
+ {
+ title: t('construction.end_date'),
+ dataIndex: 'end_date',
+ key: 'end_date',
+ width: 130,
+ render: (v: string) =>
+ v ? (
+ <span style={{ color: 'var(--ink-700)', fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>{v}</span>
+ ) : (
+ <span style={{ color: 'var(--ink-400)' }}>—</span>
+ ),
+ },
  {
  title: t('construction.budget'),
  dataIndex: 'contract_value',
  key: 'contract_value',
- width: 140,
- align: 'right',
- render: (v: number) => v.toLocaleString(),
+ width: 150,
+ align: 'right' as const,
+ render: (v: number) => (
+ <span style={{ color: 'var(--ink-900)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+ {v.toLocaleString()}
+ </span>
+ ),
  },
  {
  title: t('construction.status'),
  dataIndex: 'status',
  key: 'status',
- width: 120,
+ width: 130,
  render: getStatusTag,
  },
  {
- title: t('actions'),
+ title: '',
  key: 'actions',
- width: 120,
- align: 'center',
+ width: 56,
+ align: 'center' as const,
  render: (_: any, rec: Project) => (
- <Button type="link" icon={<EyeOutlined />} onClick={() => handleViewDetail(rec)}>
- {t('construction.view_detail')}
- </Button>
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ {
+ key: 'view',
+ icon: <EyeOutlined />,
+ label: t('construction.view_detail'),
+ onClick: () => handleViewDetail(rec),
+ },
+ ]}
+ />
  ),
  },
  ];
+
+ const columns = useMemo(() => allColumns.filter((c) => !hiddenCols.includes(c.key)), [hiddenCols, t]);
+ const columnsMeta: ColumnVisibilityItem[] = allColumns.map((c) => ({
+ key: c.key,
+ label: typeof c.title === 'string' ? c.title : c.key,
+ pinned: c.key === 'name' || c.key === 'actions',
+ }));
+ const persistHidden = (next: string[]) => {
+ setHiddenCols(next);
+ try { localStorage.setItem('construction_projects.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
+ };
 
  return (
  <>
@@ -150,20 +272,72 @@ const ConstructionProjects: React.FC = () => {
  }
  />
 
- <FilterBar
- searchPlaceholder={t('search')}
- searchValue={search}
- onSearchChange={setSearch}
+ <KitListCard
+ tabs={tabs}
+ activeTab={tab}
+ onTabChange={(k) => { setTab(k as typeof tab); setPage(1); }}
+ toolbar={
+ <>
+ <KitSearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder={t('search')} />
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={tab !== 'all' ? 1 : 0}
+ onClear={() => { setTab('all'); setPage(1); }}
+ >
+ <Radio.Group
+ value={tab}
+ onChange={(e) => { setTab(e.target.value); setPage(1); }}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="all">{t('all', 'All')}</Radio>
+ <Radio value="planning">{t('construction.status_planning')}</Radio>
+ <Radio value="in_progress">{t('construction.status_in_progress')}</Radio>
+ <Radio value="on_hold">{t('construction.status_on_hold')}</Radio>
+ <Radio value="completed">{t('construction.status_completed')}</Radio>
+ <Radio value="cancelled">{t('construction.status_cancelled')}</Radio>
+ </Radio.Group>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('construction.status')}
+ anyLabel={t('all', 'All')}
+ value={tab === 'all' ? '' : tab}
+ onChange={(v) => { setTab((v || 'all') as typeof tab); setPage(1); }}
+ options={[
+ { value: 'planning', label: t('construction.status_planning') },
+ { value: 'in_progress', label: t('construction.status_in_progress') },
+ { value: 'on_hold', label: t('construction.status_on_hold') },
+ { value: 'completed', label: t('construction.status_completed') },
+ { value: 'cancelled', label: t('construction.status_cancelled') },
+ ]}
  />
-
+ </div>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('construction_projects', filteredData, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ </div>
+ </>
+ }
+ >
  <DataTable<Project>
  columns={columns}
  dataSource={filteredData}
  rowKey="id"
  loading={loading}
  stickyHeader={false}
- pagination={{ pageSize: 20 }}
+ pagination={{ current: page, pageSize: 20, onChange: setPage }}
  />
+ </KitListCard>
 
  <FormDialog title={t('construction.add_project')} open={drawer} onClose={() => setDrawer(false)}>
  <Form form={form} layout="vertical" onFinish={handleCreate}>

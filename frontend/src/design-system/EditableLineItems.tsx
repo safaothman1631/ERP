@@ -407,13 +407,19 @@ export function EditableLineItems<T extends LineItem = LineItem>({
     <div
       ref={containerRef}
       role="grid"
+      className="vx-lineitems"
       aria-label={t('line_items.table_label', 'Line items')}
       aria-rowcount={value.length + 1}
       style={{
         border: '1px solid var(--border)',
         borderRadius: 'var(--radius-lg)',
         background: 'var(--surface)',
-        overflow: 'hidden',
+        // Horizontal scroll instead of clipping — on narrow (mobile) viewports
+        // the columnar flex rows would otherwise cram/overlap. vertex-kit.css
+        // pins a min-width on the rows under 680px so columns stay readable and
+        // the table scrolls sideways. overflow-y hidden keeps the radius clip.
+        overflowX: 'auto',
+        overflowY: 'hidden',
         boxShadow: 'var(--shadow-xs)',
       }}
     >

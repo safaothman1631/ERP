@@ -64,9 +64,9 @@ export const POSTerminalShell: React.FC<POSTerminalShellProps> = ({
       {/* Top bar */}
       <div
         style={{
-          background: '#fff',
+          background: 'var(--surface)',
           padding: '12px 24px',
-          borderBottom: '1px solid #f0f0f0',
+          borderBottom: '1px solid var(--border)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -110,7 +110,7 @@ export const POSTerminalShell: React.FC<POSTerminalShellProps> = ({
         <Sider
           width="40%"
           theme="light"
-          style={{ borderRight: '1px solid #f0f0f0', overflow: 'auto' }}
+          style={{ borderInlineEnd: '1px solid var(--border)', overflow: 'auto' }}
         >
           <Suspense fallback={null}>
             <POSCartPanel

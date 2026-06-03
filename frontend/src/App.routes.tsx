@@ -54,7 +54,6 @@ const Contacts = lazyWithRetry(() => import('./pages/Contacts'), 'contacts');
 const Items = lazyWithRetry(() => import('./pages/Items'), 'items');
 const ItemForm = lazyWithRetry(() => import('./pages/ItemForm'), 'item-form');
 const Invoices = lazyWithRetry(() => import('./pages/Invoices'), 'invoices');
-const InvoiceForm = lazyWithRetry(() => import('./pages/InvoiceForm'), 'pages-invoice-form');
 const Expenses = lazyWithRetry(() => import('./pages/Expenses'), 'expenses');
 const Accounts = lazyWithRetry(() => import('./pages/Accounts'), 'accounts');
 const Reports = lazyWithRetry(() => import('./pages/Reports'), 'reports');
@@ -173,6 +172,8 @@ const LoginPageRedesign = lazyWithRetry(() => import('./features/auth/LoginPage'
 const MFAPage = lazyWithRetry(() => import('./pages/auth/MFAPage'), 'mfa-page');
 // Vertex "Slate & Signal" full-kit PROOF — standalone preview at /vertex.
 const VertexProof = lazyWithRetry(() => import('./vertex-proof/VertexProof'), 'vertex-proof-page');
+// Kit list-composition visual harness (public, no-login) — verifies the shared list components.
+const KitPreview = lazyWithRetry(() => import('./pages/KitPreview'), 'kit-preview-page');
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'not-found');
 const ServerError = lazyWithRetry(() => import('./pages/ServerError'), 'server-error');
 // POS Pages
@@ -443,6 +444,7 @@ export const routes: RouteObject[] = [
   { path: '/login', element: <Suspense fallback={FeatureFallback}><PageTransition><LoginPageRedesign /></PageTransition></Suspense> },
   // Vertex "Slate & Signal" full-kit PROOF — standalone, full-fidelity kit rebuild preview.
   { path: '/vertex', element: <Suspense fallback={FeatureFallback}><VertexProof /></Suspense> },
+  { path: '/kit-preview', element: <Suspense fallback={FeatureFallback}><KitPreview /></Suspense> },
   { path: '/signup', element: <Suspense fallback={FeatureFallback}><PageTransition><SignUp /></PageTransition></Suspense> },
   { path: '/forgot-password', element: <Suspense fallback={FeatureFallback}><PageTransition><ForgotPassword /></PageTransition></Suspense> },
   { path: '/reset-password', element: <Suspense fallback={FeatureFallback}><PageTransition><ResetPassword /></PageTransition></Suspense> },
@@ -516,7 +518,9 @@ export const routes: RouteObject[] = [
       // Task 18: Modern Items List Page (PageHeader + FilterBar + BulkActionBar + DataTable + Pagination)
       { path: 'items/list', element: <Suspense fallback={FeatureFallback}><ItemsListModern /></Suspense> },
       { path: 'invoices', element: <PageTransition><Invoices /></PageTransition> },
-      { path: 'invoices/new', element: <PageTransition><InvoiceForm /></PageTransition> },
+      // '/invoices/new' now uses the SAME redesigned form as /create and /edit
+      // (the old pages/InvoiceForm was a stale duplicate the primary "New" button hit).
+      { path: 'invoices/new', element: <Suspense fallback={FeatureFallback}><InvoiceFormRedesign /></Suspense> },
       // Task 18: Modern Invoices List Page (PageHeader + FilterBar + BulkActionBar + DataTable + Pagination)
       { path: 'invoices/list', element: <Suspense fallback={FeatureFallback}><InvoicesListModern /></Suspense> },
       // Task 19: Modern Invoice Form (FormLayout + EditableLineItems + useAutoSave + split save)
@@ -528,6 +532,8 @@ export const routes: RouteObject[] = [
       { path: 'credit-notes', element: <PageTransition><CreditNotes /></PageTransition> },
       { path: 'expenses', element: <PageTransition><Expenses /></PageTransition> },
       { path: 'bills', element: <PageTransition><Bills /></PageTransition> },
+      // '/bills/new' (used by CommandPalette + BillsList) previously had no route → 404.
+      { path: 'bills/new', element: <Suspense fallback={FeatureFallback}><BillFormRedesign /></Suspense> },
       // Task 18: Modern Bills List Page (PageHeader + FilterBar + BulkActionBar + DataTable + Pagination)
       { path: 'bills/list', element: <Suspense fallback={FeatureFallback}><BillsListModern /></Suspense> },
       // Task 19: Modern Bill Form (FormLayout + EditableLineItems + useAutoSave + split save)

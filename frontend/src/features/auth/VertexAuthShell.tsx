@@ -390,7 +390,7 @@ const VertexAuthShell: React.FC<VertexAuthShellProps> = ({
               {signin && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 7, color: 'var(--ink-600)', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} style={{ accentColor: 'var(--accent-500)', width: 15, height: 15 }} />
+                    <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} style={{ accentColor: 'var(--accent-500)', width: 18, height: 18, flexShrink: 0 }} />
                     {tr('Remember me', 'بیرم بمێنێتەوە', 'تذكّرني')}
                   </label>
                   <Link to="/forgot-password" style={{ color: 'var(--accent-400)', fontWeight: 500 }}>{tr('Forgot password?', 'تێپەڕەوشەت بیرچووە؟', 'نسيت كلمة المرور؟')}</Link>

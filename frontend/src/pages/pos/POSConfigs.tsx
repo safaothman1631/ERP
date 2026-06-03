@@ -1,16 +1,31 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Space, Form, Input, Switch, InputNumber, Select, Tabs, Modal } from 'antd';
+import { Button, Space, Form, Input, Switch, InputNumber, Select, Tabs, Modal, Radio } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { PlusOutlined, EditOutlined, DeleteOutlined, CopyOutlined, CheckCircleOutlined, ApiOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, CopyOutlined, CheckCircleOutlined, ApiOutlined, EyeOutlined } from '@ant-design/icons';
 import api from '../../api';
 import { message } from '../../utils/message';
-import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../../design-system';
+import { PageHeader, StatusTag, type ColumnVisibilityItem } from '../../design-system';
+import KitListCard, { type KitListTab } from '../../design-system/KitListCard';
+import KitSearchInput from '../../design-system/KitSearchInput';
+import KitListToolbarActions from '../../design-system/KitListToolbarActions';
+import KitRowActions from '../../design-system/KitRowActions';
+import KitFiltersButton from '../../design-system/KitFiltersButton';
+import KitStatusFilter from '../../design-system/KitStatusFilter';
 import { downloadCsv } from '../../utils/exportCsv';
-import { useAuthStore } from '../../store';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 // growth-to-100 § G3 — ESC/POS hardware pairing wizard (printer/scanner/drawer/display).
 import { HardwarePairingWizard } from '../../components/pos/HardwarePairingWizard';
+
+/** Initials for the kit's avatar cell (first letters of the first two words). */
+const initialsOf = (name: string): string =>
+  String(name || '?')
+    .trim()
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
 const POSConfigs: React.FC = () => {
  const { t } = useTranslation();
@@ -22,10 +37,12 @@ const POSConfigs: React.FC = () => {
  const [modalVisible, setModalVisible] = useState(false);
  const [editingId, setEditingId] = useState<string | null>(null);
  const [hwWizardOpen, setHwWizardOpen] = useState(false);
+ const [search, setSearch] = useState('');
+ // Presentation-only status segment (client-side filter over the already-loaded list).
+ const [statusTab, setStatusTab] = useState<'all' | 'active' | 'inactive'>('all');
  const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
  try { return JSON.parse(localStorage.getItem('posConfigs.hiddenCols') || '[]'); } catch { return []; }
  });
- const isDark = useAuthStore((s) => s.theme === 'dark');
  const [form] = Form.useForm();
 
  const fetchPricelists = async () => {
@@ -100,6 +117,15 @@ const POSConfigs: React.FC = () => {
  setModalVisible(true);
  };
 
+ // Duplicate: open the create form pre-filled with this record's values (no id).
+ const openDuplicate = (record: any) => {
+ setEditingId(null);
+ const { id: _id, ...rest } = record;
+ form.resetFields();
+ form.setFieldsValue({ ...rest, name: `${record.name ?? ''} (${t('copy', 'copy')})` });
+ setModalVisible(true);
+ };
+
  const handleSubmit = async (values: any) => {
  try {
  if (editingId) {
@@ -146,23 +172,58 @@ const POSConfigs: React.FC = () => {
  }
  };
 
+ // Status segments (presentation-only filter over the loaded list).
+ const tabs: KitListTab[] = [
+ { key: 'all', label: t('all', 'All') },
+ { key: 'active', label: t('active') },
+ { key: 'inactive', label: t('inactive') },
+ ];
+ const visibleData = useMemo(() => {
+ let rows = data;
+ if (statusTab === 'active') rows = rows.filter((r) => r.is_active);
+ else if (statusTab === 'inactive') rows = rows.filter((r) => !r.is_active);
+ if (search) {
+ const q = search.toLowerCase();
+ rows = rows.filter((row: any) =>
+ Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(q))
+ );
+ }
+ return rows;
+ }, [data, statusTab, search]);
+
  const columns = [
  {
  title: t('name'),
  dataIndex: 'name',
  key: 'name',
+ render: (v: string) => (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{initialsOf(v)}</span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{v}</span>
+ </div>
+ ),
  },
  {
  title: t('name_ku'),
  dataIndex: 'name_ku',
  key: 'name_ku',
+ render: (v: string) => <span style={{ color: 'var(--ink-700)' }}>{v || '—'}</span>,
  },
  {
  title: t('pos.iface_type'),
  dataIndex: 'iface_type',
  key: 'iface_type',
  render: (type: string) => (
- <StatusTag status={type === 'shop' ? 'info' : 'viewed'} label={t(`pos.${type}`)} />
+ <span style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--surface-2)', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-600)',
+ }}>{t(`pos.${type}`)}</span>
  ),
  },
  {
@@ -174,36 +235,39 @@ const POSConfigs: React.FC = () => {
  ),
  },
  {
- title: t('actions'),
+ title: '',
  key: 'actions',
+ width: 56,
+ align: 'center' as const,
  render: (_: any, record: any) => (
- <Space>
- <Button
- icon={<EditOutlined />}
- onClick={() => openModal(record)}
- />
- <Button
- icon={<CopyOutlined />}
- onClick={() => handleClone(record.id)}
- />
- <Button
- icon={<CheckCircleOutlined />}
- type={record.is_active ? 'default' : 'primary'}
- onClick={() => handleToggleActive(record.id)}
- >
- {record.is_active ? t('deactivate') : t('activate')}
- </Button>
- <Button
- icon={<DeleteOutlined />}
- danger
- onClick={() => {
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'view', icon: <EyeOutlined />, label: t('view', 'View'), onClick: () => openModal(record) },
+ { key: 'edit', icon: <EditOutlined />, label: t('edit'), onClick: () => openModal(record) },
+ { key: 'duplicate', icon: <CopyOutlined />, label: t('duplicate', 'Duplicate'), onClick: () => openDuplicate(record) },
+ { key: 'clone', icon: <CopyOutlined />, label: t('pos.clone', 'Clone'), onClick: () => handleClone(record.id) },
+ {
+ key: 'toggle',
+ icon: <CheckCircleOutlined />,
+ label: record.is_active ? t('deactivate') : t('activate'),
+ onClick: () => handleToggleActive(record.id),
+ },
+ { type: 'divider' },
+ {
+ key: 'delete',
+ icon: <DeleteOutlined />,
+ label: t('delete'),
+ danger: true,
+ onClick: () => {
  Modal.confirm({
  title: t('confirm_delete'),
  onOk: () => handleDelete(record.id),
  });
- }}
+ },
+ },
+ ]}
  />
- </Space>
  ),
  },
  ];
@@ -369,16 +433,6 @@ const POSConfigs: React.FC = () => {
  title={t('pos.configs')}
  extra={
  <Space>
- <ExportMenu
- formats={['csv']}
- onExport={(f: ExportFormat) => {
- if (f === 'csv') {
- const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
- downloadCsv('pos-configs', data, cols);
- }
- }}
- />
- <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
  <Button icon={<ApiOutlined />} onClick={() => setHwWizardOpen(true)}>
  {t('pos.pair_hardware', { defaultValue: 'Pair hardware' })}
  </Button>
@@ -389,13 +443,71 @@ const POSConfigs: React.FC = () => {
  }
  />
 
+ <KitListCard
+ tabs={tabs}
+ activeTab={statusTab}
+ onTabChange={(k) => setStatusTab(k as typeof statusTab)}
+ toolbar={
+ <>
+ <KitSearchInput
+ value={search}
+ onChange={(v) => setSearch(v)}
+ placeholder={t('search')}
+ />
+ {/* Group Filters + Status in a single flex unit so they ALWAYS wrap
+ together to the same line — never one stranded on a row by itself. */}
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={statusTab !== 'all' ? 1 : 0}
+ onClear={() => setStatusTab('all')}
+ >
+ <Radio.Group
+ value={statusTab}
+ onChange={(e) => setStatusTab(e.target.value)}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="all">{t('all', 'All')}</Radio>
+ <Radio value="active">{t('active')}</Radio>
+ <Radio value="inactive">{t('inactive')}</Radio>
+ </Radio.Group>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('status')}
+ anyLabel={t('all', 'All')}
+ value={statusTab === 'all' ? '' : statusTab}
+ onChange={(v) => setStatusTab((v || 'all') as typeof statusTab)}
+ options={[
+ { value: 'active', label: t('active') },
+ { value: 'inactive', label: t('inactive') },
+ ]}
+ />
+ </div>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('pos-configs', visibleData, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ </div>
+ </>
+ }
+ >
  <ResponsiveTableAdapter
- dataSource={data}
+ dataSource={visibleData}
  columns={visibleColumns}
  rowKey="id"
  loading={loading}
  pagination={false}
  />
+ </KitListCard>
 
  <FormDialog
  title={editingId ? t('edit') : t('pos.new_config')}

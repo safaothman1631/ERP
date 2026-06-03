@@ -44,15 +44,20 @@
 }
 
 [data-theme="dark"] {
-  --pl-ink-900:      #F1F5F9;
-  --pl-ink-700:      #CBD5E1;
-  --pl-ink-500:      #94A3B8;
-  --pl-ink-300:      #64748B;
-  --pl-bg:           #0B1220;
-  --pl-surface:      #111A2E;
-  --pl-surface-2:    #172238;
-  --pl-border:       rgba(148,163,184,0.16);
-  --pl-border-soft:  rgba(148,163,184,0.08);
+  /* Aligned to the Vertex "Slate & Signal" kit tokens (vertex-tokens.css) so
+     every polish.css-styled control (inputs, input-number, dashed buttons,
+     cards…) uses the SAME slate surfaces as the kit. Previously this used a
+     navy palette (#111A2E / #172238) that clashed — e.g. InputNumber and the
+     "+ Add Line" dashed button rendered navy inside slate cards. */
+  --pl-ink-900:      #ECEEF2;
+  --pl-ink-700:      #C2C8D2;
+  --pl-ink-500:      #8A93A3;
+  --pl-ink-300:      #5C6473;
+  --pl-bg:           #0B0E14;
+  --pl-surface:      #11151F;
+  --pl-surface-2:    #161B27;
+  --pl-border:       rgba(0,0,0,0.55);
+  --pl-border-soft:  rgba(0,0,0,0.35);
 
   --pl-shadow-xs:   0 1px 0 rgba(0,0,0,0.20);
   --pl-shadow-sm:   0 1px 2px rgba(0,0,0,0.30);

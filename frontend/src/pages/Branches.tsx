@@ -1,15 +1,29 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Button, Form, Input, Space, Switch, Tag, Modal } from 'antd';
+import { Button, Form, Input, Space, Switch, Modal, Radio } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
-import { PageHeader, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { PageHeader, type ColumnVisibilityItem } from '../design-system';
+import KitListCard, { type KitListTab } from '../design-system/KitListCard';
+import KitListToolbarActions from '../design-system/KitListToolbarActions';
+import KitRowActions from '../design-system/KitRowActions';
+import KitFiltersButton from '../design-system/KitFiltersButton';
+import KitStatusFilter from '../design-system/KitStatusFilter';
+import KitSearchInput from '../design-system/KitSearchInput';
 import { downloadCsv } from '../utils/exportCsv';
-import { space } from '../theme/tokens';
-import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
+
+/** Initials for the kit's avatar cell (first letters of the first two words). */
+const initialsOf = (name: string): string =>
+  String(name || '?')
+    .trim()
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
 export default function Branches() {
  const { t } = useTranslation();
@@ -19,10 +33,11 @@ export default function Branches() {
  const [form] = Form.useForm();
  const [editId, setEditId] = useState<string | null>(null);
  const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 });
+ const [tab, setTab] = useState<'all' | 'active' | 'inactive'>('all');
+ const [search, setSearch] = useState('');
  const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
  try { return JSON.parse(localStorage.getItem('branches.hiddenCols') || '[]'); } catch { return []; }
  });
- const isDark = useAuthStore((s) => s.theme === 'dark');
 
  const fetchData = async (page = 1) => {
  setLoading(true);
@@ -90,16 +105,70 @@ export default function Branches() {
  setModalVisible(true);
  };
 
+ // Duplicate: open the create form pre-filled with this record's values (no id).
+ const handleDuplicate = (record: any) => {
+ setEditId(null);
+ const { id: _id, ...rest } = record;
+ form.setFieldsValue({ ...rest, name: `${record.name ?? ''} (${t('copy', 'copy')})` });
+ setModalVisible(true);
+ };
+
+ // Kit list tabs (All / Active / Inactive) — derived client-side from the
+ // already-fetched data; no change to the query, endpoint, or pagination.
+ const tabs: KitListTab[] = [
+ { key: 'all', label: t('all', 'All') },
+ { key: 'active', label: t('active', 'Active') },
+ { key: 'inactive', label: t('inactive', 'Inactive') },
+ ];
+
  const columns = [
- { title: t('name'), dataIndex: 'name', key: 'name' },
- { title: t('code'), dataIndex: 'code', key: 'code' },
- { title: t('address'), dataIndex: 'address', key: 'address' },
- { title: t('phone'), dataIndex: 'phone', key: 'phone' },
+ {
+ title: t('name'), dataIndex: 'name', key: 'name',
+ render: (v: string) => (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{initialsOf(v)}</span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{v}</span>
+ </div>
+ ),
+ },
+ {
+ title: t('code'), dataIndex: 'code', key: 'code',
+ render: (v: string) => v
+ ? <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-900)', fontWeight: 500 }}>{v}</span>
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>,
+ },
+ {
+ title: t('address'), dataIndex: 'address', key: 'address',
+ render: (v: string) => <span style={{ color: 'var(--ink-700)' }}>{v || '—'}</span>,
+ },
+ {
+ title: t('phone'), dataIndex: 'phone', key: 'phone',
+ render: (v: string) => v
+ ? <span style={{ color: 'var(--ink-700)', fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>{v}</span>
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>,
+ },
  {
  title: t('head_office'),
  dataIndex: 'is_head_office',
  key: 'is_head_office',
- render: (v: boolean) => (v ? <Tag color="blue">{t('yes')}</Tag> : <Tag>{t('no')}</Tag>),
+ render: (v: boolean) => (
+ v
+ ? <span style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--accent-soft)', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--accent-500)',
+ }}>{t('yes')}</span>
+ : <span style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--surface-2)', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-600)',
+ }}>{t('no')}</span>
+ ),
  },
  {
  title: t('status'),
@@ -115,13 +184,17 @@ export default function Branches() {
  ),
  },
  {
- title: t('actions'),
- key: 'actions',
+ title: '', key: 'actions', width: 56, align: 'center' as const,
  render: (_: any, record: any) => (
- <Space>
- <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} />
- <Button danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} />
- </Space>
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'edit', icon: <EditOutlined />, label: t('edit'), onClick: () => handleEdit(record) },
+ { key: 'duplicate', icon: <PlusOutlined />, label: t('duplicate', 'Duplicate'), onClick: () => handleDuplicate(record) },
+ { type: 'divider' },
+ { key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true, onClick: () => handleDelete(record.id) },
+ ]}
+ />
  ),
  },
  ];
@@ -135,6 +208,18 @@ export default function Branches() {
  setHiddenCols(next);
  try { localStorage.setItem('branches.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
+
+ // Presentation-only view: filter the already-loaded rows by the active tab/status and search.
+ const viewData = useMemo(() => {
+ let rows = data;
+ if (tab === 'active') rows = rows.filter((b) => b.is_active);
+ else if (tab === 'inactive') rows = rows.filter((b) => !b.is_active);
+ if (search) {
+ const q = search.toLowerCase();
+ rows = rows.filter((row: any) => Object.values(row).some(v => String(v ?? '').toLowerCase().includes(q)));
+ }
+ return rows;
+ }, [data, tab, search]);
 
  return (
  <div>
@@ -157,25 +242,71 @@ export default function Branches() {
  </Space>
  }
  />
- <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: space.md }}>
- <ExportMenu
- formats={['csv']}
- onExport={(f: ExportFormat) => {
- if (f === 'csv') {
- const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
- downloadCsv('branches', data, cols);
- }
- }}
+ <KitListCard
+ tabs={tabs}
+ activeTab={tab}
+ onTabChange={(k) => { setTab(k as typeof tab); setPagination(p => ({ ...p, current: 1 })); }}
+ toolbar={
+ <>
+ <KitSearchInput
+ value={search}
+ onChange={(v) => { setSearch(v); setPagination(p => ({ ...p, current: 1 })); }}
+ placeholder={t('search')}
  />
- <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
+ {/* Group Filters + Status in a single flex unit so they ALWAYS wrap
+ together to the same line — never one stranded on a row by itself. */}
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={tab !== 'all' ? 1 : 0}
+ onClear={() => { setTab('all'); setPagination(p => ({ ...p, current: 1 })); }}
+ >
+ <Radio.Group
+ value={tab}
+ onChange={(e) => { setTab(e.target.value); setPagination(p => ({ ...p, current: 1 })); }}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="all">{t('all', 'All')}</Radio>
+ <Radio value="active">{t('active', 'Active')}</Radio>
+ <Radio value="inactive">{t('inactive', 'Inactive')}</Radio>
+ </Radio.Group>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('status', 'Status')}
+ anyLabel={t('all', 'All')}
+ value={tab === 'all' ? '' : tab}
+ onChange={(v) => { setTab((v || 'all') as typeof tab); setPagination(p => ({ ...p, current: 1 })); }}
+ options={[
+ { value: 'active', label: t('active', 'Active') },
+ { value: 'inactive', label: t('inactive', 'Inactive') },
+ ]}
+ />
  </div>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('branches', viewData, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ </div>
+ </>
+ }
+ >
  <ResponsiveTableAdapter
- dataSource={data}
+ dataSource={viewData}
  columns={visibleColumns}
  rowKey="id"
  loading={loading}
  pagination={{ ...pagination, onChange: fetchData }}
  />
+ </KitListCard>
  <FormDialog
  title={editId ? t('edit') : t('add')}
  open={modalVisible}

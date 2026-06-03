@@ -11,6 +11,125 @@
    a11y.css + reduced-motion.css load AFTER this, so focus + reduced-motion win.
    ============================================================================ */
 
+/* ───────────────────────────── Dialog line-item tables (systemic) ─────────────────────────────
+   Several create/edit dialogs (Credit Note, Bill, Sales Order, Vendor Credit,
+   Purchase Order, Recurring Invoice…) render their line items as a RAW
+   <table width:100%>. Inside a narrow modal/bottom-sheet the columns
+   (Items/Description/Quantity/Unit Price/Disc/Total) are wider than the dialog,
+   and an ancestor's overflow:hidden CLIPS them — so the user can't see or reach
+   the right-hand columns (the reported bug). Making the table itself a block
+   with its own horizontal scroll turns it into a self-contained scroller: it
+   fits the dialog width and the user swipes to reveal the rest. Applies to
+   EVERY dialog at once (does NOT touch EditableLineItems, which is div-based and
+   already scrolls via .vx-lineitems). */
+.ant-modal-body table,
+.ant-drawer-body table,
+.ant-modal-content form table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+  scrollbar-width: thin;
+}
+.ant-modal-body table::-webkit-scrollbar,
+.ant-drawer-body table::-webkit-scrollbar { height: 8px; }
+.ant-modal-body table::-webkit-scrollbar-thumb,
+.ant-drawer-body table::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ink-500) 30%, transparent);
+  border-radius: 999px;
+}
+/* Keep the header row from wrapping/squashing while scrolling. */
+.ant-modal-body table thead th,
+.ant-drawer-body table thead th { white-space: nowrap; }
+
+/* ───────────────────────────── Radio / Checkbox alignment ─────────────────────────────
+   In vertical Radio/Checkbox groups (e.g. the Filters popover) the circle sat
+   ABOVE its label text — the mobile 44px touch-target floor stretched the
+   wrapper but didn't vertically center its contents. Force center alignment so
+   the dot and its label line up. Global (all radios/checkboxes). */
+.ant-radio-wrapper,
+.ant-checkbox-wrapper { align-items: center !important; }
+/* The radio/checkbox box itself shouldn't get pushed by line-height. */
+.ant-radio, .ant-checkbox { align-self: center !important; top: 0 !important; }
+
+/* ───────────────────────────── Kit list tab-strip ─────────────────────────────
+   The tab strip (All/Draft/…) scrolls horizontally when tabs overflow, but the
+   scrollbar rendered as an ugly grey/white bar on the inline-end. Hide the
+   scrollbar (scroll still works via swipe/trackpad) for a clean kit look. */
+.vx-tabstrip { scrollbar-width: none; -ms-overflow-style: none; }
+.vx-tabstrip::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+/* ───────────────────────────── PageHeader action buttons ─────────────────────────────
+   The Export / "+ New …" buttons in every page header were rendering at the
+   large default control height, which looked oversized next to the kit's 32px
+   toolbar (Filters/Type). Pin them to a compact 36px — slightly larger than the
+   toolbar buttons (the user's request) while staying mobile-sensible. Applies to
+   ALL pages via the shared PageHeader. */
+.vx-pageheader-actions .ant-btn {
+  height: 36px !important;
+  padding-inline: 14px !important;
+  font-size: 13px !important;
+  border-radius: var(--radius-md, 8px) !important;
+}
+.vx-pageheader-actions .ant-btn .anticon { font-size: 13px; }
+
+/* ───────────────────────────── InputNumber / affix-input focus ─────────────────────────────
+   AntD wraps a native <input> inside a styled wrapper (.ant-input-number,
+   .ant-input-affix-wrapper). The WRAPPER already shows the kit's 3px focus ring.
+   But the global a11y `:focus-visible { outline }` also lands on the INNER
+   native input, and the wrapper's `overflow:hidden` CLIPS that inner outline to
+   one edge — producing an ugly violet bar on the left of number fields. Kill the
+   inner input's own outline/shadow; the wrapper ring is the (accessible) focus
+   indicator. Higher specificity than a11y's bare `:focus-visible`, so it wins. */
+.ant-input-number-input:focus,
+.ant-input-number-input:focus-visible,
+.ant-input-affix-wrapper > input.ant-input:focus,
+.ant-input-affix-wrapper > input.ant-input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+/* Plain inputs & textareas already get the kit border-focus + activeShadow
+   ring from the AntD theme; the extra global a11y `:focus-visible` outline
+   doubles up (an offset violet rectangle around the rounded field). Drop the
+   duplicate outline on these too — the kit ring is the focus indicator. */
+textarea.ant-input:focus,
+textarea.ant-input:focus-visible,
+.ant-input:not(.ant-input-number-input):focus,
+.ant-input:not(.ant-input-number-input):focus-visible {
+  outline: none !important;
+}
+
+/* ───────────────────────────── Form save-bar buttons (mobile) ─────────────────────────────
+   On phones the sticky form save-bar (Cancel / Save / Save-split) inherited the
+   44px a11y touch-target floor, making the buttons look oversized. Pin them to
+   a compact 36px on mobile — still a comfortable tap target within the bar's
+   padding, and visually standard for mobile. */
+@media (max-width: 768px) {
+  .vx-form-savebar .ant-btn,
+  .vx-form-savebar .ant-btn-compact-item {
+    min-height: 36px !important;
+    height: 36px !important;
+    padding-inline: 14px !important;
+    font-size: 13px !important;
+  }
+}
+
+/* ───────────────────────────── Editable line-items (mobile) ─────────────────────────────
+   The line-items editor (invoices/quotes/bills/etc.) is a columnar flex table.
+   On phones the columns cram and overlap (the user's report: "ئەو بەشە بۆ
+   مۆبایل بە تەواوی ڕێک نیە"). Below 680px we pin each row to a readable
+   min-width and let the container scroll sideways — columns stay legible and
+   aligned (header + rows share the min-width so they line up). */
+.vx-lineitems { scrollbar-width: thin; }
+@media (max-width: 680px) {
+  .vx-lineitems > [role="row"],
+  .vx-lineitems [role="row"] { min-width: 600px; }
+}
+.vx-lineitems::-webkit-scrollbar { height: 8px; }
+.vx-lineitems::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ink-500) 30%, transparent);
+  border-radius: 999px;
+}
+
 /* ───────────────────────────── Base ───────────────────────────── */
 body { font-family: var(--font-ui); color: var(--ink-900); background: var(--bg); -webkit-font-smoothing: antialiased; }
 [dir='rtl'] body { font-family: var(--font-rtl); }
@@ -186,8 +305,11 @@ h1, h2, h3, .ant-typography h1, .ant-typography h2, .ant-typography h3,
 .ant-pagination .ant-pagination-item-active a { color: var(--accent-500) !important; }
 .ant-pagination .ant-pagination-prev .ant-pagination-item-link,
 .ant-pagination .ant-pagination-next .ant-pagination-item-link { background: var(--surface-2) !important; border-color: var(--border) !important; color: var(--ink-500) !important; }
+/* Kit table header — IDENTICAL background to the card so there is no visible
+   "frame" around the header band, especially under horizontal scroll where the
+   sticky table-header would otherwise render as a separate dark plate. */
 .ant-table-thead > tr > th {
-  background: var(--surface-2) !important;
+  background: var(--surface) !important;
   color: var(--ink-500) !important;
   font-size: 11px !important;
   font-weight: 600 !important;
@@ -196,14 +318,93 @@ h1, h2, h3, .ant-typography h1, .ant-typography h2, .ant-typography h3,
   border-bottom: 1px solid var(--border) !important;
   padding: 10px 14px !important;
 }
+/* Kill AntD's vertical column dividers in the header (the ::before pseudo-rule
+   that draws a hairline between cells) — they look like a broken frame edge. */
+.ant-table-thead > tr > th::before { display: none !important; }
+/* Every AntD v6 table wrapper/container that gets its own background must be
+   forced to the card surface — otherwise in dark mode the default light tokens
+   bleed through as a visible white band, especially around the pagination
+   footer and the bottom of the spin container.
+   ─ `.ant-spin-container` is the immediate ancestor of both the table AND the
+     pagination strip; it had been rendering as a white slab below the rows.
+   ─ `.ant-pagination` (when AntD renders it inside the table) inherits an
+     antd colorBgContainer that is light by default. */
+.ant-table, .ant-table-container, .ant-table-content, .ant-table-body,
+.ant-table-header, .ant-table-summary, .ant-table-sticky-holder,
+.ant-table-cell-fix-left, .ant-table-cell-fix-right,
+.ant-table-wrapper, .ant-spin-nested-loading, .ant-spin-container,
+.ant-table-pagination { background: var(--surface) !important; }
+/* AntD v6 default chrome that paints a visible "white frame" inside the kit
+   card in dark mode — the user's reported "ڕەنگە سپیە" — comes from:
+   (a) `.ant-table-wrapper { padding-inline: 2px }` insetting the inner table,
+   (b) `.ant-table-container { border-top, border-inline-start }` drawing two
+       hairlines of colorSplit (a light tone on dark backgrounds).
+   Kill them so the table is flush with the card and no inner frame shows. */
+/* Make EVERY AntD v6 table wrapper visually disappear into the parent card.
+   The persistent thin "frame" the user kept reporting comes from the table's
+   own `border-radius` carving its rounded silhouette inside the card —
+   even when backgrounds match, the radius mismatch creates a visible edge in
+   dark mode anti-aliasing. By zero-ing radius/border/shadow/padding on every
+   layer of the AntD v6 table chrome, the table truly becomes part of the
+   card, with no inner outline of any kind. */
+.ant-table-wrapper, .ant-spin-nested-loading, .ant-spin-container,
+.ant-table, .ant-table-container, .ant-table-content,
+.ant-table-header, .ant-table-body, .ant-table-summary,
+.ant-table-sticky-holder {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+.ant-table-wrapper { padding-inline: 0 !important; padding-block: 0 !important; }
+.ant-table-container::before, .ant-table-container::after { display: none !important; }
+/* Push the pagination strip flush with the surface — no surrounding gap. */
+.ant-table-pagination.ant-pagination { margin: 0 !important; padding: 12px 16px !important; }
+/* Sticky/fixed column shadows that AntD draws on horizontal scroll — match
+   the kit's hairline instead of a dark gradient slab. */
+.ant-table-cell-fix-left-last::after,
+.ant-table-cell-fix-right-first::after { box-shadow: none !important; }
+.ant-table-ping-left .ant-table-cell-fix-left-last::after,
+.ant-table-ping-right .ant-table-cell-fix-right-first::after {
+  box-shadow: inset 10px 0 8px -8px color-mix(in srgb, var(--ink-900) 12%, transparent) !important;
+}
+.ant-table-ping-right .ant-table-cell-fix-right-first::after {
+  box-shadow: inset -10px 0 8px -8px color-mix(in srgb, var(--ink-900) 12%, transparent) !important;
+}
+
 .ant-table-tbody > tr > td {
   padding: 12px 14px;
   border-bottom: 1px solid var(--border);
   color: var(--ink-700);
+  background: var(--surface);
 }
 .ant-table-tbody > tr { transition: background .12s var(--ease-standard); }
-.ant-table-tbody > tr:hover > td { background: var(--surface-2) !important; }
+/* Row hover uses a lighter, more subtle tint than the surface-2 grey
+   (which was clashing with the header) — kit-faithful and works in both themes. */
+.ant-table-tbody > tr:hover > td {
+  background: color-mix(in srgb, var(--accent-500) 4%, var(--surface)) !important;
+}
 .ant-table-tbody > tr.ant-table-row-selected > td { background: var(--accent-soft) !important; }
+/* Scrollbar inside the table — slim kit chrome, not the OS default. */
+.ant-table-body::-webkit-scrollbar, .ant-table-content::-webkit-scrollbar { height: 10px; width: 10px; }
+.ant-table-body::-webkit-scrollbar-track, .ant-table-content::-webkit-scrollbar-track { background: transparent; }
+.ant-table-body::-webkit-scrollbar-thumb, .ant-table-content::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ink-500) 30%, transparent);
+  border-radius: 999px;
+  border: 2px solid var(--surface);
+}
+.ant-table-body::-webkit-scrollbar-thumb:hover, .ant-table-content::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--ink-500) 50%, transparent);
+}
+/* Row "⋯" icon button — make the dots VIOLET so they read as the kit's
+   primary row affordance (the user's feedback: the dots should be violet,
+   not muted grey). Accent-soft tint on hover. */
+.ant-table-tbody .ant-btn.ant-btn-text:has(.anticon-more) { color: var(--accent-500) !important; }
+.ant-table-tbody .ant-btn.ant-btn-text .anticon-more { color: var(--accent-500) !important; }
+.ant-table-tbody .ant-btn.ant-btn-text:hover:has(.anticon-more) {
+  background: var(--accent-soft) !important;
+  color: var(--accent-600, var(--accent-500)) !important;
+}
 /* tabular-nums for money/number columns (DataTable adds .vx-num / align-right) */
 .ant-table-cell.vx-num, td.ant-table-cell[class*="align-right"], .ant-table-cell-ellipsis.vx-num {
   font-variant-numeric: tabular-nums; text-align: end;
@@ -258,22 +459,98 @@ h1, h2, h3, .ant-typography h1, .ant-typography h2, .ant-typography h3,
 }
 
 /* ───────────────────────────── Modals / dialogs / drawers / dropdowns / popovers ─────────────────────────────
-   Kit aesthetic: flat surface card, hairline border, kit radius, soft shadow, dark scrim. */
+   PREMIUM GLASSMORPHISM: a translucent surface with a real backdrop blur, an
+   accent-tinted hairline + top highlight, and a soft violet glow, sitting on a
+   blurred dim scrim. Applies to every AntD Modal/Dialog in the app. */
 .ant-modal-content {
+  position: relative;
   border-radius: var(--radius-xl) !important;
-  box-shadow: var(--shadow-xl) !important;
-  background: var(--surface) !important;
-  border: 1px solid var(--border) !important;
+  /* Translucent surface so the blurred backdrop shows through (glass). */
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--accent-500) 6%, transparent) 0%,
+      transparent 30%),
+    color-mix(in srgb, var(--surface) 86%, transparent) !important;
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  border: 1px solid color-mix(in srgb, var(--accent-500) 16%, var(--border)) !important;
+  box-shadow:
+    0 24px 70px -16px rgba(0, 0, 0, 0.55),
+    0 0 40px -8px color-mix(in srgb, var(--accent-500) 22%, transparent),
+    inset 0 1px 0 0 color-mix(in srgb, #ffffff 8%, transparent) !important;
+}
+/* Solid fallback when backdrop-filter is unsupported, so it never looks washed out. */
+@supports not (backdrop-filter: blur(1px)) {
+  .ant-modal-content { background: var(--surface) !important; }
 }
 .ant-modal-header { background: transparent !important; border-bottom: 1px solid var(--border) !important; }
-.ant-modal-footer { border-top: 1px solid var(--border) !important; }
-.ant-modal-mask { background: rgba(8, 10, 15, 0.55) !important; }
+.ant-modal-title { font-size: 17px !important; font-weight: 700 !important; }
+/* Footer: NO band behind the buttons + NO divider line — the user asked to
+   remove the strip behind Stay/Leave anyway. Selectors match polish.css's
+   `[data-theme="dark"] .ant-modal-footer` specificity (0,2,0) and load after
+   it, so they win. `html[data-theme]` covers BOTH light & dark. */
+.ant-modal .ant-modal-footer,
+html[data-theme] .ant-modal-footer {
+  background: transparent !important;
+  border-top: none !important;
+}
+/* Dim + blur the page behind the dialog — completes the glass effect. */
+.ant-modal-mask {
+  background: color-mix(in srgb, #080A0F 60%, transparent) !important;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
 .ant-modal-close { color: var(--ink-500) !important; border-radius: var(--radius-md) !important; }
 .ant-modal-close:hover { background: var(--surface-2) !important; color: var(--ink-900) !important; }
 
-.ant-drawer-content { background: var(--surface) !important; }
+/* Drawers get the same glass treatment. */
+.ant-drawer-content {
+  background: color-mix(in srgb, var(--surface) 88%, transparent) !important;
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .ant-drawer-content { background: var(--surface) !important; }
+}
 .ant-drawer-header { border-bottom: 1px solid var(--border) !important; }
-.ant-drawer-mask { background: rgba(8, 10, 15, 0.55) !important; }
+.ant-drawer-mask {
+  background: color-mix(in srgb, #080A0F 60%, transparent) !important;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+/* Confirm dialogs stay a CENTERED glass card on mobile too (the user wants the
+   mobile confirm to match the laptop, not become a full-width bottom-sheet).
+   This overrides premium.css's global modal→bottom-sheet rule, scoped to the
+   .vx-confirm-modal class so larger form dialogs keep their bottom-sheet. */
+@media (max-width: 640px) {
+  /* Force the wrap to flex-center the confirm modal — premium.css drops the
+     wrap to display:block + pins the modal to the bottom on mobile; this
+     restores true vertical+horizontal centering for the confirm card. */
+  .ant-modal-root .ant-modal-wrap:has(.ant-modal.vx-confirm-modal) {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 16px !important;
+  }
+  .ant-modal-root .ant-modal.vx-confirm-modal {
+    top: auto !important;
+    bottom: auto !important;
+    inset-block: auto !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    padding-bottom: 0 !important;
+  }
+  .ant-modal-root .ant-modal.vx-confirm-modal .ant-modal-content {
+    border-radius: var(--radius-xl) !important;
+    padding-bottom: 20px !important;
+  }
+  /* Remove the bottom-sheet grab handle for the centered confirm card. */
+  .ant-modal-root .ant-modal.vx-confirm-modal .ant-modal-content::before {
+    display: none !important;
+  }
+}
 
 /* Dropdown + context menus (row actions: View / Edit / Duplicate / Delete) — kit menu:
    surface popover, accent-soft hover, accent text, red danger item. */
@@ -312,10 +589,30 @@ h1, h2, h3, .ant-typography h1, .ant-typography h2, .ant-typography h3,
 .ant-segmented .ant-segmented-item-selected { background: var(--accent-soft); color: var(--accent-500); }
 .ant-segmented .ant-segmented-item:hover:not(.ant-segmented-item-selected) { color: var(--ink-900); }
 
-/* ───────────────────────────── Scrollbars (kit .vx-scroll) ───────────────────────────── */
-.role-accent-root *::-webkit-scrollbar { width: 9px; height: 9px; }
-.role-accent-root *::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
-[data-theme='dark'] .role-accent-root *::-webkit-scrollbar-thumb { background: var(--slate-700); background-clip: padding-box; }
+/* ───────────────────────────── Scrollbars: HIDE EVERYWHERE ─────────────────────────────
+   The user wants a fully chromeless surface — NO visible scrollbar on any element,
+   dialog, table, tab-strip, line-items grid, or the page itself, in light OR dark.
+   Scrolling still works completely (wheel / touch / trackpad / keyboard); only the
+   visual bar is removed. This `!important` block is the last word in the cascade and
+   supersedes every earlier scrollbar style (this file's kit table / .vx-lineitems /
+   .ant-table-body, plus polish.css `*::-webkit-scrollbar`, premium.css + global.css
+   dark scrollbars, and the .role-accent-root kit bars). */
+*,
+*::before,
+*::after {
+  scrollbar-width: none !important;       /* Firefox */
+  -ms-overflow-style: none !important;    /* old Edge / IE */
+}
+*::-webkit-scrollbar,
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-thumb,
+*::-webkit-scrollbar-corner,
+*::-webkit-scrollbar-button {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+  background: transparent !important;
+}
 
 /* ───────────────────────────── Capture-safe entrance (kit .vx-page) ─────────────────────────────
    transform-only; never opacity-from-0 (keeps screenshot/PDF/PPTX capture intact). */

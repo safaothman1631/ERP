@@ -121,7 +121,7 @@ export const POSPaymentModal: React.FC<POSPaymentModalProps> = ({
       destroyOnHidden
       width={640}
     >
-      <div style={{ marginBottom: 16, padding: 16, background: '#f5f5f5', borderRadius: 8 }}>
+      <div style={{ marginBottom: 16, padding: 16, background: 'var(--surface-2)', borderRadius: 8 }}>
         <Title level={3} style={{ margin: 0 }}>{formatCurrency(total)}</Title>
         <Text type="secondary">{t('pos.amount_to_pay')}</Text>
         {paid > 0 && (

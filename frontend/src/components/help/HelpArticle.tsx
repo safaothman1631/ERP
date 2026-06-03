@@ -181,7 +181,7 @@ export const HelpArticle: React.FC<HelpArticleProps> = ({
         />
       )}
 
-      <div style={{ marginTop: 24, borderTop: '1px solid #f0f0f0', paddingTop: 12 }}>
+      <div style={{ marginTop: 24, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
         <Paragraph strong>{t('help.wasHelpful', 'Was this helpful?')}</Paragraph>
         <Space>
           <Button

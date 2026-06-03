@@ -1,11 +1,18 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Button, Space, Input, Form, Select, Tag, Tree, Card, Tooltip, Row, Col, DatePicker, message, Modal } from 'antd';
-import { UploadOutlined, FolderOutlined, FileOutlined, DownloadOutlined, ShareAltOutlined, DeleteOutlined, HistoryOutlined, AppstoreOutlined, UnorderedListOutlined, SearchOutlined, FolderAddOutlined, FileTextOutlined, FilePdfOutlined, FileImageOutlined, FileExcelOutlined, FileWordOutlined } from '@ant-design/icons';
+import { Button, Space, Input, Form, Select, Tree, Card, Row, Col, DatePicker, message, Modal, Radio } from 'antd';
+import { UploadOutlined, FolderOutlined, DownloadOutlined, ShareAltOutlined, DeleteOutlined, HistoryOutlined, AppstoreOutlined, UnorderedListOutlined, FolderAddOutlined, FileTextOutlined, FilePdfOutlined, FileImageOutlined, FileExcelOutlined, FileWordOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { DataNode } from 'antd/es/tree';
 import api from '../../api';
-import { PageHeader, SectionCard } from '../../design-system';
+import { PageHeader, SectionCard, type ColumnVisibilityItem } from '../../design-system';
+import KitListCard, { type KitListTab } from '../../design-system/KitListCard';
+import KitListToolbarActions from '../../design-system/KitListToolbarActions';
+import KitRowActions from '../../design-system/KitRowActions';
+import KitFiltersButton from '../../design-system/KitFiltersButton';
+import KitStatusFilter from '../../design-system/KitStatusFilter';
+import KitSearchInput from '../../design-system/KitSearchInput';
+import { downloadCsv } from '../../utils/exportCsv';
 import { space } from '../../theme/tokens';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -30,6 +37,9 @@ const DocumentVault: React.FC = () => {
  const [bulkDrawerOpen, setBulkDrawerOpen] = useState(false);
  const [form] = Form.useForm();
  const [folderForm] = Form.useForm();
+ const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
+ try { return JSON.parse(localStorage.getItem('dms.hiddenCols') || '[]'); } catch { return []; }
+ });
 
  const fetchFiles = async () => {
  setLoading(true);
@@ -122,7 +132,7 @@ const DocumentVault: React.FC = () => {
  title: t('dms.bulk_delete_confirm', { count: selectedRowKeys.length }),
  onOk: async () => {
  for (const key of selectedRowKeys) {
- await api.delete(`/api/documents/files/${key}`).catch(() => {});
+ await api.delete(`/api/documents/files/${key}`).catch((e) => console.error(e));
  }
  message.success(t('dms.bulk_deleted'));
  setSelectedRowKeys([]);
@@ -138,7 +148,7 @@ const DocumentVault: React.FC = () => {
  const file = files.find((f) => f.id === key);
  if (!file) continue;
  const newTags = [...(file.tags || []), tag];
- await api.patch(`/api/documents/files/${key}`, { tags: newTags }).catch(() => {});
+ await api.patch(`/api/documents/files/${key}`, { tags: newTags }).catch((e) => console.error(e));
  }
  message.success(t('dms.bulk_tagged'));
  setSelectedRowKeys([]);
@@ -192,6 +202,22 @@ const DocumentVault: React.FC = () => {
  return Array.from(tagSet);
  }, [files]);
 
+ // Count of active client-side filters (drives the Filters button badge).
+ const activeFilterCount = (filterType ? 1 : 0) + (filterTag ? 1 : 0) + (dateRange && dateRange.length === 2 ? 1 : 0);
+
+ // Document-type segments (the entity's natural segments) wired to the existing
+ // client-side `filterType` param — same param the Type status-filter controls.
+ const typeOptions = [
+ { value: 'pdf', label: t('dms.type_pdf', 'PDF') },
+ { value: 'image', label: t('dms.type_image', 'Image') },
+ { value: 'document', label: t('dms.type_document', 'Document') },
+ { value: 'spreadsheet', label: t('dms.type_spreadsheet', 'Spreadsheet') },
+ ];
+ const tabs: KitListTab[] = [
+ { key: 'all', label: t('all', 'All') },
+ ...typeOptions.map((o) => ({ key: o.value, label: o.label })),
+ ];
+
  const getFileIcon = (mime: string) => {
  if (mime.includes('pdf')) return <FilePdfOutlined style={{ color: 'var(--danger-500)', fontSize: 20 }} />;
  if (mime.includes('image')) return <FileImageOutlined style={{ color: 'var(--success-500)', fontSize: 20 }} />;
@@ -200,61 +226,91 @@ const DocumentVault: React.FC = () => {
  return <FileTextOutlined style={{ color: 'var(--ink-400)', fontSize: 20 }} />;
  };
 
- const columns = [
+ const allColumns = [
  {
  title: t('dms.document'),
  dataIndex: 'name',
  key: 'name',
  render: (v: string, r: any) => (
- <Space>
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
  {getFileIcon(r.mime_type)}
- <a onClick={() => navigate(`/dms/${r.id}`)}>{v}</a>
- </Space>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500, cursor: 'pointer' }} onClick={() => navigate(`/dms/${r.id}`)}>{v}</span>
+ </div>
  ),
  },
- { title: t('dms.type'), dataIndex: 'mime_type', key: 'mime_type', width: 180 },
- { title: t('dms.size'), dataIndex: 'size_bytes', key: 'size_bytes', width: 100, render: (v: number) => `${Math.round(v / 1024)} KB` },
+ {
+ title: t('dms.type'), dataIndex: 'mime_type', key: 'mime_type', width: 180,
+ render: (v: string) => (
+ <span style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--surface-2)', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-600)', fontFamily: 'var(--font-mono)',
+ }}>{v}</span>
+ ),
+ },
+ {
+ title: t('dms.size'), dataIndex: 'size_bytes', key: 'size_bytes', width: 100,
+ render: (v: number) => <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--ink-900)' }}>{`${Math.round(v / 1024)} KB`}</span>,
+ },
  {
  title: t('dms.tags'),
  dataIndex: 'tags',
  key: 'tags',
  width: 200,
  render: (tags: string[]) => (
- <>
+ <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
  {(tags || []).slice(0, 3).map((tag) => (
- <Tag key={tag}>{tag}</Tag>
+ <span key={tag} style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--surface-2)', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-600)',
+ }}>{tag}</span>
  ))}
- {(tags || []).length > 3 && <Tag>+{(tags || []).length - 3}</Tag>}
- </>
+ {(tags || []).length > 3 && (
+ <span style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--surface-2)', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-600)',
+ }}>+{(tags || []).length - 3}</span>
+ )}
+ </div>
  ),
  },
- { title: t('dms.uploaded_by'), dataIndex: 'uploaded_by', key: 'uploaded_by', width: 150 },
- { title: t('dms.modified'), dataIndex: 'updated_at', key: 'updated_at', width: 150, render: (v: string) => v ? new Date(v).toLocaleDateString() : '—' },
  {
- title: t('actions'),
- key: 'actions',
- width: 200,
+ title: t('dms.uploaded_by'), dataIndex: 'uploaded_by', key: 'uploaded_by', width: 150,
+ render: (v: string) => <span style={{ color: 'var(--ink-700)' }}>{v || '—'}</span>,
+ },
+ {
+ title: t('dms.modified'), dataIndex: 'updated_at', key: 'updated_at', width: 150,
+ render: (v: string) => <span style={{ color: 'var(--ink-500)' }}>{v ? new Date(v).toLocaleDateString() : '—'}</span>,
+ },
+ {
+ title: '', key: 'actions', width: 56, align: 'center' as const,
  render: (_: any, record: any) => (
- <Space>
- <Tooltip title={t('dms.preview')}>
- <Button icon={<FileOutlined />} onClick={() => navigate(`/dms/${record.id}`)} />
- </Tooltip>
- <Tooltip title={t('dms.download')}>
- <Button icon={<DownloadOutlined />} onClick={() => handleDownload(record)} />
- </Tooltip>
- <Tooltip title={t('dms.share')}>
- <Button icon={<ShareAltOutlined />} onClick={() => handleShare(record)} />
- </Tooltip>
- <Tooltip title={t('dms.versions')}>
- <Button icon={<HistoryOutlined />} onClick={() => handleVersions(record)} />
- </Tooltip>
- <Tooltip title={t('delete')}>
- <Button icon={<DeleteOutlined />} danger onClick={() => handleDelete(record.id)} />
- </Tooltip>
- </Space>
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'view', icon: <EyeOutlined />, label: t('dms.preview', 'Preview'), onClick: () => navigate(`/dms/${record.id}`) },
+ { key: 'download', icon: <DownloadOutlined />, label: t('dms.download', 'Download'), onClick: () => handleDownload(record) },
+ { key: 'share', icon: <ShareAltOutlined />, label: t('dms.share', 'Share'), onClick: () => handleShare(record) },
+ { key: 'versions', icon: <HistoryOutlined />, label: t('dms.versions', 'Versions'), onClick: () => handleVersions(record) },
+ { type: 'divider' },
+ { key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true, onClick: () => handleDelete(record.id) },
+ ]}
+ />
  ),
  },
  ];
+ const columns = useMemo(() => allColumns.filter((c) => !hiddenCols.includes(c.key)), [hiddenCols, t, navigate]);
+ const columnsMeta: ColumnVisibilityItem[] = allColumns.map((c) => ({
+ key: c.key,
+ label: typeof c.title === 'string' && c.title ? c.title : c.key,
+ pinned: c.key === 'name' || c.key === 'actions',
+ }));
+ const persistHidden = (next: string[]) => {
+ setHiddenCols(next);
+ try { localStorage.setItem('dms.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
+ };
 
  const rowSelection = {
  selectedRowKeys,
@@ -296,33 +352,34 @@ const DocumentVault: React.FC = () => {
  </Col>
 
  <Col span={19}>
- <SectionCard>
- <Space direction="vertical" style={{ width: '100%' }}>
- <Row gutter={16}>
- <Col span={10}>
- <Input
- placeholder={t('dms.search')}
- prefix={<SearchOutlined />}
- allowClear
- value={searchQuery}
- onChange={(e) => setSearchQuery(e.target.value)}
- />
- </Col>
- <Col span={4}>
- <Select
- placeholder={t('dms.type')}
- allowClear
- style={{ width: '100%' }}
- value={filterType || undefined}
- onChange={(v) => setFilterType(v || '')}
+ <KitListCard
+ tabs={tabs}
+ activeTab={filterType || 'all'}
+ onTabChange={(k) => { setFilterType(k === 'all' ? '' : k); setSelectedRowKeys([]); }}
+ toolbar={
+ <>
+ <KitSearchInput value={searchQuery} onChange={(v) => { setSearchQuery(v); }} placeholder={t('search')} />
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={activeFilterCount}
+ onClear={() => { setFilterType(''); setFilterTag(''); setDateRange([]); }}
  >
- <Select.Option value="pdf">PDF</Select.Option>
- <Select.Option value="image">Image</Select.Option>
- <Select.Option value="document">Document</Select.Option>
- <Select.Option value="spreadsheet">Spreadsheet</Select.Option>
- </Select>
- </Col>
- <Col span={4}>
+ <Space direction="vertical" style={{ width: '100%' }} size={12}>
+ <div>
+ <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, color: 'var(--ink-600)' }}>{t('dms.type')}</div>
+ <Radio.Group
+ value={filterType || 'all'}
+ onChange={(e) => setFilterType(e.target.value === 'all' ? '' : e.target.value)}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="all">{t('all', 'All')}</Radio>
+ {typeOptions.map((o) => (
+ <Radio key={o.value} value={o.value}>{o.label}</Radio>
+ ))}
+ </Radio.Group>
+ </div>
+ <div>
+ <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, color: 'var(--ink-600)' }}>{t('dms.tag')}</div>
  <Select
  placeholder={t('dms.tag')}
  allowClear
@@ -334,11 +391,22 @@ const DocumentVault: React.FC = () => {
  <Select.Option key={tag} value={tag}>{tag}</Select.Option>
  ))}
  </Select>
- </Col>
- <Col span={4}>
- <RangePicker style={{ width: '100%' }} onChange={(dates) => setDateRange(dates || [])} />
- </Col>
- <Col span={2} style={{ textAlign: 'right' }}>
+ </div>
+ <div>
+ <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, color: 'var(--ink-600)' }}>{t('dms.modified')}</div>
+ <RangePicker style={{ width: '100%' }} value={dateRange as any} onChange={(dates) => setDateRange(dates || [])} />
+ </div>
+ </Space>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('dms.type')}
+ anyLabel={t('all', 'All')}
+ value={filterType}
+ onChange={(v) => setFilterType(v)}
+ options={typeOptions}
+ />
+ </div>
+ <div style={{ marginInlineStart: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
  <Button.Group>
  <Button
  icon={<UnorderedListOutlined />}
@@ -351,9 +419,23 @@ const DocumentVault: React.FC = () => {
  onClick={() => setViewMode('grid')}
  />
  </Button.Group>
- </Col>
- </Row>
-
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('documents', filteredFiles, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ </div>
+ </>
+ }
+ >
  {viewMode === 'list' ? (
  <ResponsiveTableAdapter
  dataSource={filteredFiles}
@@ -364,6 +446,7 @@ const DocumentVault: React.FC = () => {
  pagination={{ pageSize: 50, showSizeChanger: true }}
  />
  ) : (
+ <div style={{ padding: 16 }}>
  <Row gutter={[16, 16]}>
  {filteredFiles.map((file) => (
  <Col key={file.id} span={6}>
@@ -388,9 +471,9 @@ const DocumentVault: React.FC = () => {
  </Col>
  ))}
  </Row>
+ </div>
  )}
- </Space>
- </SectionCard>
+ </KitListCard>
  </Col>
  </Row>
 

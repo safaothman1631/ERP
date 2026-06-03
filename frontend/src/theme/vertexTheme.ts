@@ -99,8 +99,9 @@ export function buildVertexTheme({
       colorBgLayout: dark ? '#0B0E14' : PALETTE.slate[50],
       colorBgContainer: dark ? '#11151F' : '#FFFFFF',
       colorBgElevated: dark ? '#161B27' : '#FFFFFF',
-      colorBorder: dark ? 'rgba(255,255,255,0.08)' : '#E2E6EC',
-      colorBorderSecondary: dark ? 'rgba(255,255,255,0.06)' : '#ECEFF3',
+      // Borders are DARK in dark mode (the user's repeated "no white frames")
+      colorBorder: dark ? 'rgba(0,0,0,0.55)' : '#E2E6EC',
+      colorBorderSecondary: dark ? 'rgba(0,0,0,0.40)' : '#ECEFF3',
       borderRadius: 8,          // controls (inputs, buttons)
       borderRadiusLG: 12,       // cards, modals
       borderRadiusSM: 6,
@@ -119,7 +120,7 @@ export function buildVertexTheme({
       Button: { fontWeight: 600, primaryShadow: `0 8px 30px ${hexA(primary, 0.4)}`, defaultShadow: 'none' },
       Table: {
         headerBg: dark ? '#161B27' : '#FAFBFC',
-        borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E2E6EC',
+        borderColor: dark ? 'rgba(0,0,0,0.55)' : '#E2E6EC',
         cellPaddingBlock: 12,
         headerColor: PALETTE.ink[500],
       },
@@ -168,7 +169,7 @@ export function vertexCssVars(roleOrAccent = 'owner'): string {
   --radius-md:8px;--radius-lg:12px;--radius-sm:6px;
 }
 html[data-theme="dark"]{
-  --bg:#0B0E14;--surface:#11151F;--surface-2:#161B27;--border:rgba(255,255,255,0.08);
+  --bg:#0B0E14;--surface:#11151F;--surface-2:#161B27;--border:rgba(0,0,0,0.55);
   --ink-900:#ECEEF2;--ink-700:#C2C8D2;--ink-500:#8A93A3;--ink-300:#5C6473;
 }`;
 }

@@ -333,7 +333,10 @@ const AppearanceSettings: React.FC = () => {
       if (vals.layout && vals.layout !== currentLayout) {
         setLayoutMode(vals.layout);
       }
-      await api.put('/api/system/settings/appearance', vals).catch(() => {});
+      // No inline .catch here: a failed save must propagate to the outer catch
+      // so we show an error (not a false success toast). The API interceptor
+      // also surfaces the specific reason.
+      await api.put('/api/system/settings/appearance', vals);
       message.success(t('success'));
     } catch {
       message.error(t('error'));
@@ -1213,7 +1216,9 @@ const NotificationSettings: React.FC = () => {
 
   const handleTest = async (channel: NotifChannel) => {
     try {
-      await api.post('/api/system/notification-preferences/test', { channel }).catch(() => {});
+      // No inline .catch: if the test send fails, fall through to the catch
+      // below ("queued") instead of falsely reporting it as sent.
+      await api.post('/api/system/notification-preferences/test', { channel });
       message.success(t('test_sent', `Test ${channel} notification sent`));
     } catch {
       message.info(t('test_queued', 'Test notification queued'));

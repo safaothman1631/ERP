@@ -39,7 +39,7 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { space, radius, layout } from '../theme/tokens';
+import { space, radius, layout, fontSize } from '../theme/tokens';
 import { useIsDark } from '../hooks/useIsDark';
 import { MotionButton } from '../components/MotionButton';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -291,7 +291,7 @@ export const FormLayout: React.FC<FormLayoutProps> = ({
                     style={{
                       margin: 0,
                       fontFamily: 'var(--font-display)',
-                      fontSize: 16,
+                      fontSize: fontSize.lg,
                       fontWeight: 700,
                       letterSpacing: '-0.01em',
                       color: 'var(--ink-900)',
@@ -335,6 +335,7 @@ export const FormLayout: React.FC<FormLayoutProps> = ({
         {/* ── Sticky save bar ──────────────────────────────────────────── */}
         <Affix offsetBottom={layout.footerHeight}>
           <div
+            className="vx-form-savebar"
             style={{
               display: 'flex',
               alignItems: 'center',

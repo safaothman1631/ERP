@@ -1,13 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Space, Form, Input, InputNumber, Select, Tabs, App, Switch, DatePicker, Modal } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, GiftOutlined } from '@ant-design/icons';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Button, Form, Input, InputNumber, Select, App, Switch, DatePicker, Modal } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, GiftOutlined, CopyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import api from '../../api';
-import { PageHeader, StatusTag } from '../../design-system';
+import { PageHeader, StatusTag, type ColumnVisibilityItem } from '../../design-system';
 import type { StatusKind } from '../../design-system';
+import KitListCard, { type KitListTab } from '../../design-system/KitListCard';
+import KitListToolbarActions from '../../design-system/KitListToolbarActions';
+import KitRowActions from '../../design-system/KitRowActions';
+import KitSearchInput from '../../design-system/KitSearchInput';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
+import { downloadCsv } from '../../utils/exportCsv';
 
 // Map loyalty program types → StatusTag semantic kinds (auto-flip tokens).
 const PROGRAM_TYPE_KIND: Record<string, StatusKind> = {
@@ -17,6 +22,16 @@ const PROGRAM_TYPE_KIND: Record<string, StatusKind> = {
  ewallet: 'warning',
  promotion: 'error',
 };
+
+/** Initials for the kit's avatar cell (first letters of the first two words). */
+const initialsOf = (name: string): string =>
+ String(name || '?')
+ .trim()
+ .split(/\s+/)
+ .map((w) => w[0])
+ .join('')
+ .slice(0, 2)
+ .toUpperCase();
 
 interface LoyaltyProgram {
  id: string;
@@ -44,7 +59,7 @@ const POSLoyalty: React.FC = () => {
  const { t } = useTranslation();
  const { message } = App.useApp();
  const [form] = Form.useForm();
- 
+
  const [programs, setPrograms] = useState<LoyaltyProgram[]>([]);
  const [cards, setCards] = useState<LoyaltyCard[]>([]);
  const [loading, setLoading] = useState(false);
@@ -52,6 +67,10 @@ const POSLoyalty: React.FC = () => {
  const [cardModalOpen, setCardModalOpen] = useState(false);
  const [editingId, setEditingId] = useState<string | null>(null);
  const [activeTab, setActiveTab] = useState('programs');
+ const [search, setSearch] = useState('');
+ const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
+ try { return JSON.parse(localStorage.getItem('pos_loyalty.hiddenCols') || '[]'); } catch { return []; }
+ });
 
  useEffect(() => {
  loadPrograms();
@@ -110,6 +129,19 @@ const POSLoyalty: React.FC = () => {
  setModalOpen(true);
  };
 
+ // Duplicate: open the create form pre-filled with this record's values (no id).
+ const handleDuplicate = (record: LoyaltyProgram) => {
+ setEditingId(null);
+ const { id: _id, ...rest } = record;
+ form.setFieldsValue({
+ ...rest,
+ name: `${record.name ?? ''} (${t('copy', 'copy')})`,
+ date_from: record.date_from ? dayjs(record.date_from) : undefined,
+ date_to: record.date_to ? dayjs(record.date_to) : undefined,
+ });
+ setModalOpen(true);
+ };
+
  const handleSubmit = async () => {
  try {
  const values = await form.validateFields();
@@ -118,7 +150,7 @@ const POSLoyalty: React.FC = () => {
  date_from: values.date_from ? values.date_from.toISOString() : undefined,
  date_to: values.date_to ? values.date_to.toISOString() : undefined,
  };
- 
+
  if (editingId) {
  await api.put(`/api/pos/loyalty/programs/${editingId}`, data);
  message.success(t('updated_successfully'));
@@ -159,9 +191,17 @@ const POSLoyalty: React.FC = () => {
  dataIndex: 'name',
  key: 'name',
  render: (_: any, record: LoyaltyProgram) => (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{initialsOf(record.name)}</span>
  <div>
- <div>{record.name}</div>
+ <div style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{record.name}</div>
  {record.name_ku && <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>{record.name_ku}</div>}
+ </div>
  </div>
  ),
  },
@@ -177,13 +217,21 @@ const POSLoyalty: React.FC = () => {
  title: t('point_ratio'),
  dataIndex: 'point_ratio',
  key: 'point_ratio',
- render: (val: number) => `${val} pts / 1000 ${t('currency')}`,
+ render: (val: number) => (
+ <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-900)', fontWeight: 600 }}>
+ {`${val} pts / 1000 ${t('currency')}`}
+ </span>
+ ),
  },
  {
  title: t('min_amount'),
  dataIndex: 'min_amount',
  key: 'min_amount',
- render: (val: number) => val.toLocaleString(),
+ render: (val: number) => (
+ <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-900)', fontWeight: 600 }}>
+ {val.toLocaleString()}
+ </span>
+ ),
  },
  {
  title: t('valid_period'),
@@ -192,7 +240,7 @@ const POSLoyalty: React.FC = () => {
  if (!record.date_from && !record.date_to) return t('always');
  const from = record.date_from ? dayjs(record.date_from).format('YYYY-MM-DD') : '∞';
  const to = record.date_to ? dayjs(record.date_to).format('YYYY-MM-DD') : '∞';
- return `${from} — ${to}`;
+ return <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-700)', fontSize: 12.5 }}>{`${from} — ${to}`}</span>;
  },
  },
  {
@@ -204,17 +252,20 @@ const POSLoyalty: React.FC = () => {
  ),
  },
  {
- title: t('actions'),
+ title: '',
  key: 'actions',
+ width: 56,
+ align: 'center' as const,
  render: (_: any, record: LoyaltyProgram) => (
- <Space>
- <Button icon={<EditOutlined />} onClick={() => handleEdit(record)}>
- {t('edit')}
- </Button>
- <Button danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)}>
- {t('delete')}
- </Button>
- </Space>
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'edit', icon: <EditOutlined />, label: t('edit'), onClick: () => handleEdit(record) },
+ { key: 'duplicate', icon: <CopyOutlined />, label: t('duplicate', 'Duplicate'), onClick: () => handleDuplicate(record) },
+ { type: 'divider' },
+ { key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true, onClick: () => handleDelete(record.id) },
+ ]}
+ />
  ),
  },
  ];
@@ -224,7 +275,9 @@ const POSLoyalty: React.FC = () => {
  title: t('code'),
  dataIndex: 'code',
  key: 'code',
- render: (code: string) => <code>{code}</code>,
+ render: (code: string) => (
+ <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-900)', fontWeight: 500 }}>{code}</span>
+ ),
  },
  {
  title: t('program'),
@@ -258,9 +311,45 @@ const POSLoyalty: React.FC = () => {
  title: t('created_at'),
  dataIndex: 'created_at',
  key: 'created_at',
- render: (val: string) => dayjs(val).format('YYYY-MM-DD HH:mm'),
+ render: (val: string) => (
+ <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-700)', fontSize: 12.5 }}>
+ {dayjs(val).format('YYYY-MM-DD HH:mm')}
+ </span>
+ ),
  },
  ];
+
+ // Kit list tabs — the page's natural top-level segments (programs vs issued cards).
+ const tabs: KitListTab[] = [
+ { key: 'programs', label: t('programs') },
+ { key: 'cards', label: t('loyalty_cards') },
+ ];
+
+ const isCards = activeTab === 'cards';
+ const activeColumns = isCards ? cardColumns : programColumns;
+ const activeData: any[] = isCards ? cards : programs;
+ const filteredData = useMemo(() => {
+ if (!search) return activeData;
+ const q = search.toLowerCase();
+ return activeData.filter((row: any) =>
+ Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(q)),
+ );
+ }, [activeData, search]);
+
+ // Column show/hide meta for the active tab (exclude the actions column).
+ const columnsMeta: ColumnVisibilityItem[] = activeColumns.map((c) => ({
+ key: c.key,
+ label: typeof c.title === 'string' && c.title ? c.title : c.key,
+ pinned: c.key === 'name' || c.key === 'code' || c.key === 'actions',
+ }));
+ const visibleColumns = useMemo(
+ () => activeColumns.filter((c) => !hiddenCols.includes(c.key)),
+ [activeColumns, hiddenCols],
+ );
+ const persistHidden = (next: string[]) => {
+ setHiddenCols(next);
+ try { localStorage.setItem('pos_loyalty.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
+ };
 
  return (
  <div style={{ padding: 24 }}>
@@ -273,45 +362,48 @@ const POSLoyalty: React.FC = () => {
  }
  />
 
- <Tabs
- activeKey={activeTab}
- onChange={setActiveTab}
- items={[
- {
- key: 'programs',
- label: t('programs'),
- children: (
- <ResponsiveTableAdapter
- columns={programColumns}
- dataSource={programs}
- rowKey="id"
- loading={loading}
- pagination={{ pageSize: 20 }}
- />
- ),
- },
- {
- key: 'cards',
- label: t('loyalty_cards'),
- children: (
+ <KitListCard
+ tabs={tabs}
+ activeTab={activeTab}
+ onTabChange={setActiveTab}
+ toolbar={
  <>
- <div style={{ marginBottom: 16 }}>
+ <KitSearchInput
+ value={search}
+ onChange={(v) => { setSearch(v); }}
+ placeholder={t('search')}
+ />
+ {isCards && (
  <Button icon={<GiftOutlined />} onClick={handleIssueCard}>
  {t('issue_card')}
  </Button>
+ )}
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv(isCards ? 'loyalty_cards' : 'loyalty_programs', activeData, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
  </div>
+ </>
+ }
+ >
  <ResponsiveTableAdapter
- columns={cardColumns}
- dataSource={cards}
+ columns={visibleColumns}
+ dataSource={filteredData}
  rowKey="id"
  loading={loading}
  pagination={{ pageSize: 20 }}
  />
- </>
- ),
- },
- ]}
- />
+ </KitListCard>
 
  <FormDialog
  title={editingId ? t('edit_program') : t('add_program')}

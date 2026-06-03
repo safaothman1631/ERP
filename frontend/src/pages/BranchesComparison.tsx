@@ -12,6 +12,7 @@ import { PageHeader } from '../design-system';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { ResponsiveChart } from '../components/responsive/ResponsiveChart';
 import { asTranslationKey } from '../i18n/types';
+import { dataViz } from '../theme/tokens';
 
 interface Row {
   branch_id: string;
@@ -72,8 +73,8 @@ export default function BranchesComparison() {
       />
       <ResponsiveChart
         legendItems={[
-          { id: 'revenue', labelKey: asTranslationKey('revenue'), color: '#52c41a' },
-          { id: 'expenses', labelKey: asTranslationKey('expenses'), color: '#ff4d4f' },
+          { id: 'revenue', labelKey: asTranslationKey('revenue'), color: dataViz.categorical[1] },
+          { id: 'expenses', labelKey: asTranslationKey('expenses'), color: dataViz.categorical[3] },
           { id: 'profit', labelKey: asTranslationKey('profit'), color: '#7B61FF' },
         ]}
       >
@@ -82,8 +83,8 @@ export default function BranchesComparison() {
           <XAxis dataKey="branch_name" />
           <YAxis />
           <Tooltip />
-          <Bar dataKey="revenue" fill="#52c41a" name={t('revenue') || 'Revenue'} />
-          <Bar dataKey="expenses" fill="#ff4d4f" name={t('expenses') || 'Expenses'} />
+          <Bar dataKey="revenue" fill={dataViz.categorical[1]} name={t('revenue') || 'Revenue'} />
+          <Bar dataKey="expenses" fill={dataViz.categorical[3]} name={t('expenses') || 'Expenses'} />
           <Bar dataKey="profit" fill="#7B61FF" name={t('profit') || 'Profit'} />
         </BarChart>
       </ResponsiveChart>
