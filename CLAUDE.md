@@ -795,3 +795,26 @@ frontend/src/
 - **1.6 dead code:** `frontend/scripts/deadcode-audit.mjs` + `npm run audit:deadcode` (convention-matched، report-only، static + dynamic `import()` + `require` + `new URL` resolve). ٧٩ orphan دۆزرانەوە، بەڵام زۆربەیان **scaffolding-ی pending-feature** (payments/billing/hardware/PayLink — لە CLAUDE.md وەک pending) یان barrel/template/dev-tool-ی مەبەستدارن — نەک کۆدی مردوو. تەنها ٢ duplicate-ی superseded سڕایەوە: `pages/Login.tsx` + `pages/SignUp.tsx` (auth-ی کۆنی پێش-Vertex؛ active-ەکە `features/auth/LoginPage` + `VertexAuthShell`). کۆدبەیس `import.meta.glob`/template-literal import **بەکارناهێنێت** → "0 refs"-ـی سکریپتەکە بەڵگەی تەواوە، tsc+build وەک oracle.
 
 **گەیتەکان (Windows):** tsc ٠ · lint exit 0 (٠ error / 2392 warn) · build exit 0 (477 PWA) · test 1321/1321 (٠ ڕیگرێشن؛ هەمان ٢٩ suite-load-ی پێش-بوونیار: Playwright e2e + scanner-service `workers/barcode` + buildAddOption) · rtl:audit passed · audit:glass-modals OK. **٠ commit · ٠ deploy** (بەپێی پۆلیسی — بەکارهێنەر review + commit دەکات).
+
+### 2026-06-03 — پۆلی ٢ (Pool 2): Commit + Production Deploy ✅
+
+دوای پۆلی ١، بەکارهێنەر «هەمووی ئێستا دیپلۆی بکە» هەڵبژارد. هەمووی جێبەجێکرا + پشتڕاستکرایەوە.
+
+**Commit (2.1):** ٤ کۆمیتی پاک لەسەر `feat/platform-overhaul-2026-05-27`:
+- `1c5677e` feat(accounting): GL/COGS/AP auto-post + read-after-write fix + P0/P1 audit fixes (backend، 35 فایل)
+- `b3f69bc` feat(ui): Vertex rollout + Pool 1 token/density/error-handling polish (168 فایل)
+- `300f8cc` fix(marketing): pricing alignment با plans.py
+- `ca8b719` docs+chore: roadmap, audit artifacts, changelog, POS index, drop test stubs
+- **index corruption چارەسەرکرا:** کاتی stage، `.git/index` بە phantom entry (`frontend/TEMPlintout.txt`) خراپ ببوو (بەهۆی لابردنی lock-ی ٤-کاتژمێریی کۆن لە کاتی نووسین)؛ `.git/index` بسڕایەوە + `read-tree HEAD` دروستکرایەوە. artifact/secret/binary commit **نەکران**: `.coverage.*`، `TEMPlintout.txt`، `gha-key.json` (classifier ڕێی نەدا staged بکرێت — سەلامەت)، `ERP_*.pdf/docx`/`Perfection.docx` (gitignore + exclude).
+
+**Deploy (2.2 + 2.3) — هەمووی production، پشتڕاستکراو:**
+- **firestore index** → `zoho-83cda` ✅ (`pos_orders (org_id,state,created_at)` + هیتر؛ ٣ index-ی نا-لە-فایل بە --force نەسڕانەوە).
+- **backend** → Cloud Run **europe-west1** (production `-ew` service، نەک `me-central1`-ی ناو سکریپتی migrate — سکریپتەکە region-ی هەڵەی هەبوو؛ vercel.json بۆ `-ew` proxy دەکات). revision `00009-hnf` → **`00010-ncg`**، **code-only deploy** (`--source . --region europe-west1`، بێ env-flag → ١٧ env var + ٢ secret + cpu/memory پارێزران). پشتڕاستی: `route_count 2338`، `uptime 74s` (تازە)، `/api/live` alive بە proxy + direct.
+- **frontend** → Vercel (`erpiq-frontend`). erpiq.systems HTTP 200، CSS `index-DjCdojk7.css` (Vertex+Pool1 build، 4979 module)، theme-color `#7B61FF`. زیرۆ-downtime (Vercel alias + Cloud Run rolling).
+
+**ماوە (بەمەبەست deferred):**
+- **POS query rewrite** (2.2 بەشی ٢): `pos.py` reports → query-ی `pos_orders` بە index-ی نوێ لەبری scan-ی 5000-doc. **نەکرا** چونکە optimization-ی مەترسیدارە بۆ report-ێکی کارا — پێویستی بە before/after validation-ی داتای ڕاستەقینە + redeploy-ی جیاواز هەیە (Pool-3 style). index ئامادەیە.
+- **`git push origin feat/platform-overhaul-2026-05-27`**: کۆمیتەکان لۆکاڵن؛ production لە کۆدی لۆکاڵ build بووە. push بۆ backup + هاوتەریبیی remote پێشنیارکراوە (بەپێی policy: تەنها بە داوای بەکارهێنەر).
+- **gha-key.json**: هێشتا tracked-ـە (classifier ڕێی نەدا سڕینەوەی stage بکەم)؛ کلیلەکە پێشتر لە history-دایە — history-rewrite پێویستە بۆ پاککردنەوەی تەواو.
+
+**گەیتە کۆتاییەکان (پێش deploy):** tsc ٠ · lint ٠ error · build exit 0 · test 1321/1321 · rtl ٠ · glass OK · backend pytest (پێشتر) 1490+ سەرکەوتوو.
