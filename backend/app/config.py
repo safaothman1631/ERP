@@ -144,6 +144,12 @@ class Settings(BaseSettings):
     # Off = no event is enqueued from the hot JE/invoice path (zero behavior
     # change); the create_journal_entry_* `emit_event` arg is simply ignored.
     OUTBOX_HOTPATH_ENABLED: bool = False
+    # Pool 4.6: business-data warehouse (Firestore -> BigQuery) + analytics +
+    # BQML forecasting. Empty = OFF (sync job no-ops, analytics falls back to
+    # OLTP/empty). Set to "project.dataset" (e.g. "zoho-83cda.zoho_warehouse")
+    # to enable. Read via os.environ by the analytics modules (mirrors
+    # rum_ingest's RUM_BIGQUERY_DATASET pattern).
+    ANALYTICS_BQ_DATASET: str = ""
     GENERIC_WRITE_VALIDATION: bool = True
     AUDIT_RETENTION_MONTHS: int = 24
 

@@ -106,6 +106,8 @@ const WmsPage = lazyWithRetry(() => import('./pages/wms/WmsPage'), 'wms');
 const TmsPage = lazyWithRetry(() => import('./pages/tms/TmsPage'), 'tms');
 const MdmPage = lazyWithRetry(() => import('./pages/mdm/MdmPage'), 'mdm');
 const BpmnPage = lazyWithRetry(() => import('./pages/bpmn/BpmnPage'), 'bpmn');
+// Pool 4.6 warehouse-backed analytics dashboard
+const AnalyticsDashboard = lazyWithRetry(() => import('./pages/analytics/AnalyticsDashboard'), 'analytics');
 const ConsolidatedReports = lazyWithRetry(() => import('./pages/ConsolidatedReports'), 'consolidated-reports');
 const BranchesComparison = lazyWithRetry(() => import('./pages/BranchesComparison'), 'branches-comparison');
 const Projects = lazyWithRetry(() => import('./pages/Projects'), 'projects');
@@ -625,6 +627,7 @@ export const routes: RouteObject[] = [
       { path: 'tms', element: <PageTransition><TmsPage /></PageTransition> },
       { path: 'mdm', element: <PageTransition><MdmPage /></PageTransition> },
       { path: 'bpmn', element: <PageTransition><BpmnPage /></PageTransition> },
+      { path: 'analytics', element: <PageTransition><AnalyticsDashboard /></PageTransition> },
       { path: 'reports/consolidated', element: <PageTransition><ConsolidatedReports /></PageTransition> },
       { path: 'reports/branches', element: <PageTransition><BranchesComparison /></PageTransition> },
       // Wave AA: Multi-Entity Management

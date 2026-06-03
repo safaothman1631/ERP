@@ -128,6 +128,9 @@ from app.api import mdm as mdm_api
 from app.api import bpmn as bpmn_api
 # Pool 3 §3.6: public, API-key-authenticated gateway (/api/public/v1) + key mgmt.
 from app.api import public_gateway as public_gateway_api
+# Pool 4.6: BigQuery-warehouse-backed analytics (saved analyses + pivot) + BQML forecasting.
+from app.api import analytics as analytics_api
+from app.api import forecast as forecast_api
 from app.api.v1.errors import register_error_handlers
 import os
 
@@ -457,6 +460,9 @@ app.include_router(bpmn_api.router)
 # Pool 3 §3.6: public API gateway (versioned, API-key auth) + key management.
 for _pub_router in public_gateway_api.ALL_ROUTERS:
     app.include_router(_pub_router)
+# Pool 4.6: analytics warehouse (BI layer) + BQML forecasting.
+app.include_router(analytics_api.router)
+app.include_router(forecast_api.router)
 
 # ── Wave A: Sprints 36-44 (P0 generic enterprise modules) ──
 app.include_router(helpdesk.router)

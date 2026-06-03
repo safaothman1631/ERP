@@ -233,8 +233,20 @@ def start_scheduler(app=None):
     except Exception as exc:  # pragma: no cover - defensive
         logger.warning("observability heartbeat not registered: %s", exc)
 
+    # Pool 4.6: nightly Firestore -> BigQuery warehouse sync (flag-gated; no-ops
+    # unless ANALYTICS_BQ_DATASET / the default warehouse dataset is reachable).
+    _scheduler.add_job(
+        _job_warehouse_sync,
+        trigger=CronTrigger(hour=2, minute=30),
+        id="warehouse_sync",
+        name="Firestore -> BigQuery Warehouse Sync",
+        coalesce=True,
+        max_instances=1,
+        replace_existing=True,
+    )
+
     _scheduler.start()
-    logger.info("✅ Scheduler started with 20 jobs")
+    logger.info("✅ Scheduler started with 21 jobs")
 
 
 def shutdown_scheduler():
@@ -657,6 +669,18 @@ def _job_monthly_depreciation():
             finished_at=datetime.utcnow().isoformat(),
             status="failed",
         )
+
+
+def _job_warehouse_sync():
+    """Pool 4.6: sync Firestore business data -> the BigQuery warehouse. No-ops
+    (logged) when ANALYTICS_BQ_DATASET / the default dataset isn't reachable."""
+    from app.services.warehouse_sync import run_warehouse_sync
+
+    try:
+        logger.info("📦 Running warehouse sync (Firestore -> BigQuery)...")
+        logger.info("✅ Warehouse sync result: %s", run_warehouse_sync())
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.error("Warehouse sync failed: %s", exc)
 
 
 def _job_gdpr_hard_delete():
