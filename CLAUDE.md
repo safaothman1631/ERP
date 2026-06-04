@@ -927,3 +927,34 @@ consolidation-ـی GL-based: هەر JE بە `company_id` تاگ دەکرێت (de
 **ئەنجام:** backend **1619 passed / 3 pre-existing** (firestore_audit/redis/region — ٠ ڕیگرێشن) · app boots 2378 ڕووت · frontend tsc 0 · build exit 0 (481 PWA) · vitest **1321 passed / 0 ڕیگرێشن** · lint 0 error · **i18n:purity:foundation EXIT 0** · rtl ✅ · glass ✅.
 
 **flag بەمەبەست OFF (کۆد تەواو، چالاککردن operational):** `OUTBOX_HOTPATH_ENABLED` (event-driven staged) · `PERPETUAL_VALUATION_ENABLED` (flip-ی گلۆباڵ COGS دەشکێنێت بێ per-org cost-layer seed). **٠ commit/deploy تا ئەو خاڵە** (بەپێی داواکاری).
+
+### 2026-06-04 — Pool 4.6/4.7: BigQuery warehouse + BQML forecasting + AI/prediction suite (flag-gated، real-data validated، committed + pushed)
+
+تایەری چوارەم (داتا + AI). تەواوی پێپلاینی Firestore→BigQuery→BQML→Claude. **هەمووی flag-gated → ٠ گۆڕانی production تا env-ـەکان دانانرێن** (warehouse OFF بەبێ `ANALYTICS_BQ_DATASET`، AI OFF بەبێ `ANTHROPIC_API_KEY`، هەردووک گریسفول never-500). کۆمیتکراو (`34b37a7`, `4b0621e`, `772e566`, `e119940`, `760829d`, `8f6a158`, `d7a53c9`) + push بۆ `feat/platform-overhaul-2026-05-27`.
+
+**§4.6 Warehouse + BI + forecast:**
+- `app/analytics/warehouse_schema.py` — سەرچاوەی یەکتای contract: `dataset_ref/table_ref/project_id` (project لە "project.dataset" parse دەکات بۆ pin-کردنی BQ billing project) + ٤ fact (`fact_invoices/bills/pos_orders/items`) + `fact_invoice_lines` (line-level بۆ per-item demand) + mapperـەکان.
+- `app/services/warehouse_sync.py` — ETL: `sync_org`/`run_warehouse_sync` (scheduler entrypoint)، delete-then-insert idempotent، lazy BQ import، graceful no-op.
+- `app/api/analytics.py` — BI layer: `_FACTS` whitelist + `AnalysisDef` + `_validate` + parameterized `_build_sql` (injection-safe) + saved analyses. `/api/analytics/{query,saved,facts}`.
+- `app/api/forecast.py` — BQML `ARIMA_PLUS` revenue + cashflow forecast. **فێربوونی گرنگ:** ML.FORECAST settings دەبێت literal constant بن (`STRUCT({int(horizon)} AS horizon, 0.8 AS confidence_level)`) نەک `@param` — ئەگەرنا "settings struct must have literal constant values".
+
+**§4.7 AI/prediction suite (هەریەک `analytics/ai/*` + `api/ai_*`):**
+- `customer.py` — RFM (NTILE 5×5)، churn_risk، customer_clv، ar_late_risk.
+- `anomaly.py` — transaction_anomalies (z-score + IQR)، cashflow_anomalies.
+- `inventory.py` — demand_forecast (ARIMA_PLUS `time_series_id_col=item_id` بۆ multi-series)، reorder_suggestions، stockout_prediction، abc_analysis، dead_stock.
+- `financial.py` — expense_forecast، margin_forecast، payment_date_prediction.
+- `assistant.py` — Claude NL→query (whitelist-only system prompt → strict JSON → `AnalysisDef` → `_validate` → `_run_warehouse`؛ LLM هەرگیز ناگاتە SQL، injection-safe) + narrative_insights (کوردی/عەرەبی/ئینگلیزی).
+
+**§4.7+ Model-agnostic finalization (`d7a53c9` — ئەم سێشنە):** داوای بەکارهێنەر «کلیلی هەر مۆدێلێک دابنێیت کێشەی نەبێت».
+- `assistant.py` — `model_translate()/model_narrate()` لە env resolve دەکرێن: `AI_TRANSLATE_MODEL`/`AI_NARRATE_MODEL` → `AI_MODEL` → default (haiku بۆ translate، opus بۆ narrative). هیچ hard-code لە call نییە.
+- `_create_message()` — rich call (cached system block + structured JSON output) لەگەڵ **fallback ئۆتۆماتیک** بۆ سادەترین call (string system، بێ output_config) لەسەر هەر ناتەباییەکی SDK/model؛ JSON-in-text لە هەردوو حاڵەت parse دەکرێت → هەر مۆدێلێک/SDKـێک کار دەکات.
+- `status()/_probe_key()` + `GET /api/ai/status[?probe=true]` — ڕاپۆرتی config + (بە probe) live-call-ی بچووک بۆ پشتڕاستکردنی کلیل+مۆدێل. never-500.
+- `env_docs.py` + `.env.example` — تۆمارکردنی `ANTHROPIC_API_KEY`, `AI_MODEL`, `AI_TRANSLATE_MODEL`, `AI_NARRATE_MODEL`, `ANALYTICS_BQ_DATASET`.
+
+**§4 infra:** Sentry durability + OTel project pin (`tracing.py`) + CI region/secret fixes + `/api/live` HEAD + region-alignment tool (Vercel /api proxy → europe-west1) + ٣ tooling-test fix.
+
+**🔬 Real-data validation (Firestore + BigQuery ڕاستەقینە، synthetic test orgs، net-zero cleanup):** demand forecast E2E (28→30 per-item points)؛ reorder Item-A/C high؛ stockout Item-A=0 days؛ margin 5711−1400=4311؛ RFM segment-بندی دروست؛ anomaly گرتنی planted 99000 invoice.
+
+**ئەنجام:** backend **1851 passed / 0 failed** (پێشتر 3 pre-existing → ئێستا هەمووی سەوز؛ +12 تێستی model-agnostic) · app boots 2401 ڕووت · `/api/ai/status` تۆمارکراوە · `anthropic>=0.69` لە requirements + venv.
+
+**ماوە (operational، هی بەکارهێنەر — کاتێک «لە production بەکاری بهێنە»):** `ANALYTICS_BQ_DATASET` env + grant-ـی runtime SA (`bigquery.jobUser` + `dataEditor`) + `ANTHROPIC_API_KEY` env + redeploy → چالاککردنی warehouse/AI. پشتڕاستی: `GET /api/ai/status?probe=true`. ئیختیاری داهاتوو: price optimization، lead scoring، seasonality.
