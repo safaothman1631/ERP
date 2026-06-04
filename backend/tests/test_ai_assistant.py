@@ -399,3 +399,165 @@ def test_insights_endpoint_default_lang_no_500(client, monkeypatch):
     resp = client.get("/api/ai/insights")
     assert resp.status_code == 200
     assert resp.json()["status"] == "ai_not_configured"
+
+
+# ── "any model works": env-configurable model ids ────────────────────────────
+
+
+def test_model_resolution_defaults(monkeypatch):
+    """With no overrides, each task uses its sensible built-in default."""
+    for var in ("AI_MODEL", "AI_TRANSLATE_MODEL", "AI_NARRATE_MODEL"):
+        monkeypatch.delenv(var, raising=False)
+    assert assistant.model_translate() == assistant._DEFAULT_MODEL_TRANSLATE
+    assert assistant.model_narrate() == assistant._DEFAULT_MODEL_NARRATE
+
+
+def test_model_resolution_global_override(monkeypatch):
+    """``AI_MODEL`` alone switches BOTH tasks to one model — no code change."""
+    for var in ("AI_TRANSLATE_MODEL", "AI_NARRATE_MODEL"):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv("AI_MODEL", "claude-some-future-model")
+    assert assistant.model_translate() == "claude-some-future-model"
+    assert assistant.model_narrate() == "claude-some-future-model"
+
+
+def test_model_resolution_per_task_overrides_global(monkeypatch):
+    """Per-task env vars take precedence over the global ``AI_MODEL``."""
+    monkeypatch.setenv("AI_MODEL", "global-model")
+    monkeypatch.setenv("AI_TRANSLATE_MODEL", "fast-model")
+    monkeypatch.setenv("AI_NARRATE_MODEL", "prose-model")
+    assert assistant.model_translate() == "fast-model"
+    assert assistant.model_narrate() == "prose-model"
+
+
+def test_ask_data_uses_configured_model(monkeypatch):
+    """The model id flowing into ``messages.create`` is the configured one."""
+    monkeypatch.setenv("AI_TRANSLATE_MODEL", "my-custom-model")
+    captured = _install_fake_anthropic(monkeypatch, reply_text=_GOOD_QUERY_JSON)
+    monkeypatch.setattr(
+        assistant.analytics, "_run_warehouse", MagicMock(return_value=[])
+    )
+    out = assistant.ask_data("org-1", "revenue by month")
+    assert out["status"] == "ok"
+    assert captured["calls"][0]["model"] == "my-custom-model"
+
+
+# ── "any model works": rich→plain fallback ───────────────────────────────────
+
+
+def _install_picky_anthropic(monkeypatch, *, reply_text):
+    """Fake SDK whose ``messages.create`` REJECTS the rich form.
+
+    It raises ``TypeError`` if called with ``output_config`` or a *list* system
+    block (i.e. an older SDK / a model that doesn't support structured output or
+    cached system blocks), and only succeeds on the plain form (string ``system``,
+    no ``output_config``). This proves ``_create_message`` degrades so any
+    model/SDK works. Records calls on the returned ``captured`` dict.
+    """
+    captured: dict = {"calls": []}
+    mod = types.ModuleType("anthropic")
+
+    class _Messages:
+        def create(self, **kwargs):
+            captured["calls"].append(kwargs)
+            if "output_config" in kwargs or isinstance(kwargs.get("system"), list):
+                raise TypeError("unexpected keyword argument 'output_config'")
+            return _Message(reply_text)
+
+    class Anthropic:
+        def __init__(self, *a, **k):
+            self.messages = _Messages()
+
+    mod.Anthropic = Anthropic
+    monkeypatch.setitem(sys.modules, "anthropic", mod)
+    return captured
+
+
+def test_create_message_falls_back_to_plain_call(monkeypatch):
+    """A schema-bearing call on a picky SDK still returns text via the plain form."""
+    captured = _install_picky_anthropic(monkeypatch, reply_text="ok")
+    client = assistant._anthropic_client()
+    msg = assistant._create_message(
+        client, model="m", system_text="sys",
+        messages=[{"role": "user", "content": "hi"}], max_tokens=8,
+        schema={"type": "object"},
+    )
+    assert assistant._extract_text(msg) == "ok"
+    # Two attempts recorded: the rich one (rejected) then the plain one (ok).
+    assert len(captured["calls"]) == 2
+    assert "output_config" in captured["calls"][0]
+    assert "output_config" not in captured["calls"][1]
+    assert captured["calls"][1]["system"] == "sys"  # plain string system
+
+
+def test_ask_data_works_on_model_without_structured_output(monkeypatch):
+    """End-to-end: a model that rejects structured output still answers — the
+    key 'just works' for any model because we parse JSON-in-text on fallback."""
+    _install_picky_anthropic(monkeypatch, reply_text=_GOOD_QUERY_JSON)
+    monkeypatch.setattr(
+        assistant.analytics,
+        "_run_warehouse",
+        MagicMock(return_value=[{"month": "2026-01", "total": 5.0}]),
+    )
+    out = assistant.ask_data("org-1", "revenue by month")
+    assert out["status"] == "ok"
+    assert out["rows"] == [{"month": "2026-01", "total": 5.0}]
+
+
+# ── status() + /api/ai/status endpoint ───────────────────────────────────────
+
+
+def test_status_reports_ok_when_configured(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    monkeypatch.setenv("ANALYTICS_BQ_DATASET", "p.ds")
+    monkeypatch.setenv("AI_TRANSLATE_MODEL", "t-model")
+    monkeypatch.setenv("AI_NARRATE_MODEL", "n-model")
+    out = assistant.status()
+    assert out["status"] == "ok"
+    assert out["ai_configured"] is True
+    assert out["warehouse_configured"] is True
+    assert out["translate_model"] == "t-model"
+    assert out["narrate_model"] == "n-model"
+    assert "probe" not in out  # no live call unless asked
+
+
+def test_status_reports_ai_not_configured(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    out = assistant.status()
+    assert out["status"] == "ai_not_configured"
+    assert out["ai_configured"] is False
+
+
+def test_status_probe_makes_live_call_when_configured(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    monkeypatch.setenv("ANALYTICS_BQ_DATASET", "p.ds")
+    _install_fake_anthropic(monkeypatch, reply_text="ok")
+    out = assistant.status(probe=True)
+    assert out["probe"]["ok"] is True
+
+
+def test_status_probe_reports_error_without_raising(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-bad")
+    monkeypatch.setenv("ANALYTICS_BQ_DATASET", "p.ds")
+    _install_fake_anthropic(monkeypatch, raises=RuntimeError("401 invalid key"))
+    out = assistant.status(probe=True)
+    assert out["probe"]["ok"] is False
+    assert "401" in out["probe"]["error"]
+
+
+def test_status_endpoint_no_500_when_unconfigured(client, monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    resp = client.get("/api/ai/status")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["status"] == "ai_not_configured"
+    assert body["ai_configured"] is False
+    assert "translate_model" in body and "narrate_model" in body
+
+
+def test_status_endpoint_ok_when_configured(client, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    monkeypatch.setenv("ANALYTICS_BQ_DATASET", "p.ds")
+    resp = client.get("/api/ai/status")
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "ok"

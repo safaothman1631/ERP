@@ -55,4 +55,20 @@ def insights(
     return assistant.narrative_insights(user["org_id"], lang=lang)
 
 
+@router.get("/status", dependencies=[Depends(require_perm(_PERM_READ))])
+def ai_status(
+    probe: bool = False,
+    user: dict = Depends(get_current_user),
+):
+    """Report the AI assistant's configuration so an operator can confirm that
+    setting the key (for any model) is wired correctly.
+
+    Returns ``{ai_configured, sdk_available, warehouse_configured, translate_model,
+    narrate_model, status}``. With ``?probe=true`` it additionally makes a tiny
+    live call to the configured model to verify the key actually works
+    (``probe: {ok, model, error?}``). Never 500s.
+    """
+    return assistant.status(probe=probe)
+
+
 ALL_ROUTERS = [router]

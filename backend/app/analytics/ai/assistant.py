@@ -55,14 +55,64 @@ STATUS_WAREHOUSE_NOT_CONFIGURED = "warehouse_not_configured"
 STATUS_COULD_NOT_INTERPRET = "could_not_interpret"
 STATUS_ERROR = "error"
 
-# ── Model ids (current Claude models) ────────────────────────────────────────
-# Cheap, fast model for the constrained NL -> structured-query translation.
-MODEL_TRANSLATE = "claude-haiku-4-5"
-# Higher-quality model for the plain-language business narrative.
-MODEL_NARRATE = "claude-opus-4-8"
+# ── Model ids — fully configurable so ANY Claude model works when a key is set ─
+# Resolution order (per task): the task-specific env var, then the global
+# AI_MODEL override, then a sensible current default. Set ONLY ``AI_MODEL`` to
+# run everything on one model, or override per task. Nothing is hard-coded into
+# the call — change the env var, no code change.
+_DEFAULT_MODEL_TRANSLATE = "claude-haiku-4-5"  # cheap/fast for NL->query
+_DEFAULT_MODEL_NARRATE = "claude-opus-4-8"      # higher quality for prose
+
+
+def model_translate() -> str:
+    return (os.environ.get("AI_TRANSLATE_MODEL") or os.environ.get("AI_MODEL")
+            or _DEFAULT_MODEL_TRANSLATE)
+
+
+def model_narrate() -> str:
+    return (os.environ.get("AI_NARRATE_MODEL") or os.environ.get("AI_MODEL")
+            or _DEFAULT_MODEL_NARRATE)
+
+
+# Back-compat aliases (some callers/tests read these): evaluated at import with
+# the defaults; the live calls use the functions above so env changes take effect.
+MODEL_TRANSLATE = _DEFAULT_MODEL_TRANSLATE
+MODEL_NARRATE = _DEFAULT_MODEL_NARRATE
 
 _MAX_TOKENS_QUERY = 1024
 _MAX_TOKENS_NARRATIVE = 2048
+
+
+def _create_message(client: Any, *, model: str, system_text: str, messages: list,
+                    max_tokens: int, schema: Optional[dict] = None) -> Any:
+    """Robust Claude call that works across SDK versions AND models.
+
+    Tries the feature-rich form first (a cached system block + — when a ``schema``
+    is given — structured JSON output). If that raises for ANY reason (an older
+    SDK without ``output_config``, a model that doesn't support structured output
+    or system blocks, etc.), it falls back to the plainest possible call (a string
+    system prompt, no cache_control, no structured output). The plain reply is
+    still parsed by ``_parse_query_json`` (which tolerates JSON-in-text), so
+    setting the key for ANY model just works — no per-model code changes.
+    """
+    # Attempt 1 — rich (cached system block + optional structured output).
+    try:
+        kwargs: dict[str, Any] = {
+            "model": model,
+            "max_tokens": max_tokens,
+            "system": [{"type": "text", "text": system_text, "cache_control": {"type": "ephemeral"}}],
+            "messages": messages,
+        }
+        if schema is not None:
+            kwargs["output_config"] = {"format": {"type": "json_schema", "schema": schema}}
+        return client.messages.create(**kwargs)
+    except Exception as exc:  # noqa: BLE001 - any SDK/model incompatibility
+        log.info("assistant.rich_call_unsupported model=%s falling back to plain: %s", model, exc)
+
+    # Attempt 2 — plainest form: string system, no cache_control, no structured output.
+    return client.messages.create(
+        model=model, max_tokens=max_tokens, system=system_text, messages=messages
+    )
 
 
 # ── Config / SDK helpers ─────────────────────────────────────────────────────
@@ -96,6 +146,56 @@ def _anthropic_client():
     except Exception:  # pragma: no cover - misconfigured key etc.
         log.warning("assistant.anthropic_client_init_failed")
         return None
+
+
+def _sdk_available() -> bool:
+    try:
+        import anthropic  # noqa: F401
+        return True
+    except Exception:
+        return False
+
+
+def _probe_key() -> dict:
+    """Make a tiny live call to verify the configured key + model actually work.
+    Returns ``{ok: bool, model, error?}``. Never raises."""
+    model = model_translate()
+    client = _anthropic_client()
+    if client is None:
+        return {"ok": False, "model": model, "error": "no_client"}
+    try:
+        msg = _create_message(
+            client, model=model, system_text="Reply with the single word: ok",
+            messages=[{"role": "user", "content": "ping"}], max_tokens=8,
+        )
+        return {"ok": bool(_extract_text(msg)), "model": model}
+    except Exception as exc:  # noqa: BLE001 - report, never raise
+        return {"ok": False, "model": model, "error": str(exc)[:200]}
+
+
+def status(probe: bool = False) -> dict:
+    """Report the assistant's configuration (and optionally live-test the key/model).
+
+    Lets an operator confirm, after setting ``ANTHROPIC_API_KEY`` (+ optionally
+    ``AI_MODEL``), that the assistant is wired and the chosen model works — so
+    "set the key for any model" is verifiable. Never raises.
+    """
+    out: dict[str, Any] = {
+        "ai_configured": ai_enabled(),
+        "sdk_available": _sdk_available(),
+        "warehouse_configured": warehouse_enabled(),
+        "translate_model": model_translate(),
+        "narrate_model": model_narrate(),
+    }
+    if not ai_enabled():
+        out["status"] = STATUS_AI_NOT_CONFIGURED
+    elif not warehouse_enabled():
+        out["status"] = STATUS_WAREHOUSE_NOT_CONFIGURED
+    else:
+        out["status"] = STATUS_OK
+    if probe and ai_enabled():
+        out["probe"] = _probe_key()
+    return out
 
 
 # ── Whitelist description for the LLM ────────────────────────────────────────
@@ -209,41 +309,33 @@ def _parse_query_json(text: str) -> Optional[dict]:
 def _ask_claude_for_query(client: Any, question: str) -> Optional[dict]:
     """Send the question to Claude and return the parsed query dict (or None).
 
-    Uses structured-output (``output_config.format``) so the model is constrained
-    to emit a JSON object; the system prompt is cached. Any SDK error propagates
-    to the caller (which maps it to ``status: error``)."""
-    message = client.messages.create(
-        model=MODEL_TRANSLATE,
-        max_tokens=_MAX_TOKENS_QUERY,
-        system=[
-            {
-                "type": "text",
-                "text": _system_prompt(),
-                "cache_control": {"type": "ephemeral"},
-            }
-        ],
-        output_config={
-            "format": {
-                "type": "json_schema",
-                "schema": {
-                    "type": "object",
-                    "properties": {
-                        "fact": {"type": "string"},
-                        "measures": {"type": "array", "items": {"type": "string"}},
-                        "dimensions": {"type": "array", "items": {"type": "string"}},
-                        "filters": {"type": "object", "additionalProperties": True},
-                        "date_from": {"type": ["string", "null"]},
-                        "date_to": {"type": ["string", "null"]},
-                        "order_by": {"type": ["string", "null"]},
-                        "order_dir": {"type": "string", "enum": ["ASC", "DESC"]},
-                        "limit": {"type": "integer"},
-                    },
-                    "required": ["fact", "measures"],
-                    "additionalProperties": True,
-                },
-            }
+    Prefers structured-output (``output_config.format``) when the model/SDK
+    support it, but :func:`_create_message` transparently falls back to a plain
+    JSON-in-text call otherwise — so ANY configured model works. The reply is
+    parsed by ``_parse_query_json`` either way."""
+    schema = {
+        "type": "object",
+        "properties": {
+            "fact": {"type": "string"},
+            "measures": {"type": "array", "items": {"type": "string"}},
+            "dimensions": {"type": "array", "items": {"type": "string"}},
+            "filters": {"type": "object", "additionalProperties": True},
+            "date_from": {"type": ["string", "null"]},
+            "date_to": {"type": ["string", "null"]},
+            "order_by": {"type": ["string", "null"]},
+            "order_dir": {"type": "string", "enum": ["ASC", "DESC"]},
+            "limit": {"type": "integer"},
         },
+        "required": ["fact", "measures"],
+        "additionalProperties": True,
+    }
+    message = _create_message(
+        client,
+        model=model_translate(),
+        system_text=_system_prompt(),
         messages=[{"role": "user", "content": question}],
+        max_tokens=_MAX_TOKENS_QUERY,
+        schema=schema,
     )
     return _parse_query_json(_extract_text(message))
 
@@ -453,22 +545,14 @@ def narrative_insights(org_id: str, lang: str = "ku") -> dict:
     payload = json.dumps(data, ensure_ascii=False, sort_keys=True, default=str)
 
     try:
-        message = client.messages.create(
-            model=MODEL_NARRATE,
-            max_tokens=_MAX_TOKENS_NARRATIVE,
-            system=[
-                {
-                    "type": "text",
-                    "text": _narrative_system_prompt(lang),
-                    "cache_control": {"type": "ephemeral"},
-                }
-            ],
+        message = _create_message(
+            client,
+            model=model_narrate(),
+            system_text=_narrative_system_prompt(lang),
             messages=[
-                {
-                    "role": "user",
-                    "content": f"Here is the analytics data as JSON:\n{payload}",
-                }
+                {"role": "user", "content": f"Here is the analytics data as JSON:\n{payload}"}
             ],
+            max_tokens=_MAX_TOKENS_NARRATIVE,
         )
     except Exception as exc:  # Claude/SDK failure -> graceful error
         log.warning("narrative_insights.claude_failed: %s", exc)
