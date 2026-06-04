@@ -136,37 +136,68 @@ def _dataset_reachable(client) -> bool:
 
 # ── per-org sync ────────────────────────────────────────────────────────────
 
+def all_tables() -> list[str]:
+    """Every warehouse table this module knows how to sync, in a stable order:
+    the generic header facts (``FACTS``), the line-level sales table, and the
+    derived/enriched tables (GL, expenses, payments, orders, quotes)."""
+    return (
+        list(warehouse_schema.FACTS.keys())
+        + ["fact_invoice_lines"]
+        + list(warehouse_schema.DERIVED_TABLES.keys())
+    )
+
+
+def _dispatch_sync(client, table: str, org_id: str, accounts_map: dict, contacts_map: dict):
+    """Route one table to its sync implementation (generic vs derived)."""
+    if table == "fact_invoice_lines":
+        return _sync_invoice_lines(client, org_id)
+    if table == "fact_je_lines":
+        return _sync_je_lines(client, org_id, accounts_map)
+    if table == "fact_expenses":
+        return _sync_expenses(client, org_id, accounts_map)
+    if table == "fact_payments":
+        return _sync_payments(client, org_id, contacts_map)
+    if table in _ORDER_SOURCES:
+        return _sync_orders(client, table, _ORDER_SOURCES[table], org_id, contacts_map)
+    # generic header facts: invoices / bills / pos_orders / items / contacts / accounts
+    return _sync_table(client, table, org_id)
+
+
 def sync_org(org_id: str, tables: Optional[Iterable[str]] = None) -> dict:
     """Idempotently sync one org's fact tables to BigQuery.
 
-    For each fact table (all of ``warehouse_schema.FACTS`` or the given subset):
-    stream the org's Firestore collection, map each doc to a BQ row, then
-    **delete the org's existing rows and insert the fresh batch** (delete-then-
-    insert = a clean daily snapshot per org). Returns ``{table: row_count}``,
-    or ``{"skipped": "warehouse_not_configured"}`` when BQ isn't available.
-    Never raises on a per-table BQ error — failures are logged and reported.
+    For each fact table (all of :func:`all_tables` or the given subset): stream
+    the org's Firestore collection(s), map each doc to a BQ row (enriching GL /
+    expense rows with account names and payment / order rows with contact names),
+    then **delete the org's existing rows and insert the fresh batch** (delete-
+    then-insert = a clean daily snapshot per org). The dataset + tables are
+    provisioned up-front (idempotent) so a first-ever sync works. Returns
+    ``{table: row_count}``, or ``{"skipped": "warehouse_not_configured"}`` when
+    BQ isn't available. Never raises on a per-table error — logged and reported.
     """
-    selected = list(tables) if tables is not None else (
-        list(warehouse_schema.FACTS.keys()) + ["fact_invoice_lines"]
-    )
+    selected = list(tables) if tables is not None else all_tables()
     # Validate up-front so a typo'd table name fails loudly rather than silently
-    # syncing nothing (KeyError surfaces the bad name). fact_invoice_lines is
-    # line-level (the invoices' "lines" subcollection) so it lives outside FACTS.
+    # syncing nothing (KeyError surfaces the bad name).
+    valid = set(warehouse_schema.FACTS) | {"fact_invoice_lines"} | set(warehouse_schema.DERIVED_TABLES)
     for t in selected:
-        if t not in warehouse_schema.FACTS and t != "fact_invoice_lines":
+        if t not in valid:
             raise KeyError(f"unknown fact table: {t!r}")
 
     client = _bq_client()
     if client is None or not _dataset_reachable(client):
         return dict(_SKIP_NOT_CONFIGURED)
 
+    # Provision the dataset + tables (idempotent) so the very first sync works.
+    ensure_warehouse(client)
+
+    # Build name-resolution maps once per org, only if an enriched table is in play.
+    needs_maps = any(t in warehouse_schema.DERIVED_TABLES for t in selected)
+    accounts_map, contacts_map = _lookup_maps(org_id) if needs_maps else ({}, {})
+
     counts: dict[str, Any] = {}
     for table in selected:
         try:
-            if table == "fact_invoice_lines":
-                counts[table] = _sync_invoice_lines(client, org_id)
-            else:
-                counts[table] = _sync_table(client, table, org_id)
+            counts[table] = _dispatch_sync(client, table, org_id, accounts_map, contacts_map)
         except Exception as exc:  # noqa: BLE001 - one bad table shouldn't kill the rest
             log.exception(
                 "warehouse_sync.table_failed table=%s org=%s: %s", table, org_id, exc
@@ -177,29 +208,8 @@ def sync_org(org_id: str, tables: Optional[Iterable[str]] = None) -> dict:
 
 def _sync_table(client, table: str, org_id: str) -> int:
     """Delete this org's rows in ``table``, then insert the freshly-mapped
-    batch. Returns the number of rows inserted."""
-    target = warehouse_schema.table_ref(table)
-    rows = list(_stream_rows(table, org_id))
-
-    # 1) DELETE existing rows for this org (idempotency: re-run = same state).
-    _delete_org_rows(client, table, org_id)
-
-    # 2) INSERT the fresh batch (chunked for streaming-insert limits).
-    inserted = 0
-    for chunk in _chunked(rows):
-        errors = client.insert_rows_json(target, chunk)
-        if errors:
-            log.error(
-                "warehouse_sync.insert_errors table=%s org=%s errors=%s",
-                table,
-                org_id,
-                errors[:5],
-            )
-        inserted += len(chunk)
-    log.info(
-        "warehouse_sync.table_done table=%s org=%s rows=%d", table, org_id, inserted
-    )
-    return inserted
+    batch (delete-then-insert = a clean per-org snapshot). Returns rows inserted."""
+    return _insert_rows(client, table, list(_stream_rows(table, org_id)), org_id)
 
 
 def _sync_invoice_lines(client, org_id: str) -> int:
@@ -227,16 +237,177 @@ def _sync_invoice_lines(client, org_id: str) -> int:
                 warehouse_schema.map_invoice_line(line_id, ln, inv_id, inv_date, inv_status, org_id)
             )
 
-    _delete_org_rows(client, "fact_invoice_lines", org_id)
-    target = warehouse_schema.table_ref("fact_invoice_lines")
+    return _insert_rows(client, "fact_invoice_lines", rows, org_id)
+
+
+# ── Table provisioning (idempotent) ─────────────────────────────────────────
+
+def ensure_warehouse(client) -> None:
+    """Create the dataset + every warehouse table if they don't already exist.
+
+    Idempotent (``exists_ok=True``): safe to call on every sync. Schemas come
+    from ``warehouse_schema.all_table_schemas`` (one source of truth), and each
+    table is DATE/TIMESTAMP-partitioned on its ``partition_col`` when it has one
+    (cheaper scans for the time-series facts). Without this, the very first sync
+    would fail because BigQuery streaming inserts require the table to exist —
+    so this is what makes "set ANALYTICS_BQ_DATASET and go" actually work.
+    """
+    from google.cloud import bigquery  # type: ignore
+
+    ds_ref = warehouse_schema.dataset_ref()
+    dataset = bigquery.Dataset(ds_ref)
+    try:
+        client.create_dataset(dataset, exists_ok=True)
+    except Exception as exc:  # noqa: BLE001 - may lack create perms; tables may still exist
+        log.warning("warehouse_sync.ensure_dataset_failed dataset=%s: %s", ds_ref, exc)
+
+    for table, schema in warehouse_schema.all_table_schemas().items():
+        fields = [bigquery.SchemaField(col, bq_type) for col, bq_type in schema.items()]
+        tbl = bigquery.Table(warehouse_schema.table_ref(table), schema=fields)
+        pcol = warehouse_schema.partition_col(table)
+        if pcol and schema.get(pcol) in ("DATE", "TIMESTAMP"):
+            tbl.time_partitioning = bigquery.TimePartitioning(field=pcol)
+        try:
+            client.create_table(tbl, exists_ok=True)
+        except Exception as exc:  # noqa: BLE001 - one table failing shouldn't abort the rest
+            log.warning("warehouse_sync.ensure_table_failed table=%s: %s", table, exc)
+
+
+# ── Per-org lookup maps (for name enrichment) ───────────────────────────────
+
+def _lookup_maps(org_id: str) -> tuple[dict, dict]:
+    """Build ``(accounts_map, contacts_map)`` once per org for name resolution.
+
+    ``accounts_map``: ``{account_id: {"name", "account_type"}}`` — used to
+    denormalize the GL & expense account name/type so each fact row is
+    self-contained (the LLM never joins). ``contacts_map``: ``{contact_id:
+    name}`` — used for payments & order headers. Read via the generic org-scoped
+    repos; failures degrade to empty maps (rows just carry ids, not names)."""
+    accounts: dict[str, dict] = {}
+    contacts: dict[str, str] = {}
+    try:
+        for a in _repo_for("accounts", org_id).stream_org_docs():
+            accounts[a.get("id")] = {
+                "name": a.get("name") or a.get("account_name"),
+                "account_type": a.get("account_type"),
+            }
+    except Exception as exc:  # noqa: BLE001
+        log.warning("warehouse_sync.accounts_map_failed org=%s: %s", org_id, exc)
+    try:
+        for c in _repo_for("contacts", org_id).stream_org_docs():
+            contacts[c.get("id")] = c.get("display_name") or c.get("company_name") or c.get("name")
+    except Exception as exc:  # noqa: BLE001
+        log.warning("warehouse_sync.contacts_map_failed org=%s: %s", org_id, exc)
+    return accounts, contacts
+
+
+# ── Derived-table sync (enriched / merged) ──────────────────────────────────
+
+def _insert_chunk(client, target: str, chunk: list[dict], attempts: int = 6) -> list:
+    """``insert_rows_json`` with retry-on-NotFound.
+
+    A *freshly created* BigQuery table can take a few seconds before it accepts
+    streaming inserts (metadata propagation) — so the very first sync after
+    provisioning would otherwise fail with "table not found". We retry on
+    ``NotFound`` with a short exponential backoff; row-level errors (a list, not
+    an exception) are returned to the caller to log. Steady-state syncs hit the
+    table immediately and never sleep."""
+    import time
+
+    try:
+        from google.api_core.exceptions import NotFound  # type: ignore
+    except Exception:  # pragma: no cover - api_core always present with bigquery
+        NotFound = ()  # type: ignore
+    last_exc = None
+    for i in range(attempts):
+        try:
+            return client.insert_rows_json(target, chunk)
+        except NotFound as exc:  # table not propagated yet -> wait & retry
+            last_exc = exc
+            log.info("warehouse_sync.table_not_ready target=%s attempt=%d", target, i + 1)
+            time.sleep(min(2 ** i, 8))
+    if last_exc is not None:
+        raise last_exc
+    return []
+
+
+def _insert_rows(client, table: str, rows: list[dict], org_id: str) -> int:
+    """Delete this org's rows in ``table`` then insert ``rows`` (chunked)."""
+    _delete_org_rows(client, table, org_id)
+    target = warehouse_schema.table_ref(table)
     inserted = 0
     for chunk in _chunked(rows):
-        errors = client.insert_rows_json(target, chunk)
+        errors = _insert_chunk(client, target, chunk)
         if errors:
-            log.error("warehouse_sync.line_insert_errors org=%s errors=%s", org_id, errors[:5])
+            log.error("warehouse_sync.insert_errors table=%s org=%s errors=%s", table, org_id, errors[:5])
         inserted += len(chunk)
-    log.info("warehouse_sync.lines_done org=%s rows=%d", org_id, inserted)
+    log.info("warehouse_sync.table_done table=%s org=%s rows=%d", table, org_id, inserted)
     return inserted
+
+
+def _sync_je_lines(client, org_id: str, accounts_map: dict) -> int:
+    """Sync the General Ledger into ``fact_je_lines`` (one row per JE line).
+
+    Streams ``journal_entries`` headers, skips void/cancelled entries, reads each
+    entry's ``lines`` subcollection, and enriches every line with its account
+    name/type + the header's status/date/source — making the GL a complete,
+    self-contained fact that answers almost any financial question."""
+    db = None  # fetched lazily on the first non-void header (keeps tests offline)
+    rows: list[dict] = []
+    for hdr in _repo_for("journal_entries", org_id).stream_org_docs():
+        if str(hdr.get("status") or "").lower() in ("void", "voided", "cancelled", "canceled"):
+            continue
+        if db is None:
+            from app.firebase_client import get_firestore_client
+            db = get_firestore_client()
+        je_id = hdr.get("id")
+        try:
+            line_docs = db.collection("journal_entries").document(je_id).collection("lines").stream()
+            lines = [{"id": d.id, **(d.to_dict() or {})} for d in line_docs]
+        except Exception:  # noqa: BLE001 - fall back to an embedded lines list
+            lines = hdr.get("lines") or []
+        for ln in lines:
+            line_id = ln.get("id") or ln.get("line_id")
+            account = accounts_map.get(ln.get("account_id")) or {}
+            rows.append(warehouse_schema.map_je_line(line_id, ln, hdr, account, org_id))
+    return _insert_rows(client, "fact_je_lines", rows, org_id)
+
+
+def _sync_expenses(client, org_id: str, accounts_map: dict) -> int:
+    """Sync ``expenses`` into ``fact_expenses`` with the account (category) resolved."""
+    rows: list[dict] = []
+    for d in _repo_for("expenses", org_id).stream_org_docs():
+        account = accounts_map.get(d.get("account_id")) or {}
+        rows.append(warehouse_schema.map_expense(d.get("id"), d, account, org_id))
+    return _insert_rows(client, "fact_expenses", rows, org_id)
+
+
+def _sync_payments(client, org_id: str, contacts_map: dict) -> int:
+    """Merge ``payments_received`` + ``payments_made`` into one ``fact_payments``
+    table (a ``direction`` column distinguishes them) so cash-flow is one fact."""
+    rows: list[dict] = []
+    for collection, direction in (("payments_received", "received"), ("payments_made", "made")):
+        for d in _repo_for(collection, org_id).stream_org_docs():
+            name = contacts_map.get(d.get("contact_id"))
+            rows.append(warehouse_schema.map_payment(d.get("id"), d, direction, name, org_id))
+    return _insert_rows(client, "fact_payments", rows, org_id)
+
+
+def _sync_orders(client, table: str, collection: str, org_id: str, contacts_map: dict) -> int:
+    """Sync a sales-order / purchase-order / quote collection into its fact table
+    (shared header shape), with the contact name resolved."""
+    rows: list[dict] = []
+    for d in _repo_for(collection, org_id).stream_org_docs():
+        name = contacts_map.get(d.get("contact_id"))
+        rows.append(warehouse_schema.map_order(table, d.get("id"), d, name, org_id))
+    return _insert_rows(client, table, rows, org_id)
+
+
+_ORDER_SOURCES = {
+    "fact_sales_orders": "sales_orders",
+    "fact_purchase_orders": "purchase_orders",
+    "fact_quotes": "quotes",
+}
 
 
 def _delete_org_rows(client, table: str, org_id: str) -> None:

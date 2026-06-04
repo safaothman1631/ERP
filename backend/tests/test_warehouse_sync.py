@@ -126,8 +126,12 @@ def test_all_facts_synced_when_tables_omitted(monkeypatch):
          patch.object(WS, "_sync_invoice_lines", return_value=0):
         out = WS.sync_org("org-1")
 
-    # Every standard fact table PLUS the line-level table is covered, each 0 rows.
-    assert set(out.keys()) == set(warehouse_schema.FACTS.keys()) | {"fact_invoice_lines"}
+    # Every table the module knows how to sync is covered (generic header facts,
+    # the line-level table, and the derived/enriched facts), each 0 rows.
+    assert set(out.keys()) == set(WS.all_tables())
+    # The new derived tables are part of that coverage.
+    assert {"fact_je_lines", "fact_expenses", "fact_payments",
+            "fact_sales_orders", "fact_purchase_orders", "fact_quotes"} <= set(out.keys())
     assert all(v == 0 for v in out.values())
 
 
@@ -226,3 +230,129 @@ def test_iter_org_ids_uses_organizations_collection():
         ids = WS._iter_org_ids()
     db.collection.assert_called_once_with("organizations")
     assert ids == ["orgA", "orgB"]
+
+
+# ── Provisioning + derived/enriched tables ──────────────────────────────────
+
+def _repo_router(by_collection: dict):
+    """Return a ``_repo_for`` side_effect serving per-collection docs.
+
+    ``by_collection`` maps a Firestore collection name -> list of docs; an
+    unlisted collection yields nothing. A fresh iterator is produced per call so
+    repeated ``stream_org_docs`` (e.g. lookup maps then sync) don't exhaust."""
+    def _side_effect(collection, org_id):
+        repo = MagicMock()
+        repo.stream_org_docs.side_effect = lambda: iter(list(by_collection.get(collection, [])))
+        return repo
+    return _side_effect
+
+
+def test_ensure_warehouse_creates_dataset_and_all_tables():
+    """Provisioning creates the dataset once and every known table (exists_ok)."""
+    client = MagicMock()
+    WS.ensure_warehouse(client)
+    client.create_dataset.assert_called_once()
+    # One create_table per table in the full schema set.
+    assert client.create_table.call_count == len(warehouse_schema.all_table_schemas())
+    # exists_ok=True keeps it idempotent.
+    for _args, kwargs in client.create_table.call_args_list:
+        assert kwargs.get("exists_ok") is True
+
+
+def test_sync_je_lines_enriches_account_and_skips_void(monkeypatch):
+    monkeypatch.setenv("ANALYTICS_BQ_DATASET", "proj.ds")
+    client, _order = _bq_with_recorder()
+
+    headers = [
+        {"id": "JE-1", "status": "posted", "source_type": "invoice", "date": "2026-01-05"},
+        {"id": "JE-2", "status": "void", "source_type": "manual", "date": "2026-01-06"},  # skipped
+    ]
+    lines_by_je = {
+        "JE-1": [
+            {"id": "L1", "account_id": "acc-rev", "debit": 0, "credit": 1000, "je_date": "2026-01-05"},
+        ],
+    }
+    accounts = [{"id": "acc-rev", "name": "Sales Revenue", "account_type": "income"}]
+
+    # Fake Firestore for the lines subcollection read.
+    db = MagicMock()
+    def _doc(je_id):
+        d = MagicMock()
+        line_docs = []
+        for ln in lines_by_je.get(je_id, []):
+            md = MagicMock()
+            md.id = ln["id"]
+            md.to_dict.return_value = {k: v for k, v in ln.items() if k != "id"}
+            line_docs.append(md)
+        d.collection.return_value.stream.return_value = iter(line_docs)
+        return d
+    db.collection.return_value.document.side_effect = _doc
+
+    monkeypatch.setattr(WS, "_repo_for", _repo_router({
+        "journal_entries": headers, "accounts": accounts, "contacts": [],
+    }))
+    with patch.object(WS, "_bq_client", return_value=client), \
+         patch("app.firebase_client.get_firestore_client", return_value=db):
+        out = WS.sync_org("org-1", tables=["fact_je_lines"])
+
+    assert out == {"fact_je_lines": 1}  # void entry contributed no lines
+    # The single inserted row is the enriched GL line.
+    target = warehouse_schema.table_ref("fact_je_lines")
+    _t, rows = client.insert_rows_json.call_args[0]
+    assert _t == target and len(rows) == 1
+    row = rows[0]
+    assert row["account_name"] == "Sales Revenue" and row["account_type"] == "income"
+    assert row["credit"] == 1000.0 and row["net"] == -1000.0
+    assert row["status"] == "posted" and row["source_type"] == "invoice"
+
+
+def test_sync_payments_merges_received_and_made(monkeypatch):
+    monkeypatch.setenv("ANALYTICS_BQ_DATASET", "proj.ds")
+    client, _order = _bq_with_recorder()
+
+    monkeypatch.setattr(WS, "_repo_for", _repo_router({
+        "payments_received": [{"id": "PR1", "amount": 500, "date": "2026-01-07",
+                               "payment_mode": "cash", "contact_id": "c1"}],
+        "payments_made": [{"id": "PM1", "amount": 300, "date": "2026-01-08",
+                           "payment_mode": "transfer", "contact_id": "c2"}],
+        "contacts": [{"id": "c1", "display_name": "Acme"},
+                     {"id": "c2", "display_name": "Globex"}],
+        "accounts": [],
+    }))
+    with patch.object(WS, "_bq_client", return_value=client):
+        out = WS.sync_org("org-1", tables=["fact_payments"])
+
+    assert out == {"fact_payments": 2}
+    _t, rows = client.insert_rows_json.call_args[0]
+    by_dir = {r["direction"]: r for r in rows}
+    assert by_dir["received"]["amount"] == 500.0 and by_dir["received"]["contact_name"] == "Acme"
+    assert by_dir["made"]["amount"] == 300.0 and by_dir["made"]["contact_name"] == "Globex"
+
+
+def test_sync_orders_resolves_contact_name(monkeypatch):
+    monkeypatch.setenv("ANALYTICS_BQ_DATASET", "proj.ds")
+    client, _order = _bq_with_recorder()
+
+    monkeypatch.setattr(WS, "_repo_for", _repo_router({
+        "sales_orders": [{"id": "SO1", "date": "2026-01-04", "total": 1200,
+                          "status": "open", "contact_id": "c1", "order_number": "SO-1"}],
+        "contacts": [{"id": "c1", "display_name": "Acme"}],
+        "accounts": [],
+    }))
+    with patch.object(WS, "_bq_client", return_value=client):
+        out = WS.sync_org("org-1", tables=["fact_sales_orders"])
+
+    assert out == {"fact_sales_orders": 1}
+    _t, rows = client.insert_rows_json.call_args[0]
+    assert rows[0]["contact_name"] == "Acme" and rows[0]["total"] == 1200.0
+    assert rows[0]["number"] == "SO-1"
+
+
+def test_lookup_maps_built_from_accounts_and_contacts(monkeypatch):
+    monkeypatch.setattr(WS, "_repo_for", _repo_router({
+        "accounts": [{"id": "a1", "name": "Cash", "account_type": "asset"}],
+        "contacts": [{"id": "c1", "display_name": "Acme"}],
+    }))
+    accounts_map, contacts_map = WS._lookup_maps("org-1")
+    assert accounts_map["a1"] == {"name": "Cash", "account_type": "asset"}
+    assert contacts_map["c1"] == "Acme"

@@ -66,9 +66,14 @@ def test_facts_reference_only_real_warehouse_columns():
     quoted = re.compile(r"'[^']*'")  # strip 'literals' like the %Y-%m format str
     sql_funcs = {"SUM", "COUNT", "AVG", "MIN", "MAX", "FORMAT_DATE", "DATE"}
 
+    # Cover every warehouse table (generic header facts, line-level, AND the
+    # derived/enriched tables: GL, expenses, payments, orders, quotes).
+    all_schemas = warehouse_schema.all_table_schemas()
     for fact, cfg in analytics._FACTS.items():
-        schema_cols = set(warehouse_schema.FACTS[fact]["schema"].keys())
-        assert cfg["date_col"] in schema_cols, f"{fact}.date_col not in schema"
+        schema_cols = set(all_schemas[fact].keys())  # KeyError if fact has no table
+        # Master-data facts (items/contacts/accounts) have no time axis -> None.
+        if cfg["date_col"] is not None:
+            assert cfg["date_col"] in schema_cols, f"{fact}.date_col not in schema"
         for expr in list(cfg["measures"].values()) + list(cfg["dimensions"].values()):
             bare = quoted.sub("", expr)  # remove string literals before tokenizing
             for tok in ident.findall(bare):
@@ -83,11 +88,22 @@ def test_list_facts_endpoint_returns_whitelist(client):
     resp = client.get("/api/analytics/facts")
     assert resp.status_code == 200
     facts = resp.json()["facts"]
-    assert set(facts) == {"fact_invoices", "fact_bills", "fact_pos_orders"}
+    # The whitelist now spans the full business model: the original three plus
+    # the General Ledger, master data, line-level sales, and order/payment facts.
+    expected = {
+        "fact_invoices", "fact_bills", "fact_pos_orders", "fact_je_lines",
+        "fact_expenses", "fact_payments", "fact_sales_orders",
+        "fact_purchase_orders", "fact_quotes", "fact_invoice_lines",
+        "fact_items", "fact_contacts", "fact_accounts",
+    }
+    assert set(facts) == expected
     assert "total" in facts["fact_invoices"]["measures"]
     assert "month" in facts["fact_invoices"]["dimensions"]
     # fact_bills has no tax_amount column -> no tax measure exposed
     assert "tax" not in facts["fact_bills"]["measures"]
+    # The General Ledger exposes the account_type dimension + debit/credit/net.
+    assert "account_type" in facts["fact_je_lines"]["dimensions"]
+    assert {"debit", "credit", "net"} <= set(facts["fact_je_lines"]["measures"])
 
 
 # ── _validate: reject anything off the whitelist (400) ───────────────────────

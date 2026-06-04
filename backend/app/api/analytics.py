@@ -106,6 +106,161 @@ _FACTS: dict[str, dict[str, Any]] = {
         },
         "date_col": "date",
     },
+    # ── General Ledger (the complete financial truth) ────────────────────────
+    # Every posted invoice/bill/payment/COGS/manual entry is a row here. With
+    # account_type you read revenue (income: credit side), expense (debit side),
+    # and balances (net = debit - credit). Excludes void entries (sync-side).
+    "fact_je_lines": {
+        # schema cols: account_id, account_name, account_type, debit, credit,
+        # net, date, status, source_type, company_id, description, contact_id
+        "measures": {
+            "debit": "SUM(debit)",
+            "credit": "SUM(credit)",
+            "net": "SUM(net)",          # debit - credit (signed balance amount)
+            "count": "COUNT(1)",
+        },
+        "dimensions": {
+            "month": "FORMAT_DATE('%Y-%m', date)",
+            "day": "date",
+            "account_name": "account_name",
+            "account_type": "account_type",
+            "status": "status",
+            "source_type": "source_type",
+            "company_id": "company_id",
+        },
+        "date_col": "date",
+    },
+    # ── Expenses (with the expense account as the 'category') ─────────────────
+    "fact_expenses": {
+        # schema cols: amount, tax_amount, account_name, account_type, status, date
+        "measures": {
+            "total": "SUM(amount)",
+            "tax": "SUM(tax_amount)",
+            "count": "COUNT(1)",
+            "avg": "AVG(amount)",
+        },
+        "dimensions": {
+            "month": "FORMAT_DATE('%Y-%m', date)",
+            "day": "date",
+            "account_name": "account_name",   # the expense category
+            "account_type": "account_type",
+            "status": "status",
+        },
+        "date_col": "date",
+    },
+    # ── Payments / cash-flow (received + made, merged by direction) ───────────
+    "fact_payments": {
+        # schema cols: amount, direction, payment_mode, contact_name, date
+        "measures": {
+            "total": "SUM(amount)",
+            "count": "COUNT(1)",
+            "avg": "AVG(amount)",
+        },
+        "dimensions": {
+            "month": "FORMAT_DATE('%Y-%m', date)",
+            "day": "date",
+            "direction": "direction",        # 'received' (in) | 'made' (out)
+            "payment_mode": "payment_mode",
+            "contact_name": "contact_name",
+        },
+        "date_col": "date",
+    },
+    # ── Sales orders / Purchase orders / Quotes (shared header shape) ─────────
+    "fact_sales_orders": {
+        "measures": {
+            "total": "SUM(total)", "subtotal": "SUM(subtotal)",
+            "tax": "SUM(tax_amount)", "count": "COUNT(1)", "avg": "AVG(total)",
+        },
+        "dimensions": {
+            "month": "FORMAT_DATE('%Y-%m', date)", "day": "date",
+            "status": "status", "contact_name": "contact_name",
+        },
+        "date_col": "date",
+    },
+    "fact_purchase_orders": {
+        "measures": {
+            "total": "SUM(total)", "subtotal": "SUM(subtotal)",
+            "tax": "SUM(tax_amount)", "count": "COUNT(1)", "avg": "AVG(total)",
+        },
+        "dimensions": {
+            "month": "FORMAT_DATE('%Y-%m', date)", "day": "date",
+            "status": "status", "contact_name": "contact_name",
+        },
+        "date_col": "date",
+    },
+    "fact_quotes": {
+        "measures": {
+            "total": "SUM(total)", "subtotal": "SUM(subtotal)",
+            "tax": "SUM(tax_amount)", "count": "COUNT(1)", "avg": "AVG(total)",
+        },
+        "dimensions": {
+            "month": "FORMAT_DATE('%Y-%m', date)", "day": "date",
+            "status": "status", "contact_name": "contact_name",
+        },
+        "date_col": "date",
+    },
+    # ── Line-level sales (per-item revenue & quantity) ───────────────────────
+    "fact_invoice_lines": {
+        # schema cols: item_id, description, quantity, unit_price, line_total, date, status
+        "measures": {
+            "revenue": "SUM(line_total)",
+            "quantity": "SUM(quantity)",
+            "count": "COUNT(1)",
+            "avg_price": "AVG(unit_price)",
+        },
+        "dimensions": {
+            "month": "FORMAT_DATE('%Y-%m', date)",
+            "day": "date",
+            "description": "description",   # item/line label
+            "item_id": "item_id",
+            "status": "status",
+        },
+        "date_col": "date",
+    },
+    # ── Master data (no time axis -> date_col = None) ────────────────────────
+    "fact_items": {
+        # schema cols: name, sku, stock_on_hand, reorder_point, cost_price,
+        # selling_price, track_inventory
+        "measures": {
+            "count": "COUNT(1)",
+            "total_stock": "SUM(stock_on_hand)",
+            "stock_value": "SUM(stock_on_hand * cost_price)",
+            "avg_cost": "AVG(cost_price)",
+            "avg_price": "AVG(selling_price)",
+        },
+        "dimensions": {
+            "name": "name",
+            "sku": "sku",
+            "track_inventory": "track_inventory",
+        },
+        "date_col": None,
+    },
+    "fact_contacts": {
+        # schema cols: name, contact_type, currency_code, opening_balance, is_active
+        "measures": {
+            "count": "COUNT(1)",
+            "opening_balance": "SUM(opening_balance)",
+        },
+        "dimensions": {
+            "contact_type": "contact_type",   # 'customer' | 'vendor'
+            "currency_code": "currency_code",
+            "is_active": "is_active",
+        },
+        "date_col": None,
+    },
+    "fact_accounts": {
+        # schema cols: code, name, account_type, balance, is_active
+        "measures": {
+            "count": "COUNT(1)",
+            "balance": "SUM(balance)",
+        },
+        "dimensions": {
+            "name": "name",
+            "account_type": "account_type",
+            "is_active": "is_active",
+        },
+        "date_col": None,
+    },
 }
 
 # OLTP fallback: fact -> the Firestore collection it shadows (used only to label
@@ -202,11 +357,13 @@ def _build_sql(defn: AnalysisDef, fact: dict, org_id: str) -> tuple[str, dict[st
     where = ["org_id = @org_id"]
     params: dict[str, Any] = {"org_id": org_id}
 
-    date_col = fact["date_col"]
-    if defn.date_from:
+    # Master-data facts (items / contacts / accounts) have no time axis -> a
+    # None date_col simply means date_from/date_to are ignored (no bogus column).
+    date_col = fact.get("date_col")
+    if date_col and defn.date_from:
         where.append(f"{date_col} >= @date_from")
         params["date_from"] = defn.date_from
-    if defn.date_to:
+    if date_col and defn.date_to:
         where.append(f"{date_col} <= @date_to")
         params["date_to"] = defn.date_to
 

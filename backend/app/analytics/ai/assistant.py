@@ -218,13 +218,53 @@ def _facts_catalogue() -> dict[str, Any]:
     return out
 
 
+# Human-readable guide to each fact table: what it holds + when to pick it.
+# Sorted by key when rendered, so the prompt stays byte-stable for the cache.
+# This is what lets the model route ANY question (Kurdish/Arabic/English) to the
+# right table instead of guessing — it knows the full business model.
+_FACT_GUIDE: dict[str, str] = {
+    "fact_invoices": "Sales invoices billed to customers (accounts receivable). Use for revenue/sales billed, amounts owed by customers (balance_due), by customer (contact_name), status, month.",
+    "fact_bills": "Vendor/supplier bills (accounts payable) — what the business owes suppliers. Use for purchases on credit, money owed to vendors (balance_due), by vendor.",
+    "fact_pos_orders": "Point-of-sale / shop register sales (cash counter). Use for retail/POS takings, by register or cashier.",
+    "fact_je_lines": "THE GENERAL LEDGER — every posted accounting entry (from invoices, bills, payments, COGS, and manual entries). The most complete & precise financial source. Use account_type to answer almost anything: revenue = credit on income accounts, expenses = debit on expense accounts, balances/profit via net (debit - credit). Slice by account_name, account_type, source_type, company_id, month.",
+    "fact_expenses": "Recorded business expenses, categorised by their expense account (account_name = the category). Use for spending/expense analysis by category.",
+    "fact_payments": "Actual money movements: cash received (direction='received') and paid out (direction='made'). Use for cash flow, collections, payments by method (payment_mode).",
+    "fact_sales_orders": "Customer sales orders (confirmed orders, not yet necessarily invoiced). Use for order volume/backlog by customer/status.",
+    "fact_purchase_orders": "Purchase orders raised to vendors (not yet billed). Use for procurement pipeline by vendor/status.",
+    "fact_quotes": "Quotes/estimates sent to customers (pre-sale). Use for pipeline/conversion analysis by status.",
+    "fact_invoice_lines": "Per-line sales detail (one row per product line on invoices). Use for product/item analysis: which items sold, quantity, revenue per item (description/item_id).",
+    "fact_items": "Product/service master + current stock snapshot. Use for inventory: stock on hand, stock value, counts, costs/prices. No time axis.",
+    "fact_contacts": "Customer & vendor master (contact_type = 'customer' or 'vendor'). Use for counts/segments of who you deal with. No time axis.",
+    "fact_accounts": "Chart of accounts + current balance per account. Use for account balances by account_type. No time axis.",
+}
+
+# Terminology routing — Kurdish (Sorani) / Arabic business words -> the fact to
+# pick. Helps the model map a local-language question to the right table.
+_TERMINOLOGY = (
+    "Kurdish/Arabic terminology -> fact:\n"
+    "- داهات / فرۆشتن / مبيعات / إيرادات (revenue, sales) -> fact_invoices, OR fact_je_lines filtered account_type='income' for the accounting-precise total.\n"
+    "- خەرجی / مەسروفات / مصروفات (expenses, spending) -> fact_expenses, OR fact_je_lines account_type='expense'.\n"
+    "- قازانج / سوود / ربح (profit) -> fact_je_lines: income credit minus expense debit (use measure 'net' grouped by account_type, or 'credit'/'debit').\n"
+    "- پارە / کاش / نەقد / نقد / دفعات (cash, payments, money in/out) -> fact_payments (use direction), OR fact_je_lines account_type in cash/bank.\n"
+    "- پسووڵە / فاتورة (invoice) -> fact_invoices. پسوولەی کڕین / فاتورة مورد (vendor bill) -> fact_bills.\n"
+    "- کڕیار / زبون / عميل (customer) -> fact_contacts contact_type='customer', or group fact_invoices by contact_name. دابینکەر / مورد (vendor) -> fact_bills / fact_contacts vendor.\n"
+    "- کاڵا / بەرهەم / مەخزەن / منتج / مخزون (product, item, stock) -> fact_items (stock) or fact_invoice_lines (what sold).\n"
+    "- هەژمار / حساب (account, ledger) -> fact_accounts (balances) or fact_je_lines (movements).\n"
+    "- فرۆشگا / کاش / نقطة بيع / POS -> fact_pos_orders.\n"
+    "- داواکاری / طلب / أمر (order) -> fact_sales_orders / fact_purchase_orders. نرخنامە / عرض سعر (quote) -> fact_quotes.\n"
+)
+
+
 def _system_prompt() -> str:
     """Build the system prompt describing ONLY the whitelist + the output rules.
 
     Deterministic (sorted keys) so it is byte-stable across requests and the
-    ``cache_control`` breakpoint actually hits the prompt cache.
+    ``cache_control`` breakpoint actually hits the prompt cache. Includes a
+    human guide to every fact + Kurdish/Arabic terminology routing so the model
+    knows the full business model and answers precisely.
     """
     catalogue = json.dumps(_facts_catalogue(), ensure_ascii=False, sort_keys=True, indent=2)
+    guide = "\n".join(f"- {fact}: {_FACT_GUIDE[fact]}" for fact in sorted(_FACT_GUIDE))
     return (
         "You are a careful data-analytics query planner for an ERP system used in "
         "Iraq (users write in Kurdish (Sorani), Arabic, or English).\n\n"
@@ -232,7 +272,10 @@ def _system_prompt() -> str:
         "over a fixed, whitelisted set of fact tables. You do NOT write SQL. You do "
         "NOT invent table, measure, or dimension names. You may ONLY use the exact "
         "keys listed below.\n\n"
-        "Available fact tables (measures / dimensions / date column):\n"
+        "What each fact table holds (pick the best one for the question):\n"
+        f"{guide}\n\n"
+        f"{_TERMINOLOGY}\n"
+        "Available fact tables (exact measure / dimension / date keys you may use):\n"
         f"{catalogue}\n\n"
         "Reply with a SINGLE JSON object and NOTHING ELSE (no prose, no markdown "
         "fences, no SQL). The object must have this shape:\n"
@@ -250,13 +293,18 @@ def _system_prompt() -> str:
         "Rules:\n"
         "- measures must be non-empty.\n"
         "- Every measure/dimension/filter/order_by key MUST belong to the chosen "
-        "fact table per the list above. If the question cannot be answered with the "
-        "available tables and fields, choose the closest sensible fact and a single "
-        "count measure rather than inventing fields.\n"
-        "- 'revenue'/'sales'/'income' -> fact_invoices. 'expenses'/'purchases'/"
-        "'bills' -> fact_bills. 'point of sale'/'POS'/'register' -> fact_pos_orders.\n"
-        "- 'by month' -> dimensions:[\"month\"]. 'top'/'biggest' -> set order_by to "
-        "the relevant measure, order_dir DESC, and a small limit.\n"
+        "fact table per the catalogue above. If the question cannot be answered with "
+        "the available tables and fields, choose the closest sensible fact and a "
+        "single count measure rather than inventing fields.\n"
+        "- For accounting-precise totals (revenue, expense, profit, account balances) "
+        "prefer fact_je_lines with an account_type filter: revenue -> filter "
+        "account_type='income' measure 'credit'; expenses -> account_type='expense' "
+        "measure 'debit'; balances -> measure 'net'.\n"
+        "- 'by month' -> dimensions:[\"month\"]. 'top'/'biggest'/'most' -> set "
+        "order_by to the relevant measure, order_dir DESC, and a small limit.\n"
+        "- Date ranges: only set date_from/date_to for time-series facts (those whose "
+        "catalogue date_col is not null). Master-data facts (fact_items, "
+        "fact_contacts, fact_accounts) have no date.\n"
         "- Output ONLY the JSON object."
     )
 

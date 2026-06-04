@@ -131,6 +131,37 @@ def _map_item(doc_id: str, d: dict, org_id: str) -> dict:
     }
 
 
+def _map_contact(doc_id: str, d: dict, org_id: str) -> dict:
+    """Customer / vendor master (the 'who' behind every sale & purchase)."""
+    return {
+        "org_id": org_id,
+        "id": doc_id,
+        "name": _s(d.get("display_name") or d.get("company_name") or d.get("name")),
+        "contact_type": _s(d.get("contact_type")),  # 'customer' | 'vendor'
+        "email": _s(d.get("email")),
+        "phone": _s(d.get("phone") or d.get("mobile")),
+        "currency_code": _s(d.get("currency_code")),
+        "opening_balance": _f(d.get("opening_balance")),
+        "is_active": bool(d.get("is_active", True)),
+        "created_at": _ts(d.get("created_at")),
+    }
+
+
+def _map_account(doc_id: str, d: dict, org_id: str) -> dict:
+    """Chart-of-accounts entry + current balance (the financial backbone)."""
+    return {
+        "org_id": org_id,
+        "id": doc_id,
+        "code": _s(d.get("code")),
+        "name": _s(d.get("name") or d.get("account_name")),
+        "name_ku": _s(d.get("name_ku")),
+        "account_type": _s(d.get("account_type")),
+        "balance": _f(d.get("balance")),
+        "parent_id": _s(d.get("parent_id")),
+        "is_active": bool(d.get("is_active", True)),
+    }
+
+
 def map_invoice_line(line_id: str, line: dict, invoice_id: str, invoice_date,
                      invoice_status, org_id: str) -> dict:
     """One sold line (for per-item demand forecasting). Carries the parent
@@ -193,6 +224,31 @@ FACTS: dict[str, dict[str, Any]] = {
             "selling_price": "FLOAT", "track_inventory": "BOOL", "synced_at": "TIMESTAMP",
         },
     },
+    # Customer/vendor master — not time-series (clustered by org only). Powers
+    # "who are my customers/vendors", segment counts, contactability.
+    "fact_contacts": {
+        "collection": "contacts",
+        "partition_col": None,
+        "mapper": _map_contact,
+        "schema": {
+            "org_id": "STRING", "id": "STRING", "name": "STRING",
+            "contact_type": "STRING", "email": "STRING", "phone": "STRING",
+            "currency_code": "STRING", "opening_balance": "FLOAT",
+            "is_active": "BOOL", "created_at": "TIMESTAMP",
+        },
+    },
+    # Chart of accounts + live balance snapshot. Powers account balances, the
+    # account dimension behind the GL, and "what's in account X".
+    "fact_accounts": {
+        "collection": "accounts",
+        "partition_col": None,
+        "mapper": _map_account,
+        "schema": {
+            "org_id": "STRING", "id": "STRING", "code": "STRING", "name": "STRING",
+            "name_ku": "STRING", "account_type": "STRING", "balance": "FLOAT",
+            "parent_id": "STRING", "is_active": "BOOL",
+        },
+    },
 }
 
 # Line-level sales (one row per invoice line) for per-item demand forecasting.
@@ -212,3 +268,172 @@ INVOICE_LINES = {
 def map_row(table: str, doc_id: str, doc: dict, org_id: str) -> dict:
     """Map a Firestore doc to a BQ row for ``table`` (raises on unknown table)."""
     return FACTS[table]["mapper"](doc_id, doc, org_id)
+
+
+# ── Derived / enriched fact tables ──────────────────────────────────────────
+# These need a name resolved from another collection (account_name for GL &
+# expenses, contact_name for payments & orders) or merge two source collections
+# into one table (payments). They are NOT synced via the generic ``map_row``
+# path — ``services.warehouse_sync`` has a dedicated function per table that
+# builds the per-org lookup maps once and calls the builders below. Their
+# schemas live here so table provisioning covers every table in one place.
+
+
+def map_je_line(line_id: str, line: dict, header: dict, account: dict, org_id: str) -> dict:
+    """One General-Ledger line — the single most complete financial record.
+
+    ``line`` is a doc from ``journal_entries/{id}/lines``; ``header`` its parent
+    journal entry; ``account`` the resolved chart-of-accounts entry (name +
+    type). Every posted invoice, bill, payment, COGS move and manual entry flows
+    through here, so this table answers almost any financial question on its own.
+    ``net`` = debit − credit (a natural signed amount for balance-style sums).
+    """
+    debit = _f(line.get("debit"))
+    credit = _f(line.get("credit"))
+    return {
+        "org_id": org_id,
+        "je_id": _s(header.get("id")),
+        "line_id": line_id,
+        "account_id": _s(line.get("account_id")),
+        "account_name": _s((account or {}).get("name") or (account or {}).get("account_name")),
+        "account_type": _s((account or {}).get("account_type")),
+        "debit": debit,
+        "credit": credit,
+        "net": round(debit - credit, 4),
+        "date": _date10(line.get("je_date") or header.get("date")),
+        "status": _s(header.get("status")),
+        "source_type": _s(header.get("source_type")),
+        "company_id": _s(line.get("company_id") or header.get("company_id") or org_id),
+        "description": _s(line.get("description") or header.get("description")),
+        "contact_id": _s(line.get("contact_id")),
+    }
+
+
+def map_expense(doc_id: str, d: dict, account: dict, org_id: str) -> dict:
+    """One expense, with its expense account name/type resolved (the 'category')."""
+    return {
+        "org_id": org_id,
+        "id": doc_id,
+        "date": _date10(d.get("date")),
+        "amount": _f(d.get("total") or d.get("amount")),
+        "tax_amount": _f(d.get("tax_amount")),
+        "account_id": _s(d.get("account_id")),
+        "account_name": _s((account or {}).get("name") or (account or {}).get("account_name")),
+        "account_type": _s((account or {}).get("account_type")),
+        "contact_id": _s(d.get("contact_id")),
+        "status": _s(d.get("status")),
+        "currency_code": _s(d.get("currency_code")),
+        "project_id": _s(d.get("project_id")),
+        "created_at": _ts(d.get("created_at")),
+    }
+
+
+def map_payment(doc_id: str, d: dict, direction: str, contact_name, org_id: str) -> dict:
+    """One payment (money in/out). ``direction`` is 'received' or 'made'; the two
+    source collections are merged into one table so cash-flow is a single fact."""
+    return {
+        "org_id": org_id,
+        "id": doc_id,
+        "date": _date10(d.get("date")),
+        "amount": _f(d.get("amount")),
+        "direction": direction,
+        "payment_mode": _s(d.get("payment_mode") or d.get("payment_method") or d.get("mode")),
+        "contact_id": _s(d.get("contact_id")),
+        "contact_name": _s(contact_name),
+        "currency_code": _s(d.get("currency_code")),
+        "created_at": _ts(d.get("created_at")),
+    }
+
+
+def map_order(table: str, doc_id: str, d: dict, contact_name, org_id: str) -> dict:
+    """One sales order / purchase order / quote header (shared shape), with the
+    contact name resolved. ``due_date`` folds delivery_date (orders) / expiry_date
+    (quotes) into one column."""
+    return {
+        "org_id": org_id,
+        "id": doc_id,
+        "date": _date10(d.get("date")),
+        "due_date": _date10(d.get("delivery_date") or d.get("expiry_date")),
+        "total": _f(d.get("total")),
+        "subtotal": _f(d.get("subtotal")),
+        "tax_amount": _f(d.get("tax_amount")),
+        "discount_amount": _f(d.get("discount_amount")),
+        "status": _s(d.get("status")),
+        "contact_id": _s(d.get("contact_id")),
+        "contact_name": _s(contact_name),
+        "number": _s(d.get("order_number") or d.get("quote_number") or d.get("number")),
+        "currency_code": _s(d.get("currency_code")),
+        "created_at": _ts(d.get("created_at")),
+    }
+
+
+_ORDER_SCHEMA = {
+    "org_id": "STRING", "id": "STRING", "date": "DATE", "due_date": "DATE",
+    "total": "FLOAT", "subtotal": "FLOAT", "tax_amount": "FLOAT",
+    "discount_amount": "FLOAT", "status": "STRING", "contact_id": "STRING",
+    "contact_name": "STRING", "number": "STRING", "currency_code": "STRING",
+    "created_at": "TIMESTAMP",
+}
+
+# table -> {schema, partition_col, source} for the enriched/merged tables.
+# ``source`` documents the Firestore collection(s) feeding each (for sync).
+DERIVED_TABLES: dict[str, dict[str, Any]] = {
+    "fact_je_lines": {
+        "partition_col": "date",
+        "source": "journal_entries/lines",
+        "schema": {
+            "org_id": "STRING", "je_id": "STRING", "line_id": "STRING",
+            "account_id": "STRING", "account_name": "STRING", "account_type": "STRING",
+            "debit": "FLOAT", "credit": "FLOAT", "net": "FLOAT", "date": "DATE",
+            "status": "STRING", "source_type": "STRING", "company_id": "STRING",
+            "description": "STRING", "contact_id": "STRING",
+        },
+    },
+    "fact_expenses": {
+        "partition_col": "date",
+        "source": "expenses",
+        "schema": {
+            "org_id": "STRING", "id": "STRING", "date": "DATE", "amount": "FLOAT",
+            "tax_amount": "FLOAT", "account_id": "STRING", "account_name": "STRING",
+            "account_type": "STRING", "contact_id": "STRING", "status": "STRING",
+            "currency_code": "STRING", "project_id": "STRING", "created_at": "TIMESTAMP",
+        },
+    },
+    "fact_payments": {
+        "partition_col": "date",
+        "source": "payments_received+payments_made",
+        "schema": {
+            "org_id": "STRING", "id": "STRING", "date": "DATE", "amount": "FLOAT",
+            "direction": "STRING", "payment_mode": "STRING", "contact_id": "STRING",
+            "contact_name": "STRING", "currency_code": "STRING", "created_at": "TIMESTAMP",
+        },
+    },
+    "fact_sales_orders": {"partition_col": "date", "source": "sales_orders", "schema": dict(_ORDER_SCHEMA)},
+    "fact_purchase_orders": {"partition_col": "date", "source": "purchase_orders", "schema": dict(_ORDER_SCHEMA)},
+    "fact_quotes": {"partition_col": "date", "source": "quotes", "schema": dict(_ORDER_SCHEMA)},
+}
+
+
+def all_table_schemas() -> dict[str, dict[str, str]]:
+    """Every warehouse table -> its ``{column: BQ type}`` schema.
+
+    The single source for **provisioning** (create dataset + tables): the
+    generic header facts (``FACTS``), the line-level sales table
+    (``INVOICE_LINES``), and the derived/enriched tables (``DERIVED_TABLES``).
+    """
+    out: dict[str, dict[str, str]] = {t: cfg["schema"] for t, cfg in FACTS.items()}
+    out[INVOICE_LINES["table"]] = INVOICE_LINES["schema"]
+    for t, cfg in DERIVED_TABLES.items():
+        out[t] = cfg["schema"]
+    return out
+
+
+def partition_col(table: str) -> str | None:
+    """The DATE/TIMESTAMP partition column for ``table`` (or None if unpartitioned)."""
+    if table in FACTS:
+        return FACTS[table]["partition_col"]
+    if table == INVOICE_LINES["table"]:
+        return INVOICE_LINES["partition_col"]
+    if table in DERIVED_TABLES:
+        return DERIVED_TABLES[table]["partition_col"]
+    return None
