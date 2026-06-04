@@ -122,11 +122,12 @@ def test_all_facts_synced_when_tables_omitted(monkeypatch):
     repo = _fake_repo([])  # zero docs per collection
 
     with patch.object(WS, "_bq_client", return_value=client), \
-         patch.object(WS, "_repo_for", return_value=repo):
+         patch.object(WS, "_repo_for", return_value=repo), \
+         patch.object(WS, "_sync_invoice_lines", return_value=0):
         out = WS.sync_org("org-1")
 
-    # Every fact table in the shared contract is covered, each with 0 rows.
-    assert set(out.keys()) == set(warehouse_schema.FACTS.keys())
+    # Every standard fact table PLUS the line-level table is covered, each 0 rows.
+    assert set(out.keys()) == set(warehouse_schema.FACTS.keys()) | {"fact_invoice_lines"}
     assert all(v == 0 for v in out.values())
 
 

@@ -135,6 +135,9 @@ from app.api import forecast as forecast_api
 from app.api import ai_customer as ai_customer_api
 from app.api import ai_anomaly as ai_anomaly_api
 from app.api import ai_assistant as ai_assistant_api
+# Pool 4.6+ predictions: demand/inventory + financial forecasting.
+from app.api import ai_inventory as ai_inventory_api
+from app.api import ai_financial as ai_financial_api
 from app.api.v1.errors import register_error_handlers
 import os
 
@@ -472,6 +475,8 @@ app.include_router(ai_customer_api.router)
 app.include_router(ai_anomaly_api.router)
 for _ai_router in ai_assistant_api.ALL_ROUTERS:
     app.include_router(_ai_router)
+app.include_router(ai_inventory_api.router)
+app.include_router(ai_financial_api.router)
 
 # ── Wave A: Sprints 36-44 (P0 generic enterprise modules) ──
 app.include_router(helpdesk.router)

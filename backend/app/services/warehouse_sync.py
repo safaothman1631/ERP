@@ -146,11 +146,14 @@ def sync_org(org_id: str, tables: Optional[Iterable[str]] = None) -> dict:
     or ``{"skipped": "warehouse_not_configured"}`` when BQ isn't available.
     Never raises on a per-table BQ error — failures are logged and reported.
     """
-    selected = list(tables) if tables is not None else list(warehouse_schema.FACTS.keys())
+    selected = list(tables) if tables is not None else (
+        list(warehouse_schema.FACTS.keys()) + ["fact_invoice_lines"]
+    )
     # Validate up-front so a typo'd table name fails loudly rather than silently
-    # syncing nothing (KeyError surfaces the bad name).
+    # syncing nothing (KeyError surfaces the bad name). fact_invoice_lines is
+    # line-level (the invoices' "lines" subcollection) so it lives outside FACTS.
     for t in selected:
-        if t not in warehouse_schema.FACTS:
+        if t not in warehouse_schema.FACTS and t != "fact_invoice_lines":
             raise KeyError(f"unknown fact table: {t!r}")
 
     client = _bq_client()
@@ -160,7 +163,10 @@ def sync_org(org_id: str, tables: Optional[Iterable[str]] = None) -> dict:
     counts: dict[str, Any] = {}
     for table in selected:
         try:
-            counts[table] = _sync_table(client, table, org_id)
+            if table == "fact_invoice_lines":
+                counts[table] = _sync_invoice_lines(client, org_id)
+            else:
+                counts[table] = _sync_table(client, table, org_id)
         except Exception as exc:  # noqa: BLE001 - one bad table shouldn't kill the rest
             log.exception(
                 "warehouse_sync.table_failed table=%s org=%s: %s", table, org_id, exc
@@ -193,6 +199,43 @@ def _sync_table(client, table: str, org_id: str) -> int:
     log.info(
         "warehouse_sync.table_done table=%s org=%s rows=%d", table, org_id, inserted
     )
+    return inserted
+
+
+def _sync_invoice_lines(client, org_id: str) -> int:
+    """Sync line-level sales into ``fact_invoice_lines`` (one BQ row per invoice
+    line) for per-item demand forecasting. Lines live in each invoice's ``lines``
+    subcollection; we read them via ``BaseRepository.get_lines`` (embedded-list
+    fallback). Delete-then-insert per org, like the header tables."""
+    import uuid as _uuid
+
+    from app.firestore.invoices import InvoiceRepository
+
+    repo = InvoiceRepository(org_id)
+    rows: list[dict] = []
+    for inv in repo.stream_org_docs():
+        inv_id = inv.get("id")
+        inv_date = inv.get("date") or inv.get("invoice_date")
+        inv_status = inv.get("status")
+        try:
+            lines = repo.get_lines(inv_id)
+        except Exception:  # noqa: BLE001 - fall back to embedded lines
+            lines = inv.get("lines") or []
+        for ln in (lines or []):
+            line_id = ln.get("id") or ln.get("line_id") or str(_uuid.uuid4())
+            rows.append(
+                warehouse_schema.map_invoice_line(line_id, ln, inv_id, inv_date, inv_status, org_id)
+            )
+
+    _delete_org_rows(client, "fact_invoice_lines", org_id)
+    target = warehouse_schema.table_ref("fact_invoice_lines")
+    inserted = 0
+    for chunk in _chunked(rows):
+        errors = client.insert_rows_json(target, chunk)
+        if errors:
+            log.error("warehouse_sync.line_insert_errors org=%s errors=%s", org_id, errors[:5])
+        inserted += len(chunk)
+    log.info("warehouse_sync.lines_done org=%s rows=%d", org_id, inserted)
     return inserted
 
 

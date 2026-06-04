@@ -115,6 +115,40 @@ def _map_pos_order(doc_id: str, d: dict, org_id: str) -> dict:
     }
 
 
+def _map_item(doc_id: str, d: dict, org_id: str) -> dict:
+    """Current item master + stock snapshot (for reorder / stockout prediction)."""
+    return {
+        "org_id": org_id,
+        "id": doc_id,
+        "name": _s(d.get("name") or d.get("item_name")),
+        "sku": _s(d.get("sku")),
+        "stock_on_hand": _f(d.get("stock_on_hand")),
+        "reorder_point": _f(d.get("reorder_point")),
+        "cost_price": _f(d.get("cost_price")),
+        "selling_price": _f(d.get("selling_price") or d.get("rate") or d.get("price")),
+        "track_inventory": bool(d.get("track_inventory", True)),
+        "synced_at": _ts(datetime.utcnow()),
+    }
+
+
+def map_invoice_line(line_id: str, line: dict, invoice_id: str, invoice_date,
+                     invoice_status, org_id: str) -> dict:
+    """One sold line (for per-item demand forecasting). Carries the parent
+    invoice's date/status so item sales can be aggregated over time."""
+    return {
+        "org_id": org_id,
+        "invoice_id": invoice_id,
+        "line_id": line_id,
+        "item_id": _s(line.get("item_id")),
+        "description": _s(line.get("description") or line.get("item_name")),
+        "quantity": _f(line.get("quantity") or line.get("qty")),
+        "unit_price": _f(line.get("unit_price") or line.get("rate")),
+        "line_total": _f(line.get("line_total") or line.get("total") or line.get("amount")),
+        "date": _date10(invoice_date),
+        "status": _s(invoice_status),
+    }
+
+
 # table -> {schema, collection, partition_col, mapper}
 FACTS: dict[str, dict[str, Any]] = {
     "fact_invoices": {
@@ -146,6 +180,31 @@ FACTS: dict[str, dict[str, Any]] = {
             "date": "DATE", "total": "FLOAT", "register_id": "STRING",
             "cashier_id": "STRING",
         },
+    },
+    # Item master + live stock snapshot — not time-series, so no date partition
+    # (clustered by org_id only). Powers reorder / stockout / dead-stock.
+    "fact_items": {
+        "collection": "items",
+        "partition_col": None,
+        "mapper": _map_item,
+        "schema": {
+            "org_id": "STRING", "id": "STRING", "name": "STRING", "sku": "STRING",
+            "stock_on_hand": "FLOAT", "reorder_point": "FLOAT", "cost_price": "FLOAT",
+            "selling_price": "FLOAT", "track_inventory": "BOOL", "synced_at": "TIMESTAMP",
+        },
+    },
+}
+
+# Line-level sales (one row per invoice line) for per-item demand forecasting.
+# NOT a standard header collection — it is the "lines" subcollection under each
+# invoice, so warehouse_sync syncs it via a dedicated path (map_invoice_line).
+INVOICE_LINES = {
+    "table": "fact_invoice_lines",
+    "partition_col": "date",
+    "schema": {
+        "org_id": "STRING", "invoice_id": "STRING", "line_id": "STRING",
+        "item_id": "STRING", "description": "STRING", "quantity": "FLOAT",
+        "unit_price": "FLOAT", "line_total": "FLOAT", "date": "DATE", "status": "STRING",
     },
 }
 

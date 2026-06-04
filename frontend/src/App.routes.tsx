@@ -110,6 +110,8 @@ const BpmnPage = lazyWithRetry(() => import('./pages/bpmn/BpmnPage'), 'bpmn');
 const AnalyticsDashboard = lazyWithRetry(() => import('./pages/analytics/AnalyticsDashboard'), 'analytics');
 // AI insights dashboard (/api/ai/*)
 const AIInsightsDashboard = lazyWithRetry(() => import('./pages/ai/AIInsightsDashboard'), 'ai-insights');
+// AI predictions dashboard (/api/ai/inventory/* + /api/ai/predict/*)
+const PredictionsDashboard = lazyWithRetry(() => import('./pages/ai/PredictionsDashboard'), 'predictions');
 const ConsolidatedReports = lazyWithRetry(() => import('./pages/ConsolidatedReports'), 'consolidated-reports');
 const BranchesComparison = lazyWithRetry(() => import('./pages/BranchesComparison'), 'branches-comparison');
 const Projects = lazyWithRetry(() => import('./pages/Projects'), 'projects');
@@ -631,6 +633,7 @@ export const routes: RouteObject[] = [
       { path: 'bpmn', element: <PageTransition><BpmnPage /></PageTransition> },
       { path: 'analytics', element: <PageTransition><AnalyticsDashboard /></PageTransition> },
       { path: 'ai-insights', element: <PageTransition><AIInsightsDashboard /></PageTransition> },
+      { path: 'predictions', element: <PageTransition><PredictionsDashboard /></PageTransition> },
       { path: 'reports/consolidated', element: <PageTransition><ConsolidatedReports /></PageTransition> },
       { path: 'reports/branches', element: <PageTransition><BranchesComparison /></PageTransition> },
       // Wave AA: Multi-Entity Management
