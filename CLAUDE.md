@@ -971,3 +971,15 @@ consolidation-ـی GL-based: هەر JE بە `company_id` تاگ دەکرێت (de
 - **🔬 Real-data validation (Firestore + BigQuery ڕاستەقینە، synthetic org، net-zero cleanup):** GL income credit=1000 + AR debit=1000 + account_name resolved («Sales Revenue»)؛ accounts 4؛ contacts 1 customer + 1 vendor؛ expense Rent=200؛ payment received=1000؛ sales order 1200؛ invoice line revenue 1000/qty 2. **ALL PASS.** retry-ـەکە race-ـی table-propagation چاککرد.
 
 **ماوە (operational):** هەمان activation-ـی §4.6/4.7 (set `ANALYTICS_BQ_DATASET` + SA grant + redeploy). دوای چالاککردن، scheduled warehouse sync هەموو ١٣ جەدوەل پڕ دەکاتەوە و ئەیئای دەتوانێت پرسیاری GL/کڕیار/هەژمار/خەرجی/پارەدان وەڵام بداتەوە.
+
+### 2026-06-04 — 🚀 Production activation: warehouse + AI/analytics خرانە بواری production
+
+داوای بەکارهێنەر: «هەموو شت چالاک بکە و بپشکنە و بخە بواری production». warehouse + analytics + پێشبینی چالاککران لەسەر production. **٠ گۆڕانکاریی کۆد** (deploy-ی کۆدی پێش-commit-کراوی f715ad5/195b2e8).
+
+- **BigQuery warehouse:** `zoho-83cda.zoho_warehouse` دروستکرا لە **EU** (data-residency + نزیکی europe-west1). `run_warehouse_sync()` لۆکاڵی ڕان کرا (بە ADC؛ نەک firebase-adminsdk SA کە BQ perm-ـی نییە) → هەر ١٣ جەدوەل دروستکران + داتای هەر ٥ org بار کرا: **fact_accounts 345، fact_invoices 93، contacts/items/POS/quotes/sales_orders**. (je_lines/bills/expenses/payments = 0 چونکە orgـە دیمۆکان ئەو داتایەیان نییە — sync-ی شەوانە دەیانگرێت کاتێک دروستکران.) **فێربوون:** BQ client-ی بێ-`location` بە سەرکەوتوویی query-ی dataset-ی EU دەکات (BQ server-side location auto-detect لە referenced dataset).
+- **IAM:** پێویست نەبوو — runtime SA-ی Cloud Run (`363501065969-compute@…`) پێشتر `roles/editor`-ـی هەیە (BQ jobUser+dataEditor تێیدایە).
+- **Deploy:** `gcloud run deploy zoho-erp-backend --source . --region europe-west1 --update-env-vars ANALYTICS_BQ_DATASET=zoho-83cda.zoho_warehouse` → revision **`00014-mx9`** (Pool 3 + Pool 4 + ١٣-fact code). نهێنی/env-ی پێشوو (SECRET_KEY/FIELD_ENCRYPTION_KEY/SENTRY_DSN) پارێزران (`--update-env-vars`، نەک `--set`).
+- **پشتڕاستی زیندوو:** `route_count 2402` (= local boot، کۆدی نوێ)، `/api/live` 200، `/api/analytics/facts` + `/api/ai/status` + `/api/ai/predict/expenses` → **401** (نەک 404 = deployed، تەنها auth دەوێت)، هەم ڕاستەوخۆ هەم بە proxy-ی `erpiq.systems`. scheduler warehouse_sync (CronTrigger 02:30) پێشتر wire کراوە → تازەمانەوەی شەوانە.
+- **ئەنجام:** warehouse + analytics BI + BQML forecast + AI prediction suite (customer/anomaly/inventory/financial) **هەمووی زیندوون لە production**.
+
+**تەنها ماوە (هی بەکارهێنەر — کلیلی Anthropic، بۆ ئاسایش لە چات دانەنراوە):** بۆ ئەیئای-ی گفتوگۆ (`/api/ai/ask` + `/api/ai/insights`) — Secret Manager: `anthropic-api-key` دروست بکە + `secretAccessor` بدە بە compute SA + `gcloud run services update … --update-secrets ANTHROPIC_API_KEY=anthropic-api-key:latest`. پشتڕاستی: `GET /api/ai/status?probe=true`.
