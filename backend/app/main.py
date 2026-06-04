@@ -131,6 +131,10 @@ from app.api import public_gateway as public_gateway_api
 # Pool 4.6: BigQuery-warehouse-backed analytics (saved analyses + pivot) + BQML forecasting.
 from app.api import analytics as analytics_api
 from app.api import forecast as forecast_api
+# Pool 4.6+ advanced AI: customer intelligence, anomaly detection, LLM assistant.
+from app.api import ai_customer as ai_customer_api
+from app.api import ai_anomaly as ai_anomaly_api
+from app.api import ai_assistant as ai_assistant_api
 from app.api.v1.errors import register_error_handlers
 import os
 
@@ -463,6 +467,11 @@ for _pub_router in public_gateway_api.ALL_ROUTERS:
 # Pool 4.6: analytics warehouse (BI layer) + BQML forecasting.
 app.include_router(analytics_api.router)
 app.include_router(forecast_api.router)
+# Pool 4.6+ advanced AI (all under /api/ai, flag-gated, graceful).
+app.include_router(ai_customer_api.router)
+app.include_router(ai_anomaly_api.router)
+for _ai_router in ai_assistant_api.ALL_ROUTERS:
+    app.include_router(_ai_router)
 
 # ── Wave A: Sprints 36-44 (P0 generic enterprise modules) ──
 app.include_router(helpdesk.router)
