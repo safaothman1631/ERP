@@ -54,10 +54,11 @@ export interface VertexAuthShellProps {
 }
 
 // ─── Tiny kit primitives (Field + password-capable Input) ────────────────────
-const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+const Field: React.FC<{ label: string; hint?: string; children: React.ReactNode }> = ({ label, hint, children }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
     <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-700)' }}>{label}</label>
     {children}
+    {hint && <div style={{ fontSize: 11.5, color: 'var(--ink-500)', marginTop: -1, lineHeight: 1.45 }}>{hint}</div>}
   </div>
 );
 
@@ -135,7 +136,8 @@ const VertexAuthShell: React.FC<VertexAuthShellProps> = ({
   // Client-side validation per mode; returns an error string or null.
   const validate = (): string | null => {
     if (signup) {
-      if (!businessName.trim()) return tr('Business name is required', 'ناوی بزنس پێویستە', 'اسم النشاط مطلوب');
+      // Business name is OPTIONAL — an individual can register without a company
+      // (the workspace is named after them). Only the person's name is required.
       if (!fullName.trim()) return tr('Your name is required', 'ناوت پێویستە', 'الاسم مطلوب');
     }
     if ((signin || signup || forgot) && !email.trim()) return tr('Email is required', 'ئیمەیڵ پێویستە', 'البريد الإلكتروني مطلوب');
@@ -340,15 +342,22 @@ const VertexAuthShell: React.FC<VertexAuthShellProps> = ({
 
             <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
               {signup && (
-                <Field label={tr('Business name', 'ناوی بزنس', 'اسم النشاط')}>
-                  <VxField icon="building" name="organization" autoComplete="organization" value={businessName} onChange={setBusinessName} disabled={disabled}
-                    placeholder={tr('e.g. Zagros Trading', 'بۆ نموونە: بازرگانی زاگرۆس', 'مثال: زاكروس للتجارة')} ariaLabel={tr('Business name', 'ناوی بزنس', 'اسم النشاط')} />
-                </Field>
-              )}
-              {signup && (
                 <Field label={tr('Full name', 'ناوی تەواو', 'الاسم الكامل')}>
                   <VxField icon="users" name="name" autoComplete="name" value={fullName} onChange={setFullName} disabled={disabled}
                     placeholder={tr('e.g. Safa Othman', 'بۆ نموونە: سەفا عوسمان', 'مثال: صفا عثمان')} ariaLabel={tr('Full name', 'ناوی تەواو', 'الاسم الكامل')} />
+                </Field>
+              )}
+              {signup && (
+                <Field
+                  label={tr('Business name (optional)', 'ناوی بزنس (ئیختیاری)', 'اسم النشاط (اختياري)')}
+                  hint={tr(
+                    'Have a company? Add it. Registering as an individual? Leave it empty — we’ll name your workspace after you.',
+                    'کۆمپانیات هەیە؟ زیادی بکە. وەک کەسێک تۆمار دەبیت؟ بەتاڵی بهێڵە — شوێنی کارەکەت بە ناوی خۆت دادەنێین.',
+                    'لديك شركة؟ أضِفها. تسجّل كفرد؟ اتركه فارغًا — سنسمّي مساحة عملك باسمك.',
+                  )}
+                >
+                  <VxField icon="building" name="organization" autoComplete="organization" value={businessName} onChange={setBusinessName} disabled={disabled}
+                    placeholder={tr('e.g. Zagros Trading', 'بۆ نموونە: بازرگانی زاگرۆس', 'مثال: زاكروس للتجارة')} ariaLabel={tr('Business name', 'ناوی بزنس', 'اسم النشاط')} />
                 </Field>
               )}
 

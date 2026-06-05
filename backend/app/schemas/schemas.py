@@ -47,7 +47,9 @@ class RegisterRequest(BaseModel):
 
 class FirebaseRegisterRequest(BaseModel):
     id_token: str
-    org_name: str = Field(min_length=1, max_length=200)
+    # Optional: individuals can sign up with Google without a business name —
+    # the backend defaults the workspace name to their Google display name.
+    org_name: Optional[str] = Field(default=None, max_length=200)
 
 
 class ForgotPasswordRequest(BaseModel):

@@ -426,8 +426,11 @@ def register(request: Request, data: RegisterRequest):
     org_id = str(uuid.uuid4())
     user_id = str(uuid.uuid4())
 
-    # Create org + user + seed data
-    _seed_org(org_id, data.org_name, data.currency_code, data.language)
+    # Create org + user + seed data. Business name is optional for individuals
+    # registering themselves — fall back to the person's name so the workspace
+    # is still named (never an empty org).
+    org_name = (data.org_name or "").strip() or (data.user_name or "").strip() or "My Business"
+    _seed_org(org_id, org_name, data.currency_code, data.language)
 
     user_repo = UserRepository(org_id)
     user = user_repo.create({
@@ -451,10 +454,6 @@ def firebase_register(request: Request, data: FirebaseRegisterRequest):
     from app.firebase_client import get_db
     from datetime import timedelta
 
-    org_name = (data.org_name or "").strip()
-    if not org_name:
-        raise HTTPException(status_code=400, detail="ناوی ڕێکخراو پێویستە")
-
     try:
         decoded = firebase_auth.verify_id_token(data.id_token)
     except Exception:
@@ -472,6 +471,9 @@ def firebase_register(request: Request, data: FirebaseRegisterRequest):
     org_id = str(uuid.uuid4())
     user_id = str(uuid.uuid4())
     display_name = decoded.get("name") or email.split("@")[0]
+    # Business name is optional for individuals signing up with Google — default
+    # the workspace name to their Google display name when none was provided.
+    org_name = (data.org_name or "").strip() or display_name
 
     _seed_org(org_id, org_name, "IQD", "ku")
 

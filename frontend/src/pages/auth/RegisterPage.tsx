@@ -48,11 +48,10 @@ const RegisterPage: React.FC = () => {
 
   // ── Email + password registration ──
   const handleRegister = async ({ businessName, fullName, email, password }: AuthSubmitValues) => {
-    const orgName = businessName.trim();
-    if (!orgName) {
-      setErrorMsg(t('required_company'));
-      return;
-    }
+    // Business name is optional: an individual registering for themselves can
+    // leave it empty, and we name their workspace after them (full name, then
+    // email local-part as a last resort). Only the person's name is required.
+    const orgName = businessName.trim() || fullName.trim() || email.split('@')[0];
     setLoading(true);
     setErrorMsg(null);
     try {
@@ -75,13 +74,11 @@ const RegisterPage: React.FC = () => {
     }
   };
 
-  // ── Google registration (needs the business name from the form) ──
+  // ── Google registration (business name optional) ──
   const handleGoogleRegister = async (idToken: string, values: AuthSubmitValues) => {
-    const orgName = values.businessName.trim();
-    if (!orgName) {
-      setErrorMsg(t('required_company'));
-      return;
-    }
+    // Optional business name: fall back to the typed full name; if both are
+    // empty the backend names the workspace after the Google account holder.
+    const orgName = values.businessName.trim() || values.fullName.trim();
     setLoading(true);
     setErrorMsg(null);
     try {
