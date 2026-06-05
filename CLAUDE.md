@@ -983,3 +983,16 @@ consolidation-ـی GL-based: هەر JE بە `company_id` تاگ دەکرێت (de
 - **ئەنجام:** warehouse + analytics BI + BQML forecast + AI prediction suite (customer/anomaly/inventory/financial) **هەمووی زیندوون لە production**.
 
 **تەنها ماوە (هی بەکارهێنەر — کلیلی Anthropic، بۆ ئاسایش لە چات دانەنراوە):** بۆ ئەیئای-ی گفتوگۆ (`/api/ai/ask` + `/api/ai/insights`) — Secret Manager: `anthropic-api-key` دروست بکە + `secretAccessor` بدە بە compute SA + `gcloud run services update … --update-secrets ANTHROPIC_API_KEY=anthropic-api-key:latest`. پشتڕاستی: `GET /api/ai/status?probe=true`.
+
+### 2026-06-04 — fix(auth): ناوی بزنس لە signup ئیختیاری کرا (کەسە تاکەکان دەتوانن تۆمار ببن) — deployed + verified live
+
+داوای بەکارهێنەر: «کاتێک کەسێک خۆی ریگیستەر بکات، ناچار دەکرێت ناوی کۆمپانیا بنووسێت — لە Chrome بیبینە و چاکیکە، هەروەها بۆ Gmail». لە Chrome پشکنرا: فۆڕمی signup **ناوی بزنس**-ـی وەک یەکەم فیلدی پێویست داوا دەکرد → کەسی تاک ناچار دەبوو کۆمپانیایەک «دروست بکات».
+
+- **`frontend/src/features/auth/VertexAuthShell.tsx`** — ناوی تەواو ئێستا یەکەمە و تەنها فیلدی پێویستی ناسنامەیە؛ **ناوی بزنس ئیختیاریە** لەگەڵ هینت («کۆمپانیات هەیە؟ زیادی بکە. وەک کەسێک تۆمار دەبیت؟ بەتاڵی بهێڵە — شوێنی کارەکەت بە ناوی خۆت دادەنێین») بە هەر سێ زمان. لابردنی validation-ـی «business name required». `Field` پراپی `hint`-ـی پێزیادکرا.
+- **`frontend/src/pages/auth/RegisterPage.tsx`** — ئیمەیڵ: `org_name` بە default بۆ ناوی تەواو (پاشان email local-part). Google: fallback بۆ ناوی تەواو؛ ئەگەر بەتاڵ بێت backend لە ناوی Google-ـەوە وەریدەگرێت. لابردنی بلۆکی required.
+- **`backend/app/api/auth.py`** — `/register`: `org_name` default بۆ `user_name` (هەرگیز org-ـی بێ-ناو). `/firebase-register`: `org_name` ئیختیاری، default بۆ ناوی display-ـی Google (reorder: decode → derive). 
+- **`backend/app/schemas/schemas.py`** — `FirebaseRegisterRequest.org_name` → `Optional` (پێشتر `min_length=1`).
+- **تێست:** `test_v1_firebase_register_org_name_optional` (token-ـی هەڵە → 401 نەک 422). 6/6 auth سەوز · tsc 0 · build exit 0.
+- **Deploy + پشتڕاستی زیندوو:** frontend → Vercel (`erpiq-frontend-7ys32uy0d`)؛ backend → Cloud Run revision **`00015-lnp`** (env-ی warehouse پارێزراو، route_count 2402). erpiq.systems/signup ئێستا فۆڕمی نوێ پیشان دەدات (ناوی تەواو یەکەم + بزنس ئیختیاری)؛ `/api/v1/auth/firebase-register` بە org_name-ـی بەتاڵ → **401** (ئیختیاری زیندوو). کۆمیت `e15b6a0` + push.
+
+**کێشەی جیاوازی پێش-بوونیار کە دۆزرایەوە (نەک لەم فیکسەوە):** deep-link/refresh-ـی ڕاستەوخۆی `/signup` (و وەک پێدەچێت `/login`...) لە براوزەری خاوەن service-worker-ـی کۆن، chrome-error نیشان دەدات — هەرچەندە سێرڤەر `200 + index.html`-ـی دروست دەداتەوە (curl سەلمێندرا). هۆکار: SW-ـی PWA داواکاریی navigation شکست دەهێنێت (navigateFallback). flow-ـی سەرەکی (landing → Get started → client-side route) کاردەکات. flag کرا بۆ فیکسی جیاواز.
