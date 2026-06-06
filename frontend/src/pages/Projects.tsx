@@ -1,19 +1,29 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Form, Input, Select, Tag, Space} from 'antd';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Button, Form, Input, Space } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, BarChartOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { PageHeader, StatusTag } from '../design-system';
+import { PageHeader, DataTable, StatusTag, type ColumnVisibilityItem } from '../design-system';
+import type { ColumnDef } from '../design-system/DataTable';
+import KitListCard from '../design-system/KitListCard';
+import KitListToolbarActions from '../design-system/KitListToolbarActions';
+import KitRowActions from '../design-system/KitRowActions';
+import KitSearchInput from '../design-system/KitSearchInput';
+import { downloadCsv } from '../utils/exportCsv';
 import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
-import { space } from '../theme/tokens';
-import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 
-const statusColors: Record<string, string> = {
- active: 'blue', completed: 'green', on_hold: 'orange', cancelled: 'red',
-};
+/** Initials for the kit's avatar cell (first letters of the first two words). */
+const initialsOf = (name: string): string =>
+  String(name || '?')
+    .trim()
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
 const Projects: React.FC = () => {
  const { t } = useTranslation();
@@ -22,9 +32,13 @@ const Projects: React.FC = () => {
  const [loading, setLoading] = useState(false);
  const [total, setTotal] = useState(0);
  const [page, setPage] = useState(1);
+ const [search, setSearch] = useState('');
  const [modal, setModal] = useState(false);
- const [contacts, setContacts] = useState<any[]>([]);
+ const [_contacts, setContacts] = useState<any[]>([]);
  const [form] = Form.useForm();
+ const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
+ try { return JSON.parse(localStorage.getItem('projects.hiddenCols') || '[]'); } catch { return []; }
+ });
 
  const fetchData = async () => {
  setLoading(true);
@@ -47,24 +61,54 @@ const Projects: React.FC = () => {
  } catch { message.error(t('error')); }
  };
 
- const columns = [
- { title: t('name'), dataIndex: 'name', key: 'name' },
- { title: t('status'), dataIndex: 'status', key: 'status', render: (s: string) => <StatusTag status={s} label={t(s)} /> },
- { title: t('description'), dataIndex: 'description', key: 'description' },
+ // Kit cell renderers — avatar+name, status chip (StatusTag), muted description.
+ const allColumns: ColumnDef<any>[] = [
  {
- title: t('actions'),
- key: 'actions',
+ title: t('name'), dataIndex: 'name', key: 'name',
+ render: (v: string) => (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{initialsOf(v)}</span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{v}</span>
+ </div>
+ ),
+ },
+ { title: t('status'), dataIndex: 'status', key: 'status', render: (s: string) => <StatusTag status={s} label={t(s)} /> },
+ {
+ title: t('description'), dataIndex: 'description', key: 'description',
+ render: (v: string) => <span style={{ color: 'var(--ink-600)' }}>{v || '—'}</span>,
+ },
+ {
+ title: '', key: 'actions', width: 56, align: 'center' as const,
  render: (_: any, record: any) => (
- <Button
- type="link"
- icon={<BarChartOutlined />}
- onClick={() => navigate(`/projects/${record.id}/gantt`)}
- >
- {t('gantt')}
- </Button>
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'gantt', icon: <BarChartOutlined />, label: t('gantt'), onClick: () => navigate(`/projects/${record.id}/gantt`) },
+ ]}
+ />
  ),
  },
  ];
+ const columns = useMemo(() => allColumns.filter((c) => !hiddenCols.includes(c.key as string)), [hiddenCols, t]);
+ const filteredData = useMemo(() => {
+ if (!search) return data;
+ const q = search.toLowerCase();
+ return data.filter((row: any) => Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(q)));
+ }, [data, search]);
+ const columnsMeta: ColumnVisibilityItem[] = allColumns.map((c) => ({
+ key: c.key as string,
+ label: typeof c.title === 'string' ? c.title : (c.key as string),
+ pinned: c.key === 'name' || c.key === 'actions',
+ }));
+ const persistHidden = (next: string[]) => {
+ setHiddenCols(next);
+ try { localStorage.setItem('projects.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
+ };
 
  return (
  <div>
@@ -80,7 +124,34 @@ const Projects: React.FC = () => {
  }
  />
 
- <ResponsiveTableAdapter dataSource={data} columns={columns} rowKey="id" loading={loading} pagination={{ current: page, total, pageSize: 20, onChange: setPage }} />
+ <KitListCard
+ toolbar={
+ <>
+ <KitSearchInput
+ value={search}
+ onChange={(v) => { setSearch(v); setPage(1); }}
+ placeholder={t('search')}
+ />
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('projects', data, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ </div>
+ </>
+ }
+ >
+ <DataTable dataSource={filteredData} columns={columns} rowKey="id" loading={loading} pagination={{ current: page, total: search ? filteredData.length : total, pageSize: 20, onChange: setPage }} />
+ </KitListCard>
 
  <FormDialog title={t('new_project')} open={modal} onClose={() => setModal(false)} onOk={() => form.submit()}>
  <Form form={form} layout="vertical" onFinish={handleSave} initialValues={{ status: 'active', billing_method: 'fixed_cost' }}>

@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
- Card, Upload, Button, Space, Tag, message, Row, Col, Descriptions, Typography } from 'antd';
+ Upload, Button, Space, Tag, message, Row, Col, Descriptions, Typography } from 'antd';
 import type { TableProps } from 'antd';
 import type { UploadFile, UploadProps } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import {
- InboxOutlined, ReloadOutlined, EyeOutlined, PlusOutlined, FileImageOutlined,
-} from '@ant-design/icons';
-import { PageHeader } from '../../design-system';
+import { InboxOutlined, ReloadOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
+import { PageHeader, SectionCard } from '../../design-system';
 import api from '../../api';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -212,7 +210,7 @@ const OCRReceiptsAdvanced: React.FC = () => {
 
  <Row gutter={[16, 16]}>
  <Col xs={24} lg={8}>
- <Card title={t('ai.upload_receipts')}>
+ <SectionCard title={t('ai.upload_receipts')}>
  <Dragger {...uploadProps} disabled={uploading}>
  <p className="ant-upload-drag-icon">
  <InboxOutlined />
@@ -222,11 +220,11 @@ const OCRReceiptsAdvanced: React.FC = () => {
  {t('ai.upload_hint')}
  </p>
  </Dragger>
- </Card>
+ </SectionCard>
  </Col>
 
  <Col xs={24} lg={16}>
- <Card title={t('ai.ocr_jobs')}>
+ <SectionCard title={t('ai.ocr_jobs')}>
  <ResponsiveTableAdapter
  columns={columns}
  dataSource={data}
@@ -234,7 +232,7 @@ const OCRReceiptsAdvanced: React.FC = () => {
  loading={loading}
  pagination={{ pageSize: 10 }}
  />
- </Card>
+ </SectionCard>
  </Col>
  </Row>
 
@@ -273,7 +271,7 @@ const OCRReceiptsAdvanced: React.FC = () => {
  </Descriptions>
 
  {selectedJob.extracted_fields && (
- <Card
+ <SectionCard
  title={t('ai.extracted_fields')}
  style={{ marginTop: 16 }}
  extra={
@@ -326,7 +324,7 @@ const OCRReceiptsAdvanced: React.FC = () => {
  key={idx}
  style={{
  padding: '8px 0',
- borderBottom: '1px solid #f0f0f0',
+ borderBottom: '1px solid var(--border)',
  }}
  >
  <Space style={{ width: '100%', justifyContent: 'space-between' }}>
@@ -337,15 +335,15 @@ const OCRReceiptsAdvanced: React.FC = () => {
  ))}
  </div>
  )}
- </Card>
+ </SectionCard>
  )}
 
  {selectedJob.extracted_text && (
- <Card title={t('ai.raw_text')} style={{ marginTop: 16 }}>
+ <SectionCard title={t('ai.raw_text')} style={{ marginTop: 16 }}>
  <pre style={{ whiteSpace: 'pre-wrap', fontSize: 12 }}>
  {selectedJob.extracted_text}
  </pre>
- </Card>
+ </SectionCard>
  )}
  </>
  )}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Statistic, Button, Space, Tag } from 'antd';
+import { Row, Col, Button, Space, Tag } from 'antd';
 import {
   ToolOutlined,
   CheckCircleOutlined,
@@ -11,7 +11,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, KpiCard, ChartCard, SectionCard } from '../../design-system';
 import { message } from '../../utils/message';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -109,7 +109,7 @@ const MaintenanceDashboard: React.FC = () => {
       title: t('maintenance.next_due_date'),
       dataIndex: 'next_due_date',
       key: 'next_due_date',
-      render: (date: string) => <span style={{ color: 'red' }}>{date}</span>,
+      render: (date: string) => <span style={{ color: 'var(--danger-fg)' }}>{date}</span>,
     },
   ];
 
@@ -121,112 +121,100 @@ const MaintenanceDashboard: React.FC = () => {
       />
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} lg={8}>
-          <Card>
-            <Statistic
-              title={t('maintenance.total_equipment')}
-              value={totalEquipment}
-              prefix={<ToolOutlined />}
-              loading={loading}
-            />
-          </Card>
+          <KpiCard
+            title={t('maintenance.total_equipment')}
+            value={totalEquipment}
+            icon={<ToolOutlined />}
+            loading={loading}
+          />
         </Col>
         <Col xs={24} sm={12} lg={8}>
-          <Card>
-            <Statistic
-              title={t('maintenance.active_equipment')}
-              value={activeEquipment}
-              prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: '#3f8600' }}
-              loading={loading}
-            />
-          </Card>
+          <KpiCard
+            title={t('maintenance.active_equipment')}
+            value={activeEquipment}
+            icon={<CheckCircleOutlined />}
+            tone="success"
+            loading={loading}
+          />
         </Col>
         <Col xs={24} sm={12} lg={8}>
-          <Card>
-            <Statistic
-              title={t('maintenance.in_maintenance')}
-              value={inMaintenance}
-              prefix={<WarningOutlined />}
-              valueStyle={{ color: '#faad14' }}
-              loading={loading}
-            />
-          </Card>
+          <KpiCard
+            title={t('maintenance.in_maintenance')}
+            value={inMaintenance}
+            icon={<WarningOutlined />}
+            tone="warning"
+            loading={loading}
+          />
         </Col>
         <Col xs={24} sm={12} lg={8}>
-          <Card>
-            <Statistic
-              title={t('maintenance.broken_equipment')}
-              value={brokenEquipment}
-              prefix={<CloseCircleOutlined />}
-              valueStyle={{ color: '#cf1322' }}
-              loading={loading}
-            />
-          </Card>
+          <KpiCard
+            title={t('maintenance.broken_equipment')}
+            value={brokenEquipment}
+            icon={<CloseCircleOutlined />}
+            tone="danger"
+            loading={loading}
+          />
         </Col>
         <Col xs={24} sm={12} lg={8}>
-          <Card>
-            <Statistic
-              title={t('maintenance.open_requests')}
-              value={openRequests}
-              prefix={<FileTextOutlined />}
-              loading={loading}
-            />
-          </Card>
+          <KpiCard
+            title={t('maintenance.open_requests')}
+            value={openRequests}
+            icon={<FileTextOutlined />}
+            loading={loading}
+          />
         </Col>
         <Col xs={24} sm={12} lg={8}>
-          <Card>
-            <Statistic
-              title={t('maintenance.overdue_schedules')}
-              value={overdueSchedules.length}
-              prefix={<ClockCircleOutlined />}
-              valueStyle={{ color: '#cf1322' }}
-            />
-          </Card>
+          <KpiCard
+            title={t('maintenance.overdue_schedules')}
+            value={overdueSchedules.length}
+            icon={<ClockCircleOutlined />}
+            tone="danger"
+          />
         </Col>
       </Row>
 
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} lg={12}>
-          <Card title={t('maintenance.requests_by_type')}>
+          <ChartCard title={t('maintenance.requests_by_type')}>
             <ResponsiveChart
               legendItems={[
-                { id: 'requests', labelKey: asTranslationKey('maintenance.requests'), color: '#1890ff' },
+                { id: 'requests', labelKey: asTranslationKey('maintenance.requests'), color: 'var(--accent-500)' },
               ]}
             >
               <BarChart data={requestsByType}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="name" tick={{ fill: 'var(--ink-400)' }} />
+                <YAxis tick={{ fill: 'var(--ink-400)' }} />
                 <Tooltip />
-                <Bar dataKey="value" fill="#1890ff" name={t('maintenance.requests')} />
+                <Bar dataKey="value" fill="var(--accent-500)" name={t('maintenance.requests')} />
               </BarChart>
             </ResponsiveChart>
-          </Card>
+          </ChartCard>
         </Col>
         <Col xs={24} lg={12}>
-          <Card title={t('maintenance.mtbf_mttr_trend')}>
+          <ChartCard title={t('maintenance.mtbf_mttr_trend')}>
             <ResponsiveChart
               legendItems={[
-                { id: 'mtbf', labelKey: asTranslationKey('maintenance.mtbf'), color: '#52c41a' },
-                { id: 'mttr', labelKey: asTranslationKey('maintenance.mttr'), color: '#faad14' },
+                { id: 'mtbf', labelKey: asTranslationKey('maintenance.mtbf'), color: 'var(--success-500)' },
+                { id: 'mttr', labelKey: asTranslationKey('maintenance.mttr'), color: 'var(--warning-500)' },
               ]}
             >
               <LineChart data={mtbfMttrTrend}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="month" tick={{ fill: 'var(--ink-400)' }} />
+                <YAxis tick={{ fill: 'var(--ink-400)' }} />
                 <Tooltip />
-                <Line type="monotone" dataKey="mtbf" stroke="#52c41a" name={t('maintenance.mtbf')} />
-                <Line type="monotone" dataKey="mttr" stroke="#faad14" name={t('maintenance.mttr')} />
+                <Line type="monotone" dataKey="mtbf" stroke="var(--success-500)" name={t('maintenance.mtbf')} />
+                <Line type="monotone" dataKey="mttr" stroke="var(--warning-500)" name={t('maintenance.mttr')} />
               </LineChart>
             </ResponsiveChart>
-          </Card>
+          </ChartCard>
         </Col>
       </Row>
 
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={12}>
-          <Card
+          <SectionCard
             title={t('maintenance.recent_requests')}
             extra={
               <Button type="link" onClick={() => navigate('/maintenance/requests')}>
@@ -241,10 +229,10 @@ const MaintenanceDashboard: React.FC = () => {
               pagination={false}
               size="small"
             />
-          </Card>
+          </SectionCard>
         </Col>
         <Col xs={24} lg={12}>
-          <Card
+          <SectionCard
             title={t('maintenance.overdue_schedules')}
             extra={
               <Button type="link" onClick={() => navigate('/maintenance/schedules')}>
@@ -259,7 +247,7 @@ const MaintenanceDashboard: React.FC = () => {
               pagination={false}
               size="small"
             />
-          </Card>
+          </SectionCard>
         </Col>
       </Row>
 

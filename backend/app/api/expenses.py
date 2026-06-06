@@ -262,6 +262,24 @@ def approve_bill(bill_id: str, user: dict = Depends(get_current_user)):
         if str(exc) == "bill_not_draft":
             raise HTTPException(status_code=400, detail="تەنیا ڕەشنووس پەسەند دەکرێت")
         raise
+
+    # --- P0 (AP): GL auto-post on approve (Dr Expense/Inventory / Cr AP).
+    # Idempotent; never breaks the approve response. ---
+    try:
+        from app.services.bill_gl import post_bill_approval_je
+        bill_full = repo.get_with_lines(bill_id) or bill
+        je = post_bill_approval_je(
+            user["org_id"], bill_full, bill_full.get("lines") or [], created_by=user.get("id")
+        )
+        if je and not je.get("skipped"):
+            repo.update(bill_id, {"gl_posted": True, "journal_entry_id": je["id"]})
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).error(
+            "bill_approve_je_failed", extra={"bill_id": bill_id, "error": str(exc)}
+        )
+    # ---------------------------------------------------------------------------
+
     try:
         from app.services.webhook_dispatcher import dispatch_event
         dispatch_event(user["org_id"], "bill.approved", {"id": bill_id})
@@ -286,11 +304,15 @@ def cancel_bill(bill_id: str, data: dict = None, user: dict = Depends(get_curren
         raise HTTPException(status_code=400, detail=f"ناتوانرێت دۆخی '{bill.get('status')}' هەڵبوەشێنرێت")
     if float(bill.get("balance_due", bill.get("total", 0)) or 0) != float(bill.get("total", 0) or 0):
         raise HTTPException(status_code=400, detail="ناتوانرێت پسووڵەی پارەی لەسەرە درا هەڵبوەشێنرێت — یەکەم پارەکە بگەڕێنەوە")
+    if bill.get("gl_posted") and bill.get("journal_entry_id"):
+        from app.services.bill_gl import reverse_bill_je
+        reverse_bill_je(user["org_id"], bill, reversal_date=datetime.utcnow(), user_id=user.get("id"))
     return repo.update(bill_id, {
         "status": "cancelled",
         "cancelled_at": datetime.utcnow().isoformat(),
         "cancelled_by": user.get("id"),
         "cancellation_reason": (data or {}).get("reason", ""),
+        "gl_reversed": True,
     })
 
 
@@ -302,11 +324,15 @@ def void_bill(bill_id: str, data: dict = None, user: dict = Depends(get_current_
         raise HTTPException(status_code=404, detail="پسووڵە نەدۆزرایەوە")
     if bill.get("status") == "void":
         return bill
+    if bill.get("gl_posted") and bill.get("journal_entry_id"):
+        from app.services.bill_gl import reverse_bill_je
+        reverse_bill_je(user["org_id"], bill, reversal_date=datetime.utcnow(), user_id=user.get("id"))
     return repo.update(bill_id, {
         "status": "void",
         "voided_at": datetime.utcnow().isoformat(),
         "voided_by": user.get("id"),
         "void_reason": (data or {}).get("reason", ""),
+        "gl_reversed": True,
     })
 
 

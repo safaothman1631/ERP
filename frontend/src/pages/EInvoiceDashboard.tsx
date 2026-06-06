@@ -73,7 +73,7 @@ export default function EInvoiceDashboard() {
  }
  };
 
- useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+ useEffect(() => { load();   }, []);
 
  const summary = report?.summary || {};
  const total = useMemo(() => Object.values(summary).reduce((s, v) => s + v, 0), [summary]);
@@ -171,10 +171,10 @@ export default function EInvoiceDashboard() {
  <>
  <Row gutter={12} style={{ marginBottom: 16 }}>
  <Col span={4}><Card><Statistic title={t('total')} value={total} /></Card></Col>
- <Col span={4}><Card><Statistic title={t('accepted')} value={summary.accepted || 0} styles={{ content: { color: '#52c41a' } }} /></Card></Col>
- <Col span={4}><Card><Statistic title={t('submitted')} value={summary.submitted || 0} styles={{ content: { color: '#1890ff' } }} /></Card></Col>
- <Col span={4}><Card><Statistic title={t('rejected')} value={(summary.rejected || 0) + (summary.failed || 0)} styles={{ content: { color: '#f5222d' } }} /></Card></Col>
- <Col span={4}><Card><Statistic title={t('cancelled')} value={summary.cancelled || 0} styles={{ content: { color: '#fa8c16' } }} /></Card></Col>
+ <Col span={4}><Card><Statistic title={t('accepted')} value={summary.accepted || 0} styles={{ content: { color: 'var(--success-500)' } }} /></Card></Col>
+ <Col span={4}><Card><Statistic title={t('submitted')} value={summary.submitted || 0} styles={{ content: { color: 'var(--accent-500)' } }} /></Card></Col>
+ <Col span={4}><Card><Statistic title={t('rejected')} value={(summary.rejected || 0) + (summary.failed || 0)} styles={{ content: { color: 'var(--danger-500)' } }} /></Card></Col>
+ <Col span={4}><Card><Statistic title={t('cancelled')} value={summary.cancelled || 0} styles={{ content: { color: 'var(--warning-500)' } }} /></Card></Col>
  <Col span={4}><Card><Statistic title={t('acceptance_rate')} value={acceptanceRate} suffix="%" /></Card></Col>
  </Row>
 

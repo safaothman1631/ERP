@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Button, Space, Typography, Badge, Dropdown, message, Modal } from 'antd';
+import { Card, Row, Col, Button, Space, Typography, Dropdown, Input, message, Modal } from 'antd';
 import {
  PlusOutlined, EditOutlined, DeleteOutlined, CopyOutlined,
  ShareAltOutlined, StarOutlined, EllipsisOutlined, DashboardOutlined
@@ -7,7 +7,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, StatusTag } from '../../design-system';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
 const { Title, Text } = Typography;
@@ -16,7 +16,7 @@ const MyDashboards: React.FC = () => {
  const { t } = useTranslation();
  const navigate = useNavigate();
  const [dashboards, setDashboards] = useState<any[]>([]);
- const [loading, setLoading] = useState(true);
+ const [_loading, setLoading] = useState(true);
  const [createModalOpen, setCreateModalOpen] = useState(false);
  const [newName, setNewName] = useState('');
 
@@ -29,7 +29,7 @@ const MyDashboards: React.FC = () => {
  try {
  const res = await api.get('/api/dashboards');
  setDashboards(res.data.data || []);
- } catch (err) {
+ } catch (_err) {
  message.error(t('load_error'));
  } finally {
  setLoading(false);
@@ -48,7 +48,7 @@ const MyDashboards: React.FC = () => {
  setCreateModalOpen(false);
  setNewName('');
  navigate(`/dashboards/${newDash.id}/edit`);
- } catch (err) {
+ } catch (_err) {
  message.error(t('create_error'));
  }
  };
@@ -65,7 +65,7 @@ const MyDashboards: React.FC = () => {
  await api.delete(`/api/dashboards/${id}`);
  message.success(t('deleted'));
  fetchDashboards();
- } catch (err) {
+ } catch (_err) {
  message.error(t('delete_error'));
  }
  }
@@ -77,7 +77,7 @@ const MyDashboards: React.FC = () => {
  await api.post(`/api/dashboards/${id}/clone`);
  message.success(t('dashboard_cloned'));
  fetchDashboards();
- } catch (err) {
+ } catch (_err) {
  message.error(t('clone_error'));
  }
  };
@@ -86,7 +86,7 @@ const MyDashboards: React.FC = () => {
  try {
  await api.post(`/api/dashboards/${id}/set-default`);
  message.success(t('set_as_default_success'));
- } catch (err) {
+ } catch (_err) {
  message.error(t('error'));
  }
  };
@@ -139,9 +139,9 @@ const MyDashboards: React.FC = () => {
  {dash.name}
  </Title>
  {dash.is_owner ? (
- <Badge color="blue" text={t('mine')} />
+ <StatusTag status="info" label={t('mine')} />
  ) : (
- <Badge color="green" text={t('shared_with_me')} />
+ <StatusTag status="success" label={t('shared_with_me')} />
  )}
  </div>
  <Text type="secondary">
@@ -162,13 +162,11 @@ const MyDashboards: React.FC = () => {
  onOk={handleCreate}
  onClose={() => { setCreateModalOpen(false); setNewName(''); }}
  >
- <input
- type="text"
+ <Input
  placeholder={t('dashboard_name')}
  value={newName}
  onChange={(e) => setNewName(e.target.value)}
- style={{ width: '100%', padding: '8px', border: '1px solid #d9d9d9', borderRadius: 4 }}
- onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); }}
+ onPressEnter={handleCreate}
  />
  </FormDialog>
  </div>

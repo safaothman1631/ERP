@@ -13,7 +13,7 @@
  */
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 import { ResponsiveTable, type ResponsiveColumn, type RowAction } from './ResponsiveTable';
 import { asTranslationKey } from '../../i18n/types';
@@ -128,7 +128,7 @@ const manyColumns: ResponsiveColumn<TestRow>[] = [
   { id: 'status', headerKey: asTranslationKey('col.status'), priority: 'low', render: (r) => r.status },
 ];
 
-const sampleRowActions = (row: TestRow): RowAction[] => [
+const sampleRowActions = (_row: TestRow): RowAction[] => [
   { id: 'edit', labelKey: asTranslationKey('action.edit'), onClick: vi.fn() },
   { id: 'delete', labelKey: asTranslationKey('action.delete'), onClick: vi.fn(), danger: true },
 ];
@@ -179,8 +179,13 @@ describe('ResponsiveTable — Mobile (card list)', () => {
     expect(labels[0].textContent).toBe('col.name');
   });
 
-  /** Validates: R4.3 — high-priority columns retained on mobile when > 5 columns. */
-  it('shows only high-priority columns by default when > 5 columns', () => {
+  /**
+   * Updated contract: the column-trimming / "Show more" affordance was removed —
+   * mobile cards now render EVERY column (the owner asked to drop the "More"
+   * button so no data is hidden behind an extra tap). These assert the new
+   * all-columns-always-visible behavior.
+   */
+  it('shows ALL columns on mobile cards by default (no trimming)', () => {
     render(
       <ResponsiveTable
         columns={manyColumns}
@@ -193,16 +198,14 @@ describe('ResponsiveTable — Mobile (card list)', () => {
     const firstCard = wrapper.querySelector('li.responsive-table__card-wrapper');
     expect(firstCard).not.toBeNull();
 
-    // Only high-priority columns should be visible by default
+    // Every column renders (all 6), not just the high-priority ones.
     const visibleLabels = firstCard!.querySelectorAll('.responsive-table__label');
-    // 2 high-priority columns: name, email
-    expect(visibleLabels.length).toBe(2);
+    expect(visibleLabels.length).toBe(6);
     expect(visibleLabels[0].textContent).toBe('col.name');
     expect(visibleLabels[1].textContent).toBe('col.email');
   });
 
-  /** Validates: R4.3 — "Show more" button reveals hidden columns on mobile. */
-  it('reveals all columns when "Show more" is clicked', () => {
+  it('does not render a "Show more" button (all columns always visible)', () => {
     render(
       <ResponsiveTable
         columns={manyColumns}
@@ -213,44 +216,8 @@ describe('ResponsiveTable — Mobile (card list)', () => {
 
     const wrapper = screen.getByTestId('test-table');
     const firstCard = wrapper.querySelector('li.responsive-table__card-wrapper');
-
-    // Find the "Show more" button (renders the "more" translation key)
-    const showMoreBtn = firstCard!.querySelector('.responsive-table__show-more');
-    expect(showMoreBtn).not.toBeNull();
-    expect(showMoreBtn!.textContent).toBe('more');
-
-    // Click to expand
-    fireEvent.click(showMoreBtn!);
-
-    // Now all 6 columns should be visible
-    const allLabels = firstCard!.querySelectorAll('.responsive-table__label');
-    expect(allLabels.length).toBe(6);
-  });
-
-  /** Validates: R4.3 — expanding reveals all columns and marks button as expanded. */
-  it('marks the show-more button as aria-expanded after clicking', () => {
-    render(
-      <ResponsiveTable
-        columns={manyColumns}
-        data={sampleData}
-        testId="test-table"
-      />,
-    );
-
-    const wrapper = screen.getByTestId('test-table');
-    const firstCard = wrapper.querySelector('li.responsive-table__card-wrapper');
-    const showMoreBtn = firstCard!.querySelector('.responsive-table__show-more');
-    expect(showMoreBtn).not.toBeNull();
-
-    // Before click: aria-expanded is false, text is "more"
-    expect(showMoreBtn!.getAttribute('aria-expanded')).toBe('false');
-    expect(showMoreBtn!.textContent).toBe('more');
-
-    // After click: all columns are revealed
-    fireEvent.click(showMoreBtn!);
-
-    const allLabels = firstCard!.querySelectorAll('.responsive-table__label');
-    expect(allLabels.length).toBe(6);
+    // The trim / "Show more" control was removed — it must not exist.
+    expect(firstCard!.querySelector('.responsive-table__show-more')).toBeNull();
   });
 
   it('renders row actions menu on mobile cards', () => {

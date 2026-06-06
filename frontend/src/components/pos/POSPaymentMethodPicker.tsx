@@ -15,20 +15,7 @@
  * connectivity returns.
  */
 import React, { useMemo, useState } from 'react';
-import {
-  Alert,
-  Button,
-  Card,
-  Col,
-  Input,
-  InputNumber,
-  Modal,
-  QRCode,
-  Row,
-  Space,
-  Tag,
-  Typography,
-} from 'antd';
+import { Alert, Card, Col, Input, InputNumber, Modal, QRCode, Row, Space, Tag, Typography } from 'antd';
 import {
   DollarOutlined,
   TruckOutlined,

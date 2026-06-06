@@ -232,6 +232,25 @@ ENV_VAR_REGISTRY: list[EnvVarDoc] = [
         sensitive=False,
         category="Payments",
     ),
+    EnvVarDoc(
+        name="IRAQ_PAYMENT_WEBHOOK_SECRET",
+        description=(
+            "HMAC-SHA256 shared secret used to verify the PUBLIC Iraq payment "
+            "webhooks (POST /api/iraq-payments/webhook/fib and /webhook/zain-cash). "
+            "When empty/unset, those webhooks are disabled and return 503 so forged "
+            "callbacks cannot mark invoices paid (safe-by-default)."
+        ),
+        required=False,
+        example="change-me-iraq-payment-webhook-secret",
+        default="",
+        sensitive=True,
+        category="Payments",
+        notes=(
+            "Generate with: python -c \"import secrets; print(secrets.token_hex(32))\"\n"
+            "Configure FIB/Zain Cash to sign each request with the X-Webhook-Signature "
+            "header (hex digest of the raw request body). Never commit the real value."
+        ),
+    ),
     # ── Support stack (growth-to-100 § G2) ──────────────────────────────────────
     EnvVarDoc(
         name="CRISP_WEBSITE_ID",
@@ -361,6 +380,90 @@ ENV_VAR_REGISTRY: list[EnvVarDoc] = [
         sensitive=False,
         category="Iraq Compliance",
         notes="Falls back to the previous day's rate (then a hardcoded 1320) on fetch failure. Format pending R7.6.",
+    ),
+    # ── AI & Analytics warehouse (Pool 4.6 / 4.7) ───────────────────────────────
+    EnvVarDoc(
+        name="ANALYTICS_BQ_DATASET",
+        description=(
+            "BigQuery warehouse dataset as 'project.dataset' (e.g. "
+            "'zoho-83cda.zoho_warehouse'). When UNSET the analytics warehouse, "
+            "BQML forecasts, and all AI insight endpoints are a graceful no-op "
+            "(each returns a 'warehouse_not_configured' status, never a 500). "
+            "Setting it opts the whole analytics/AI layer in."
+        ),
+        required=False,
+        example="zoho-83cda.zoho_warehouse",
+        default="",
+        sensitive=False,
+        category="AI & Analytics",
+        notes=(
+            "The project half also pins the BigQuery client's billing project. "
+            "Grant the runtime service account roles/bigquery.jobUser + "
+            "roles/bigquery.dataEditor on this dataset before enabling."
+        ),
+    ),
+    EnvVarDoc(
+        name="ANTHROPIC_API_KEY",
+        description=(
+            "Anthropic API key that powers the natural-language data assistant "
+            "(/api/ai/ask) and narrative business insights (/api/ai/insights). "
+            "When UNSET, those endpoints return an 'ai_not_configured' status and "
+            "never raise — the rest of the app is unaffected."
+        ),
+        required=False,
+        example="sk-ant-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        default="",
+        sensitive=True,
+        category="AI & Analytics",
+        notes=(
+            "Get a key from https://console.anthropic.com/ . Never commit the real "
+            "value. After setting it, verify with GET /api/ai/status?probe=true — a "
+            "tiny live call confirms the key + model work."
+        ),
+    ),
+    EnvVarDoc(
+        name="AI_MODEL",
+        description=(
+            "Optional global override for BOTH AI models (translation + narrative). "
+            "Set this to a single Claude model id to run every AI feature on one "
+            "model — no code change. Per-task overrides below take precedence."
+        ),
+        required=False,
+        example="claude-opus-4-8",
+        default="",
+        sensitive=False,
+        category="AI & Analytics",
+        notes=(
+            "Any current Claude model id works — the assistant degrades gracefully "
+            "from structured-output to plain-JSON parsing so the key 'just works' "
+            "for any model. Resolution: AI_TRANSLATE_MODEL/AI_NARRATE_MODEL → AI_MODEL → built-in default."
+        ),
+    ),
+    EnvVarDoc(
+        name="AI_TRANSLATE_MODEL",
+        description=(
+            "Override the model used for the NL→query translation step only "
+            "(a constrained structured-extraction task; a fast/cheap model is ideal). "
+            "Defaults to a current Haiku model when unset."
+        ),
+        required=False,
+        example="claude-haiku-4-5",
+        default="claude-haiku-4-5",
+        sensitive=False,
+        category="AI & Analytics",
+    ),
+    EnvVarDoc(
+        name="AI_NARRATE_MODEL",
+        description=(
+            "Override the model used for the plain-language narrative summary only "
+            "(prose quality matters; a stronger model is ideal). Defaults to a "
+            "current Opus model when unset."
+        ),
+        required=False,
+        example="claude-opus-4-8",
+        default="claude-opus-4-8",
+        sensitive=False,
+        category="AI & Analytics",
     ),
 ]
 

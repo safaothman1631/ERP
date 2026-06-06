@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Form, Input, Select, Tag, message, Card, DatePicker, Modal } from 'antd';
+import { Button, Space, Form, Input, Select, Tag, message, Card, Modal } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, CheckOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
@@ -26,7 +26,7 @@ const Helpdesk: React.FC = () => {
  params: { status: statusFilter || undefined, limit: 100 },
  });
  setTickets(res.data.items || []);
- } catch (error) {
+ } catch (_error) {
  message.error(t('error'));
  } finally {
  setLoading(false);

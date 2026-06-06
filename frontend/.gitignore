@@ -31,3 +31,8 @@ e2e/reports/
 .env*.local
 .env.e2e
 release-readiness-report.md
+
+# Vertex design-system reference kit (read-only; ported into theme/vertex-tokens.css — not part of the build)
+src/design-system/Vertex Design System*/
+src/design-system/vertex/
+src/design-system/*.zip

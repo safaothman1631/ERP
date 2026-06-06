@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
- Card, Descriptions, Button, Space, Tabs, Input, message, Form, Select, Tag, List, Avatar, Upload, Tooltip, DatePicker, Modal } from 'antd';
+import { Button, Space, Tabs, Input, message, Form, Select, Tag, List, Avatar, Tooltip, DatePicker, Modal } from 'antd';
 import {
  DownloadOutlined, ShareAltOutlined, DeleteOutlined, UploadOutlined,
  RollbackOutlined, UserOutlined, LinkOutlined, SendOutlined
@@ -8,7 +7,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, DetailLayout, SectionCard, KeyValueGrid, StatusTag } from '../../design-system';
 import { space } from '../../theme/tokens';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -21,10 +20,10 @@ const DocumentDetail: React.FC = () => {
  const navigate = useNavigate();
  const [doc, setDoc] = useState<any>(null);
  const [versions, setVersions] = useState<any[]>([]);
- const [comments, setComments] = useState<any[]>([]);
+ const [comments, _setComments] = useState<any[]>([]);
  const [shares, setShares] = useState<any[]>([]);
- const [activity, setActivity] = useState<any[]>([]);
- const [loading, setLoading] = useState(false);
+ const [activity, _setActivity] = useState<any[]>([]);
+ const [_loading, setLoading] = useState(false);
  const [commentText, setCommentText] = useState('');
  const [shareModalOpen, setShareModalOpen] = useState(false);
  const [versionModalOpen, setVersionModalOpen] = useState(false);
@@ -37,7 +36,7 @@ const DocumentDetail: React.FC = () => {
  try {
  const res = await api.get(`/api/documents/files/${docId}`);
  setDoc(res.data);
- } catch (error) {
+ } catch (_error) {
  message.error(t('error'));
  } finally {
  setLoading(false);
@@ -49,7 +48,7 @@ const DocumentDetail: React.FC = () => {
  try {
  const res = await api.get(`/api/documents/files/${docId}/versions`);
  setVersions(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  const fetchShares = async () => {
@@ -57,7 +56,7 @@ const DocumentDetail: React.FC = () => {
  try {
  const res = await api.get('/api/documents/shares', { params: { file_id: docId } });
  setShares(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  useEffect(() => {
@@ -136,7 +135,7 @@ const DocumentDetail: React.FC = () => {
  }
  };
 
- const handleRestoreVersion = async (versionId: string) => {
+ const handleRestoreVersion = async (_versionId: string) => {
  message.info(t('dms.restore_coming_soon'));
  };
 
@@ -167,7 +166,7 @@ const DocumentDetail: React.FC = () => {
  title: t('dms.shared_with'),
  dataIndex: 'user_id',
  key: 'user_id',
- render: (v: string, r: any) => r.public_link ? <Tag color="blue">{t('dms.public_link')}</Tag> : (v || t('dms.unknown')),
+ render: (v: string, r: any) => r.public_link ? <StatusTag status="info" label={t('dms.public_link')} /> : (v || t('dms.unknown')),
  },
  { title: t('dms.permission'), dataIndex: 'permission', key: 'permission', render: (v: string) => <Tag>{v}</Tag> },
  { title: t('dms.expires_at'), dataIndex: 'expires_at', key: 'expires_at', render: (v: string) => v ? new Date(v).toLocaleDateString() : '—' },
@@ -188,10 +187,9 @@ const DocumentDetail: React.FC = () => {
  }
 
  return (
- <div>
- <PageHeader
- title={doc.name}
- extra={
+ <DetailLayout
+ header={<PageHeader title={doc.name} />}
+ toolbar={
  <Space>
  <Button icon={<DownloadOutlined />} onClick={handleDownload}>
  {t('dms.download')}
@@ -204,13 +202,11 @@ const DocumentDetail: React.FC = () => {
  </Button>
  </Space>
  }
- />
-
- <div style={{ marginTop: space.md }}>
- <Card>
+ >
+ <SectionCard>
  <Space direction="vertical" style={{ width: '100%' }}>
  {/* Preview */}
- <div style={{ textAlign: 'center', background: '#fafafa', padding: space.lg, borderRadius: 8 }}>
+ <div style={{ textAlign: 'center', background: 'var(--surface-2)', padding: space.lg, borderRadius: 'var(--radius-md)' }}>
  {doc.mime_type.includes('pdf') ? (
  <iframe
  src={doc.storage_url}
@@ -227,22 +223,23 @@ const DocumentDetail: React.FC = () => {
  </div>
 
  {/* Metadata */}
- <Descriptions bordered column={2}>
- <Descriptions.Item label={t('dms.document_name')}>{doc.name}</Descriptions.Item>
- <Descriptions.Item label={t('dms.type')}>{doc.mime_type}</Descriptions.Item>
- <Descriptions.Item label={t('dms.size')}>{Math.round(doc.size_bytes / 1024)} KB</Descriptions.Item>
- <Descriptions.Item label={t('dms.uploaded_by')}>{doc.uploaded_by || '—'}</Descriptions.Item>
- <Descriptions.Item label={t('dms.uploaded_at')}>{new Date(doc.created_at).toLocaleString()}</Descriptions.Item>
- <Descriptions.Item label={t('dms.version')}>{doc.version || 1}</Descriptions.Item>
- <Descriptions.Item label={t('dms.tags')} span={2}>
- {(doc.tags || []).map((tag: string) => <Tag key={tag}>{tag}</Tag>)}
- </Descriptions.Item>
- </Descriptions>
+ <KeyValueGrid
+ columns={2}
+ items={[
+ { label: t('dms.document_name'), value: doc.name },
+ { label: t('dms.type'), value: doc.mime_type },
+ { label: t('dms.size'), value: `${Math.round(doc.size_bytes / 1024)} KB` },
+ { label: t('dms.uploaded_by'), value: doc.uploaded_by || '—' },
+ { label: t('dms.uploaded_at'), value: new Date(doc.created_at).toLocaleString() },
+ { label: t('dms.version'), value: doc.version || 1 },
+ { label: t('dms.tags'), value: <>{(doc.tags || []).map((tag: string) => <Tag key={tag}>{tag}</Tag>)}</>, span: 2 },
+ ]}
+ />
  </Space>
- </Card>
+ </SectionCard>
 
  {/* Tabs */}
- <Card style={{ marginTop: space.md }}>
+ <SectionCard>
  <Tabs
  items={[
  {
@@ -336,8 +333,7 @@ const DocumentDetail: React.FC = () => {
  },
  ]}
  />
- </Card>
- </div>
+ </SectionCard>
 
  {/* Share Modal */}
  <FormDialog
@@ -382,7 +378,7 @@ const DocumentDetail: React.FC = () => {
  </Form.Item>
  </Form>
  </FormDialog>
- </div>
+ </DetailLayout>
  );
 };
 

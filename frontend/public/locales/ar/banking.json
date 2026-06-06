@@ -94,5 +94,6 @@
   "wh_workdays": "أيام العمل",
   "unique_transactions": "المعاملات الفريدة",
   "system_balance": "رصيد النظام",
-  "running_balance": "الرصيد الجاري"
+  "running_balance": "الرصيد الجاري",
+  "payment_mode": "الوضع"
 }

@@ -1,6 +1,12 @@
 /**
  * ChartCard — recharts wrapper with skeleton + error state + card hover micro-interaction.
  *
+ * Vertex "Slate & Signal" kit chart card (screens.jsx): flat var(--surface) panel,
+ * 1px var(--border) hairline, var(--radius-lg) corners, Inter Tight display title,
+ * muted var(--ink-500) subtitle, chart slot below. Fully theme-aware — every colour
+ * resolves from CSS-var tokens that auto-flip via [data-theme="dark"], so the card is
+ * correct in BOTH light and dark themes.
+ *
  * Applies card hover micro-interaction (upward shift + increased shadow, 150ms).
  * Requirements: 8.4, 8.8, 13.3, 13.7
  *
@@ -14,10 +20,12 @@
  * ```
  */
 import React from 'react';
-import { Card, Skeleton, Alert, Typography } from 'antd';
+import { Card, Alert, Typography } from 'antd';
 import { motion, useReducedMotion } from 'framer-motion';
-import { palette, radius, shadow, space } from '../theme/tokens';
+import { useTranslation } from 'react-i18next';
+import { space } from '../theme/tokens';
 import { cardVariants } from '../utils/animations';
+import { useIsDark } from '../hooks/useIsDark';
 import LoadingSkeleton from './LoadingSkeleton';
 
 const { Text } = Typography;
@@ -58,40 +66,55 @@ const ChartCardInner: React.FC<ChartCardProps> = ({
   loading = false,
   error = null,
   onRetry,
-  isDark = false,
+  isDark: isDarkProp,
   height = 280,
   animated = true,
 }) => {
+  // Auto-flip with the live theme when the consumer doesn't thread isDark down
+  // (the common case). Prop override is preserved. Rules-of-hooks safe.
+  const themeDark = useIsDark();
+  const isDark = isDarkProp ?? themeDark;
+
+  const { t } = useTranslation();
   const prefersReducedMotion = useReducedMotion();
   const shouldAnimate = animated && !prefersReducedMotion;
 
+  // Kit "vx-card": flat surface, hairline border, --radius-lg. Tokens auto-flip
+  // for dark mode, so no JS light/dark branching needed.
   const cardStyle: React.CSSProperties = {
-    borderRadius: radius.lg,
-    boxShadow: shadow.sm,
+    borderRadius: 'var(--radius-lg)',
+    boxShadow: 'var(--shadow-sm)',
     height: '100%',
-    background: isDark ? palette.darkSurface : palette.surface,
-    border: `1px solid ${isDark ? palette.darkBorder : palette.border}`,
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
   };
 
   const content = (
     <Card
+      className="vertex-chart-card"
       styles={{ body: { padding: space.lg } }}
       style={cardStyle}
       title={
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <span style={{
-            fontSize: 14,
-            fontWeight: 600,
-            color: isDark ? palette.darkInk : palette.ink900,
-          }}>
+          <span
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 14,
+              fontWeight: 600,
+              letterSpacing: '-0.01em',
+              color: 'var(--ink-900)',
+            }}
+          >
             {title}
           </span>
           {subtitle && (
-            <Text style={{
-              fontSize: 12,
-              color: isDark ? palette.darkInkMuted : palette.ink500,
-              fontWeight: 400,
-            }}>
+            <Text
+              style={{
+                fontSize: 12,
+                color: 'var(--ink-500)',
+                fontWeight: 400,
+              }}
+            >
               {subtitle}
             </Text>
           )}
@@ -102,14 +125,16 @@ const ChartCardInner: React.FC<ChartCardProps> = ({
       {loading ? (
         <LoadingSkeleton variant="chart" isDark={isDark} />
       ) : error ? (
-        <div style={{
-          height,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-          gap: space.md,
-        }}>
+        <div
+          style={{
+            height,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'column',
+            gap: space.md,
+          }}
+        >
           <Alert
             type="error"
             message={error}
@@ -121,13 +146,14 @@ const ChartCardInner: React.FC<ChartCardProps> = ({
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: palette.primary500,
+                    color: 'var(--accent-500)',
                     cursor: 'pointer',
                     fontSize: 13,
-                    padding: '2px 8px',
+                    paddingBlock: 2,
+                    paddingInline: 8,
                   }}
                 >
-                  Retry
+                  {t('retry', 'Retry')}
                 </button>
               ) : undefined
             }

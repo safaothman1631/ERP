@@ -1,12 +1,5 @@
 import type React from 'react';
-import {
-  DashboardOutlined, TeamOutlined, ShoppingOutlined, FileTextOutlined,
-  BankOutlined, ProjectOutlined, BookOutlined, WalletOutlined,
-  ShoppingCartOutlined, InboxOutlined, SettingOutlined,
-  ShopOutlined, BarChartOutlined, GlobalOutlined,
-  AppstoreOutlined, ApiOutlined, BuildOutlined, MailOutlined,
-  ToolOutlined,
-} from '@ant-design/icons';
+import { DashboardOutlined, TeamOutlined, FileTextOutlined, BankOutlined, ProjectOutlined, BookOutlined, WalletOutlined, ShoppingCartOutlined, InboxOutlined, SettingOutlined, ShopOutlined, BarChartOutlined, GlobalOutlined, AppstoreOutlined, ApiOutlined, BuildOutlined, MailOutlined, ToolOutlined, GoldOutlined, TruckOutlined, DatabaseOutlined, PartitionOutlined } from '@ant-design/icons';
 import type { TFunction } from 'i18next';
 
 export type NavZoneKey = 'core-commerce' | 'operations' | 'people' | 'finance-control';
@@ -192,6 +185,26 @@ export const buildNavSections = (t: TFunction): NavSection[] => [
     ],
   },
   {
+    key: 'wms',
+    label: t('wms', 'Warehouse Management'),
+    icon: <GoldOutlined />,
+    zone: 'operations',
+    blurb: t('nav.wms_blurb', 'Bins, put-away, and picking across warehouses'),
+    items: [
+      { key: '/wms', label: t('wms', 'Warehouse Management'), description: t('nav.desc_wms', 'Storage bins, put-away, and pick allocation'), keywords: ['warehouse', 'bins', 'putaway', 'picking', 'wms'], favoriteEligible: true },
+    ],
+  },
+  {
+    key: 'tms',
+    label: t('tms', 'Transport Management'),
+    icon: <TruckOutlined />,
+    zone: 'operations',
+    blurb: t('nav.tms_blurb', 'Carriers, shipments, freight rating, and routing'),
+    items: [
+      { key: '/tms', label: t('tms', 'Transport Management'), description: t('nav.desc_tms', 'Carriers, shipments, freight quotes, and routes'), keywords: ['transport', 'carrier', 'shipment', 'freight', 'route', 'tms'], favoriteEligible: true },
+    ],
+  },
+  {
     key: 'pos',
     label: t('pos.pos'),
     icon: <ShopOutlined />,
@@ -348,6 +361,26 @@ export const buildNavSections = (t: TFunction): NavSection[] => [
       { key: '/multi-entity/consolidated-pl', label: t('multi_entity.consolidated_pl'), description: t('nav.desc_multi_entity_pl', 'Consolidated profit & loss across entities'), keywords: ['consolidated', 'pl', 'profit', 'loss'], favoriteEligible: true },
       { key: '/multi-entity/consolidated-bs', label: t('multi_entity.consolidated_bs'), description: t('nav.desc_multi_entity_bs', 'Consolidated balance sheet across entities'), keywords: ['consolidated', 'bs', 'balance sheet'], favoriteEligible: true },
       { key: '/multi-entity/eliminations', label: t('multi_entity.eliminations_workbench'), description: t('nav.desc_multi_entity_eliminations', 'Manage intercompany eliminations'), keywords: ['eliminations', 'consolidation'] },
+    ],
+  },
+  {
+    key: 'mdm',
+    label: t('mdm', 'Master Data'),
+    icon: <DatabaseOutlined />,
+    zone: 'finance-control',
+    blurb: t('nav.mdm_blurb', 'Golden records, deduplication, and data governance'),
+    items: [
+      { key: '/mdm', label: t('mdm', 'Master Data'), description: t('nav.desc_mdm', 'Golden records, duplicate detection, and merge'), keywords: ['master data', 'golden record', 'dedup', 'merge', 'mdm'], favoriteEligible: true },
+    ],
+  },
+  {
+    key: 'bpmn',
+    label: t('bpmn', 'Workflow'),
+    icon: <PartitionOutlined />,
+    zone: 'finance-control',
+    blurb: t('nav.bpmn_blurb', 'Process definitions, instances, and approvals'),
+    items: [
+      { key: '/bpmn', label: t('bpmn', 'Workflow'), description: t('nav.desc_bpmn', 'Process definitions, running instances, and steps'), keywords: ['workflow', 'process', 'bpmn', 'approval', 'state machine'], favoriteEligible: true },
     ],
   },
   {

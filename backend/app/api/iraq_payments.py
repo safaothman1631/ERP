@@ -1,15 +1,21 @@
 """Sprint 28: Iraq Payment Gateways (FIB + Zain Cash + Asia Hawala) — FIX-441..460.
 
+Public webhooks (FIB / Zain Cash) are HMAC-SHA256 verified via X-Webhook-Signature.
+
 Provides a unified API for initiating and tracking payments through major Iraqi
 payment providers. Network calls are stubbed — provider integration is a
 configuration concern handled by the deployer.
 """
+import hashlib
+import hmac
+import json
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel, ValidationError
 
+from app.config import settings
 from app.firestore.iraq_payments import IraqPaymentRepository, IraqGatewayConfigRepository
 from app.firestore.invoices import InvoiceRepository
 from app.services.auth import get_current_user
@@ -173,15 +179,55 @@ def payment_callback(gateway: str, data: PaymentCallback,
     return _process_gateway_callback(user["org_id"], gateway, data)
 
 
+# Header the provider must send carrying the HMAC-SHA256 hex digest of the raw body.
+WEBHOOK_SIGNATURE_HEADER = "X-Webhook-Signature"
+
+
+async def _verify_and_parse_webhook(request: Request) -> PaymentCallback:
+    """Authenticate a PUBLIC payment webhook and return the parsed body.
+
+    The raw request body is read **once** and HMAC-verified before any parsing,
+    so a forged callback can never reach ``_process_gateway_callback`` (which
+    marks invoices paid). Behaviour:
+
+    * secret unset/empty            → 503 (webhook disabled, safe-by-default)
+    * signature header missing/bad  → 401 (invalid signature)
+    * valid signature               → parsed ``PaymentCallback``
+    """
+    secret = (settings.IRAQ_PAYMENT_WEBHOOK_SECRET or "").strip()
+    if not secret:
+        # Safe-by-default: with no secret configured we cannot authenticate the
+        # caller, so we refuse to process rather than trust an unsigned request.
+        raise HTTPException(503, "webhook disabled: signature secret not configured")
+
+    raw_body = await request.body()
+    provided_sig = request.headers.get(WEBHOOK_SIGNATURE_HEADER, "")
+    if not provided_sig:
+        raise HTTPException(401, "invalid signature")
+
+    expected_sig = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(expected_sig, provided_sig):
+        raise HTTPException(401, "invalid signature")
+
+    # Body is authenticated — parse the verified bytes into the model.
+    try:
+        payload = json.loads(raw_body.decode("utf-8"))
+        return PaymentCallback(**payload)
+    except (ValueError, ValidationError) as exc:
+        raise HTTPException(400, "invalid webhook payload") from exc
+
+
 @router.post("/webhook/fib", status_code=200)
-def fib_webhook(data: PaymentCallback, org_id: str = Query(..., min_length=1)):
-    """Public FIB webhook — org_id query param identifies tenant."""
+async def fib_webhook(request: Request, org_id: str = Query(..., min_length=1)):
+    """Public FIB webhook — HMAC-signed (X-Webhook-Signature); org_id identifies tenant."""
+    data = await _verify_and_parse_webhook(request)
     return _process_gateway_callback(org_id, "fib", data)
 
 
 @router.post("/webhook/zain-cash", status_code=200)
-def zain_cash_webhook(data: PaymentCallback, org_id: str = Query(..., min_length=1)):
-    """Public Zain Cash webhook."""
+async def zain_cash_webhook(request: Request, org_id: str = Query(..., min_length=1)):
+    """Public Zain Cash webhook — HMAC-signed (X-Webhook-Signature)."""
+    data = await _verify_and_parse_webhook(request)
     return _process_gateway_callback(org_id, "zain_cash", data)
 
 

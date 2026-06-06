@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Form, Input, Select, Tag, message, Card } from 'antd';
-import { EyeOutlined, FileTextOutlined } from '@ant-design/icons';
+import { Button, Space, Tag, message, Card } from 'antd';
+import { EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader } from '../../design-system';
@@ -19,7 +19,7 @@ const Studio: React.FC = () => {
     try {
       const res = await api.get('/api/studio/models', { params: { limit: 100 } });
       setModels(res.data.items || []);
-    } catch (error) {
+    } catch (_error) {
       message.error(t('error'));
     } finally {
       setLoading(false);
@@ -31,7 +31,7 @@ const Studio: React.FC = () => {
     try {
       const res = await api.get('/api/studio/fields', { params: { model_name: modelName, limit: 200 } });
       setFields(res.data.items || []);
-    } catch (error) {
+    } catch (_error) {
       message.error(t('error'));
     } finally {
       setLoading(false);

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Button, Space, Typography, Badge, message } from 'antd';
-import { EyeOutlined, CopyOutlined, DashboardOutlined } from '@ant-design/icons';
+import { Card, Row, Col, Space, Typography, message } from 'antd';
+import { EyeOutlined, CopyOutlined, DashboardOutlined, InboxOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard, StatusTag, EmptyState } from '../../design-system';
 
 const { Title, Text } = Typography;
 
@@ -25,7 +25,7 @@ const SharedDashboards: React.FC = () => {
       const allDashboards = res.data.data || [];
       const shared = allDashboards.filter((d: any) => !d.is_owner);
       setDashboards(shared);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('load_error'));
     } finally {
       setLoading(false);
@@ -38,7 +38,7 @@ const SharedDashboards: React.FC = () => {
       message.success(t('dashboard_cloned'));
       const clonedId = res.data.data.id;
       navigate(`/dashboards/${clonedId}/edit`);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('clone_error'));
     }
   };
@@ -55,14 +55,12 @@ const SharedDashboards: React.FC = () => {
         subtitle={t('dashboards_shared_subtitle')}
       />
 
-      <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
+      <Row gutter={[16, 16]}>
         {dashboards.length === 0 && !loading ? (
           <Col span={24}>
-            <Card>
-              <div style={{ textAlign: 'center', padding: 40 }}>
-                <Text type="secondary">{t('no_shared_dashboards')}</Text>
-              </div>
-            </Card>
+            <SectionCard>
+              <EmptyState icon={<InboxOutlined />} title={t('no_shared_dashboards')} />
+            </SectionCard>
           </Col>
         ) : (
           dashboards.map((dash) => (
@@ -81,7 +79,7 @@ const SharedDashboards: React.FC = () => {
                       <DashboardOutlined style={{ marginInlineEnd: 8 }} />
                       {dash.name}
                     </Title>
-                    <Badge color="green" text={t('shared')} />
+                    <StatusTag status="success" label={t('shared')} />
                   </div>
                   <Text type="secondary">
                     {t('widgets')}: {dash.widgets?.length || 0}

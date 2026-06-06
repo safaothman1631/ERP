@@ -1,0 +1,3406 @@
+{
+  "settings": {
+    "digits.title": {
+      "ku": "شێوازی ژمارە",
+      "en": "Digit style"
+    },
+    "digits.auto": {
+      "ku": "خۆکار",
+      "en": "Auto"
+    },
+    "digits.latin": {
+      "ku": "لاتینی (0-9)",
+      "en": "Latin (0-9)"
+    },
+    "digits.indic": {
+      "ku": "عەرەبی-ھیندی (٠-٩)",
+      "en": "Arabic-Indic (٠-٩)"
+    },
+    "digits.preview": {
+      "ku": "پێشبینین",
+      "en": "Preview"
+    },
+    "groups.account": {
+      "ku": "هەژمار",
+      "en": "Account"
+    },
+    "groups.general": {
+      "ku": "گشتی",
+      "en": "General"
+    },
+    "groups.organization": {
+      "ku": "ڕێکخراو",
+      "en": "Organization"
+    },
+    "groups.users": {
+      "ku": "بەکارهێنەران",
+      "en": "Users"
+    },
+    "groups.localization": {
+      "ku": "ناوچەیی",
+      "en": "Localization"
+    },
+    "groups.finance": {
+      "ku": "دارایی",
+      "en": "Finance"
+    },
+    "groups.commerce": {
+      "ku": "بازرگانی",
+      "en": "Commerce"
+    },
+    "groups.operations": {
+      "ku": "کارگێڕی",
+      "en": "Operations"
+    },
+    "groups.automation": {
+      "ku": "ئۆتۆماسیۆن",
+      "en": "Automation"
+    },
+    "groups.content": {
+      "ku": "ناوەڕۆک",
+      "en": "Content"
+    },
+    "groups.system": {
+      "ku": "سیستەم",
+      "en": "System"
+    },
+    "not_found.title": {
+      "ku": "ڕێکخستن نەدۆزرایەوە",
+      "en": "Setting not found"
+    },
+    "not_found.subtitle": {
+      "ku": "ئەم ڕێکخستنە بەردەست نییە.",
+      "en": "This setting is not available."
+    },
+    "example.field": {
+      "ku": "نموونە",
+      "en": "Example"
+    },
+    "migration.title": {
+      "ku": "گواستنەوەی داتا",
+      "en": "Data migration"
+    },
+    "migration.description": {
+      "ku": "داتای خۆت لە سیستەمی دیکە بگوازەوە.",
+      "en": "Migrate your data from another system."
+    },
+    "migration.handoff": {
+      "ku": "شیکارمەند پەیوەند بکە",
+      "en": "Contact a specialist"
+    },
+    "branding.logo_url": {
+      "ku": "بەستەری لۆگۆ",
+      "en": "Logo URL"
+    },
+    "branding.upload_logo": {
+      "ku": "بارکردنی لۆگۆ",
+      "en": "Upload logo"
+    },
+    "branding.logo_dark_url": {
+      "ku": "بەستەری لۆگۆی تاریک",
+      "en": "Dark logo URL"
+    },
+    "branding.favicon_url": {
+      "ku": "بەستەری favicon",
+      "en": "Favicon URL"
+    },
+    "branding.primary_color": {
+      "ku": "ڕەنگی سەرەکی",
+      "en": "Primary color"
+    },
+    "branding.accent_color": {
+      "ku": "ڕەنگی تایبەت",
+      "en": "Accent color"
+    },
+    "branding.theme_mode": {
+      "ku": "شێوازی تیم",
+      "en": "Theme mode"
+    },
+    "branding.light": {
+      "ku": "ڕووناک",
+      "en": "Light"
+    },
+    "branding.dark": {
+      "ku": "تاریک",
+      "en": "Dark"
+    },
+    "branding.system": {
+      "ku": "سیستەم",
+      "en": "System"
+    },
+    "branding.help": {
+      "ku": "لۆگۆ و ڕەنگ لەسەر فاکتور، پسووڵە و پۆرتاڵ دەردەکەوێت.",
+      "en": "Logo and colors appear on invoices, receipts, and portals."
+    },
+    "company.name": {
+      "ku": "ناوی کۆمپانیا",
+      "en": "Company name"
+    },
+    "company.legal_name": {
+      "ku": "ناوی یاسایی",
+      "en": "Legal name"
+    },
+    "company.registration_number": {
+      "ku": "ژمارەی تۆمارکردن",
+      "en": "Registration number"
+    },
+    "company.tax_id": {
+      "ku": "ناسنامەی باجی",
+      "en": "Tax ID"
+    },
+    "company.commercial_registration_no": {
+      "ku": "ژمارەی تۆمارکردنی بازرگانی",
+      "en": "Commercial registration no."
+    },
+    "company.commercial_registration_no.help": {
+      "ku": "ژمارەی تۆمارکردنی بازرگانی لە وەزارەتی بازرگانی عێراق.",
+      "en": "Iraqi Ministry of Trade commercial registration number."
+    },
+    "company.commercial_registration_no.invalid": {
+      "ku": "فۆرماتی ژمارەی تۆمارکردن نادروستە.",
+      "en": "Invalid registration number format."
+    },
+    "company.fiscal_year_start": {
+      "ku": "دەستپێکی ساڵی دارایی",
+      "en": "Fiscal year start"
+    },
+    "company.fiscal_year_start.help": {
+      "ku": "مانگ و ڕۆژی دەستپێکی ساڵی دارایی.",
+      "en": "Month and day the fiscal year begins."
+    },
+    "company.timezone": {
+      "ku": "کاتژمێری ناوچە",
+      "en": "Timezone"
+    },
+    "company.email": {
+      "ku": "ئیمەیڵی کۆمپانیا",
+      "en": "Company email"
+    },
+    "company.phone": {
+      "ku": "تەلەفۆنی کۆمپانیا",
+      "en": "Company phone"
+    },
+    "localization.language": {
+      "ku": "زمان",
+      "en": "Language"
+    },
+    "localization.currency": {
+      "ku": "دراو",
+      "en": "Currency"
+    },
+    "localization.date_format": {
+      "ku": "فۆرماتی بەروار",
+      "en": "Date format"
+    },
+    "localization.number_format": {
+      "ku": "فۆرماتی ژمارە",
+      "en": "Number format"
+    },
+    "localization.number_format.help": {
+      "ku": "شێوازی نیشاندانی ژمارەی کەسرەدار، وەک ١٢٣٤٫٥٦.",
+      "en": "How decimals and thousands separators are displayed, e.g. 1,234.56."
+    },
+    "localization.rtl_override": {
+      "ku": "ئێجبارکردنی ئاراستەی RTL",
+      "en": "Force RTL direction"
+    },
+    "localization.rtl_override.help": {
+      "ku": "بەکارهێنانی ئاراستەی راست-بۆ-چەپ بۆ هەموو رووکار.",
+      "en": "Apply right-to-left layout to all UI regardless of language setting."
+    },
+    "localization.preview": {
+      "ku": "پێشبینین",
+      "en": "Preview"
+    },
+    "localization.preview.currency": {
+      "ku": "دراو",
+      "en": "Currency"
+    },
+    "localization.preview.number": {
+      "ku": "ژمارە",
+      "en": "Number"
+    },
+    "localization.preview.date": {
+      "ku": "بەروار",
+      "en": "Date"
+    },
+    "data_rights.status.ready": {
+      "ku": "ئامادەیە",
+      "en": "Ready"
+    },
+    "data_rights.status.pending": {
+      "ku": "چاوەڕوانکراو",
+      "en": "Pending"
+    },
+    "data_rights.status.failed": {
+      "ku": "شکستهێنا",
+      "en": "Failed"
+    },
+    "data_rights.erasure_status.awaiting": {
+      "ku": "چاوەڕوان",
+      "en": "Awaiting"
+    },
+    "data_rights.erasure_status.scheduled": {
+      "ku": "پلانگێڕاو",
+      "en": "Scheduled"
+    },
+    "data_rights.erasure_status.completed": {
+      "ku": "تەواوبوو",
+      "en": "Completed"
+    },
+    "data_rights.erasure_status.cancelled": {
+      "ku": "هەڵوەشاندرایەوە",
+      "en": "Cancelled"
+    },
+    "data_rights.export_ready": {
+      "ku": "هەناردەکردن ئامادەیە",
+      "en": "Export ready"
+    },
+    "data_rights.export_pending": {
+      "ku": "هەناردەکردن چاوەڕوانکراوە",
+      "en": "Export pending"
+    },
+    "data_rights.export_failed": {
+      "ku": "هەناردەکردن شکستهێنا",
+      "en": "Export failed"
+    },
+    "data_rights.erasure_requested": {
+      "ku": "داواکاری سڕینەوە تۆمارکرا",
+      "en": "Erasure requested"
+    },
+    "data_rights.erasure_failed": {
+      "ku": "سڕینەوە شکستهێنا",
+      "en": "Erasure failed"
+    },
+    "data_rights.no_permission": {
+      "ku": "مۆڵەتی دەسەڵاتت نییە",
+      "en": "You do not have permission"
+    },
+    "data_rights.intro_title": {
+      "ku": "مافەکانی داتا (GDPR)",
+      "en": "Data rights (GDPR)"
+    },
+    "data_rights.intro_body": {
+      "ku": "داتای خۆت هەناردە بکە یان داوای سڕینەوەی بکە.",
+      "en": "Export your data or request erasure of your personal data."
+    },
+    "data_rights.export_title": {
+      "ku": "هەناردەکردنی داتا",
+      "en": "Data export"
+    },
+    "data_rights.export_desc": {
+      "ku": "هەموو داتای خۆت بەشێوەی JSON بۆ بارکردن ئامادە دەبێت.",
+      "en": "All your data will be prepared as a downloadable JSON archive."
+    },
+    "data_rights.request_export": {
+      "ku": "داوای هەناردەکردن بکە",
+      "en": "Request export"
+    },
+    "data_rights.refresh_status": {
+      "ku": "نوێکردنەوەی دۆخ",
+      "en": "Refresh status"
+    },
+    "data_rights.latest_export": {
+      "ku": "دوایین هەناردەکردن",
+      "en": "Latest export"
+    },
+    "data_rights.col_status": {
+      "ku": "دۆخ",
+      "en": "Status"
+    },
+    "data_rights.col_documents": {
+      "ku": "دۆکیومێنتەکان",
+      "en": "Documents"
+    },
+    "data_rights.col_size": {
+      "ku": "قەبارە",
+      "en": "Size"
+    },
+    "data_rights.col_requested_at": {
+      "ku": "کاتی داواکردن",
+      "en": "Requested at"
+    },
+    "data_rights.col_download": {
+      "ku": "داونلۆد",
+      "en": "Download"
+    },
+    "data_rights.download_archive": {
+      "ku": "داونلۆدی ئەرشیف",
+      "en": "Download archive"
+    },
+    "data_rights.no_download": {
+      "ku": "بەستەری داونلۆد بەردەست نییە",
+      "en": "No download link available"
+    },
+    "data_rights.col_collections": {
+      "ku": "کۆلێکشنەکان",
+      "en": "Collections"
+    },
+    "data_rights.erasure_title": {
+      "ku": "سڕینەوەی داتا",
+      "en": "Data erasure"
+    },
+    "data_rights.erasure_warn_title": {
+      "ku": "کردارێکی ناگەڕێتەوە",
+      "en": "Irreversible action"
+    },
+    "data_rights.erasure_warn_body": {
+      "ku": "داوای سڕینەوە هەموو داتای کەسیت بەدوای کاتێکی باندەرابوونی ٣٠ ڕۆژ بە تەواوی دەسڕێتەوە.",
+      "en": "An erasure request will permanently delete all your personal data after a 30-day grace period."
+    },
+    "data_rights.request_erasure": {
+      "ku": "داوای سڕینەوە بکە",
+      "en": "Request erasure"
+    },
+    "data_rights.latest_erasure": {
+      "ku": "دوایین داواکاری سڕینەوە",
+      "en": "Latest erasure request"
+    },
+    "data_rights.col_grace": {
+      "ku": "کاتی باندەرابوون",
+      "en": "Grace period"
+    },
+    "data_rights.grace_days": {
+      "ku": "{{days}} ڕۆژ",
+      "en": "{{days}} days"
+    },
+    "data_rights.col_purge_at": {
+      "ku": "کاتی سڕینەوەی تەواو",
+      "en": "Purge at"
+    },
+    "data_rights.col_confirm_token": {
+      "ku": "تۆکەنی پشتڕاستکردنەوە",
+      "en": "Confirm token"
+    },
+    "data_rights.confirm_title": {
+      "ku": "پشتڕاستکردنەوەی سڕینەوە",
+      "en": "Confirm erasure"
+    },
+    "data_rights.confirm_ok": {
+      "ku": "بەڵێ، داوام دەکات",
+      "en": "Yes, request erasure"
+    },
+    "data_rights.confirm_body": {
+      "ku": "ئەم کردارە ناگەڕێتەوە. هەموو داتای کەسی دەسڕێتەوە.",
+      "en": "This action is irreversible. All personal data will be permanently deleted."
+    },
+    "data_rights.confirm_prompt": {
+      "ku": "بۆ پشتڕاستکردنەوە، کاری خۆت بنووسە:",
+      "en": "To confirm, type your reason below:"
+    },
+    "data_rights.reason_placeholder": {
+      "ku": "هۆکاری داواکاری سڕینەوە…",
+      "en": "Reason for erasure request…"
+    }
+  },
+  "common": {
+    "modreq_none": {
+      "ku": "هیچ داواکاری مۆدیوولێک نییە",
+      "en": "No module request yet"
+    },
+    "modreq_none_hint": {
+      "ku": "مۆدیوولەکان لە wizard-ەکە هەڵبژێرە و داواکارییەکەت بنێرە.",
+      "en": "Select modules in the wizard and submit your request."
+    },
+    "modreq_requested": {
+      "ku": "مۆدیوولە داواکراوەکان",
+      "en": "Requested modules"
+    },
+    "modreq_rejected_title": {
+      "ku": "داواکاری ڕەتکرایەوە",
+      "en": "Request rejected"
+    },
+    "modreq_rejected_hint": {
+      "ku": "پەیوەندی بە بەڕێوەبەری خۆت بکە یان داواکاری نوێ بنێرە.",
+      "en": "Contact your administrator or submit a new request."
+    },
+    "modreq_resubmit": {
+      "ku": "داواکاری نوێ بنێرە",
+      "en": "Submit new request"
+    },
+    "modreq_approved_title": {
+      "ku": "مۆدیوولەکان پەسەندکران",
+      "en": "Modules approved"
+    },
+    "modreq_approved_hint": {
+      "ku": "مۆدیوولە پەسەندکراوەکانت ئێستا چالاکن.",
+      "en": "Your approved modules are now active."
+    },
+    "doc_type": {
+      "ku": "جۆری دۆکیومێنت",
+      "en": "Document type"
+    },
+    "subject": {
+      "ku": "بابەت",
+      "en": "Subject"
+    },
+    "is_default": {
+      "ku": "بنەڕەتیە",
+      "en": "Is default"
+    },
+    "email_templates": {
+      "ku": "قاڵبەکانی ئیمەیڵ",
+      "en": "Email templates"
+    },
+    "available_variables": {
+      "ku": "گۆڕاوە بەردەستەکان",
+      "en": "Available variables"
+    },
+    "user_status_active": {
+      "ku": "چالاک",
+      "en": "Active"
+    },
+    "user_status_invited": {
+      "ku": "بانگهێشتکراو",
+      "en": "Invited"
+    },
+    "user_status_suspended": {
+      "ku": "هەڵوەشێنراوە",
+      "en": "Suspended"
+    },
+    "user_status_archived": {
+      "ku": "ئەرشیفکراو",
+      "en": "Archived"
+    },
+    "impersonation.started": {
+      "ku": "سێشنی پیشاندانی بەکارهێنەر دەستپێکرد — بەردەمبوونەوە…",
+      "en": "Impersonation session started — redirecting…"
+    },
+    "impersonation.startFailed": {
+      "ku": "نەتوانرا سێشنی پیشاندان دەستپێبکات",
+      "en": "Could not start impersonation"
+    },
+    "impersonation.title": {
+      "ku": "پیشاندانی تینانت",
+      "en": "Impersonate tenant"
+    },
+    "impersonation.intro": {
+      "ku": "سێشنێکی ٣٠ خولەکی تەنها-خوێندن بۆ تینانت دەستپێبکە بۆ هەڵسەنگاندن. هەموو کردار تۆمار دەکرێت.",
+      "en": "Start a 30-minute read-only session as a tenant for debugging. Every action is logged and visible in the audit trail."
+    },
+    "impersonation.warningTitle": {
+      "ku": "تۆمارکراوە — بە ئەحتیات بچۆ پێش",
+      "en": "Audited — proceed carefully"
+    },
+    "impersonation.warningBody": {
+      "ku": "تینانتەکە تەواو دەبینیت، بەڵام ناتوانیت داتا بگۆرێت. هەموو سەردانی پەڕە و بانگەشەکردنی API لە تۆماری impersonation_audit نووسراوە و ١٨ مانگ پاراستراوە.",
+      "en": "You will see the tenant exactly as they do, but cannot modify data. Every screen visit and API call is written to the impersonation_audit log and retained for 18 months."
+    },
+    "impersonation.tenantId": {
+      "ku": "ناسنامەی تینانت",
+      "en": "Tenant ID"
+    },
+    "impersonation.targetUser": {
+      "ku": "بەکارهێنەری دیاریکراو (ئیختیاری)",
+      "en": "Specific user (optional)"
+    },
+    "impersonation.targetUserHelp": {
+      "ku": "بەتاڵ بهێڵەوە بۆ پیشاندانی بەڕێوەبەری سەرەکی تینانت.",
+      "en": "Leave blank to impersonate the tenant's primary admin."
+    },
+    "impersonation.reason": {
+      "ku": "هۆکار (دیاریە بۆ ئۆدیتەران)",
+      "en": "Reason (visible to auditors)"
+    },
+    "impersonation.reasonRequired": {
+      "ku": "هۆکار پێویستە و دەبێت لانیکەم ١٠ پیت بێت",
+      "en": "Reason is required and must be at least 10 characters"
+    },
+    "impersonation.reasonPlaceholder": {
+      "ku": "نموونە: هەڵسەنگاندنی فاکتوری ڕاگیراو بۆ تیکێت #1234",
+      "en": "e.g. Debugging stuck invoice for ticket #1234"
+    },
+    "impersonation.start": {
+      "ku": "دەستپێکردنی پیشاندان",
+      "en": "Start impersonation"
+    },
+    "impersonation.confirmTitle": {
+      "ku": "پشتڕاستکردنەوەی پیشاندان",
+      "en": "Confirm impersonation"
+    },
+    "impersonation.confirmOk": {
+      "ku": "بەڵێ، سێشن دەستپێبکە",
+      "en": "Yes, start session"
+    },
+    "impersonation.confirmCancel": {
+      "ku": "هەڵوەشاندنەوە",
+      "en": "Cancel"
+    },
+    "impersonation.confirmBody": {
+      "ku": "داواکارییەکەت تینانتی {{tenant}} وەک یەکێک لە بەکارهێنەرانیان ببینیت. سێشن تەنها-خوێندنە و ٣٠ خولەک دەمێنێتەوە.",
+      "en": "You are about to view tenant {{tenant}} as one of their users. The session is read-only and lasts 30 minutes."
+    },
+    "jobs.error_loading_status": {
+      "ku": "هەڵە لە بارکردنی دۆخی کار",
+      "en": "Error loading job status"
+    },
+    "jobs.error_loading_runs": {
+      "ku": "هەڵە لە بارکردنی ئەنجامدانەکان",
+      "en": "Error loading job runs"
+    },
+    "jobs.trigger_success": {
+      "ku": "کار دەستپێکرا",
+      "en": "Job triggered successfully"
+    },
+    "jobs.trigger_error": {
+      "ku": "نەتوانرا کار دەستپێبکات",
+      "en": "Failed to trigger job"
+    },
+    "jobs.error_loading_details": {
+      "ku": "هەڵە لە بارکردنی وردەکاری کار",
+      "en": "Error loading job details"
+    },
+    "jobs.job_name": {
+      "ku": "ناوی کار",
+      "en": "Job name"
+    },
+    "jobs.next_run": {
+      "ku": "ئەنجامدانی داهاتوو",
+      "en": "Next run"
+    },
+    "jobs.last_status": {
+      "ku": "دوایین دۆخ",
+      "en": "Last status"
+    },
+    "jobs.never_run": {
+      "ku": "هەرگیز نەچالاکبووە",
+      "en": "Never run"
+    },
+    "jobs.last_run_stats": {
+      "ku": "ئامارەکانی دوایین ئەنجامدان",
+      "en": "Last run stats"
+    },
+    "jobs.processed": {
+      "ku": "پرۆسەکراو",
+      "en": "Processed"
+    },
+    "jobs.failed": {
+      "ku": "شکستهێنا",
+      "en": "Failed"
+    },
+    "jobs.actions": {
+      "ku": "کردارەکان",
+      "en": "Actions"
+    },
+    "jobs.confirm_trigger": {
+      "ku": "پشتڕاستکردنەوەی دەستپێکردنی کار",
+      "en": "Confirm job trigger"
+    },
+    "jobs.confirm_trigger_desc": {
+      "ku": "دەتەوێت ئەم کارە ئێستا دەستپێبکات؟",
+      "en": "Do you want to trigger this job now?"
+    },
+    "jobs.trigger_now": {
+      "ku": "ئێستا دەستپێبکە",
+      "en": "Trigger now"
+    },
+    "jobs.started_at": {
+      "ku": "کاتی دەستپێکردن",
+      "en": "Started at"
+    },
+    "jobs.status": {
+      "ku": "دۆخ",
+      "en": "Status"
+    },
+    "jobs.duration": {
+      "ku": "ماوە",
+      "en": "Duration"
+    },
+    "jobs.scheduler_running": {
+      "ku": "scheduler چالاکە",
+      "en": "Scheduler running"
+    },
+    "jobs.scheduler_stopped": {
+      "ku": "scheduler وەستاوە",
+      "en": "Scheduler stopped"
+    },
+    "jobs.total_jobs": {
+      "ku": "کۆی کارەکان",
+      "en": "Total jobs"
+    },
+    "jobs.recently_run": {
+      "ku": "بەتازەگی ئەنجامدراوە",
+      "en": "Recently run"
+    },
+    "jobs.failed_jobs": {
+      "ku": "کارە شکستهێنراوەکان",
+      "en": "Failed jobs"
+    },
+    "jobs.registered_jobs": {
+      "ku": "کارە تۆمارکراوەکان",
+      "en": "Registered jobs"
+    },
+    "jobs.execution_history": {
+      "ku": "مێژووی ئەنجامدان",
+      "en": "Execution history"
+    },
+    "jobs.filter_by_job": {
+      "ku": "فلتەر بەپێی کار",
+      "en": "Filter by job"
+    },
+    "jobs.filter_by_status": {
+      "ku": "فلتەر بەپێی دۆخ",
+      "en": "Filter by status"
+    },
+    "jobs.status_success": {
+      "ku": "سەرکەوتوو",
+      "en": "Success"
+    },
+    "jobs.status_partial": {
+      "ku": "بەشێک",
+      "en": "Partial"
+    },
+    "jobs.status_failed": {
+      "ku": "شکستهێنا",
+      "en": "Failed"
+    },
+    "jobs.run_details": {
+      "ku": "وردەکاری ئەنجامدان",
+      "en": "Run details"
+    },
+    "jobs.finished_at": {
+      "ku": "کاتی تەواوبوون",
+      "en": "Finished at"
+    },
+    "jobs.items_processed": {
+      "ku": "بەندەکانی پرۆسەکراو",
+      "en": "Items processed"
+    },
+    "jobs.items_failed": {
+      "ku": "بەندەکانی شکستهێنراو",
+      "en": "Items failed"
+    },
+    "jobs.errors": {
+      "ku": "هەڵەکان",
+      "en": "Errors"
+    },
+    "admin.billing.load_failed": {
+      "ku": "هەڵە لە بارکردنی داشبۆرد",
+      "en": "Failed to load dashboard"
+    },
+    "admin.billing.forbidden": {
+      "ku": "دەسەڵاتی پلاتفۆرم-ئەدمین پێویستە",
+      "en": "Platform-admin access required"
+    },
+    "admin.billing.title": {
+      "ku": "SaaS Billing — ئەدمین",
+      "en": "SaaS Billing — Admin"
+    },
+    "admin.billing.mrr_iqd": {
+      "ku": "MRR (IQD)",
+      "en": "MRR (IQD)"
+    },
+    "admin.billing.mrr_usd": {
+      "ku": "MRR (USD)",
+      "en": "MRR (USD)"
+    },
+    "admin.billing.arr_iqd": {
+      "ku": "ARR (IQD)",
+      "en": "ARR (IQD)"
+    },
+    "admin.billing.churn": {
+      "ku": "چرن مانگانەی",
+      "en": "Monthly churn"
+    },
+    "admin.billing.active": {
+      "ku": "چالاک",
+      "en": "Active"
+    },
+    "admin.billing.trialing": {
+      "ku": "تاقیکردنەوە",
+      "en": "Trialing"
+    },
+    "admin.billing.past_due": {
+      "ku": "دواکەوتوو",
+      "en": "Past due"
+    },
+    "admin.billing.suspended": {
+      "ku": "هەڵوەشێنراوە",
+      "en": "Suspended"
+    },
+    "admin.billing.tenants": {
+      "ku": "تینانتەکان",
+      "en": "Tenants"
+    },
+    "admin.billing.col.tenant": {
+      "ku": "تینانت",
+      "en": "Tenant"
+    },
+    "admin.billing.col.plan": {
+      "ku": "پلان",
+      "en": "Plan"
+    },
+    "admin.billing.col.status": {
+      "ku": "دۆخ",
+      "en": "Status"
+    },
+    "admin.billing.col.cycle": {
+      "ku": "چەرخ",
+      "en": "Cycle"
+    },
+    "admin.billing.col.mrr": {
+      "ku": "MRR (IQD)",
+      "en": "MRR (IQD)"
+    },
+    "admin.billing.col.trial_end": {
+      "ku": "کۆتایی تاقیکردنەوە",
+      "en": "Trial ends"
+    },
+    "admin.billing.col.last_payment": {
+      "ku": "دوایین پارەدان",
+      "en": "Last payment"
+    },
+    "agriculture.yield_error": {
+      "ku": "هەڵە لە بارکردنی دانەوەڵە",
+      "en": "Error loading yield data"
+    },
+    "agriculture.field_deleted": {
+      "ku": "زەوی سڕایەوە",
+      "en": "Field deleted"
+    },
+    "agriculture.area_dunum": {
+      "ku": "فراوانی (دونم)",
+      "en": "Area (dunums)"
+    },
+    "agriculture.soil_type": {
+      "ku": "جۆری خاک",
+      "en": "Soil type"
+    },
+    "agriculture.add_field": {
+      "ku": "زەوی زیادبکە",
+      "en": "Add field"
+    },
+    "agriculture.yield_tracking": {
+      "ku": "شوێنکەوتنی دانەوەڵە",
+      "en": "Yield tracking"
+    },
+    "agriculture.select_field": {
+      "ku": "زەوی هەڵبژێرە",
+      "en": "Select field"
+    },
+    "agriculture.dunum": {
+      "ku": "دونم",
+      "en": "Dunum"
+    },
+    "agriculture.quantity": {
+      "ku": "بڕ",
+      "en": "Quantity"
+    },
+    "agriculture.crop": {
+      "ku": "دانەوەڵە",
+      "en": "Crop"
+    },
+    "agriculture.no_yield_data": {
+      "ku": "هیچ داتای دانەوەڵەیەک نییە",
+      "en": "No yield data yet"
+    },
+    "agriculture.soil_type_placeholder": {
+      "ku": "جۆری خاک هەڵبژێرە…",
+      "en": "Select soil type…"
+    },
+    "automation.status": {
+      "ku": "دۆخ",
+      "en": "Status"
+    },
+    "automation.result": {
+      "ku": "ئەنجام",
+      "en": "Result"
+    },
+    "automation.active": {
+      "ku": "چالاک",
+      "en": "Active"
+    },
+    "automation.inactive": {
+      "ku": "ناچالاک",
+      "en": "Inactive"
+    },
+    "automation.deactivate": {
+      "ku": "ناچالاک بکە",
+      "en": "Deactivate"
+    },
+    "automation.activate": {
+      "ku": "چالاک بکە",
+      "en": "Activate"
+    },
+    "automation.description": {
+      "ku": "وەسف",
+      "en": "Description"
+    },
+    "automation.description_placeholder": {
+      "ku": "وەسفی ئۆتۆماسیۆن…",
+      "en": "Automation description…"
+    },
+    "load_error": {
+      "ku": "هەڵە لە بارکردن",
+      "en": "Error loading data"
+    },
+    "save_error": {
+      "ku": "هەڵە لە پاشەکەوتکردن",
+      "en": "Error saving"
+    },
+    "create_error": {
+      "ku": "هەڵە لە دروستکردن",
+      "en": "Error creating"
+    },
+    "delete_error": {
+      "ku": "هەڵە لە سڕینەوە",
+      "en": "Error deleting"
+    },
+    "load_failed": {
+      "ku": "بارکردن شکستهێنا",
+      "en": "Failed to load"
+    },
+    "uploaded": {
+      "ku": "بارکرا",
+      "en": "Uploaded"
+    },
+    "dms.notes": {
+      "ku": "تێبینیەکان",
+      "en": "Notes"
+    },
+    "list_load_failed": {
+      "ku": "هەڵە لە بارکردنی داواکارییەکان",
+      "en": "Failed to load submissions"
+    },
+    "col_invoice": {
+      "ku": "فاکتور",
+      "en": "Invoice"
+    },
+    "col_status": {
+      "ku": "دۆخ",
+      "en": "Status"
+    },
+    "col_attempts": {
+      "ku": "هەوڵەکان",
+      "en": "Attempts"
+    },
+    "col_ack": {
+      "ku": "پشتڕاستکردنەوەی MoF",
+      "en": "MoF Ack"
+    },
+    "col_error": {
+      "ku": "دوایین هەڵە",
+      "en": "Last error"
+    },
+    "col_actions": {
+      "ku": "کردارەکان",
+      "en": "Actions"
+    },
+    "mof_disclaimer": {
+      "ku": "e-invoicing ی وەزارەتی دارایی عێراق — فۆرماتی داتا چاوەڕوانی تەسدیقی کۆتایی MoF دەکات (R7.X).",
+      "en": "Iraq Ministry of Finance e-invoicing — wire format pending final MoF spec (R7.X)."
+    },
+    "cancelled_ok": {
+      "ku": "داواکاری هەڵوەشاندرایەوە",
+      "en": "Submission cancelled"
+    },
+    "cancel_failed": {
+      "ku": "هەڵوەشاندنەوە شکستهێنا",
+      "en": "Cancel failed"
+    },
+    "detail_title": {
+      "ku": "وردەکاری داواکاری",
+      "en": "Submission"
+    },
+    "attempts": {
+      "ku": "هەوڵەکان",
+      "en": "Attempts"
+    },
+    "mof_ack": {
+      "ku": "ژمارەی پشتڕاستکردنەوەی MoF",
+      "en": "MoF Ack number"
+    },
+    "next_attempt": {
+      "ku": "دووبارەهەوڵدانی داهاتوو",
+      "en": "Next retry"
+    },
+    "timeline": {
+      "ku": "خەتی کات",
+      "en": "Timeline"
+    },
+    "no_history": {
+      "ku": "هیچ مێژووێک نییە",
+      "en": "No history yet"
+    },
+    "cancel_confirm": {
+      "ku": "ئایا داواکاری هەڵوەشاندنەوە دەکەیت؟ ئەمە دووبارەهەوڵدان بۆ هەمیشە دادەوەستێنێت.",
+      "en": "Cancel this submission? This stops retries permanently."
+    },
+    "cancel_button": {
+      "ku": "هەڵوەشاندنەوەی داواکاری (ئەدمین تەنها)",
+      "en": "Cancel submission (admin only)"
+    },
+    "no_description": {
+      "ku": "وەسف نییە",
+      "en": "No description"
+    },
+    "helpdesk.select_employee": {
+      "ku": "کارمەند هەڵبژێرە",
+      "en": "Select employee"
+    },
+    "helpdesk.no_employees": {
+      "ku": "هیچ کارمەندێک نییە",
+      "en": "No employees yet"
+    },
+    "helpdesk.add_employee": {
+      "ku": "کارمەندی نوێ زیادبکە",
+      "en": "Add new employee"
+    },
+    "common.load_failed": {
+      "ku": "بارکردن شکستهێنا",
+      "en": "Failed to load"
+    },
+    "common.operation_failed": {
+      "ku": "کردار شکستهێنا",
+      "en": "Operation failed"
+    },
+    "common.created": {
+      "ku": "دروستکرا",
+      "en": "Created"
+    },
+    "common.deleted": {
+      "ku": "سڕایەوە",
+      "en": "Deleted"
+    },
+    "common.delete_failed": {
+      "ku": "سڕینەوە شکستهێنا",
+      "en": "Delete failed"
+    },
+    "common.delete_confirm": {
+      "ku": "سڕینەوە؟",
+      "en": "Delete?"
+    },
+    "common.not_set": {
+      "ku": "دانەنراوە",
+      "en": "Not set"
+    },
+    "common.copied": {
+      "ku": "کۆپی کرا",
+      "en": "Copied"
+    },
+    "common.never": {
+      "ku": "هەرگیز",
+      "en": "Never"
+    },
+    "iot.name": {
+      "ku": "ناو",
+      "en": "Name"
+    },
+    "maintenance.status": {
+      "ku": "دۆخ",
+      "en": "Status"
+    },
+    "maintenance.type": {
+      "ku": "جۆر",
+      "en": "Type"
+    },
+    "maintenance.priority": {
+      "ku": "پێشینە",
+      "en": "Priority"
+    },
+    "maintenance.select_equipment": {
+      "ku": "ئامێر هەڵبژێرە",
+      "en": "Select equipment"
+    },
+    "maintenance.executed": {
+      "ku": "جێبەجێکرا",
+      "en": "Executed"
+    },
+    "maintenance.request_id": {
+      "ku": "ناسنامەی داواکاری",
+      "en": "Request ID"
+    },
+    "maintenance.execute": {
+      "ku": "جێبەجێبکە",
+      "en": "Execute"
+    },
+    "maintenance.description": {
+      "ku": "وەسف",
+      "en": "Description"
+    },
+    "skip": {
+      "ku": "تێپەڕبکە",
+      "en": "Skip"
+    },
+    "platform_license_load_err": {
+      "ku": "نەتوانرا مۆڵەت بارببێت",
+      "en": "Could not load license"
+    },
+    "platform_org_required": {
+      "ku": "ناسنامەی ڕێکخراو داخڵ بکە",
+      "en": "Enter organization ID"
+    },
+    "platform_license_saved": {
+      "ku": "مۆڵەت پاشەکەوتکرا",
+      "en": "License saved"
+    },
+    "platform_license_save_err": {
+      "ku": "پاشەکەوتکردن شکستهێنا — مۆڵەتی platform.manage پشکنین بکە",
+      "en": "Save failed — check platform.manage permission"
+    },
+    "platform_license_title": {
+      "ku": "مۆڵەتەکانی ڕێکخراو",
+      "en": "Organization licenses"
+    },
+    "platform_license_sub": {
+      "ku": "دابینکردنی بڵاوکار — سنووری مۆدیوول بۆ ڕێکخراوی کڕیار.",
+      "en": "Vendor provisioning — cap modules per customer org."
+    },
+    "platform_license_hint": {
+      "ku": "دەبێت platform.manage و لیستی PLATFORM_ADMIN_USER_IDS هەبێت.",
+      "en": "Requires platform.manage and PLATFORM_ADMIN_USER_IDS allowlist."
+    },
+    "platform_license_editor": {
+      "ku": "دەستکاری مۆڵەت",
+      "en": "License editor"
+    },
+    "platform_org_id": {
+      "ku": "ناسنامەی ڕێکخراو",
+      "en": "Organization ID"
+    },
+    "platform_org_select": {
+      "ku": "ناسنامەی ڕێکخراو هەڵبژێرە یان بنووسە",
+      "en": "Select or type org ID"
+    },
+    "platform_org_manual": {
+      "ku": "ناسنامەی ڕێکخراوی دەستی",
+      "en": "Manual org ID"
+    },
+    "load": {
+      "ku": "بارببکە",
+      "en": "Load"
+    },
+    "platform_bundle": {
+      "ku": "بستە",
+      "en": "Bundle"
+    },
+    "platform_modules": {
+      "ku": "مۆدیوولە ڕێگەپێدراوەکان",
+      "en": "Allowed modules"
+    },
+    "platform_modules_preview": {
+      "ku": "مۆدیوولەکان لە بستەدا",
+      "en": "Modules in bundle"
+    },
+    "platform_expires": {
+      "ku": "بەسەردێت لە (ئیختیاری)",
+      "en": "Expires at (optional)"
+    },
+    "n_a": {
+      "ku": "نزر",
+      "en": "N/A"
+    },
+    "real_estate.deleted": {
+      "ku": "خانوبەرە سڕایەوە",
+      "en": "Property deleted"
+    },
+    "real_estate.invoice_generated": {
+      "ku": "فاکتور دروستکرا",
+      "en": "Invoice generated"
+    },
+    "real_estate.property_name": {
+      "ku": "ناوی خانوبەرە",
+      "en": "Property name"
+    },
+    "real_estate.units": {
+      "ku": "یەکەکان",
+      "en": "Units"
+    },
+    "real_estate.purchase_price": {
+      "ku": "نرخی کڕین",
+      "en": "Purchase price"
+    },
+    "real_estate.start_date": {
+      "ku": "بەرواری دەستپێکردن",
+      "en": "Start date"
+    },
+    "real_estate.end_date": {
+      "ku": "بەرواری کۆتایی",
+      "en": "End date"
+    },
+    "real_estate.add_property": {
+      "ku": "خانوبەرە زیادبکە",
+      "en": "Add property"
+    },
+    "real_estate.add_lease": {
+      "ku": "عەقدی ئیجارە زیادبکە",
+      "en": "Add lease"
+    },
+    "real_estate.type_residential": {
+      "ku": "نیشتەجێبوون",
+      "en": "Residential"
+    },
+    "real_estate.type_commercial": {
+      "ku": "بازرگانی",
+      "en": "Commercial"
+    },
+    "real_estate.type_industrial": {
+      "ku": "پیشەسازی",
+      "en": "Industrial"
+    },
+    "real_estate.type_land": {
+      "ku": "زەوی",
+      "en": "Land"
+    },
+    "real_estate.type_mixed": {
+      "ku": "تێکەڵ",
+      "en": "Mixed use"
+    },
+    "real_estate.unit": {
+      "ku": "یەکە",
+      "en": "Unit"
+    },
+    "real_estate.deposit": {
+      "ku": "مەبەستانە",
+      "en": "Deposit"
+    },
+    "real_estate.status_active": {
+      "ku": "چالاک",
+      "en": "Active"
+    },
+    "real_estate.status_expired": {
+      "ku": "بەسەردەچووە",
+      "en": "Expired"
+    },
+    "real_estate.status_terminated": {
+      "ku": "بەتاڵکراوە",
+      "en": "Terminated"
+    },
+    "real_estate.status_pending": {
+      "ku": "چاوەڕوانکراو",
+      "en": "Pending"
+    },
+    "modreq_load_error": {
+      "ku": "نەتوانرا داواکارییەکان بارببێن",
+      "en": "Could not load requests"
+    },
+    "modreq_approved_toast": {
+      "ku": "داواکاری پەسەندکرا",
+      "en": "Request approved"
+    },
+    "modreq_approve_error": {
+      "ku": "پەسەندکردن شکستهێنا",
+      "en": "Approve failed"
+    },
+    "modreq_rejected_toast": {
+      "ku": "داواکاری ڕەتکرایەوە",
+      "en": "Request rejected"
+    },
+    "modreq_reject_error": {
+      "ku": "ڕەتکردنەوە شکستهێنا",
+      "en": "Reject failed"
+    },
+    "modreq_user": {
+      "ku": "بەکارهێنەر",
+      "en": "User"
+    },
+    "modreq_note": {
+      "ku": "تێبینی",
+      "en": "Note"
+    },
+    "modreq_page_sub": {
+      "ku": "داواکارییەکانی دەسەڵاتی مۆدیوول لە تیمەکەت پشکنین و پەسەند بکە.",
+      "en": "Review and approve module access requests from your team."
+    },
+    "modreq_pending_queue": {
+      "ku": "ڕیزی چاوەڕوانی",
+      "en": "Pending queue"
+    },
+    "modreq_approve_modal": {
+      "ku": "پەسەندکردنی مۆدیوولەکان",
+      "en": "Approve modules"
+    },
+    "modreq_reject_modal": {
+      "ku": "ڕەتکردنەوەی داواکاری",
+      "en": "Reject request"
+    },
+    "modreq_reject_confirm": {
+      "ku": "ئیختیاریە: هۆکار داخڵ بکە:",
+      "en": "Optionally provide a reason:"
+    },
+    "modreq_reason_ph": {
+      "ku": "هۆکار…",
+      "en": "Reason…"
+    },
+    "errors.fetch_failed": {
+      "ku": "بارکردن شکستهێنا",
+      "en": "Failed to fetch"
+    },
+    "success.deleted": {
+      "ku": "سڕایەوە",
+      "en": "Deleted successfully"
+    },
+    "errors.operation_failed": {
+      "ku": "کردار شکستهێنا",
+      "en": "Operation failed"
+    },
+    "success.updated": {
+      "ku": "نوێکرایەوە",
+      "en": "Updated successfully"
+    },
+    "success.created": {
+      "ku": "دروستکرا",
+      "en": "Created successfully"
+    },
+    "errors.validation_failed": {
+      "ku": "پشکنینی داتا شکستهێنا",
+      "en": "Validation failed"
+    },
+    "errors.required": {
+      "ku": "ئەم خانەیە پێویستە",
+      "en": "This field is required"
+    },
+    "numbering.branch": {
+      "ku": "لق",
+      "en": "Branch"
+    },
+    "numbering.doc_type": {
+      "ku": "جۆری دۆکیومێنت",
+      "en": "Document type"
+    },
+    "numbering.prefix": {
+      "ku": "پێشدوانە",
+      "en": "Prefix"
+    },
+    "numbering.format_template": {
+      "ku": "قاڵبی فۆرمات",
+      "en": "Format template"
+    },
+    "numbering.next_value": {
+      "ku": "ژمارەی داهاتوو",
+      "en": "Next value"
+    },
+    "numbering.example": {
+      "ku": "نموونە",
+      "en": "Example"
+    },
+    "numbering.create_sequence": {
+      "ku": "زنجیرەی نوێ دروست بکە",
+      "en": "Create sequence"
+    },
+    "numbering.edit_sequence": {
+      "ku": "دەستکاریکردنی زنجیرە",
+      "en": "Edit sequence"
+    },
+    "numbering.padding": {
+      "ku": "پرکردنی ژمارە",
+      "en": "Padding"
+    },
+    "numbering.format_hint": {
+      "ku": "نموونە: INV-{YYYY}-{SEQ:4}",
+      "en": "e.g. INV-{YYYY}-{SEQ:4}"
+    },
+    "numbering.sequence_preview": {
+      "ku": "پێشبینینی زنجیرە",
+      "en": "Sequence preview"
+    },
+    "confirm.delete": {
+      "ku": "دڵنیایی لە سڕینەوە؟",
+      "en": "Are you sure you want to delete?"
+    },
+    "system_health.unavailable": {
+      "ku": "پشکنینی تەندروستی سیستەم بەردەست نییە",
+      "en": "Health check unavailable"
+    },
+    "system_health.unavailable_desc": {
+      "ku": "نەتوانرا داتای تەندروستی سیستەم بەدەستبێت. دووبارە هەوڵبدەوە.",
+      "en": "Unable to retrieve system health data. Please retry."
+    },
+    "system_health.status_healthy": {
+      "ku": "هەموو سیستەمەکان کاردەکەن",
+      "en": "All Systems Operational"
+    },
+    "system_health.status_degraded": {
+      "ku": "سیستەم قلسبووە",
+      "en": "System Degraded"
+    },
+    "system_health.status_unhealthy": {
+      "ku": "سیستەم نەخۆشە",
+      "en": "System Unhealthy"
+    },
+    "system_health.response_time": {
+      "ku": "کاتی وەڵام",
+      "en": "Response time"
+    },
+    "system_health.recommendations": {
+      "ku": "پێشنیارەکان",
+      "en": "Recommendations"
+    },
+    "system_health.last_checked": {
+      "ku": "کاتی دوایین پشکنین",
+      "en": "Last checked"
+    },
+    "system_health.title": {
+      "ku": "تەندروستی سیستەم",
+      "en": "System Health"
+    },
+    "system_health.refresh": {
+      "ku": "نوێکردنەوە",
+      "en": "Refresh"
+    },
+    "system_health.error_title": {
+      "ku": "پشکنینی تەندروستی شکستهێنا",
+      "en": "Health check failed"
+    },
+    "system_health.error_desc": {
+      "ku": "نەتوانرا داتای تەندروستی سیستەم بارببێت. دووبارە هەوڵبدەوە.",
+      "en": "Could not load system health data. Please try again."
+    },
+    "system_health.retry": {
+      "ku": "دووبارەهەوڵدانەوە",
+      "en": "Retry"
+    },
+    "backup.run_failed": {
+      "ku": "دەستپێکردنی پاشەکەوت شکستهێنا. دووبارە هەوڵبدەوە.",
+      "en": "Failed to start backup. Please try again."
+    },
+    "backup.download_failed": {
+      "ku": "داونلۆدکردنی پاشەکەوت شکستهێنا. دووبارە هەوڵبدەوە.",
+      "en": "Failed to download backup. Please try again."
+    },
+    "backup.col_datetime": {
+      "ku": "بەروار / کات",
+      "en": "Date / Time"
+    },
+    "backup.col_status": {
+      "ku": "دۆخ",
+      "en": "Status"
+    },
+    "backup.status_success": {
+      "ku": "سەرکەوتوو",
+      "en": "Success"
+    },
+    "backup.status_failed": {
+      "ku": "شکستهێنا",
+      "en": "Failed"
+    },
+    "backup.checksum": {
+      "ku": "SHA-256",
+      "en": "SHA-256"
+    },
+    "backup.col_integrity": {
+      "ku": "درووستی",
+      "en": "Integrity"
+    },
+    "backup.integrity_verified_tip": {
+      "ku": "ژمارەی دۆکیومێنت و checksum پشتڕاستکراوەتەوە",
+      "en": "Document count and checksum verified"
+    },
+    "backup.integrity_verified": {
+      "ku": "پشتڕاستکراوە",
+      "en": "Verified"
+    },
+    "backup.integrity_failed_tip": {
+      "ku": "پشکنینی درووستی شکستهێنا — ناکۆکی ژمارەی دۆکیومێنت یان هەڵەی بکردنەوە",
+      "en": "Integrity verification failed — document count mismatch or decompression error"
+    },
+    "backup.integrity_failed": {
+      "ku": "شکستهێنا",
+      "en": "Failed"
+    },
+    "backup.integrity_pending": {
+      "ku": "چاوەڕوانکراو",
+      "en": "Pending"
+    },
+    "backup.col_total_docs": {
+      "ku": "کۆی دۆکیومێنتەکان",
+      "en": "Total Docs"
+    },
+    "backup.col_file_size": {
+      "ku": "قەبارەی فایل",
+      "en": "File Size"
+    },
+    "backup.col_storage_path": {
+      "ku": "ڕێگای پاشەکەوت",
+      "en": "Storage Path"
+    },
+    "backup.col_download": {
+      "ku": "داونلۆد",
+      "en": "Download"
+    },
+    "backup.download": {
+      "ku": "داونلۆد",
+      "en": "Download"
+    },
+    "backup.history_title": {
+      "ku": "مێژووی پاشەکەوت",
+      "en": "Backup History"
+    },
+    "backup.run_now": {
+      "ku": "ئێستا پاشەکەوتبکە",
+      "en": "Run Backup Now"
+    },
+    "backup.no_records": {
+      "ku": "هیچ تۆماری پاشەکەوتێک نەدۆزرایەوە",
+      "en": "No backup records found"
+    },
+    "range_required": {
+      "ku": "ماوەی بەروار هەڵبژێرە",
+      "en": "Choose a date range"
+    },
+    "queued_ok": {
+      "ku": "هەناردەکردن ڕیزکرا — کەمێک چاوەڕوان بکە",
+      "en": "Export queued — refresh in a moment"
+    },
+    "queue_failed": {
+      "ku": "نەتوانرا هەناردەکردن ڕیزبکرێت",
+      "en": "Could not queue export"
+    },
+    "export_title": {
+      "ku": "هەناردەکردنی ئۆدیتەری باج",
+      "en": "Tax auditor export"
+    },
+    "export_help": {
+      "ku": "فایلی ZIP لەگەڵ هەموو XML و PDF و manifest-ی e-Fakhata واژۆکراو بۆ ماوەی دیاریکراو دروست دەکات. بەستەری داونلۆد ٧ ڕۆژ کار دەکات.",
+      "en": "Generates a ZIP with every signed e-Fakhata XML + PDF + manifest for the chosen range. The download link is valid for 7 days."
+    },
+    "request_button": {
+      "ku": "داوای هەناردەکردن بکە",
+      "en": "Request export"
+    },
+    "past_exports": {
+      "ku": "هەناردەکردنە پێشووەکان",
+      "en": "Past exports"
+    },
+    "col_range": {
+      "ku": "ماوە",
+      "en": "Range"
+    },
+    "col_invoices": {
+      "ku": "فاکتورەکان",
+      "en": "Invoices"
+    },
+    "col_requested_by": {
+      "ku": "داواکراوی لەلایەن",
+      "en": "Requested by"
+    },
+    "col_created": {
+      "ku": "دروستکراوە",
+      "en": "Created"
+    },
+    "col_download": {
+      "ku": "داونلۆد",
+      "en": "Download"
+    },
+    "download_zip": {
+      "ku": "داونلۆدی ZIP",
+      "en": "Download ZIP"
+    },
+    "building": {
+      "ku": "دروستکردن…",
+      "en": "building…"
+    },
+    "cert_file_required": {
+      "ku": "پێشتر فایلی .p12 / .pfx هەڵبژێرە",
+      "en": "Select a .p12 / .pfx file first"
+    },
+    "cert_password_required": {
+      "ku": "وشەی نهێنی پێویستە",
+      "en": "Password is required"
+    },
+    "uploaded_ok": {
+      "ku": "بڕوانامە بارکرا",
+      "en": "Certificate uploaded"
+    },
+    "revoked_ok": {
+      "ku": "بڕوانامە بەتاڵکرایەوە",
+      "en": "Certificate revoked"
+    },
+    "revoke_failed": {
+      "ku": "بەتاڵکردنەوە شکستهێنا",
+      "en": "Revoke failed"
+    },
+    "cert_title": {
+      "ku": "بڕوانامەی واژۆی e-Fakhata",
+      "en": "e-Fakhata signing certificate"
+    },
+    "cert_warning": {
+      "ku": "فایلی PKCS#12 شیفرکراوە لە Secret Manager. وشەی نهێنی تەنها لە بیرگەدایە و هەرگیز تۆمار ناکرێت.",
+      "en": "PKCS#12 file is encrypted at rest in Secret Manager. The password is held in memory only and never logged."
+    },
+    "cert_file": {
+      "ku": "فایلی PKCS#12 (.p12 / .pfx)",
+      "en": "PKCS#12 file (.p12 / .pfx)"
+    },
+    "password_label": {
+      "ku": "وشەی نهێنی PKCS#12",
+      "en": "PKCS#12 password"
+    },
+    "upload_button": {
+      "ku": "بارکردن",
+      "en": "Upload"
+    },
+    "history": {
+      "ku": "مێژووی نسخەکان",
+      "en": "Version history"
+    },
+    "revoke_confirm": {
+      "ku": "بڕوانامەی چالاک بەتاڵ بکەیتەوە؟ دەبێت بەیەکەوە بڕوانامەی نوێ بارببکەیت.",
+      "en": "Revoke the active certificate? You must immediately upload a replacement."
+    },
+    "revoke_button": {
+      "ku": "بەتاڵکردنەوەی چالاک",
+      "en": "Revoke active"
+    },
+    "payments.providers.savedToggle": {
+      "ku": "دابینکەر نوێکرایەوە",
+      "en": "Provider updated"
+    },
+    "payments.providers.saveFailed": {
+      "ku": "پاشەکەوتکردنی دابینکەر شکستهێنا",
+      "en": "Failed to save provider"
+    },
+    "payments.providers.savedConfig": {
+      "ku": "ڕێکخستن پاشەکەوتکرا",
+      "en": "Configuration saved"
+    },
+    "payments.providers.title": {
+      "ku": "دابینکەرانی پارەدان",
+      "en": "Payment Providers"
+    },
+    "payments.providers.subtitle": {
+      "ku": "هەر دابینکەرێک چالاک بکە، ڕێکبخە و سویچ بکە.",
+      "en": "Enable, configure, and toggle each payment gateway."
+    },
+    "payments.providers.pendingCreds": {
+      "ku": "بڕواننامەی sandbox چاوەڕوانکراوە — ڕێکخستنت ئێرە پێشڕاهێنە، بەڵام مامەڵەکان شکست دەهێنن تا R7.x داخرانێت.",
+      "en": "Sandbox credentials pending — pre-stage your configuration here, but transactions will fail with provider_not_configured until R7.x closes."
+    },
+    "payments.providers.noConfig": {
+      "ku": "هیچ ڕێکخستنێک پێویست نییە.",
+      "en": "No configuration required."
+    },
+    "payments.recon.loadFailed": {
+      "ku": "بارکردنی ڕیزی چارەسەرکردنی هەڵە شکستهێنا",
+      "en": "Failed to load reconciliation queue"
+    },
+    "payments.recon.reasonRequired": {
+      "ku": "تکایە هۆکار داخڵ بکە",
+      "en": "Please provide a reason"
+    },
+    "payments.recon.resolved": {
+      "ku": "کێشە چارەسەرکرا",
+      "en": "Issue resolved"
+    },
+    "payments.recon.resolveFailed": {
+      "ku": "چارەسەرکردن شکستهێنا",
+      "en": "Resolve failed"
+    },
+    "payments.recon.provider": {
+      "ku": "دابینکەر",
+      "en": "Provider"
+    },
+    "payments.recon.kind": {
+      "ku": "جۆر",
+      "en": "Kind"
+    },
+    "payments.recon.description": {
+      "ku": "وەسف",
+      "en": "Description"
+    },
+    "payments.recon.settledOn": {
+      "ku": "بەرواری جێبەجێکردن",
+      "en": "Settlement date"
+    },
+    "payments.recon.expected": {
+      "ku": "چاوەڕوانکراو",
+      "en": "Expected"
+    },
+    "payments.recon.actual": {
+      "ku": "ڕاستەقینە",
+      "en": "Actual"
+    },
+    "payments.recon.match": {
+      "ku": "دەستی وەکیبکەرەوە",
+      "en": "Match Manually"
+    },
+    "payments.recon.investigate": {
+      "ku": "لێکۆڵینەوە",
+      "en": "Investigate"
+    },
+    "payments.recon.ignore": {
+      "ku": "پشتگوێبخرێت",
+      "en": "Ignore"
+    },
+    "payments.recon.title": {
+      "ku": "ڕیزی چارەسەرکردنی هەڵە",
+      "en": "Reconciliation Queue"
+    },
+    "payments.recon.subtitle": {
+      "ku": "ناکۆکی لەنێوان جێبەجێکردنی دابینکەر و پارەدانە ناوخۆییەکان.",
+      "en": "Discrepancies between provider settlements and local Payments."
+    },
+    "payments.recon.filterProvider": {
+      "ku": "فلتەر بەپێی دابینکەر",
+      "en": "Filter by provider"
+    },
+    "payments.recon.empty": {
+      "ku": "هیچ کێشەی کراوەیەک نییە",
+      "en": "No open issues"
+    },
+    "payments.recon.resolveTitle": {
+      "ku": "چارەسەرکردنی کێشە",
+      "en": "Resolve issue"
+    },
+    "payments.recon.reasonPlaceholder": {
+      "ku": "هۆکاری ئۆدیت",
+      "en": "Audit reason"
+    },
+    "storefront.cart_updated": {
+      "ku": "سەبەتە نوێکرایەوە",
+      "en": "Cart updated"
+    },
+    "storefront.update_failed": {
+      "ku": "نوێکردنەوە شکستهێنا",
+      "en": "Update failed"
+    },
+    "storefront.product": {
+      "ku": "بەرهەم",
+      "en": "Product"
+    },
+    "storefront.price": {
+      "ku": "نرخ",
+      "en": "Price"
+    },
+    "storefront.quantity": {
+      "ku": "بڕ",
+      "en": "Quantity"
+    },
+    "storefront.total": {
+      "ku": "کۆ",
+      "en": "Total"
+    },
+    "storefront.back_to_store": {
+      "ku": "گەڕانەوە بۆ فرۆشگا",
+      "en": "Back to store"
+    },
+    "storefront.shopping_cart": {
+      "ku": "سەبەتەی کڕین",
+      "en": "Shopping cart"
+    },
+    "storefront.cart_empty": {
+      "ku": "سەبەتەکەت بەتاڵە",
+      "en": "Your cart is empty"
+    },
+    "storefront.continue_shopping": {
+      "ku": "بەردەوامبوون لە کڕین",
+      "en": "Continue shopping"
+    },
+    "storefront.subtotal": {
+      "ku": "ژێر-کۆ",
+      "en": "Subtotal"
+    },
+    "storefront.proceed_to_checkout": {
+      "ku": "بچۆ بۆ پارەدان",
+      "en": "Proceed to checkout"
+    },
+    "storefront.order_placed": {
+      "ku": "داواکاری تۆمارکرا",
+      "en": "Order placed"
+    },
+    "storefront.checkout_failed": {
+      "ku": "پارەدان شکستهێنا",
+      "en": "Checkout failed"
+    },
+    "storefront.customer_info": {
+      "ku": "زانیاری کڕیار",
+      "en": "Customer info"
+    },
+    "storefront.review_order": {
+      "ku": "پشکنینی داواکاری",
+      "en": "Review order"
+    },
+    "storefront.back_to_cart": {
+      "ku": "گەڕانەوە بۆ سەبەتە",
+      "en": "Back to cart"
+    },
+    "storefront.checkout": {
+      "ku": "پارەدان",
+      "en": "Checkout"
+    },
+    "storefront.full_name": {
+      "ku": "ناوی تەواو",
+      "en": "Full name"
+    },
+    "storefront.name_required": {
+      "ku": "ناو پێویستە",
+      "en": "Name is required"
+    },
+    "storefront.email": {
+      "ku": "ئیمەیڵ",
+      "en": "Email"
+    },
+    "storefront.email_required": {
+      "ku": "ئیمەیڵ پێویستە",
+      "en": "Email is required"
+    },
+    "storefront.email_invalid": {
+      "ku": "ئیمەیڵ نادروستە",
+      "en": "Invalid email address"
+    },
+    "storefront.phone": {
+      "ku": "تەلەفۆن",
+      "en": "Phone"
+    },
+    "storefront.address": {
+      "ku": "ناونیشان",
+      "en": "Address"
+    },
+    "storefront.continue": {
+      "ku": "بەردەوامبوون",
+      "en": "Continue"
+    },
+    "storefront.order_summary": {
+      "ku": "پوختەی داواکاری",
+      "en": "Order summary"
+    },
+    "storefront.back": {
+      "ku": "گەڕانەوە",
+      "en": "Back"
+    },
+    "storefront.place_order": {
+      "ku": "داواکاری تۆمار بکە",
+      "en": "Place order"
+    },
+    "storefront.title": {
+      "ku": "فرۆشگای ئۆنلاین",
+      "en": "Online storefront"
+    },
+    "storefront.cart": {
+      "ku": "سەبەتە",
+      "en": "Cart"
+    },
+    "storefront.categories": {
+      "ku": "جۆرەکان",
+      "en": "Categories"
+    },
+    "storefront.all_products": {
+      "ku": "هەموو بەرهەمەکان",
+      "en": "All products"
+    },
+    "storefront.search": {
+      "ku": "گەڕان",
+      "en": "Search"
+    },
+    "storefront.search_placeholder": {
+      "ku": "گەڕان لە بەرهەمەکان…",
+      "en": "Search products…"
+    },
+    "storefront.no_products": {
+      "ku": "هیچ بەرهەمێک نەدۆزرایەوە",
+      "en": "No products found"
+    },
+    "storefront.no_image": {
+      "ku": "وێنەی بەرهەم نییە",
+      "en": "No product image"
+    },
+    "storefront.order_confirmed": {
+      "ku": "داواکاری پشتڕاستکرایەوە",
+      "en": "Order confirmed"
+    },
+    "storefront.order_confirmation_message": {
+      "ku": "سوپاس بۆ داواکارییەکەت! بەیانی پشتڕاستکردنەوە بۆت دەنێردرێت.",
+      "en": "Thank you for your order! A confirmation email will be sent to you."
+    },
+    "storefront.order_details": {
+      "ku": "وردەکاری داواکاری",
+      "en": "Order details"
+    },
+    "storefront.order_id": {
+      "ku": "ناسنامەی داواکاری",
+      "en": "Order ID"
+    },
+    "storefront.customer": {
+      "ku": "کڕیار",
+      "en": "Customer"
+    },
+    "storefront.order_date": {
+      "ku": "بەرواری داواکاری",
+      "en": "Order date"
+    },
+    "storefront.status": {
+      "ku": "دۆخ",
+      "en": "Status"
+    },
+    "storefront.product_not_found": {
+      "ku": "بەرهەم نەدۆزرایەوە",
+      "en": "Product not found"
+    },
+    "storefront.added_to_cart": {
+      "ku": "بۆ سەبەتە زیادکرا",
+      "en": "Added to cart"
+    },
+    "storefront.add_to_cart_failed": {
+      "ku": "زیادکردن بۆ سەبەتە شکستهێنا",
+      "en": "Failed to add to cart"
+    },
+    "storefront.sku": {
+      "ku": "SKU",
+      "en": "SKU"
+    },
+    "storefront.add_to_cart": {
+      "ku": "زیادبکە بۆ سەبەتە",
+      "en": "Add to cart"
+    },
+    "documents.uploaded": {
+      "ku": "دۆکیومێنت بارکرا",
+      "en": "Document uploaded"
+    },
+    "documents.name": {
+      "ku": "ناو",
+      "en": "Name"
+    },
+    "documents.folder": {
+      "ku": "فۆڵدەر",
+      "en": "Folder"
+    },
+    "documents.root": {
+      "ku": "ڕەگ",
+      "en": "Root"
+    },
+    "documents.mime_type": {
+      "ku": "جۆری فایل",
+      "en": "File type"
+    },
+    "documents.size": {
+      "ku": "قەبارە",
+      "en": "Size"
+    },
+    "documents.title": {
+      "ku": "بەڕێوەبردنی دۆکیومێنت",
+      "en": "Document management"
+    },
+    "documents.subtitle": {
+      "ku": "فایلەکانت بە مرۆڤانە پاراستن و هاوبەشیان بکە.",
+      "en": "Store and share your files securely."
+    },
+    "documents.upload": {
+      "ku": "بارکردنی دۆکیومێنت",
+      "en": "Upload document"
+    },
+    "documents.filter_folder": {
+      "ku": "فلتەر بەپێی فۆڵدەر",
+      "en": "Filter by folder"
+    },
+    "documents.select_folder": {
+      "ku": "فۆڵدەر هەڵبژێرە",
+      "en": "Select folder"
+    },
+    "documents.url_placeholder": {
+      "ku": "بەستەری دۆکیومێنت…",
+      "en": "Document URL…"
+    },
+    "field_service.worker_assigned": {
+      "ku": "کارگێر دیاریکرا",
+      "en": "Worker assigned"
+    },
+    "field_service.order_id": {
+      "ku": "ناسنامەی داواکاری",
+      "en": "Order ID"
+    },
+    "field_service.customer": {
+      "ku": "کڕیار",
+      "en": "Customer"
+    },
+    "field_service.worker": {
+      "ku": "کارگێر",
+      "en": "Worker"
+    },
+    "field_service.unassigned": {
+      "ku": "دیاری نەکراو",
+      "en": "Unassigned"
+    },
+    "field_service.assign_worker": {
+      "ku": "کارگێر دیاری بکە",
+      "en": "Assign worker"
+    },
+    "field_service.subtitle": {
+      "ku": "بەڕێوەبردنی داواکارییەکانی خزمەتگوزاری مەیدانی.",
+      "en": "Manage field service orders."
+    },
+    "field_service.edit_order": {
+      "ku": "دەستکاریکردنی داواکاری",
+      "en": "Edit order"
+    },
+    "field_service.select_worker": {
+      "ku": "کارگێر هەڵبژێرە",
+      "en": "Select worker"
+    },
+    "priority_low": {
+      "ku": "کەم",
+      "en": "Low"
+    },
+    "priority_medium": {
+      "ku": "مامناوەند",
+      "en": "Medium"
+    },
+    "priority_high": {
+      "ku": "بەرز",
+      "en": "High"
+    },
+    "priority_urgent": {
+      "ku": "فریاکەوتن",
+      "en": "Urgent"
+    },
+    "hr_extended.application_id": {
+      "ku": "ناسنامەی داواکاری",
+      "en": "Application ID"
+    },
+    "hr_extended.candidate": {
+      "ku": "کاندید",
+      "en": "Candidate"
+    },
+    "hr_extended.position": {
+      "ku": "پۆست",
+      "en": "Position"
+    },
+    "hr_extended.status": {
+      "ku": "دۆخ",
+      "en": "Status"
+    },
+    "hr_extended.appraisal_id": {
+      "ku": "ناسنامەی هەڵسەنگاندن",
+      "en": "Appraisal ID"
+    },
+    "hr_extended.employee": {
+      "ku": "کارمەند",
+      "en": "Employee"
+    },
+    "hr_extended.cycle": {
+      "ku": "چەرخ",
+      "en": "Cycle"
+    },
+    "hr_extended.rating": {
+      "ku": "ڕیزبەندی",
+      "en": "Rating"
+    },
+    "hr_extended.title": {
+      "ku": "HR بڕواندراو",
+      "en": "Extended HR"
+    },
+    "hr_extended.subtitle": {
+      "ku": "بەکارهێنان و هەڵسەنگاندنی کارمەندان.",
+      "en": "Recruitment and employee appraisals."
+    },
+    "hr_extended.new_application": {
+      "ku": "داواکاری نوێ",
+      "en": "New application"
+    },
+    "hr_extended.new_appraisal": {
+      "ku": "هەڵسەنگاندنی نوێ",
+      "en": "New appraisal"
+    },
+    "hr_extended.recruitment": {
+      "ku": "بەکارهێنان",
+      "en": "Recruitment"
+    },
+    "hr_extended.appraisals": {
+      "ku": "هەڵسەنگاندنەکان",
+      "en": "Appraisals"
+    },
+    "hr_extended.edit_application": {
+      "ku": "دەستکاریکردنی داواکاری",
+      "en": "Edit application"
+    },
+    "hr_extended.edit_appraisal": {
+      "ku": "دەستکاریکردنی هەڵسەنگاندن",
+      "en": "Edit appraisal"
+    },
+    "hr_extended.candidate_id_placeholder": {
+      "ku": "ناسنامەی کاندید…",
+      "en": "Candidate ID…"
+    },
+    "hr_extended.position_id_placeholder": {
+      "ku": "ناسنامەی پۆست…",
+      "en": "Position ID…"
+    },
+    "hr_extended.notes": {
+      "ku": "تێبینیەکان",
+      "en": "Notes"
+    },
+    "hr_extended.employee_id_placeholder": {
+      "ku": "ناسنامەی کارمەند…",
+      "en": "Employee ID…"
+    },
+    "hr_extended.cycle_id_placeholder": {
+      "ku": "ناسنامەی چەرخ…",
+      "en": "Cycle ID…"
+    },
+    "helpdesk.ticket_id": {
+      "ku": "ناسنامەی تیکێت",
+      "en": "Ticket ID"
+    },
+    "helpdesk.contact": {
+      "ku": "پەیوەندیکار",
+      "en": "Contact"
+    },
+    "helpdesk.assigned_to": {
+      "ku": "دیاریکراو بۆ",
+      "en": "Assigned to"
+    },
+    "helpdesk.title": {
+      "ku": "یارمەتیدان",
+      "en": "Help desk"
+    },
+    "helpdesk.subtitle": {
+      "ku": "بەڕێوەبردنی داواکارییەکانی پشتگیری کڕیار.",
+      "en": "Manage customer support tickets."
+    },
+    "helpdesk.filter_status": {
+      "ku": "فلتەر بەپێی دۆخ",
+      "en": "Filter by status"
+    },
+    "helpdesk.status_in_progress": {
+      "ku": "لە ئەنجامدانا",
+      "en": "In progress"
+    },
+    "helpdesk.status_waiting_response": {
+      "ku": "چاوەڕوانی وەڵام",
+      "en": "Waiting for response"
+    },
+    "helpdesk.edit_ticket": {
+      "ku": "دەستکاریکردنی تیکێت",
+      "en": "Edit ticket"
+    },
+    "helpdesk.description": {
+      "ku": "وەسف",
+      "en": "Description"
+    },
+    "helpdesk.contact_email": {
+      "ku": "ئیمەیڵی پەیوەندیکار",
+      "en": "Contact email"
+    },
+    "knowledge.title": {
+      "ku": "سەردێڕ",
+      "en": "Title"
+    },
+    "knowledge.category": {
+      "ku": "جۆر",
+      "en": "Category"
+    },
+    "knowledge.published": {
+      "ku": "بڵاوکراوەتەوە",
+      "en": "Published"
+    },
+    "knowledge.draft": {
+      "ku": "پێشنووس",
+      "en": "Draft"
+    },
+    "knowledge.public": {
+      "ku": "گشتی",
+      "en": "Public"
+    },
+    "knowledge.internal": {
+      "ku": "ناوخۆیی",
+      "en": "Internal"
+    },
+    "knowledge.title_page": {
+      "ku": "بنکەی زانیاری",
+      "en": "Knowledge base"
+    },
+    "knowledge.subtitle": {
+      "ku": "بابەتە بڵاوکراوەکان بەڕێوەبە.",
+      "en": "Manage published knowledge articles."
+    },
+    "knowledge.new_article": {
+      "ku": "بابەتی نوێ",
+      "en": "New article"
+    },
+    "knowledge.edit_article": {
+      "ku": "دەستکاریکردنی بابەت",
+      "en": "Edit article"
+    },
+    "knowledge.body": {
+      "ku": "ناوەڕۆک",
+      "en": "Body"
+    },
+    "knowledge.select_category": {
+      "ku": "جۆر هەڵبژێرە",
+      "en": "Select category"
+    },
+    "plm.eco_id": {
+      "ku": "ناسنامەی ECO",
+      "en": "ECO ID"
+    },
+    "plm.product": {
+      "ku": "بەرهەم",
+      "en": "Product"
+    },
+    "plm.type": {
+      "ku": "جۆر",
+      "en": "Type"
+    },
+    "plm.status": {
+      "ku": "دۆخ",
+      "en": "Status"
+    },
+    "plm.priority": {
+      "ku": "پێشینە",
+      "en": "Priority"
+    },
+    "plm.new_eco": {
+      "ku": "ECO نوێ",
+      "en": "New ECO"
+    },
+    "plm.edit_eco": {
+      "ku": "دەستکاریکردنی ECO",
+      "en": "Edit ECO"
+    },
+    "plm.product_id_placeholder": {
+      "ku": "ناسنامەی بەرهەم…",
+      "en": "Product ID…"
+    },
+    "plm.type_change": {
+      "ku": "گۆڕانکاری",
+      "en": "Change"
+    },
+    "plm.type_new_part": {
+      "ku": "بەشی نوێ",
+      "en": "New part"
+    },
+    "plm.type_obsolete": {
+      "ku": "کۆن",
+      "en": "Obsolete"
+    },
+    "plm.type_deviation": {
+      "ku": "لادان",
+      "en": "Deviation"
+    },
+    "plm.proposed_changes": {
+      "ku": "گۆڕانکارییە پێشنیارکراوەکان",
+      "en": "Proposed changes"
+    },
+    "quality.check_id": {
+      "ku": "ناسنامەی پشکنین",
+      "en": "Check ID"
+    },
+    "quality.point": {
+      "ku": "خاڵی پشکنین",
+      "en": "Check point"
+    },
+    "quality.result": {
+      "ku": "ئەنجام",
+      "en": "Result"
+    },
+    "quality.subtitle": {
+      "ku": "پشکنینی کوالیتی بەرهەمەکان.",
+      "en": "Product quality checks."
+    },
+    "quality.edit_check": {
+      "ku": "دەستکاریکردنی پشکنین",
+      "en": "Edit check"
+    },
+    "quality.select_point": {
+      "ku": "خاڵی پشکنین هەڵبژێرە",
+      "en": "Select check point"
+    },
+    "quality.product_id_placeholder": {
+      "ku": "ناسنامەی بەرهەم…",
+      "en": "Product ID…"
+    },
+    "repairs.order_id": {
+      "ku": "ناسنامەی داواکاری",
+      "en": "Order ID"
+    },
+    "repairs.customer": {
+      "ku": "کڕیار",
+      "en": "Customer"
+    },
+    "repairs.serial": {
+      "ku": "ژمارەی سریاڵ",
+      "en": "Serial number"
+    },
+    "repairs.warranty_yes": {
+      "ku": "گەرەنتی هەیە",
+      "en": "Under warranty"
+    },
+    "repairs.warranty_no": {
+      "ku": "گەرەنتی نییە",
+      "en": "Out of warranty"
+    },
+    "repairs.mark_ready": {
+      "ku": "ئامادەی چوونەوەکردن",
+      "en": "Mark as ready"
+    },
+    "repairs.ready": {
+      "ku": "ئامادەیە",
+      "en": "Ready"
+    },
+    "repairs.title": {
+      "ku": "چاکردنەوە",
+      "en": "Repairs"
+    },
+    "repairs.subtitle": {
+      "ku": "داواکارییەکانی چاکردنەوە بەڕێوەبە.",
+      "en": "Manage repair orders."
+    },
+    "repairs.edit_order": {
+      "ku": "دەستکاریکردنی داواکاری",
+      "en": "Edit order"
+    },
+    "studio.model_name": {
+      "ku": "ناوی مۆدێل",
+      "en": "Model name"
+    },
+    "studio.label_singular": {
+      "ku": "ناوی تاکی",
+      "en": "Singular label"
+    },
+    "studio.label_plural": {
+      "ku": "ناوی زۆری",
+      "en": "Plural label"
+    },
+    "studio.description": {
+      "ku": "وەسف",
+      "en": "Description"
+    },
+    "studio.view_fields": {
+      "ku": "بینینی خانەکان",
+      "en": "View fields"
+    },
+    "studio.label": {
+      "ku": "ناو",
+      "en": "Label"
+    },
+    "studio.type": {
+      "ku": "جۆر",
+      "en": "Type"
+    },
+    "studio.required": {
+      "ku": "پێویست",
+      "en": "Required"
+    },
+    "studio.optional": {
+      "ku": "ئیختیاری",
+      "en": "Optional"
+    },
+    "studio.subtitle": {
+      "ku": "مۆدێلی کەسانەی خۆت دروست بکە.",
+      "en": "Build your own custom data models."
+    },
+    "studio.custom_models": {
+      "ku": "مۆدێلی کەسانە",
+      "en": "Custom models"
+    },
+    "studio.fields_for": {
+      "ku": "خانەکانی {{model}}",
+      "en": "Fields for {{model}}"
+    },
+    "studio.back_to_models": {
+      "ku": "گەڕانەوە بۆ مۆدێلەکان",
+      "en": "Back to models"
+    },
+    "platform.reconcile.kind": {
+      "ku": "جۆر",
+      "en": "Kind"
+    },
+    "platform.reconcile.entity": {
+      "ku": "بەند",
+      "en": "Entity"
+    },
+    "platform.reconcile.field": {
+      "ku": "خانە",
+      "en": "Field"
+    },
+    "platform.reconcile.delta": {
+      "ku": "جیاوازی",
+      "en": "Delta"
+    },
+    "platform.reconcile.values": {
+      "ku": "تۆمارکراو → کۆمپیوتەرکراو",
+      "en": "Stored → Computed"
+    },
+    "platform.reconcile.title": {
+      "ku": "چارەسەرکردنی دروستی داتا",
+      "en": "Data integrity reconcile"
+    },
+    "platform.reconcile.hint": {
+      "ku": "balance_due، stock_on_hand و باڵانسی بانک لەگەڵ لیژنەی مامەڵەکان بەراوردی دەکات.",
+      "en": "Compares balance_due, stock_on_hand, and bank balances against movement/payment ledgers."
+    },
+    "platform.reconcile.org_id": {
+      "ku": "ناسنامەی ڕێکخراو",
+      "en": "Organization ID"
+    },
+    "platform.reconcile.scan": {
+      "ku": "سکانی تاقیکردنەوە",
+      "en": "Dry-run scan"
+    },
+    "platform.reconcile.fix": {
+      "ku": "گۆڕانکاری جێبەجێ بکە",
+      "en": "Apply fix"
+    },
+    "platform.reconcile.clean": {
+      "ku": "هیچ لادانێک نەدۆزرایەوە",
+      "en": "No drift detected"
+    },
+    "platform.reconcile.found": {
+      "ku": "{{count}} لادان دۆزرایەوە",
+      "en": "{{count}} drift(s) found"
+    },
+    "platform.reconcile.fixed": {
+      "ku": "خانەکانی denormalized نوێکرانەوە.",
+      "en": "Denormalized fields were updated."
+    },
+    "platform.reconcile.stock_hint": {
+      "ku": "لادانی ئەنبار دەکرێت پێویست بکات opening_stock لەسەر بەرهەم دابنرێت ئەگەر ئەنبار پێش شوێنکەوتنی مامەڵەکان هەبووبێت.",
+      "en": "Item stock drift may need opening_stock set on the product if inventory existed before movements were tracked."
+    },
+    "platform.command_palette": {
+      "ku": "بچۆ بۆ…",
+      "en": "Jump to…"
+    },
+    "platform.search_pages": {
+      "ku": "گەڕان لە پەڕەکان",
+      "en": "Search pages"
+    },
+    "platform.nav_label": {
+      "ku": "ناڤیگەیشنی پلاتفۆرم",
+      "en": "Platform navigation"
+    },
+    "platform.menu": {
+      "ku": "مێنیو",
+      "en": "Menu"
+    },
+    "platform.admin": {
+      "ku": "ئەدمینی پلاتفۆرم",
+      "en": "Platform Admin"
+    },
+    "platform.light": {
+      "ku": "ڕووناک",
+      "en": "Light"
+    },
+    "platform.dark": {
+      "ku": "تاریک",
+      "en": "Dark"
+    },
+    "platform.announcement_created": {
+      "ku": "ئاگادارکردنەوە دروستکرا",
+      "en": "Announcement created"
+    },
+    "platform.new_announcement": {
+      "ku": "ئاگادارکردنەوەی نوێ",
+      "en": "New announcement"
+    },
+    "platform.severity": {
+      "ku": "گرانایی",
+      "en": "Severity"
+    },
+    "platform.start": {
+      "ku": "دەستپێک",
+      "en": "Start"
+    },
+    "platform.end": {
+      "ku": "کۆتایی",
+      "en": "End"
+    },
+    "platform.flag_saved": {
+      "ku": "فلاگ پاشەکەوتکرا",
+      "en": "Flag saved"
+    },
+    "platform.enabled": {
+      "ku": "چالاک",
+      "en": "Enabled"
+    },
+    "platform.rollout": {
+      "ku": "ڕیژەی بڵاوکردنەوە %",
+      "en": "Rollout %"
+    },
+    "platform.request_approved": {
+      "ku": "پەسەندکرا",
+      "en": "Approved"
+    },
+    "platform.request_rejected": {
+      "ku": "ڕەتکرایەوە",
+      "en": "Rejected"
+    },
+    "platform.requests.title": {
+      "ku": "داواکارییەکانی مۆدیوول",
+      "en": "Module requests"
+    },
+    "platform.requests.subtitle": {
+      "ku": "ڕیزی پەسەندکردنی گشتی",
+      "en": "Global approval queue"
+    },
+    "platform.org": {
+      "ku": "ڕێکخراو",
+      "en": "Organization"
+    },
+    "platform.reject_request": {
+      "ku": "ڕەتکردنەوەی داواکاری",
+      "en": "Reject request"
+    },
+    "platform.user_unlocked": {
+      "ku": "بەکارهێنەر کراوەیەوە",
+      "en": "User unlocked"
+    },
+    "platform.user_deactivated": {
+      "ku": "بەکارهێنەر ناچالاک کرا",
+      "en": "User deactivated"
+    },
+    "platform.users.title": {
+      "ku": "بەکارهێنەران",
+      "en": "Users"
+    },
+    "platform.users.subtitle": {
+      "ku": "گەڕانی بەکارهێنەر لە هەموو ڕێکخراوەکاندا",
+      "en": "Cross-organization user search"
+    },
+    "platform.search_users": {
+      "ku": "ئیمەیڵ یان ناو بگەڕێ",
+      "en": "Search email or name"
+    },
+    "platform.locked": {
+      "ku": "قولپکراوە",
+      "en": "Locked"
+    },
+    "platform.unlock": {
+      "ku": "کردنەوە",
+      "en": "Unlock"
+    },
+    "platform.deactivate": {
+      "ku": "ناچالاک بکە",
+      "en": "Deactivate"
+    },
+    "platform.org_id": {
+      "ku": "ناسنامەی ڕێکخراو",
+      "en": "Organization ID"
+    },
+    "platform.bundle": {
+      "ku": "بستە",
+      "en": "Bundle"
+    },
+    "platform.license.title": {
+      "ku": "دەستکاری مۆڵەت",
+      "en": "License editor"
+    },
+    "platform.license.confirm": {
+      "ku": "پشتڕاستکردنەوەی گۆڕانی مۆڵەت",
+      "en": "Confirm license change"
+    },
+    "platform.license.confirm_body": {
+      "ku": "بستەی {{bundle}} لە ڕێکخراوی {{org}} جێبەجێبکەیت؟",
+      "en": "Apply bundle {{bundle}} to org {{org}}?"
+    },
+    "platform.org_updated": {
+      "ku": "ڕێکخراو نوێکرایەوە",
+      "en": "Organization updated"
+    },
+    "platform.no_owner": {
+      "ku": "هیچ بەکارهێنەرێک بۆ ئەم ڕێکخراوە نەدۆزرایەوە",
+      "en": "No user found for this organization"
+    },
+    "platform.org_not_found": {
+      "ku": "ڕێکخراو نەدۆزرایەوە",
+      "en": "Organization not found"
+    },
+    "platform.unsuspend": {
+      "ku": "دووبارە چالاکبکەرەوە",
+      "en": "Unsuspend"
+    },
+    "platform.suspend": {
+      "ku": "هەڵوەشاندنەوە",
+      "en": "Suspend"
+    },
+    "platform.enter_org": {
+      "ku": "ڕێکخراو داخڵ بکە",
+      "en": "Enter organization"
+    },
+    "platform.tab.overview": {
+      "ku": "پوختە",
+      "en": "Overview"
+    },
+    "platform.users_count": {
+      "ku": "بەکارهێنەران",
+      "en": "Users"
+    },
+    "platform.tab.license": {
+      "ku": "مۆڵەت",
+      "en": "License"
+    },
+    "platform.org_created": {
+      "ku": "ڕێکخراو دروستکرا",
+      "en": "Organization created"
+    },
+    "platform.orgs.title": {
+      "ku": "ڕێکخراوەکان",
+      "en": "Organizations"
+    },
+    "platform.orgs.subtitle": {
+      "ku": "بەڕێوەبردنی ڕێکخراوە تینانتەکان",
+      "en": "Manage tenant organizations"
+    },
+    "platform.create_org": {
+      "ku": "ڕێکخراوی نوێ دروست بکە",
+      "en": "Create organization"
+    },
+    "platform.search_orgs": {
+      "ku": "گەڕان لە ڕێکخراوەکان",
+      "en": "Search organizations"
+    },
+    "platform.owner_email": {
+      "ku": "ئیمەیڵی خاوەن",
+      "en": "Owner email"
+    },
+    "platform.audit.title": {
+      "ku": "تۆماری ئۆدیت",
+      "en": "Audit log"
+    },
+    "platform.export_csv": {
+      "ku": "هەناردەکردن وەک CSV",
+      "en": "Export CSV"
+    },
+    "platform.action_prefix": {
+      "ku": "پێشدوانەی کردار",
+      "en": "Action prefix"
+    },
+    "platform.action": {
+      "ku": "کردار",
+      "en": "Action"
+    },
+    "platform.user": {
+      "ku": "بەکارهێنەر",
+      "en": "User"
+    },
+    "platform.dashboard.subtitle": {
+      "ku": "پوختەی تینانتەکان و کارگێڕییەکان",
+      "en": "Overview of tenants and operations"
+    },
+    "platform.kpi.active_orgs": {
+      "ku": "ڕێکخراوە چالاکەکان",
+      "en": "Active orgs"
+    },
+    "platform.kpi.suspended_orgs": {
+      "ku": "هەڵوەشێنراوەکان",
+      "en": "Suspended"
+    },
+    "platform.kpi.active_users": {
+      "ku": "بەکارهێنەرە چالاکەکان",
+      "en": "Active users"
+    },
+    "platform.kpi.pending_requests": {
+      "ku": "داواکارییە چاوەڕوانەکان",
+      "en": "Pending requests"
+    },
+    "platform.kpi.expiring_licenses": {
+      "ku": "بەسەردەچوون (٣٠ ڕۆژ)",
+      "en": "Expiring (30d)"
+    },
+    "platform.kpi.locked_users": {
+      "ku": "بەکارهێنەرە قولپکراوەکان",
+      "en": "Locked users"
+    },
+    "platform.dashboard.quick_actions": {
+      "ku": "کردارە خێراکان",
+      "en": "Quick actions"
+    },
+    "dr.created": {
+      "ku": "داواکاری گەڕاندنەوە دروستکرا — چاوەڕوانی پەسەندکردنی ئەدمینی دووەمە",
+      "en": "Restore request created — pending second-admin approval"
+    },
+    "dr.create_err": {
+      "ku": "نەتوانرا داواکاری دروست بکرێت",
+      "en": "Could not create request"
+    },
+    "dr.action_ok": {
+      "ku": "تەواوبوو: {{a}}",
+      "en": "Done: {{a}}"
+    },
+    "dr.action_err": {
+      "ku": "کردار شکستهێنا",
+      "en": "Action failed"
+    },
+    "dr.execute_err": {
+      "ku": "جێبەجێکردن شکستهێنا",
+      "en": "Execute failed"
+    },
+    "dr.no_preview": {
+      "ku": "هیچ پێشبینینی diff حیساب نەکرایەوە.",
+      "en": "No diff preview computed."
+    },
+    "dr.added": {
+      "ku": "زیادکرا",
+      "en": "Added"
+    },
+    "dr.changed": {
+      "ku": "گۆڕا",
+      "en": "Changed"
+    },
+    "dr.unchanged": {
+      "ku": "نەگۆڕا",
+      "en": "Unchanged"
+    },
+    "dr.collection": {
+      "ku": "کۆلێکشن",
+      "en": "Collection"
+    },
+    "dr.archive": {
+      "ku": "لە پاشەکەوتدا",
+      "en": "In backup"
+    },
+    "dr.live": {
+      "ku": "لە زیندوودا",
+      "en": "In live"
+    },
+    "dr.org": {
+      "ku": "ڕێکخراو",
+      "en": "Organization"
+    },
+    "dr.status": {
+      "ku": "دۆخ",
+      "en": "Status"
+    },
+    "dr.mode": {
+      "ku": "شێواز",
+      "en": "Mode"
+    },
+    "dr.requested_by": {
+      "ku": "داواکراوی لەلایەن",
+      "en": "Requested by"
+    },
+    "dr.approved_by": {
+      "ku": "پەسەندکراوی لەلایەن",
+      "en": "Approved by"
+    },
+    "dr.review": {
+      "ku": "پشکنینەوە",
+      "en": "Review"
+    },
+    "dr.four_eyes_hint": {
+      "ku": "دەبێت لەلایەن سوپەرئەدمینێکی جیاوازەوە پەسەند بکرێت",
+      "en": "Must be approved by a DIFFERENT super-admin"
+    },
+    "dr.approve": {
+      "ku": "پەسەندبکە",
+      "en": "Approve"
+    },
+    "dr.execute": {
+      "ku": "جێبەجێبکە",
+      "en": "Execute"
+    },
+    "dr.reject": {
+      "ku": "ڕەتبکەرەوە",
+      "en": "Reject"
+    },
+    "dr.title": {
+      "ku": "گەڕاندنەوەی تینانت — DR",
+      "en": "Disaster recovery — tenant restore"
+    },
+    "dr.subtitle": {
+      "ku": "گەڕاندنەوەی تینانت بە ئارشیفی پاشەکەوت لەگەڵ پشکنینی diff پێش پەسەندکردن (چوار-چاو).",
+      "en": "Four-eyes per-tenant restore from a backup archive. Diff preview before approval."
+    },
+    "dr.new": {
+      "ku": "داواکاری گەڕاندنەوەی نوێ",
+      "en": "New restore request"
+    },
+    "dr.warn_title": {
+      "ku": "کردارێکی تایبەتی وێرانکەر",
+      "en": "Destructive privileged operation"
+    },
+    "dr.warn_body": {
+      "ku": "گەڕاندنەوەی تینانت داتای بەرهەمهێنانی ئەو کڕیارە بە تەواوی دەگۆڕێت. پشتڕاستکردنەوەی سوپەرئەدمینی دووەم (چوار-چاو) پێویستە و تەنها ئەوکات جێبەجێدەکرێت.",
+      "en": "A tenant restore overwrites that customer's live production data. It requires approval by a second super-admin (four-eyes) and only then can be executed. Execution returns a command to run on the incident bridge."
+    },
+    "dr.create_btn": {
+      "ku": "دروست بکە و diff پشکنینەوە",
+      "en": "Create & preview diff"
+    },
+    "dr.org_req": {
+      "ku": "ناسنامەی ڕێکخراو پێویستە",
+      "en": "Organization ID is required"
+    },
+    "dr.source": {
+      "ku": "ڕێگای ئارشیفی پاشەکەوت (GCS)",
+      "en": "Backup archive path (GCS)"
+    },
+    "dr.source_req": {
+      "ku": "ڕێگای پاشەکەوت پێویستە",
+      "en": "Backup path is required"
+    },
+    "dr.source_hint": {
+      "ku": "نموونە: backups/<org>/2026-05-26/backup_20260526_020000.json.gz",
+      "en": "e.g. backups/<org>/2026-05-26/backup_20260526_020000.json.gz"
+    },
+    "dr.mode_upsert": {
+      "ku": "Upsert (تێکەڵکردنی زیادەخواز — سەلامەت)",
+      "en": "Upsert (additive merge — safe)"
+    },
+    "dr.mode_replace": {
+      "ku": "جێناوجێکردن (هەروەها دۆکیومێنتی نەبوون لە پاشەکەوت دەسڕێتەوە)",
+      "en": "Replace (also delete docs absent from backup)"
+    },
+    "dr.reason": {
+      "ku": "هۆکار",
+      "en": "Reason"
+    },
+    "dr.reason_req": {
+      "ku": "هۆکار (لانیکەم ٥ پیت) پێویستە",
+      "en": "A reason (>=5 chars) is required"
+    },
+    "dr.reason_ph": {
+      "ku": "بۆچی ئەم گەڕاندنەوەیە پێویستە؟",
+      "en": "Why is this restore needed?"
+    },
+    "dr.recompute": {
+      "ku": "دووبارەحیسابکردنی diff",
+      "en": "Recompute diff"
+    },
+    "dr.diff_preview": {
+      "ku": "پێشبینینی diff",
+      "en": "Diff preview"
+    },
+    "dr.result": {
+      "ku": "ئەنجامی جێبەجێکردن",
+      "en": "Execution result"
+    },
+    "dr.run_command": {
+      "ku": "لەسەر پردی ڕووداو جێبەجێبکە",
+      "en": "Run on the incident bridge"
+    },
+    "dr.copied": {
+      "ku": "فەرمان کۆپی کرا",
+      "en": "Command copied"
+    },
+    "dr.copy": {
+      "ku": "کۆپیکردنی فەرمان",
+      "en": "Copy command"
+    },
+    "key": {
+      "ku": "کلیل",
+      "en": "Key"
+    },
+    "int_health_ok": {
+      "ku": "باشە",
+      "en": "OK"
+    },
+    "int_health_preview": {
+      "ku": "پێشبینین",
+      "en": "Preview"
+    },
+    "int_health_missing": {
+      "ku": "نەدۆزرایەوە",
+      "en": "Missing"
+    },
+    "int_health_title": {
+      "ku": "تەندروستی یەکگرتنەوەکان",
+      "en": "Integration health"
+    },
+    "int_health_desc": {
+      "ku": "ئامادەبوونی زیندوو e-invoice، پارەدان، ئامرازی پەیامگێڕانی و یەکگرتنەوەکانی دەرەکی.",
+      "en": "Live readiness of e-invoice, payments, messaging, and outbound integrations."
+    },
+    "int_health_integration": {
+      "ku": "یەکگرتنەوە",
+      "en": "Integration"
+    },
+    "int_health_detail": {
+      "ku": "وردەکاری",
+      "en": "Detail"
+    },
+    "configure": {
+      "ku": "ڕێکبخە",
+      "en": "Configure"
+    },
+    "settings_general": {
+      "ku": "گشتی",
+      "en": "General"
+    },
+    "settings_sub_general": {
+      "ku": "ناوی بەرنامە، زمانی بنەڕەت و کاتژمێری ناوچە.",
+      "en": "Application name, default language, and timezone."
+    },
+    "min_length_2": {
+      "ku": "دەبێت لانیکەم ٢ پیت بێت",
+      "en": "Must be at least 2 characters"
+    },
+    "max_length_100": {
+      "ku": "دەبێت لەزۆر ١٠٠ پیت بێت",
+      "en": "Must be at most 100 characters"
+    },
+    "default_language": {
+      "ku": "زمانی بنەڕەت",
+      "en": "Default language"
+    },
+    "layout_classic_sidebar": {
+      "ku": "لایەنداری کلاسیک",
+      "en": "Classic sidebar"
+    },
+    "layout_top_megamenu": {
+      "ku": "مێنیوی گەورەی سەرەوە",
+      "en": "Top mega-menu"
+    },
+    "layout_dual_rail": {
+      "ku": "دوو ڕیل",
+      "en": "Dual rail"
+    },
+    "layout_icon_rail": {
+      "ku": "ڕیلی ئایکۆن",
+      "en": "Icon rail"
+    },
+    "layout_dashboard_first": {
+      "ku": "داشبۆرد سەرەتا",
+      "en": "Dashboard first"
+    },
+    "layout_command_centric": {
+      "ku": "فەرمانگۆڕ",
+      "en": "Command centric"
+    },
+    "layout_workspace_tabs": {
+      "ku": "تابی workspace",
+      "en": "Workspace tabs"
+    },
+    "layout_apps_launcher": {
+      "ku": "دەستکردنی بەرنامەکان",
+      "en": "Apps launcher"
+    },
+    "layout_split_master": {
+      "ku": "لیستی دووبەش",
+      "en": "Split master-detail"
+    },
+    "layout_mobile_bottom": {
+      "ku": "ناڤیگەیشنی خوارەوەی مۆبایل",
+      "en": "Mobile bottom nav"
+    },
+    "settings_appearance": {
+      "ku": "ڕووکار",
+      "en": "Appearance"
+    },
+    "settings_sub_appearance": {
+      "ku": "تیم، شێوازی لایەوت و چڕی نیشاندان.",
+      "en": "Theme, layout mode, and display density."
+    },
+    "theme_light": {
+      "ku": "ڕووناک",
+      "en": "Light"
+    },
+    "theme_dark": {
+      "ku": "تاریک",
+      "en": "Dark"
+    },
+    "layout_mode": {
+      "ku": "شێوازی لایەوت",
+      "en": "Layout mode"
+    },
+    "density_compact": {
+      "ku": "چڕ",
+      "en": "Compact"
+    },
+    "density_default": {
+      "ku": "بنەڕەت",
+      "en": "Default"
+    },
+    "density_comfort": {
+      "ku": "فراوان",
+      "en": "Comfort"
+    },
+    "ff_ai_assist": {
+      "ku": "یارمەتی AI",
+      "en": "AI Assist"
+    },
+    "ff_ai_assist_desc": {
+      "ku": "چالاککردنی پێشنیارەکانی AI و دۆزینەوەی ناکۆکی.",
+      "en": "Enable AI-powered suggestions and anomaly detection."
+    },
+    "ff_ocr": {
+      "ku": "OCR پسوولەکان",
+      "en": "OCR Receipts"
+    },
+    "ff_ocr_desc": {
+      "ku": "سکانی ئۆتۆماتیکی پسوولە و دەرهێنانی داتا.",
+      "en": "Automatic receipt scanning and data extraction."
+    },
+    "ff_adv_reports": {
+      "ku": "ڕاپۆرتی پیشکەوتوو",
+      "en": "Advanced Reports"
+    },
+    "ff_adv_reports_desc": {
+      "ku": "دروستکەری ڕاپۆرتی کەسانە و ڕاپۆرتی پلانگێڕاو.",
+      "en": "Custom report builder and scheduled reports."
+    },
+    "ff_pos": {
+      "ku": "نوسینگەی فرۆشتن",
+      "en": "Point of Sale"
+    },
+    "ff_pos_desc": {
+      "ku": "تێرمیناڵی POS، سێشنەکان و نەخشەی کەتخودا.",
+      "en": "POS terminal, sessions, and floor plans."
+    },
+    "ff_ecommerce": {
+      "ku": "فرۆشگای ئەلیکترۆنی",
+      "en": "E-commerce Storefront"
+    },
+    "ff_ecommerce_desc": {
+      "ku": "فرۆشگای گشتی و پۆرتاڵی کڕیار.",
+      "en": "Public storefront and customer portal."
+    },
+    "ff_iot": {
+      "ku": "تیلیمیتری IoT",
+      "en": "IoT Telemetry"
+    },
+    "ff_iot_desc": {
+      "ku": "بەڕێوەبردنی ئامێر و داتای تاقی زیندوو.",
+      "en": "Device management and real-time sensor data."
+    },
+    "ff_multi_entity": {
+      "ku": "چەند-بنکە",
+      "en": "Multi-Entity"
+    },
+    "ff_multi_entity_desc": {
+      "ku": "بەڕێوەبردنی چەند کۆمپانیا و مامەڵەکانی نێوانیان.",
+      "en": "Manage multiple companies and intercompany transactions."
+    },
+    "ff_whatsapp": {
+      "ku": "یەکگرتنەوەی WhatsApp",
+      "en": "WhatsApp Integration"
+    },
+    "ff_whatsapp_desc": {
+      "ku": "ناردنی فاکتور و ئاگادارکردنەوە بە WhatsApp Business API.",
+      "en": "Send invoices and notifications via WhatsApp Business API."
+    },
+    "rollout_pct_invalid": {
+      "ku": "ڕیژەی بڵاوکردنەوە دەبێت لەنێوان ٠ و ١٠٠ بێت",
+      "en": "Rollout percentage must be between 0 and 100"
+    },
+    "settings_feature_flags": {
+      "ku": "فلاگەکانی فیچەر",
+      "en": "Feature flags"
+    },
+    "settings_sub_feature_flags": {
+      "ku": "فیچەرەکان بۆ ڕێکخراوەکەت چالاک یان ناچالاک بکە.",
+      "en": "Enable or disable features for your organization."
+    },
+    "rollout_pct_tooltip": {
+      "ku": "ڕیژەی بەکارهێنەرانی دەستبەسەرئامادەبووی ئەم فیچەرە (٠-١٠٠)",
+      "en": "Percentage of users who see this feature (0–100)"
+    },
+    "generated": {
+      "ku": "دروستکراوە",
+      "en": "Generated"
+    },
+    "signed": {
+      "ku": "واژۆکراوە",
+      "en": "Signed"
+    },
+    "einvoice_settings": {
+      "ku": "ڕێکخستنی فاکتوری ئەلیکترۆنی",
+      "en": "E-invoice settings"
+    },
+    "iraq_einvoice_enabled": {
+      "ku": "e-invoicing ی عێراق چالاک",
+      "en": "Iraq e-invoicing enabled"
+    },
+    "auto_submit_on_send": {
+      "ku": "ئۆتۆماتیک بنێرە لە کاتی ئیمەیڵکردن",
+      "en": "Auto-submit on send"
+    },
+    "portal_url": {
+      "ku": "بەستەری پۆرتاڵ",
+      "en": "Portal URL"
+    },
+    "status_url_template": {
+      "ku": "قاڵبی بەستەری دۆخ",
+      "en": "Status URL template"
+    },
+    "cancel_url": {
+      "ku": "بەستەری هەڵوەشاندنەوە",
+      "en": "Cancel URL"
+    },
+    "iraq_seller_tax_id": {
+      "ku": "ژمارەی باجی فرۆشیار لە عێراق",
+      "en": "Iraq seller tax ID"
+    },
+    "branch_code": {
+      "ku": "کۆدی لق",
+      "en": "Branch code"
+    },
+    "api_key": {
+      "ku": "کلیلی API",
+      "en": "API key"
+    },
+    "auth_token": {
+      "ku": "تۆکەنی دەستگەیشتن",
+      "en": "Auth token"
+    },
+    "private_key_pem": {
+      "ku": "کلیلی تایبەتی (PEM)",
+      "en": "Private key (PEM)"
+    },
+    "private_key_password": {
+      "ku": "وشەی نهێنی کلیلی تایبەتی",
+      "en": "Private key password"
+    },
+    "einvoice_compliance_overview": {
+      "ku": "پوختەی پابەندبوون بە e-invoice",
+      "en": "E-invoice compliance overview"
+    },
+    "einvoice_errors": {
+      "ku": "هەڵەکانی e-invoice",
+      "en": "E-invoice errors"
+    },
+    "preferences_personal": {
+      "ku": "ئامرازەکانی کەسی",
+      "en": "Personal preferences"
+    },
+    "preferences_desc": {
+      "ku": "تیم، چڕی، پەڕەی بنەڕەت و دەستکاریکردنی دەستگەیشتن.",
+      "en": "Theme, density, default landing page, and accessibility tweaks."
+    },
+    "theme_system": {
+      "ku": "سیستەم",
+      "en": "System"
+    },
+    "pref_landing": {
+      "ku": "پەڕەی بنەڕەتی دادەبڕی",
+      "en": "Default landing page"
+    },
+    "nav_dashboard": {
+      "ku": "داشبۆرد",
+      "en": "Dashboard"
+    },
+    "nav_invoices": {
+      "ku": "فاکتورەکان",
+      "en": "Invoices"
+    },
+    "nav_contacts": {
+      "ku": "پەیوەندیکارەکان",
+      "en": "Contacts"
+    },
+    "nav_items": {
+      "ku": "بەرهەمەکان",
+      "en": "Items"
+    },
+    "nav_reports": {
+      "ku": "ڕاپۆرتەکان",
+      "en": "Reports"
+    },
+    "nav_pos": {
+      "ku": "POS",
+      "en": "POS"
+    },
+    "pref_first_day": {
+      "ku": "ڕۆژی یەکەمی هەفتە",
+      "en": "First day of week"
+    },
+    "pref_keyboard": {
+      "ku": "کلیلەکانی کیبۆرد",
+      "en": "Keyboard shortcuts"
+    },
+    "pref_keyboard_desc": {
+      "ku": "چالاکبکردنی پالێتی Ctrl+K و کلیلە گشتییەکان.",
+      "en": "Enable Ctrl+K palette and global shortcuts."
+    },
+    "pref_high_contrast": {
+      "ku": "کونتراستی بەرز",
+      "en": "High contrast"
+    },
+    "pref_large_text": {
+      "ku": "دەقی گەورەتر",
+      "en": "Larger text"
+    },
+    "pref_calendar": {
+      "ku": "یەکگرتنەوەی ڕۆژژمێر",
+      "en": "Calendar integration"
+    },
+    "calendar_none": {
+      "ku": "ناچالاک",
+      "en": "Disabled"
+    },
+    "branches_title": {
+      "ku": "لقەکان و شوێنەکان",
+      "en": "Branches & locations"
+    },
+    "branding_title": {
+      "ku": "براند و تیم",
+      "en": "Branding & theme"
+    },
+    "branding_desc": {
+      "ku": "لۆگۆ، ڕەنگی براند، favicon، فۆنت و تیمی دۆکیومێنت.",
+      "en": "Logos, brand colors, favicon, fonts, and document theme."
+    },
+    "br_logo_primary": {
+      "ku": "بەستەری لۆگۆی سەرەکی",
+      "en": "Primary logo URL"
+    },
+    "br_logo_dark": {
+      "ku": "بەستەری لۆگۆ (شێوازی تاریک)",
+      "en": "Logo (dark mode) URL"
+    },
+    "br_favicon": {
+      "ku": "بەستەری favicon",
+      "en": "Favicon URL"
+    },
+    "br_color_primary": {
+      "ku": "ڕەنگی سەرەکی براند",
+      "en": "Primary brand color"
+    },
+    "br_color_accent": {
+      "ku": "ڕەنگی تایبەت",
+      "en": "Accent color"
+    },
+    "br_doc_theme": {
+      "ku": "تیمی دۆکیومێنت",
+      "en": "Document theme"
+    },
+    "theme_classic": {
+      "ku": "کلاسیک",
+      "en": "Classic"
+    },
+    "theme_modern": {
+      "ku": "مۆدێرن",
+      "en": "Modern"
+    },
+    "theme_minimal": {
+      "ku": "مینیمال",
+      "en": "Minimal"
+    },
+    "br_email_theme": {
+      "ku": "تیمی ئیمەیڵ",
+      "en": "Email theme"
+    },
+    "br_login_bg": {
+      "ku": "بەستەری پاشخانی پەڕەی چوونەژوورەوە",
+      "en": "Login screen background URL"
+    },
+    "day_tue": {
+      "ku": "سێشەممە",
+      "en": "Tue"
+    },
+    "day_wed": {
+      "ku": "چوارشەممە",
+      "en": "Wed"
+    },
+    "day_thu": {
+      "ku": "پێنجشەممە",
+      "en": "Thu"
+    },
+    "day_fri": {
+      "ku": "هەینی",
+      "en": "Fri"
+    },
+    "wh_workweek": {
+      "ku": "هەفتەی کار",
+      "en": "Work week"
+    },
+    "wh_hours": {
+      "ku": "کاتژمێری کار",
+      "en": "Working hours"
+    },
+    "wh_breaks": {
+      "ku": "کاتی پانتایی",
+      "en": "Break window"
+    },
+    "wh_timezone": {
+      "ku": "کاتژمێری بنەڕەت",
+      "en": "Default timezone"
+    },
+    "wh_holidays": {
+      "ku": "ڕەچاوکردنی بۆنی گشتی",
+      "en": "Honor public holidays"
+    },
+    "wh_sla": {
+      "ku": "SLA تەنها کاتژمێری کار",
+      "en": "SLA business-hours only"
+    },
+    "hol_country": {
+      "ku": "پێشڕاهێنانی وڵات",
+      "en": "Country preset"
+    },
+    "hol_regional": {
+      "ku": "ڕەچاوکردنی بۆنی ناوچەیی",
+      "en": "Honor regional holidays"
+    },
+    "hol_carry": {
+      "ku": "گواستنەوەی بۆ ساڵی داهاتوو",
+      "en": "Carry to next year"
+    },
+    "hol_custom": {
+      "ku": "بۆنی کەسانە",
+      "en": "Custom holidays"
+    },
+    "hol_paid": {
+      "ku": "پارەدراو",
+      "en": "Paid"
+    },
+    "add_holiday": {
+      "ku": "بۆن زیادبکە",
+      "en": "Add holiday"
+    },
+    "user_suspended": {
+      "ku": "بەکارهێنەر هەڵوەشێنراوە",
+      "en": "User suspended"
+    },
+    "user_activated": {
+      "ku": "بەکارهێنەر چالاک کرا",
+      "en": "User activated"
+    },
+    "role_admin": {
+      "ku": "بەڕێوەبەر",
+      "en": "Administrator"
+    },
+    "role_manager": {
+      "ku": "بەڕێوەبەر",
+      "en": "Manager"
+    },
+    "role_user": {
+      "ku": "بەکارهێنەر",
+      "en": "User"
+    },
+    "role_accountant": {
+      "ku": "ژمێریار",
+      "en": "Accountant"
+    },
+    "edit_role": {
+      "ku": "دەستکاریکردنی ڕۆڵ",
+      "en": "Edit role"
+    },
+    "role_perm_hint": {
+      "ku": "بەشی دەسەڵاتەکان بەکاربهێنە بۆ باشتربەستنی توانەکان بۆ ئەم ڕۆڵە.",
+      "en": "Use the Permissions section to fine-tune capabilities for this role."
+    },
+    "permission": {
+      "ku": "دەسەڵات",
+      "en": "Permission"
+    },
+    "sso_provider": {
+      "ku": "دابینکەری ناسنامە",
+      "en": "Identity provider"
+    },
+    "sso_metadata": {
+      "ku": "Metadata / بەستەری discovery",
+      "en": "Metadata / discovery URL"
+    },
+    "sso_client_id": {
+      "ku": "ناسنامەی کلاینت",
+      "en": "Client ID"
+    },
+    "sso_client_secret": {
+      "ku": "نهێنی کلاینت",
+      "en": "Client secret"
+    },
+    "sso_attr_email": {
+      "ku": "نەقشەکردنی تایبەتمەندی: ئیمەیڵ",
+      "en": "Attribute mapping: email"
+    },
+    "sso_attr_name": {
+      "ku": "نەقشەکردنی تایبەتمەندی: ناو",
+      "en": "Attribute mapping: name"
+    },
+    "sso_jit": {
+      "ku": "دابینکردنی فەوریی (JIT)",
+      "en": "Just-in-time provisioning"
+    },
+    "sso_enforce": {
+      "ku": "ئێجبارکردنی SSO بۆ دۆمەینی ئیمەیڵ",
+      "en": "Enforce SSO for email domain"
+    },
+    "portals_title": {
+      "ku": "پۆرتاڵی کڕیار و دابینکار",
+      "en": "Customer & vendor portals"
+    },
+    "portals_desc": {
+      "ku": "پۆرتاڵی خودمانگێڕانە بۆ کڕیار و دابینکار لەگەڵ چوونەژوورەوەی براند.",
+      "en": "Self-service portals for customers and vendors with branded login."
+    },
+    "po_cust": {
+      "ku": "پۆرتاڵی کڕیار",
+      "en": "Customer portal"
+    },
+    "po_vendor": {
+      "ku": "پۆرتاڵی دابینکار",
+      "en": "Vendor portal"
+    },
+    "po_subdomain": {
+      "ku": "ژێردۆمەینی کەسانە",
+      "en": "Custom subdomain"
+    },
+    "po_subdomain_desc": {
+      "ku": "نموونە: portal.کۆمپانیاکەت.com",
+      "en": "e.g. portal.your-company.com"
+    },
+    "portal_capabilities": {
+      "ku": "توانەکان",
+      "en": "Capabilities"
+    },
+    "po_inv": {
+      "ku": "داونلۆد و پارەدانی فاکتور",
+      "en": "Invoice download & pay"
+    },
+    "po_quote": {
+      "ku": "پەسەندکردنی نرخنامە",
+      "en": "Quote acceptance"
+    },
+    "po_doc": {
+      "ku": "هاوبەشکردنی دۆکیومێنت",
+      "en": "Document sharing"
+    },
+    "edit_bank_account": {
+      "ku": "دەستکاریکردنی هەژمار",
+      "en": "Edit account"
+    },
+    "swift": {
+      "ku": "SWIFT/BIC",
+      "en": "SWIFT/BIC"
+    },
+    "pm_offline": {
+      "ku": "ئۆفلاین",
+      "en": "Offline"
+    },
+    "pm_cash": {
+      "ku": "نەقد",
+      "en": "Cash"
+    },
+    "pm_bank": {
+      "ku": "گواستنەوەی بانکی",
+      "en": "Bank transfer"
+    },
+    "pm_cheque": {
+      "ku": "چەک",
+      "en": "Cheque"
+    },
+    "pm_online": {
+      "ku": "ئۆنلاین",
+      "en": "Online"
+    },
+    "pm_card": {
+      "ku": "کارت (Visa / MasterCard)",
+      "en": "Cards (Visa / MasterCard)"
+    },
+    "pm_qr": {
+      "ku": "پارەدانی QR",
+      "en": "QR code payments"
+    },
+    "pm_install": {
+      "ku": "پلانی قیستی",
+      "en": "Installment plans"
+    },
+    "pm_default": {
+      "ku": "ڕێگای پارەدانی بنەڕەت",
+      "en": "Default payment method"
+    },
+    "error_quota": {
+      "ku": "خزمەتگوزاری بۆ ماوەیەک بەردەست نییە. تکایە دووبارە هەوڵبدەوە.",
+      "en": "Service temporarily busy. Please try again."
+    },
+    "error_load": {
+      "ku": "بارکردنی وۆرکفلۆکان شکستهێنا.",
+      "en": "Failed to load workflows."
+    },
+    "coming_soon_short": {
+      "ku": "بەزووی",
+      "en": "soon"
+    },
+    "settings_group_general": {
+      "ku": "گشتی",
+      "en": "General"
+    },
+    "settings_open_nav": {
+      "ku": "کردنەوەی ناڤیگەیشنی ڕێکخستنەکان",
+      "en": "Open settings navigation"
+    },
+    "settings_tap_to_switch": {
+      "ku": "کلیک بکە بۆ گۆڕینی بەش",
+      "en": "Tap to switch section"
+    }
+  }
+}

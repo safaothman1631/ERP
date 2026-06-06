@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Tabs, Button, Form, Input, Select, InputNumber, Space, message, Popconfirm, Tag } from 'antd';
+import { Tabs, Button, Form, Input, Select, Space, message, Popconfirm } from 'antd';
 import type { TabsProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined, EditOutlined, DeleteOutlined, LoginOutlined, LogoutOutlined } from '@ant-design/icons';
 import api from '../../api';
-import { PageHeader, StatusTag } from '../../design-system';
-import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { PageHeader, StatusTag, DataTable } from '../../design-system';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
 interface RoomType {
@@ -54,7 +53,7 @@ const RoomsBookings: React.FC = () => {
  const [rooms, setRooms] = useState<Room[]>([]);
  const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
  const [reservations, setReservations] = useState<Reservation[]>([]);
- const [guests, setGuests] = useState<Guest[]>([]);
+ const [_guests, setGuests] = useState<Guest[]>([]);
  const [loading, setLoading] = useState(false);
  const [modalOpen, setModalOpen] = useState(false);
  const [editingId, setEditingId] = useState<string | null>(null);
@@ -192,7 +191,12 @@ const RoomsBookings: React.FC = () => {
  title: t('status'),
  dataIndex: 'status',
  key: 'status',
- render: (status: string) => <Tag color={status === 'confirmed' ? 'blue' : status === 'checked_in' ? 'green' : 'default'}>{t(`hotel.status_${status}`)}</Tag>,
+ render: (status: string) => (
+ <StatusTag
+ status={status === 'confirmed' ? 'info' : status === 'checked_in' ? 'success' : 'default'}
+ label={t(`hotel.status_${status}`)}
+ />
+ ),
  },
  {
  title: t('actions'),
@@ -235,11 +239,12 @@ const RoomsBookings: React.FC = () => {
  >
  {t('hotel.add_room')}
  </Button>
- <ResponsiveTableAdapter
+ <DataTable<Room>
  columns={roomColumns}
  dataSource={rooms}
  rowKey="id"
  loading={loading}
+ stickyHeader={false}
  pagination={{ pageSize: 20 }}
  />
  </>
@@ -249,11 +254,12 @@ const RoomsBookings: React.FC = () => {
  key: 'bookings',
  label: t('hotel.bookings'),
  children: (
- <ResponsiveTableAdapter
+ <DataTable<Reservation>
  columns={reservationColumns}
  dataSource={reservations}
  rowKey="id"
  loading={loading}
+ stickyHeader={false}
  pagination={{ pageSize: 20 }}
  />
  ),

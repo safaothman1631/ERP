@@ -21,7 +21,7 @@ const ItemForm: React.FC = () => {
 
   useEffect(() => {
     if (!id) return;
-    api.get(`/api/items/${id}`).then(r => form.setFieldsValue(r.data)).catch(() => {});
+    api.get(`/api/items/${id}`).then(r => form.setFieldsValue(r.data)).catch((e) => console.error(e));
   }, [id, form]);
 
   const handleSubmit = async (values: any) => {

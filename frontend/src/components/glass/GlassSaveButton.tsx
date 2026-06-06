@@ -31,8 +31,8 @@ const GlassSaveButton: React.FC<Props> = ({ loading, onClick, label }) => {
       icon={saved && !loading ? <CheckOutlined /> : undefined}
       onClick={onClick}
       style={{
-        background: saved && !loading ? '#16A34A' : 'var(--role-accent, #1F6FEB)',
-        borderColor: saved && !loading ? '#16A34A' : 'var(--role-accent, #1F6FEB)',
+        background: saved && !loading ? 'var(--success-500)' : 'var(--role-accent, #7B61FF)',
+        borderColor: saved && !loading ? 'var(--success-500)' : 'var(--role-accent, #7B61FF)',
         transition: 'background 0.25s ease, border-color 0.25s ease',
       }}
     >

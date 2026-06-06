@@ -105,7 +105,7 @@ Steps 1-4 take 5-10 minutes with the system; without it they take 45 minutes and
 For a restaurant operator considering the move:
 
 - **Hardware** (POS, KDS, printer, drawer): IQD 1,500,000 – 2,500,000 one-time.
-- **Software** (Kurdish ERP Growth, billed monthly): IQD 135,000 / month.
+- **Software** (Kurdish ERP Growth, billed monthly): IQD 80,000 / month.
 - **Platform fees** (delivery commissions, payment processor): typically 5-25% of order value per channel.
 
 The 5-minute closing drill alone usually pays for the software inside a month.

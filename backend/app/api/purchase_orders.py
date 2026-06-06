@@ -283,7 +283,7 @@ def create_goods_receipt(purchase_order_id: str, data: dict, user: dict = Depend
     """
     from app.services.grn_receive_atomic import create_goods_receipt_atomic
 
-    _po_load(PurchaseOrderRepository(user["org_id"]), purchase_order_id, user["org_id"])
+    po = _po_load(PurchaseOrderRepository(user["org_id"]), purchase_order_id, user["org_id"]) or {}
     lines = data.get("lines") or []
     if not lines:
         raise HTTPException(400, "??? ???? ?????? ????")
@@ -310,6 +310,52 @@ def create_goods_receipt(purchase_order_id: str, data: dict, user: dict = Depend
             dispatch_event(user["org_id"], "po.received", {"id": purchase_order_id})
         except Exception:
             pass
+    # Pool 3.4: perpetual valuation — add a cost layer per received line at the PO
+    # unit cost (fallback item.cost_price). Flag-gated + post-commit (record_receipt
+    # is its own transaction). Off => no effect / standard-cost behavior preserved.
+    try:
+        from app.config import settings
+        if getattr(settings, "PERPETUAL_VALUATION_ENABLED", False):
+            from app.firestore.items import ItemRepository
+            from app.services import valuation as V
+            from app.services import valuation_service
+
+            cost_by_poline: dict[str, float] = {}
+            cost_by_item: dict[str, float] = {}
+            for pl in (po.get("lines") or []):
+                c = float(pl.get("unit_price") or pl.get("rate") or pl.get("price")
+                          or pl.get("cost") or 0)
+                if pl.get("id"):
+                    cost_by_poline[pl["id"]] = c
+                if pl.get("item_id"):
+                    cost_by_item[pl["item_id"]] = c
+            item_repo = ItemRepository(user["org_id"])
+            icache: dict[str, dict] = {}
+            grn_id = received["grn"].get("id")
+            for gl in (received["grn"].get("lines") or []):
+                item_id = gl.get("item_id")
+                qty = float(gl.get("qty_received") or gl.get("qty") or 0)
+                if not item_id or qty <= 0:
+                    continue
+                item = icache.get(item_id)
+                if item is None:
+                    item = item_repo.get(item_id) or {}
+                    icache[item_id] = item
+                if item.get("track_inventory") is False:
+                    continue
+                unit_cost = (cost_by_poline.get(gl.get("po_line_id"))
+                             or cost_by_item.get(item_id)
+                             or float(item.get("cost_price") or 0))
+                if unit_cost <= 0:
+                    continue
+                valuation_service.record_receipt(
+                    user["org_id"], item_id, qty, unit_cost,
+                    method=item.get("valuation_method") or V.AVERAGE,
+                    source_type="grn", source_id=grn_id,
+                )
+    except Exception as _exc:
+        import logging
+        logging.getLogger(__name__).warning("perpetual valuation receive skipped: %s", _exc)
     return received["grn"]
 
 

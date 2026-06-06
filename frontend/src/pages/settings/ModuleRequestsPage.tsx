@@ -1,18 +1,30 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Button, Checkbox, Modal, Space, Tag, Typography, message, Alert,
+  Checkbox, Input, Modal, Typography, message, Alert,
 } from 'antd';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import PremiumPageHeader from '../../components/ui/PremiumPageHeader';
-import SectionCard from '../../components/ui/SectionCard';
+import { PageHeader, type ColumnVisibilityItem } from '../../design-system';
+import KitListCard from '../../design-system/KitListCard';
+import KitListToolbarActions from '../../design-system/KitListToolbarActions';
+import KitRowActions from '../../design-system/KitRowActions';
+import KitSearchInput from '../../design-system/KitSearchInput';
+import { downloadCsv } from '../../utils/exportCsv';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { MODULES, type ModuleKey } from '../../onboarding/industries';
 import { useOnboardingStore } from '../../onboarding/store';
 import { usePermission } from '../../hooks/usePermission';
 
-const { Text } = Typography;
+/** Initials for the kit's avatar cell (first letters of the first two words). */
+const initialsOf = (name: string): string =>
+  String(name || '?')
+    .trim()
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
 interface RequestRow {
   id: string;
@@ -32,10 +44,20 @@ export default function ModuleRequestsPage() {
 
   const [items, setItems] = useState<RequestRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState('');
   const [approveId, setApproveId] = useState<string | null>(null);
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [selectedMods, setSelectedMods] = useState<ModuleKey[]>([]);
   const [rejectReason, setRejectReason] = useState('');
+  const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('modreq.hiddenCols') || '[]'); } catch { return []; }
+  });
+
+  const filteredItems = useMemo(() => {
+    if (!search) return items;
+    const q = search.toLowerCase();
+    return items.filter((row: any) => Object.values(row).some(v => String(v ?? '').toLowerCase().includes(q)));
+  }, [items, search]);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -53,9 +75,14 @@ export default function ModuleRequestsPage() {
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
 
+  const modLabel = useCallback((k: ModuleKey) => {
+    const m = MODULES.find(x => x.key === k);
+    return m ? t(m.labelKey, m.title) : k;
+  }, [t]);
+
   if (!isAdmin && !isOwner) {
     return (
-      <Alert type="error" showIcon title={t('access_denied', 'Access denied')} />
+      <Alert type="error" showIcon message={t('access_denied', 'Access denied')} />
     );
   }
 
@@ -92,67 +119,123 @@ export default function ModuleRequestsPage() {
     }
   };
 
-  const modLabel = (k: ModuleKey) => {
-    const m = MODULES.find(x => x.key === k);
-    return m ? t(m.labelKey, m.title) : k;
-  };
-
-  const columns = [
+  const allColumns = [
     {
       title: t('modreq_user', 'User'),
       dataIndex: 'user_name',
-      render: (_: unknown, row: RequestRow) => (
-        <div>
-          <Text strong>{row.user_name || row.user_email || '—'}</Text>
-          {row.user_email && <div><Text type="secondary" style={{ fontSize: 12 }}>{row.user_email}</Text></div>}
-        </div>
-      ),
+      key: 'user_name',
+      render: (_: unknown, row: RequestRow) => {
+        const primary = row.user_name || row.user_email || '—';
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+            <span style={{
+              width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+              background: 'var(--accent-soft)', color: 'var(--accent-500)',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 11, fontWeight: 700,
+            }}>{initialsOf(primary)}</span>
+            <div>
+              <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{primary}</span>
+              {row.user_email && (
+                <div style={{ color: 'var(--ink-500)', fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>
+                  {row.user_email}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      },
     },
     {
       title: t('modreq_requested', 'Requested modules'),
       dataIndex: 'requested_modules',
+      key: 'requested_modules',
       render: (mods: ModuleKey[]) => (
-        <Space wrap size={[4, 4]}>
-          {(mods || []).map(k => <Tag key={k}>{modLabel(k)}</Tag>)}
-        </Space>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+          {(mods || []).map(k => (
+            <span key={k} style={{
+              display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+              background: 'var(--surface-2)', border: '1px solid var(--border)',
+              fontSize: 11.5, fontWeight: 600, color: 'var(--ink-600)',
+            }}>{modLabel(k)}</span>
+          ))}
+        </div>
       ),
     },
     {
       title: t('modreq_note', 'Note'),
       dataIndex: 'note',
-      render: (v: string) => v || '—',
+      key: 'note',
+      render: (v: string) => v
+        ? <span style={{ color: 'var(--ink-700)' }}>{v}</span>
+        : <span style={{ color: 'var(--ink-400)' }}>—</span>,
     },
     {
-      title: t('actions', 'Actions'),
-      key: 'actions',
+      title: '', key: 'actions', width: 56, align: 'center' as const,
       render: (_: unknown, row: RequestRow) => (
-        <Space>
-          <Button size="small" type="primary" icon={<CheckOutlined />} onClick={() => openApprove(row)}>
-            {t('approve', 'Approve')}
-          </Button>
-          <Button size="small" danger icon={<CloseOutlined />} onClick={() => setRejectId(row.id)}>
-            {t('reject', 'Reject')}
-          </Button>
-        </Space>
+        <KitRowActions
+          ariaLabel={t('actions', 'Actions')}
+          actions={[
+            { key: 'approve', icon: <CheckOutlined />, label: t('approve', 'Approve'), onClick: () => openApprove(row) },
+            { type: 'divider' },
+            { key: 'reject', icon: <CloseOutlined />, label: t('reject', 'Reject'), danger: true, onClick: () => setRejectId(row.id) },
+          ]}
+        />
       ),
     },
   ];
 
+  const columns = allColumns.filter((c) => !hiddenCols.includes(c.key));
+  const columnsMeta: ColumnVisibilityItem[] = allColumns.map((c) => ({
+    key: c.key,
+    label: typeof c.title === 'string' ? c.title : c.key,
+    pinned: c.key === 'user_name' || c.key === 'actions',
+  }));
+  const persistHidden = (next: string[]) => {
+    setHiddenCols(next);
+    try { localStorage.setItem('modreq.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
+  };
+
   return (
     <div>
-      <PremiumPageHeader
+      <PageHeader
         title={t('modreq_page_title', 'Module requests')}
         subtitle={t('modreq_page_sub', 'Review and approve module access requests from your team.')}
       />
-      <SectionCard title={t('modreq_pending_queue', 'Pending queue')}>
+      <KitListCard
+        toolbar={
+          <>
+            <KitSearchInput
+              value={search}
+              onChange={(v) => { setSearch(v); }}
+              placeholder={t('search')}
+            />
+            <div style={{ marginInlineStart: 'auto' }}>
+              <KitListToolbarActions
+                columns={columnsMeta.filter((c) => c.key !== 'actions')}
+                hiddenCols={hiddenCols}
+                onColumnsChange={persistHidden}
+                onExport={() => {
+                  const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+                  downloadCsv('module-requests', items, cols);
+                }}
+                onPrint={() => window.print()}
+                onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+                onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+                onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+              />
+            </div>
+          </>
+        }
+      >
         <ResponsiveTableAdapter
           rowKey="id"
           loading={loading}
-          dataSource={items}
+          dataSource={filteredItems}
           columns={columns}
           pagination={false}
         />
-      </SectionCard>
+      </KitListCard>
 
       <Modal
         open={!!approveId}
@@ -181,11 +264,10 @@ export default function ModuleRequestsPage() {
         okText={t('reject', 'Reject')}
       >
         <Typography.Paragraph>{t('modreq_reject_confirm', 'Optionally provide a reason:')}</Typography.Paragraph>
-        <textarea
+        <Input.TextArea
           value={rejectReason}
           onChange={e => setRejectReason(e.target.value)}
           rows={3}
-          style={{ width: '100%' }}
           placeholder={t('modreq_reason_ph', 'Reason…')}
         />
       </Modal>

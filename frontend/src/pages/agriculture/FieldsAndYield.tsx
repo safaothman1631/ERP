@@ -1,15 +1,18 @@
 import type React from 'react';
-import { useEffect, useState } from 'react';
-import { Tabs, Button, Space, Input, Form, Select, InputNumber, Card } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import { Tabs, Button, Space, Input, Form, Select, InputNumber } from 'antd';
 
 import { message } from '../../utils/message';
-import { PlusOutlined, SearchOutlined, DeleteOutlined, LineChartOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, LineChartOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { Popconfirm } from 'antd';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
-import { space } from '../../theme/tokens';
+import { PageHeader, SectionCard, ChartCard, type ColumnVisibilityItem } from '../../design-system';
+import KitListCard from '../../design-system/KitListCard';
+import KitListToolbarActions from '../../design-system/KitListToolbarActions';
+import KitRowActions from '../../design-system/KitRowActions';
+import KitSearchInput from '../../design-system/KitSearchInput';
+import { downloadCsv } from '../../utils/exportCsv';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
@@ -30,6 +33,16 @@ interface YieldData {
  crop_name?: string;
 }
 
+/** Initials for the kit's avatar cell (first letters of the first two words). */
+const initialsOf = (name: string): string =>
+ String(name || '?')
+ .trim()
+ .split(/\s+/)
+ .map((w) => w[0])
+ .join('')
+ .slice(0, 2)
+ .toUpperCase();
+
 const FieldsAndYield: React.FC = () => {
  const { t } = useTranslation();
  const [activeTab, setActiveTab] = useState('1');
@@ -41,6 +54,9 @@ const FieldsAndYield: React.FC = () => {
  const [search, setSearch] = useState('');
  const [drawer, setDrawer] = useState(false);
  const [form] = Form.useForm();
+ const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
+ try { return JSON.parse(localStorage.getItem('agriculture.fields.hiddenCols') || '[]'); } catch { return []; }
+ });
 
  const fetchFields = async () => {
  setLoading(true);
@@ -106,30 +122,89 @@ const FieldsAndYield: React.FC = () => {
  f.location?.toLowerCase().includes(search.toLowerCase())
  );
 
- const fieldColumns: any[] = [
- { title: t('agriculture.field_name'), dataIndex: 'name', key: 'name', width: 200 },
- { title: t('agriculture.location'), dataIndex: 'location', key: 'location', width: 200 },
+ const allFieldColumns: any[] = [
+ {
+ title: t('agriculture.field_name'),
+ dataIndex: 'name',
+ key: 'name',
+ width: 220,
+ render: (v: string) => (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{initialsOf(v)}</span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{v}</span>
+ </div>
+ ),
+ },
+ {
+ title: t('agriculture.location'),
+ dataIndex: 'location',
+ key: 'location',
+ width: 200,
+ render: (v: string) => v
+ ? <span style={{ color: 'var(--ink-700)' }}>{v}</span>
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>,
+ },
  {
  title: t('agriculture.area_dunum'),
  dataIndex: 'area_dunum',
  key: 'area_dunum',
  width: 120,
  align: 'right',
- render: (v: number) => v.toLocaleString(),
+ render: (v: number) => (
+ <span style={{ color: 'var(--ink-900)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+ {v.toLocaleString()}
+ </span>
+ ),
  },
- { title: t('agriculture.soil_type'), dataIndex: 'soil_type', key: 'soil_type', width: 150 },
  {
- title: t('actions'),
+ title: t('agriculture.soil_type'),
+ dataIndex: 'soil_type',
+ key: 'soil_type',
+ width: 150,
+ render: (v: string) => v
+ ? (
+ <span style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--surface-2)', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-600)',
+ }}>{v}</span>
+ )
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>,
+ },
+ {
+ title: '',
  key: 'actions',
- width: 100,
- align: 'center',
+ width: 56,
+ align: 'center' as const,
  render: (_: any, rec: Field) => (
- <Popconfirm title={t('confirm_delete')} onConfirm={() => handleDeleteField(rec.id)}>
- <Button type="text" danger icon={<DeleteOutlined />} />
- </Popconfirm>
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true, onClick: () => handleDeleteField(rec.id) },
+ ]}
+ />
  ),
  },
  ];
+
+ const fieldColumns = useMemo(
+ () => allFieldColumns.filter((c) => !hiddenCols.includes(c.key)),
+ [hiddenCols, t],
+ );
+ const columnsMeta: ColumnVisibilityItem[] = allFieldColumns.map((c) => ({
+ key: c.key,
+ label: typeof c.title === 'string' && c.title ? c.title : c.key,
+ pinned: c.key === 'name' || c.key === 'actions',
+ }));
+ const persistHidden = (next: string[]) => {
+ setHiddenCols(next);
+ try { localStorage.setItem('agriculture.fields.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
+ };
 
  return (
  <>
@@ -146,20 +221,34 @@ const FieldsAndYield: React.FC = () => {
  }
  />
 
- <div style={{ background: '#fff', padding: space.lg, borderRadius: 8 }}>
  <Tabs activeKey={activeTab} onChange={setActiveTab}>
  <Tabs.TabPane tab={t('agriculture.fields')} key="1">
- <Space style={{ marginBottom: space.md }}>
- <Input
- placeholder={t('search')}
- prefix={<SearchOutlined />}
+ <KitListCard
+ toolbar={
+ <>
+ <KitSearchInput
  value={search}
- onChange={(e) => setSearch(e.target.value)}
- style={{ width: 300 }}
- allowClear
+ onChange={(v) => setSearch(v)}
+ placeholder={t('search')}
  />
- </Space>
-
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('agriculture-fields', filteredFields, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ </div>
+ </>
+ }
+ >
  <ResponsiveTableAdapter
  columns={fieldColumns}
  dataSource={filteredFields}
@@ -168,9 +257,11 @@ const FieldsAndYield: React.FC = () => {
  pagination={{ pageSize: 20 }}
  scroll={{ x: 800 }}
  />
+ </KitListCard>
  </Tabs.TabPane>
 
  <Tabs.TabPane tab={t('agriculture.yield_tracking')} key="2">
+ <SectionCard>
  <Space direction="vertical" style={{ width: '100%' }}>
  <Select
  placeholder={t('agriculture.select_field')}
@@ -190,21 +281,21 @@ const FieldsAndYield: React.FC = () => {
  </Select>
 
  {selectedField && (
- <Card
+ <ChartCard
  title={t('agriculture.harvest_history')}
  loading={loadingYield}
- extra={<LineChartOutlined />}
+ extra={<LineChartOutlined style={{ color: 'var(--ink-400)' }} />}
  >
  {yieldData.length > 0 ? (
  <ResponsiveChart
  legendItems={[
- { id: 'quantity', labelKey: asTranslationKey('agriculture.quantity'), color: '#52c41a' },
+ { id: 'quantity', labelKey: asTranslationKey('agriculture.quantity'), color: 'var(--success-500)' },
  ]}
  >
  <LineChart data={yieldData}>
- <CartesianGrid strokeDasharray="3 3" />
- <XAxis dataKey="date" />
- <YAxis />
+ <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+ <XAxis dataKey="date" tick={{ fill: 'var(--ink-400)' }} />
+ <YAxis tick={{ fill: 'var(--ink-400)' }} />
  <Tooltip
  content={(props: any) => {
  if (!props.active || !props.payload || props.payload.length === 0) return null;
@@ -212,10 +303,11 @@ const FieldsAndYield: React.FC = () => {
  return (
  <div
  style={{
- background: '#fff',
+ background: 'var(--surface)',
  padding: '8px 12px',
- border: '1px solid #ddd',
- borderRadius: 4,
+ border: '1px solid var(--border)',
+ borderRadius: 'var(--radius-sm)',
+ color: 'var(--ink-900)',
  }}
  >
  <div>
@@ -233,20 +325,20 @@ const FieldsAndYield: React.FC = () => {
  );
  }}
  />
- <Line type="monotone" dataKey="quantity" stroke="#52c41a" strokeWidth={2} />
+ <Line type="monotone" dataKey="quantity" stroke="var(--success-500)" strokeWidth={2} />
  </LineChart>
  </ResponsiveChart>
  ) : (
- <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
+ <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--ink-400)' }}>
  {t('agriculture.no_yield_data')}
  </div>
  )}
- </Card>
+ </ChartCard>
  )}
  </Space>
+ </SectionCard>
  </Tabs.TabPane>
  </Tabs>
- </div>
 
  <FormDialog title={t('agriculture.add_field')} open={drawer} onClose={() => setDrawer(false)}>
  <Form form={form} layout="vertical" onFinish={handleCreateField}>

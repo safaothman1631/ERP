@@ -89,7 +89,7 @@ export function useBarcodeScanner(): {
       setReady(true);
       return w;
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.warn('[useBarcodeScanner] worker creation failed', err);
       return null;
     }

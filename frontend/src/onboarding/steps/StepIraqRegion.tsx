@@ -137,7 +137,7 @@ export default function StepIraqRegion() {
               width="100%"
               role="img"
               aria-label={t('region.map_aria')}
-              style={{ maxWidth: '100%', height: 'auto', background: '#f8fafc', borderRadius: 8 }}
+              style={{ maxWidth: '100%', height: 'auto', background: 'var(--surface-2)', borderRadius: 8 }}
             >
               {/* Country outline as a soft backdrop */}
               <rect x={4} y={4} width={MAP_W - 8} height={MAP_H - 8} rx={12} fill="#eef2ff" stroke="#c7d2fe" />
@@ -226,7 +226,7 @@ export default function StepIraqRegion() {
             </Title>
             {selected.tax_rates.length === 0 && <Text type="secondary">{t('region.preview.no_taxes')}</Text>}
             {selected.tax_rates.map((tx, i) => (
-              <div key={i} style={{ padding: '6px 0', borderBottom: '1px dashed #e2e8f0' }}>
+              <div key={i} style={{ padding: '6px 0', borderBottom: '1px dashed var(--border)' }}>
                 <Text>
                   {i18n.language === 'ku' ? tx.name_ku : i18n.language === 'ar' ? tx.name_ar : tx.name_en}
                 </Text>

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, DatePicker, Button, Typography, Space, Progress } from 'antd';
+import { Row, Col, DatePicker, Button, Typography, Space, Progress } from 'antd';
 import { DollarOutlined, ShoppingCartOutlined, BarChartOutlined, FileTextOutlined, ReloadOutlined, DownloadOutlined } from '@ant-design/icons';
 import { posApi } from '../../api';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
+import { PageHeader, KpiCard, SectionCard } from '../../design-system';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { ComingSoon } from '../../components/feedback/ComingSoon';
 
@@ -127,94 +128,83 @@ export default function POSReports() {
 
   return (
     <div>
+      <PageHeader
+        title={t('reports')}
+        extra={
+          <Space>
+            <Button
+              type="primary"
+              icon={<ReloadOutlined />}
+              onClick={fetchReports}
+              loading={loading}
+            >
+              {t('refresh')}
+            </Button>
+            <Button icon={<DownloadOutlined />}>
+              {t('export_pdf')}
+            </Button>
+          </Space>
+        }
+      />
+
       <Space orientation="vertical" size="large" style={{ width: '100%' }}>
         {/* Filters */}
-        <Card>
-          <Row gutter={16} align="middle">
-            <Col flex="auto">
-              <RangePicker
-                value={dateRange}
-                onChange={(dates) => setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs])}
-                style={{ width: '100%' }}
-                format="YYYY-MM-DD"
-              />
-            </Col>
-            <Col>
-              <Button
-                type="primary"
-                icon={<ReloadOutlined />}
-                onClick={fetchReports}
-                loading={loading}
-              >
-                {t('refresh')}
-              </Button>
-            </Col>
-            <Col>
-              <Button icon={<DownloadOutlined />}>
-                {t('export_pdf')}
-              </Button>
-            </Col>
-          </Row>
-        </Card>
+        <div
+          style={{
+            display: 'flex',
+            gap: 'var(--space-sm)',
+            alignItems: 'center',
+            paddingBlock: 'var(--space-sm)',
+            paddingInline: 'var(--space-md)',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
+          <RangePicker
+            value={dateRange}
+            onChange={(dates) => setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs])}
+            style={{ flex: 1 }}
+            format="YYYY-MM-DD"
+          />
+        </div>
 
         {/* KPIs */}
         <Row gutter={16}>
           <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title={t('total_sales')}
-                value={dashboardData?.total_sales || 0}
-                precision={2}
-                suffix={t('iqd')}
-                prefix={<DollarOutlined />}
-                styles={{ content: { color: '#3f8600' } }}
-              />
-              {dashboardData?.compared_to_previous && (
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  {dashboardData.compared_to_previous.sales_change_percent > 0 ? '↗' : '↘'}{' '}
-                  {Math.abs(dashboardData.compared_to_previous.sales_change_percent).toFixed(1)}%
-                </Text>
-              )}
-            </Card>
+            <KpiCard
+              title={t('total_sales')}
+              value={`${(dashboardData?.total_sales || 0).toLocaleString()} ${t('iqd')}`}
+              icon={<DollarOutlined />}
+              tone="success"
+              delta={dashboardData?.compared_to_previous?.sales_change_percent}
+            />
           </Col>
           <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title={t('total_orders')}
-                value={dashboardData?.total_orders || 0}
-                prefix={<ShoppingCartOutlined />}
-                styles={{ content: { color: '#1890ff' } }}
-              />
-              {dashboardData?.compared_to_previous && (
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  {dashboardData.compared_to_previous.orders_change_percent > 0 ? '↗' : '↘'}{' '}
-                  {Math.abs(dashboardData.compared_to_previous.orders_change_percent).toFixed(1)}%
-                </Text>
-              )}
-            </Card>
+            <KpiCard
+              title={t('total_orders')}
+              value={dashboardData?.total_orders || 0}
+              icon={<ShoppingCartOutlined />}
+              tone="info"
+              delta={dashboardData?.compared_to_previous?.orders_change_percent}
+            />
           </Col>
           <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title={t('average_basket')}
-                value={dashboardData?.average_basket || 0}
-                precision={2}
-                suffix={t('iqd')}
-                prefix={<BarChartOutlined />}
-                styles={{ content: { color: '#cf1322' } }}
-              />
-            </Card>
+            <KpiCard
+              title={t('average_basket')}
+              value={`${(dashboardData?.average_basket || 0).toLocaleString()} ${t('iqd')}`}
+              icon={<BarChartOutlined />}
+              tone="primary"
+            />
           </Col>
           <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title={t('total_tax')}
-                value={dashboardData?.total_tax || 0}
-                precision={2}
-                suffix={t('iqd')}
-                prefix={<FileTextOutlined />}
-              />
-            </Card>
+            <KpiCard
+              title={t('total_tax')}
+              value={`${(dashboardData?.total_tax || 0).toLocaleString()} ${t('iqd')}`}
+              icon={<FileTextOutlined />}
+              tone="warning"
+            />
           </Col>
         </Row>
 
@@ -222,7 +212,7 @@ export default function POSReports() {
         <Row gutter={16}>
           {/* Top Products */}
           <Col xs={24} lg={12}>
-            <Card title={t('top_products')} bordered={false}>
+            <SectionCard title={t('top_products')} style={{ marginBottom: 0 }}>
               {topProducts.length > 0 ? (
                 <Space orientation="vertical" style={{ width: '100%' }}>
                   {topProducts.map((p: any, idx: number) => (
@@ -238,7 +228,7 @@ export default function POSReports() {
                       <Progress
                         percent={Math.round((p.revenue / topProducts[0]?.revenue) * 100)}
                         showInfo={false}
-                        strokeColor="#52c41a"
+                        strokeColor="var(--success-500)"
                       />
                     </div>
                   ))}
@@ -246,12 +236,12 @@ export default function POSReports() {
               ) : (
                 <Text type="secondary">{t('no_data')}</Text>
               )}
-            </Card>
+            </SectionCard>
           </Col>
 
           {/* Payment Methods */}
           <Col xs={24} lg={12}>
-            <Card title={t('sales_by_payment_method')} bordered={false}>
+            <SectionCard title={t('sales_by_payment_method')} style={{ marginBottom: 0 }}>
               {paymentMethodData.length > 0 ? (
                 <Space orientation="vertical" style={{ width: '100%' }}>
                   {paymentMethodData.map((pm: any, idx: number) => {
@@ -267,7 +257,7 @@ export default function POSReports() {
                             <Text strong>{pm.amount?.toLocaleString()} {t('iqd')}</Text>
                           </Col>
                         </Row>
-                        <Progress percent={percent} showInfo={false} />
+                        <Progress percent={percent} showInfo={false} strokeColor="var(--accent-500)" />
                       </div>
                     );
                   })}
@@ -275,12 +265,12 @@ export default function POSReports() {
               ) : (
                 <Text type="secondary">{t('no_data')}</Text>
               )}
-            </Card>
+            </SectionCard>
           </Col>
         </Row>
 
         {/* Detailed Tables */}
-        <Card title={t('sales_by_product')} bordered={false}>
+        <SectionCard title={t('sales_by_product')} style={{ marginBottom: 0 }}>
           <ResponsiveTableAdapter
             dataSource={productData}
             columns={productColumns}
@@ -288,9 +278,9 @@ export default function POSReports() {
             loading={loading}
             pagination={{ pageSize: 10 }}
           />
-        </Card>
+        </SectionCard>
 
-        <Card title={t('sales_by_cashier')} bordered={false}>
+        <SectionCard title={t('sales_by_cashier')} style={{ marginBottom: 0 }}>
           <ResponsiveTableAdapter
             dataSource={cashierData}
             columns={cashierColumns}
@@ -298,12 +288,12 @@ export default function POSReports() {
             loading={loading}
             pagination={{ pageSize: 10 }}
           />
-        </Card>
+        </SectionCard>
 
         {/* Hourly Heatmap */}
-        <Card title={t('hourly_sales_heatmap')} bordered={false}>
+        <SectionCard title={t('hourly_sales_heatmap')} style={{ marginBottom: 0 }}>
           <ComingSoon featureNameKey="hourly_sales_heatmap" />
-        </Card>
+        </SectionCard>
       </Space>
     </div>
   );

@@ -17,7 +17,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { asTranslationKey, type TranslationKey } from '../../i18n/types';
+import { type TranslationKey } from '../../i18n/types';
 import { EmptyState } from './EmptyState';
 
 export interface EmptySelectStateProps {

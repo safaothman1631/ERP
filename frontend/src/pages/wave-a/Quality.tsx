@@ -22,7 +22,7 @@ const Quality: React.FC = () => {
  try {
  const res = await api.get('/api/quality/checks', { params: { limit: 100 } });
  setChecks(res.data.items || []);
- } catch (error) {
+ } catch (_error) {
  message.error(t('error'));
  } finally {
  setLoading(false);
@@ -33,7 +33,7 @@ const Quality: React.FC = () => {
  try {
  const res = await api.get('/api/quality/points', { params: { limit: 100 } });
  setPoints(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  useEffect(() => {

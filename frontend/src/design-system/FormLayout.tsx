@@ -17,9 +17,18 @@
  *   - beforeunload guard for browser close/refresh
  *   - "Save / Save & New / Save & Send" split button
  *
+ * Vertex "Slate & Signal" styling — matches the kit's `records.jsx` form shell:
+ *   - sections = flat `var(--surface)` cards, hairline `1px var(--border)`, `--radius-lg`
+ *   - section title = `var(--font-display)`, `var(--ink-900)`; description = `var(--ink-500)`
+ *   - field labels = `var(--ink-700)` (12.5px) via the scoped `<style>` below
+ *   - sticky save-bar = surface + hairline top border + `--shadow-md`
+ *
+ * Every colour resolves from a kit CSS-var token, so the layout is correct in
+ * BOTH light and dark themes (the tokens auto-flip via `[data-theme="dark"]`).
+ *
  * Requirements: 15.1, 15.4, 15.5, 15.6
  */
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { Alert, Affix, Space, Tag, Grid } from 'antd';
 import {
   SaveOutlined,
@@ -30,7 +39,8 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { palette, space, radius, layout } from '../theme/tokens';
+import { space, radius, layout, fontSize } from '../theme/tokens';
+import { useIsDark } from '../hooks/useIsDark';
 import { MotionButton } from '../components/MotionButton';
 import { ConfirmDialog } from './ConfirmDialog';
 import { SaveSplitButton, type SaveAction } from './SaveSplitButton';
@@ -82,9 +92,24 @@ export interface FormLayoutProps {
   /** Whether to use the split save button (Save / Save & New / Save & Send) */
   useSplitSave?: boolean;
 
-  /** Dark mode */
+  /**
+   * Force dark styling. Defaults to the live theme store (`useIsDark`) so the
+   * layout adapts to dark mode even when the consumer doesn't thread it down
+   * (the common case). The styling itself is token-driven and auto-flips, so
+   * this is kept only for the public `isDark` override contract.
+   */
   isDark?: boolean;
 }
+
+// ─── Card surface (kit `.vx-card`) ──────────────────────────────────────────────
+// Flat surface + hairline border + card radius — identical in light & dark
+// because every value is a CSS-var token that auto-flips.
+const cardSurface: React.CSSProperties = {
+  background: 'var(--surface)',
+  border: '1px solid var(--border)',
+  borderRadius: radius.lg,
+  padding: space.lg,
+};
 
 // ─── FormLayout ───────────────────────────────────────────────────────────────
 
@@ -102,15 +127,22 @@ export const FormLayout: React.FC<FormLayoutProps> = ({
   onCancel,
   extraActions,
   useSplitSave = false,
-  isDark = false,
+  isDark: isDarkProp,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const screens = useBreakpoint();
   const isMobile = !screens.md;
 
-  const sep = isDark ? palette.darkBorder : palette.border;
-  const surface = isDark ? palette.darkSurface : palette.surface;
+  // Subscribe to the live theme so the layout re-renders on toggle. The styling
+  // is token-driven (auto-flips via [data-theme="dark"]), so this is kept for
+  // the public `isDark` override contract + to stay reactive.
+  const themeDark = useIsDark();
+  void (isDarkProp ?? themeDark);
+
+  // Scope kit field-label styling to this layout instance.
+  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
+  const scope = `vx-formlayout-${uid}`;
 
   // ── Unsaved-changes guard (manual — compatible with BrowserRouter) ────────
   // useBlocker requires a data router (createBrowserRouter). Since we use
@@ -160,6 +192,27 @@ export const FormLayout: React.FC<FormLayoutProps> = ({
 
   return (
     <>
+      {/* Kit form-field tokens: labels = var(--ink-700) 12.5px, helper text muted,
+          required asterisk = danger. Scoped to this layout. */}
+      <style>{`
+        .${scope} .ant-form-item-label > label {
+          color: var(--ink-700);
+          font-size: 12.5px;
+          font-weight: 500;
+        }
+        .${scope} .ant-form-item-required::before {
+          color: var(--danger-500) !important;
+        }
+        .${scope} .ant-form-item-extra,
+        .${scope} .ant-form-item-explain {
+          color: var(--ink-500);
+          font-size: 12px;
+        }
+        .${scope} .ant-form-item-explain-error {
+          color: var(--danger-500);
+        }
+      `}</style>
+
       {/* ── Unsaved-changes confirmation dialog ─────────────────────────── */}
       <ConfirmDialog
         open={blockerDialogOpen}
@@ -187,6 +240,7 @@ export const FormLayout: React.FC<FormLayoutProps> = ({
       />
 
       <div
+        className={scope}
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -231,22 +285,16 @@ export const FormLayout: React.FC<FormLayoutProps> = ({
           {/* Left column — main form sections */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: space.lg }}>
             {sections.map((s) => (
-              <section
-                key={s.key}
-                style={{
-                  background: surface,
-                  border: `1px solid ${sep}`,
-                  borderRadius: radius.md,
-                  padding: space.lg,
-                }}
-              >
+              <section key={s.key} style={cardSurface}>
                 <header style={{ marginBottom: space.md }}>
                   <h3
                     style={{
                       margin: 0,
-                      fontSize: 16,
-                      fontWeight: 600,
-                      color: isDark ? palette.darkInk : palette.ink900,
+                      fontFamily: 'var(--font-display)',
+                      fontSize: fontSize.lg,
+                      fontWeight: 700,
+                      letterSpacing: '-0.01em',
+                      color: 'var(--ink-900)',
                     }}
                   >
                     {s.title}
@@ -256,7 +304,8 @@ export const FormLayout: React.FC<FormLayoutProps> = ({
                       style={{
                         marginTop: 4,
                         fontSize: 13,
-                        color: isDark ? palette.darkInkMuted : palette.ink500,
+                        lineHeight: 1.45,
+                        color: 'var(--ink-500)',
                       }}
                     >
                       {s.description}
@@ -274,48 +323,29 @@ export const FormLayout: React.FC<FormLayoutProps> = ({
           {summaryPanel && !isMobile && (
             <div>
               <Affix offsetTop={80}>
-                <div
-                  style={{
-                    background: surface,
-                    border: `1px solid ${sep}`,
-                    borderRadius: radius.md,
-                    padding: space.lg,
-                  }}
-                >
-                  {summaryPanel}
-                </div>
+                <div style={cardSurface}>{summaryPanel}</div>
               </Affix>
             </div>
           )}
 
           {/* Mobile: summary panel below form */}
-          {summaryPanel && isMobile && (
-            <div
-              style={{
-                background: surface,
-                border: `1px solid ${sep}`,
-                borderRadius: radius.md,
-                padding: space.lg,
-              }}
-            >
-              {summaryPanel}
-            </div>
-          )}
+          {summaryPanel && isMobile && <div style={cardSurface}>{summaryPanel}</div>}
         </div>
 
         {/* ── Sticky save bar ──────────────────────────────────────────── */}
         <Affix offsetBottom={layout.footerHeight}>
           <div
+            className="vx-form-savebar"
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: space.md,
               padding: `${space.md}px ${space.lg}px`,
-              background: surface,
-              borderTop: `1px solid ${sep}`,
-              borderRadius: `${radius.md}px ${radius.md}px 0 0`,
-              boxShadow: '0 -4px 12px rgba(15,23,42,0.04)',
+              background: 'var(--surface)',
+              borderTop: '1px solid var(--border)',
+              borderRadius: `${radius.lg}px ${radius.lg}px 0 0`,
+              boxShadow: 'var(--shadow-md)',
             }}
           >
             {/* Left side: status indicators + extra actions */}
@@ -334,15 +364,13 @@ export const FormLayout: React.FC<FormLayoutProps> = ({
                 </Tag>
               )}
               {saving && (
-                <span style={{ color: palette.primary500, fontSize: 13 }}>
-                  <LoadingOutlined />{' '}
-                  {t('form_layout.saving', 'Saving…')}
+                <span style={{ color: 'var(--accent-500)', fontSize: 13 }}>
+                  <LoadingOutlined /> {t('form_layout.saving', 'Saving…')}
                 </span>
               )}
               {saved && !isDirty && !saving && (
-                <span style={{ color: palette.success, fontSize: 13 }}>
-                  <CheckCircleOutlined />{' '}
-                  {t('form_layout.saved', 'Saved')}
+                <span style={{ color: 'var(--success-fg)', fontSize: 13 }}>
+                  <CheckCircleOutlined /> {t('form_layout.saved', 'Saved')}
                 </span>
               )}
             </Space>

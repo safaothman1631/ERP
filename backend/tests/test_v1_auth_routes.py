@@ -26,12 +26,16 @@ class TestV1AuthRoutes:
         assert res.status_code != 405
         assert res.status_code in (401, 422)
 
-    def test_v1_firebase_register_requires_org_name(self, client):
+    def test_v1_firebase_register_org_name_optional(self, client):
+        # Business name is OPTIONAL for individuals signing up with Google: an
+        # empty/missing org_name must NOT 422 (it defaults to the Google display
+        # name server-side). The request proceeds to token verification, which
+        # fails 401 for this invalid token — proving org_name no longer gates.
         res = client.post("/api/v1/auth/firebase-register", json={
             "id_token": "invalid",
-            "org_name": "",
         })
-        assert res.status_code == 422
+        assert res.status_code != 422
+        assert res.status_code == 401
 
     def test_legacy_auth_path_still_works(self, client):
         res = client.post("/api/auth/firebase-register", json={

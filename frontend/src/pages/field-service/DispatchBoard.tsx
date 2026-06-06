@@ -4,7 +4,8 @@ import { PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, StatusTag, SectionCard } from '../../design-system';
+import { space } from '../../theme/tokens';
 import { message } from '../../utils/message';
 import type { ColumnsType } from 'antd/es/table';
 import type { Dayjs } from 'dayjs';
@@ -123,12 +124,12 @@ const DispatchBoard: React.FC = () => {
  }
  };
 
- const statusColors: Record<string, string> = {
- draft: 'default',
- scheduled: 'blue',
- in_progress: 'orange',
- done: 'green',
- cancelled: 'red',
+ const statusKinds: Record<string, string> = {
+ draft: 'draft',
+ scheduled: 'info',
+ in_progress: 'warning',
+ done: 'success',
+ cancelled: 'cancelled',
  };
 
  const columns: ColumnsType<ScheduleRow> = [
@@ -150,16 +151,22 @@ const DispatchBoard: React.FC = () => {
  record.orders.map((o) => (
  <Card
  key={o.id}
+ size="small"
  style={{
- backgroundColor: statusColors[o.status],
- color: '#fff',
- borderRadius: 4,
+ background: 'var(--surface-2)',
+ borderRadius: 'var(--radius-md)',
  }}
  >
+ <Space style={{ justifyContent: 'space-between', width: '100%' }}>
  <div style={{ fontSize: 12 }}>
  <strong>{o.order_number || o.id.slice(0, 8)}</strong> - {o.customer_name}
  </div>
- <div style={{ fontSize: 11 }}>
+ <StatusTag
+ status={statusKinds[o.status] || 'default'}
+ label={t(`field_service.status_${o.status}`)}
+ />
+ </Space>
+ <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>
  {o.scheduled_at ? dayjs(o.scheduled_at).format('HH:mm') : '-'}
  </div>
  </Card>
@@ -190,7 +197,7 @@ const DispatchBoard: React.FC = () => {
  }
  />
 
- <Card>
+ <SectionCard padded={false}>
  <ResponsiveTableAdapter
  dataSource={schedules}
  columns={columns}
@@ -199,7 +206,7 @@ const DispatchBoard: React.FC = () => {
  pagination={false}
  scroll={{ x: 800 }}
  />
- </Card>
+ </SectionCard>
 
  <FormDialog
  title={t('field_service.unassigned_orders')}
@@ -254,11 +261,12 @@ const DispatchBoard: React.FC = () => {
  title={`${order.order_number || order.id.slice(0, 8)} - ${order.customer_name}`}
  description={
  <>
- <Tag color={statusColors[order.status]}>
- {t(`field_service.status_${order.status}`)}
- </Tag>
+ <StatusTag
+ status={statusKinds[order.status] || 'default'}
+ label={t(`field_service.status_${order.status}`)}
+ />
  {order.scheduled_at && (
- <span style={{ marginLeft: 8 }}>
+ <span style={{ marginInlineStart: space.sm }}>
  {dayjs(order.scheduled_at).format('HH:mm')}
  </span>
  )}

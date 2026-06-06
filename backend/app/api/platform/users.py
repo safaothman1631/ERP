@@ -6,7 +6,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.firebase_client import get_db
+from app.firebase_client import get_db, safe_query
 
 from ._audit import audit_platform
 from ._guards import require_platform_admin, require_super_admin
@@ -22,7 +22,7 @@ def search_users(
     limit: int = Query(default=50, ge=1, le=200),
 ):
     db = get_db()
-    stream = db.collection("users").limit(5000).stream()
+    stream = safe_query(db.collection("users").limit(5000))
     items = []
     ql = (q or "").lower()
     for doc in stream:

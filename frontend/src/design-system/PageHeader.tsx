@@ -1,13 +1,11 @@
 import React from 'react';
-import { Breadcrumb, Space, Typography } from 'antd';
+import { Breadcrumb, Space } from 'antd';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { space } from '../theme/tokens';
 import HelpButton from '../components/HelpButton';
 import { HelpIcon } from '../help/HelpIcon';
 import type { SectionId } from '../help/sectionIds';
-
-const { Title, Text } = Typography;
 
 export interface PageHeaderProps {
   title: React.ReactNode;
@@ -23,6 +21,9 @@ export interface PageHeaderProps {
 
 /**
  * PageHeader — title + breadcrumb + actions، پەترۆنی هاوبەش بۆ هەموو لاپەڕە.
+ * Vertex kit "PageHead": var(--font-display) 26px var(--ink-900) -0.02em title,
+ * 13.5px var(--ink-500) subtitle, actions row on the inline-end. Fully theme-aware
+ * via auto-flipping CSS var tokens (light + dark).
  * Sprint 7: respects prefers-reduced-motion.
  * React.memo applied per Requirements 18.4.
  */
@@ -44,21 +45,48 @@ const PageHeaderInner: React.FC<PageHeaderProps> = ({ title, subtitle, breadcrum
         }))}
       />
     )}
-    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: space.md, flexWrap: 'wrap' }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        gap: space.md,
+        flexWrap: 'wrap',
+      }}
+    >
       <div style={{ minWidth: 0 }}>
-        <Space align="center" size={space.sm}>
-          <Title level={3} style={{ margin: 0, fontWeight: 600 }}>{title}</Title>
+        <div style={{ display: 'flex', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' }}>
+          <h1
+            style={{
+              margin: 0,
+              fontFamily: 'var(--font-display)',
+              fontSize: 26,
+              lineHeight: 1.2,
+              fontWeight: 700,
+              letterSpacing: '-0.02em',
+              color: 'var(--ink-900)',
+            }}
+          >
+            {title}
+          </h1>
           {tag}
           {sectionId && <HelpIcon sectionId={sectionId} />}
           {helpKey && !sectionId && <HelpButton pageKey={helpKey} />}
-        </Space>
+        </div>
         {subtitle && (
-          <div style={{ marginTop: space.xs }}>
-            <Text type="secondary">{subtitle}</Text>
-          </div>
+          <p
+            style={{
+              margin: '5px 0 0',
+              fontSize: 13.5,
+              lineHeight: 1.45,
+              color: 'var(--ink-500)',
+            }}
+          >
+            {subtitle}
+          </p>
         )}
       </div>
-      {extra && <Space size={space.sm} wrap>{extra}</Space>}
+      {extra && <Space className="vx-pageheader-actions" size={space.sm} wrap>{extra}</Space>}
     </div>
   </motion.div>
   );

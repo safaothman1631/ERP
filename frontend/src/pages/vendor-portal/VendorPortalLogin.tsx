@@ -5,8 +5,6 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
 import vendorApi from '../../api/vendorPortal';
-import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
-
 const { Title, Text } = Typography;
 
 const VendorPortalLogin: React.FC = () => {
@@ -80,20 +78,20 @@ const VendorPortalLogin: React.FC = () => {
   ];
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      alignItems: 'center', 
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(135deg, var(--accent-700) 0%, var(--accent-500) 100%)',
     }}>
-      <Card 
-        style={{ 
-          width: '100%', 
+      <Card
+        style={{
+          width: '100%',
           maxWidth: 500,
           margin: 16,
-          borderRadius: 8,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-lg)',
         }}
       >
         <Space direction="vertical" size="large" style={{ width: '100%' }}>

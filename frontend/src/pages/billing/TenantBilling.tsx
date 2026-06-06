@@ -16,11 +16,10 @@
  * Spec: launch-readiness § R5.6.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   Button,
-  Card,
   Col,
   Modal,
   Progress,
@@ -28,14 +27,13 @@ import {
   Space,
   Spin,
   Statistic,
-  Table,
-  Tag,
   Typography,
   Input,
 } from 'antd';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { message } from '../../utils/message';
+import { PageHeader, SectionCard, StatusTag, DataTable, type StatusKind } from '../../design-system';
 import PlanPicker from './PlanPicker';
 
 const { Title, Text, Paragraph } = Typography;
@@ -86,13 +84,13 @@ const formatMoney = (amount: number, currency: string): string => {
   return `$${(amount / 100).toFixed(2)}`;
 };
 
-const STATUS_COLOR: Record<string, string> = {
-  trialing: 'blue',
-  active: 'green',
-  past_due: 'orange',
-  suspended: 'red',
+const STATUS_KIND: Record<string, StatusKind> = {
+  trialing: 'info',
+  active: 'active',
+  past_due: 'warning',
+  suspended: 'error',
   cancelled: 'default',
-  incomplete: 'gold',
+  incomplete: 'warning',
 };
 
 export default function TenantBilling(): React.ReactElement {
@@ -114,7 +112,7 @@ export default function TenantBilling(): React.ReactElement {
       ]);
       setState(stateRes.data);
       setInvoices(invRes.data.items || []);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('billing.errors.load_failed', 'Failed to load billing state'));
     } finally {
       setLoading(false);
@@ -140,7 +138,7 @@ export default function TenantBilling(): React.ReactElement {
       message.success(t('billing.cancelled', 'Subscription cancelled'));
       setCancelOpen(false);
       void loadState();
-    } catch (err) {
+    } catch (_err) {
       message.error(t('billing.errors.cancel_failed', 'Could not cancel'));
     } finally {
       setCancelling(false);
@@ -177,8 +175,8 @@ export default function TenantBilling(): React.ReactElement {
     : 0;
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, margin: '0 auto' }}>
-      <Title level={2}>{t('billing.title', 'Subscription & Billing')}</Title>
+    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+      <PageHeader title={t('billing.title', 'Subscription & Billing')} />
 
       {state.status === 'trialing' && state.days_left_in_trial !== null && (
         <Alert
@@ -220,14 +218,12 @@ export default function TenantBilling(): React.ReactElement {
 
       <Row gutter={[16, 16]}>
         <Col xs={24} md={12}>
-          <Card title={t('billing.current_plan', 'Current plan')}>
+          <SectionCard title={t('billing.current_plan', 'Current plan')}>
             <Space direction="vertical" size={4} style={{ width: '100%' }}>
               <Title level={3} style={{ margin: 0 }}>
                 {plan?.name_ku || plan?.name_en || state.plan_slug}
               </Title>
-              <Tag color={STATUS_COLOR[state.status] || 'default'}>
-                {t(`billing.status.${state.status}`, state.status)}
-              </Tag>
+              <StatusTag status={STATUS_KIND[state.status] || 'default'} label={t(`billing.status.${state.status}`, state.status)} />
               <Statistic
                 value={formatMoney(price, state.currency)}
                 suffix={`/ ${t(`billing.cycle.${state.billing_cycle}`, state.billing_cycle)}`}
@@ -248,11 +244,11 @@ export default function TenantBilling(): React.ReactElement {
                 )}
               </Space>
             </Space>
-          </Card>
+          </SectionCard>
         </Col>
 
         <Col xs={24} md={12}>
-          <Card title={t('billing.usage', 'Usage')}>
+          <SectionCard title={t('billing.usage', 'Usage')}>
             {plan && (
               <Space direction="vertical" style={{ width: '100%' }}>
                 <UsageBar
@@ -273,29 +269,30 @@ export default function TenantBilling(): React.ReactElement {
                 />
               </Space>
             )}
-          </Card>
+          </SectionCard>
         </Col>
       </Row>
 
-      <Card style={{ marginTop: 16 }} title={t('billing.invoices', 'Invoice history')}>
-        <Table<InvoiceRow>
+      <SectionCard title={t('billing.invoices', 'Invoice history')} padded={false} style={{ marginTop: 'var(--space-lg)' }}>
+        <DataTable<InvoiceRow>
           rowKey="id"
           dataSource={invoices}
-          locale={{ emptyText: t('billing.no_invoices', 'No invoices yet') }}
           pagination={false}
+          emptyTitle={t('billing.no_invoices', 'No invoices yet')}
           columns={[
             { title: t('billing.invoice.number', 'Number'), dataIndex: 'number', key: 'number' },
             {
               title: t('billing.invoice.amount', 'Amount'),
               dataIndex: 'amount_due',
               key: 'amount_due',
+              align: 'right',
               render: (v: number, row) => formatMoney(v, row.currency),
             },
             {
               title: t('billing.invoice.status', 'Status'),
               dataIndex: 'status',
               key: 'status',
-              render: (s: string) => <Tag>{s}</Tag>,
+              render: (s: string) => <StatusTag status={(STATUS_KIND[s] || 'default')} label={s} />,
             },
             { title: t('billing.invoice.date', 'Date'), dataIndex: 'issued_at', key: 'issued_at' },
             {
@@ -310,7 +307,7 @@ export default function TenantBilling(): React.ReactElement {
             },
           ]}
         />
-      </Card>
+      </SectionCard>
 
       <PlanPicker
         open={pickerOpen}

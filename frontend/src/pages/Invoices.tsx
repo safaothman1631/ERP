@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Tag, Space, Select, Form, InputNumber, Input, Empty, Typography, Dropdown } from 'antd';
+import { Button, Space, Select, Form, InputNumber, Input, Typography, Radio } from 'antd';
 
 import { message } from '../utils/message';
-import { PlusOutlined, SendOutlined, WalletOutlined, DollarOutlined, InboxOutlined, FilePdfOutlined, MailOutlined, BellOutlined, QrcodeOutlined, CloudUploadOutlined, InfoCircleOutlined, MoreOutlined } from '@ant-design/icons';
+import { PlusOutlined, SendOutlined, WalletOutlined, DollarOutlined, InboxOutlined, FilePdfOutlined, MailOutlined, BellOutlined, QrcodeOutlined, CloudUploadOutlined, InfoCircleOutlined, EditOutlined, EyeOutlined, MessageOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
@@ -10,10 +10,14 @@ import ExportButton from '../components/ExportButton';
 import ChatterPanel from '../components/ChatterPanel';
 import { useListQuery } from '../api/queries/useListQuery';
 import { listQueryKeys } from '../api/queries/keys';
-import { PageHeader, StatusTag, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { PageHeader, StatusTag, type ColumnVisibilityItem } from '../design-system';
+import KitListCard, { type KitListTab } from '../design-system/KitListCard';
+import KitListToolbarActions from '../design-system/KitListToolbarActions';
+import KitRowActions from '../design-system/KitRowActions';
+import KitFiltersButton from '../design-system/KitFiltersButton';
+import KitStatusFilter from '../design-system/KitStatusFilter';
+import KitSearchInput from '../design-system/KitSearchInput';
 import { downloadCsv } from '../utils/exportCsv';
-import { palette, space } from '../theme/tokens';
-import { useAuthStore } from '../store';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
@@ -23,16 +27,13 @@ import { asTranslationKey } from '../i18n/types';
 
 const { Text } = Typography;
 
-const statusColors: Record<string, string> = {
- draft: 'default', sent: 'blue', paid: 'green', overdue: 'red', partially_paid: 'orange', void: 'grey', retainer: 'purple',
-};
-
 const noWrap: React.CSSProperties = { whiteSpace: 'nowrap' };
 
 const Invoices: React.FC = () => {
  const { t } = useTranslation();
  const navigate = useNavigate();
  const [page, setPage] = useState(1);
+ const [search, setSearch] = useState('');
  const [statusFilter, setStatusFilter] = useState('');
  const [retainerModal, setRetainerModal] = useState(false);
  const [retainerForm] = Form.useForm();
@@ -49,7 +50,6 @@ const Invoices: React.FC = () => {
  const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
  try { return JSON.parse(localStorage.getItem('invoices.hiddenCols') || '[]'); } catch { return []; }
  });
- const isDark = useAuthStore((s) => s.theme === 'dark');
  const [chatterDrawer, setChatterDrawer] = useState<string | null>(null);
 
  // AddGate: wire Selective Add for invoices section (R9.1, R9.5)
@@ -61,9 +61,31 @@ const Invoices: React.FC = () => {
  const data = invoicesQuery.data?.items ?? [];
  const total = invoicesQuery.data?.total ?? 0;
  const loading = invoicesQuery.isLoading || invoicesQuery.isFetching;
+ const filteredData = useMemo(() => {
+ if (!search) return data;
+ const q = search.toLowerCase();
+ return data.filter((row: any) => Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(q)));
+ }, [data, search]);
 
  // Sync record count into AddGate store (R9.5, R9.6)
  useEffect(() => { addGate.setRecordCount(total); }, [total, addGate.setRecordCount]);
+
+ // Kit list tabs (All / Draft / Sent / Paid / Overdue) — server-side filtered
+ // via the same `status` param the page already supports ('' == all).
+ const tabs: KitListTab[] = [
+ { key: 'all', label: t('all', 'All') },
+ { key: 'draft', label: t('draft', 'Draft') },
+ { key: 'sent', label: t('sent', 'Sent') },
+ { key: 'paid', label: t('paid', 'Paid') },
+ { key: 'overdue', label: t('overdue', 'Overdue') },
+ ];
+ // Real status options shared by tabs / Filters popover / Status dropdown.
+ const statusOptions = [
+ { value: 'draft', label: t('draft', 'Draft') },
+ { value: 'sent', label: t('sent', 'Sent') },
+ { value: 'paid', label: t('paid', 'Paid') },
+ { value: 'overdue', label: t('overdue', 'Overdue') },
+ ];
 
  const handleSend = async (id: string) => {
  try {
@@ -176,17 +198,21 @@ const Invoices: React.FC = () => {
  key: 'invoice_number',
  width: 132,
  ellipsis: true,
- render: (v: string) => <Text strong style={{ color: palette.primary500, ...noWrap }}>{v || '-'}</Text>,
+ render: (v: string) => (
+ <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-900)', fontWeight: 500, ...noWrap }}>{v || '-'}</span>
+ ),
  },
- { title: t('date'), dataIndex: 'date', key: 'date', width: 122, render: (d: string) => <span style={noWrap}>{d ? formatDate(d) : '-'}</span> },
- { title: t('due_date'), dataIndex: 'due_date', key: 'due_date', width: 122, render: (d: string) => <span style={noWrap}>{d ? formatDate(d) : '-'}</span> },
+ { title: t('date'), dataIndex: 'date', key: 'date', width: 122, render: (d: string) => <span style={{ color: 'var(--ink-700)', ...noWrap }}>{d ? formatDate(d) : '-'}</span> },
+ { title: t('due_date'), dataIndex: 'due_date', key: 'due_date', width: 122, render: (d: string) => <span style={{ color: 'var(--ink-700)', ...noWrap }}>{d ? formatDate(d) : '-'}</span> },
  {
  title: t('total'),
  dataIndex: 'total',
  key: 'total',
  width: 154,
  align: 'right',
- render: (v: number, r: any) => <Text strong style={noWrap}>{formatCurrency(Number(v || 0), r.currency_code || 'IQD')}</Text>,
+ render: (v: number, r: any) => (
+ <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--ink-900)', ...noWrap }}>{formatCurrency(Number(v || 0), r.currency_code || 'IQD')}</span>
+ ),
  },
  {
  title: t('balance_due'),
@@ -194,7 +220,9 @@ const Invoices: React.FC = () => {
  key: 'balance_due',
  width: 154,
  align: 'right',
- render: (v: number, r: any) => <Text strong style={{ color: v > 0 ? palette.danger : palette.success, ...noWrap }}>{formatCurrency(Number(v || 0), r.currency_code || 'IQD')}</Text>,
+ render: (v: number, r: any) => (
+ <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: v > 0 ? 'var(--danger-fg)' : 'var(--success-fg)', ...noWrap }}>{formatCurrency(Number(v || 0), r.currency_code || 'IQD')}</span>
+ ),
  },
  {
  title: t('status'), dataIndex: 'status', key: 'status',
@@ -202,43 +230,48 @@ const Invoices: React.FC = () => {
  render: (s: string, r: any) => (
  <Space wrap style={{ minWidth: 0 }}>
  <StatusTag status={s} label={t(s)} />
- {r.is_retainer && <Tag color="purple" style={{ borderRadius: 6 }}>{t('retainerInvoice')}</Tag>}
- {r.is_progress && <Tag color="cyan" style={{ borderRadius: 6 }}>{t('progressInvoice')}</Tag>}
+ {r.is_retainer && <StatusTag status="viewed" label={t('retainerInvoice')} />}
+ {r.is_progress && <StatusTag status="info" label={t('progressInvoice')} />}
  </Space>
  ),
  },
  {
- title: t('actions'), key: 'actions',
- width: 220,
+ title: '', key: 'actions', width: 56, align: 'center' as const,
  fixed: 'right',
  render: (_: any, r: any) => {
- const menuItems: { key: string; label: string; icon: React.ReactNode; onClick: () => void; danger?: boolean; disabled?: boolean }[] = [];
+ const actions: ({ key: string; label: React.ReactNode; icon?: React.ReactNode; danger?: boolean; disabled?: boolean; onClick: () => void } | { type: 'divider' })[] = [];
+ // View = open the full invoice (all its data: customer, dates, line items,
+ // totals). The invoice's complete record lives on the edit route, so View
+ // opens it there. (Previously View opened only the activity/chatter drawer,
+ // which shows comments — NOT the invoice data — so the user couldn't see the
+ // full record. Activity is still reachable via the "Activity" item below.)
+ actions.push({ key: 'view', icon: <EyeOutlined />, label: t('view', 'View'), onClick: () => navigate(`/invoices/${r.id}/edit`) });
+ // Edit = the real edit route ('/invoices/:id/edit').
+ actions.push({ key: 'edit', icon: <EditOutlined />, label: t('edit'), onClick: () => navigate(`/invoices/${r.id}/edit`) });
+ // Activity = the chatter/activity feed (comments, history).
+ actions.push({ key: 'activity', icon: <MessageOutlined />, label: t('chatter.activities', 'Activity'), onClick: () => setChatterDrawer(r.id) });
+ if (r.status === 'draft') {
+ actions.push({ key: 'send', icon: <SendOutlined />, label: t('send'), onClick: () => handleSend(r.id) });
+ }
  if (!r.is_retainer && r.status !== 'paid' && r.status !== 'void') {
- menuItems.push({ key: 'retainer', icon: <WalletOutlined />, label: t('applyToInvoice'), onClick: () => openApplyRetainer(r.id) });
+ actions.push({ key: 'retainer', icon: <WalletOutlined />, label: t('applyToInvoice'), onClick: () => openApplyRetainer(r.id) });
  }
  if (r.status !== 'void') {
- menuItems.push(
+ actions.push(
  { key: 'einvoice-submit', icon: <CloudUploadOutlined />, label: t('einvoice_submit'), disabled: !!einvoiceLoadingKey, onClick: () => handleEInvoiceAction(r.id, 'submit') },
  { key: 'einvoice-status', icon: <InfoCircleOutlined />, label: t('einvoice_status'), disabled: !!einvoiceLoadingKey, onClick: () => handleEInvoiceAction(r.id, 'status') },
  { key: 'qr', icon: <QrcodeOutlined />, label: t('qr_code'), disabled: !!einvoiceLoadingKey, onClick: () => handleEInvoiceAction(r.id, 'qr') },
  );
  }
- menuItems.push(
+ actions.push(
  { key: 'pdf', icon: <FilePdfOutlined />, label: 'PDF', onClick: () => handleDownloadPdf(r.id) },
  { key: 'email', icon: <MailOutlined />, label: t('send_email'), onClick: () => openEmailModal(r.id) },
  );
  if (r.status === 'overdue') {
- menuItems.push({ key: 'reminder', icon: <BellOutlined />, label: t('send_reminder'), danger: true, onClick: () => handleSendReminder(r.id) });
+ actions.push({ type: 'divider' });
+ actions.push({ key: 'reminder', icon: <BellOutlined />, label: t('send_reminder'), danger: true, onClick: () => handleSendReminder(r.id) });
  }
-
- return (
- <Space wrap={false} style={noWrap}>
- {r.status === 'draft' && <Button icon={<SendOutlined />} onClick={() => handleSend(r.id)}>{t('send')}</Button>}
- <Dropdown menu={{ items: menuItems }} trigger={['click']}>
- <Button icon={<MoreOutlined />}>{t('more', 'More')}</Button>
- </Dropdown>
- </Space>
- );
+ return <KitRowActions ariaLabel={t('actions')} actions={actions} />;
  },
  },
  ];
@@ -250,7 +283,7 @@ const Invoices: React.FC = () => {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('invoices.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('invoices.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (
@@ -272,35 +305,62 @@ const Invoices: React.FC = () => {
  </Space>
  }
  />
- <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: space.md, alignItems: 'center', gap: space.md, flexWrap: 'wrap' }}>
- <Select
- placeholder={t('status')}
- value={statusFilter || undefined}
- onChange={(v) => { setStatusFilter(v || ''); setPage(1); }}
- allowClear
- style={{ width: 200 }}
+
+ <KitListCard
+ tabs={tabs}
+ activeTab={statusFilter || 'all'}
+ onTabChange={(k) => { setStatusFilter(k === 'all' ? '' : k); setPage(1); }}
+ toolbar={
+ <>
+ <KitSearchInput
+ value={search}
+ onChange={(v) => { setSearch(v); setPage(1); }}
+ placeholder={t('search')}
+ />
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={statusFilter ? 1 : 0}
+ onClear={() => { setStatusFilter(''); setPage(1); }}
  >
- <Select.Option value="draft">{t('draft')}</Select.Option>
- <Select.Option value="sent">{t('sent')}</Select.Option>
- <Select.Option value="paid">{t('paid')}</Select.Option>
- <Select.Option value="overdue">{t('overdue')}</Select.Option>
- </Select>
- <Space>
- <ExportMenu
- formats={['csv']}
- onExport={(f: ExportFormat) => {
- if (f === 'csv') {
+ <Radio.Group
+ value={statusFilter || 'all'}
+ onChange={(e) => { setStatusFilter(e.target.value === 'all' ? '' : e.target.value); setPage(1); }}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="all">{t('all', 'All')}</Radio>
+ {statusOptions.map((o) => (
+ <Radio key={o.value} value={o.value}>{o.label}</Radio>
+ ))}
+ </Radio.Group>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('status', 'Status')}
+ anyLabel={t('all', 'All')}
+ value={statusFilter}
+ onChange={(v) => { setStatusFilter(v); setPage(1); }}
+ options={statusOptions}
+ />
+ </div>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
  const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
  downloadCsv('invoices', data, cols);
- }
  }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
  />
- <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
- </Space>
  </div>
-
+ </>
+ }
+ >
  <ResponsiveTableAdapter
- dataSource={data}
+ dataSource={filteredData}
  columns={visibleColumns}
  rowKey="id"
  loading={loading}
@@ -310,7 +370,7 @@ const Invoices: React.FC = () => {
  onClick: () => setChatterDrawer(record.id),
  style: { cursor: 'pointer' },
  })}
- pagination={{ current: page, total, pageSize: 20, onChange: setPage }}
+ pagination={{ current: page, total: search ? filteredData.length : total, pageSize: 20, onChange: setPage }}
  locale={{
  emptyText: (
  <EmptyState
@@ -324,6 +384,7 @@ const Invoices: React.FC = () => {
  ),
  }}
  />
+ </KitListCard>
 
  <FormDialog open={retainerModal} onClose={() => setRetainerModal(false)} title={t('retainerInvoice')} hideFooter>
  <Form form={retainerForm} layout="vertical" onFinish={handleCreateRetainer}>

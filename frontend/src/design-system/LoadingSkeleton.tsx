@@ -1,20 +1,25 @@
 /**
  * LoadingSkeleton — Skeleton loading system with shimmer animation.
  *
+ * Vertex "Slate & Signal" kit: flat var(--surface) containers on the canvas,
+ * 1px var(--border) hairlines, kit radii, and a shimmer that rides on the
+ * neutral surface-2 ramp (matching the kit's `.vx-skel`).
+ *
  * Variants:
  *  - row:   Horizontal bars matching list-item / table-row dimensions
  *  - card:  Rectangular block matching KPI card / summary card dimensions
  *  - chart: Rectangular block matching recharts area chart dimensions
  *  - table: Header row + N body rows matching DataTable dimensions
  *
- * Shimmer animation is defined in globalStyles.css (.skeleton class).
- * Light/dark CSS variables (--skeleton-base, --skeleton-highlight) are also
- * defined in globalStyles.css and toggled via [data-theme='dark'].
+ * Shimmer animation is defined in globalStyles.css (.skeleton class), driven by
+ * --skeleton-base / --skeleton-highlight which AUTO-FLIP via [data-theme='dark']
+ * on <html>. The `isDark` prop additionally forces the dark ramp on demand.
  *
  * Requirements: 7.3, 9.3, 9.4, 11.1–11.7
  */
 
 import React from 'react';
+import { useIsDark } from '../hooks/useIsDark';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -47,7 +52,7 @@ const darkOverride: React.CSSProperties = {
   ['--skeleton-highlight' as string]: 'rgba(255, 255, 255, 0.12)',
 };
 
-/** A single shimmer bar. */
+/** A single shimmer bar. Rides the kit's neutral surface ramp via `.skeleton`. */
 const Bar: React.FC<{ width?: string | number; height?: string | number; style?: React.CSSProperties }> = ({
   width = '100%',
   height = 16,
@@ -55,7 +60,8 @@ const Bar: React.FC<{ width?: string | number; height?: string | number; style?:
 }) => (
   <div
     className="skeleton"
-    style={{ width, height, borderRadius: 4, ...style }}
+    // 5px == kit `.vx-skel` default radius.
+    style={{ width, height, borderRadius: 5, ...style }}
     aria-hidden="true"
   />
 );
@@ -67,17 +73,17 @@ const Bar: React.FC<{ width?: string | number; height?: string | number; style?:
  * Each row has a short leading bar (icon/avatar placeholder) + two text bars.
  */
 const RowSkeleton: React.FC<{ rows: number }> = ({ rows }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
     {Array.from({ length: rows }).map((_, i) => (
       <div
         key={i}
-        style={{ display: 'flex', alignItems: 'center', gap: 12, height: 40 }}
+        style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', height: 40 }}
         role="presentation"
       >
         {/* Leading icon/avatar placeholder */}
-        <Bar width={32} height={32} style={{ borderRadius: 6, flexShrink: 0 }} />
+        <Bar width={32} height={32} style={{ borderRadius: 'var(--radius-sm)', flexShrink: 0 }} />
         {/* Text lines */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
           <Bar width={`${55 + (i % 3) * 15}%`} height={14} />
           <Bar width={`${30 + (i % 4) * 10}%`} height={12} />
         </div>
@@ -97,27 +103,28 @@ const RowSkeleton: React.FC<{ rows: number }> = ({ rows }) => (
 const CardSkeleton: React.FC = () => (
   <div
     style={{
-      padding: 20,
-      borderRadius: 12,
-      border: '1px solid var(--color-border, #E5E7EB)',
+      padding: 'var(--space-xl)',
+      borderRadius: 'var(--radius-lg)',
+      border: '1px solid var(--border)',
+      background: 'var(--surface)',
       display: 'flex',
       flexDirection: 'column',
-      gap: 12,
+      gap: 'var(--space-md)',
       minHeight: 140,
     }}
     role="presentation"
   >
     {/* Header row: icon + title */}
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <Bar width={32} height={32} style={{ borderRadius: 8, flexShrink: 0 }} />
+    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+      <Bar width={32} height={32} style={{ borderRadius: 'var(--radius-md)', flexShrink: 0 }} />
       <Bar width="55%" height={14} />
     </div>
     {/* Value */}
-    <Bar width="70%" height={28} style={{ marginTop: 4 }} />
+    <Bar width="70%" height={28} style={{ marginTop: 'var(--space-xs)' }} />
     {/* Delta badge */}
     <Bar width="30%" height={12} />
     {/* Sparkline area */}
-    <Bar width="100%" height={36} style={{ borderRadius: 6, marginTop: 4 }} />
+    <Bar width="100%" height={36} style={{ borderRadius: 'var(--radius-sm)', marginTop: 'var(--space-xs)' }} />
   </div>
 );
 
@@ -130,21 +137,22 @@ const CardSkeleton: React.FC = () => (
 const ChartSkeleton: React.FC = () => (
   <div
     style={{
-      padding: 20,
-      borderRadius: 12,
-      border: '1px solid var(--color-border, #E5E7EB)',
+      padding: 'var(--space-xl)',
+      borderRadius: 'var(--radius-lg)',
+      border: '1px solid var(--border)',
+      background: 'var(--surface)',
       display: 'flex',
       flexDirection: 'column',
-      gap: 12,
+      gap: 'var(--space-md)',
     }}
     role="presentation"
   >
     {/* Card title */}
     <Bar width="40%" height={16} />
     {/* Chart body */}
-    <Bar width="100%" height={180} style={{ borderRadius: 8, marginTop: 4 }} />
+    <Bar width="100%" height={180} style={{ borderRadius: 'var(--radius-md)', marginTop: 'var(--space-xs)' }} />
     {/* X-axis labels */}
-    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--space-sm)' }}>
       {[40, 32, 36, 28, 40, 32].map((w, i) => (
         <Bar key={i} width={w} height={10} />
       ))}
@@ -164,21 +172,31 @@ const TableSkeleton: React.FC<{ rows: number }> = ({ rows }) => {
 
   return (
     <div
-      style={{ display: 'flex', flexDirection: 'column', gap: 0 }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 0,
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--border)',
+        background: 'var(--surface)',
+        overflow: 'hidden',
+      }}
       role="presentation"
     >
-      {/* Header row */}
+      {/* Header row — sits on surface-2 with a stronger hairline, echoing the
+          kit's uppercase table head. */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 12,
-          padding: '12px 16px',
-          borderBottom: '1px solid var(--color-border, #E5E7EB)',
+          gap: 'var(--space-md)',
+          padding: 'var(--space-md) var(--space-lg)',
+          background: 'var(--surface-2)',
+          borderBottom: '1px solid var(--border-strong)',
         }}
       >
         {/* Checkbox placeholder */}
-        <Bar width={16} height={16} style={{ borderRadius: 3, flexShrink: 0 }} />
+        <Bar width={16} height={16} style={{ borderRadius: 'var(--radius-xs)', flexShrink: 0 }} />
         {colWidths.map((w, i) => (
           <Bar key={i} width={w} height={12} style={{ flexShrink: 0 }} />
         ))}
@@ -191,13 +209,14 @@ const TableSkeleton: React.FC<{ rows: number }> = ({ rows }) => {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 12,
-            padding: '14px 16px',
-            borderBottom: '1px solid var(--color-border, #E5E7EB)',
+            gap: 'var(--space-md)',
+            padding: 'var(--space-md) var(--space-lg)',
+            borderBottom:
+              rowIdx === rows - 1 ? 'none' : '1px solid var(--border)',
           }}
         >
           {/* Checkbox placeholder */}
-          <Bar width={16} height={16} style={{ borderRadius: 3, flexShrink: 0 }} />
+          <Bar width={16} height={16} style={{ borderRadius: 'var(--radius-xs)', flexShrink: 0 }} />
           {colWidths.map((w, colIdx) => (
             <Bar
               key={colIdx}
@@ -230,8 +249,14 @@ const TableSkeleton: React.FC<{ rows: number }> = ({ rows }) => {
 const LoadingSkeletonInner: React.FC<LoadingSkeletonProps> = ({
   variant,
   rows = 5,
-  isDark = false,
+  isDark: isDarkProp,
 }) => {
+  // Default to the live app theme so the skeleton flips for dark mode even when
+  // the consumer never threads `isDark` (the common case). Called
+  // unconditionally — rules-of-hooks safe.
+  const themeDark = useIsDark();
+  const isDark = isDarkProp ?? themeDark;
+
   const wrapperStyle: React.CSSProperties = isDark ? darkOverride : {};
 
   const content = (() => {

@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 from typing import Optional, Any, Literal
-from datetime import datetime
+from datetime import datetime, timedelta
 from app.firestore.dashboards import DashboardRepository
 from app.firestore.invoices import InvoiceRepository, PaymentReceivedRepository
 from app.firestore.bills import BillRepository, PaymentMadeRepository
@@ -100,6 +100,21 @@ def _parse_date(val):
     return None
 
 
+def _d10(value) -> str:
+    """Normalize a date value (datetime / Firestore DatetimeWithNanoseconds / ISO
+    str / None) to a 'YYYY-MM-DD' string so both sides of a date-range comparison
+    are the SAME type. Comparing a datetime bound to a sliced string raised
+    `TypeError: '<=' not supported between datetime and str`."""
+    if not value:
+        return ""
+    if isinstance(value, str):
+        return value[:10]
+    try:
+        return value.strftime("%Y-%m-%d")
+    except Exception:
+        return str(value)[:10]
+
+
 def _execute_data_source(org_id: str, key: str, params: dict) -> dict:
     """Execute a data source query and return structured result"""
     now = datetime.utcnow()
@@ -127,7 +142,7 @@ def _execute_data_source(org_id: str, key: str, params: dict) -> dict:
         payments = [
             p
             for p in collect_stream(payment_repo)
-            if date_from <= (p.get("date") or "")[:10] <= date_to
+            if _d10(date_from) <= _d10(p.get("date")) <= _d10(date_to)
         ]
         total = sum(p.get("amount", 0) for p in payments)
         return {"data": {"value": total}}
@@ -138,7 +153,7 @@ def _execute_data_source(org_id: str, key: str, params: dict) -> dict:
         expenses = [
             e
             for e in collect_stream(expense_repo)
-            if date_from <= (e.get("date") or "")[:10] <= date_to
+            if _d10(date_from) <= _d10(e.get("date")) <= _d10(date_to)
         ]
         total = sum(e.get("amount", 0) for e in expenses if e.get("status") != "void")
         return {"data": {"value": total}}
@@ -146,13 +161,13 @@ def _execute_data_source(org_id: str, key: str, params: dict) -> dict:
     elif key == "ar_balance":
         from app.services.org_counters import get_counters
 
-        counters = get_counters(user["org_id"])
+        counters = get_counters(org_id)
         return {"data": {"value": float(counters.get("invoices_open_balance") or 0)}}
     
     elif key == "ap_balance":
         from app.services.org_counters import get_counters
 
-        counters = get_counters(user["org_id"])
+        counters = get_counters(org_id)
         return {"data": {"value": float(counters.get("bills_open_balance") or 0)}}
 
     elif key == "cash_position":
@@ -172,7 +187,7 @@ def _execute_data_source(org_id: str, key: str, params: dict) -> dict:
     elif key == "open_invoices_count":
         from app.services.org_counters import get_counters
 
-        counters = get_counters(user["org_id"])
+        counters = get_counters(org_id)
         return {"data": {"value": int(counters.get("invoices_open_count") or 0)}}
     
     elif key == "overdue_bills_count":
@@ -302,7 +317,7 @@ def _execute_data_source(org_id: str, key: str, params: dict) -> dict:
     
     elif key == "upcoming_due":
         # Bills due in next 7 days
-        in_7_days = now + datetime.timedelta(days=7)
+        in_7_days = now + timedelta(days=7)
         bills, _ = bill_repo.list(
             filters=[
                 {"field": "status", "op": "in", "value": ["open", "partially_paid"]}

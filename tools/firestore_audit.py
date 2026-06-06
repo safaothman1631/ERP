@@ -63,6 +63,7 @@ def audit_repos() -> list[dict]:
         if py.name in (
             "__init__.py",
             "base.py",
+            "client.py",  # typed Firestore client wrapper (traced get/query/set) — infra, not a tenant-data repo
             "encrypted_mixin.py",
             "references.py",
             "pii_registry.py",

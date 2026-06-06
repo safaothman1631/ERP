@@ -51,8 +51,8 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
  padding: `${space.lg}px ${space.xl}px`,
  borderBottom: `1px solid ${border}`,
  background: isDark
- ? 'linear-gradient(180deg, color-mix(in srgb, var(--role-accent, #1F6FEB) 10%, transparent), transparent)'
- : 'linear-gradient(180deg, color-mix(in srgb, var(--role-accent, #1F6FEB) 6%, transparent), transparent)',
+ ? 'linear-gradient(180deg, color-mix(in srgb, var(--role-accent, #7B61FF) 10%, transparent), transparent)'
+ : 'linear-gradient(180deg, color-mix(in srgb, var(--role-accent, #7B61FF) 6%, transparent), transparent)',
  }}
  >
  {icon && (
@@ -63,8 +63,8 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
  justifyContent: 'center',
  width: 40, height: 40,
  borderRadius: radius.md,
- background: 'color-mix(in srgb, var(--role-accent, #1F6FEB) 14%, transparent)',
- color: 'var(--role-accent, #1F6FEB)',
+ background: 'color-mix(in srgb, var(--role-accent, #7B61FF) 14%, transparent)',
+ color: 'var(--role-accent, #7B61FF)',
  fontSize: 18,
  flexShrink: 0,
  }}
@@ -123,7 +123,7 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
  <Space>
  <Button onClick={onCancel}>{cancelText}</Button>
  <Button type="primary" danger={okDanger} loading={okLoading} onClick={onOk}
-  style={!okDanger ? { background: 'var(--role-accent, #1F6FEB)', borderColor: 'var(--role-accent, #1F6FEB)' } : undefined}>
+  style={!okDanger ? { background: 'var(--role-accent, #7B61FF)', borderColor: 'var(--role-accent, #7B61FF)' } : undefined}>
   {okText}
  </Button>
  </Space>

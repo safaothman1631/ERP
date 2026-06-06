@@ -50,7 +50,7 @@ function ResourceTab({ basePath, resource }: { basePath: string; resource: Resou
  }
  };
 
- useEffect(() => { load(); /* eslint-disable-next-line */ }, [url]);
+ useEffect(() => { load();   }, [url]);
 
  const normalizeValues = (raw: Record<string, any>) => {
  const out: Record<string, any> = {};

@@ -23,9 +23,14 @@
 
 name: Production Deploy
 
+# NOTE: the canonical auto-deploy is `deploy-cloudrun.yml` (simple `--source`
+# build → Cloud Run europe-west1, in lock-step with deploy/redeploy-backend.ps1
+# and the 3 live secrets). This richer blue-green pipeline is kept for manual
+# runs only (workflow_dispatch) until its extra secrets (zoho-redis-url,
+# zoho-database-url, SENTRY_AUTH_TOKEN) and Artifact Registry repo are
+# provisioned — otherwise it would conflict with deploy-cloudrun.yml on every
+# push to main and fail on the missing secrets.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       skip-tests:
@@ -45,7 +50,7 @@ permissions:
 env:
   NODE_VERSION: "20"
   PYTHON_VERSION: "3.11"
-  REGION: me-central1
+  REGION: europe-west1
   SERVICE_NAME: zoho-erp-backend
   ARTIFACT_REPO: zoho-images
 

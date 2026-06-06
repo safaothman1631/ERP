@@ -14,7 +14,6 @@
 
 import React, { useCallback, useEffect } from 'react';
 import {
-  Card,
   Form,
   Input,
   Select,
@@ -32,6 +31,7 @@ import dayjs, { type Dayjs } from 'dayjs';
 
 import api from '../../../../api';
 import { useClassedQuery } from '../../../../data/useClassedQuery';
+import { SectionCard } from '../../../../design-system';
 import { message } from '../../../../utils/message';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -138,7 +138,7 @@ const CompanyInfo: React.FC = React.memo(() => {
       // Roll back optimistic update on failure.
       if (previous) qc.setQueryData(QUERY_KEY, previous);
       message.error(t('common:save_failed', { defaultValue: 'Save failed' }));
-      // eslint-disable-next-line no-console
+       
       console.warn('[CompanyInfo] save failed', err);
     } finally {
       setSaving(false);
@@ -179,7 +179,7 @@ const CompanyInfo: React.FC = React.memo(() => {
   }
 
   return (
-    <Card>
+    <SectionCard style={{ marginBottom: 0 }}>
       <Form<CompanyInfoForm> form={form} layout="vertical" requiredMark="optional">
         <Row gutter={[24, 0]}>
           <Col xs={24} md={12}>
@@ -288,7 +288,7 @@ const CompanyInfo: React.FC = React.memo(() => {
           </Button>
         </Space>
       </Form>
-    </Card>
+    </SectionCard>
   );
 });
 

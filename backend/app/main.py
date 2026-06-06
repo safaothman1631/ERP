@@ -121,6 +121,23 @@ from app.api import nps as nps_api
 from app.api.internal import health_emit as health_emit_api
 # growth-to-100 § G3 (hardware): per-tenant printer/scanner/drawer/display config.
 from app.api import tenant_hardware as tenant_hardware_api
+# Pool 3 §3.5/§3.6: WMS bins, TMS freight/route, MDM golden-record, BPMN workflow.
+from app.api import wms as wms_api
+from app.api import tms as tms_api
+from app.api import mdm as mdm_api
+from app.api import bpmn as bpmn_api
+# Pool 3 §3.6: public, API-key-authenticated gateway (/api/public/v1) + key mgmt.
+from app.api import public_gateway as public_gateway_api
+# Pool 4.6: BigQuery-warehouse-backed analytics (saved analyses + pivot) + BQML forecasting.
+from app.api import analytics as analytics_api
+from app.api import forecast as forecast_api
+# Pool 4.6+ advanced AI: customer intelligence, anomaly detection, LLM assistant.
+from app.api import ai_customer as ai_customer_api
+from app.api import ai_anomaly as ai_anomaly_api
+from app.api import ai_assistant as ai_assistant_api
+# Pool 4.6+ predictions: demand/inventory + financial forecasting.
+from app.api import ai_inventory as ai_inventory_api
+from app.api import ai_financial as ai_financial_api
 from app.api.v1.errors import register_error_handlers
 import os
 
@@ -163,6 +180,16 @@ async def lifespan(app: FastAPI):
         start_scheduler(app)
     except Exception as e:
         logging.getLogger(__name__).warning(f"Scheduler not started: {e}")
+
+    # Firestore self-healing watchdog: keeps the gRPC channel warm and recreates
+    # it the moment it wedges (intermittent channel_spin corruption that hung
+    # /platform queries). Relies on Cloud Run --no-cpu-throttling so the daemon
+    # thread keeps running between requests.
+    try:
+        from app.firebase_client import start_firestore_keepalive
+        start_firestore_keepalive()
+    except Exception as e:
+        logging.getLogger(__name__).warning(f"Firestore keepalive not started: {e}")
 
     if getattr(settings, "RUN_MIGRATIONS_ON_BOOT", False):
         try:
@@ -432,6 +459,24 @@ app.include_router(payroll.router)
 app.include_router(manufacturing.router)
 # Sprint 9.1: Multi-Company
 app.include_router(companies.router)
+# Pool 3 §3.5/§3.6: WMS / TMS / MDM / BPMN modules (engine-backed)
+app.include_router(wms_api.router)
+app.include_router(tms_api.router)
+app.include_router(mdm_api.router)
+app.include_router(bpmn_api.router)
+# Pool 3 §3.6: public API gateway (versioned, API-key auth) + key management.
+for _pub_router in public_gateway_api.ALL_ROUTERS:
+    app.include_router(_pub_router)
+# Pool 4.6: analytics warehouse (BI layer) + BQML forecasting.
+app.include_router(analytics_api.router)
+app.include_router(forecast_api.router)
+# Pool 4.6+ advanced AI (all under /api/ai, flag-gated, graceful).
+app.include_router(ai_customer_api.router)
+app.include_router(ai_anomaly_api.router)
+for _ai_router in ai_assistant_api.ALL_ROUTERS:
+    app.include_router(_ai_router)
+app.include_router(ai_inventory_api.router)
+app.include_router(ai_financial_api.router)
 
 # ── Wave A: Sprints 36-44 (P0 generic enterprise modules) ──
 app.include_router(helpdesk.router)
@@ -669,9 +714,11 @@ def root():
 
 
 
-@app.get("/api/live")
+@app.api_route("/api/live", methods=["GET", "HEAD"])
 def liveness():
-    """Sprint 19 (FIX-266): Liveness probe — process is alive (always returns ok unless dead)."""
+    """Sprint 19 (FIX-266): Liveness probe — process is alive (always returns ok
+    unless dead). Accepts HEAD too: most uptime monitors (UptimeRobot, Pingdom,
+    ...) default to HEAD, and a GET-only route would answer 405 → false 'down'."""
     return {"status": "alive"}
 
 

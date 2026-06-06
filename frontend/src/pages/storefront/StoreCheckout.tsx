@@ -5,8 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
 import api from '../../api';
-import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
-
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
@@ -64,7 +62,7 @@ const StoreCheckout: React.FC = () => {
 
       message.success(t('storefront.order_placed'));
       navigate(`/store/order/${res.data.order_id}?email=${values.email}`);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('storefront.checkout_failed'));
     } finally {
       setSubmitting(false);
@@ -77,7 +75,7 @@ const StoreCheckout: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
+    <div style={{ padding: '24px', background: 'var(--surface-2)', minHeight: '100vh' }}>
       <div style={{ maxWidth: 800, margin: '0 auto' }}>
         <Button
           icon={<LeftOutlined />}
@@ -148,11 +146,11 @@ const StoreCheckout: React.FC = () => {
 
             {step === 1 && (
               <>
-                <Card style={{ marginBottom: 24, background: '#fafafa' }}>
+                <Card style={{ marginBottom: 24, background: 'var(--surface-2)' }}>
                   <Title level={4}>{t('storefront.order_summary')}</Title>
                   <Row justify="space-between" style={{ marginTop: 16 }}>
                     <Text strong>{t('storefront.total')}:</Text>
-                    <Title level={3} style={{ margin: 0, color: '#1890ff' }}>
+                    <Title level={3} style={{ margin: 0, color: 'var(--accent-500)' }}>
                       {cartTotal.toLocaleString()} {t('currency')}
                     </Title>
                   </Row>

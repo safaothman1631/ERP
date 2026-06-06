@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Card, Button, Space, Tag, Typography, Row, Col, Slider, Alert, Empty, Descriptions } from 'antd';
+import { Button, Space, Typography, Row, Col, Slider, Alert, Empty, Descriptions } from 'antd';
 import { message } from '../../utils/message';
 import { ThunderboltOutlined, LinkOutlined, CloseOutlined, ArrowLeftOutlined, InboxOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard, StatusTag } from '../../design-system';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 interface BankTransaction {
   id: string;
@@ -127,7 +127,7 @@ const SmartMatch: React.FC = () => {
       dataIndex: 'amount',
       key: 'amount',
       width: 150,
-      render: (v: number) => <span style={{ color: v >= 0 ? '#52c41a' : '#f5222d' }}>{fmtIQD(v)}</span>
+      render: (v: number) => <span style={{ color: v >= 0 ? 'var(--success-fg)' : 'var(--danger-fg)' }}>{fmtIQD(v)}</span>
     },
     {
       title: '',
@@ -147,7 +147,7 @@ const SmartMatch: React.FC = () => {
       dataIndex: 'type',
       key: 'type',
       width: 100,
-      render: (v: string) => <Tag color={v === 'invoice' ? 'blue' : v === 'bill' ? 'orange' : 'green'}>{t(v)}</Tag>
+      render: (v: string) => <StatusTag status={v === 'invoice' ? 'info' : v === 'bill' ? 'warning' : 'success'} label={t(v)} />
     },
     {
       title: t('target'),
@@ -166,9 +166,7 @@ const SmartMatch: React.FC = () => {
       key: 'score',
       width: 80,
       render: (v: number) => (
-        <Tag color={v >= 90 ? 'green' : v >= 70 ? 'orange' : 'default'}>
-          {v}
-        </Tag>
+        <StatusTag status={v >= 90 ? 'success' : v >= 70 ? 'warning' : 'default'} label={String(v)} />
       )
     },
     {
@@ -203,7 +201,7 @@ const SmartMatch: React.FC = () => {
         }
       />
 
-      <Card style={{ marginBottom: 16 }}>
+      <SectionCard style={{ marginBottom: 16 }}>
         <Row gutter={16} align="middle">
           <Col span={12}>
             <Text strong>{t('auto_match_threshold')}: {threshold}%</Text>
@@ -216,7 +214,7 @@ const SmartMatch: React.FC = () => {
               marks={{ 50: '50%', 70: '70%', 90: '90%', 100: '100%' }}
             />
           </Col>
-          <Col span={12} style={{ textAlign: 'left' }}>
+          <Col span={12} style={{ textAlign: 'start' }}>
             <Button
               type="primary"
               size="large"
@@ -235,9 +233,9 @@ const SmartMatch: React.FC = () => {
             message={t('auto_match_result')}
             description={
               <Space direction="vertical">
-                <Text>{t('matched')}: <strong style={{ color: '#52c41a' }}>{autoResult.matched}</strong></Text>
-                <Text>{t('ambiguous')}: <strong style={{ color: '#faad14' }}>{autoResult.ambiguous}</strong></Text>
-                <Text>{t('no_match')}: <strong style={{ color: '#f5222d' }}>{autoResult.no_match}</strong></Text>
+                <Text>{t('matched')}: <strong style={{ color: 'var(--success-fg)' }}>{autoResult.matched}</strong></Text>
+                <Text>{t('ambiguous')}: <strong style={{ color: 'var(--warning-fg)' }}>{autoResult.ambiguous}</strong></Text>
+                <Text>{t('no_match')}: <strong style={{ color: 'var(--danger-fg)' }}>{autoResult.no_match}</strong></Text>
                 <Text>{t('total')}: <strong>{autoResult.total}</strong></Text>
               </Space>
             }
@@ -248,14 +246,13 @@ const SmartMatch: React.FC = () => {
             style={{ marginTop: 16 }}
           />
         )}
-      </Card>
+      </SectionCard>
 
       <Row gutter={16}>
         <Col xs={24} lg={12}>
-          <Card
-            title={<Title level={5} style={{ margin: 0 }}>{t('unmatched_transactions')} ({transactions.length})</Title>}
-            size="small"
-            style={{ borderRadius: 12 }}
+          <SectionCard
+            title={`${t('unmatched_transactions')} (${transactions.length})`}
+            padded={false}
           >
             <ResponsiveTableAdapter
               dataSource={transactions}
@@ -267,24 +264,22 @@ const SmartMatch: React.FC = () => {
               locale={{
                 emptyText: (
                   <Empty
-                    image={<InboxOutlined style={{ fontSize: 48, color: '#d1d5db' }} />}
+                    image={<InboxOutlined style={{ fontSize: 48, color: 'var(--ink-300)' }} />}
                     description={<Text type="secondary">{t('all_matched')}</Text>}
                   />
                 )
               }}
             />
-          </Card>
+          </SectionCard>
         </Col>
 
         <Col xs={24} lg={12}>
-          <Card
-            title={<Title level={5} style={{ margin: 0 }}>{t('match_candidates')}</Title>}
-            size="small"
-            style={{ borderRadius: 12 }}
+          <SectionCard
+            title={t('match_candidates')}
           >
             {!selectedTxn ? (
               <Empty
-                image={<LinkOutlined style={{ fontSize: 48, color: '#d1d5db' }} />}
+                image={<LinkOutlined style={{ fontSize: 48, color: 'var(--ink-300)' }} />}
                 description={<Text type="secondary">{t('select_transaction_first')}</Text>}
               />
             ) : (
@@ -293,7 +288,7 @@ const SmartMatch: React.FC = () => {
                   <Descriptions.Item label={t('date')}>{selectedTxn.date?.substring(0, 10)}</Descriptions.Item>
                   <Descriptions.Item label={t('description')}>{selectedTxn.description}</Descriptions.Item>
                   <Descriptions.Item label={t('amount')}>
-                    <span style={{ color: selectedTxn.amount >= 0 ? '#52c41a' : '#f5222d' }}>
+                    <span style={{ color: selectedTxn.amount >= 0 ? 'var(--success-fg)' : 'var(--danger-fg)' }}>
                       {fmtIQD(selectedTxn.amount)}
                     </span>
                   </Descriptions.Item>
@@ -310,7 +305,7 @@ const SmartMatch: React.FC = () => {
                   locale={{
                     emptyText: (
                       <Empty
-                        image={<CloseOutlined style={{ fontSize: 48, color: '#d1d5db' }} />}
+                        image={<CloseOutlined style={{ fontSize: 48, color: 'var(--ink-300)' }} />}
                         description={<Text type="secondary">{t('no_candidates')}</Text>}
                       />
                     )
@@ -318,7 +313,7 @@ const SmartMatch: React.FC = () => {
                 />
               </>
             )}
-          </Card>
+          </SectionCard>
         </Col>
       </Row>
     </div>

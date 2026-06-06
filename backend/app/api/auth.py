@@ -144,8 +144,11 @@ def login(request: Request, data: LoginRequest):
     from app.firebase_client import get_db
     db = get_db()
     user_data = None
+    # Normalize the email (trim + lowercase) so login matches a registration that
+    # stored the same address in a different case — register normalizes identically.
+    login_email = (data.email or "").strip().lower()
     try:
-        users_ref = db.collection("users").where("email", "==", data.email).limit(1).stream()
+        users_ref = db.collection("users").where("email", "==", login_email).limit(1).stream()
         for doc in users_ref:
             user_data = {"id": doc.id, **doc.to_dict()}
             break
@@ -418,22 +421,30 @@ def register(request: Request, data: RegisterRequest):
     from app.firebase_client import get_db
     db = get_db()
 
+    # Normalize the email (trim + lowercase) so it is stored and looked up
+    # consistently — a later login normalizes identically, so register→login
+    # always matches regardless of how the address was capitalised.
+    reg_email = (data.email or "").strip().lower()
+
     # Check if email already exists
-    existing = list(db.collection("users").where("email", "==", data.email).limit(1).stream())
+    existing = list(db.collection("users").where("email", "==", reg_email).limit(1).stream())
     if existing:
         raise HTTPException(status_code=400, detail="ئەم ئیمەیڵە پێشتر تۆمارکراوە")
 
     org_id = str(uuid.uuid4())
     user_id = str(uuid.uuid4())
 
-    # Create org + user + seed data
-    _seed_org(org_id, data.org_name, data.currency_code, data.language)
+    # Create org + user + seed data. Business name is optional for individuals
+    # registering themselves — fall back to the person's name so the workspace
+    # is still named (never an empty org).
+    org_name = (data.org_name or "").strip() or (data.user_name or "").strip() or "My Business"
+    _seed_org(org_id, org_name, data.currency_code, data.language)
 
     user_repo = UserRepository(org_id)
     user = user_repo.create({
         "id": user_id,
         "name": data.user_name,
-        "email": data.email,
+        "email": reg_email,
         "password_hash": hash_password(data.password),
         "role": "admin",
         "is_active": True,
@@ -450,10 +461,6 @@ def firebase_register(request: Request, data: FirebaseRegisterRequest):
     from firebase_admin import auth as firebase_auth
     from app.firebase_client import get_db
     from datetime import timedelta
-
-    org_name = (data.org_name or "").strip()
-    if not org_name:
-        raise HTTPException(status_code=400, detail="ناوی ڕێکخراو پێویستە")
 
     try:
         decoded = firebase_auth.verify_id_token(data.id_token)
@@ -472,6 +479,9 @@ def firebase_register(request: Request, data: FirebaseRegisterRequest):
     org_id = str(uuid.uuid4())
     user_id = str(uuid.uuid4())
     display_name = decoded.get("name") or email.split("@")[0]
+    # Business name is optional for individuals signing up with Google — default
+    # the workspace name to their Google display name when none was provided.
+    org_name = (data.org_name or "").strip() or display_name
 
     _seed_org(org_id, org_name, "IQD", "ku")
 

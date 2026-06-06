@@ -54,6 +54,13 @@ const SRC_DIR = join(__dirname, '..', 'src');
 const EXEMPT_PATHS = [
   'theme/tokens.ts',
   'theme/tokens.test.ts',
+  // Vertex "Slate & Signal" design-system reference kit — a standalone,
+  // read-only visual spec (HTML/CSS/JSX via Babel) dropped under src/ purely
+  // for reference. It is NOT part of the app build and legitimately uses
+  // physical left/right in its own demo CSS, so it is exempt from the audit.
+  // (matches "Vertex Design System", "Vertex Design System (1)", and "vertex".)
+  'design-system/Vertex Design System',
+  'design-system/vertex/',
   // Third-party type definitions
   'node_modules',
 ];

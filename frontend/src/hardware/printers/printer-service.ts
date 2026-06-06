@@ -16,7 +16,7 @@
  */
 import { buildIdentifierProbe, detectDialect } from './detection';
 import { ALL_DIALECTS, getDialectById } from './dialects';
-import { flattenCommands, printReceipt } from './commands';
+import { printReceipt } from './commands';
 import type {
   Dialect,
   DialectId,
@@ -55,7 +55,6 @@ export function detectCapabilities(): PrinterServiceCapabilities {
 
 // ───────────────────────── Web Bluetooth transport ───────────────────────
 
-const PRINTER_NAME_REGEX = /printer|pos|xp-?\d+|rongta|goojprt|sunmi|epson|bixolon|srp/i;
 const NUS_SERVICE = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const NUS_TX_CHAR = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 const NUS_RX_CHAR = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
@@ -391,7 +390,7 @@ export interface ActivePrinter {
 }
 
 let active: ActivePrinter | null = null;
-let pendingHandles: Map<string, any> = new Map(); // descriptor.id → underlying device handle
+const pendingHandles: Map<string, any> = new Map(); // descriptor.id → underlying device handle
 
 export function getActivePrinter(): ActivePrinter | null {
   return active;

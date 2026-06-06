@@ -3,8 +3,8 @@ import { Row, Col, Card, Button, Space, message, Typography, Badge } from 'antd'
 import { useTranslation } from 'react-i18next';
 import { ClockCircleOutlined, CheckOutlined, FireOutlined } from '@ant-design/icons';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
-import { space, radius } from '../../theme/tokens';
+import { PageHeader, EmptyState } from '../../design-system';
+import { space } from '../../theme/tokens';
 
 const { Text } = Typography;
 
@@ -74,11 +74,11 @@ const KitchenDisplay: React.FC = () => {
   const ticketColor = (status?: string) => {
     switch (status) {
       case 'preparing':
-        return '#faad14';
+        return 'var(--warning-500)';
       case 'ready':
-        return '#52c41a';
+        return 'var(--success-500)';
       default:
-        return '#d9d9d9';
+        return 'var(--border-strong)';
     }
   };
 
@@ -97,9 +97,10 @@ const KitchenDisplay: React.FC = () => {
       <Row gutter={[space.md, space.md]}>
         {tickets.length === 0 && !loading && (
           <Col span={24}>
-            <Card style={{ textAlign: 'center', padding: 40 }}>
-              <Text type="secondary">{t('restaurant.no_pending_orders')}</Text>
-            </Card>
+            <EmptyState
+              icon={<FireOutlined />}
+              title={t('restaurant.no_pending_orders')}
+            />
           </Col>
         )}
         {tickets.map(ticket => (
@@ -110,9 +111,13 @@ const KitchenDisplay: React.FC = () => {
             >
               <Card
                 size="small"
+                className="vx-card"
                 style={{
-                  borderRadius: radius.md,
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-lg)',
                   borderInlineStart: `4px solid ${ticketColor(ticket.status)}`,
+                  boxShadow: 'var(--shadow-sm)',
                 }}
               >
                 <Space direction="vertical" style={{ width: '100%' }}>
@@ -155,7 +160,7 @@ const KitchenDisplay: React.FC = () => {
                         type="primary"
                         size="small"
                         icon={<CheckOutlined />}
-                        style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                        style={{ backgroundColor: 'var(--success-500)', borderColor: 'var(--success-500)' }}
                         onClick={() => void handleReady(ticket.id)}
                       >
                         {t('restaurant.mark_ready')}

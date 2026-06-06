@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form, Input, Select, Row, Col } from 'antd';
+import { Input, Select, Row, Col } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 export const IRAQ_GOVERNORATES = [

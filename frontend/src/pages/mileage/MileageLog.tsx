@@ -1,15 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { FC } from 'react';
-import { Button, Form, Input, InputNumber, DatePicker, Select, Space, Popconfirm, Tag, message as antdMessage } from 'antd';
+import { Button, Form, Input, InputNumber, DatePicker, Select, Radio } from 'antd';
 
-import { PlusOutlined, EditOutlined, DeleteOutlined, CheckOutlined, SendOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, CheckOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import api from '../../api';
 import { message } from '../../utils/message';
-import { PageHeader, StatusTag, BulkActionBar, FilterBar } from '../../design-system';
-import type { FilterDef } from '../../design-system';
+import { PageHeader, StatusTag, BulkActionBar, type ColumnVisibilityItem } from '../../design-system';
+import KitListCard, { type KitListTab } from '../../design-system/KitListCard';
+import KitListToolbarActions from '../../design-system/KitListToolbarActions';
+import KitRowActions from '../../design-system/KitRowActions';
+import KitFiltersButton from '../../design-system/KitFiltersButton';
+import KitStatusFilter from '../../design-system/KitStatusFilter';
+import KitSearchInput from '../../design-system/KitSearchInput';
+import { downloadCsv } from '../../utils/exportCsv';
 import { useAuthStore } from '../../store';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -31,6 +37,8 @@ interface MileageLog {
  created_at?: string;
 }
 
+type StatusTab = 'all' | 'draft' | 'submitted' | 'approved' | 'rejected';
+
 const MileageLog: FC = () => {
  const { t } = useTranslation();
  const [data, setData] = useState<MileageLog[]>([]);
@@ -45,15 +53,20 @@ const MileageLog: FC = () => {
  const isDark = useAuthStore((s) => s.theme === 'dark');
 
  // Filters
- const [statusFilter, setStatusFilter] = useState<string>('');
- const [dateFrom, setDateFrom] = useState<Dayjs | null>(null);
- const [dateTo, setDateTo] = useState<Dayjs | null>(null);
+ const [statusFilter, setStatusFilter] = useState<StatusTab>('all');
+ const [search, setSearch] = useState('');
+ const [_dateFrom, _setDateFrom] = useState<Dayjs | null>(null);
+ const [_dateTo, _setDateTo] = useState<Dayjs | null>(null);
+
+ const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
+ try { return JSON.parse(localStorage.getItem('mileage.hiddenCols') || '[]'); } catch { return []; }
+ });
 
  const fetchData = async () => {
  setLoading(true);
  try {
  const params: Record<string, unknown> = { page, page_size: pageSize };
- if (statusFilter) params.status = statusFilter;
+ if (statusFilter && statusFilter !== 'all') params.status = statusFilter;
  const res = await api.get('/api/mileage', { params });
  setData(res.data.items || []);
  setTotal(res.data.total || 0);
@@ -149,65 +162,104 @@ const MileageLog: FC = () => {
  }
  };
 
- const columns: any[] = [
- { title: t('date'), dataIndex: 'date', key: 'date', width: 110, render: (d: string) => d?.substring(0, 10) },
+ // Kit list tabs — real status segments wired to server param.
+ const tabs: KitListTab[] = [
+ { key: 'all', label: t('all', 'All') },
+ { key: 'draft', label: t('draft', 'Draft') },
+ { key: 'submitted', label: t('submitted', 'Submitted') },
+ { key: 'approved', label: t('approved', 'Approved') },
+ { key: 'rejected', label: t('rejected', 'Rejected') },
+ ];
+
+ const allColumns: any[] = [
  {
- title: t('mileage.route'),
- key: 'route',
- render: (_, r) => `${r.from_location} → ${r.to_location}`,
+ title: t('date'), dataIndex: 'date', key: 'date', width: 110,
+ render: (d: string) => (
+ <span style={{ color: 'var(--ink-900)', fontFamily: 'var(--font-mono)', fontWeight: 500 }}>
+ {d?.substring(0, 10)}
+ </span>
+ ),
  },
- { title: t('mileage.distance_km'), dataIndex: 'distance_km', key: 'distance_km', width: 100, align: 'right' },
- { title: t('mileage.rate_per_km'), dataIndex: 'rate_per_km', key: 'rate_per_km', width: 100, align: 'right' },
  {
- title: t('amount'),
- dataIndex: 'total_amount',
- key: 'total_amount',
- width: 120,
- align: 'right',
- render: (v: number) => v?.toFixed(2),
+ title: t('mileage.route'), key: 'route',
+ render: (_: any, r: MileageLog) => (
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>
+ {r.from_location} → {r.to_location}
+ </span>
+ ),
  },
- { title: t('mileage.purpose'), dataIndex: 'purpose', key: 'purpose', ellipsis: true },
- { title: t('mileage.vehicle'), dataIndex: 'vehicle', key: 'vehicle', width: 100 },
  {
- title: t('status'),
- dataIndex: 'status',
- key: 'status',
- width: 110,
+ title: t('mileage.distance_km'), dataIndex: 'distance_km', key: 'distance_km', width: 100, align: 'right',
+ render: (v: number) => (
+ <span style={{ color: 'var(--ink-700)', fontFamily: 'var(--font-mono)', fontWeight: 500 }}>{v}</span>
+ ),
+ },
+ {
+ title: t('mileage.rate_per_km'), dataIndex: 'rate_per_km', key: 'rate_per_km', width: 100, align: 'right',
+ render: (v: number) => (
+ <span style={{ color: 'var(--ink-700)', fontFamily: 'var(--font-mono)', fontWeight: 500 }}>{v}</span>
+ ),
+ },
+ {
+ title: t('amount'), dataIndex: 'total_amount', key: 'total_amount', width: 120, align: 'right',
+ render: (v: number) => (
+ <span style={{ color: 'var(--ink-900)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+ {v?.toFixed(2)}
+ </span>
+ ),
+ },
+ {
+ title: t('mileage.purpose'), dataIndex: 'purpose', key: 'purpose', ellipsis: true,
+ render: (v: string) => <span style={{ color: 'var(--ink-700)' }}>{v || '—'}</span>,
+ },
+ {
+ title: t('mileage.vehicle'), dataIndex: 'vehicle', key: 'vehicle', width: 100,
+ render: (v: string) => v
+ ? (
+ <span style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--surface-2)', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-600)',
+ }}>{v}</span>
+ )
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>,
+ },
+ {
+ title: t('status'), dataIndex: 'status', key: 'status', width: 110,
  render: (s: string) => <StatusTag status={s as never} label={t(s)} />,
  },
  {
- title: t('actions'),
- key: 'actions',
- width: 140,
- render: (_, r) => (
- <Space>
- <Button icon={<EditOutlined />} onClick={() => openModal(r)} />
- {r.status === 'draft' && (
- <Button type="primary" icon={<SendOutlined />} onClick={() => handleSubmit(r.id)}>
- {t('submit')}
- </Button>
- )}
- <Popconfirm title={t('confirm_delete')} onConfirm={() => handleDelete(r.id)}>
- <Button danger icon={<DeleteOutlined />} />
- </Popconfirm>
- </Space>
- ),
+ title: '', key: 'actions', width: 56, align: 'center' as const,
+ render: (_: any, r: MileageLog) => {
+ const actions: any[] = [
+ { key: 'view', icon: <EyeOutlined />, label: t('view', 'View'), onClick: () => openModal(r) },
+ { key: 'edit', icon: <EditOutlined />, label: t('edit'), onClick: () => openModal(r) },
+ ];
+ if (r.status === 'draft') {
+ actions.push({ key: 'submit', icon: <CheckOutlined />, label: t('submit', 'Submit'), onClick: () => handleSubmit(r.id) });
+ }
+ actions.push({ type: 'divider' });
+ actions.push({ key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true, onClick: () => handleDelete(r.id) });
+ return <KitRowActions ariaLabel={t('actions')} actions={actions} />;
+ },
  },
  ];
 
- const filterDefs: FilterDef[] = [
- {
- key: 'status',
- label: t('status'),
- options: [
- { value: '', label: t('all') },
- { value: 'draft', label: t('draft') },
- { value: 'submitted', label: t('submitted') },
- { value: 'approved', label: t('approved') },
- { value: 'rejected', label: t('rejected') },
- ],
- },
- ];
+ const columns = useMemo(() => allColumns.filter((c) => !hiddenCols.includes(c.key)), [hiddenCols, t]);
+ const filteredData = useMemo(() => {
+ if (!search) return data;
+ const q = search.toLowerCase();
+ return data.filter((row: any) => Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(q)));
+ }, [data, search]);
+ const columnsMeta: ColumnVisibilityItem[] = allColumns.map((c) => ({
+ key: c.key,
+ label: typeof c.title === 'string' ? c.title : c.key,
+ pinned: c.key === 'date' || c.key === 'actions',
+ }));
+ const persistHidden = (next: string[]) => {
+ setHiddenCols(next);
+ try { localStorage.setItem('mileage.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
+ };
 
  return (
  <div style={{ padding: 24 }}>
@@ -221,21 +273,70 @@ const MileageLog: FC = () => {
  }
  />
 
- <FilterBar
- filters={filterDefs}
- values={{ status: statusFilter }}
- onChange={(v) => setStatusFilter((v.status as string) ?? '')}
+ <KitListCard
+ tabs={tabs}
+ activeTab={statusFilter}
+ onTabChange={(k) => { setStatusFilter(k as StatusTab); setPage(1); setSelectedRowKeys([]); }}
+ toolbar={
+ <>
+ <KitSearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder={t('search')} />
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={statusFilter !== 'all' ? 1 : 0}
+ onClear={() => { setStatusFilter('all'); setPage(1); }}
+ >
+ <Radio.Group
+ value={statusFilter}
+ onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="all">{t('all', 'All')}</Radio>
+ <Radio value="draft">{t('draft', 'Draft')}</Radio>
+ <Radio value="submitted">{t('submitted', 'Submitted')}</Radio>
+ <Radio value="approved">{t('approved', 'Approved')}</Radio>
+ <Radio value="rejected">{t('rejected', 'Rejected')}</Radio>
+ </Radio.Group>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('status', 'Status')}
+ anyLabel={t('all', 'All')}
+ value={statusFilter === 'all' ? '' : statusFilter}
+ onChange={(v) => { setStatusFilter((v || 'all') as StatusTab); setPage(1); }}
+ options={[
+ { value: 'draft', label: t('draft', 'Draft') },
+ { value: 'submitted', label: t('submitted', 'Submitted') },
+ { value: 'approved', label: t('approved', 'Approved') },
+ { value: 'rejected', label: t('rejected', 'Rejected') },
+ ]}
  />
-
+ </div>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('mileage', filteredData, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ </div>
+ </>
+ }
+ >
  <ResponsiveTableAdapter
- dataSource={data}
+ dataSource={filteredData}
  columns={columns}
  rowKey="id"
  loading={loading}
  pagination={{
  current: page,
  pageSize,
- total,
+ total: search ? filteredData.length : total,
  onChange: setPage,
  showSizeChanger: false,
  }}
@@ -244,6 +345,7 @@ const MileageLog: FC = () => {
  onChange: (keys) => setSelectedRowKeys(keys as string[]),
  }}
  />
+ </KitListCard>
 
  <BulkActionBar
  selectedCount={selectedRowKeys.length}

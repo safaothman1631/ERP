@@ -53,6 +53,7 @@ ALL_PERMISSIONS += [
     "pos.force_close",   # force close sessions
     "pos.admin",         # full POS admin
     "purchase.receive_shortcut",  # mark PO received without GRN
+    "api_keys.manage",   # Pool 3.6: create/list/revoke public API keys
     # Module licensing
     "platform.manage",
     "modules.request",

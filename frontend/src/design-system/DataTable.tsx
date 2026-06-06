@@ -23,7 +23,8 @@ import { motion, useReducedMotion } from 'framer-motion';
 import EmptyState from './EmptyState';
 import LoadingSkeleton from './LoadingSkeleton';
 import BulkActionBar, { type BulkAction } from './BulkActionBar';
-import { radius, shadow, space, palette } from '../theme/tokens';
+import { space } from '../theme/tokens';
+import { useIsDark } from '../hooks/useIsDark';
 import { MotionButton } from '../components/MotionButton';
 
 // ─── Threshold ────────────────────────────────────────────────────────────────
@@ -190,7 +191,7 @@ function useResizableColumns<T extends object>(initialColumns: ColumnDef<T>[]) {
               <span style={{
                 width: 2,
                 height: 16,
-                background: palette.gray300,
+                background: 'var(--border-strong)',
                 borderRadius: 1,
               }} />
             </span>
@@ -264,9 +265,12 @@ function QuickActionsCell<T extends object>({
  * Requirements: 14.1–14.9
  * React.memo applied per Requirements 18.4.
  */
-export function DataTable<T extends object>(props: DataTableProps<T>) {
-  return <DataTableInner<T> {...props} />;
-}
+// Memoized so a stable (useMemo'd) columns/dataSource skips re-rendering the
+// whole table — the "React.memo applied" the docstring promised but the wrapper
+// never delivered. React.memo strips the generic, so the cast restores the call
+// signature; callers passing fresh array literals each render simply re-render
+// as before (shallow-unequal props) — no behaviour change.
+export const DataTable = React.memo(DataTableInner) as typeof DataTableInner;
 
 function DataTableInner<T extends object>({
   columns,
@@ -289,7 +293,7 @@ function DataTableInner<T extends object>({
   onEmptyAction,
   emptyIcon,
   density = 'default',
-  isDark = false,
+  isDark: isDarkProp,
   rowKey = 'id',
   pagination,
   tableProps,
@@ -297,6 +301,9 @@ function DataTableInner<T extends object>({
   className,
   style,
 }: DataTableProps<T>) {
+  // Auto-flip dark mode from the live theme; explicit prop still wins (rules-of-hooks safe).
+  const themeDark = useIsDark();
+  const isDark = isDarkProp ?? themeDark;
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const prefersReducedMotion = useReducedMotion();
 
@@ -309,12 +316,23 @@ function DataTableInner<T extends object>({
   // ── Resizable columns ───────────────────────────────────────────────────────
   const resizableColumns = useResizableColumns(columns);
 
+  // ── Numeric columns → kit .vx-num (tabular-nums + end-align via vertex-kit.css) ──
+  // Right/end-aligned columns are treated as numeric per the kit's `.vx-num` rule.
+  const styledColumns = useMemo<ColumnDef<T>[]>(() =>
+    resizableColumns.map(col => {
+      const isNumeric = col.align === 'right' || col.align === 'end';
+      if (!isNumeric) return col;
+      const className = [col.className, 'vx-num'].filter(Boolean).join(' ');
+      return { ...col, className };
+    }),
+  [resizableColumns]);
+
   // ── Quick actions column ────────────────────────────────────────────────────
   const hasQuickActions = quickActions?.length || onView || onEdit || onMore || showDefaultQuickActions;
   const columnsWithActions = useMemo<ColumnDef<T>[]>(() => {
-    if (!hasQuickActions) return resizableColumns;
+    if (!hasQuickActions) return styledColumns;
     return [
-      ...resizableColumns,
+      ...styledColumns,
       {
         key: '__actions',
         title: '',
@@ -332,7 +350,7 @@ function DataTableInner<T extends object>({
         ),
       },
     ];
-  }, [resizableColumns, hasQuickActions, quickActions, onView, onEdit, onMore, showDefaultQuickActions]);
+  }, [styledColumns, hasQuickActions, quickActions, onView, onEdit, onMore, showDefaultQuickActions]);
 
   // ── Row selection ───────────────────────────────────────────────────────────
   const antRowSelection = rowSelection
@@ -354,9 +372,10 @@ function DataTableInner<T extends object>({
     return (
       <div
         style={{
-          background: isDark ? palette.darkSurface : palette.surface,
-          borderRadius: radius.lg,
-          boxShadow: isDark ? shadow.dark.sm : shadow.sm,
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-sm)',
           overflow: 'hidden',
           ...style,
         }}
@@ -401,17 +420,20 @@ function DataTableInner<T extends object>({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: [0.2, 0, 0, 1] }}
         style={{
-          background: isDark ? palette.darkSurface : palette.surface,
-          borderRadius: radius.lg,
-          boxShadow: isDark ? shadow.dark.sm : shadow.sm,
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-sm)',
           overflow: 'hidden',
           ...style,
         }}
         className={className}
       >
         {/*
-          CSS for row hover quick actions opacity transition (Requirements 14.3)
-          and sort transition within 200ms (Requirements 14.9)
+          Kit `.vx-table` look (theme-aware via CSS vars) + row-hover quick-action
+          reveal (Requirements 14.3) + sort transition within 200ms (Requirements 14.9).
+          The global vertex-kit.css already styles AntD tables; these scoped rules
+          pin the kit appearance for this wrapper and stay correct in light + dark.
         */}
         <style>{`
           .zoho-datatable .table-row-actions {
@@ -421,11 +443,35 @@ function DataTableInner<T extends object>({
           .zoho-datatable .ant-table-row:hover .table-row-actions {
             opacity: 1;
           }
-          .zoho-datatable .ant-table-column-sorter {
-            transition: color 150ms ease;
+          .zoho-datatable .ant-table { background: transparent; }
+          .zoho-datatable .ant-table-thead > tr > th {
+            background: var(--surface-2);
+            color: var(--ink-500);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border);
+          }
+          .zoho-datatable .ant-table-tbody > tr > td {
+            color: var(--ink-700);
+            border-bottom: 1px solid var(--border);
           }
           .zoho-datatable .ant-table-tbody > tr {
             transition: background-color 120ms ease;
+          }
+          .zoho-datatable .ant-table-tbody > tr:hover > td {
+            background: var(--surface-2);
+          }
+          .zoho-datatable .ant-table-tbody > tr.ant-table-row-selected > td {
+            background: var(--accent-soft);
+          }
+          .zoho-datatable .ant-table-cell.vx-num {
+            font-variant-numeric: tabular-nums;
+            text-align: end;
+          }
+          .zoho-datatable .ant-table-column-sorter {
+            transition: color 150ms ease;
           }
         `}</style>
 

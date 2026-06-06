@@ -27,7 +27,7 @@ interface OrgSwitcherProps {
 export const OrgSwitcher: React.FC<OrgSwitcherProps> = ({ isRTL }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const orgId = useAuthStore((s) => s.orgId);
+  const _orgId = useAuthStore((s) => s.orgId);
   const [orgs, setOrgs] = React.useState<OrgItem[] | null>(null);
   const [loading, setLoading] = React.useState(false);
 

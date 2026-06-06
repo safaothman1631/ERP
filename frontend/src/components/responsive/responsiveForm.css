@@ -101,10 +101,13 @@
 /* Mobile_Viewport: card chrome + toggle hint. */
 @media (max-width: 640px) {
   .responsive-form__line-item--card {
-    border: 1px solid var(--color-border, #E5E7EB);
+    /* Live Vertex tokens — earlier this used --color-border / --color-surface
+       (don't exist in our token set) and fell back to a WHITE card with light
+       grey border, which on dark mode looked broken. */
+    border: 1px solid var(--border);
     border-radius: 10px;
     padding: 12px;
-    background: var(--color-surface, #FFFFFF);
+    background: var(--surface);
   }
 
   .responsive-form__line-item--card > summary {
@@ -129,7 +132,7 @@
   .responsive-form__line-item-toggle {
     font-size: 13px;
     font-weight: 500;
-    color: var(--color-primary, #1F6FEB);
+    color: var(--accent-500, #7B61FF);
     /* Touch-target floor for the toggle hint itself when it is the only
      * tappable hint. The summary already gets ≥ 44 px above. */
     min-block-size: 24px;

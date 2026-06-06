@@ -205,7 +205,7 @@ export default function StepChartOfAccounts() {
                 }
               }}
               style={{
-                borderColor: isPicked ? '#2563eb' : undefined,
+                borderColor: isPicked ? 'var(--accent-500)' : undefined,
                 borderWidth: isPicked ? 2 : 1,
                 opacity: applied && !isPicked ? 0.5 : 1,
               }}
@@ -213,7 +213,7 @@ export default function StepChartOfAccounts() {
               <Space direction="vertical" size="small">
                 <div style={{ fontSize: 28 }}>{tpl.icon}</div>
                 <strong>{t(`coa.templates.${tpl.id}.name`)}</strong>
-                <span style={{ fontSize: 12, color: '#64748b' }}>
+                <span style={{ fontSize: 12, color: 'var(--ink-500)' }}>
                   {t(`coa.templates.${tpl.id}.description`)}
                 </span>
                 <Space size={4} wrap>
@@ -222,7 +222,7 @@ export default function StepChartOfAccounts() {
                     <Tag key={rf}>{t(`company.business_type.options.${rf}`)}</Tag>
                   ))}
                 </Space>
-                {isPicked && <CheckCircleOutlined style={{ color: '#16a34a' }} />}
+                {isPicked && <CheckCircleOutlined style={{ color: 'var(--success-500)' }} />}
               </Space>
             </Card>
           );

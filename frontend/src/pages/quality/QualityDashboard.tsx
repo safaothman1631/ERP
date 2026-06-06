@@ -1,11 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Card, Row, Col } from 'antd';
+import { Row, Col } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import api from '../../api';
-import { message } from '../../utils/message';
-import { PageHeader, KpiCard, StatusTag, LoadingSkeleton } from '../../design-system';
+import { PageHeader, KpiCard, LoadingSkeleton, SectionCard, ChartCard } from '../../design-system';
 import { InlineError } from '../../components/feedback/InlineError';
 import { useLoadingState } from '../../hooks/useLoadingState';
 import { space } from '../../theme/tokens';
@@ -146,7 +145,7 @@ const QualityDashboard: React.FC = () => {
 
       <Row gutter={[space.md, space.md]}>
         <Col xs={24} lg={12}>
-          <Card title={t('quality.recent_failures')} bordered={false}>
+          <SectionCard title={t('quality.recent_failures')}>
             <ResponsiveTableAdapter
               dataSource={recentFailures}
               columns={failureColumns}
@@ -154,26 +153,26 @@ const QualityDashboard: React.FC = () => {
               pagination={false}
               size="small"
             />
-          </Card>
+          </SectionCard>
         </Col>
         <Col xs={24} lg={12}>
-          <Card title={t('quality.trend_chart')} bordered={false}>
+          <ChartCard title={t('quality.trend_chart')}>
             <ResponsiveChart
               legendItems={[
-                { id: 'pass', labelKey: asTranslationKey('quality.passed'), color: '#52c41a' },
-                { id: 'fail', labelKey: asTranslationKey('quality.failed'), color: '#ff4d4f' },
+                { id: 'pass', labelKey: asTranslationKey('quality.passed'), color: 'var(--success-500)' },
+                { id: 'fail', labelKey: asTranslationKey('quality.failed'), color: 'var(--danger-500)' },
               ]}
             >
               <LineChart data={trendData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="week" />
-                <YAxis />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="week" tick={{ fill: 'var(--ink-400)' }} />
+                <YAxis tick={{ fill: 'var(--ink-400)' }} />
                 <Tooltip />
-                <Line type="monotone" dataKey="pass" stroke="#52c41a" name={t('quality.passed')} />
-                <Line type="monotone" dataKey="fail" stroke="#ff4d4f" name={t('quality.failed')} />
+                <Line type="monotone" dataKey="pass" stroke="var(--success-500)" name={t('quality.passed')} />
+                <Line type="monotone" dataKey="fail" stroke="var(--danger-500)" name={t('quality.failed')} />
               </LineChart>
             </ResponsiveChart>
-          </Card>
+          </ChartCard>
         </Col>
       </Row>
     </div>

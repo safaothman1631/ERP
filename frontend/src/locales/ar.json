@@ -739,6 +739,10 @@
   "deductions": "Deductions",
   "net": "Net",
   "manufacturing": "Manufacturing",
+  "wms": "إدارة المستودعات",
+  "tms": "إدارة النقل",
+  "mdm": "البيانات الرئيسية",
+  "bpmn": "سير العمل",
   "boms": "Bills of Materials",
   "new_bom": "New BOM",
   "edit_bom": "Edit BOM",
@@ -1721,7 +1725,19 @@
     "tab_read": "Read",
     "mark_all_read": "Mark all as read",
     "empty": "No notifications",
-    "view_all": "View all"
+    "view_all": "View all",
+    "mock": {
+      "new_invoice_title": "فاتورة جديدة",
+      "new_invoice_body": "‏INV-000007 جاهزة للإرسال",
+      "bill_received_title": "تم استلام فاتورة مورد",
+      "bill_received_body": "تمت الموافقة على ‏BILL-000012",
+      "bank_sync_title": "مزامنة البنك",
+      "bank_sync_body": "٧ سجلات مطابقة جديدة",
+      "return_title": "إرجاع بضاعة",
+      "return_body": "إرجاع للطلب ‏SO-22",
+      "new_lead_title": "عميل محتمل جديد",
+      "new_lead_body": "عميل محتمل جديد في إدارة علاقات العملاء"
+    }
   },
   "quick_create": {
     "title": "Quick create",
@@ -1771,7 +1787,8 @@
     "reset": "Reset",
     "apply": "Apply",
     "save_preset": "Save preset",
-    "active_filters": "Active filters"
+    "active_filters": "Active filters",
+    "remove_filter": "إزالة الفلتر"
   },
   "form_layout": {
     "unsaved_changes": "Unsaved changes",
@@ -1835,113 +1852,94 @@
   "qc.subscription.cta": "اشتراك جديد",
   "qc.anomaly.title": "لم يتم اكتشاف أي شذوذ",
   "qc.anomaly.description": "كل شيء على ما يرام. يستمر النظام في مراقبة معاملاتك بحثًا عن أي نشاط غير معتاد.",
-
   "qc.action.create_and_select": "إنشاء وتحديد",
   "qc.action.full_form": "النموذج الكامل…",
   "qc.action.save_and_add_another": "حفظ وإضافة آخر",
   "qc.action.cancel": "إلغاء",
   "qc.confirm_discard": "هل تريد تجاهل تغييراتك؟",
-
   "qc.errors.permission": "ليس لديك إذن لإنشاء هذا السجل",
   "qc.errors.validation": "يرجى مراجعة الحقول المميزة",
   "qc.success.created": "تم الإنشاء بنجاح",
   "qc.steps.basic_info": "المعلومات الأساسية",
-
   "empty.permission_denied": "ليس لديك إذن",
   "empty.request_access": "طلب الوصول",
   "empty.no_related_data": "لا توجد بيانات مرتبطة بعد",
   "empty.no_related_data_description": "عند إضافة سجلات، ستظهر هنا.",
-
   "qc.customer.title": "إنشاء عميل سريع",
   "qc.customer.description": "يظهر العملاء في الفواتير وعروض الأسعار وأوامر البيع.",
   "qc.customer.cta": "أضف أول عميل",
   "qc.customer.empty_title": "لا يوجد عملاء بعد",
   "qc.customer.empty_description": "ابدأ إدارة العملاء بإنشاء أول سجل.",
-
   "qc.vendor.title": "إنشاء مورد سريع",
   "qc.vendor.description": "يُستخدم الموردون في الفواتير وأوامر الشراء.",
   "qc.vendor.cta": "أضف أول مورد",
   "qc.vendor.empty_title": "لا يوجد موردون بعد",
   "qc.vendor.empty_description": "نظّم شركاءك التجاريين بإضافة أول مورد.",
-
   "qc.tax_rate.title": "إنشاء معدل ضريبي",
   "qc.tax_rate.description": "تتدفق معدلات الضرائب عبر الفواتير وفواتير الشراء.",
   "qc.tax_rate.cta": "إضافة معدل ضريبي",
   "qc.tax_rate.empty_title": "لا توجد معدلات ضريبية محددة",
   "qc.tax_rate.empty_description": "أعدّ ضريبة القيمة المضافة أو الاستقطاع لاستخدامها في المستندات.",
-
   "qc.expense_category.title": "إنشاء فئة مصروفات",
   "qc.expense_category.description": "صنّف المصروفات للحصول على تقارير أفضل.",
   "qc.expense_category.cta": "إضافة فئة مصروفات",
   "qc.expense_category.empty_title": "لا توجد فئات مصروفات",
   "qc.expense_category.empty_description": "صنّف نفقاتك للحصول على تقارير أنظف.",
-
   "qc.equipment_category.title": "إنشاء فئة معدات",
   "qc.equipment_category.description": "صنّف المعدات لتسهيل المتابعة.",
   "qc.equipment_category.cta": "إضافة فئة معدات",
   "qc.equipment_category.empty_title": "لا توجد فئات معدات",
   "qc.equipment_category.empty_description": "جمّع المعدات لتبسيط الصيانة.",
-
   "qc.currency.title": "إنشاء عملة",
   "qc.currency.description": "أضف عملة للتجارة الدولية.",
   "qc.currency.cta": "إضافة عملة",
   "qc.currency.empty_title": "لا توجد عملات إضافية",
   "qc.currency.empty_description": "أضف عملة للتعامل بفئات نقدية مختلفة.",
-
   "qc.tag.title": "إنشاء وسم",
   "qc.tag.description": "استخدم الوسوم لتصنيف السجلات عبر الوحدات.",
   "qc.tag.cta": "إضافة وسم",
   "qc.tag.empty_title": "لا توجد وسوم بعد",
   "qc.tag.empty_description": "الوسوم تساعد على التصنيف والبحث.",
-
   "qc.payment_method.title": "إنشاء طريقة دفع",
   "qc.payment_method.description": "حدد طريقة دفع جديدة للمعاملات.",
   "qc.payment_method.cta": "إضافة طريقة دفع",
   "qc.payment_method.empty_title": "لا توجد طرق دفع",
   "qc.payment_method.empty_description": "أعدّ النقد أو البنك أو البطاقة للمدفوعات.",
-
   "qc.item.title": "إنشاء صنف سريع",
   "qc.item.description": "أضف منتجًا أو خدمة للمبيعات والمشتريات.",
   "qc.item.cta": "أضف أول صنف",
   "qc.item.empty_title": "لا توجد أصناف بعد",
   "qc.item.empty_description": "ابنِ كتالوجك للفوترة والمخزون.",
-
   "qc.account.title": "إنشاء حساب",
   "qc.account.description": "أضف حسابًا جديدًا إلى دليل حساباتك.",
   "qc.account.cta": "إضافة حساب",
   "qc.account.empty_title": "لا توجد حسابات محددة",
   "qc.account.empty_description": "ابنِ دليل حساباتك لبدء التسجيل المحاسبي.",
-
   "qc.bank_account.title": "إنشاء حساب بنكي",
   "qc.bank_account.description": "اربط حسابًا بنكيًا لإدارة الأموال النقدية.",
   "qc.bank_account.cta": "إضافة حساب بنكي",
   "qc.bank_account.empty_title": "لا توجد حسابات بنكية",
   "qc.bank_account.empty_description": "أضف حسابك البنكي لتتبع الإيرادات والمصروفات.",
-
   "qc.team.title": "إنشاء فريق",
   "qc.team.description": "أنشئ فريقًا للمشاريع والعمل الجماعي.",
   "qc.team.cta": "إضافة فريق",
   "qc.team.empty_title": "لا توجد فرق بعد",
   "qc.team.empty_description": "جمّع المستخدمين في فرق لتبسيط التعاون.",
-
   "qc.subscription_plan.title": "إنشاء خطة اشتراك",
   "qc.subscription_plan.description": "أضف خطة فوترة متكررة لعملائك.",
   "qc.subscription_plan.cta": "إضافة خطة اشتراك",
   "qc.subscription_plan.empty_title": "لا توجد خطط اشتراك",
   "qc.subscription_plan.empty_description": "حدد خططًا شهرية أو سنوية للفوترة المتكررة.",
-
   "qc.location.title": "إنشاء موقع",
   "qc.location.description": "حدد مستودعًا أو فرعًا أو موقع بيع جديدًا.",
   "qc.location.cta": "إضافة موقع",
   "qc.location.empty_title": "لا توجد مواقع محددة",
   "qc.location.empty_description": "تتبع المخزون والعمليات عبر مواقع متعددة.",
-
   "qc.employee.title": "إضافة موظف",
   "qc.employee.description": "سجّل موظفًا جديدًا في الموارد البشرية.",
   "qc.employee.cta": "إضافة موظف",
   "qc.employee.empty_title": "لا يوجد موظفون بعد",
   "qc.employee.empty_description": "سجّل الموظفين لاستخدامهم في المشاريع والرواتب والإجازات.",
-
   "fields.name": "الاسم",
   "fields.full_name": "الاسم الكامل",
   "fields.phone": "الهاتف",
@@ -1985,7 +1983,6 @@
   "fields.address": "العنوان",
   "fields.region": "المنطقة",
   "fields.country": "البلد",
-
   "enums.contact_type.customer": "عميل",
   "enums.contact_type.vendor": "مورد",
   "enums.tax_type.vat": "ضريبة القيمة المضافة",
@@ -2018,9 +2015,14 @@
   "enums.billing_period.monthly": "شهري",
   "enums.billing_period.quarterly": "ربع سنوي",
   "enums.billing_period.yearly": "سنوي",
-
   "common.retry": "إعادة المحاولة",
   "common.upload_hint": "انقر أو اسحب ملفًا هنا",
   "error.title": "حدث خطأ ما",
-  "error.generic_message": "يرجى المحاولة مرة أخرى بعد لحظات."
+  "error.generic_message": "يرجى المحاولة مرة أخرى بعد لحظات.",
+  "filters": "عوامل التصفية",
+  "print_list": "طباعة القائمة",
+  "manage_columns": "إدارة الأعمدة",
+  "any_status": "أي حالة",
+  "help.openHelp": "المساعدة والدعم",
+  "role.current": "الدور الحالي: {{role}}"
 }

@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Tag, Space, Descriptions, Select, Typography, Switch } from 'antd';
+import React, { useMemo, useState } from 'react';
+import { Space, Typography, Switch, Radio } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { EyeOutlined, PrinterOutlined, RollbackOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import api from '../../api';
@@ -7,26 +7,44 @@ import { useListQuery } from '../../api/queries/useListQuery';
 import { listQueryKeys } from '../../api/queries/keys';
 import { message } from '../../utils/message';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../../design-system';
+import { PageHeader, StatusTag, KeyValueGrid, type ColumnVisibilityItem } from '../../design-system';
+import KitListCard, { type KitListTab } from '../../design-system/KitListCard';
+import KitListToolbarActions from '../../design-system/KitListToolbarActions';
+import KitRowActions from '../../design-system/KitRowActions';
+import KitFiltersButton from '../../design-system/KitFiltersButton';
+import KitStatusFilter from '../../design-system/KitStatusFilter';
+import KitSearchInput from '../../design-system/KitSearchInput';
+import type { StatusKind } from '../../design-system';
 import { downloadCsv } from '../../utils/exportCsv';
-import { useAuthStore } from '../../store';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
-const statusColors: Record<string, string> = {
- draft: 'default',
- quotation: 'gold',
- paid: 'green',
- invoiced: 'blue',
- cancelled: 'red',
- refunded: 'orange',
+// Map POS order states → StatusTag semantic kinds (auto-flip tokens, light + dark).
+const ORDER_STATUS: Record<string, StatusKind> = {
+ draft: 'draft',
+ quotation: 'pending',
+ paid: 'paid',
+ invoiced: 'sent',
+ cancelled: 'cancelled',
+ refunded: 'warning',
 };
+
+/** Initials for the kit's avatar cell (first letters of the first two words). */
+const initialsOf = (name: string): string =>
+ String(name || '?')
+ .trim()
+ .split(/\s+/)
+ .map((w) => w[0])
+ .join('')
+ .slice(0, 2)
+ .toUpperCase();
 
 const POSOrders: React.FC = () => {
  const { t } = useTranslation();
  const [page, setPage] = useState(1);
+ const [search, setSearch] = useState('');
  const [stateFilter, setStateFilter] = useState('');
  const [showQuotationsOnly, setShowQuotationsOnly] = useState(false);
  const [detailDrawerVisible, setDetailDrawerVisible] = useState(false);
@@ -34,7 +52,6 @@ const POSOrders: React.FC = () => {
  const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
  try { return JSON.parse(localStorage.getItem('posOrders.hiddenCols') || '[]'); } catch { return []; }
  });
- const isDark = useAuthStore((s) => s.theme === 'dark');
 
  const posOrdersQuery = useListQuery<any, { items?: any[]; total?: number }>({
  queryKey: listQueryKeys.posOrders({
@@ -56,6 +73,12 @@ const POSOrders: React.FC = () => {
  const data = posOrdersQuery.data?.items ?? [];
  const total = posOrdersQuery.data?.total ?? 0;
  const loading = posOrdersQuery.isLoading || posOrdersQuery.isFetching;
+
+ const filteredData = useMemo(() => {
+ if (!search) return data;
+ const q = search.toLowerCase();
+ return data.filter((row: any) => Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(q)));
+ }, [data, search]);
 
  const viewOrderDetail = async (orderId: string) => {
  try {
@@ -85,12 +108,28 @@ const POSOrders: React.FC = () => {
  // navigate(`/pos/terminal/${_order.session_id}?order_id=${_order.id}`);
  };
 
+ // Kit list tabs (All / Draft / Paid / Invoiced / Cancelled) — server-side `state` filter.
+ const tabs: KitListTab[] = [
+ { key: '', label: t('all', 'All') },
+ { key: 'draft', label: t('pos.order_draft') },
+ { key: 'paid', label: t('pos.order_paid') },
+ { key: 'invoiced', label: t('pos.order_invoiced') },
+ { key: 'cancelled', label: t('pos.order_cancelled') },
+ ];
+
+ const statusOptions = [
+ { value: 'draft', label: t('pos.order_draft') },
+ { value: 'paid', label: t('pos.order_paid') },
+ { value: 'invoiced', label: t('pos.order_invoiced') },
+ { value: 'cancelled', label: t('pos.order_cancelled') },
+ ];
+
  const columns = [
  {
  title: t('pos.order_number'),
  dataIndex: 'order_number',
  key: 'order_number',
- render: (text: string) => <Text strong style={{ color: '#1677ff' }}>{text}</Text>,
+ render: (text: string) => <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--ink-900)' }}>{text}</span>,
  },
  {
  title: t('date'),
@@ -102,18 +141,32 @@ const POSOrders: React.FC = () => {
  title: t('customer'),
  dataIndex: 'partner_name',
  key: 'partner_name',
- render: (name: string) => name || t('pos.walk_in_customer'),
+ render: (name: string) => {
+ const display = name || t('pos.walk_in_customer');
+ return (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{initialsOf(display)}</span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{display}</span>
+ </div>
+ );
+ },
  },
  {
  title: t('pos.cashier'),
  dataIndex: 'cashier_name',
  key: 'cashier_name',
+ render: (v: string) => <span style={{ color: 'var(--ink-700)' }}>{v || '—'}</span>,
  },
  {
  title: t('total'),
  dataIndex: 'total',
  key: 'total',
- render: (val: number) => formatCurrency(val),
+ render: (val: number) => <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--ink-900)' }}>{formatCurrency(val)}</span>,
  },
  {
  title: t('status'),
@@ -121,49 +174,32 @@ const POSOrders: React.FC = () => {
  key: 'state',
  render: (state: string, record: any) => (
  <Space>
- <Tag color={statusColors[state]}>{t(`pos.order_${state}`)}</Tag>
- {record.is_refund && <Tag color="red">{t('pos.refund')}</Tag>}
- {record.quotation_name && <Tag color="gold">{record.quotation_name}</Tag>}
+ <StatusTag status={ORDER_STATUS[state] ?? 'default'} label={t(`pos.order_${state}`)} />
+ {record.is_refund && <StatusTag status="error" label={t('pos.refund')} />}
+ {record.quotation_name && <StatusTag status="pending" label={record.quotation_name} />}
  </Space>
  ),
  },
  {
- title: t('actions'),
+ title: '',
  key: 'actions',
- render: (_: any, record: any) => (
- <Space>
- <Button
- icon={<EyeOutlined />}
- onClick={() => viewOrderDetail(record.id)}
- >
- {t('view')}
- </Button>
- <Button
- icon={<PrinterOutlined />}
- onClick={handlePrint}
- >
- {t('print')}
- </Button>
- {(record.state === 'quotation' || record.state === 'draft') && (
- <Button
- icon={<ShoppingCartOutlined />}
- type="primary"
- onClick={() => handleConvertToOrder(record)}
- >
- {t('pos.convert_to_order')}
- </Button>
- )}
- {record.state === 'paid' && !record.is_refund && (
- <Button
- icon={<RollbackOutlined />}
- danger
- onClick={handleRefund}
- >
- {t('pos.refund')}
- </Button>
- )}
- </Space>
- ),
+ width: 56,
+ align: 'center' as const,
+ render: (_: any, record: any) => {
+ const canConvert = record.state === 'quotation' || record.state === 'draft';
+ const canRefund = record.state === 'paid' && !record.is_refund;
+ return (
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'view', icon: <EyeOutlined />, label: t('view'), onClick: () => viewOrderDetail(record.id) },
+ { key: 'print', icon: <PrinterOutlined />, label: t('print'), onClick: handlePrint },
+ ...(canConvert ? [{ key: 'convert', icon: <ShoppingCartOutlined />, label: t('pos.convert_to_order'), onClick: () => handleConvertToOrder(record) }] : []),
+ ...(canRefund ? [{ key: 'refund', icon: <RollbackOutlined />, label: t('pos.refund'), danger: true, onClick: handleRefund }] : []),
+ ]}
+ />
+ );
+ },
  },
  ];
  const visibleColumns = useMemo(() => columns.filter((c) => !hiddenCols.includes(c.key as string)), [hiddenCols, columns]);
@@ -174,68 +210,92 @@ const POSOrders: React.FC = () => {
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('posOrders.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('posOrders.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
+
+ const activeFilterCount = (stateFilter ? 1 : 0) + (showQuotationsOnly ? 1 : 0);
 
  return (
  <div>
- <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
- <Title level={2}>{t('pos.orders')}</Title>
- </div>
+ <PageHeader title={t('pos.orders')} />
 
- <div style={{ marginBottom: 16 }}>
- <Space>
- <Select
- placeholder={t('status')}
- value={stateFilter || undefined}
- onChange={v => { setStateFilter(v || ''); setPage(1); }}
- allowClear
- style={{ width: 150 }}
- disabled={showQuotationsOnly}
+ <KitListCard
+ tabs={tabs}
+ activeTab={showQuotationsOnly ? '' : stateFilter}
+ onTabChange={(k) => { if (showQuotationsOnly) return; setStateFilter(k); setPage(1); }}
+ toolbar={
+ <>
+ <KitSearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder={t('search')} />
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={activeFilterCount}
+ onClear={() => { setStateFilter(''); setShowQuotationsOnly(false); setPage(1); }}
  >
- <Select.Option value="draft">{t('pos.order_draft')}</Select.Option>
- <Select.Option value="paid">{t('pos.order_paid')}</Select.Option>
- <Select.Option value="invoiced">{t('pos.order_invoiced')}</Select.Option>
- <Select.Option value="cancelled">{t('pos.order_cancelled')}</Select.Option>
- </Select>
- 
- {/* Sprint 6.3 - Quotations filter */}
- <Space>
- <Text>{t('pos.show_quotations_only')}</Text>
- <Switch 
- checked={showQuotationsOnly} 
+ <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+ <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+ <span style={{ color: 'var(--ink-700)', fontSize: 13 }}>{t('pos.show_quotations_only')}</span>
+ <Switch
+ checked={showQuotationsOnly}
  onChange={(checked) => {
  setShowQuotationsOnly(checked);
  setStateFilter('');
  setPage(1);
  }}
  />
- </Space>
- </Space>
- <ExportMenu
- formats={['csv']}
- onExport={(f: ExportFormat) => {
- if (f === 'csv') {
- const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
- downloadCsv('pos-orders', data, cols);
- }
- }}
- />
- <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
  </div>
-
+ <Radio.Group
+ value={stateFilter}
+ onChange={(e) => { setStateFilter(e.target.value); setPage(1); }}
+ disabled={showQuotationsOnly}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="">{t('all', 'All')}</Radio>
+ <Radio value="draft">{t('pos.order_draft')}</Radio>
+ <Radio value="paid">{t('pos.order_paid')}</Radio>
+ <Radio value="invoiced">{t('pos.order_invoiced')}</Radio>
+ <Radio value="cancelled">{t('pos.order_cancelled')}</Radio>
+ </Radio.Group>
+ </div>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('status')}
+ anyLabel={t('all', 'All')}
+ value={showQuotationsOnly ? '' : stateFilter}
+ onChange={(v) => { if (showQuotationsOnly) return; setStateFilter(v); setPage(1); }}
+ options={statusOptions}
+ />
+ </div>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('pos-orders', filteredData, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ </div>
+ </>
+ }
+ >
  <ResponsiveTableAdapter
- dataSource={data}
+ dataSource={filteredData}
  columns={visibleColumns}
  rowKey="id"
  loading={loading}
  pagination={{
  current: page,
- total,
+ total: search ? filteredData.length : total,
  pageSize: 25,
  onChange: setPage,
  }}
  />
+ </KitListCard>
 
  {/* Order Detail Drawer */}
  <FormDialog
@@ -245,24 +305,19 @@ const POSOrders: React.FC = () => {
  >
  {selectedOrder && (
  <div>
- <Descriptions bordered column={1} style={{ marginBottom: 16 }}>
- <Descriptions.Item label={t('date')}>
- {formatDate(selectedOrder.date)}
- </Descriptions.Item>
- <Descriptions.Item label={t('customer')}>
- {selectedOrder.partner_name || t('pos.walk_in_customer')}
- </Descriptions.Item>
- <Descriptions.Item label={t('pos.cashier')}>
- {selectedOrder.cashier_name}
- </Descriptions.Item>
- <Descriptions.Item label={t('status')}>
- <Tag color={statusColors[selectedOrder.state]}>
- {t(`pos.order_${selectedOrder.state}`)}
- </Tag>
- </Descriptions.Item>
- </Descriptions>
+ <div style={{ marginBottom: 16 }}>
+ <KeyValueGrid
+ columns={2}
+ items={[
+ { label: t('date'), value: formatDate(selectedOrder.date) },
+ { label: t('customer'), value: selectedOrder.partner_name || t('pos.walk_in_customer') },
+ { label: t('pos.cashier'), value: selectedOrder.cashier_name },
+ { label: t('status'), value: <StatusTag status={ORDER_STATUS[selectedOrder.state] ?? 'default'} label={t(`pos.order_${selectedOrder.state}`)} /> },
+ ]}
+ />
+ </div>
 
- <Title level={5}>{t('pos.order_lines')}</Title>
+ <Title level={5} style={{ fontFamily: 'var(--font-display)', color: 'var(--ink-900)' }}>{t('pos.order_lines')}</Title>
  <ResponsiveTableAdapter
  dataSource={selectedOrder.lines || []}
  columns={[
@@ -294,24 +349,19 @@ const POSOrders: React.FC = () => {
  style={{ marginBottom: 16 }}
  />
 
- <Descriptions bordered column={1}>
- <Descriptions.Item label={t('subtotal')}>
- {formatCurrency(selectedOrder.subtotal || 0)}
- </Descriptions.Item>
- <Descriptions.Item label={t('tax')}>
- {formatCurrency(selectedOrder.tax_total || 0)}
- </Descriptions.Item>
- <Descriptions.Item label={t('discount')}>
- {formatCurrency(selectedOrder.discount_total || 0)}
- </Descriptions.Item>
- <Descriptions.Item label={<strong>{t('total')}</strong>}>
- <strong>{formatCurrency(selectedOrder.total || 0)}</strong>
- </Descriptions.Item>
- </Descriptions>
+ <KeyValueGrid
+ columns={1}
+ items={[
+ { label: t('subtotal'), value: formatCurrency(selectedOrder.subtotal || 0) },
+ { label: t('tax'), value: formatCurrency(selectedOrder.tax_total || 0) },
+ { label: t('discount'), value: formatCurrency(selectedOrder.discount_total || 0) },
+ { label: t('total'), value: <strong>{formatCurrency(selectedOrder.total || 0)}</strong> },
+ ]}
+ />
 
  {selectedOrder.payments && selectedOrder.payments.length > 0 && (
  <>
- <Title level={5} style={{ marginTop: 16 }}>{t('pos.payments')}</Title>
+ <Title level={5} style={{ marginTop: 16, fontFamily: 'var(--font-display)', color: 'var(--ink-900)' }}>{t('pos.payments')}</Title>
  <ResponsiveTableAdapter
  dataSource={selectedOrder.payments}
  columns={[

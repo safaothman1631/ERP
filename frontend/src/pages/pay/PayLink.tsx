@@ -11,7 +11,7 @@
  * intent.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Spin, Typography, Result } from 'antd';
+import { Card, Spin, Typography, Result } from 'antd';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
@@ -56,7 +56,7 @@ const PayLinkPage: React.FC = () => {
         if (res.data.expired) {
           setError(t('pay.expired', 'This payment link has expired'));
         }
-      } catch (e) {
+      } catch (_e) {
         setError(t('pay.notFound', 'Payment link not found or expired'));
       } finally {
         setLoading(false);
@@ -83,7 +83,7 @@ const PayLinkPage: React.FC = () => {
       if (res.status === 200 || res.status === 201) {
         setCompleted(true);
       }
-    } catch (e) {
+    } catch (_e) {
       setError(t('pay.initiateFailed', 'Could not initiate payment. Please try again.'));
     }
   };

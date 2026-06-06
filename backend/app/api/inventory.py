@@ -1015,7 +1015,7 @@ def done_picking(picking_id: str, user: dict = Depends(get_current_user)):
     from app.services.warehouse_move_atomic import done_picking_atomic
 
     try:
-        return done_picking_atomic(
+        result = done_picking_atomic(
             user["org_id"],
             picking_id,
             done_by=user.get("id"),
@@ -1027,6 +1027,23 @@ def done_picking(picking_id: str, user: dict = Depends(get_current_user)):
         if code == "picking_invalid_status":
             raise HTTPException(400, "???????? ??????? ????????/????????? ????? ?????")
         raise HTTPException(400, code)
+
+    # --- COGS auto-post on goods-out (Dr COGS / Cr Inventory; idempotent;
+    # never breaks the picking action) ---
+    try:
+        from app.firestore.inventory import StockMovementRepository
+        from app.services.cogs_gl import post_picking_cogs_je
+        _repo = StockMovementRepository(user["org_id"])
+        _picking = _repo.get(picking_id)
+        _je = post_picking_cogs_je(user["org_id"], _picking, created_by=user.get("id"))
+        if _je and not _je.get("skipped"):
+            _repo.update(picking_id, {"gl_posted_cogs": True, "cogs_journal_entry_id": _je["id"]})
+    except Exception as _exc:
+        import logging
+        logging.getLogger(__name__).error(
+            "picking_cogs_je_failed", extra={"picking_id": picking_id, "error": str(_exc)}
+        )
+    return result
 
 
 @router.post("/pickings/{picking_id}/cancel")

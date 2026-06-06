@@ -6,7 +6,7 @@
  *   - RTL direction for Kurdish and Arabic
  *   - Missing key handler that humanizes translation keys
  *   - Default language is Kurdish ("ku")
- *   - Language persistence via localStorage key "app_language"
+ *   - Language persistence via localStorage key "i18n.language"
  *
  * Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6
  */
@@ -184,7 +184,7 @@ describe('language persistence via localStorage', () => {
     vi.resetModules();
   });
 
-  it('reads saved language from localStorage key "app_language" on init (Requirement 4.3)', async () => {
+  it('reads saved language from localStorage key "i18n.language" on init (Requirement 4.3)', async () => {
     const mockGetItem = vi.fn().mockReturnValue('en');
     vi.stubGlobal('localStorage', {
       getItem: mockGetItem,
@@ -194,7 +194,7 @@ describe('language persistence via localStorage', () => {
     });
     vi.resetModules();
     const mod = await import('./i18n');
-    expect(mockGetItem).toHaveBeenCalledWith('app_language');
+    expect(mockGetItem).toHaveBeenCalledWith('i18n.language');
     expect(mod.default.language).toBe('en');
   });
 
@@ -209,7 +209,7 @@ describe('language persistence via localStorage', () => {
     vi.resetModules();
     const mod = await import('./i18n');
     await mod.default.changeLanguage('en');
-    expect(mockSetItem).toHaveBeenCalledWith('app_language', 'en');
+    expect(mockSetItem).toHaveBeenCalledWith('i18n.language', 'en');
   });
 });
 

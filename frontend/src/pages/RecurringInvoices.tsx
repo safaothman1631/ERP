@@ -1,19 +1,34 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Tag, Dropdown, Form, Input, InputNumber, DatePicker, Space, Select, Divider } from 'antd';
+import { Button, Form, Input, InputNumber, DatePicker, Space, Select, Divider, Radio } from 'antd';
 import { message } from '../utils/message';
-import { PlusOutlined, MoreOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, ThunderboltOutlined, PauseCircleOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import dayjs from 'dayjs';
-import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { PageHeader, StatusTag, type StatusKind, type ColumnVisibilityItem } from '../design-system';
+import KitListCard, { type KitListTab } from '../design-system/KitListCard';
+import KitListToolbarActions from '../design-system/KitListToolbarActions';
+import KitRowActions from '../design-system/KitRowActions';
+import KitFiltersButton from '../design-system/KitFiltersButton';
+import KitStatusFilter from '../design-system/KitStatusFilter';
+import KitSearchInput from '../design-system/KitSearchInput';
 import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { downloadCsv } from '../utils/exportCsv';
-import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 
-const statusColors: Record<string, string> = { active: 'green', paused: 'orange', expired: 'grey' };
+const statusKinds: Record<string, StatusKind> = { active: 'active', paused: 'warning', expired: 'default' };
 const freqOptions = ['daily', 'weekly', 'monthly', 'quarterly', 'yearly'];
+
+/** Initials for the kit's avatar cell (first letters of the first two words). */
+const initialsOf = (name: string): string =>
+ String(name || '?')
+ .trim()
+ .split(/\s+/)
+ .map((w) => w[0])
+ .join('')
+ .slice(0, 2)
+ .toUpperCase();
 
 const RecurringInvoices: React.FC = () => {
  const { t } = useTranslation();
@@ -21,8 +36,10 @@ const RecurringInvoices: React.FC = () => {
  const [loading, setLoading] = useState(false);
  const [total, setTotal] = useState(0);
  const [page, setPage] = useState(1);
+ const [status, setStatus] = useState('');
+ const [search, setSearch] = useState('');
  const [modalOpen, setModalOpen] = useState(false);
- const [contacts, setContacts] = useState<any[]>([]);
+ const [_contacts, setContacts] = useState<any[]>([]);
  const [contactMap, setContactMap] = useState<Record<string, string>>({});
  const [items, setItems] = useState<any[]>([]);
  const [form] = Form.useForm();
@@ -31,22 +48,21 @@ const RecurringInvoices: React.FC = () => {
  const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
  try { return JSON.parse(localStorage.getItem('recurringInvoices.hiddenCols') || '[]'); } catch { return []; }
  });
- const isDark = useAuthStore((s) => s.theme === 'dark');
 
  const fetchData = async () => {
  setLoading(true);
- try { const r = await api.get('/api/recurring-invoices', { params: { page, page_size: 20 } }); setData(r.data.items); setTotal(r.data.total); }
+ try { const r = await api.get('/api/recurring-invoices', { params: { page, page_size: 20, ...(status ? { status } : {}) } }); setData(r.data.items); setTotal(r.data.total); }
  catch { message.error(t('error')); } finally { setLoading(false); }
  };
 
- useEffect(() => { fetchData(); }, [page]);
+ useEffect(() => { fetchData(); }, [page, status]);
 
  useEffect(() => {
  api.get('/api/contacts', { params: { page_size: 200 } }).then(r => {
  const map: Record<string, string> = {};
  (r.data.items || []).forEach((c: any) => { map[c.id] = c.display_name || c.company_name || c.first_name || c.id.substring(0, 8); });
  setContactMap(map);
- }).catch(() => {});
+ }).catch((e) => console.error(e));
  }, []);
 
  const openNew = async () => {
@@ -91,53 +107,150 @@ const RecurringInvoices: React.FC = () => {
  } catch { message.error(t('error')); } finally { setSaving(false); }
  };
 
- const columns = [
- { title: t('customer'), dataIndex: 'contact_id', key: 'contact_id', render: (v: string) => contactMap[v] || v?.substring(0, 8) + '...' },
- { title: t('frequency'), dataIndex: 'frequency', key: 'frequency', render: (f: string) => t(f) },
- { title: t('next_date'), dataIndex: 'next_invoice_date', key: 'next_invoice_date', render: (d: string) => d?.substring(0, 10) },
- { title: t('total'), dataIndex: 'total', key: 'total', render: (v: number) => v?.toLocaleString() },
- { title: t('status'), dataIndex: 'status', key: 'status', render: (s: string) => <Tag color={statusColors[s]}>{t(s)}</Tag> },
+ // Kit list tabs (All / Active / Paused / Expired) — server-side filtered via `status`.
+ const tabs: KitListTab[] = [
+ { key: 'all', label: t('all', 'All') },
+ { key: 'active', label: t('active', 'Active') },
+ { key: 'paused', label: t('paused', 'Paused') },
+ { key: 'expired', label: t('expired', 'Expired') },
+ ];
+ const statusOptions = [
+ { value: 'active', label: t('active', 'Active') },
+ { value: 'paused', label: t('paused', 'Paused') },
+ { value: 'expired', label: t('expired', 'Expired') },
+ ];
+
+ const filteredData = useMemo(() => {
+ if (!search) return data;
+ const q = search.toLowerCase();
+ return data.filter((row: any) => Object.values(row).some(v => String(v ?? '').toLowerCase().includes(q)));
+ }, [data, search]);
+
+ const allColumns = [
  {
- title: t('actions'), key: 'actions',
+ title: t('customer'), dataIndex: 'contact_id', key: 'contact_id',
+ render: (v: string) => {
+ const name = contactMap[v] || (v?.substring(0, 8) + '...');
+ return (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{initialsOf(name)}</span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{name}</span>
+ </div>
+ );
+ },
+ },
+ {
+ title: t('frequency'), dataIndex: 'frequency', key: 'frequency',
+ render: (f: string) => (
+ <span style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--surface-2)', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-600)',
+ }}>{t(f)}</span>
+ ),
+ },
+ {
+ title: t('next_date'), dataIndex: 'next_invoice_date', key: 'next_invoice_date',
+ render: (d: string) => d
+ ? <span style={{ color: 'var(--ink-700)', fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>{d.substring(0, 10)}</span>
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>,
+ },
+ {
+ title: t('total'), dataIndex: 'total', key: 'total',
+ render: (v: number) => <span style={{ color: 'var(--ink-900)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{v?.toLocaleString()}</span>,
+ },
+ { title: t('status'), dataIndex: 'status', key: 'status', render: (s: string) => <StatusTag status={statusKinds[s] || 'default'} label={t(s)} /> },
+ {
+ title: '', key: 'actions', width: 56, align: 'center' as const,
  render: (_: any, r: any) => {
- const menuitems = [];
+ const actions: any[] = [];
  if (r.status === 'active') {
- menuitems.push({ key: 'pause', label: t('pause'), onClick: () => handleAction(r.id, 'pause') });
- menuitems.push({ key: 'gen', label: t('generate_invoice'), onClick: () => handleAction(r.id, 'generate-invoice') });
+ actions.push({ key: 'pause', icon: <PauseCircleOutlined />, label: t('pause'), onClick: () => handleAction(r.id, 'pause') });
+ actions.push({ key: 'gen', icon: <ThunderboltOutlined />, label: t('generate_invoice'), onClick: () => handleAction(r.id, 'generate-invoice') });
  }
- if (r.status === 'paused') menuitems.push({ key: 'resume', label: t('resume'), onClick: () => handleAction(r.id, 'resume') });
- menuitems.push({ key: 'del', label: t('delete'), danger: true, onClick: () => handleDelete(r.id) });
- return <Dropdown menu={{ items: menuitems }} trigger={['click']}><Button icon={<MoreOutlined />} /></Dropdown>;
+ if (r.status === 'paused') actions.push({ key: 'resume', icon: <PlayCircleOutlined />, label: t('resume'), onClick: () => handleAction(r.id, 'resume') });
+ actions.push({ type: 'divider' });
+ actions.push({ key: 'del', icon: <DeleteOutlined />, label: t('delete'), danger: true, onClick: () => handleDelete(r.id) });
+ return <KitRowActions ariaLabel={t('actions')} actions={actions} />;
  },
  },
  ];
- const visibleColumns = useMemo(() => columns.filter((c) => !hiddenCols.includes(c.key as string)), [hiddenCols, columns]);
- const columnsMeta: ColumnVisibilityItem[] = columns.map((c) => ({
+ const visibleColumns = useMemo(() => allColumns.filter((c) => !hiddenCols.includes(c.key as string)), [hiddenCols, contactMap, t]);
+ const columnsMeta: ColumnVisibilityItem[] = allColumns.map((c) => ({
  key: c.key as string,
- label: typeof c.title === 'string' ? c.title : (c.key as string),
+ label: typeof c.title === 'string' && c.title ? c.title : (c.key as string),
  pinned: c.key === 'contact_id' || c.key === 'actions',
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('recurringInvoices.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('recurringInvoices.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (
  <div>
- <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
- <ExportMenu
- formats={['csv']}
- onExport={(f: ExportFormat) => {
- if (f === 'csv') {
- const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
- downloadCsv('recurring-invoices', data, cols);
- }
- }}
- />
- <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
+ <PageHeader
+ title={t('recurring_invoices', 'Recurring Invoices')}
+ subtitle={t('recurring_invoices_subtitle', 'Automatically generated invoices')}
+ extra={
  <Button type="primary" icon={<PlusOutlined />} onClick={openNew}>{t('new_recurring_invoice')}</Button>
+ }
+ />
+ <KitListCard
+ tabs={tabs}
+ activeTab={status || 'all'}
+ onTabChange={(k) => { setStatus(k === 'all' ? '' : k); setPage(1); }}
+ toolbar={
+ <>
+ <KitSearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder={t('search')} />
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={status ? 1 : 0}
+ onClear={() => { setStatus(''); setPage(1); }}
+ >
+ <Radio.Group
+ value={status || 'all'}
+ onChange={(e) => { setStatus(e.target.value === 'all' ? '' : e.target.value); setPage(1); }}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="all">{t('all', 'All')}</Radio>
+ <Radio value="active">{t('active', 'Active')}</Radio>
+ <Radio value="paused">{t('paused', 'Paused')}</Radio>
+ <Radio value="expired">{t('expired', 'Expired')}</Radio>
+ </Radio.Group>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('status', 'Status')}
+ anyLabel={t('all', 'All')}
+ value={status}
+ onChange={(v) => { setStatus(v); setPage(1); }}
+ options={statusOptions}
+ />
  </div>
- <ResponsiveTableAdapter dataSource={data} columns={visibleColumns} rowKey="id" loading={loading} pagination={{ current: page, total, pageSize: 20, onChange: setPage }} />
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('recurring-invoices', filteredData, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ </div>
+ </>
+ }
+ >
+ <ResponsiveTableAdapter dataSource={filteredData} columns={visibleColumns} rowKey="id" loading={loading} pagination={{ current: page, total: search ? filteredData.length : total, pageSize: 20, onChange: setPage }} />
+ </KitListCard>
  <FormDialog open={modalOpen} onClose={() => setModalOpen(false)} title={t('new_recurring_invoice')} hideFooter>
  <Form form={form} layout="vertical" onFinish={handleSave} initialValues={{ start_date: dayjs(), frequency: 'monthly', payment_terms_days: 30 }}>
  <Space wrap>

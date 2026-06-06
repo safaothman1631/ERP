@@ -99,7 +99,7 @@ export const POSProductGrid: React.FC<POSProductGridProps> = ({
               style={{
                 position: 'absolute',
                 top: 0,
-                left: 0,
+                left: 0, /* rtl-ignore */
                 width: '100%',
                 height: rowHeight,
                 transform: `translateY(${virtualRow.start}px)`,

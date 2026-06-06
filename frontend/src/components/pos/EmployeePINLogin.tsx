@@ -19,7 +19,7 @@ const EmployeePINLogin: React.FC<EmployeePINLoginProps> = ({
 }) => {
   const { t } = useTranslation();
   const { message } = App.useApp();
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
 
   const handlePINSubmit = async (pin: string) => {
     setLoading(true);
@@ -29,7 +29,7 @@ const EmployeePINLogin: React.FC<EmployeePINLoginProps> = ({
         config_id: configId,
       });
       
-      const { token, employee, expires_at } = res.data;
+      const { token, employee, expires_at: _expires_at } = res.data;
       message.success(t('login_successful', { name: employee.name }));
       onSuccess(employee, token);
     } catch (error: any) {

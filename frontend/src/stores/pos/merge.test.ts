@@ -27,22 +27,42 @@ const deviceIdArb = fc.constantFrom('dev-a', 'dev-b', 'dev-c', 'dev-d');
 const lineIdArb = fc.constantFrom('L1', 'L2', 'L3', 'L4', 'L5');
 
 const cartLineArb = (lineId: string): fc.Arbitrary<CartLineRow> =>
-  fc.record({
-    lineId: fc.constant(lineId),
-    itemId: fc.constantFrom('item-1', 'item-2', 'item-3'),
-    itemName: fc.constantFrom('Apple', 'Bread', 'Coffee'),
-    sku: fc.option(fc.constantFrom('SKU1', 'SKU2'), { nil: undefined }),
-    qty: fc.integer({ min: 1, max: 100 }),
-    unitPrice: fc.integer({ min: 0, max: 10_000 }),
-    discountPercent: fc.integer({ min: 0, max: 100 }),
-    taxRate: fc.integer({ min: 0, max: 30 }),
-    note: fc.option(fc.constantFrom('VIP', 'No ice'), { nil: undefined }),
-    course: fc.option(fc.constantFrom('starter', 'main'), { nil: undefined }),
-    qtyUpdatedAt: fc.integer({ min: 1_000, max: 10_000 }),
-    qtyUpdatedBy: deviceIdArb,
-    deletedAt: fc.option(fc.integer({ min: 1_000, max: 10_000 }), { nil: undefined }),
-    deletedBy: fc.option(deviceIdArb, { nil: undefined }),
-  });
+  fc
+    .record({
+      lineId: fc.constant(lineId),
+      itemId: fc.constantFrom('item-1', 'item-2', 'item-3'),
+      itemName: fc.constantFrom('Apple', 'Bread', 'Coffee'),
+      sku: fc.option(fc.constantFrom('SKU1', 'SKU2'), { nil: undefined }),
+      qty: fc.integer({ min: 1, max: 100 }),
+      unitPrice: fc.integer({ min: 0, max: 10_000 }),
+      discountPercent: fc.integer({ min: 0, max: 100 }),
+      taxRate: fc.integer({ min: 0, max: 30 }),
+      note: fc.option(fc.constantFrom('VIP', 'No ice'), { nil: undefined }),
+      course: fc.option(fc.constantFrom('starter', 'main'), { nil: undefined }),
+      qtyUpdatedAt: fc.integer({ min: 1_000, max: 10_000 }),
+      qtyUpdatedBy: deviceIdArb,
+      // A tombstone is a COUPLED pair: a real deletion stamps `deletedAt` and
+      // `deletedBy` together (or the line is alive and both are absent).
+      // Generating one without the other is an impossible production state the
+      // merge legitimately normalises away.
+      //
+      // `deltaFromEdit` additionally pins the deletion's timestamp to be >= the
+      // line's own `qtyUpdatedAt`. A tombstone OLDER than the line's own live
+      // edit is also impossible: you cannot edit a line after deleting it and
+      // still carry the stale delete stamp. Such a state is not idempotent
+      // under merge (`merge(A,A)` correctly resurrects the line by dropping the
+      // outdated tombstone, so it ≠ A) — but it can never occur in production,
+      // so we exclude it from the generator rather than weaken the merge.
+      tombstone: fc.option(
+        fc.record({ deltaFromEdit: fc.integer({ min: 0, max: 9_000 }), by: deviceIdArb }),
+        { nil: undefined },
+      ),
+    })
+    .map(({ tombstone, ...rest }): CartLineRow => ({
+      ...rest,
+      deletedAt: tombstone ? rest.qtyUpdatedAt + tombstone.deltaFromEdit : undefined,
+      deletedBy: tombstone?.by,
+    }));
 
 const linesArb: fc.Arbitrary<Record<string, CartLineRow>> = fc
   .uniqueArray(lineIdArb, { minLength: 0, maxLength: 5 })

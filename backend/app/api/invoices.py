@@ -237,8 +237,13 @@ def void_invoice(invoice_id: str, user: dict = Depends(get_current_user)):
     invoice = repo.get(invoice_id)
     if not invoice or invoice.get("org_id") != user["org_id"]:
         raise HTTPException(status_code=404, detail="وەسڵ نەدۆزرایەوە")
-    
-    repo.update(invoice_id, {"status": "void"})
+
+    # --- P0 Fix 1: reverse the GL entry on void (idempotent) ---
+    if invoice.get("gl_posted") and invoice.get("journal_entry_id"):
+        from app.services.invoice_gl import reverse_invoice_je
+        reverse_invoice_je(user["org_id"], invoice, reversal_date=datetime.utcnow(), user_id=user.get("id"))
+
+    repo.update(invoice_id, {"status": "void", "gl_reversed": True})
     return {"message": "وەسڵ هەڵوەشێنرایەوە", "success": True}
 
 
@@ -253,11 +258,16 @@ def cancel_invoice(invoice_id: str, data: dict = None, user: dict = Depends(get_
         raise HTTPException(status_code=400, detail=f"ناتوانرێت دۆخی '{invoice.get('status')}' هەڵبوەشێنرێت")
     if float(invoice.get("amount_paid", 0) or 0) > 0:
         raise HTTPException(status_code=400, detail="ناتوانرێت وەسڵی بەشە‌پێدراو هەڵبوەشێنرێت — یەکەم پارەکە بگەڕێنەوە")
+    # --- P0 Fix 1: reverse the GL entry on cancel (idempotent) ---
+    if invoice.get("gl_posted") and invoice.get("journal_entry_id"):
+        from app.services.invoice_gl import reverse_invoice_je
+        reverse_invoice_je(user["org_id"], invoice, reversal_date=datetime.utcnow(), user_id=user.get("id"))
     return repo.update(invoice_id, {
         "status": "cancelled",
         "cancelled_at": datetime.utcnow().isoformat(),
         "cancelled_by": user.get("id"),
         "cancellation_reason": (data or {}).get("reason", ""),
+        "gl_reversed": True,
     })
 
 
@@ -270,6 +280,20 @@ def send_invoice(invoice_id: str, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="وەسڵ نەدۆزرایەوە")
     
     repo.update(invoice_id, {"status": "sent", "sent_date": datetime.utcnow()})
+
+    # --- P0 Fix 1: GL auto-post on confirm (idempotent; never breaks confirm) ---
+    try:
+        from app.services.invoice_gl import post_invoice_confirmation_je
+        full_invoice = repo.get(invoice_id)  # fresh copy with computed totals
+        je = post_invoice_confirmation_je(user["org_id"], full_invoice, created_by=user.get("id"))
+        if je and not je.get("skipped"):
+            repo.update(invoice_id, {"gl_posted": True, "journal_entry_id": je["id"]})
+    except Exception as exc:  # GL posting must never break the confirm response
+        import logging
+        logging.getLogger(__name__).error(
+            "invoice_confirm_je_failed", extra={"invoice_id": invoice_id, "error": str(exc)}
+        )
+    # ---------------------------------------------------------------------------
 
     auto_submit_result = None
     try:
@@ -467,7 +491,11 @@ def create_payment_received(data: PaymentReceivedCreate, user: dict = Depends(ge
     legacy_invoice_id = raw.get('invoice_id')
     legacy_account_id = raw.get('account_id') or raw.get('deposit_to_account_id')
     
-    from app.services.invoice_payments import create_payment_received_atomic
+    from app.services.invoice_payments import (
+        create_payment_received_atomic,
+        create_payment_received_with_je_atomic,
+    )
+    from app.services.accounting import AccountingService
 
     payment_id = str(uuid.uuid4())
     payload = {**raw}
@@ -475,8 +503,32 @@ def create_payment_received(data: PaymentReceivedCreate, user: dict = Depends(ge
     payload["auto_numbered"] = auto_numbered
     if legacy_account_id and not payload.get("deposit_to_account_id"):
         payload["deposit_to_account_id"] = legacy_account_id
+
+    # --- P0 Fix 2: post Dr Cash / Cr AR in the SAME transaction as the receipt.
+    # Resolve the deposit + AR accounts; soft-fall back to the no-JE path when the
+    # chart of accounts isn't configured (fresh tenant) so payment never 500s.
+    deposit_id = payload.get("deposit_to_account_id")
     try:
-        payment = create_payment_received_atomic(user["org_id"], payment_id, payload)
+        if not deposit_id:
+            deposit_id = AccountingService._get_account_by_type(user["org_id"], "cash")
+        ar_id = AccountingService._get_account_by_type(user["org_id"], "accounts_receivable")
+        post_je = True
+    except HTTPException:
+        post_je = False
+
+    try:
+        if post_je:
+            payment = create_payment_received_with_je_atomic(
+                user["org_id"], payment_id, payload,
+                deposit_account_id=deposit_id,
+                ar_account_id=ar_id,
+                created_by=user.get("id"),
+                currency_code=payload.get("currency_code", "IQD"),
+                exchange_rate=float(payload.get("exchange_rate", 1.0)),
+                company_id=payload.get("company_id"),
+            )
+        else:
+            payment = create_payment_received_atomic(user["org_id"], payment_id, payload)
     except ValueError as exc:
         raise HTTPException(
             status_code=422,
@@ -806,14 +858,14 @@ def trigger_recurring_invoices(user: dict = Depends(get_current_user)):
         try:
             # Check if we should generate next invoice
             next_due_str = rec.get("next_due_date")
-            next_due = date.fromisoformat(next_due_str) if next_due_str else date.fromisoformat(rec["start_date"][:10])
+            next_due = date.fromisoformat(next_due_str) if next_due_str else date.fromisoformat(str(rec.get("start_date") or "")[:10])
             
             if today < next_due:
                 continue  # Not yet due
             
             end_date_str = rec.get("end_date")
             if end_date_str:
-                end_date = date.fromisoformat(end_date_str[:10])
+                end_date = date.fromisoformat(str(end_date_str)[:10])
                 if today > end_date:
                     # Mark as inactive
                     rec_repo.update(rec["id"], {"is_active": False})
@@ -855,8 +907,14 @@ def trigger_recurring_invoices(user: dict = Depends(get_current_user)):
             rec_repo.update(rec["id"], {"next_due_date": next_due.isoformat()})
             generated.append(invoice)
         except Exception as e:
-            # Log error but continue
-            pass
-    
+            # Surface the failure instead of silently dropping the invoice
+            # (the bare `pass` here was silent data loss — a due recurring
+            # invoice would never be generated and no one would know).
+            import logging
+            logging.getLogger("invoices.recurring").warning(
+                "recurring invoice %s skipped: %s", rec.get("id"), e
+            )
+            continue
+
     return {"generated": len(generated), "invoices": [{"id": i["id"], "invoice_number": i.get("invoice_number")} for i in generated]}
 

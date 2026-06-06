@@ -159,7 +159,7 @@ const GuideDrawer: React.FC<GuideDrawerProps> = ({ open, onClose }) => {
  style={{
  width: 200,
  minWidth: 200,
- borderInlineEnd: '1px solid #f0f0f0',
+ borderInlineEnd: '1px solid var(--border)',
  overflowY: 'auto',
  }}
  >

@@ -29,9 +29,10 @@ function buildRoleTheme(
     id,
     accent,
     accentMuted,
-    glassBorderGlow: `0 0 0 1px ${accentMuted}, 0 8px 32px ${accent}22`,
-    heroGradientLight: `linear-gradient(135deg, ${accent}18 0%, transparent 55%)`,
-    heroGradientDark: `linear-gradient(135deg, ${accent}28 0%, transparent 60%)`,
+    glassBorderGlow: `0 0 0 1px ${accentMuted}, 0 12px 40px ${accent}26`,
+    // Richer two-stop accent wash so each role's home reads as distinctly "theirs".
+    heroGradientLight: `linear-gradient(135deg, ${accent}24 0%, ${accent}0D 38%, transparent 72%)`,
+    heroGradientDark: `linear-gradient(135deg, ${accent}38 0%, ${accent}16 42%, transparent 74%)`,
     defaultRoute,
     navProfile,
     quickActions,
@@ -39,18 +40,24 @@ function buildRoleTheme(
   };
 }
 
+// Accents map onto the Vertex "Slate & Signal" ROLE_ACCENTS:
+//   owner/admin = violet · accountant(finance) = emerald · sales = blue ·
+//   inventory = cyan · cashier(pos) = amber · hr = magenta.
+// Red stays reserved for danger, so no role uses it. Roles without a Vertex
+// persona (manager/purchase/projects/personal/readonly) keep distinct,
+// harmonious slate-adjacent hues.
 export const ROLE_THEMES: Record<RoleThemeId, RoleTheme> = {
-  executive: buildRoleTheme('executive', '#D97706', 'rgba(217,119,6,0.35)', 'full_admin', '/dashboard', [QA.settings, QA.moduleReq, QA.users], { isOwnerAccent: true }),
-  administrator: buildRoleTheme('administrator', palette.primary500, 'rgba(31,111,235,0.35)', 'full_admin', '/dashboard', [QA.users, QA.settings, QA.moduleReq]),
+  executive: buildRoleTheme('executive', '#7B61FF', 'rgba(123,97,255,0.35)', 'full_admin', '/dashboard', [QA.settings, QA.moduleReq, QA.users], { isOwnerAccent: true }),
+  administrator: buildRoleTheme('administrator', '#7B61FF', 'rgba(123,97,255,0.35)', 'full_admin', '/dashboard', [QA.users, QA.settings, QA.moduleReq]),
   manager: buildRoleTheme('manager', '#0D9488', 'rgba(13,148,136,0.35)', 'manager_business', '/dashboard', [QA.newInvoice, QA.purchase]),
-  finance: buildRoleTheme('finance', palette.success600, 'rgba(22,163,74,0.35)', 'finance_cluster', '/dashboard', [QA.journal, QA.newInvoice]),
-  sales: buildRoleTheme('sales', palette.primary500, 'rgba(31,111,235,0.35)', 'sales_cluster', '/crm/leads', [QA.newQuote, QA.crm]),
+  finance: buildRoleTheme('finance', '#1FAE63', 'rgba(31,174,99,0.35)', 'finance_cluster', '/dashboard', [QA.journal, QA.newInvoice]),
+  sales: buildRoleTheme('sales', '#2E8FE0', 'rgba(46,143,224,0.35)', 'sales_cluster', '/crm/leads', [QA.newQuote, QA.crm]),
   purchase: buildRoleTheme('purchase', '#7C3AED', 'rgba(124,58,237,0.35)', 'warehouse_cluster', '/purchase-orders', [QA.purchase]),
-  inventory: buildRoleTheme('inventory', '#0891B2', 'rgba(8,145,178,0.35)', 'warehouse_cluster', '/inventory', [QA.inventory]),
-  pos: buildRoleTheme('pos', palette.error500, 'rgba(220,38,38,0.35)', 'pos_minimal', '/pos', [QA.openPos]),
-  hr: buildRoleTheme('hr', '#8B5CF6', 'rgba(139,92,246,0.35)', 'hr_cluster', '/hr', [QA.hr]),
+  inventory: buildRoleTheme('inventory', '#06B6D4', 'rgba(6,182,212,0.35)', 'warehouse_cluster', '/inventory', [QA.inventory]),
+  pos: buildRoleTheme('pos', '#F59E0B', 'rgba(245,158,11,0.35)', 'pos_minimal', '/pos', [QA.openPos]),
+  hr: buildRoleTheme('hr', '#C026D3', 'rgba(192,38,211,0.35)', 'hr_cluster', '/hr', [QA.hr]),
   projects: buildRoleTheme('projects', '#6366F1', 'rgba(99,102,241,0.35)', 'personal_minimal', '/projects', [QA.projects]),
-  personal: buildRoleTheme('personal', palette.ink500, 'rgba(100,116,139,0.25)', 'personal_minimal', '/dashboard', []),
+  personal: buildRoleTheme('personal', palette.ink500, 'rgba(107,117,133,0.25)', 'personal_minimal', '/dashboard', []),
   readonly: buildRoleTheme('readonly', '#94A3B8', 'rgba(148,163,184,0.2)', 'readonly', '/dashboard', []),
 };
 

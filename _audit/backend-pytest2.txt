@@ -1,0 +1,9 @@
+# PYTEST (OTEL disabled) Wed Jun  3 01:30:26 AST 2026
+================================== FAILURES ===================================
+============================== warnings summary ===============================
+=========================== short test summary info ===========================
+FAILED tests/test_firestore_audit_tool.py::test_firestore_audit_exits_zero - ...
+FAILED tests/test_redis_rate_limit_config.py::test_build_limiter_passes_storage_uri_kwarg
+FAILED tests/test_region_alignment_tool.py::test_verify_region_alignment_exits_zero
+3 failed, 1388 passed, 5 warnings in 43.35s
+# DONE Wed Jun  3 01:31:18 AST 2026

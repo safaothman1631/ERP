@@ -131,7 +131,7 @@ function loadRegistry(): Promise<HelpRegistry | null> {
       // Structured warn for production telemetry; console.warn is the lingua
       // franca consumed by both dev tools and the existing prod logger.
       try {
-        // eslint-disable-next-line no-console
+         
         console.warn('[useHelp] failed to load help registry chunk', err);
       } catch {
         /* noop — never throw from the hook (R8.4) */
@@ -339,10 +339,10 @@ function isDevEnvironment(): boolean {
 function logFallback(key: string, sectionId: SectionId, lang: string): void {
   try {
     if (isDevEnvironment()) {
-      // eslint-disable-next-line no-console
+       
       console.warn(`[useHelp] missing translation for "${key}" in lang="${lang}" (sectionId="${sectionId}")`);
     } else {
-      // eslint-disable-next-line no-console
+       
       console.warn('[useHelp] translation fallback', {
         event: 'i18n.fallback',
         sectionId,

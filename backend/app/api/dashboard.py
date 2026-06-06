@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends
 from datetime import datetime, timedelta
 from app.firestore.invoices import InvoiceRepository, PaymentReceivedRepository
 from app.firestore.expenses import ExpenseRepository
-from app.firestore.bills import BillRepository
+from app.firestore.bills import BillRepository, PaymentMadeRepository
 from app.firestore.contacts import ContactRepository
+from app.firestore.banking import BankAccountRepository
 from app.services.auth import get_current_user
 from app.schemas.schemas import DashboardResponse
 
@@ -25,6 +26,38 @@ def _parse_date(val):
         except Exception:
             return None
     return None
+
+
+def _last_12_month_keys(now: datetime) -> list[str]:
+    """Return the last 12 calendar-month keys (oldest→newest) as ``YYYY-MM``."""
+    keys: list[str] = []
+    y, m = now.year, now.month
+    for _ in range(12):
+        keys.append(f"{y:04d}-{m:02d}")
+        m -= 1
+        if m == 0:
+            m = 12
+            y -= 1
+    keys.reverse()
+    return keys
+
+
+def _month_key_of(val) -> str | None:
+    """Bucket key (``YYYY-MM``) for a datetime/ISO-string value, or ``None``."""
+    dt = _parse_date(val)
+    if dt is None:
+        return None
+    return f"{dt.year:04d}-{dt.month:02d}"
+
+
+def _num(val) -> float:
+    """Best-effort float coercion that never raises."""
+    try:
+        if val is None:
+            return 0.0
+        return float(val)
+    except (TypeError, ValueError):
+        return 0.0
 
 router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
 
@@ -130,6 +163,198 @@ def get_dashboard(user: dict = Depends(get_current_user)):
             "expense": float(month_expense),
         })
 
+    # ──────────────────────────────────────────────────────────────────────
+    #  Additive analytics (purely optional). Each block is independently
+    #  wrapped in try/except and defaults to [] on ANY error so a new field
+    #  can never break the endpoint or the existing fields/response shape.
+    #  Reads are streamed once per collection (not N queries per month).
+    # ──────────────────────────────────────────────────────────────────────
+    month_keys = _last_12_month_keys(now)
+
+    # Stream each source collection a single time, bucketing in Python.
+    # Wrapped so a streaming failure degrades to empty maps rather than 500.
+    inv_by_month: dict[str, float] = {k: 0.0 for k in month_keys}
+    exp_by_month: dict[str, float] = {k: 0.0 for k in month_keys}
+    pay_in_by_month: dict[str, float] = {k: 0.0 for k in month_keys}
+    pay_out_by_month: dict[str, float] = {k: 0.0 for k in month_keys}
+    customer_totals: dict[str, float] = {}
+    open_invoices: list[dict] = []
+
+    try:
+        for inv in inv_repo.stream_org_docs():
+            if inv.get("status") == "void":
+                continue
+            total = _num(inv.get("total"))
+            mk = _month_key_of(inv.get("date"))
+            if mk in inv_by_month:
+                inv_by_month[mk] += total
+            # Top-customer aggregation (by invoiced amount).
+            cid = inv.get("contact_id")
+            if cid:
+                customer_totals[cid] = customer_totals.get(cid, 0.0) + total
+            # Aging needs every still-open invoice.
+            if _num(inv.get("balance_due")) > 0 and inv.get("status") not in ("paid", "void", "cancelled"):
+                open_invoices.append(inv)
+    except Exception:
+        inv_by_month = {k: 0.0 for k in month_keys}
+        customer_totals = {}
+        open_invoices = []
+
+    try:
+        for exp in expense_repo.stream_org_docs():
+            if exp.get("status") == "void":
+                continue
+            mk = _month_key_of(exp.get("date"))
+            if mk in exp_by_month:
+                exp_by_month[mk] += _num(exp.get("amount"))
+    except Exception:
+        exp_by_month = {k: 0.0 for k in month_keys}
+
+    try:
+        for pmt in payment_repo.stream_org_docs():
+            mk = _month_key_of(pmt.get("date"))
+            if mk in pay_in_by_month:
+                pay_in_by_month[mk] += _num(pmt.get("amount"))
+    except Exception:
+        pay_in_by_month = {k: 0.0 for k in month_keys}
+
+    try:
+        pay_made_repo = PaymentMadeRepository(org_id)
+        for pmt in pay_made_repo.stream_org_docs():
+            mk = _month_key_of(pmt.get("date"))
+            if mk in pay_out_by_month:
+                pay_out_by_month[mk] += _num(pmt.get("amount"))
+    except Exception:
+        pay_out_by_month = {k: 0.0 for k in month_keys}
+
+    # revenue_trend: last ~12 months of invoiced revenue vs expense.
+    try:
+        revenue_trend = [
+            {
+                "month": k,
+                "revenue": round(inv_by_month.get(k, 0.0), 2),
+                "expense": round(exp_by_month.get(k, 0.0), 2),
+            }
+            for k in month_keys
+        ]
+    except Exception:
+        revenue_trend = []
+
+    # cash_flow: last ~12 months of cash in vs cash out (payments + expenses).
+    try:
+        cash_flow = []
+        for k in month_keys:
+            inflow = round(pay_in_by_month.get(k, 0.0), 2)
+            outflow = round(pay_out_by_month.get(k, 0.0) + exp_by_month.get(k, 0.0), 2)
+            cash_flow.append({
+                "month": k,
+                "inflow": inflow,
+                "outflow": outflow,
+                "net": round(inflow - outflow, 2),
+            })
+    except Exception:
+        cash_flow = []
+
+    # top_customers: top 5 contacts by invoiced amount (names resolved once).
+    try:
+        top_pairs = sorted(customer_totals.items(), key=lambda kv: kv[1], reverse=True)[:5]
+        name_by_id: dict[str, str] = {}
+        try:
+            for cid, _amt in top_pairs:
+                c = contact_repo.get(cid)
+                if c:
+                    name_by_id[cid] = (
+                        c.get("display_name")
+                        or c.get("company_name")
+                        or c.get("name")
+                        or cid
+                    )
+        except Exception:
+            name_by_id = {}
+        top_customers = [
+            {"name": name_by_id.get(cid, cid), "amount": round(amt, 2)}
+            for cid, amt in top_pairs
+        ]
+    except Exception:
+        top_customers = []
+
+    # aging: receivables aging buckets (0-30 / 31-60 / 61-90 / 90+) by balance.
+    try:
+        buckets = {"0-30": 0.0, "31-60": 0.0, "61-90": 0.0, "90+": 0.0}
+        for inv in open_invoices:
+            bal = _num(inv.get("balance_due"))
+            if bal <= 0:
+                continue
+            due = _parse_date(inv.get("due_date")) or _parse_date(inv.get("date"))
+            days = (now - due).days if due else 0
+            if days <= 30:
+                buckets["0-30"] += bal
+            elif days <= 60:
+                buckets["31-60"] += bal
+            elif days <= 90:
+                buckets["61-90"] += bal
+            else:
+                buckets["90+"] += bal
+        aging = [{"range": r, "amount": round(v, 2)} for r, v in buckets.items()]
+    except Exception:
+        aging = []
+
+    # Sparklines: ~12-point series derived from the buckets computed above.
+    try:
+        income_sparkline = [round(pay_in_by_month.get(k, 0.0), 2) for k in month_keys]
+    except Exception:
+        income_sparkline = []
+    try:
+        expense_sparkline = [round(exp_by_month.get(k, 0.0), 2) for k in month_keys]
+    except Exception:
+        expense_sparkline = []
+    # Receivable sparkline: running open-receivable proxy = cumulative
+    # (invoiced − collected) per month, clamped at 0.
+    try:
+        receivable_sparkline = []
+        running = 0.0
+        for k in month_keys:
+            running += inv_by_month.get(k, 0.0) - pay_in_by_month.get(k, 0.0)
+            receivable_sparkline.append(round(max(running, 0.0), 2))
+    except Exception:
+        receivable_sparkline = []
+    # Payable sparkline: cumulative (expenses − payments made) per month.
+    try:
+        payable_sparkline = []
+        running = 0.0
+        for k in month_keys:
+            running += exp_by_month.get(k, 0.0) - pay_out_by_month.get(k, 0.0)
+            payable_sparkline.append(round(max(running, 0.0), 2))
+    except Exception:
+        payable_sparkline = []
+
+    # cash_breakdown: share of balance per bank account (+ Cash), ~100%.
+    try:
+        cash_breakdown = []
+        bank_repo = BankAccountRepository(org_id)
+        accounts = list(bank_repo.stream_org_docs())
+        slices: list[tuple[str, float]] = []
+        for acc in accounts:
+            name = (
+                acc.get("account_name")
+                or acc.get("name")
+                or acc.get("bank_name")
+                or "Account"
+            )
+            bal = _num(acc.get("current_balance"))
+            if acc.get("balance") is not None and not acc.get("current_balance"):
+                bal = _num(acc.get("balance"))
+            if bal > 0:
+                slices.append((name, bal))
+        total_bal = sum(b for _n, b in slices)
+        if total_bal > 0:
+            cash_breakdown = [
+                {"name": n, "percent": round(b / total_bal * 100, 1)}
+                for n, b in slices
+            ]
+    except Exception:
+        cash_breakdown = []
+
     result = DashboardResponse(
         total_receivable=float(total_receivable),
         total_payable=float(total_payable),
@@ -151,6 +376,15 @@ def get_dashboard(user: dict = Depends(get_current_user)):
             for exp in recent_expenses
         ],
         income_expense_chart=income_chart,
+        revenue_trend=revenue_trend,
+        cash_flow=cash_flow,
+        top_customers=top_customers,
+        aging=aging,
+        receivable_sparkline=receivable_sparkline,
+        payable_sparkline=payable_sparkline,
+        income_sparkline=income_sparkline,
+        expense_sparkline=expense_sparkline,
+        cash_breakdown=cash_breakdown,
     )
     _cache.set(_cache_key, result)
     return result

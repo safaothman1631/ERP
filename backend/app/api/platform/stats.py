@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends
 
-from app.firebase_client import get_db
+from app.firebase_client import get_db, safe_query
 from app.services.onboarding_prefs import OnboardingPreferencesRepository, fetch_prefs
 from app.services.org_license import get_license
 
@@ -17,7 +17,7 @@ router = APIRouter()
 @router.get("/stats")
 def platform_stats(user: dict = Depends(require_platform_admin)):
     db = get_db()
-    orgs = list(db.collection("organizations").limit(5000).stream())
+    orgs = safe_query(db.collection("organizations").limit(5000))
     active = suspended = deleted = 0
     expiring_licenses = 0
     cutoff = (datetime.utcnow() + timedelta(days=30)).isoformat()
@@ -37,11 +37,11 @@ def platform_stats(user: dict = Depends(require_platform_admin)):
         if exp and exp <= cutoff and exp >= now:
             expiring_licenses += 1
 
-    users = list(db.collection("users").where("is_active", "==", True).limit(10000).stream())
+    users = safe_query(db.collection("users").where("is_active", "==", True).limit(10000))
     locked = sum(1 for u in users if u.to_dict().get("locked_until"))
 
-    pending_requests = list(
-        db.collection("module_access_requests").where("status", "==", "pending").limit(1000).stream()
+    pending_requests = safe_query(
+        db.collection("module_access_requests").where("status", "==", "pending").limit(1000)
     )
 
     return {

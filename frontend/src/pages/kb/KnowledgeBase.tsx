@@ -4,7 +4,7 @@ import { SearchOutlined, FileTextOutlined, FolderOutlined } from '@ant-design/ic
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { PageHeader, LoadingSkeleton } from '../../design-system';
+import { PageHeader, LoadingSkeleton, SectionCard } from '../../design-system';
 import { InlineError } from '../../components/feedback/InlineError';
 import { useLoadingState } from '../../hooks/useLoadingState';
 import { space } from '../../theme/tokens';
@@ -50,7 +50,7 @@ export default function KnowledgeBase() {
       const arts = artRes.data.items || [];
       setArticles(arts);
       setPopular(arts.sort((a: Article, b: Article) => (b.view_count || 0) - (a.view_count || 0)).slice(0, 5));
-    } catch (err) {
+    } catch (_err) {
       setError(true);
     } finally {
       setLoading(false);
@@ -84,13 +84,13 @@ export default function KnowledgeBase() {
       <PageHeader title={t('kb.knowledge_base')} subtitle={t('kb.browse_articles')} />
       <Row gutter={[16, 16]} style={{ marginTop: space.md }}>
         <Col xs={24} md={6}>
-          <Card title={t('kb.categories')}>
+          <SectionCard title={t('kb.categories')}>
             <Tree
               treeData={treeData}
               onSelect={(keys) => setSelectedCat(keys[0] as string || null)}
               showIcon
             />
-          </Card>
+          </SectionCard>
         </Col>
         <Col xs={24} md={18}>
           <Input
@@ -101,7 +101,7 @@ export default function KnowledgeBase() {
             style={{ marginBottom: space.md }}
             size="large"
           />
-          <Card title={t('kb.articles')}>
+          <SectionCard title={t('kb.articles')}>
             {filteredArticles.length > 0 ? (
               <List
                 grid={{ gutter: 16, xs: 1, sm: 2, md: 2, lg: 3, xl: 3 }}
@@ -114,7 +114,7 @@ export default function KnowledgeBase() {
                       style={{ height: '100%' }}
                     >
                       <Card.Meta
-                        avatar={<FileTextOutlined style={{ fontSize: 24 }} />}
+                        avatar={<FileTextOutlined style={{ fontSize: 24, color: 'var(--accent-500)' }} />}
                         title={a.title}
                         description={
                           <div>
@@ -134,21 +134,21 @@ export default function KnowledgeBase() {
             ) : (
               <Empty description={t('kb.no_articles')} />
             )}
-          </Card>
-          <Card title={t('kb.popular_articles')} style={{ marginTop: space.md }}>
+          </SectionCard>
+          <SectionCard title={t('kb.popular_articles')} style={{ marginTop: space.md }}>
             <List
               dataSource={popular}
               renderItem={(a) => (
                 <List.Item>
                   <a onClick={() => navigate(`/kb/articles/${a.id}`)}>{a.title}</a>
-                  <span style={{ marginLeft: space.sm, color: '#999' }}>
+                  <span style={{ marginInlineStart: space.sm, color: 'var(--ink-400)' }}>
                     ({a.view_count || 0} {t('kb.views')})
                   </span>
                 </List.Item>
               )}
               locale={{ emptyText: t('kb.no_articles') }}
             />
-          </Card>
+          </SectionCard>
         </Col>
       </Row>
     </div>

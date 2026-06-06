@@ -682,11 +682,11 @@ export default function OnboardingWizard({ open, firstTime = false, onClose, onC
 
             <div>
 
-              <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>{t('onb_industry_label')}</div>
+              <div style={{ fontSize: 11, color: 'var(--ink-500)', marginBottom: 4 }}>{t('onb_industry_label')}</div>
 
-              <div style={{ fontWeight: 700, fontSize: 16, color: '#0f172a' }}>{ind.title}</div>
+              <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--ink-900)' }}>{ind.title}</div>
 
-              <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>{ind.description}</div>
+              <div style={{ fontSize: 13, color: 'var(--ink-500)', marginTop: 4 }}>{ind.description}</div>
 
             </div>
 

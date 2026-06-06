@@ -1,14 +1,20 @@
 import type React from 'react';
-import { useEffect, useState } from 'react';
-import { Tabs, Button, Space, Input, Form, Select, InputNumber, Tag, Popconfirm } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import { Button, Space, Input, Form, Select, InputNumber, Radio } from 'antd';
 
 import { message } from '../../utils/message';
-import { PlusOutlined, SearchOutlined, DeleteOutlined, FileTextOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import api from '../../api';
-import { PageHeader, StatusTag } from '../../design-system';
-import { space } from '../../theme/tokens';
+import { PageHeader, StatusTag, type ColumnVisibilityItem } from '../../design-system';
+import KitListCard, { type KitListTab } from '../../design-system/KitListCard';
+import KitListToolbarActions from '../../design-system/KitListToolbarActions';
+import KitRowActions from '../../design-system/KitRowActions';
+import KitFiltersButton from '../../design-system/KitFiltersButton';
+import KitStatusFilter from '../../design-system/KitStatusFilter';
+import KitSearchInput from '../../design-system/KitSearchInput';
+import { downloadCsv } from '../../utils/exportCsv';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
@@ -53,18 +59,36 @@ interface Tenant {
  national_id?: string;
 }
 
+/** Initials for the kit's avatar cell (first letters of the first two words). */
+const initialsOf = (name: string): string =>
+ String(name || '?')
+ .trim()
+ .split(/\s+/)
+ .map((w) => w[0])
+ .join('')
+ .slice(0, 2)
+ .toUpperCase();
+
 const PropertiesAndLeases: React.FC = () => {
  const { t } = useTranslation();
- const [activeTab, setActiveTab] = useState('1');
+ const [activeTab, setActiveTab] = useState<'1' | '2'>('1');
  const [properties, setProperties] = useState<Property[]>([]);
  const [leases, setLeases] = useState<Lease[]>([]);
  const [units, setUnits] = useState<Unit[]>([]);
  const [tenants, setTenants] = useState<Tenant[]>([]);
  const [loading, setLoading] = useState(false);
  const [search, setSearch] = useState('');
+ const [leaseStatus, setLeaseStatus] = useState<string>('');
+ const [propertyType, setPropertyType] = useState<string>('');
  const [drawer, setDrawer] = useState(false);
  const [drawerType, setDrawerType] = useState<'property' | 'lease'>('property');
  const [form] = Form.useForm();
+ const [hiddenColsProperty, setHiddenColsProperty] = useState<string[]>(() => {
+ try { return JSON.parse(localStorage.getItem('real-estate.properties.hiddenCols') || '[]'); } catch { return []; }
+ });
+ const [hiddenColsLease, setHiddenColsLease] = useState<string[]>(() => {
+ try { return JSON.parse(localStorage.getItem('real-estate.leases.hiddenCols') || '[]'); } catch { return []; }
+ });
 
  const fetchProperties = async () => {
  setLoading(true);
@@ -160,112 +184,202 @@ const PropertiesAndLeases: React.FC = () => {
  form.resetFields();
  };
 
- const filteredProperties = properties.filter((p) =>
- !search || p.name?.toLowerCase().includes(search.toLowerCase()) || p.address?.toLowerCase().includes(search.toLowerCase())
- );
-
- const filteredLeases = leases.filter((l) => {
- const tenant = tenants.find((t) => t.id === l.tenant_id);
- return !search || tenant?.name?.toLowerCase().includes(search.toLowerCase());
+ const filteredProperties = properties.filter((p) => {
+ const matchSearch = !search || p.name?.toLowerCase().includes(search.toLowerCase()) || p.address?.toLowerCase().includes(search.toLowerCase());
+ const matchType = !propertyType || p.property_type === propertyType;
+ return matchSearch && matchType;
  });
 
- const propertyColumns: any[] = [
- { title: t('real_estate.property_name'), dataIndex: 'name', key: 'name', width: 200 },
- { title: t('real_estate.address'), dataIndex: 'address', key: 'address', width: 250 },
+ const filteredLeases = leases.filter((l) => {
+ const tenant = tenants.find((tn) => tn.id === l.tenant_id);
+ const matchSearch = !search || tenant?.name?.toLowerCase().includes(search.toLowerCase());
+ const matchStatus = !leaseStatus || l.status === leaseStatus;
+ return matchSearch && matchStatus;
+ });
+
+ // Kit list tabs (Properties / Leases) — entity switch.
+ const tabs: KitListTab[] = [
+ { key: '1', label: t('real_estate.properties') },
+ { key: '2', label: t('real_estate.leases') },
+ ];
+
+ const allPropertyColumns: any[] = [
+ {
+ title: t('real_estate.property_name'), dataIndex: 'name', key: 'name', width: 220,
+ render: (v: string) => (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{initialsOf(v)}</span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{v}</span>
+ </div>
+ ),
+ },
+ {
+ title: t('real_estate.address'), dataIndex: 'address', key: 'address', width: 250,
+ render: (v: string) => <span style={{ color: 'var(--ink-700)' }}>{v || '—'}</span>,
+ },
  {
  title: t('real_estate.type'),
  dataIndex: 'property_type',
  key: 'property_type',
- width: 130,
- render: (v: string) => <Tag>{t(`real_estate.type_${v}`)}</Tag>,
+ width: 140,
+ render: (v: string) => (
+ <span style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--surface-2)', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-600)',
+ }}>{t(`real_estate.type_${v}`)}</span>
+ ),
  },
  {
  title: t('real_estate.units'),
  dataIndex: 'total_units',
  key: 'total_units',
- width: 80,
- align: 'center',
+ width: 90,
+ align: 'center' as const,
+ render: (v: number) => (
+ <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-900)', fontWeight: 500 }}>{v}</span>
+ ),
  },
  {
  title: t('real_estate.purchase_price'),
  dataIndex: 'purchase_price',
  key: 'purchase_price',
- width: 150,
- align: 'right',
- render: (v: number) => v.toLocaleString(),
+ width: 160,
+ align: 'right' as const,
+ render: (v: number) => (
+ <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-900)', fontWeight: 600 }}>
+ {v.toLocaleString()}
+ </span>
+ ),
  },
  {
- title: t('actions'),
- key: 'actions',
- width: 100,
- align: 'center',
- render: (_: any, rec: Property) => (
- <Popconfirm title={t('confirm_delete')} onConfirm={() => handleDelete(rec.id, 'property')}>
- <Button type="text" danger icon={<DeleteOutlined />} />
- </Popconfirm>
+ title: '', key: 'actions', width: 56, align: 'center' as const,
+ render: (_: any, record: Property) => (
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true, onClick: () => handleDelete(record.id, 'property') },
+ ]}
+ />
  ),
  },
  ];
 
- const leaseColumns: any[] = [
+ const allLeaseColumns: any[] = [
  {
  title: t('real_estate.tenant'),
  dataIndex: 'tenant_id',
  key: 'tenant_id',
- width: 150,
- render: (tid: string) => tenants.find((t) => t.id === tid)?.name || tid,
+ width: 180,
+ render: (tid: string) => {
+ const name = tenants.find((tn) => tn.id === tid)?.name || tid;
+ return (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{initialsOf(name)}</span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{name}</span>
+ </div>
+ );
+ },
  },
  {
  title: t('real_estate.property'),
  dataIndex: 'unit_id',
  key: 'unit_id',
- width: 150,
+ width: 180,
  render: (uid: string) => {
  const unit = units.find((u) => u.id === uid);
  const prop = properties.find((p) => p.id === unit?.property_id);
- return prop?.name || uid;
+ return <span style={{ color: 'var(--ink-700)' }}>{prop?.name || uid}</span>;
  },
  },
- { title: t('real_estate.start_date'), dataIndex: 'start_date', key: 'start_date', width: 120 },
- { title: t('real_estate.end_date'), dataIndex: 'end_date', key: 'end_date', width: 120 },
+ {
+ title: t('real_estate.start_date'), dataIndex: 'start_date', key: 'start_date', width: 130,
+ render: (v: string) => (
+ <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-700)', fontSize: 12.5 }}>{v}</span>
+ ),
+ },
+ {
+ title: t('real_estate.end_date'), dataIndex: 'end_date', key: 'end_date', width: 130,
+ render: (v: string) => (
+ <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-700)', fontSize: 12.5 }}>{v}</span>
+ ),
+ },
  {
  title: t('real_estate.rent'),
  dataIndex: 'monthly_rent',
  key: 'monthly_rent',
- width: 130,
- align: 'right',
- render: (v: number) => v.toLocaleString(),
+ width: 140,
+ align: 'right' as const,
+ render: (v: number) => (
+ <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-900)', fontWeight: 600 }}>
+ {v.toLocaleString()}
+ </span>
+ ),
  },
  {
  title: t('real_estate.status'),
  dataIndex: 'status',
  key: 'status',
- width: 100,
+ width: 110,
  render: (s: string) => (
  <StatusTag status={s === 'active' ? 'success' : s === 'expired' ? 'error' : 'warning'} />
  ),
  },
  {
- title: t('actions'),
- key: 'actions',
- width: 180,
- align: 'center',
- render: (_: any, rec: Lease) => (
- <Space>
- <Button
- type="primary"
- icon={<FileTextOutlined />}
- onClick={() => handleGenerateInvoice(rec.id)}
- >
- {t('real_estate.generate_invoice')}
- </Button>
- <Popconfirm title={t('confirm_delete')} onConfirm={() => handleDelete(rec.id, 'lease')}>
- <Button type="text" danger icon={<DeleteOutlined />} />
- </Popconfirm>
- </Space>
+ title: '', key: 'actions', width: 56, align: 'center' as const,
+ render: (_: any, record: Lease) => (
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'invoice', icon: <FileTextOutlined />, label: t('real_estate.generate_invoice'), onClick: () => handleGenerateInvoice(record.id) },
+ { type: 'divider' },
+ { key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true, onClick: () => handleDelete(record.id, 'lease') },
+ ]}
+ />
  ),
  },
  ];
+
+ const propertyColumns = useMemo(
+ () => allPropertyColumns.filter((c) => !hiddenColsProperty.includes(c.key)),
+ [hiddenColsProperty, t, properties],
+ );
+ const leaseColumns = useMemo(
+ () => allLeaseColumns.filter((c) => !hiddenColsLease.includes(c.key)),
+ [hiddenColsLease, t, tenants, units, properties, leases],
+ );
+
+ const propertyColumnsMeta: ColumnVisibilityItem[] = allPropertyColumns.map((c) => ({
+ key: c.key,
+ label: typeof c.title === 'string' ? c.title : c.key,
+ pinned: c.key === 'name' || c.key === 'actions',
+ }));
+ const leaseColumnsMeta: ColumnVisibilityItem[] = allLeaseColumns.map((c) => ({
+ key: c.key,
+ label: typeof c.title === 'string' ? c.title : c.key,
+ pinned: c.key === 'tenant_id' || c.key === 'actions',
+ }));
+
+ const persistHiddenProperty = (next: string[]) => {
+ setHiddenColsProperty(next);
+ try { localStorage.setItem('real-estate.properties.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
+ };
+ const persistHiddenLease = (next: string[]) => {
+ setHiddenColsLease(next);
+ try { localStorage.setItem('real-estate.leases.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
+ };
+
+ const isProperties = activeTab === '1';
 
  return (
  <>
@@ -274,47 +388,136 @@ const PropertiesAndLeases: React.FC = () => {
  subtitle={t('real_estate.subtitle')}
  breadcrumb={[{ label: t('real_estate.title') }]}
  extra={
- <Button type="primary" icon={<PlusOutlined />} onClick={() => openDrawer(activeTab === '1' ? 'property' : 'lease')}>
- {activeTab === '1' ? t('real_estate.add_property') : t('real_estate.add_lease')}
+ <Button type="primary" icon={<PlusOutlined />} onClick={() => openDrawer(isProperties ? 'property' : 'lease')}>
+ {isProperties ? t('real_estate.add_property') : t('real_estate.add_lease')}
  </Button>
  }
  />
 
- <div style={{ background: '#fff', padding: space.lg, borderRadius: 8 }}>
- <Space style={{ marginBottom: space.md, width: '100%', justifyContent: 'space-between' }}>
- <Input
- placeholder={t('search')}
- prefix={<SearchOutlined />}
- value={search}
- onChange={(e) => setSearch(e.target.value)}
- style={{ width: 300 }}
- allowClear
+ <KitListCard
+ tabs={tabs}
+ activeTab={activeTab}
+ onTabChange={(k) => { setActiveTab(k as '1' | '2'); setSearch(''); setLeaseStatus(''); setPropertyType(''); }}
+ toolbar={
+ <>
+ <KitSearchInput value={search} onChange={(v) => { setSearch(v); }} placeholder={t('search')} />
+ {isProperties ? (
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={propertyType ? 1 : 0}
+ onClear={() => setPropertyType('')}
+ >
+ <Radio.Group
+ value={propertyType || 'all'}
+ onChange={(e) => setPropertyType(e.target.value === 'all' ? '' : e.target.value)}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="all">{t('all', 'All')}</Radio>
+ <Radio value="residential">{t('real_estate.type_residential')}</Radio>
+ <Radio value="commercial">{t('real_estate.type_commercial')}</Radio>
+ <Radio value="industrial">{t('real_estate.type_industrial')}</Radio>
+ <Radio value="land">{t('real_estate.type_land')}</Radio>
+ <Radio value="mixed">{t('real_estate.type_mixed')}</Radio>
+ </Radio.Group>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('real_estate.type', 'Type')}
+ anyLabel={t('all', 'All')}
+ value={propertyType}
+ onChange={(v) => setPropertyType(v)}
+ options={[
+ { value: 'residential', label: t('real_estate.type_residential') },
+ { value: 'commercial', label: t('real_estate.type_commercial') },
+ { value: 'industrial', label: t('real_estate.type_industrial') },
+ { value: 'land', label: t('real_estate.type_land') },
+ { value: 'mixed', label: t('real_estate.type_mixed') },
+ ]}
  />
- </Space>
-
- <Tabs activeKey={activeTab} onChange={setActiveTab}>
- <Tabs.TabPane tab={t('real_estate.properties')} key="1">
- <ResponsiveTableAdapter
- columns={propertyColumns}
- dataSource={filteredProperties}
- rowKey="id"
- loading={loading}
- pagination={{ pageSize: 20 }}
- scroll={{ x: 900 }}
- />
- </Tabs.TabPane>
- <Tabs.TabPane tab={t('real_estate.leases')} key="2">
- <ResponsiveTableAdapter
- columns={leaseColumns}
- dataSource={filteredLeases}
- rowKey="id"
- loading={loading}
- pagination={{ pageSize: 20 }}
- scroll={{ x: 1100 }}
- />
- </Tabs.TabPane>
- </Tabs>
  </div>
+ ) : (
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={leaseStatus ? 1 : 0}
+ onClear={() => setLeaseStatus('')}
+ >
+ <Radio.Group
+ value={leaseStatus || 'all'}
+ onChange={(e) => setLeaseStatus(e.target.value === 'all' ? '' : e.target.value)}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="all">{t('all', 'All')}</Radio>
+ <Radio value="active">{t('real_estate.status_active')}</Radio>
+ <Radio value="expired">{t('real_estate.status_expired')}</Radio>
+ <Radio value="terminated">{t('real_estate.status_terminated')}</Radio>
+ <Radio value="pending">{t('real_estate.status_pending')}</Radio>
+ </Radio.Group>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('real_estate.status', 'Status')}
+ anyLabel={t('all', 'All')}
+ value={leaseStatus}
+ onChange={(v) => setLeaseStatus(v)}
+ options={[
+ { value: 'active', label: t('real_estate.status_active') },
+ { value: 'expired', label: t('real_estate.status_expired') },
+ { value: 'terminated', label: t('real_estate.status_terminated') },
+ { value: 'pending', label: t('real_estate.status_pending') },
+ ]}
+ />
+ </div>
+ )}
+ <div style={{ marginInlineStart: 'auto' }}>
+ {isProperties ? (
+ <KitListToolbarActions
+ columns={propertyColumnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenColsProperty}
+ onColumnsChange={persistHiddenProperty}
+ onExport={() => {
+ const cols = propertyColumnsMeta.filter((c) => !hiddenColsProperty.includes(c.key) && c.key !== 'actions');
+ downloadCsv('properties', filteredProperties, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ ) : (
+ <KitListToolbarActions
+ columns={leaseColumnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenColsLease}
+ onColumnsChange={persistHiddenLease}
+ onExport={() => {
+ const cols = leaseColumnsMeta.filter((c) => !hiddenColsLease.includes(c.key) && c.key !== 'actions');
+ downloadCsv('leases', filteredLeases, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ )}
+ </div>
+ </>
+ }
+ >
+ {isProperties ? (
+ <ResponsiveTableAdapter
+ dataSource={filteredProperties}
+ columns={propertyColumns}
+ rowKey="id"
+ loading={loading}
+ pagination={{ pageSize: 20 }}
+ />
+ ) : (
+ <ResponsiveTableAdapter
+ dataSource={filteredLeases}
+ columns={leaseColumns}
+ rowKey="id"
+ loading={loading}
+ pagination={{ pageSize: 20 }}
+ />
+ )}
+ </KitListCard>
 
  <FormDialog
  title={drawerType === 'property' ? t('real_estate.add_property') : t('real_estate.add_lease')}

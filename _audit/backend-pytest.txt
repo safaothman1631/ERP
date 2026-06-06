@@ -1,0 +1,42 @@
+# BACKEND PYTEST (no-cov, started Wed Jun  3 01:28:05 AST 2026)
+google.api_core.exceptions.PermissionDenied: 403 Project erp-system-494716 has been deleted. [reason: "USER_PROJECT_DENIED"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "cloudtrace.googleapis.com"
+}
+metadata {
+  key: "containerInfo"
+  value: "erp-system-494716"
+}
+metadata {
+  key: "consumer"
+  value: "projects/erp-system-494716"
+}
+, locale: "en-US"
+message: "Project erp-system-494716 has been deleted."
+]
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: I/O operation on closed file.
+Call stack:
+  File "C:\Python313\Lib\threading.py", line 1014, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Python313\Lib\threading.py", line 1043, in _bootstrap_inner
+    self.run()
+  File "C:\Python313\Lib\threading.py", line 994, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\SAFA\zoho\backend\venv\Lib\site-packages\opentelemetry\sdk\_shared_internal\__init__.py", line 159, in worker
+    self._export(
+  File "C:\Users\SAFA\zoho\backend\venv\Lib\site-packages\opentelemetry\sdk\_shared_internal\__init__.py", line 182, in _export
+    self._exporter.export(
+  File "C:\Users\SAFA\zoho\backend\venv\Lib\site-packages\opentelemetry\exporter\cloud_trace\__init__.py", line 207, in export
+    logger.error("Error while writing to Cloud Trace", exc_info=ex)
+Message: 'Error while writing to Cloud Trace'
+Arguments: ()
+# DONE Wed Jun  3 01:29:02 AST 2026

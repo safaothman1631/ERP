@@ -125,8 +125,28 @@ export default function OnboardingShell({ onExit }: OnboardingShellProps) {
         display: 'flex',
         flexDirection: 'column',
         background: token.colorBgLayout,
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
+      {/* Kit atmosphere — soft accent glow + dotted grid (behind content) */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: -1,
+          pointerEvents: 'none',
+          backgroundImage:
+            'radial-gradient(circle at 12% -8%, color-mix(in srgb, var(--accent-500) 16%, transparent), transparent 42%),' +
+            'linear-gradient(rgba(127,127,127,0.05) 1px, transparent 1px),' +
+            'linear-gradient(90deg, rgba(127,127,127,0.05) 1px, transparent 1px)',
+          backgroundSize: 'auto, 48px 48px, 48px 48px',
+          maskImage: 'radial-gradient(ellipse 85% 55% at 50% 18%, #000, transparent)',
+          WebkitMaskImage: 'radial-gradient(ellipse 85% 55% at 50% 18%, #000, transparent)',
+        }}
+      />
+
       {/* Header */}
       <header
         style={{
@@ -138,7 +158,7 @@ export default function OnboardingShell({ onExit }: OnboardingShellProps) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <RocketOutlined style={{ fontSize: 20, color: token.colorPrimary }} aria-hidden />
-            <strong style={{ fontSize: 18 }}>{t('title')}</strong>
+            <strong style={{ fontSize: 18, fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>{t('title')}</strong>
           </div>
           <span
             style={{ fontSize: 12, color: token.colorTextSecondary }}
@@ -194,7 +214,7 @@ export default function OnboardingShell({ onExit }: OnboardingShellProps) {
       >
         <div style={{ width: '100%', maxWidth: 880 }}>
           <div style={{ marginBottom: 24 }}>
-            <h2 style={{ margin: 0, fontSize: 24, color: token.colorTextHeading }}>
+            <h2 style={{ margin: 0, fontSize: 24, color: token.colorTextHeading, fontFamily: 'var(--font-display)', fontWeight: 700, letterSpacing: '-0.02em' }}>
               {t(stepTitleKey)}
             </h2>
             <p style={{ margin: '8px 0 0', color: token.colorTextSecondary }}>
@@ -321,9 +341,9 @@ function CompletionScreen({ onExit }: { onExit?: () => void }) {
 
 function ConfettiBurst() {
   // CSS-only confetti: 24 absolutely-positioned colored dots that fall + rotate.
-  const colors = ['#f43f5e', '#fb923c', '#facc15', '#22c55e', '#06b6d4', '#6366f1', '#a855f7'];
+  const colors = ['#f43f5e', '#fb923c', '#facc15', '#22c55e', '#06b6d4', '#7B61FF', '#a855f7'];
   const pieces = Array.from({ length: 24 }, (_, i) => ({
-    left: `${(i / 24) * 100}%`,
+    left: `${(i / 24) * 100}%`, /* rtl-ignore */
     delay: `${(i % 8) * 0.12}s`,
     color: colors[i % colors.length],
     duration: `${1.6 + ((i * 13) % 800) / 1000}s`,
@@ -343,7 +363,7 @@ function ConfettiBurst() {
           style={{
             position: 'absolute',
             top: 0,
-            left: p.left,
+            left: p.left, /* rtl-ignore */
             width: p.size,
             height: p.size,
             background: p.color,

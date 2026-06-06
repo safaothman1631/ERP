@@ -424,18 +424,33 @@ describe('BackupHistoryTable', () => {
       fireEvent.click(downloadButtons[0]);
 
       await waitFor(() => {
+        // The download is an authenticated blob stream: GET <url> with
+        // { responseType: 'blob' }. Assert the endpoint regardless of the
+        // options object.
         expect(mockApiGet).toHaveBeenCalledWith(
           `/api/system/backup/${successRecord.id}/download`,
+          expect.objectContaining({ responseType: 'blob' }),
         );
       });
     });
 
-    it('opens the signed URL in a new tab after successful download fetch', async () => {
-      const signedUrl = 'https://storage.example.com/signed-url?token=abc';
+    it('streams the backup blob and triggers a file download', async () => {
       setupRoutedMock([successRecord], {
-        url: signedUrl,
+        url: 'https://storage.example.com/signed-url',
         expires_in_minutes: 60,
       });
+
+      // The component downloads via an authenticated blob stream:
+      //   createObjectURL(blob) → <a download> click → revokeObjectURL.
+      // jsdom implements none of these, so stub them and assert the flow ran.
+      const createObjectURL = vi.fn(() => 'blob:mock-url');
+      const revokeObjectURL = vi.fn();
+      vi.stubGlobal('URL', {
+        ...window.URL,
+        createObjectURL,
+        revokeObjectURL,
+      });
+      const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
 
       const { container } = renderBackupHistoryTable();
 
@@ -449,12 +464,11 @@ describe('BackupHistoryTable', () => {
       fireEvent.click(downloadButtons[0]);
 
       await waitFor(() => {
-        expect(window.open).toHaveBeenCalledWith(
-          signedUrl,
-          '_blank',
-          'noopener,noreferrer',
-        );
+        expect(createObjectURL).toHaveBeenCalled();
+        expect(clickSpy).toHaveBeenCalled();
       });
+
+      clickSpy.mockRestore();
     });
 
     it('download button is disabled for failed backup records', async () => {

@@ -51,7 +51,7 @@ export const PWA_CONFIG: VitePWAOptions = {
     display: 'standalone',
     orientation: 'any',
     background_color: '#ffffff',
-    theme_color: '#1677ff',
+    theme_color: '#7B61FF',
     categories: ['business', 'productivity', 'finance'],
     icons: [
       {

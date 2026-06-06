@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Form, Input, Select, message, Card, Upload, Tag, Modal } from 'antd';
-import { PlusOutlined, DownloadOutlined, DeleteOutlined, FolderOutlined, FileOutlined, UploadOutlined } from '@ant-design/icons';
+import { Button, Space, Form, Input, Select, message, Card, Modal } from 'antd';
+import { DownloadOutlined, DeleteOutlined, FolderOutlined, FileOutlined, UploadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader } from '../../design-system';
@@ -24,7 +24,7 @@ const Documents: React.FC = () => {
  params: { folder_id: folderFilter || undefined, limit: 100 },
  });
  setFiles(res.data.items || []);
- } catch (error) {
+ } catch (_error) {
  message.error(t('error'));
  } finally {
  setLoading(false);
@@ -35,7 +35,7 @@ const Documents: React.FC = () => {
  try {
  const res = await api.get('/api/documents/folders', { params: { limit: 100 } });
  setFolders(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  useEffect(() => {
@@ -79,7 +79,7 @@ const Documents: React.FC = () => {
  };
 
  const columns = [
- { title: t('documents.name'), dataIndex: 'name', key: 'name', render: (v: string, r: any) => <><FileOutlined /> {v}</> },
+ { title: t('documents.name'), dataIndex: 'name', key: 'name', render: (v: string, _r: any) => <><FileOutlined /> {v}</> },
  { title: t('documents.folder'), dataIndex: 'folder_id', key: 'folder_id', render: (v: string) => v || t('documents.root') },
  { title: t('documents.mime_type'), dataIndex: 'mime_type', key: 'mime_type' },
  { title: t('documents.size'), dataIndex: 'size_bytes', key: 'size_bytes', render: (v: number) => `${Math.round(v / 1024)} KB` },

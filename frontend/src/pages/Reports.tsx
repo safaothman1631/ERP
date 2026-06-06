@@ -20,7 +20,7 @@ const Reports: React.FC = () => {
   useEffect(() => {
     api.get('/api/accounts').then(r => {
       setAccounts((r.data.items || []).map((a: {id: string; code: string; name: string}) => ({ label: `${a.code} - ${a.name}`, value: a.id })));
-    }).catch(() => {});
+    }).catch((e) => console.error(e));
   }, []);
 
   const fetchProfitLoss = async (values: any) => {
@@ -163,9 +163,9 @@ const Reports: React.FC = () => {
       {reportType === 'pl' && data && (
         <Card style={{ marginTop: 24 }} title={t('profit_loss')} extra={<Space><Button icon={<FilePdfOutlined />} size="small" onClick={() => exportReport('pdf')}>PDF</Button><Button icon={<FileExcelOutlined />} size="small" onClick={() => exportReport('excel')}>Excel</Button></Space>}>
           <Row gutter={16}>
-            <Col span={8}><Statistic title={t('income')} value={data.total_revenue} precision={0} suffix="IQD" styles={{ content: { color: '#3f8600' } }} /></Col>
-            <Col span={8}><Statistic title={t('expenses')} value={data.total_expenses} precision={0} suffix="IQD" styles={{ content: { color: '#cf1322' } }} /></Col>
-            <Col span={8}><Statistic title={t('net_profit')} value={data.net_profit} precision={0} suffix="IQD" styles={{ content: { color: data.net_profit >= 0 ? '#3f8600' : '#cf1322' } }} /></Col>
+            <Col span={8}><Statistic title={t('income')} value={data.total_revenue} precision={0} suffix="IQD" styles={{ content: { color: 'var(--success-500)' } }} /></Col>
+            <Col span={8}><Statistic title={t('expenses')} value={data.total_expenses} precision={0} suffix="IQD" styles={{ content: { color: 'var(--danger-500)' } }} /></Col>
+            <Col span={8}><Statistic title={t('net_profit')} value={data.net_profit} precision={0} suffix="IQD" styles={{ content: { color: data.net_profit >= 0 ? 'var(--success-500)' : 'var(--danger-500)' } }} /></Col>
           </Row>
           <Divider>{t('income')}</Divider>
           <ResponsiveTableAdapter dataSource={data.revenue || []} columns={accountCols} rowKey="account_id" pagination={false} size="small" />

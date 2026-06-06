@@ -92,7 +92,7 @@ export function createIDBPersister(
         blocked() {
           // Another tab is holding an older version open. Best effort: log it
           // and let the upgrade wait for that tab to close.
-          // eslint-disable-next-line no-console
+           
           console.warn(
             `[idb-persister] Upgrade of ${dbName} blocked by another tab.`,
           );
@@ -118,7 +118,7 @@ export function createIDBPersister(
         const json = JSON.stringify(client);
         await db.put(STORE_NAME, json, CACHE_KEY);
       } catch (err) {
-        // eslint-disable-next-line no-console
+         
         console.warn('[idb-persister] persistClient failed:', err);
       }
     },
@@ -134,7 +134,7 @@ export function createIDBPersister(
         if (!json) return undefined;
         return JSON.parse(json) as PersistedClient;
       } catch (err) {
-        // eslint-disable-next-line no-console
+         
         console.warn('[idb-persister] restoreClient failed:', err);
         return undefined;
       }
@@ -146,7 +146,7 @@ export function createIDBPersister(
         const db = await getDB();
         await db.delete(STORE_NAME, CACHE_KEY);
       } catch (err) {
-        // eslint-disable-next-line no-console
+         
         console.warn('[idb-persister] removeClient failed:', err);
       }
     },

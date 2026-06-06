@@ -116,7 +116,7 @@ export function FileUploadField({
   const handleBeforeUpload = useCallback<NonNullable<UploadProps['beforeUpload']>>(
     async (file) => {
       if (file.size > maxSizeMB * 1024 * 1024) {
-        message.error(t('upload.too_large', `File exceeds ${maxSizeMB}MB`));
+        message.error(t('uploader.too_large', `File exceeds ${maxSizeMB}MB`));
         return Upload.LIST_IGNORE;
       }
       setUploading(true);
@@ -145,8 +145,8 @@ export function FileUploadField({
           });
         }
       } catch (err) {
-        message.error(t('upload.failed', 'Upload failed'));
-        // eslint-disable-next-line no-console
+        message.error(t('uploader.failed', 'Upload failed'));
+         
         console.error('[FileUploadField] upload error', err);
       } finally {
         setUploading(false);
@@ -184,12 +184,12 @@ export function FileUploadField({
     >
       {!value && (
         <Button icon={<UploadOutlined />} loading={uploading} disabled={disabled}>
-          {t('upload.select_file', 'Select file')}
+          {t('uploader.select_file', 'Select file')}
         </Button>
       )}
       {value && (
         <Button danger icon={<DeleteOutlined />} size="small" disabled={disabled}>
-          {t('upload.remove', 'Remove')}
+          {t('uploader.remove', 'Remove')}
         </Button>
       )}
     </Upload>

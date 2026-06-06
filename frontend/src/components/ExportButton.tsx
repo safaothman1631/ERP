@@ -69,7 +69,7 @@ export default function ExportButton({
       const name = filenameFromHeaders(res.headers, fallback);
       triggerDownload(res.data as Blob, name);
       message.success(t('export_success'));
-    } catch (err: any) {
+    } catch (_err: any) {
       message.error(t('export_failed'));
     } finally {
       setLoading(null);

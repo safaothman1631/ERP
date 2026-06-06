@@ -1,14 +1,20 @@
 import type React from 'react';
-import { useEffect, useState } from 'react';
-import { Button, Space, Input, Form, Select, Tag, InputNumber } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import { Button, Space, Input, Form, Select, InputNumber, Radio } from 'antd';
 
 import { message } from '../../utils/message';
-import { PlusOutlined, SearchOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { PlusOutlined, EyeOutlined, EditOutlined, CopyOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { Popconfirm } from 'antd';
 import api from '../../api';
-import { PageHeader, StatusTag } from '../../design-system';
-import { space } from '../../theme/tokens';
+import { PageHeader, StatusTag, type ColumnVisibilityItem } from '../../design-system';
+import type { StatusKind } from '../../design-system';
+import KitListCard, { type KitListTab } from '../../design-system/KitListCard';
+import KitListToolbarActions from '../../design-system/KitListToolbarActions';
+import KitRowActions from '../../design-system/KitRowActions';
+import KitFiltersButton from '../../design-system/KitFiltersButton';
+import KitStatusFilter from '../../design-system/KitStatusFilter';
+import KitSearchInput from '../../design-system/KitSearchInput';
+import { downloadCsv } from '../../utils/exportCsv';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
@@ -31,6 +37,16 @@ interface Product {
  name: string;
 }
 
+/** Initials for the kit's avatar cell (first letters of the first two words). */
+const initialsOf = (name: string): string =>
+ String(name || '?')
+ .trim()
+ .split(/\s+/)
+ .map((w) => w[0])
+ .join('')
+ .slice(0, 2)
+ .toUpperCase();
+
 const PLMEngineeringChanges: React.FC = () => {
  const { t } = useTranslation();
  const [data, setData] = useState<ECN[]>([]);
@@ -41,6 +57,9 @@ const PLMEngineeringChanges: React.FC = () => {
  const [drawer, setDrawer] = useState(false);
  const [editingId, setEditingId] = useState<string | null>(null);
  const [form] = Form.useForm();
+ const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
+ try { return JSON.parse(localStorage.getItem('plm_ecn.hiddenCols') || '[]'); } catch { return []; }
+ });
 
  const fetchData = async () => {
  setLoading(true);
@@ -92,6 +111,14 @@ const PLMEngineeringChanges: React.FC = () => {
  setDrawer(true);
  };
 
+ // Duplicate: open the create form pre-filled with this record's values (no id).
+ const handleDuplicate = (ecn: ECN) => {
+ setEditingId(null);
+ const { id: _id, ...rest } = ecn;
+ form.setFieldsValue({ ...rest, title: `${ecn.title ?? ''} (${t('copy', 'copy')})` });
+ setDrawer(true);
+ };
+
  const handleDelete = async (id: string) => {
  try {
  await api.delete(`/api/plm/ecos/${id}`);
@@ -114,13 +141,13 @@ const PLMEngineeringChanges: React.FC = () => {
  };
 
  const getPriorityTag = (priority: string) => {
- const colors: Record<string, string> = {
+ const kinds: Record<string, StatusKind> = {
  low: 'default',
- medium: 'blue',
- high: 'orange',
- urgent: 'red',
+ medium: 'info',
+ high: 'warning',
+ urgent: 'error',
  };
- return <Tag color={colors[priority] || 'default'}>{t(`plm.priority_${priority}`)}</Tag>;
+ return <StatusTag status={kinds[priority] || 'default'} label={t(`plm.priority_${priority}`)} />;
  };
 
  const filteredData = data.filter((e) => {
@@ -129,28 +156,69 @@ const PLMEngineeringChanges: React.FC = () => {
  return matchSearch && matchStatus;
  });
 
- const columns: any[] = [
+ // Kit list tabs (All / status segments) — wired to the same statusFilter param.
+ const statusOptions = [
+ { value: 'draft', label: t('plm.status_draft') },
+ { value: 'review', label: t('plm.status_review') },
+ { value: 'approved', label: t('plm.status_approved') },
+ { value: 'implemented', label: t('plm.status_implemented') },
+ { value: 'rejected', label: t('plm.status_rejected') },
+ ];
+ const tabs: KitListTab[] = [
+ { key: 'all', label: t('all', 'All') },
+ ...statusOptions.map((o) => ({ key: o.value, label: o.label })),
+ ];
+
+ const allColumns: any[] = [
  {
  title: t('plm.ecn_number'),
  dataIndex: 'id',
  key: 'id',
  width: 150,
- render: (id: string) => `ECN-${id.slice(0, 8)}`,
+ render: (id: string) => (
+ <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-900)', fontWeight: 500 }}>
+ {`ECN-${id.slice(0, 8)}`}
+ </span>
+ ),
  },
- { title: t('plm.title'), dataIndex: 'title', key: 'title', width: 250 },
+ {
+ title: t('plm.title'),
+ dataIndex: 'title',
+ key: 'title',
+ width: 250,
+ render: (v: string) => (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{initialsOf(v)}</span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{v}</span>
+ </div>
+ ),
+ },
  {
  title: t('plm.product'),
  dataIndex: 'product_id',
  key: 'product_id',
  width: 180,
- render: (pid: string) => products.find((p) => p.id === pid)?.name || pid,
+ render: (pid: string) => (
+ <span style={{ color: 'var(--ink-700)' }}>{products.find((p) => p.id === pid)?.name || pid}</span>
+ ),
  },
  {
  title: t('plm.change_type'),
  dataIndex: 'type',
  key: 'type',
  width: 120,
- render: (v: string) => <Tag>{t(`plm.type_${v}`)}</Tag>,
+ render: (v: string) => (
+ <span style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--surface-2)', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-600)',
+ }}>{t(`plm.type_${v}`)}</span>
+ ),
  },
  {
  title: t('plm.priority'),
@@ -171,30 +239,48 @@ const PLMEngineeringChanges: React.FC = () => {
  dataIndex: 'affected_boms_count',
  key: 'affected_boms_count',
  width: 120,
- align: 'center',
- render: (v?: number) => v || 0,
+ align: 'center' as const,
+ render: (v?: number) => <span style={{ color: 'var(--ink-700)' }}>{v || 0}</span>,
  },
  {
  title: t('plm.assigned_to'),
  dataIndex: 'assigned_to',
  key: 'assigned_to',
  width: 120,
+ render: (v?: string) => v
+ ? <span style={{ color: 'var(--ink-700)' }}>{v}</span>
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>,
  },
  {
- title: t('actions'),
+ title: '',
  key: 'actions',
- width: 120,
- align: 'center',
+ width: 56,
+ align: 'center' as const,
  render: (_: any, rec: ECN) => (
- <Space>
- <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(rec)} />
- <Popconfirm title={t('confirm_delete')} onConfirm={() => handleDelete(rec.id)}>
- <Button type="text" danger icon={<DeleteOutlined />} />
- </Popconfirm>
- </Space>
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'view', icon: <EyeOutlined />, label: t('view', 'View'), onClick: () => handleEdit(rec) },
+ { key: 'edit', icon: <EditOutlined />, label: t('edit'), onClick: () => handleEdit(rec) },
+ { key: 'duplicate', icon: <CopyOutlined />, label: t('duplicate', 'Duplicate'), onClick: () => handleDuplicate(rec) },
+ { type: 'divider' },
+ { key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true, onClick: () => handleDelete(rec.id) },
+ ]}
+ />
  ),
  },
  ];
+
+ const columns = useMemo(() => allColumns.filter((c) => !hiddenCols.includes(c.key)), [hiddenCols, t, products]);
+ const columnsMeta: ColumnVisibilityItem[] = allColumns.map((c) => ({
+ key: c.key,
+ label: typeof c.title === 'string' && c.title ? c.title : c.key,
+ pinned: c.key === 'title' || c.key === 'actions',
+ }));
+ const persistHidden = (next: string[]) => {
+ setHiddenCols(next);
+ try { localStorage.setItem('plm_ecn.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
+ };
 
  return (
  <>
@@ -217,31 +303,55 @@ const PLMEngineeringChanges: React.FC = () => {
  }
  />
 
- <div style={{ background: '#fff', padding: space.lg, borderRadius: 8 }}>
- <Space style={{ marginBottom: space.md }}>
- <Input
- placeholder={t('search')}
- prefix={<SearchOutlined />}
- value={search}
- onChange={(e) => setSearch(e.target.value)}
- style={{ width: 300 }}
- allowClear
- />
- <Select
- placeholder={t('plm.filter_status')}
- value={statusFilter}
- onChange={setStatusFilter}
- style={{ width: 150 }}
- allowClear
+ <KitListCard
+ tabs={tabs}
+ activeTab={statusFilter || 'all'}
+ onTabChange={(k) => setStatusFilter(k === 'all' ? '' : k)}
+ toolbar={
+ <>
+ <KitSearchInput value={search} onChange={(v) => { setSearch(v); }} placeholder={t('search')} />
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={statusFilter ? 1 : 0}
+ onClear={() => setStatusFilter('')}
  >
- <Select.Option value="draft">{t('plm.status_draft')}</Select.Option>
- <Select.Option value="review">{t('plm.status_review')}</Select.Option>
- <Select.Option value="approved">{t('plm.status_approved')}</Select.Option>
- <Select.Option value="implemented">{t('plm.status_implemented')}</Select.Option>
- <Select.Option value="rejected">{t('plm.status_rejected')}</Select.Option>
- </Select>
- </Space>
-
+ <Radio.Group
+ value={statusFilter || 'all'}
+ onChange={(e) => setStatusFilter(e.target.value === 'all' ? '' : e.target.value)}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="all">{t('all', 'All')}</Radio>
+ {statusOptions.map((o) => (
+ <Radio key={o.value} value={o.value}>{o.label}</Radio>
+ ))}
+ </Radio.Group>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('plm.status')}
+ anyLabel={t('all', 'All')}
+ value={statusFilter}
+ onChange={(v) => setStatusFilter(v || '')}
+ options={statusOptions}
+ />
+ </div>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('plm_ecn', filteredData, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ </div>
+ </>
+ }
+ >
  <ResponsiveTableAdapter
  columns={columns}
  dataSource={filteredData}
@@ -250,7 +360,7 @@ const PLMEngineeringChanges: React.FC = () => {
  pagination={{ pageSize: 20 }}
  scroll={{ x: 1400 }}
  />
- </div>
+ </KitListCard>
 
  <FormDialog
  title={editingId ? t('plm.edit_ecn') : t('plm.create_ecn')}

@@ -7,7 +7,6 @@ import { PlusOutlined, ReloadOutlined, SendOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { PageHeader } from '../design-system';
-import { space as spaceTk } from '../theme/tokens';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 
 interface Template { id: string; name: string; body: string; description?: string; locale?: string; }
@@ -55,7 +54,7 @@ export default function WhatsApp() {
  }
  };
 
- useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+ useEffect(() => { load();   }, []);
 
  const saveConfig = async () => {
  const v = await configForm.validateFields();
@@ -144,10 +143,10 @@ export default function WhatsApp() {
 
  <Row gutter={12} style={{ marginBottom: 16 }}>
  <Col span={4}><Card><Statistic title={t('total')} value={stats.total || 0} /></Card></Col>
- <Col span={4}><Card><Statistic title={t('sent')} value={stats.sent || 0} styles={{ content: { color: '#1890ff' } }} /></Card></Col>
+ <Col span={4}><Card><Statistic title={t('sent')} value={stats.sent || 0} styles={{ content: { color: 'var(--accent-500)' } }} /></Card></Col>
  <Col span={4}><Card><Statistic title={t('delivered')} value={stats.delivered || 0} styles={{ content: { color: '#13c2c2' } }} /></Card></Col>
- <Col span={4}><Card><Statistic title={t('read')} value={stats.read || 0} styles={{ content: { color: '#722ed1' } }} /></Card></Col>
- <Col span={4}><Card><Statistic title={t('failed')} value={stats.failed || 0} styles={{ content: { color: '#f5222d' } }} /></Card></Col>
+ <Col span={4}><Card><Statistic title={t('read')} value={stats.read || 0} styles={{ content: { color: 'var(--accent-500)' } }} /></Card></Col>
+ <Col span={4}><Card><Statistic title={t('failed')} value={stats.failed || 0} styles={{ content: { color: 'var(--danger-500)' } }} /></Card></Col>
  <Col span={4}><Card><Statistic title={t('previewed')} value={stats.previewed || 0} /></Card></Col>
  </Row>
 

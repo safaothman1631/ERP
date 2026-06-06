@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Tag, Form, Input, Select, InputNumber, Switch, message, Popconfirm } from 'antd';
+import { Button, Space, Form, Input, Select, InputNumber, Switch, message, Popconfirm } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
+import { PageHeader, StatusTag } from '../../design-system';
+import { space } from '../../theme/tokens';
 
 interface AlertRule {
  id: string;
@@ -49,7 +51,7 @@ const AlertRules: React.FC = () => {
  });
  setRules(res.data.items);
  setTotal(res.data.total);
- } catch (err) {
+ } catch (_err) {
  message.error(t('common.load_failed', 'Failed to load'));
  } finally {
  setLoading(false);
@@ -90,7 +92,7 @@ const AlertRules: React.FC = () => {
  }
  setModalVisible(false);
  loadRules();
- } catch (err) {
+ } catch (_err) {
  message.error(t('common.save_failed', 'Save failed'));
  }
  };
@@ -100,16 +102,16 @@ const AlertRules: React.FC = () => {
  await api.delete(`/api/iot/alert-rules/${id}`);
  message.success(t('common.deleted', 'Deleted'));
  loadRules();
- } catch (err) {
+ } catch (_err) {
  message.error(t('common.delete_failed', 'Delete failed'));
  }
  };
 
- const severityColor = (severity: string) => {
+ const severityStatus = (severity: string) => {
  const map: Record<string, string> = {
- info: 'blue',
- warn: 'orange',
- critical: 'red'
+ info: 'info',
+ warn: 'warning',
+ critical: 'error'
  };
  return map[severity] || 'default';
  };
@@ -158,7 +160,7 @@ const AlertRules: React.FC = () => {
  title: t('iot.severity', 'Severity'),
  dataIndex: 'severity',
  key: 'severity',
- render: (val: string) => <Tag color={severityColor(val)}>{t(`iot.${val}`, val)}</Tag>
+ render: (val: string) => <StatusTag status={severityStatus(val)} label={t(`iot.${val}`, val)} />
  },
  {
  title: t('iot.action', 'Action'),
@@ -187,16 +189,18 @@ const AlertRules: React.FC = () => {
  ];
 
  return (
- <div style={{ padding: '24px' }}>
- <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
- <h1>{t('iot.alert_rules', 'Alert Rules')}</h1>
+ <div style={{ padding: space.lg }}>
+ <PageHeader
+ title={t('iot.alert_rules', 'Alert Rules')}
+ extra={
  <Space>
  <Button icon={<ReloadOutlined />} onClick={loadRules} />
  <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
  {t('iot.new_rule', 'New Rule')}
  </Button>
  </Space>
- </div>
+ }
+ />
 
  <ResponsiveTableAdapter
  dataSource={rules}

@@ -63,7 +63,7 @@ export async function registerSW(opts: RegisterOptions = {}): Promise<ServiceWor
     subscribeToSWChannel();
     return reg;
   } catch (err) {
-    // eslint-disable-next-line no-console
+     
     console.warn('[pwa] service worker registration failed', err);
     return null;
   }

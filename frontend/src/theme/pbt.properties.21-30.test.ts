@@ -19,7 +19,7 @@
  *   30. Login form is locked after ≥ 5 failed attempts                 (Req 16.6)
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import * as fc from 'fast-check';
 import { formatMoney, formatDate } from '../utils/format';
 import { getGlassStyle, glass, palette } from './tokens';

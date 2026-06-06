@@ -2,11 +2,13 @@
 # should be passed via TF_VAR_* env, NOT committed here.
 
 project_id        = "zoho-83cda"
-region            = "me-central1"
+region            = "europe-west1"
 environment       = "production"
 
-frontend_base_url = "https://app.zoho-kurdish.iq"
-api_base_url      = "https://api.zoho-kurdish.iq"
+# Production is served from a single domain (Vercel frontend + /api proxy to
+# Cloud Run). There are no app./api. subdomains.
+frontend_base_url = "https://erpiq.systems"
+api_base_url      = "https://erpiq.systems"
 
 # ---- RUM / BigQuery ----
 rum_dataset_id    = "rum"
@@ -17,7 +19,7 @@ rum_agg_table_expiration_days = 730
 # ---- Notifications ----
 # Email is the awareness channel; PagerDuty (via TF_VAR_pagerduty_service_key)
 # is the page channel. Slack is optional.
-notification_email = "oncall@zoho-kurdish.iq"
+notification_email = "safaothman1631@gmail.com"
 slack_channel      = "#alerts-prod"
 # slack_auth_token  -> set via TF_VAR_slack_auth_token
 # pagerduty_service_key -> set via TF_VAR_pagerduty_service_key

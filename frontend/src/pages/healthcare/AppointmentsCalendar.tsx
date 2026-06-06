@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, Badge, Card, Button, Form, Input, Select, DatePicker, TimePicker, message, Space, Tag, Popconfirm } from 'antd';
+import { Calendar, Badge, Button, Form, Input, Select, DatePicker, TimePicker, message, Space, Popconfirm } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import { PageHeader, StatusTag } from '../../design-system';
+import { PageHeader, StatusTag, SectionCard, EmptyState } from '../../design-system';
 import api from '../../api';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
@@ -27,7 +27,7 @@ interface Patient {
 const AppointmentsCalendar: React.FC = () => {
  const { t } = useTranslation();
  const [form] = Form.useForm();
- const [loading, setLoading] = useState(false);
+ const [_loading, setLoading] = useState(false);
  const [appointments, setAppointments] = useState<Appointment[]>([]);
  const [patients, setPatients] = useState<Patient[]>([]);
  const [drawerVisible, setDrawerVisible] = useState(false);
@@ -171,26 +171,36 @@ const AppointmentsCalendar: React.FC = () => {
  }
  />
 
- <Card>
+ <SectionCard>
  <Calendar
  cellRender={dateCellRender}
  onSelect={(date) => setSelectedDate(date)}
  />
- </Card>
+ </SectionCard>
 
- <Card title={`${t('healthcare.appointments_on')} ${selectedDate.format('YYYY-MM-DD')}`} style={{ marginTop: 16 }}>
- <Space direction="vertical" style={{ width: '100%' }}>
- {selectedDayAppointments.length === 0 && <p>{t('healthcare.no_appointments')}</p>}
+ <SectionCard title={`${t('healthcare.appointments_on')} ${selectedDate.format('YYYY-MM-DD')}`}>
+ <Space direction="vertical" size={12} style={{ width: '100%' }}>
+ {selectedDayAppointments.length === 0 && (
+ <EmptyState icon={<ClockCircleOutlined />} title={t('healthcare.no_appointments')} />
+ )}
  {selectedDayAppointments.map((apt) => {
  const patient = patients.find((p) => p.id === apt.patient_id);
  return (
- <Card key={apt.id} style={{ marginBottom: 8 }}>
+ <div
+ key={apt.id}
+ style={{
+ background: 'var(--surface-2)',
+ border: '1px solid var(--border)',
+ borderRadius: 'var(--radius-lg)',
+ padding: 'var(--space-md)',
+ }}
+ >
  <Space direction="vertical" style={{ width: '100%' }}>
- <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+ <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
  <Space>
- <ClockCircleOutlined />
- <strong>{apt.scheduled_at?.substring(11, 16)}</strong>
- <span>— {patient?.name || t('healthcare.unknown_patient')}</span>
+ <ClockCircleOutlined style={{ color: 'var(--ink-400)' }} />
+ <strong style={{ color: 'var(--ink-900)' }}>{apt.scheduled_at?.substring(11, 16)}</strong>
+ <span style={{ color: 'var(--ink-700)' }}>— {patient?.name || t('healthcare.unknown_patient')}</span>
  <StatusTag status={apt.status} label={t(`healthcare.status_${apt.status}`)} />
  </Space>
  <Space>
@@ -210,13 +220,13 @@ const AppointmentsCalendar: React.FC = () => {
  </Popconfirm>
  </Space>
  </div>
- {apt.reason && <p style={{ margin: 0, color: '#666' }}>{apt.reason}</p>}
+ {apt.reason && <p style={{ margin: 0, color: 'var(--ink-500)' }}>{apt.reason}</p>}
  </Space>
- </Card>
+ </div>
  );
  })}
  </Space>
- </Card>
+ </SectionCard>
 
  <FormDialog
  title={editingId ? t('healthcare.edit_appointment') : t('healthcare.new_appointment')}

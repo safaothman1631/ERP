@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Form, Input, Select, Tag, message, Card, Tabs, Modal } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, UserAddOutlined, TrophyOutlined } from '@ant-design/icons';
+import { Button, Space, Form, Input, Tag, message, Card, Tabs, Modal } from 'antd';
+import { DeleteOutlined, UserAddOutlined, TrophyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader } from '../../design-system';
@@ -25,7 +25,7 @@ const HRExtended: React.FC = () => {
  try {
  const res = await api.get('/api/hr-extended/applications', { params: { limit: 100 } });
  setApplications(res.data.items || []);
- } catch (error) {
+ } catch (_error) {
  message.error(t('error'));
  } finally {
  setLoading(false);
@@ -37,7 +37,7 @@ const HRExtended: React.FC = () => {
  try {
  const res = await api.get('/api/hr-extended/appraisals', { params: { limit: 100 } });
  setAppraisals(res.data.items || []);
- } catch (error) {
+ } catch (_error) {
  message.error(t('error'));
  } finally {
  setLoading(false);

@@ -97,7 +97,7 @@ export interface PublicConfig {
 
 const DEFAULTS: PublicConfig = {
   formats: { date_format: 'YYYY-MM-DD', time_format: '24h', thousand_sep: ',', decimal_sep: '.', first_day_of_week: 'sun', units: 'metric', paper_size: 'A4' },
-  branding: { logo_url: '', primary_color: '#1677ff', secondary_color: '', font_family: 'system-ui', invoice_template: 'default', email_template: 'default' },
+  branding: { logo_url: '', primary_color: '#7B61FF', secondary_color: '', font_family: 'system-ui', invoice_template: 'default', email_template: 'default' },
   payment_methods: { cash: true, card: true, bank_transfer: true, fib: false, zaincash: false, asiacell: false, default_currency: 'IQD' },
   localization: { country_pack: 'IQ', coa_template: 'iraq_standard', address_format: '{name}\n{line1}\n{line2}\n{city}, {country}', phone_format: '+964 ## ### ####', postal_code_format: '#####', iban_validation: true },
   mobile: { push_enabled: true, biometric_required: false, force_min_version: '1.0.0', deep_link_scheme: 'zoho://', offline_sync_enabled: true, camera_barcode_enabled: true },

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Statistic, Tag, Space } from 'antd';
+import { Row, Col, Tag, Space } from 'antd';
 import {
   FileTextOutlined,
   ClockCircleOutlined,
@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, KpiCard, ChartCard, SectionCard, StatusTag } from '../../design-system';
 import { message } from '../../utils/message';
 import type { ColumnsType } from 'antd/es/table';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -131,7 +131,7 @@ const FieldServiceDashboard: React.FC = () => {
                 {o.order_number} - {o.customer_name}
               </a>
               {' '}
-              <Tag color={o.status === 'done' ? 'green' : 'orange'}>{t(`field_service.status_${o.status}`)}</Tag>
+              <StatusTag status={o.status === 'done' ? 'success' : 'warning'} label={t(`field_service.status_${o.status}`)} />
             </div>
           ))}
         </Space>
@@ -152,77 +152,70 @@ const FieldServiceDashboard: React.FC = () => {
 
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title={t('field_service.open_orders')}
-              value={openOrders}
-              prefix={<FileTextOutlined />}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
+          <KpiCard
+            title={t('field_service.open_orders')}
+            value={openOrders}
+            icon={<FileTextOutlined />}
+            tone="info"
+          />
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title={t('field_service.scheduled_today')}
-              value={scheduledToday}
-              prefix={<ClockCircleOutlined />}
-              valueStyle={{ color: '#faad14' }}
-            />
-          </Card>
+          <KpiCard
+            title={t('field_service.scheduled_today')}
+            value={scheduledToday}
+            icon={<ClockCircleOutlined />}
+            tone="warning"
+          />
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title={t('field_service.in_progress')}
-              value={inProgress}
-              prefix={<SyncOutlined spin />}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
+          <KpiCard
+            title={t('field_service.in_progress')}
+            value={inProgress}
+            icon={<SyncOutlined spin />}
+            tone="success"
+          />
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title={t('field_service.completed_week')}
-              value={completedWeek}
-              prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
+          <KpiCard
+            title={t('field_service.completed_week')}
+            value={completedWeek}
+            icon={<CheckCircleOutlined />}
+            tone="success"
+          />
         </Col>
       </Row>
 
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         <Col xs={24} lg={16}>
-          <Card title={t('field_service.todays_schedule')} loading={loading}>
+          <SectionCard title={t('field_service.todays_schedule')}>
             <ResponsiveTableAdapter
               dataSource={schedules}
               columns={scheduleColumns}
               rowKey="id"
+              loading={loading}
               pagination={false}
               size="small"
             />
-          </Card>
+          </SectionCard>
         </Col>
         <Col xs={24} lg={8}>
-          <Card title={t('field_service.completion_rate')}>
+          <ChartCard title={t('field_service.completion_rate')}>
             <ResponsiveChart
               legendItems={[
-                { id: 'completed', labelKey: asTranslationKey('field_service.status_done'), color: '#52c41a' },
-                { id: 'total', labelKey: asTranslationKey('total'), color: '#d9d9d9' },
+                { id: 'completed', labelKey: asTranslationKey('field_service.status_done'), color: 'var(--success-500)' },
+                { id: 'total', labelKey: asTranslationKey('total'), color: 'var(--ink-300)' },
               ]}
             >
               <BarChart data={completionData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="day" />
-                <YAxis />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="day" tick={{ fill: 'var(--ink-400)' }} />
+                <YAxis tick={{ fill: 'var(--ink-400)' }} />
                 <Tooltip />
-                <Bar dataKey="completed" fill="#52c41a" name={t('field_service.status_done')} />
-                <Bar dataKey="total" fill="#d9d9d9" name={t('total')} />
+                <Bar dataKey="completed" fill="var(--success-500)" name={t('field_service.status_done')} />
+                <Bar dataKey="total" fill="var(--ink-300)" name={t('total')} />
               </BarChart>
             </ResponsiveChart>
-          </Card>
+          </ChartCard>
         </Col>
       </Row>
     </>

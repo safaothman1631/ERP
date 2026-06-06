@@ -29,7 +29,7 @@ import {
   SplitMasterPanel, DashboardKpiStrip,
   SIDEBAR_HIDDEN_MODES, FORCE_COLLAPSED_MODES, SHOW_TABS_MODES,
 } from './LayoutChrome';
-import { palette, space, radius, motion, shadow } from '../theme/tokens';
+import { palette, space, motion, densityPagePadding } from '../theme/tokens';
 import ImpersonationBanner from '../platform/components/ImpersonationBanner';
 import PlatformAnnouncementBanner from '../platform/components/PlatformAnnouncementBanner';
 // growth-to-100 § G2 (support): global help launcher + NPS survey. Both defer
@@ -47,10 +47,10 @@ import { usePermission } from '../hooks/usePermission';
 
 /**
  * Sidebar width constants per spec requirements 4.2, 4.3.
- * Expanded: 240px, Collapsed: 64px.
+ * Expanded: 248px (Vertex), Collapsed: 64px.
  */
-const SIDER_WIDTH_COMFORTABLE = 240;
-const SIDER_WIDTH_COMPACT = 240;
+const SIDER_WIDTH_COMFORTABLE = 248;
+const SIDER_WIDTH_COMPACT = 248;
 const SIDER_COLLAPSED = 64;
 
 /**
@@ -58,7 +58,7 @@ const SIDER_COLLAPSED = 64;
  * Replaces legacy AppLayout. Token-driven, RTL-aware, dark-mode-aware.
  */
 export const AppShell: React.FC = () => {
-  const { i18n, t } = useTranslation();
+  const { i18n: _i18n, t } = useTranslation();
   const { theme: appTheme } = useAuthStore();
   const { isMobile, isTablet } = useViewport();
   const orgId = useAuthStore(s => s.orgId);
@@ -156,6 +156,10 @@ export const AppShell: React.FC = () => {
   const setDensity = useUiStore(s => s.setDensity);
   // SideNav only supports compact|comfortable; spacious widens like comfortable
   const density: 'compact' | 'comfortable' = densityFull === 'compact' ? 'compact' : 'comfortable';
+  // Page padding follows the density token (compact 16 / comfortable 20 / spacious 24)
+  // so the user's density setting actually affects the content gutter, not just
+  // control height + sider width. Falls back to space.xl (24) for any unknown value.
+  const pagePad = densityPagePadding[densityFull] ?? space.xl;
   const handleSideDensity = (d: 'compact' | 'comfortable') => setDensity(d);
   // Command palette state — driven by commandStore (session-only, no persist)
   const paletteOpen = useCommandStore(s => s.open);
@@ -210,9 +214,8 @@ export const AppShell: React.FC = () => {
     if (forceCollapsed) return;
     setSidebarCollapsed(!collapsed);
   }, [isMobile, forceCollapsed, collapsed, setSidebarCollapsed]);
-  const shellBg = isDark
-    ? `radial-gradient(circle at top ${isRTL ? 'right' : 'left'}, rgba(31, 111, 235, 0.14), transparent 32%), ${palette.darkBg}`
-    : `radial-gradient(circle at top ${isRTL ? 'right' : 'left'}, rgba(31, 111, 235, 0.09), transparent 28%), ${palette.bg}`;
+  // Vertex kit: flat canvas (no glass/gradient). Content cards provide the surfaces.
+  const shellBg = isDark ? palette.darkBg : palette.bg;
 
   // Pending module approval — hide app chrome; only wizard + account controls.
   if (isPendingLocked) {
@@ -274,9 +277,9 @@ export const AppShell: React.FC = () => {
           placement={isRTL ? 'right' : 'left'}
           width={Math.min(320, window.innerWidth * 0.92)}
           closable={false}
-          rootStyle={{ top: 56, height: 'calc(100% - 56px)' }}
+          rootStyle={{ top: 'calc(56px + env(safe-area-inset-top, 0px))', height: 'calc(100% - 56px - env(safe-area-inset-top, 0px))' }}
           mask={true}
-          maskStyle={{ top: 56 }}
+          maskStyle={{ top: 'calc(56px + env(safe-area-inset-top, 0px))' }}
           styles={{
             body: {
               padding: 0,
@@ -284,7 +287,7 @@ export const AppShell: React.FC = () => {
               display: 'flex',
               flexDirection: 'column',
               height: '100%',
-              background: isDark ? '#0B1220' : '#FAFBFC',
+              background: 'var(--surface)',
             },
           }}
           role="navigation"
@@ -324,24 +327,23 @@ export const AppShell: React.FC = () => {
         {showTabs && <WorkspaceTabs isDark={isDark} isRTL={isRTL} />}
         {showDashboardKpis && <DashboardKpiStrip isDark={isDark} />}
         <Layout.Content id="main-content" style={{
-          // Mobile: no margin/border/shadow — full-width clean canvas
-          margin: isMobile ? 0 : space.lg,
-          marginBottom: isMobile ? 0 : (showBottomNav ? 80 : space.lg),
-          paddingInlineStart: isMobile ? `max(16px, env(safe-area-inset-left, 0px))` : `max(${space.xl}px, env(safe-area-inset-left, 0px))`,
-          paddingInlineEnd:   isMobile ? `max(16px, env(safe-area-inset-right, 0px))` : `max(${space.xl}px, env(safe-area-inset-right, 0px))`,
-          paddingBlockStart:  isMobile ? '16px' : `${space.xl}px`,
+          // Vertex kit: flat, flush content canvas — no floating glass panel.
+          // Cards/tables inside (var(--surface)) provide the raised surfaces.
+          margin: 0,
+          marginBottom: showBottomNav ? 80 : 0,
+          paddingInlineStart: isMobile ? `max(16px, env(safe-area-inset-left, 0px))` : `max(${pagePad}px, env(safe-area-inset-left, 0px))`,
+          paddingInlineEnd:   isMobile ? `max(16px, env(safe-area-inset-right, 0px))` : `max(${pagePad}px, env(safe-area-inset-right, 0px))`,
+          paddingBlockStart:  isMobile ? '16px' : `${pagePad}px`,
           // On mobile: extra bottom padding to clear BottomNav + safe-area
           paddingBlockEnd: isMobile
             ? 'calc(80px + env(safe-area-inset-bottom, 0px))'
-            : `${space.xl}px`,
-          background: isMobile
-            ? (isDark ? palette.darkBg : palette.bg)
-            : (isDark ? 'linear-gradient(180deg, rgba(17,26,46,0.98), rgba(17,26,46,0.94))' : 'linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.92))'),
-          borderRadius: isMobile ? 0 : radius.lg,
-          minHeight: isMobile ? 'calc(100dvh - 56px)' : 'calc(100vh - 60px - 32px)',
-          border: isMobile ? 'none' : `1px solid ${isDark ? palette.darkBorder : palette.border}`,
-          boxShadow: isMobile ? 'none' : shadow.lg,
-          backdropFilter: isMobile ? 'none' : 'blur(18px)',
+            : `${pagePad}px`,
+          background: isDark ? palette.darkBg : palette.bg,
+          borderRadius: 0,
+          minHeight: isMobile ? 'calc(100dvh - 56px)' : 'calc(100vh - 56px)',
+          border: 'none',
+          boxShadow: 'none',
+          backdropFilter: 'none',
           overflow: isMobile ? 'visible' : 'hidden',
           maxInlineSize: '100%',
           boxSizing: 'border-box',

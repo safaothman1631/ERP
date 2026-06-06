@@ -1,9 +1,9 @@
 import type React from 'react';
-import { Card, Button, Space } from 'antd';
+import { Button, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ThunderboltOutlined, RocketOutlined } from '@ant-design/icons';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard } from '../../design-system';
 import { space } from '../../theme/tokens';
 
 const AutomationFromStudio: React.FC = () => {
@@ -33,12 +33,12 @@ const AutomationFromStudio: React.FC = () => {
         }
       />
 
-      <Card style={{ textAlign: 'center', padding: space.xl }}>
-        <Space direction="vertical" size={space.lg} style={{ width: '100%' }}>
-          <ThunderboltOutlined style={{ fontSize: 64, color: '#6366f1' }} />
+      <SectionCard style={{ textAlign: 'center' }}>
+        <Space direction="vertical" size={space.lg} style={{ width: '100%', padding: space.xl }}>
+          <ThunderboltOutlined style={{ fontSize: 64, color: 'var(--accent-500)' }} />
           <div>
             <h2>{t('studio.create_workflows', 'Create Workflows')}</h2>
-            <p style={{ fontSize: 16, color: '#64748b', maxWidth: 500, margin: '0 auto' }}>
+            <p style={{ fontSize: 16, color: 'var(--ink-500)', maxWidth: 500, margin: '0 auto' }}>
               {t('studio.workflows_desc', 'Automate tasks for this entity, like sending emails, changing status, or creating related documents')}
             </p>
           </div>
@@ -58,18 +58,18 @@ const AutomationFromStudio: React.FC = () => {
             </ul>
           </div>
         </Space>
-      </Card>
+      </SectionCard>
 
-      <Card style={{ marginTop: space.lg }}>
+      <SectionCard style={{ marginTop: space.lg }}>
         <h4>{t('studio.existing_workflows', 'Existing Workflows')}</h4>
-        <p style={{ color: '#64748b' }}>
+        <p style={{ color: 'var(--ink-500)' }}>
           {t('studio.existing_workflows_desc', 'To view and edit workflows, go to')}
           {' '}
           <Button type="link" onClick={() => navigate('/automation/workflows')} style={{ padding: 0 }}>
             {t('automation.workflows', 'Workflows')}
           </Button>
         </p>
-      </Card>
+      </SectionCard>
     </div>
   );
 };

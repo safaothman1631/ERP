@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
- Card, Descriptions, Button, Tabs, Space, Form, InputNumber,
- Input, Statistic, Row, Col, Tag, Typography
+ Button, Tabs, Space, Form, InputNumber,
+ Input, Row, Col, Typography
 } from 'antd';
 import { useTranslation } from 'react-i18next';
 import {
@@ -13,11 +13,12 @@ import api from '../../api';
 import { message } from '../../utils/message';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { FormDialog } from '../../components/responsive/FormDialog';
+import { PageHeader, StatusTag, KpiCard, SectionCard, KeyValueGrid } from '../../design-system';
 import { LoadingSkeleton } from '../../design-system/LoadingSkeleton';
 import { useLoadingState } from '../../hooks/useLoadingState';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 const POSSessionDetail: React.FC = () => {
  const { sessionId } = useParams<{ sessionId: string }>();
@@ -64,7 +65,7 @@ const POSSessionDetail: React.FC = () => {
  try {
  const res = await api.get(`/api/pos/sessions/${sessionId}/summary`);
  setSummary(res.data);
- } catch {}
+ } catch { /* noop */ }
  };
 
  const loadOrders = async () => {
@@ -73,7 +74,7 @@ const POSSessionDetail: React.FC = () => {
  params: { page_size: 1000 }
  });
  setOrders(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  const loadPayments = async () => {
@@ -82,7 +83,7 @@ const POSSessionDetail: React.FC = () => {
  params: { page_size: 1000 }
  });
  setPayments(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  const handleCloseSession = async (values: any) => {
@@ -165,9 +166,7 @@ const POSSessionDetail: React.FC = () => {
  dataIndex: 'state',
  key: 'state',
  render: (state: string) => (
- <Tag color={state === 'paid' ? 'green' : 'default'}>
- {t(`pos.order_${state}`)}
- </Tag>
+ <StatusTag status={state === 'paid' ? 'paid' : 'default'} label={t(`pos.order_${state}`)} />
  ),
  },
  ];
@@ -194,19 +193,14 @@ const POSSessionDetail: React.FC = () => {
 
  return (
  <div>
- <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
- <Space>
+ <PageHeader
+ title={session.config_name}
+ tag={<StatusTag status={session.state === 'opened' ? 'active' : 'closed'} label={t(`pos.state_${session.state}`)} />}
+ extra={
+ <Space wrap>
  <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/pos/sessions')}>
  {t('back')}
  </Button>
- <Title level={2} style={{ margin: 0 }}>
- {session.config_name}
- </Title>
- <Tag color={session.state === 'opened' ? 'green' : 'default'}>
- {t(`pos.state_${session.state}`)}
- </Tag>
- </Space>
- <Space>
  {session.state === 'opened' && (
  <>
  <Button
@@ -237,74 +231,55 @@ const POSSessionDetail: React.FC = () => {
  </Button>
  )}
  </Space>
- </div>
+ }
+ />
 
  {/* Summary Cards */}
  <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
  <Col xs={24} sm={12} md={6}>
- <Card>
- <Statistic
+ <KpiCard
  title={t('pos.opening_cash')}
- value={session.opening_cash || 0}
- formatter={value => formatCurrency(Number(value))}
+ value={formatCurrency(session.opening_cash || 0)}
  />
- </Card>
  </Col>
  <Col xs={24} sm={12} md={6}>
- <Card>
- <Statistic
+ <KpiCard
  title={t('pos.total_sales')}
- value={session.total_sales || 0}
- formatter={value => formatCurrency(Number(value))}
+ value={formatCurrency(session.total_sales || 0)}
+ tone="success"
  />
- </Card>
  </Col>
  <Col xs={24} sm={12} md={6}>
- <Card>
- <Statistic
+ <KpiCard
  title={t('pos.total_orders')}
  value={session.total_orders || 0}
+ tone="info"
  />
- </Card>
  </Col>
  <Col xs={24} sm={12} md={6}>
- <Card>
- <Statistic
+ <KpiCard
  title={session.state === 'closed' ? t('pos.cash_difference') : t('pos.expected_cash')}
- value={session.state === 'closed' ? session.closing_difference : session.closing_cash_expected}
- formatter={value => formatCurrency(Number(value))}
- styles={{ content: { color: session.closing_difference > 0 ? '#3f8600' : session.closing_difference < 0 ? '#cf1322' : undefined } }}
+ value={formatCurrency(Number(session.state === 'closed' ? session.closing_difference : session.closing_cash_expected) || 0)}
+ tone={session.state === 'closed' ? (session.closing_difference > 0 ? 'success' : session.closing_difference < 0 ? 'danger' : 'primary') : 'primary'}
  />
- </Card>
  </Col>
  </Row>
 
  {/* Details */}
- <Card style={{ marginBottom: 16 }}>
- <Descriptions bordered column={2}>
- <Descriptions.Item label={t('pos.cashier')}>
- {session.cashier_name}
- </Descriptions.Item>
- <Descriptions.Item label={t('pos.opened_at')}>
- {formatDate(session.opened_at)}
- </Descriptions.Item>
- {session.closed_at && (
- <Descriptions.Item label={t('pos.closed_at')}>
- {formatDate(session.closed_at)}
- </Descriptions.Item>
- )}
- {session.state === 'closed' && (
- <>
- <Descriptions.Item label={t('pos.closing_cash_counted')}>
- {formatCurrency(session.closing_cash_counted)}
- </Descriptions.Item>
- <Descriptions.Item label={t('pos.closing_cash_expected')}>
- {formatCurrency(session.closing_cash_expected)}
- </Descriptions.Item>
- </>
- )}
- </Descriptions>
- </Card>
+ <SectionCard>
+ <KeyValueGrid
+ columns={2}
+ items={[
+ { label: t('pos.cashier'), value: session.cashier_name },
+ { label: t('pos.opened_at'), value: formatDate(session.opened_at) },
+ ...(session.closed_at ? [{ label: t('pos.closed_at'), value: formatDate(session.closed_at) }] : []),
+ ...(session.state === 'closed' ? [
+ { label: t('pos.closing_cash_counted'), value: formatCurrency(session.closing_cash_counted) },
+ { label: t('pos.closing_cash_expected'), value: formatCurrency(session.closing_cash_expected) },
+ ] : []),
+ ]}
+ />
+ </SectionCard>
 
  {/* Tabs */}
  <Tabs
@@ -337,23 +312,23 @@ const POSSessionDetail: React.FC = () => {
  key: 'summary',
  label: t('pos.summary'),
  children: summary ? (
- <Card>
- <Title level={4}>{t('pos.payment_methods_breakdown')}</Title>
+ <SectionCard title={t('pos.payment_methods_breakdown')}>
  {Object.entries(summary.payment_summary || {}).map(([method, amount]: any) => (
  <div key={method} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
- <Text>{method}</Text>
- <Text strong>{formatCurrency(amount)}</Text>
+ <Text style={{ color: 'var(--ink-700)' }}>{method}</Text>
+ <Text strong style={{ color: 'var(--ink-900)' }}>{formatCurrency(amount)}</Text>
  </div>
  ))}
- <Descriptions bordered column={1} style={{ marginTop: 16 }}>
- <Descriptions.Item label={t('pos.total_tax')}>
- {formatCurrency(summary.total_tax || 0)}
- </Descriptions.Item>
- <Descriptions.Item label={t('pos.total_discount')}>
- {formatCurrency(summary.total_discount || 0)}
- </Descriptions.Item>
- </Descriptions>
- </Card>
+ <div style={{ marginTop: 16 }}>
+ <KeyValueGrid
+ columns={1}
+ items={[
+ { label: t('pos.total_tax'), value: formatCurrency(summary.total_tax || 0) },
+ { label: t('pos.total_discount'), value: formatCurrency(summary.total_discount || 0) },
+ ]}
+ />
+ </div>
+ </SectionCard>
  ) : null,
  },
  ]}

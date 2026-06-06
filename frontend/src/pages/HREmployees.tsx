@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Card, Button, Form, Input, Select, DatePicker, Space, Popconfirm, Tag, message, Alert } from 'antd';
+import { Button, Form, Input, Select, DatePicker, Space, Popconfirm, message, Alert } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
@@ -8,9 +8,9 @@ import api from '../api';
 import { useListQuery } from '../api/queries/useListQuery';
 import { listQueryKeys } from '../api/queries/keys';
 import ChatterWidget from '../components/chatter/ChatterWidget';
-import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
-import { HelpIcon } from '../help/HelpIcon';
+import { PageHeader, DataTable, StatusTag } from '../design-system';
+import type { ColumnDef } from '../design-system/DataTable';
 import { restoreReturnContext, readReturnToken } from '../utils/returnContext';
 
 interface Employee {
@@ -120,7 +120,7 @@ export default function HREmployees() {
  setOpen(true);
  };
 
- const cols = [
+ const cols: ColumnDef<Employee>[] = [
  { title: t('name'), dataIndex: 'name' },
  { title: t('email'), dataIndex: 'email' },
  { title: t('phone'), dataIndex: 'phone' },
@@ -132,7 +132,7 @@ export default function HREmployees() {
  { title: t('hire_date'), dataIndex: 'hire_date', render: (d?: string) => d || '—' },
  {
  title: t('status'), dataIndex: 'status',
- render: (s?: string) => <Tag color={s === 'active' ? 'green' : 'default'}>{t(s || 'active')}</Tag>,
+ render: (s?: string) => <StatusTag status={s || 'active'} label={t(s || 'active')} />,
  },
  {
  title: t('actions'),
@@ -148,7 +148,7 @@ export default function HREmployees() {
  ];
 
  return (
- <div style={{ padding: 16 }} data-section-id="hr.employees">
+ <div data-section-id="hr.employees">
  {returnHint && (
  <Alert
  type="info"
@@ -158,18 +158,20 @@ export default function HREmployees() {
  data-testid="return-context-hint"
  />
  )}
- <Space style={{ marginBottom: 12 }}>
- <h2 style={{ margin: 0 }}>{t('employees')}</h2>
- <HelpIcon sectionId="hr.employees" />
+ <PageHeader
+ title={t('employees')}
+ sectionId="hr.employees"
+ extra={
+ <Space>
  <Button icon={<ReloadOutlined />} onClick={load}>{t('refresh')}</Button>
  <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setOpen(true); }}>
  {t('new_employee')}
  </Button>
  </Space>
+ }
+ />
 
- <Card>
- <ResponsiveTableAdapter rowKey="id" dataSource={list} columns={cols} loading={loading} pagination={{ pageSize: 20 }} />
- </Card>
+ <DataTable rowKey="id" dataSource={list} columns={cols} loading={loading} pagination={{ pageSize: 20 }} />
 
  <FormDialog
  open={open}

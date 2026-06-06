@@ -144,9 +144,9 @@ function simulateResize(containerWidth: number, ghostWidth: number): void {
       width: containerWidth,
       height: 300,
       top: 0,
-      left: 0,
+      left: 0, /* rtl-ignore */
       bottom: 300,
-      right: containerWidth,
+      right: containerWidth, /* rtl-ignore */
       x: 0,
       y: 0,
       toJSON: () => ({}),
@@ -155,9 +155,9 @@ function simulateResize(containerWidth: number, ghostWidth: number): void {
       width: ghostWidth,
       height: 20,
       top: 0,
-      left: 0,
+      left: 0, /* rtl-ignore */
       bottom: 20,
-      right: ghostWidth,
+      right: ghostWidth, /* rtl-ignore */
       x: 0,
       y: 0,
       toJSON: () => ({}),

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Card, Tabs, Button, Form, Input, InputNumber, Switch, Select, message, Popconfirm, Space } from 'antd';
+import { Tabs, Button, Form, Input, InputNumber, Switch, Select, message, Popconfirm, Space } from 'antd';
 import type { TableProps } from 'antd';
 import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard } from '../../design-system';
 import { space } from '../../theme/tokens';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -251,9 +251,9 @@ export default function HelpdeskSettings() {
  return (
  <div style={{ padding: space.lg }}>
  <PageHeader title={t('helpdesk.settings')} subtitle={t('helpdesk.settings_subtitle')} />
- <Card style={{ marginTop: space.md }}>
+ <SectionCard style={{ marginTop: space.md }}>
  <Tabs items={tabItems} />
- </Card>
+ </SectionCard>
 
  <FormDialog
  title={editId ? t('edit') : t('create')}

@@ -56,7 +56,7 @@ const PageHelp: React.FC<PageHelpProps> = ({ open, onClose, content }) => {
  <FormDialog
  title={
  <Space>
- <QuestionCircleFilled style={{ color: '#6366f1' }} />
+ <QuestionCircleFilled style={{ color: '#7B61FF' }} />
  <span>{content.title}</span>
  </Space>
  }

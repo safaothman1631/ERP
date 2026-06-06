@@ -87,6 +87,14 @@ class Settings(BaseSettings):
     # clamd daemon is reachable). CLAMAV_HOST/CLAMAV_PORT honored by upload_validation.
     UPLOAD_CLAMAV_ENABLED: bool = False
 
+    # ── Payments (Iraq gateways) ────────────────────────────────────────────────
+    # HMAC-SHA256 shared secret used to verify the PUBLIC FIB / Zain Cash payment
+    # webhooks (POST /api/iraq-payments/webhook/{fib,zain-cash}). Empty by default:
+    # when unset the public webhooks are disabled (return 503) so forged callbacks
+    # cannot mark invoices paid. Set to a strong random value in production and
+    # configure the provider to sign requests with the X-Webhook-Signature header.
+    IRAQ_PAYMENT_WEBHOOK_SECRET: str = ""
+
     # ── Observability ─────────────────────────────────────────────────────────
     SENTRY_DSN: str = ""
 
@@ -122,6 +130,26 @@ class Settings(BaseSettings):
     FS_METRICS_ENABLED: bool = True
     IDEMPOTENCY_ENABLED: bool = True
     GL_MATERIALISATION_ENABLED: bool = False
+    # Accounting reports aggregate JE lines via a single collection_group('lines')
+    # query on the denormalized (org_id, je_date) index instead of an N+1 scan.
+    # Index deployed (zoho-83cda) + line docs backfilled; validated on real data
+    # (journal_balances_cg == legacy, byte-for-byte). Auto-falls-back to the
+    # legacy path on any error, so a missing index/line can never break a report.
+    REPORTS_USE_COLLECTION_GROUP: bool = True
+    # Perpetual inventory valuation (FIFO / moving-average) for COGS instead of
+    # standard cost (item.cost_price). Off = standard-cost behavior preserved.
+    PERPETUAL_VALUATION_ENABLED: bool = False
+    # Pool 3.3: couple an outbox event to the JE write (same transaction) so
+    # downstream handlers (e-invoice, inventory, notification) fire exactly-once.
+    # Off = no event is enqueued from the hot JE/invoice path (zero behavior
+    # change); the create_journal_entry_* `emit_event` arg is simply ignored.
+    OUTBOX_HOTPATH_ENABLED: bool = False
+    # Pool 4.6: business-data warehouse (Firestore -> BigQuery) + analytics +
+    # BQML forecasting. Empty = OFF (sync job no-ops, analytics falls back to
+    # OLTP/empty). Set to "project.dataset" (e.g. "zoho-83cda.zoho_warehouse")
+    # to enable. Read via os.environ by the analytics modules (mirrors
+    # rum_ingest's RUM_BIGQUERY_DATASET pattern).
+    ANALYTICS_BQ_DATASET: str = ""
     GENERIC_WRITE_VALIDATION: bool = True
     AUDIT_RETENTION_MONTHS: int = 24
 

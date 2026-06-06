@@ -1,0 +1,25 @@
+len=212723
+count dimension key=8
+count score key=8
+first2000=
+{
+  "summary": "Full-system audit (design, perf, a11y/RTL, security, backend, DB, tests, code) — find → adversarially verify → score",
+  "agentCount": 44,
+  "logs": [
+    "Auditing 11 dimensions in parallel, then adversarially verifying every P0/P1 finding...",
+    "pipeline[2] failed: agent({schema}): subagent completed without calling StructuredOutput (after 2 in-conversation nudges)",
+    "pipeline[3] failed: agent({schema}): subagent completed without calling StructuredOutput (after 2 in-conversation nudges)",
+    "pipeline[6] failed: agent({schema}): subagent completed without calling StructuredOutput (after 2 in-conversation nudges)",
+    "Audit complete: 8 dimensions, 72 findings, 28 confirmed P0/P1."
+  ],
+  "result": [
+    {
+      "dimension": "Visual design & Vertex-kit fidelity",
+      "score": 74,
+      "summary": "The Vertex token foundation is genuinely strong and well-architected: vertex-tokens.css + vertexTheme.ts + vertex-kit.css give the app flat violet buttons, kit-style tables, glass overlays, slate dark surfaces and live role-accents, all token-driven; the global shell (SideNav, TopBar), CSS files and design-system primitives (TrendChart, MiniSparkline) are clean. Fidelity breaks down in the long tail: ~289 inline hardcoded hex colors across 80 .tsx files, with a real cluster of user-facing finance dashboards, POS, onboarding and charts rendering in recharts-default and legacy-AntD palettes that clash with the violet/slate kit. The most off-brand surfaces are the HardwarePairingWizard (raw unstyled HTML buttons), the live MFA page (still on the OLD auth shell, not VertexAuthShell), and the POS Customer Display. There are also a dark-mode invisible-text bug in EmptyState and a CSS specificity conflict that leaves the old button sheen active. These are correctness/consistency issues on screens real users hit daily, not just polish.",
+      "findings": [
+        {
+          "severity": "P1",
+          "title": "Finance dashboards & charts render in 
+
+DIRECT json.loads OK type=dict len=4

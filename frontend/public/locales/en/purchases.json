@@ -95,5 +95,17 @@
   "freight": "Freight",
   "customs": "Customs",
   "insurance": "Insurance",
-  "other_charges": "Other Charges"
+  "other_charges": "Other Charges",
+  "no_bills": "No bills yet",
+  "no_bills_hint": "Record your first vendor bill to track payables",
+  "po_number": "PO #",
+  "delivery_status": "Delivery",
+  "bulk_issue": "Issuing selected purchase orders…",
+  "receive": "Mark Received",
+  "bulk_receive": "Marking selected POs as received…",
+  "purchase_orders_subtitle": "Manage vendor purchase orders and deliveries",
+  "new_po": "New Purchase Order",
+  "search_pos": "Search purchase orders…",
+  "no_pos": "No purchase orders yet",
+  "no_pos_hint": "Create your first purchase order to start managing procurement"
 }

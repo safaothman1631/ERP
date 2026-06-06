@@ -1,0 +1,521 @@
+{
+  "_note": "Authored ku + en values for in-scope keys flagged by i18n-purity.mjs (premium-glass-rtl-experience R5). Merged into public/locales/{ku,en}/{common,errors}.json by i18n-backfill.mjs. Existing keys are never overwritten.",
+  "common": {
+    "ku": {
+      "user_menu": "مێنیووی بەکارهێنەر",
+      "goToDashboard": "بڕۆ بۆ داشبۆرد",
+      "choose_tab": "تابێک هەڵبژێرە",
+      "bottom_nav": "ڕێنیشاندەری سەرەکی",
+      "edit_tabs": "دەستکاریی تابەکان",
+      "apps_launcher_title": "ئەپەکان",
+      "remove_favorite": "لابردن لە دڵخوازەکان",
+      "add_favorite": "زیادکردن بۆ دڵخوازەکان",
+      "toggle_menu": "کردنەوە/داخستنی مێنیو",
+      "nav_search_no_results": "وشەیەکی تر تاقیبکەرەوە یان پەنجەرەی فەرمان بکەرەوە",
+      "stock_locations": "شوێنەکانی کۆگا",
+      "putaway_rules": "ڕێسای دانان",
+      "cycle_counts": "ژمارکردنی خولی",
+      "data_table_v2": {
+        "bulk_actions": "کردارە کۆمەڵییەکان",
+        "selected_n": "{{n}} هەڵبژێردراو",
+        "pinned": "چەسپاو"
+      },
+      "line_items": {
+        "table_label": "بڕگەکان",
+        "empty": "هێشتا هیچ بڕگەیەک نییە. کرتە لە «زیادکردنی ڕیز» بکە بۆ دەستپێک.",
+        "add_row": "زیادکردنی ڕیز"
+      },
+      "entity_select": {
+        "create_new": "دروستکردنی نوێ",
+        "no_results": "هیچ ئەنجامێک نەدۆزرایەوە",
+        "type_to_search": "بۆ گەڕان بنووسە…",
+        "placeholder": "گەڕان…"
+      },
+      "filter_bar_v2": {
+        "clear_all": "پاککردنەوەی هەموو"
+      },
+      "form_layout": {
+        "save_and_new": "پاشەکەوت و نوێ",
+        "save_and_send": "پاشەکەوت و ناردن",
+        "unsaved_title": "گۆڕانکاریی پاشەکەوتنەکراو",
+        "unsaved_description": "گۆڕانکاریی پاشەکەوتنەکراوت هەیە. دڵنیایت دەتەوێت بڕۆیت؟",
+        "leave_anyway": "بەهەرحاڵ بڕۆ",
+        "stay": "مانەوە",
+        "validation_errors_title": "{{n}} هەڵەی پشتڕاستکردنەوە — تکایە پێش پاشەکەوت چاکیان بکە"
+      },
+      "money_input": {
+        "currency_label": "دراو",
+        "amount_label": "بڕ"
+      },
+      "save_split_button": {
+        "more_options": "هەڵبژاردنی زیاتری پاشەکەوت"
+      },
+      "a11y": {
+        "skipToContent": "بازدان بۆ ناوەڕۆکی سەرەکی"
+      },
+      "toast": {
+        "saved": "پاشەکەوت کرا",
+        "deleted": "سڕایەوە"
+      },
+      "uploader": {
+        "too_large": "قەبارەی فایل زۆر گەورەیە",
+        "failed": "بارکردن سەرکەوتوو نەبوو",
+        "select_file": "فایل هەڵبژێرە",
+        "remove": "لابردن",
+        "not_image": "تکایە فایلێکی وێنە هەڵبژێرە",
+        "image": "بارکردنی وێنە"
+      },
+      "command_palette": {
+        "title": "پەنجەرەی فەرمان",
+        "placeholder": "گەڕان بۆ پەڕە، کردار، دواییەکان…",
+        "results": "ئەنجامی گەڕان",
+        "no_results": "هیچ ئەنجامێک نەدۆزرایەوە"
+      },
+      "entity_switcher": {
+        "companies": "کۆمپانیاکان",
+        "current": "ئێستا",
+        "no_companies": "هیچ کۆمپانیایەک نییە",
+        "select": "کۆمپانیا"
+      },
+      "topbar": {
+        "entity_switcher": "کۆمپانیا"
+      },
+      "split_master": {
+        "section": "بەش",
+        "empty": "هیچ بڕگەیەک لەم بەشەدا نییە",
+        "resize": "ڕاکێشە بۆ گۆڕینی قەبارە"
+      },
+      "notifications_v2": {
+        "unread_count": "{{n}} ئاگادارکردنەوەی نەخوێندراو"
+      },
+      "marketing": {
+        "marketing": "بازاڕگەری",
+        "dashboard": "داشبۆردی بازاڕگەری",
+        "email_campaigns": "هەڵمەتی ئیمەیڵ",
+        "sms_campaigns": "هەڵمەتی کورتەنامە",
+        "segments": "بەشەکانی کڕیار",
+        "automations": "ئۆتۆماتیکردنەکان"
+      },
+      "subscription": {
+        "subscriptions": "بەشداریکردنەکان",
+        "plans": "پلانەکانی بەشداری",
+        "dunning_queue": "ڕیزی داواکردنی پارە",
+        "reports": "ڕاپۆرتی داهاتی مانگانە"
+      },
+      "returns": {
+        "vendor_returns": "گەڕاندنەوە بۆ دابینکەر"
+      },
+      "numbering": {
+        "sequences": "زنجیرەی ژمارەدانان"
+      },
+      "automation": {
+        "title": "ئۆتۆماتیکردن"
+      },
+      "audit_log": {
+        "title": "تۆماری چاودێری"
+      },
+      "jobs": {
+        "scheduler_title": "خشتەی کارەکان"
+      },
+      "nav": {
+        "main": "ڕێنیشاندەری سەرەکی",
+        "sidebar": "ڕێنیشاندەر",
+        "workspace": "شوێنی کار",
+        "search_label": "گەڕان لە ڕێنیشاندەر",
+        "search_results_count": "{{n}} ئەنجام دۆزرایەوە",
+        "crm_leads": "لیدەکان",
+        "crm_pipeline": "قۆناغەکانی فرۆشتن",
+        "pos_sessions": "سێشنەکانی فرۆشگا",
+        "pos_orders": "داواکارییەکانی فرۆشگا",
+        "dashboards": "داشبۆردەکان",
+        "credit_notes": "نۆتی قەرز",
+        "vendor_credits": "قەرزی دابینکەر",
+        "recurring_invoices": "فاکتورە دووبارەبووەکان",
+        "tax_returns": "ڕاپۆرتی باج",
+        "warehouses": "کۆگاکان",
+        "assets": "سامانە جێگیرەکان",
+        "mfg_orders": "داواکاریی بەرهەمهێنان",
+        "mfg_boms": "لیستی پێکهاتەکان",
+        "hr_employees": "کارمەندان",
+        "hr_attendance": "ئامادەبوون",
+        "payroll_runs": "جێبەجێکردنی مووچە",
+        "approvals": "پەسەندکردنەکان",
+        "my_approvals": "پەسەندکردنەکانم",
+        "audit_log": "تۆماری چاودێری",
+        "users": "بەکارهێنەران",
+        "companies": "کۆمپانیاکان",
+        "branches": "لقەکان",
+        "custom_fields": "خانە تایبەتەکان",
+        "email_templates": "قاڵبی ئیمەیڵ",
+        "tax_settings": "ڕێکخستنی باج",
+        "budgets": "بودجەکان",
+        "analytic_accounts": "هەژماری شیکاری",
+        "fx_rates": "نرخی دراو",
+        "subscriptions": "بەشداریکردنەکان",
+        "workflows": "بەڕێوەبردنی کار",
+        "helpdesk": "یارمەتیدان",
+        "field_service": "خزمەتگوزاریی مەیدانی",
+        "quality_dashboard": "جۆرایەتی",
+        "overview_blurb": "تەندروستیی ڕۆژانە، بازدانی خێرا، و ئامارە کارگێڕییەکان",
+        "desc_dashboard": "ناوەندی فەرماندان و ئاماری زیندوو",
+        "sales_blurb": "لە نرخنامەوە تا وەرگرتنی پارە، داهاتی دووبارە، و کڕیاران",
+        "desc_credit_notes": "قەرزی کڕیار و ڕاستکردنەوەی فاکتور",
+        "desc_shipments": "جێبەجێکردنی گەیاندن و دۆخی بارکردن",
+        "desc_delivery_challans": "بەڵگەی گەیاندن و فۆرمی بار",
+        "desc_sales_returns": "پەسەندکردنی گەڕاندنەوەی کڕیار و کاریگەری لەسەر کۆگا",
+        "desc_returns_sales": "گەڕاندنەوەی فرۆشتن لەگەڵ ڕەوتی گەڕاندنەوەی پارە",
+        "desc_payment_links": "بەستەری وەرگرتنی پارە بۆ کڕیاران",
+        "desc_recurring_invoices": "خشتەی فاکتوری بەشداری-شێوە",
+        "purchases_blurb": "دابینکەران، کڕین، قەرز، و خەرجکردن",
+        "desc_vendor_credits": "قەرزی دابینکەر و لێدانی کڕین",
+        "desc_purchase_returns": "گەڕاندنەوە بۆ دابینکەر و پاشگەزبوونی کۆگا",
+        "desc_returns_vendor": "گەڕاندنەوەی دابینکەر لەگەڵ ڕەوتی گەڕاندنەوەی پارە",
+        "desc_expense_claims": "داواکاریی پارەدانەوەی کارمەند و پەسەندکردن",
+        "banking_blurb": "دۆخی پارە، هاوردن، ڕێکخستن، و گەڕانەوە",
+        "desc_banking_accounts": "پوختەی هەژماری بانک و پارەی نەقد",
+        "desc_bank_rules": "ڕێسای پۆلێنکردن و گونجاندنی خۆکار",
+        "desc_reconciliation": "گونجاندنی کشف لەگەڵ مامەڵەکانی سیستەم",
+        "inventory_blurb": "تەندروستیی کۆگا، کۆگاکان، و نرخاندن",
+        "desc_inventory_overview": "نرخاندن، کەمیی کاڵا، گرووپ، و ڕاستکردنەوە",
+        "desc_warehouses": "نەخشەی کۆگا و بەڕێوەبردنی گواستنەوە",
+        "desc_locations": "پلەبەندیی شوێن و زۆن لەناو کۆگادا",
+        "desc_putaway": "پێشنیاری خۆکاری شوێنی دانان بۆ کاڵای هاتوو",
+        "desc_cycle_counts": "پشتڕاستکردنەوەی ژماردنی فیزیکی و جیاوازی",
+        "desc_price_lists": "کاتالۆگی نرخی نەرم بەپێی کەناڵ",
+        "desc_serials": "بەدواداچوونی یەکەکان بە ژمارەی سیریاڵ / IMEI",
+        "manufacturing_blurb": "لیستی پێکهاتەکان، داواکاری، و ناوەندی کار",
+        "desc_boms": "پێکهاتەی بەرهەم و ڕێسەتی ماددەکان",
+        "desc_mfg_orders": "خولی بەرهەمهێنان و دۆخی جێبەجێکردن",
+        "desc_work_centers": "توانا، ڕێڕەوەکان، و وێستگەکانی کار",
+        "pos_blurb": "تەرمیناڵی فرۆشگا، سێشن، نرخ، و زیاتر",
+        "desc_pos_terminal": "تەرمیناڵی فرۆشیار و ڕەوتی سەبەتەی زیندوو",
+        "desc_pos_sessions": "کردنەوە، داخستن، و چاودێریی سێشنەکانی فرۆشگا",
+        "desc_pos_orders": "مێژووی فرۆشتن و گەڕانی داواکاری",
+        "desc_pos_configs": "ڕێکخستن و ڕەفتاری تەرمیناڵ",
+        "desc_pos_categories": "ڕێکخستنی پۆلی فرۆشگا",
+        "desc_pos_products": "بەرهەمەکانی ئامادەکراو بۆ فرۆشتن",
+        "desc_pos_pricelists": "ڕێسای نرخی فرۆشتن و مێنیو",
+        "desc_pos_employees": "دەستڕاگەیشتنی فرۆشیار و ستافی تەرمیناڵ",
+        "desc_pos_loyalty": "خاڵی پاداشت و ڕێکخستنی پاراستنی کڕیار",
+        "desc_pos_gift_cards": "کارتی بەهادار و وەرگرتنەوە",
+        "desc_pos_floors": "نەخشەی نهۆمی چێشتخانە و مێزەکان",
+        "desc_pos_reports": "ڕاپۆرتی ڕۆژانە، فرۆشتن بەپێی فرۆشیار و بەرهەم",
+        "crm_blurb": "لیدەکان، قۆناغەکان، چالاکی، و زانیاری",
+        "desc_leads": "وەرگرتن و پۆلێنکردنی لید",
+        "desc_pipeline": "قۆناغی مامەڵە و پێشبینیی داهات",
+        "desc_activities": "ئەرک، پەیوەندی، و بەدواداچوون",
+        "desc_insights": "زیرەکیی گۆڕین و قۆناغەکان",
+        "marketing_blurb": "ئیمەیڵ، هەڵمەتی کورتەنامە، بەش، و ئۆتۆماتیک",
+        "desc_marketing_dashboard": "ئاماری بازاڕگەری و ئەدای هەڵمەت",
+        "desc_email_campaigns": "هەڵمەتی بازاڕگەریی ئیمەیڵ و ناردن",
+        "desc_sms_campaigns": "هەڵمەتی بازاڕگەریی کورتەنامە",
+        "desc_segments": "بەش و ئامانجی کڕیاران",
+        "desc_automations": "ڕەوتی بازاڕگەریی خۆکار",
+        "hr_blurb": "کارمەندان، ئامادەبوون، مۆڵەت، و مووچە",
+        "desc_hr_dashboard": "پوختەی هێزی کار و بارگرانیی HR",
+        "desc_contracts": "گرێبەستی کار و دۆخ",
+        "desc_attendance": "مێژووی هاتن و کۆنترۆڵی ئامادەبوون",
+        "desc_time_off": "داواکاریی مۆڵەت و ڕیزی پەسەندکردن",
+        "desc_salary_rules": "لۆژیکی مووچە، یارمەتی، و کەمکردنەوە",
+        "desc_payroll_runs": "خولی مووچە و دروستکردنی پسوولەی مووچە",
+        "projects_blurb": "گەیاندنی پڕۆژە، سامان، و کاری کڕیار",
+        "desc_projects": "گەیاندنی پڕۆژە و بەدواداچوونی کار",
+        "desc_assets": "سامانی بازرگانی و پوختەی کەمبوونەوەی نرخ",
+        "accounting_blurb": "دەفتەر، ڕاپۆرت، باج، و کۆنترۆڵی یاسایی",
+        "desc_advanced_reports": "ڕاپۆرتی قووڵ و شیکاریی تایبەت",
+        "desc_scheduled_reports": "ناردنی خۆکاری ڕاپۆرت بە ئیمەیڵ",
+        "desc_custom_reports": "دروستکردن و پاشەکەوتی ڕوانگەی تایبەت",
+        "desc_tax_settings": "ڕێژەی باج، گرووپ، و بنەڕەتەکان",
+        "desc_tax_returns": "ئامادەکردن و پێداچوونەوەی ڕاپۆرتی باج",
+        "management_blurb": "بەڕێوەبردن، یەکخستن، پەسەندکردن، و کۆنترۆڵ",
+        "desc_companies": "پێکهاتەی فرە-کۆمپانیا و کۆنترۆڵ",
+        "desc_branches": "کارکردن و پێکهاتەی لقەکان",
+        "desc_branch_comparison": "بەراوردی دارایی نێوان لقەکان",
+        "desc_consolidated_reports": "ڕاپۆرتی یەکخراوی ئاستی گرووپ",
+        "desc_approvals": "پەسەندکردنی ڕەوت و گەشەپێدان",
+        "desc_audit_log": "بەدواداچوون و چاودێریی سیستەمی",
+        "iraq_blurb": "ناوچەگەری، یاسا، نامەنووسین، و زیاتر",
+        "desc_iraq_localization": "ڕێکخستن و یاسای تایبەت بە وڵات",
+        "desc_einvoice_dashboard": "چاودێریی یاساییەتیی فاکتوری ئەلیکترۆنی",
+        "desc_whatsapp": "ڕەوتی نامەنووسین و هاوکاتکردنی دەرەوە",
+        "desc_ocr_receipts": "سکانکردنی پسوولە و وەرگرتنی OCR",
+        "desc_custom_fields": "فراوانکردنی سکیما و خاڵە داتای تایبەت",
+        "desc_users": "دروستکردن، بانگهێشت، ڕاگرتن و دەستنیشانکردنی ڕۆڵ",
+        "desc_roles_permissions": "سیاسەتی دەستڕاگەیشتن و دیزاینی مۆڵەت",
+        "desc_user_roles": "دەستنیشانکردنی ڕۆڵ و دەستڕاگەیشتنی بەکارهێنەر",
+        "desc_numbering": "زنجیرەی ژمارەدانانی دۆکیومێنت بەپێی لق",
+        "desc_automation": "کرداری خۆکار و ڕەوتەکان",
+        "desc_job_runs": "چاودێری و کۆنترۆڵی کارە پاشبنەماییەکان",
+        "desc_studio": "دەستکاریی بێ-کۆد و دروستکەری خانە",
+        "desc_docs": "ڕێنماییی ناو-ئەپ، خانە، ڕەوت، و کورتەڕێ",
+        "desc_trash": "بڕگە نوێ سڕاوەکان، گەڕاندنەوە یان سڕینەوەی هەمیشەیی"
+      }
+    },
+    "en": {
+      "user_menu": "User menu",
+      "goToDashboard": "Go to Dashboard",
+      "choose_tab": "Choose tab",
+      "bottom_nav": "Main navigation",
+      "edit_tabs": "Edit tabs",
+      "apps_launcher_title": "Apps",
+      "remove_favorite": "Remove favorite",
+      "add_favorite": "Add favorite",
+      "toggle_menu": "Toggle menu",
+      "nav_search_no_results": "Try another keyword or open the command palette",
+      "stock_locations": "Stock locations",
+      "putaway_rules": "Putaway rules",
+      "cycle_counts": "Cycle counts",
+      "data_table_v2": {
+        "bulk_actions": "Bulk actions",
+        "selected_n": "{{n}} selected",
+        "pinned": "pinned"
+      },
+      "line_items": {
+        "table_label": "Line items",
+        "empty": "No items yet. Click \"Add row\" to begin.",
+        "add_row": "Add row"
+      },
+      "entity_select": {
+        "create_new": "Create new",
+        "no_results": "No results found",
+        "type_to_search": "Type to search…",
+        "placeholder": "Search…"
+      },
+      "filter_bar_v2": {
+        "clear_all": "Clear all"
+      },
+      "form_layout": {
+        "save_and_new": "Save & New",
+        "save_and_send": "Save & Send",
+        "unsaved_title": "Unsaved Changes",
+        "unsaved_description": "You have unsaved changes. Are you sure you want to leave?",
+        "leave_anyway": "Leave anyway",
+        "stay": "Stay",
+        "validation_errors_title": "{{n}} validation error(s) — please fix before saving"
+      },
+      "money_input": {
+        "currency_label": "Currency",
+        "amount_label": "Amount"
+      },
+      "save_split_button": {
+        "more_options": "More save options"
+      },
+      "a11y": {
+        "skipToContent": "Skip to main content"
+      },
+      "toast": {
+        "saved": "Saved",
+        "deleted": "Deleted"
+      },
+      "uploader": {
+        "too_large": "File is too large",
+        "failed": "Upload failed",
+        "select_file": "Select file",
+        "remove": "Remove",
+        "not_image": "Please choose an image file",
+        "image": "Upload image"
+      },
+      "command_palette": {
+        "title": "Command Palette",
+        "placeholder": "Search pages, actions, recents…",
+        "results": "Search results",
+        "no_results": "No results found"
+      },
+      "entity_switcher": {
+        "companies": "Companies",
+        "current": "Current",
+        "no_companies": "No companies",
+        "select": "Company"
+      },
+      "topbar": {
+        "entity_switcher": "Company"
+      },
+      "split_master": {
+        "section": "Section",
+        "empty": "No items in this section",
+        "resize": "Drag to resize"
+      },
+      "notifications_v2": {
+        "unread_count": "{{n}} unread notifications"
+      },
+      "marketing": {
+        "marketing": "Marketing",
+        "dashboard": "Marketing dashboard",
+        "email_campaigns": "Email campaigns",
+        "sms_campaigns": "SMS campaigns",
+        "segments": "Segments",
+        "automations": "Automations"
+      },
+      "subscription": {
+        "subscriptions": "Subscriptions",
+        "plans": "Subscription Plans",
+        "dunning_queue": "Dunning Queue",
+        "reports": "MRR Reports"
+      },
+      "returns": {
+        "vendor_returns": "Vendor returns"
+      },
+      "numbering": {
+        "sequences": "Numbering sequences"
+      },
+      "automation": {
+        "title": "Automation"
+      },
+      "audit_log": {
+        "title": "Audit Log"
+      },
+      "jobs": {
+        "scheduler_title": "Job Scheduler"
+      },
+      "nav": {
+        "main": "Main navigation",
+        "sidebar": "Navigation",
+        "workspace": "Workspace",
+        "search_label": "Search navigation",
+        "search_results_count": "{{n}} results found",
+        "crm_leads": "CRM Leads",
+        "crm_pipeline": "CRM Pipeline",
+        "pos_sessions": "POS Sessions",
+        "pos_orders": "POS Orders",
+        "dashboards": "Custom Dashboards",
+        "credit_notes": "Credit Notes",
+        "vendor_credits": "Vendor Credits",
+        "recurring_invoices": "Recurring Invoices",
+        "tax_returns": "Tax Returns",
+        "warehouses": "Warehouses",
+        "assets": "Fixed Assets",
+        "mfg_orders": "Manufacturing Orders",
+        "mfg_boms": "BOMs",
+        "hr_employees": "Employees",
+        "hr_attendance": "Attendance",
+        "payroll_runs": "Payroll Runs",
+        "approvals": "Approvals",
+        "my_approvals": "My Approvals",
+        "audit_log": "Audit Log",
+        "users": "Users",
+        "companies": "Companies",
+        "branches": "Branches",
+        "custom_fields": "Custom Fields",
+        "email_templates": "Email Templates",
+        "tax_settings": "Tax Settings",
+        "budgets": "Budgets",
+        "analytic_accounts": "Analytic Accounts",
+        "fx_rates": "Currency Rates",
+        "subscriptions": "Subscriptions",
+        "workflows": "Workflows",
+        "helpdesk": "Helpdesk",
+        "field_service": "Field Service",
+        "quality_dashboard": "Quality",
+        "overview_blurb": "Daily health, quick jumps, and operating metrics",
+        "desc_dashboard": "Command center and live metrics",
+        "sales_blurb": "Quotes to cash, recurring revenue, and customers",
+        "desc_credit_notes": "Customer credits and invoice adjustments",
+        "desc_shipments": "Delivery execution and shipment status",
+        "desc_delivery_challans": "Proof of delivery and challan flows",
+        "desc_sales_returns": "Customer return approvals and stock impact",
+        "desc_returns_sales": "Sales returns with refund workflow",
+        "desc_payment_links": "Shareable collection links for customers",
+        "desc_recurring_invoices": "Subscription-like billing schedules",
+        "purchases_blurb": "Vendors, procurement, credits, and spend",
+        "desc_vendor_credits": "Supplier credits and purchase offsets",
+        "desc_purchase_returns": "Returns back to vendors and stock reversal",
+        "desc_returns_vendor": "Vendor returns with refund workflow",
+        "desc_expense_claims": "Employee reimbursement and approvals",
+        "banking_blurb": "Cash position, import, reconciliation, and more",
+        "desc_banking_accounts": "Bank and cash accounts overview",
+        "desc_bank_rules": "Auto-categorization and matching rules",
+        "desc_reconciliation": "Match statements with system transactions",
+        "inventory_blurb": "Stock health, warehouses, and valuation",
+        "desc_inventory_overview": "Valuation, low stock, groups, and adjustments",
+        "desc_warehouses": "Warehouse map and transfer management",
+        "desc_locations": "Bin and zone hierarchy within warehouses",
+        "desc_putaway": "Auto-suggest storage locations for incoming stock",
+        "desc_cycle_counts": "Physical count verification and variance",
+        "desc_price_lists": "Flexible pricing catalogs by channel",
+        "desc_serials": "Track individual units by serial / IMEI",
+        "manufacturing_blurb": "Bills of materials, orders, and work centers",
+        "desc_boms": "Product structures and material recipes",
+        "desc_mfg_orders": "Production runs and execution status",
+        "desc_work_centers": "Capacity, routings, and workstations",
+        "pos_blurb": "Retail terminal, sessions, pricing, and more",
+        "desc_pos_terminal": "Cashier terminal and live cart flow",
+        "desc_pos_sessions": "Open, close, and audit POS sessions",
+        "desc_pos_orders": "Sales history and order lookup",
+        "desc_pos_configs": "Terminal configuration and behavior",
+        "desc_pos_categories": "POS category layout and organization",
+        "desc_pos_products": "Products prepared for retail sale",
+        "desc_pos_pricelists": "Retail pricing rules and menus",
+        "desc_pos_employees": "Cashier access and terminal staff",
+        "desc_pos_loyalty": "Reward points and retention settings",
+        "desc_pos_gift_cards": "Stored-value cards and redemption",
+        "desc_pos_floors": "Restaurant floor layout and table map",
+        "desc_pos_reports": "Daily Z-report, sales by cashier and product",
+        "crm_blurb": "Leads, pipeline, activity rhythm, and insights",
+        "desc_leads": "Lead capture and qualification",
+        "desc_pipeline": "Deal stages and revenue forecasting",
+        "desc_activities": "Tasks, calls, and follow-ups",
+        "desc_insights": "Conversion and pipeline intelligence",
+        "marketing_blurb": "Email, SMS campaigns, segments, and automation",
+        "desc_marketing_dashboard": "Marketing KPIs and campaign performance",
+        "desc_email_campaigns": "Email marketing campaigns and sends",
+        "desc_sms_campaigns": "SMS marketing campaigns",
+        "desc_segments": "Customer segments and audiences",
+        "desc_automations": "Automated marketing workflows",
+        "hr_blurb": "Employees, attendance, leave, and payroll",
+        "desc_hr_dashboard": "Workforce snapshot and HR load",
+        "desc_contracts": "Employment agreements and status",
+        "desc_attendance": "Check-in history and attendance control",
+        "desc_time_off": "Leave requests and approval queue",
+        "desc_salary_rules": "Payroll logic, allowances, and deductions",
+        "desc_payroll_runs": "Payroll batches and payslip generation",
+        "projects_blurb": "Project delivery, assets, and client work",
+        "desc_projects": "Project delivery and work tracking",
+        "desc_assets": "Business assets and depreciation overview",
+        "accounting_blurb": "Books, reports, tax, and statutory control",
+        "desc_advanced_reports": "Deep reporting and custom analysis",
+        "desc_scheduled_reports": "Auto-send reports via email",
+        "desc_custom_reports": "Build and save custom data views",
+        "desc_tax_settings": "Tax rates, groups, and defaults",
+        "desc_tax_returns": "Tax filing preparation and review",
+        "management_blurb": "Governance, consolidation, approvals, and control",
+        "desc_companies": "Multi-company structure and control",
+        "desc_branches": "Branch operations and structure",
+        "desc_branch_comparison": "Cross-branch financial comparison",
+        "desc_consolidated_reports": "Group-level consolidation reports",
+        "desc_approvals": "Workflow approvals and escalations",
+        "desc_audit_log": "System-wide auditability and trace",
+        "iraq_blurb": "Localization, compliance, messaging, and more",
+        "desc_iraq_localization": "Country-specific setup and compliance",
+        "desc_einvoice_dashboard": "Electronic invoice compliance monitor",
+        "desc_whatsapp": "Messaging workflows and outbound sync",
+        "desc_ocr_receipts": "Receipt scanning and OCR intake",
+        "desc_custom_fields": "Schema extension and custom data points",
+        "desc_users": "Create, invite, suspend and assign roles",
+        "desc_roles_permissions": "Access policy and permission design",
+        "desc_user_roles": "Role assignments and user access",
+        "desc_numbering": "Per-branch document numbering sequences",
+        "desc_automation": "Automated actions and workflows",
+        "desc_job_runs": "Background job monitoring and control",
+        "desc_studio": "No-code customization and field builder",
+        "desc_docs": "In-app guides, fields, workflows, and shortcuts",
+        "desc_trash": "Recently deleted items, restore or delete permanently"
+      }
+    }
+  },
+  "errors": {
+    "ku": {
+      "pageLoadFailed": "بارکردنی پەڕە سەرکەوتوو نەبوو",
+      "pageLoadTimeout": "پەڕەکە کاتی زۆری برد بۆ بارکردن. تکایە دووبارە هەوڵبدەرەوە.",
+      "pageLoadFailedDesc": "هەڵەیەک ڕوویدا لە کاتی بارکردنی ئەم پەڕەیە."
+    },
+    "en": {
+      "pageLoadFailed": "Page failed to load",
+      "pageLoadTimeout": "The page took too long to load. Please try again.",
+      "pageLoadFailedDesc": "Something went wrong while loading this page."
+    }
+  },
+  "offline_description": {
+    "ku": "پەیوەندیی ئینتەرنێتت پچڕاوە. هەندێک تایبەتمەندی کار ناکەن تا پەیوەندی بگەڕێتەوە.",
+    "en": "Your internet connection is lost. Some features won't work until it returns."
+  }
+}

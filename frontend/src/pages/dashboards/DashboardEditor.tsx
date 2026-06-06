@@ -8,7 +8,7 @@ import RGL from 'react-grid-layout';
 const { Responsive, WidthProvider } = RGL as any;
 type Layout = { i: string; x: number; y: number; w: number; h: number; minW?: number; minH?: number };
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard } from '../../design-system';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import { FormDialog } from '../../components/responsive/FormDialog';
@@ -20,7 +20,7 @@ const DashboardEditor: React.FC = () => {
  const { t } = useTranslation();
  const navigate = useNavigate();
  const { id } = useParams<{ id: string }>();
- const [dashboard, setDashboard] = useState<any>(null);
+ const [_dashboard, setDashboard] = useState<any>(null);
  const [widgets, setWidgets] = useState<any[]>([]);
  const [name, setName] = useState('');
  const [loading, setLoading] = useState(true);
@@ -45,7 +45,7 @@ const DashboardEditor: React.FC = () => {
  setDashboard(dash);
  setName(dash.name);
  setWidgets(dash.widgets || []);
- } catch (err) {
+ } catch (_err) {
  message.error(t('load_error'));
  } finally {
  setLoading(false);
@@ -71,7 +71,7 @@ const DashboardEditor: React.FC = () => {
  message.success(t('saved'));
  setHasChanges(false);
  navigate(`/dashboards/${id}`);
- } catch (err) {
+ } catch (_err) {
  message.error(t('save_error'));
  }
  };
@@ -154,8 +154,8 @@ const DashboardEditor: React.FC = () => {
  }));
 
  const renderWidgetPlaceholder = (widget: any) => (
- <Card
- style={{ height: '100%', position: 'relative' }}
+ <SectionCard
+ style={{ height: '100%', position: 'relative', marginBottom: 0 }}
  title={widget.title}
  extra={
  <Space>
@@ -170,7 +170,7 @@ const DashboardEditor: React.FC = () => {
  <Text type="secondary">{t('data_source')}: {widget.data_source?.key || t('not_configured')}</Text>
  </div>
  </div>
- </Card>
+ </SectionCard>
  );
 
  const handleCancel = () => {
@@ -216,7 +216,7 @@ const DashboardEditor: React.FC = () => {
  }
  />
 
- <div style={{ marginTop: 24, backgroundColor: '#f5f5f5', padding: 16, minHeight: 600 }}>
+ <div style={{ background: 'var(--surface-2)', padding: 16, minHeight: 600, borderRadius: 'var(--radius-lg)' }}>
  {widgets.length === 0 ? (
  <div style={{ textAlign: 'center', padding: 60 }}>
  <Text type="secondary">{t('no_widgets_message')}</Text>

@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Tabs, Button, Tag, Card, Statistic, Row, Col, Form, Input, InputNumber, Select, Space } from 'antd';
+import { Tabs, Button, Tag, Row, Col, Form, Input, InputNumber, Space } from 'antd';
 import { message } from '../utils/message';
-import { WarningOutlined, PlusOutlined } from '@ant-design/icons';
+import { WarningOutlined, PlusOutlined, InboxOutlined, WalletOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import ExportButton from '../components/ExportButton';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
+import { KpiCard } from '../design-system/KpiCard';
 
 const Inventory: React.FC = () => {
  const { t } = useTranslation();
@@ -29,17 +30,23 @@ const InventoryOverview: React.FC = () => {
 
  useEffect(() => {
  setLoading(true);
- api.get('/api/inventory/valuation').then(r => setValuation(r.data.items || [])).catch(() => {}).finally(() => setLoading(false));
+ api.get('/api/inventory/valuation').then(r => setValuation(r.data.items || [])).catch(() => message.error(t('error'))).finally(() => setLoading(false));
  }, []);
 
  const totalValue = valuation.reduce((s: number, v: any) => s + (v.total_value || 0), 0);
 
  return (
  <div>
- <Row gutter={16} style={{ marginBottom: 24 }}>
- <Col span={8}><Card><Statistic title={t('total_items')} value={valuation.length} /></Card></Col>
- <Col span={8}><Card><Statistic title={t('total_stock_value')} value={totalValue} suffix="IQD" /></Card></Col>
- <Col span={8}><Card><Statistic title={t('low_stock_count')} value={valuation.filter((v: any) => v.stock_on_hand <= (v.reorder_point || 0)).length} styles={{ content: { color: '#cf1322' } }} /></Card></Col>
+ <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+ <Col xs={12} sm={8}>
+ <KpiCard title={t('total_items')} value={valuation.length} icon={<InboxOutlined />} tone="primary" loading={loading} />
+ </Col>
+ <Col xs={12} sm={8}>
+ <KpiCard title={t('total_stock_value')} value={totalValue} currency="IQD" icon={<WalletOutlined />} tone="success" loading={loading} />
+ </Col>
+ <Col xs={12} sm={8}>
+ <KpiCard title={t('low_stock_count')} value={valuation.filter((v: any) => v.stock_on_hand <= (v.reorder_point || 0)).length} icon={<WarningOutlined />} tone="danger" loading={loading} />
+ </Col>
  </Row>
  <ResponsiveTableAdapter dataSource={valuation} columns={[
  { title: t('name'), dataIndex: 'name', key: 'name' },
@@ -58,7 +65,7 @@ const LowStock: React.FC = () => {
 
  useEffect(() => {
  setLoading(true);
- api.get('/api/inventory/low-stock').then(r => setItems(r.data.items || [] || [])).catch(() => {}).finally(() => setLoading(false));
+ api.get('/api/inventory/low-stock').then(r => setItems(r.data.items || [] || [])).catch(() => message.error(t('error'))).finally(() => setLoading(false));
  }, []);
 
  return (
@@ -76,14 +83,14 @@ const Adjustments: React.FC = () => {
  const [data, setData] = useState<any[]>([]);
  const [loading, setLoading] = useState(false);
  const [modalOpen, setModalOpen] = useState(false);
- const [items, setItems] = useState<any[]>([]);
- const [accounts, setAccounts] = useState<any[]>([]);
+ const [_items, setItems] = useState<any[]>([]);
+ const [_accounts, setAccounts] = useState<any[]>([]);
  const [form] = Form.useForm();
  const [saving, setSaving] = useState(false);
 
  const fetchData = () => {
  setLoading(true);
- api.get('/api/inventory/adjustments').then(r => setData(r.data.items || [])).catch(() => {}).finally(() => setLoading(false));
+ api.get('/api/inventory/adjustments').then(r => setData(r.data.items || [])).catch(() => message.error(t('error'))).finally(() => setLoading(false));
  };
 
  useEffect(() => { fetchData(); }, []);
@@ -150,7 +157,7 @@ const ItemGroups: React.FC = () => {
 
  const fetchGroups = () => {
  setLoading(true);
- api.get('/api/inventory/groups').then(r => setGroups(r.data.items || [] || [])).catch(() => {}).finally(() => setLoading(false));
+ api.get('/api/inventory/groups').then(r => setGroups(r.data.items || [] || [])).catch(() => message.error(t('error'))).finally(() => setLoading(false));
  };
 
  useEffect(() => { fetchGroups(); }, []);

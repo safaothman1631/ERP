@@ -21,7 +21,14 @@ export interface FormDialogProps {
   /** Whether the dialog is currently visible. */
   open: boolean;
   /** Invoked when the dialog requests dismissal (close button, Escape, backdrop). */
-  onClose: () => void;
+  onClose?: () => void;
+  /**
+   * Alias for `onClose` (AntD `<Modal onCancel>` ergonomics). Several call sites
+   * pass `onCancel` out of habit — accept it so the ✕, Escape, backdrop, and the
+   * Cancel button all dismiss the dialog instead of silently no-op'ing when only
+   * `onCancel` was provided (the "Cancel/✕ don't close" bug).
+   */
+  onCancel?: () => void;
   /** Header title — can be a translation key or pre-translated string. */
   title: string;
   /** Primary action handler (e.g., form submit). */
@@ -50,6 +57,7 @@ export interface FormDialogProps {
 export const FormDialog: React.FC<FormDialogProps> = ({
   open,
   onClose,
+  onCancel,
   title,
   onOk,
   okText,
@@ -59,10 +67,14 @@ export const FormDialog: React.FC<FormDialogProps> = ({
   hideFooter = false,
   children,
 }) => {
+  // Accept either `onClose` (canonical) or `onCancel` (AntD-style alias). Without
+  // this, a call site that passes only `onCancel` left the dismiss handler
+  // undefined → the ✕ and Cancel button did nothing.
+  const dismiss = onClose ?? onCancel ?? (() => {});
   return (
     <ResponsiveDialog
       open={open}
-      onClose={onClose}
+      onClose={dismiss}
       title={title as TranslationKey}
       suppressSwipeDismiss={suppressSwipeDismiss}
       primaryAction={
@@ -78,7 +90,7 @@ export const FormDialog: React.FC<FormDialogProps> = ({
         !hideFooter
           ? {
               labelKey: (cancelText || 'cancel') as TranslationKey,
-              onClick: onClose,
+              onClick: dismiss,
             }
           : undefined
       }

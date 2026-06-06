@@ -1,28 +1,32 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Tag, Dropdown, Form, Input, InputNumber, DatePicker, Space, Select, Divider } from 'antd';
+import { Button, Form, Input, InputNumber, DatePicker, Space, Divider, Radio } from 'antd';
 import { message } from '../utils/message';
-import { PlusOutlined, MoreOutlined, DeleteOutlined, FilePdfOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, FilePdfOutlined, SendOutlined, SwapOutlined, StopOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { useListQuery } from '../api/queries/useListQuery';
 import { listQueryKeys } from '../api/queries/keys';
 import dayjs from 'dayjs';
-import { ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { PageHeader, StatusTag, type ColumnVisibilityItem } from '../design-system';
+import KitListCard, { type KitListTab } from '../design-system/KitListCard';
+import KitListToolbarActions from '../design-system/KitListToolbarActions';
+import KitRowActions, { type KitRowEntry } from '../design-system/KitRowActions';
+import KitFiltersButton from '../design-system/KitFiltersButton';
+import KitStatusFilter from '../design-system/KitStatusFilter';
+import KitSearchInput from '../design-system/KitSearchInput';
 import { SelectWithQuickCreate } from '../design-system/empty/SelectWithQuickCreate';
 import { downloadCsv } from '../utils/exportCsv';
-import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 import { useAddGate } from '../components/AddGate/useAddGate';
-import { asTranslationKey } from '../i18n/types';
-
-const statusColors: Record<string, string> = { draft: 'default', issued: 'blue', received: 'green', billed: 'purple', cancelled: 'red' };
 
 const PurchaseOrders: React.FC = () => {
  const { t } = useTranslation();
  const [page, setPage] = useState(1);
+ const [status, setStatus] = useState('');
+ const [search, setSearch] = useState('');
  const [modalOpen, setModalOpen] = useState(false);
- const [contacts, setContacts] = useState<any[]>([]);
+ const [_contacts, setContacts] = useState<any[]>([]);
  const [items, setItems] = useState<any[]>([]);
  const [form] = Form.useForm();
  const [lines, setLines] = useState<any[]>([{ key: 0, item_id: '', description: '', quantity: 1, unit_price: 0, discount_percent: 0 }]);
@@ -30,21 +34,45 @@ const PurchaseOrders: React.FC = () => {
  const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
  try { return JSON.parse(localStorage.getItem('purchaseOrders.hiddenCols') || '[]'); } catch { return []; }
  });
- const isDark = useAuthStore((s) => s.theme === 'dark');
 
  // AddGate: wire Selective Add for purchase orders section (R9.1, R9.5)
  const addGate = useAddGate('purchases.purchase_orders');
 
  const purchaseOrdersQuery = useListQuery<any, { items?: any[]; total?: number }>({
- queryKey: listQueryKeys.purchaseOrders({ page, page_size: 20 }),
- queryFn: () => api.get('/api/purchase-orders', { params: { page, page_size: 20 } }),
+ queryKey: listQueryKeys.purchaseOrders({ page, page_size: 20, status }),
+ queryFn: () => api.get('/api/purchase-orders', { params: { page, page_size: 20, ...(status ? { status } : {}) } }),
  });
  const data = purchaseOrdersQuery.data?.items ?? [];
  const total = purchaseOrdersQuery.data?.total ?? 0;
  const loading = purchaseOrdersQuery.isLoading || purchaseOrdersQuery.isFetching;
+ // Client-side fuzzy search (backend has no `search` param for /api/purchase-orders).
+ const filteredData = useMemo(() => {
+ if (!search) return data;
+ const q = search.toLowerCase();
+ return data.filter((row: any) => Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(q)));
+ }, [data, search]);
 
  // Sync record count into AddGate store (R9.5, R9.6)
  useEffect(() => { addGate.setRecordCount(total); }, [total, addGate.setRecordCount]);
+
+ // Status segments — wired to the server `status` filter param (state machine:
+ // draft -> sent -> (partially_received) -> received -> billed; any -> cancelled).
+ const STATUS_OPTIONS = [
+ { value: 'draft', label: t('draft', 'Draft') },
+ { value: 'sent', label: t('sent', 'Sent') },
+ { value: 'partially_received', label: t('partially_received', 'Partially received') },
+ { value: 'received', label: t('received', 'Received') },
+ { value: 'billed', label: t('billed', 'Billed') },
+ { value: 'cancelled', label: t('cancelled', 'Cancelled') },
+ ];
+ const tabs: KitListTab[] = [
+ { key: 'all', label: t('all', 'All') },
+ { key: 'draft', label: t('draft', 'Draft') },
+ { key: 'sent', label: t('sent', 'Sent') },
+ { key: 'received', label: t('received', 'Received') },
+ { key: 'billed', label: t('billed', 'Billed') },
+ { key: 'cancelled', label: t('cancelled', 'Cancelled') },
+ ];
 
  const openNew = async () => {
  const [c, i] = await Promise.all([
@@ -94,50 +122,117 @@ const PurchaseOrders: React.FC = () => {
  } catch { message.error(t('error')); } finally { setSaving(false); }
  };
 
- const columns = [
- { title: '#', dataIndex: 'order_number', key: 'order_number' },
- { title: t('date'), dataIndex: 'date', key: 'date', render: (d: string) => d?.substring(0, 10) },
- { title: t('total'), dataIndex: 'total', key: 'total', render: (v: number) => v?.toLocaleString() },
- { title: t('status'), dataIndex: 'status', key: 'status', render: (s: string) => <Tag color={statusColors[s]}>{t(s)}</Tag> },
+ const allColumns = [
  {
- title: t('actions'), key: 'actions',
+ title: '#', dataIndex: 'order_number', key: 'order_number',
+ render: (v: string) => <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-900)', fontWeight: 500 }}>{v}</span>,
+ },
+ {
+ title: t('date'), dataIndex: 'date', key: 'date',
+ render: (d: string) => <span style={{ color: 'var(--ink-700)', fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>{d?.substring(0, 10) || '—'}</span>,
+ },
+ {
+ title: t('total'), dataIndex: 'total', key: 'total',
+ render: (v: number) => (
+ <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--ink-900)' }}>
+ {v?.toLocaleString() ?? '0'} <span style={{ color: 'var(--ink-400)', fontSize: 11 }}>IQD</span>
+ </span>
+ ),
+ },
+ {
+ title: t('status'), dataIndex: 'status', key: 'status',
+ render: (s: string) => <StatusTag status={s} label={t(s)} />,
+ },
+ {
+ title: '', key: 'actions', width: 56, align: 'center' as const,
  render: (_: any, r: any) => {
- const menuitems = [];
- if (r.status === 'draft') menuitems.push({ key: 'issue', label: t('issue'), onClick: () => handleAction(r.id, 'issue') });
- if (['draft', 'issued'].includes(r.status)) menuitems.push({ key: 'to-bill', label: t('convert_to_bill'), onClick: () => handleAction(r.id, 'convert-to-bill') });
- if (!['cancelled', 'billed'].includes(r.status)) menuitems.push({ key: 'cancel', label: t('cancel'), onClick: () => handleAction(r.id, 'cancel') });
- menuitems.push({ key: 'pdf', icon: <FilePdfOutlined />, label: 'PDF', onClick: () => handleDownloadPdf(r.id) });
- return <Dropdown menu={{ items: menuitems }} trigger={['click']}><Button icon={<MoreOutlined />} /></Dropdown>;
+ const actions: KitRowEntry[] = [];
+ if (r.status === 'draft') actions.push({ key: 'issue', icon: <SendOutlined />, label: t('issue'), onClick: () => handleAction(r.id, 'issue') });
+ if (['draft', 'issued'].includes(r.status)) actions.push({ key: 'to-bill', icon: <SwapOutlined />, label: t('convert_to_bill'), onClick: () => handleAction(r.id, 'convert-to-bill') });
+ if (!['cancelled', 'billed'].includes(r.status)) actions.push({ key: 'cancel', icon: <StopOutlined />, label: t('cancel'), onClick: () => handleAction(r.id, 'cancel') });
+ actions.push({ key: 'pdf', icon: <FilePdfOutlined />, label: 'PDF', onClick: () => handleDownloadPdf(r.id) });
+ return <KitRowActions ariaLabel={t('actions')} actions={actions} />;
  },
  },
  ];
- const visibleColumns = useMemo(() => columns.filter((c) => !hiddenCols.includes(c.key as string)), [hiddenCols, columns]);
- const columnsMeta: ColumnVisibilityItem[] = columns.map((c) => ({
+ const visibleColumns = useMemo(() => allColumns.filter((c) => !hiddenCols.includes(c.key as string)), [hiddenCols, allColumns]);
+ const columnsMeta: ColumnVisibilityItem[] = allColumns.map((c) => ({
  key: c.key as string,
  label: typeof c.title === 'string' ? c.title : (c.key as string),
  pinned: c.key === 'order_number' || c.key === 'actions',
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('purchaseOrders.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('purchaseOrders.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (
  <div data-addgate-section="purchases.purchase_orders">
- <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
- <ExportMenu
- formats={['csv']}
- onExport={(f: ExportFormat) => {
- if (f === 'csv') {
+ <PageHeader
+ title={t('purchase_orders')}
+ subtitle={t('purchase_orders_subtitle', 'Vendor purchase orders')}
+ sectionId="purchases.purchase_orders"
+ extra={
+ <Button type="primary" icon={<PlusOutlined />} onClick={openNew} data-add-action="purchases.purchase_orders">{t('new_purchase_order')}</Button>
+ }
+ />
+ <KitListCard
+ tabs={tabs}
+ activeTab={status || 'all'}
+ onTabChange={(k) => { setStatus(k === 'all' ? '' : k); setPage(1); }}
+ toolbar={
+ <>
+ <KitSearchInput
+ value={search}
+ onChange={(v) => { setSearch(v); setPage(1); }}
+ placeholder={t('search')}
+ />
+ {/* Group Filters + Status in a single flex unit so they ALWAYS wrap
+ together to the same line — never one stranded on a row by itself. */}
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={status ? 1 : 0}
+ onClear={() => { setStatus(''); setPage(1); }}
+ >
+ <Radio.Group
+ value={status}
+ onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+ style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+ >
+ <Radio value="">{t('all', 'All')}</Radio>
+ {STATUS_OPTIONS.map((o) => (
+ <Radio key={o.value} value={o.value}>{o.label}</Radio>
+ ))}
+ </Radio.Group>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('status', 'Status')}
+ anyLabel={t('any_status', 'Any status')}
+ value={status}
+ onChange={(v) => { setStatus(v); setPage(1); }}
+ options={STATUS_OPTIONS}
+ />
+ </div>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
  const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
  downloadCsv('purchase-orders', data, cols);
- }
  }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
  />
- <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
- <Button type="primary" icon={<PlusOutlined />} onClick={openNew} data-add-action="purchases.purchase_orders">{t('new_purchase_order')}</Button>
  </div>
- <ResponsiveTableAdapter dataSource={data} columns={visibleColumns} rowKey="id" loading={loading} pagination={{ current: page, total, pageSize: 20, onChange: setPage }} />
+ </>
+ }
+ >
+ <ResponsiveTableAdapter dataSource={filteredData} columns={visibleColumns} rowKey="id" loading={loading} pagination={{ current: page, total, pageSize: 20, onChange: setPage }} />
+ </KitListCard>
  <FormDialog open={modalOpen} onClose={() => setModalOpen(false)} title={t('new_purchase_order')} hideFooter>
  <Form form={form} layout="vertical" onFinish={handleSave} initialValues={{ date: dayjs() }}>
  <Space wrap>

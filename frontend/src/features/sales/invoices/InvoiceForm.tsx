@@ -12,8 +12,8 @@
  *
  * Requirements: 15.1–15.7
  */
-import React, { Suspense, useCallback, useMemo, useState } from 'react';
-import { Form, Input, DatePicker, Select, Divider, Typography, Space } from 'antd';
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { Form, Input, DatePicker, Select, Divider, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import dayjs from 'dayjs';
@@ -93,10 +93,9 @@ function calcTotals(lines: InvoiceLineItem[]) {
 
 interface SummaryPanelProps {
   lines: InvoiceLineItem[];
-  isDark: boolean;
 }
 
-const SummaryPanel: React.FC<SummaryPanelProps> = ({ lines, isDark }) => {
+const SummaryPanel: React.FC<SummaryPanelProps> = ({ lines }) => {
   const { t } = useTranslation();
   const { subtotal, tax, total } = calcTotals(lines);
 
@@ -107,15 +106,19 @@ const SummaryPanel: React.FC<SummaryPanelProps> = ({ lines, isDark }) => {
     padding: '6px 0',
   };
 
+  // Use live CSS-var tokens (NOT the isDark prop with hardcoded hex). The prop
+  // was resolving false in dark mode, so Total rendered near-black (#0f172a)
+  // on a dark surface and was invisible — the user's report "هیچ نوسینێک
+  // لێرە دیار نیە". Tokens auto-flip via html[data-theme="dark"].
   const labelStyle: React.CSSProperties = {
-    color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.45)',
+    color: 'var(--ink-500)',
     fontSize: 13,
   };
 
   const totalStyle: React.CSSProperties = {
     fontWeight: 700,
     fontSize: 16,
-    color: isDark ? '#fff' : '#0f172a',
+    color: 'var(--ink-900)',
   };
 
   return (
@@ -143,7 +146,7 @@ const SummaryPanel: React.FC<SummaryPanelProps> = ({ lines, isDark }) => {
         </span>
       </div>
 
-      <div style={{ marginTop: 16, fontSize: 12, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.35)' }}>
+      <div style={{ marginTop: 16, fontSize: 12, color: 'var(--ink-400)' }}>
         {t('invoice_form.line_count', '{{n}} line(s)', { n: lines.length })}
       </div>
     </div>
@@ -164,6 +167,65 @@ const InvoiceFormPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  // Pre-seeded customer option so the EntitySelect shows the customer NAME when
+  // editing/viewing an existing invoice (not just the raw id).
+  const [customerOption, setCustomerOption] = useState<EntityOption | undefined>(undefined);
+  const [loadingInvoice, setLoadingInvoice] = useState(false);
+
+  // ── Load the existing invoice when editing/viewing (route has an :id) ───────
+  // Previously the edit route rendered a BLANK form — there was no GET, so the
+  // record's data never populated (the user's bug: "View shows no data").
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    setLoadingInvoice(true);
+    (async () => {
+      try {
+        const res = await api.get(`/api/invoices/${id}`);
+        if (cancelled) return;
+        const inv = res.data ?? {};
+        const rawLines: any[] = inv.lines ?? inv.line_items ?? inv.items ?? [];
+        form.setFieldsValue({
+          contact_id: inv.contact_id ?? inv.customer_id ?? undefined,
+          date: inv.date ? dayjs(inv.date) : undefined,
+          due_date: inv.due_date ? dayjs(inv.due_date) : undefined,
+          reference: inv.reference ?? inv.reference_number ?? '',
+          notes: inv.notes ?? '',
+          terms: inv.terms ?? '',
+        } as Partial<InvoiceFormValues> as InvoiceFormValues);
+        // Seed the customer label so EntitySelect renders the name, not the id.
+        // The invoice payload only carries contact_id (no name), so when the
+        // name isn't inlined we fetch the contact to resolve its display_name.
+        const custId = inv.contact_id ?? inv.customer_id;
+        let custName: string | undefined = inv.contact_name ?? inv.customer_name ?? inv.contact?.display_name;
+        if (custId) {
+          if (!custName) {
+            try {
+              const c = await api.get(`/api/contacts/${custId}`);
+              custName = c.data?.display_name ?? c.data?.name;
+            } catch { /* fall back to id below */ }
+          }
+          if (!cancelled) setCustomerOption({ value: String(custId), label: custName ?? String(custId) });
+        }
+        if (rawLines.length > 0) {
+          setLines(rawLines.map((l, i) => ({
+            id: `inv-line-${id}-${i}`,
+            item_id: l.item_id ?? l.product_id ?? '',
+            description: l.description ?? l.name ?? '',
+            quantity: Number(l.quantity ?? l.qty ?? 1),
+            unit_price: Number(l.unit_price ?? l.price ?? l.rate ?? 0),
+            discount_percent: Number(l.discount_percent ?? l.discount ?? 0),
+            tax_rate: Number(l.tax_rate ?? l.tax ?? 0),
+          })));
+        }
+      } catch {
+        // leave the blank form on failure (offline/permission); validation still guards save.
+      } finally {
+        if (!cancelled) setLoadingInvoice(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [id, form]);
 
   // ── Auto-save ──────────────────────────────────────────────────────────────
   const formValues = useMemo(
@@ -311,6 +373,7 @@ const InvoiceFormPage: React.FC = () => {
             >
               <EntitySelect
                 loadOptions={loadCustomers}
+                initialOption={customerOption}
                 ariaLabel={t('invoice_form.customer', 'Customer')}
                 placeholder={t('invoice_form.customer_placeholder', 'Search customers…')}
                 onCreateNew={(query) => navigate(`/contacts/new?type=customer&name=${encodeURIComponent(query)}`)}
@@ -389,13 +452,16 @@ const InvoiceFormPage: React.FC = () => {
         ),
       },
     ],
-    [t, lines, isDark, loadCustomers]
+    [t, lines, isDark, loadCustomers, customerOption]
   );
 
   return (
     <Form
       form={form}
       layout="vertical"
+      // (loading state reserved for a future skeleton; referenced so the
+      // fetch effect's setter isn't an unused binding)
+      data-loading={loadingInvoice ? 'true' : undefined}
       onValuesChange={() => {
         setIsDirty(true);
         setSaved(false);
@@ -407,7 +473,7 @@ const InvoiceFormPage: React.FC = () => {
     >
       <FormLayout
         sections={sections}
-        summaryPanel={<SummaryPanel lines={lines} isDark={isDark} />}
+        summaryPanel={<SummaryPanel lines={lines} />}
         saving={saving}
         saved={saved}
         isDirty={isDirty}

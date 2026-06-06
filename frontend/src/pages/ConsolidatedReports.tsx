@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, DatePicker, Space, Statistic, Row, Col, Tabs } from 'antd';
+import { DatePicker, Space, Statistic, Row, Col, Tabs, Button } from 'antd';
+import { ReloadOutlined } from '@ant-design/icons';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
 } from 'recharts';
 import dayjs, { Dayjs } from 'dayjs';
 import { message } from '../utils/message';
 import api from '../api';
+import { PageHeader } from '../design-system';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { ResponsiveChart } from '../components/responsive/ResponsiveChart';
 import { asTranslationKey } from '../i18n/types';
+import { dataViz } from '../theme/tokens';
 
 interface ConsolidatedRow {
   company_id: string;
@@ -54,7 +57,7 @@ export default function ConsolidatedReports() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  useEffect(() => { load();   }, []);
 
   const fmt = (n: number) => n.toLocaleString();
 
@@ -85,9 +88,9 @@ export default function ConsolidatedReports() {
           </Row>
           <ResponsiveChart
             legendItems={[
-              { id: 'revenue', labelKey: asTranslationKey('revenue'), color: '#52c41a' },
-              { id: 'expenses', labelKey: asTranslationKey('expenses'), color: '#ff4d4f' },
-              { id: 'profit', labelKey: asTranslationKey('profit'), color: '#1677ff' },
+              { id: 'revenue', labelKey: asTranslationKey('revenue'), color: dataViz.categorical[1] },
+              { id: 'expenses', labelKey: asTranslationKey('expenses'), color: dataViz.categorical[3] },
+              { id: 'profit', labelKey: asTranslationKey('profit'), color: '#7B61FF' },
             ]}
           >
             <BarChart data={pl?.rows || []}>
@@ -95,9 +98,9 @@ export default function ConsolidatedReports() {
               <XAxis dataKey="company_name" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="revenue" fill="#52c41a" name={t('revenue') || 'Revenue'} />
-              <Bar dataKey="expenses" fill="#ff4d4f" name={t('expenses') || 'Expenses'} />
-              <Bar dataKey="profit" fill="#1677ff" name={t('profit') || 'Profit'} />
+              <Bar dataKey="revenue" fill={dataViz.categorical[1]} name={t('revenue') || 'Revenue'} />
+              <Bar dataKey="expenses" fill={dataViz.categorical[3]} name={t('expenses') || 'Expenses'} />
+              <Bar dataKey="profit" fill="#7B61FF" name={t('profit') || 'Profit'} />
             </BarChart>
           </ResponsiveChart>
           <ResponsiveTableAdapter
@@ -132,19 +135,22 @@ export default function ConsolidatedReports() {
   ];
 
   return (
-    <Card
-      title={t('consolidated_reports') || 'Consolidated Reports'}
-      extra={
-        <Space>
-          <DatePicker.RangePicker
-            value={range}
-            onChange={(v) => v && v[0] && v[1] && setRange([v[0], v[1]])}
-          />
-          <a onClick={load}>{loading ? '...' : t('refresh') || 'Refresh'}</a>
-        </Space>
-      }
-    >
+    <div>
+      <PageHeader
+        title={t('consolidated_reports')}
+        extra={
+          <Space>
+            <DatePicker.RangePicker
+              value={range}
+              onChange={(v) => v && v[0] && v[1] && setRange([v[0], v[1]])}
+            />
+            <Button icon={<ReloadOutlined />} onClick={load} loading={loading}>
+              {t('refresh')}
+            </Button>
+          </Space>
+        }
+      />
       <Tabs items={items} />
-    </Card>
+    </div>
   );
 }

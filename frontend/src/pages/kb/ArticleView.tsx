@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Button, Space, Tag, List, Input, message, Divider } from 'antd';
+import { Button, Space, Tag, List, Input, message, Divider } from 'antd';
 import { EditOutlined, LikeOutlined, DislikeOutlined, CommentOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import { PageHeader, LoadingSkeleton } from '../../design-system';
+import { PageHeader, LoadingSkeleton, SectionCard } from '../../design-system';
 import { space } from '../../theme/tokens';
 import { useLoadingState } from '../../hooks/useLoadingState';
 
@@ -99,7 +99,7 @@ export default function ArticleView() {
           </Space>
         }
       />
-      <Card style={{ marginTop: space.md }}>
+      <SectionCard style={{ marginTop: space.md }}>
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <div>
             {article.tags.map((tag) => (
@@ -152,7 +152,7 @@ export default function ArticleView() {
             />
           </div>
         </Space>
-      </Card>
+      </SectionCard>
     </div>
   );
 }

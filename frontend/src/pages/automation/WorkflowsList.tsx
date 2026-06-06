@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Form, Input, Select, Switch, Tag, message, Card, Drawer, Modal } from 'antd';
+import { Button, Space, Form, Input, Select, Switch, message, Modal } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, CopyOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
-import { space } from '../../theme/tokens';
+import { PageHeader, SectionCard, StatusTag } from '../../design-system';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { ListWithEmptyState } from '../../design-system/empty/ListWithEmptyState';
@@ -49,7 +48,7 @@ const WorkflowsList: React.FC = () => {
 
  const handleCreate = async (values: any) => {
  try {
- const trigger = triggers.find((t) => t.event === values.trigger_event);
+ const _trigger = triggers.find((t) => t.event === values.trigger_event);
  const payload = {
  name: values.name,
  description: values.description,
@@ -68,7 +67,7 @@ const WorkflowsList: React.FC = () => {
  }
  };
 
- const handleToggle = async (id: string, active: boolean) => {
+ const handleToggle = async (id: string, _active: boolean) => {
  try {
  await api.post(`/api/automation/workflows/${id}/toggle`);
  message.success(t('success'));
@@ -112,7 +111,7 @@ const WorkflowsList: React.FC = () => {
  title: t('automation.trigger'),
  dataIndex: 'trigger',
  key: 'trigger',
- render: (trigger: any) => <Tag color="blue">{trigger?.event || 'N/A'}</Tag>,
+ render: (trigger: any) => <StatusTag status="info" label={trigger?.event || 'N/A'} />,
  },
  {
  title: t('automation.nodes'),
@@ -165,7 +164,7 @@ const WorkflowsList: React.FC = () => {
  </Button>
  }
  />
- <Card style={{ marginTop: space.md }}>
+ <SectionCard padded={false}>
  <ListWithEmptyState
  entity="workflow"
  data={workflows}
@@ -176,7 +175,7 @@ const WorkflowsList: React.FC = () => {
  <ResponsiveTableAdapter dataSource={rows} columns={columns} loading={loading} rowKey="id" />
  )}
  />
- </Card>
+ </SectionCard>
 
  <FormDialog
  title={t('automation.new_workflow')}

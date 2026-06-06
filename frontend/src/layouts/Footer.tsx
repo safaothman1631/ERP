@@ -25,9 +25,6 @@ export const Footer: React.FC<FooterProps> = ({ isDark, isRTL }) => {
   const [lastSync, setLastSync] = React.useState<Date>(new Date());
   const { isMobile, isTablet } = useViewport();
 
-  // Hide footer entirely on mobile — Requirement 12.1
-  if (isMobile) return null;
-
   React.useEffect(() => {
     const onUp = () => setOnline(true);
     const onDown = () => setOnline(false);
@@ -49,6 +46,11 @@ export const Footer: React.FC<FooterProps> = ({ isDark, isRTL }) => {
     const m = Math.floor(diff / 60);
     return t('footer.minutes_ago', '{{n}} خولەک پێشتر', { n: m });
   }, [lastSync, t]);
+
+  // Hide footer entirely on mobile — Requirement 12.1.
+  // NOTE: this early return must stay AFTER all hooks above so the hook call
+  // order is identical on every render (react-hooks/rules-of-hooks).
+  if (isMobile) return null;
 
   const fg     = isDark ? palette.darkInkMuted : palette.ink500;
   const fgBold = isDark ? palette.darkInk      : palette.ink900;

@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Button, Space, Input, Form, message, Select, InputNumber, Tag } from 'antd';
+import { Form, message, Tag, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { SearchOutlined, MedicineBoxOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { PageHeader, KpiCard } from '../../design-system';
+import { PageHeader, FilterBar, DataTable, SectionCard } from '../../design-system';
 import api from '../../api';
-import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
 interface Prescription {
@@ -42,12 +41,12 @@ interface Patient {
 
 const PharmacyDispense: React.FC = () => {
  const { t } = useTranslation();
- const [form] = Form.useForm();
+ const [_form] = Form.useForm();
  const [loading, setLoading] = useState(false);
  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
  const [dispenses, setDispenses] = useState<Dispense[]>([]);
- const [drugs, setDrugs] = useState<Drug[]>([]);
- const [patients, setPatients] = useState<Patient[]>([]);
+ const [_drugs, setDrugs] = useState<Drug[]>([]);
+ const [_patients, setPatients] = useState<Patient[]>([]);
  const [searchText, setSearchText] = useState('');
  const [modalVisible, setModalVisible] = useState(false);
  const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
@@ -201,35 +200,35 @@ const PharmacyDispense: React.FC = () => {
  subtitle={t('pharmacy.dispense_subtitle')}
  />
 
- <Card title={t('pharmacy.search_prescription')} style={{ marginBottom: 24 }}>
- <Space style={{ marginBottom: 16 }}>
- <Input
- placeholder={t('pharmacy.search_patient_or_rx')}
- prefix={<SearchOutlined />}
- value={searchText}
- onChange={(e) => setSearchText(e.target.value)}
- style={{ width: 400 }}
+ <FilterBar
+ searchPlaceholder={t('pharmacy.search_patient_or_rx')}
+ searchValue={searchText}
+ onSearchChange={setSearchText}
  />
- </Space>
 
- <ResponsiveTableAdapter
+ <SectionCard title={t('pharmacy.search_prescription')} padded={false}>
+ <DataTable<Prescription>
  dataSource={filteredPrescriptions}
  columns={prescriptionColumns}
  rowKey="id"
  loading={loading}
+ stickyHeader={false}
+ style={{ border: 'none', borderRadius: 0, boxShadow: 'none' }}
  pagination={{ pageSize: 20 }}
  />
- </Card>
+ </SectionCard>
 
- <Card title={t('pharmacy.recent_dispenses')}>
- <ResponsiveTableAdapter
+ <SectionCard title={t('pharmacy.recent_dispenses')} padded={false}>
+ <DataTable<Dispense>
  dataSource={dispenses.slice(0, 50)}
  columns={dispenseColumns}
  rowKey="id"
  loading={loading}
+ stickyHeader={false}
+ style={{ border: 'none', borderRadius: 0, boxShadow: 'none' }}
  pagination={{ pageSize: 20 }}
  />
- </Card>
+ </SectionCard>
 
  <FormDialog
  title={t('pharmacy.dispense_prescription')}
@@ -255,7 +254,7 @@ const PharmacyDispense: React.FC = () => {
  </li>
  ))}
  </ul>
- <p style={{ color: 'red', marginTop: 16 }}>
+ <p style={{ color: 'var(--danger-500)', marginTop: 16 }}>
  {t('pharmacy.dispense_warning')}
  </p>
  </div>

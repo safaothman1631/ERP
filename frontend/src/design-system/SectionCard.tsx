@@ -1,7 +1,5 @@
 import React from 'react';
 import { Card, Space, Typography } from 'antd';
-import { palette, radius, shadow, space } from '../theme/tokens';
-import { useAuthStore } from '../store';
 
 const { Text } = Typography;
 
@@ -19,30 +17,50 @@ export interface SectionCardProps {
 
 /**
  * SectionCard — تەنها سەرچاوەی container-ـی section لە forms/settings/details.
- * AntD Card بەکار دەهێنێت بەڵام spacing/elevation/heading consistent دەکات.
+ * Vertex kit `.vx-card`: flat var(--surface) on var(--bg), 1px var(--border) hairline,
+ * var(--radius-lg) corners, hairline header with var(--ink-900) title. Fully theme-aware
+ * via CSS var tokens (auto-flip on [data-theme="dark"]) — no hardcoded surface/text colors.
  * React.memo applied per Requirements 18.4.
  */
 const SectionCardInner: React.FC<SectionCardProps> = ({
   title, subtitle, extra, bordered = true, padded = true, elevation = 1, children, style, bodyStyle,
 }) => {
-  const isDark = useAuthStore((s) => s.theme) === 'dark';
-  const elev = elevation === 0 ? 'none' : elevation === 1 ? shadow.sm : shadow.md;
+  // Kit cards are flat; elevation maps to kit shadow tokens (auto-flip in dark).
+  const elev = elevation === 0 ? 'none' : elevation === 1 ? 'var(--shadow-sm)' : 'var(--shadow-md)';
   const header = title ? (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: space.sm }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-sm)' }}>
       <Space direction="vertical" size={2}>
-        <Text strong style={{ fontSize: 15, color: isDark ? palette.darkInk : palette.ink900 }}>{title}</Text>
-        {subtitle && <Text type="secondary" style={{ fontSize: 13 }}>{subtitle}</Text>}
+        <Text
+          strong
+          style={{
+            fontSize: 15,
+            fontFamily: 'var(--font-display)',
+            letterSpacing: '-0.01em',
+            color: 'var(--ink-900)',
+          }}
+        >
+          {title}
+        </Text>
+        {subtitle && <Text style={{ fontSize: 13, color: 'var(--ink-500)' }}>{subtitle}</Text>}
       </Space>
       {extra}
     </div>
   ) : undefined;
   return (
     <Card
+      className="vx-card"
       bordered={bordered}
-      style={{ borderRadius: radius.lg, boxShadow: elev, marginBottom: space.lg, ...style }}
+      style={{
+        background: 'var(--surface)',
+        border: bordered ? '1px solid var(--border)' : 'none',
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: elev,
+        marginBottom: 'var(--space-xl)',
+        ...style,
+      }}
       styles={{
-        header: header ? { borderBottom: `1px solid ${isDark ? palette.darkBorder : palette.border}` } : undefined,
-        body:   { padding: padded ? space.lg : 0, ...bodyStyle },
+        header: header ? { borderBottom: '1px solid var(--border)' } : undefined,
+        body:   { padding: padded ? 'var(--space-xl)' : 0, ...bodyStyle },
       }}
       title={header}
     >

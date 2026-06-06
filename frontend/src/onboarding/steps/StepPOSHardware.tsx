@@ -202,7 +202,7 @@ export default function StepPOSHardware() {
             unCheckedChildren={t('pos.printer.fallback_off')}
             aria-labelledby="onb-fallback-print-label"
           />
-          <label id="onb-fallback-print-label" htmlFor="onb-fallback-print" style={{ fontSize: 12, color: '#64748b' }}>
+          <label id="onb-fallback-print-label" htmlFor="onb-fallback-print" style={{ fontSize: 12, color: 'var(--ink-500)' }}>
             {t('pos.printer.fallback_help')}
           </label>
 
@@ -229,7 +229,7 @@ export default function StepPOSHardware() {
             checkedChildren={t('common.on')}
             unCheckedChildren={t('common.off')}
           />
-          <label htmlFor="onb-drawer-toggle" style={{ fontSize: 12, color: '#64748b' }}>
+          <label htmlFor="onb-drawer-toggle" style={{ fontSize: 12, color: 'var(--ink-500)' }}>
             {t('pos.drawer.help')}
           </label>
           {drawerOn && (

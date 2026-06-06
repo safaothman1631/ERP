@@ -1,13 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Tag, Form, Input, Select, DatePicker, Space, Popconfirm } from 'antd';
+import { Button, Form, Input, Select, DatePicker, Space } from 'antd';
 import { message } from '../utils/message';
 import { PlusOutlined, EditOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import api from '../api';
-import { PageHeader, ColumnVisibility, type ColumnVisibilityItem, ExportMenu, type ExportFormat } from '../design-system';
+import { PageHeader, StatusTag, type StatusKind, type ColumnVisibilityItem } from '../design-system';
+import KitListCard, { type KitListTab } from '../design-system/KitListCard';
+import KitListToolbarActions from '../design-system/KitListToolbarActions';
+import KitRowActions from '../design-system/KitRowActions';
+import KitFiltersButton from '../design-system/KitFiltersButton';
+import KitStatusFilter from '../design-system/KitStatusFilter';
+import KitSearchInput from '../design-system/KitSearchInput';
 import { downloadCsv } from '../utils/exportCsv';
-import { useAuthStore } from '../store';
 import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../components/responsive/FormDialog';
 
@@ -28,13 +33,15 @@ interface Item {
  sku?: string;
 }
 
-const STATUS_COLORS: Record<string, string> = {
- in_stock: 'green',
- sold: 'blue',
- reserved: 'orange',
- damaged: 'red',
- returned: 'purple',
+/** Map domain serial-status → StatusTag semantic kind (Vertex tokens). */
+const STATUS_KIND: Record<string, StatusKind> = {
+ in_stock: 'active',
+ sold: 'info',
+ reserved: 'pending',
+ damaged: 'error',
+ returned: 'archived',
 };
+const STATUS_KEYS = ['in_stock', 'sold', 'reserved', 'damaged', 'returned'];
 
 const SerialNumbers: React.FC = () => {
  const { t } = useTranslation();
@@ -45,17 +52,17 @@ const SerialNumbers: React.FC = () => {
  const [editingId, setEditingId] = useState<string | null>(null);
  const [filterItem, setFilterItem] = useState<string | undefined>();
  const [filterStatus, setFilterStatus] = useState<string | undefined>();
+ const [search, setSearch] = useState('');
  const [form] = Form.useForm();
  const [saving, setSaving] = useState(false);
  const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
  try { return JSON.parse(localStorage.getItem('serialNumbers.hiddenCols') || '[]'); } catch { return []; }
  });
- const isDark = useAuthStore((s) => s.theme === 'dark');
 
  const fetchItems = () => {
  api.get('/api/items', { params: { page_size: 500 } })
  .then(r => setItems(r.data.items || r.data || []))
- .catch(() => {});
+ .catch((e) => console.error(e));
  };
 
  const fetchData = () => {
@@ -113,33 +120,70 @@ const SerialNumbers: React.FC = () => {
 
  const itemNameById = (id: string) => items.find(i => i.id === id)?.name || id;
 
- const columns = [
- { title: t('serial_number'), dataIndex: 'serial_number', key: 'serial_number' },
- { title: t('item'), dataIndex: 'item_id', key: 'item_id', render: (v: string) => itemNameById(v) },
+ const filteredData = useMemo(() => {
+ if (!search) return data;
+ const q = search.toLowerCase();
+ return data.filter((row: any) => Object.values(row).some(v => String(v ?? '').toLowerCase().includes(q)));
+ }, [data, search]);
+
+ // Kit list tabs (All + 5 status segments) — server-side filtered via status param.
+ const tabs: KitListTab[] = [
+ { key: 'all', label: t('all', 'All') },
+ ...STATUS_KEYS.map((s) => ({ key: s, label: t(s) || s })),
+ ];
+ const activeTab = filterStatus || 'all';
+
+ const allColumns = [
+ {
+ title: t('serial_number'), dataIndex: 'serial_number', key: 'serial_number',
+ render: (v: string) => (
+ <span style={{ color: 'var(--ink-900)', fontFamily: 'var(--font-mono)', fontWeight: 500 }}>{v}</span>
+ ),
+ },
+ {
+ title: t('item'), dataIndex: 'item_id', key: 'item_id',
+ render: (v: string) => <span style={{ color: 'var(--ink-700)' }}>{itemNameById(v)}</span>,
+ },
  {
  title: t('status'), dataIndex: 'status', key: 'status',
- render: (v: string) => <Tag color={STATUS_COLORS[v] || 'default'} style={{ borderRadius: 12 }}>{t(v) || v}</Tag>,
+ render: (v: string) => <StatusTag status={STATUS_KIND[v] || 'default'} label={t(v) || v} />,
  },
- { title: t('batch_number'), dataIndex: 'batch_number', key: 'batch_number' },
- { title: t('expiry_date'), dataIndex: 'expiry_date', key: 'expiry_date', render: (d?: string) => d?.substring(0, 10) },
  {
- title: t('actions'), key: 'actions',
+ title: t('batch_number'), dataIndex: 'batch_number', key: 'batch_number',
+ render: (v?: string) => v
+ ? <span style={{ color: 'var(--ink-700)', fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>{v}</span>
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>,
+ },
+ {
+ title: t('expiry_date'), dataIndex: 'expiry_date', key: 'expiry_date',
+ render: (d?: string) => d
+ ? <span style={{ color: 'var(--ink-700)', fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>{d.substring(0, 10)}</span>
+ : <span style={{ color: 'var(--ink-400)' }}>—</span>,
+ },
+ {
+ title: '', key: 'actions', width: 56, align: 'center' as const,
  render: (_: unknown, r: Serial) => (
- <Space>
- <Button icon={<EditOutlined />} onClick={() => openEdit(r)}>{t('edit')}</Button>
- </Space>
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'edit', icon: <EditOutlined />, label: t('edit'), onClick: () => openEdit(r) },
+ ]}
+ />
  ),
  },
  ];
- const visibleColumns = useMemo(() => columns.filter((c) => !hiddenCols.includes(c.key as string)), [hiddenCols, columns]);
- const columnsMeta: ColumnVisibilityItem[] = columns.map((c) => ({
+ const visibleColumns = useMemo(
+ () => allColumns.filter((c) => !hiddenCols.includes(c.key as string)),
+ [hiddenCols, allColumns],
+ );
+ const columnsMeta: ColumnVisibilityItem[] = allColumns.map((c) => ({
  key: c.key as string,
  label: typeof c.title === 'string' ? c.title : (c.key as string),
  pinned: c.key === 'serial_number' || c.key === 'actions',
  }));
  const persistHidden = (next: string[]) => {
  setHiddenCols(next);
- try { localStorage.setItem('serialNumbers.hiddenCols', JSON.stringify(next)); } catch {}
+ try { localStorage.setItem('serialNumbers.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
  };
 
  return (
@@ -151,38 +195,59 @@ const SerialNumbers: React.FC = () => {
  extra={<Button type="primary" icon={<PlusOutlined />} onClick={openNew}>{t('new_serial')}</Button>}
  />
 
- <Space style={{ marginBottom: 16 }} wrap>
+ <KitListCard
+ tabs={tabs}
+ activeTab={activeTab}
+ onTabChange={(k) => setFilterStatus(k === 'all' ? undefined : k)}
+ toolbar={
+ <>
+ <KitSearchInput value={search} onChange={(v) => { setSearch(v); }} placeholder={t('search')} />
+ <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+ <KitFiltersButton
+ activeCount={filterItem ? 1 : 0}
+ onClear={() => setFilterItem(undefined)}
+ >
+ <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 240 }}>
+ <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-700)' }}>{t('filter_by_item')}</span>
  <Select
  allowClear
  showSearch
  optionFilterProp="label"
  placeholder={t('filter_by_item')}
- style={{ width: 240 }}
  value={filterItem}
  onChange={setFilterItem}
  options={items.map(i => ({ label: `${i.sku || ''} ${i.name}`.trim(), value: i.id }))}
  />
- <Select
- allowClear
- placeholder={t('filter_by_status')}
- style={{ width: 180 }}
- value={filterStatus}
- onChange={setFilterStatus}
- options={Object.keys(STATUS_COLORS).map(s => ({ label: t(s) || s, value: s }))}
+ </div>
+ </KitFiltersButton>
+ <KitStatusFilter
+ label={t('status')}
+ anyLabel={t('all', 'All')}
+ value={filterStatus || ''}
+ onChange={(v) => setFilterStatus(v || undefined)}
+ options={STATUS_KEYS.map((s) => ({ value: s, label: t(s) || s }))}
  />
- <ExportMenu
- formats={['csv']}
- onExport={(f: ExportFormat) => {
- if (f === 'csv') {
+ </div>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={columnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
  const cols = columnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
  downloadCsv('serial-numbers', data, cols);
- }
  }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
  />
- <ColumnVisibility columns={columnsMeta} hidden={hiddenCols} onChange={persistHidden} isDark={isDark} />
- </Space>
-
- <ResponsiveTableAdapter rowKey="id" columns={visibleColumns} dataSource={data} loading={loading} pagination={{ pageSize: 50 }} />
+ </div>
+ </>
+ }
+ >
+ <ResponsiveTableAdapter rowKey="id" columns={visibleColumns} dataSource={filteredData} loading={loading} pagination={{ pageSize: 50 }} />
+ </KitListCard>
 
  <FormDialog
  open={modalOpen}
@@ -204,7 +269,7 @@ const SerialNumbers: React.FC = () => {
  </Form.Item>
  {editingId && (
  <Form.Item label={t('status')} name="status">
- <Select options={Object.keys(STATUS_COLORS).map(s => ({ label: t(s) || s, value: s }))} />
+ <Select options={STATUS_KEYS.map(s => ({ label: t(s) || s, value: s }))} />
  </Form.Item>
  )}
  <Form.Item label={t('batch_number')} name="batch_number">

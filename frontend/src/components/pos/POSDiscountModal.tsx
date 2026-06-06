@@ -6,16 +6,7 @@
  * single-field (the legacy CartLine has only `discount_percent`).
  */
 import React, { useEffect, useState } from 'react';
-import {
-  Modal,
-  Select,
-  Radio,
-  InputNumber,
-  Button,
-  Space,
-  Typography,
-  Divider,
-} from 'antd';
+import { Modal, Select, Radio, InputNumber, Space, Typography, Divider } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../../utils/formatters';
 import type { TerminalCartLine } from '../../hooks/usePOSTerminal';

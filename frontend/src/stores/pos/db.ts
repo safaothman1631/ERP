@@ -67,7 +67,7 @@ export function getPOSDB(): Promise<IDBPDatabase<ZohoPOSSchema>> {
       blocked() {
         // Another tab is holding the old version open. Surface this so the
         // app can show a "reload to update" banner. Logging is enough today.
-        // eslint-disable-next-line no-console
+         
         console.warn('[pos/db] upgrade blocked by another tab');
       },
       blocking() {
@@ -94,7 +94,7 @@ export function getPOSDB(): Promise<IDBPDatabase<ZohoPOSSchema>> {
           await migrateFromLegacy(db);
         } catch (err) {
           // Migration must never break boot. Just log and move on.
-          // eslint-disable-next-line no-console
+           
           console.warn('[pos/db] legacy migration skipped', err);
         }
       }

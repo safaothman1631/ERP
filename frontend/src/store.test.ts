@@ -14,8 +14,6 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { applyTheme, getPersistedTheme } from './store';
-import type { Theme } from './store';
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------

@@ -6,7 +6,7 @@
  *   WHERE بەکارهێنەر ئینتەرنێتی لەدەست دات، THE سیستەم SHALL offline indicator نیشان بدات.
  */
 import React from 'react';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ConnectionStatus } from './ConnectionStatus';
 
@@ -56,20 +56,20 @@ describe('ConnectionStatus — tag variant', () => {
 
   it('shows "online" tag when navigator.onLine is true', () => {
     render(<ConnectionStatus variant="tag" />);
-    expect(screen.getByText('سەرهێڵ')).toBeInTheDocument();
+    expect(screen.getByText('Online')).toBeInTheDocument();
   });
 
   it('shows "offline" tag after the offline event fires', () => {
     render(<ConnectionStatus variant="tag" />);
     goOffline();
-    expect(screen.getByText('دەرهێڵ')).toBeInTheDocument();
+    expect(screen.getByText('Offline')).toBeInTheDocument();
   });
 
   it('returns to "online" tag after the online event fires', () => {
     render(<ConnectionStatus variant="tag" />);
     goOffline();
     goOnline();
-    expect(screen.getByText('سەرهێڵ')).toBeInTheDocument();
+    expect(screen.getByText('Online')).toBeInTheDocument();
   });
 
   it('has role="status" for accessibility', () => {
@@ -101,19 +101,21 @@ describe('ConnectionStatus — banner variant', () => {
   it('shows offline banner when navigator goes offline', () => {
     render(<ConnectionStatus variant="banner" />);
     goOffline();
-    expect(screen.getByText('دەرهێڵ — ئینتەرنێت نییە')).toBeInTheDocument();
+    expect(screen.getByText('Offline — no internet connection')).toBeInTheDocument();
   });
 
   it('hides offline banner when connection is restored', async () => {
     render(<ConnectionStatus variant="banner" />);
     goOffline();
-    expect(screen.getByText('دەرهێڵ — ئینتەرنێت نییە')).toBeInTheDocument();
+    expect(screen.getByText('Offline — no internet connection')).toBeInTheDocument();
     goOnline();
-    // After going online, the banner should no longer be rendered.
-    // AnimatePresence may keep the element briefly during exit animation in jsdom,
-    // so we check that the component re-renders without the offline content.
-    // The state update is synchronous via act(), so the element should be gone.
-    expect(screen.queryByText('دەرهێڵ — ئینتەرنێت نییە')).not.toBeInTheDocument();
+    // framer-motion's AnimatePresence plays an exit animation before unmounting,
+    // so the node lingers for a tick after going back online. Poll until removed.
+    await waitFor(() => {
+      expect(
+        screen.queryByText('Offline — no internet connection'),
+      ).not.toBeInTheDocument();
+    });
   });
 
   it('shows description text when offline', () => {
@@ -139,6 +141,6 @@ describe('ConnectionStatus — default variant', () => {
   it('defaults to tag variant when no variant prop is given', () => {
     Object.defineProperty(navigator, 'onLine', { value: true, configurable: true });
     render(<ConnectionStatus />);
-    expect(screen.getByText('سەرهێڵ')).toBeInTheDocument();
+    expect(screen.getByText('Online')).toBeInTheDocument();
   });
 });

@@ -58,7 +58,7 @@ export function lazyWithRetry<T extends ComponentType<any>>(
         lastError = err;
         if (attempt < RETRY_DELAYS_MS.length) {
           const delay = RETRY_DELAYS_MS[attempt];
-          // eslint-disable-next-line no-console
+           
           console.warn(
             `[lazyWithRetry] chunk "${chunkName}" failed (attempt ${attempt + 1}). ` +
               `Retrying in ${delay}ms.`,
@@ -87,7 +87,7 @@ export function lazyWithRetry<T extends ComponentType<any>>(
       // Sentry import or capture failed — never let observability break UX.
     }
 
-    // eslint-disable-next-line no-console
+     
     console.error(
       `[lazyWithRetry] chunk "${chunkName}" exhausted all retries.`,
       lastError,

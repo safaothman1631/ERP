@@ -8,7 +8,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from app.firebase_client import get_db
+from app.firebase_client import get_db, safe_query
 from app.firestore.organizations import OrganizationRepository
 from app.services.org_license import get_license, set_org_license
 
@@ -30,7 +30,7 @@ class OrgPatchPayload(BaseModel):
 
 
 def _user_count(db, org_id: str) -> int:
-    return len(list(db.collection("users").where("org_id", "==", org_id).limit(500).stream()))
+    return len(safe_query(db.collection("users").where("org_id", "==", org_id).limit(500)))
 
 
 @router.get("/orgs")
@@ -43,7 +43,7 @@ def list_orgs(
 ):
     db = get_db()
     items = []
-    for doc in db.collection("organizations").limit(5000).stream():
+    for doc in safe_query(db.collection("organizations").limit(5000)):
         data = {"id": doc.id, **(doc.to_dict() or {})}
         if data.get("deleted_at"):
             continue

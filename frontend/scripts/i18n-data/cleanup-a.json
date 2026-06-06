@@ -1,0 +1,1470 @@
+{
+  "common": {
+    "currency_converter": {
+      "ku": "گۆڕینی دراو (CBI)",
+      "en": "Currency converter (CBI)"
+    },
+    "rate_fresh": {
+      "ku": "نرخی تازەی CBI",
+      "en": "Fresh CBI rate"
+    },
+    "rate_fallback": {
+      "ku": "نرخی پاشگەڕاو ({{fallback_age_days}} ڕۆژ کۆن)",
+      "en": "Fallback ({{fallback_age_days}}d old)"
+    },
+    "rate_hardcoded": {
+      "ku": "نرخی جێگیرکراو",
+      "en": "Hardcoded fallback"
+    },
+    "rate_date": {
+      "ku": "بەرواری نرخ",
+      "en": "Rate date"
+    },
+    "rate_value": {
+      "ku": "نرخ",
+      "en": "Rate"
+    },
+    "login_successful": {
+      "ku": "چوونەژوورەوەی {{name}} سەرکەوتوو بوو",
+      "en": "Logged in as {{name}}"
+    },
+    "employee_locked": {
+      "ku": "ئەم کارمەندە تا {{until}} قەفڵکراوە",
+      "en": "Employee locked until {{until}}"
+    },
+    "invalid_pin": {
+      "ku": "PIN هەڵەیە",
+      "en": "Invalid PIN"
+    },
+    "employee_login": {
+      "ku": "چوونەژوورەوەی کارمەند",
+      "en": "Employee login"
+    },
+    "enter_gift_card_code": {
+      "ku": "کۆدی کارتی دیاری داخڵ بکە",
+      "en": "Enter gift card code"
+    },
+    "gift_card_not_activated": {
+      "ku": "ئەم کارتە چالاک نەکراوە",
+      "en": "Gift card not activated"
+    },
+    "gift_card_expired": {
+      "ku": "ماوەی ئەم کارتە تەموو بووە",
+      "en": "Gift card expired"
+    },
+    "gift_card_not_found": {
+      "ku": "کارتی دیاری نەدۆزرایەوە",
+      "en": "Gift card not found"
+    },
+    "insufficient_balance": {
+      "ku": "باڵانسی پێویست نییە",
+      "en": "Insufficient balance"
+    },
+    "gift_card_charged": {
+      "ku": "کارتی دیاری بارکرا",
+      "en": "Gift card charged"
+    },
+    "error_charging_gift_card": {
+      "ku": "هەڵە لە بارکردنی کارتی دیاری",
+      "en": "Error charging gift card"
+    },
+    "charge_gift_card": {
+      "ku": "بارکردنی کارتی دیاری",
+      "en": "Charge gift card"
+    },
+    "scan_or_enter_gift_card_code": {
+      "ku": "کۆدی کارت بخوێنەوە یان بنووسە",
+      "en": "Scan or enter gift card code"
+    },
+    "lookup": {
+      "ku": "گەڕان",
+      "en": "Look up"
+    },
+    "card_code": {
+      "ku": "کۆدی کارت",
+      "en": "Card code"
+    },
+    "enter_amount_to_charge": {
+      "ku": "بڕی بارکردن بنووسە",
+      "en": "Enter amount to charge"
+    },
+    "charge": {
+      "ku": "بارکردن",
+      "en": "Charge"
+    },
+    "enter_card_code": {
+      "ku": "کۆدی کارت داخڵ بکە",
+      "en": "Enter card code"
+    },
+    "card_not_found": {
+      "ku": "کارت نەدۆزرایەوە",
+      "en": "Card not found"
+    },
+    "feature_coming_soon": {
+      "ku": "ئەم تایبەتمەندییە بەم زووانە دەێت",
+      "en": "Feature coming soon"
+    },
+    "loyalty_card_lookup": {
+      "ku": "گەڕانی کارتی پاداشت",
+      "en": "Loyalty card lookup"
+    },
+    "scan_or_enter_card_code": {
+      "ku": "کۆدی کارت بخوێنەوە یان بنووسە",
+      "en": "Scan or enter card code"
+    },
+    "points_balance": {
+      "ku": "باڵانسی خاڵ",
+      "en": "Points balance"
+    },
+    "redeem_rewards": {
+      "ku": "وەرگرتنی خەڵات",
+      "en": "Redeem rewards"
+    },
+    "name_ku": {
+      "ku": "ناوی کوردی",
+      "en": "Kurdish name"
+    },
+    "updated_successfully": {
+      "ku": "نوێکرایەوە بە سەرکەوتوویی",
+      "en": "Updated successfully"
+    },
+    "created_successfully": {
+      "ku": "دروستکرا بە سەرکەوتوویی",
+      "en": "Created successfully"
+    },
+    "reset_pin": {
+      "ku": "ڕیسێتکردنی PIN",
+      "en": "Reset PIN"
+    },
+    "reset_pin_confirm": {
+      "ku": "دڵنیای لە ڕیسێتکردنی PIN-ی ئەم کارمەندە؟",
+      "en": "Are you sure you want to reset this employee's PIN?"
+    },
+    "enter_new_pin": {
+      "ku": "PIN-ی نوێ داخڵ بکە",
+      "en": "Enter new PIN"
+    },
+    "pin_reset_success": {
+      "ku": "PIN بە سەرکەوتوویی ڕیسێت کرا",
+      "en": "PIN reset successfully"
+    },
+    "pin_must_be_4_digits": {
+      "ku": "PIN دەبێت ٤ ژمارە بێت",
+      "en": "PIN must be 4 digits"
+    },
+    "locked": {
+      "ku": "قەفڵکراو",
+      "en": "Locked"
+    },
+    "pos_employees": {
+      "ku": "کارمەندەکانی فرۆشگا",
+      "en": "POS employees"
+    },
+    "add_employee": {
+      "ku": "کارمەند زیادکردن",
+      "en": "Add employee"
+    },
+    "pin": {
+      "ku": "PIN",
+      "en": "PIN"
+    },
+    "pos_role_cashier": {
+      "ku": "کاشێر",
+      "en": "Cashier"
+    },
+    "pos_role_manager": {
+      "ku": "بەڕێوەبەر",
+      "en": "Manager"
+    },
+    "pos_role_waiter": {
+      "ku": "خزمەتکار",
+      "en": "Waiter"
+    },
+    "select_configs": {
+      "ku": "کۆنفیگ هەڵبژێرە",
+      "en": "Select configs"
+    },
+    "configs": {
+      "ku": "کۆنفیگەکان",
+      "en": "Configs"
+    },
+    "gift_card_created": {
+      "ku": "کارتی دیاری دروستکرا",
+      "en": "Gift card created"
+    },
+    "gift_cards_created": {
+      "ku": "{{count}} کارتی دیاری دروستکران",
+      "en": "{{count}} gift cards created"
+    },
+    "activate_gift_card": {
+      "ku": "چالاककردنی کارتی دیاری",
+      "en": "Activate gift card"
+    },
+    "activate_gift_card_confirm": {
+      "ku": "دڵنیای لە چالاككردنی کارتی دیاری {{code}}؟",
+      "en": "Activate gift card {{code}}?"
+    },
+    "gift_card_activated": {
+      "ku": "کارتی دیاری چالاک کرا",
+      "en": "Gift card activated"
+    },
+    "error_activating": {
+      "ku": "هەڵە لە چالاككردن",
+      "en": "Error activating"
+    },
+    "initial_value": {
+      "ku": "بەهای سەرەتا",
+      "en": "Initial value"
+    },
+    "not_activated": {
+      "ku": "چالاک نەکراوە",
+      "en": "Not activated"
+    },
+    "expiration": {
+      "ku": "بەرواری تەمامبوون",
+      "en": "Expiration"
+    },
+    "no_expiration": {
+      "ku": "بەرواری تەمامبوون نییە",
+      "en": "No expiration"
+    },
+    "gift_cards": {
+      "ku": "کارتی دیاری",
+      "en": "Gift cards"
+    },
+    "issue_single_card": {
+      "ku": "دەرکردنی یەک کارت",
+      "en": "Issue single card"
+    },
+    "issue_batch": {
+      "ku": "دەرکردنی کۆمەڵی کارت",
+      "en": "Issue batch"
+    },
+    "issue_single_gift_card": {
+      "ku": "دەرکردنی یەک کارتی دیاری",
+      "en": "Issue single gift card"
+    },
+    "partner_id": {
+      "ku": "شریک",
+      "en": "Partner"
+    },
+    "expiration_date": {
+      "ku": "بەرواری تەمامبوون",
+      "en": "Expiration date"
+    },
+    "issue_batch_gift_cards": {
+      "ku": "دەرکردنی کۆمەڵی کارتی دیاری",
+      "en": "Issue batch of gift cards"
+    },
+    "value_per_card": {
+      "ku": "بەهای هەر کارتێک",
+      "en": "Value per card"
+    },
+    "gift_card_details": {
+      "ku": "وردەکاری کارتی دیاری",
+      "en": "Gift card details"
+    },
+    "activated_at": {
+      "ku": "بەرواری چالاككردن",
+      "en": "Activated at"
+    },
+    "confirm_delete_program": {
+      "ku": "دڵنیای لە سڕینەوەی ئەم پڕۆگرامە؟",
+      "en": "Delete this program?"
+    },
+    "deleted_successfully": {
+      "ku": "سڕایەوە بە سەرکەوتوویی",
+      "en": "Deleted successfully"
+    },
+    "error_deleting": {
+      "ku": "هەڵە لە سڕینەوە",
+      "en": "Error deleting"
+    },
+    "point_ratio": {
+      "ku": "ڕێژەی خاڵ",
+      "en": "Point ratio"
+    },
+    "valid_period": {
+      "ku": "ماوەی کاریگەری",
+      "en": "Valid period"
+    },
+    "program": {
+      "ku": "پڕۆگرام",
+      "en": "Program"
+    },
+    "partner": {
+      "ku": "شریک",
+      "en": "Partner"
+    },
+    "loyalty_programs": {
+      "ku": "پڕۆگرامەکانی پاداشت",
+      "en": "Loyalty programs"
+    },
+    "add_program": {
+      "ku": "پڕۆگرام زیادکردن",
+      "en": "Add program"
+    },
+    "programs": {
+      "ku": "پڕۆگرامەکان",
+      "en": "Programs"
+    },
+    "loyalty_cards": {
+      "ku": "کارتی پاداشت",
+      "en": "Loyalty cards"
+    },
+    "issue_card": {
+      "ku": "دەرکردنی کارت",
+      "en": "Issue card"
+    },
+    "edit_program": {
+      "ku": "دەستکاریکردنی پڕۆگرام",
+      "en": "Edit program"
+    },
+    "loyalty_type_loyalty": {
+      "ku": "پاداشت",
+      "en": "Loyalty"
+    },
+    "loyalty_type_coupons": {
+      "ku": "کوپۆن",
+      "en": "Coupons"
+    },
+    "loyalty_type_gift_card": {
+      "ku": "کارتی دیاری",
+      "en": "Gift card"
+    },
+    "loyalty_type_ewallet": {
+      "ku": "جزدانی ئەلیکترۆنی",
+      "en": "E-wallet"
+    },
+    "loyalty_type_promotion": {
+      "ku": "تەشویق",
+      "en": "Promotion"
+    },
+    "valid_from": {
+      "ku": "کاریگەرە لە",
+      "en": "Valid from"
+    },
+    "valid_to": {
+      "ku": "کاریگەرە تا",
+      "en": "Valid to"
+    },
+    "applies_on": {
+      "ku": "جێبەجێدەبێت لەسەر",
+      "en": "Applies on"
+    },
+    "future_orders": {
+      "ku": "داواکارییە داهاتووەکان",
+      "en": "Future orders"
+    },
+    "issue_loyalty_card": {
+      "ku": "دەرکردنی کارتی پاداشت",
+      "en": "Issue loyalty card"
+    },
+    "issue_card_description": {
+      "ku": "کارتی پاداشتێکی نوێ بۆ کڕیار دەربکە.",
+      "en": "Issue a new loyalty card to a customer."
+    },
+    "qty": {
+      "ku": "ژمارە",
+      "en": "Qty"
+    },
+    "qty_available": {
+      "ku": "بەردەستە",
+      "en": "Available"
+    },
+    "your_order": {
+      "ku": "داواکارییەکەت",
+      "en": "Your order"
+    },
+    "pos_system": {
+      "ku": "سیستەمی فرۆشگا",
+      "en": "POS system"
+    }
+  },
+  "pos": {
+    "emptyCart": {
+      "ku": "بەرهەم زیادبکە بۆ دەستپێکردن",
+      "en": "Add product to start"
+    },
+    "line": {
+      "ku": "هێڵ",
+      "en": "Line"
+    },
+    "select": {
+      "ku": "هەڵبژێرە",
+      "en": "Select"
+    },
+    "applied_percent": {
+      "ku": "جێبەجێکراو",
+      "en": "Applied"
+    },
+    "paid": {
+      "ku": "پارەدراو",
+      "en": "Paid"
+    },
+    "remaining": {
+      "ku": "ماوە",
+      "en": "Remaining"
+    },
+    "pair_hardware": {
+      "ku": "یەکخستنی ئامێر",
+      "en": "Pair hardware"
+    },
+    "name": {
+      "ku": "ناو",
+      "en": "Name"
+    },
+    "status": {
+      "ku": "دۆخ",
+      "en": "Status"
+    },
+    "pull_select_at_least_one": {
+      "ku": "لانی کەم یەک بەرهەم هەڵبژێرە",
+      "en": "Select at least one item to add"
+    },
+    "pull_partial_success": {
+      "ku": "{{count}} زیادکرا، {{failed}} شکستی هێنا",
+      "en": "{{count}} added, {{failed}} failed"
+    },
+    "pull_success": {
+      "ku": "{{count}} بەرهەم زیادکرا بۆ فرۆشگا",
+      "en": "{{count}} item(s) added to POS"
+    },
+    "add_existing_items": {
+      "ku": "زیادکردن لە ئەنبار",
+      "en": "Add from inventory"
+    },
+    "create_new_item": {
+      "ku": "بەرهەمی نوێ دروستبکە",
+      "en": "Create new item"
+    },
+    "no_products_yet": {
+      "ku": "هیچ بەرهەمێکی فرۆشگا نییە",
+      "en": "No POS products yet"
+    },
+    "no_products_help": {
+      "ku": "بەرهەمەکانی ئەنبار بکێشە بۆ فرۆشگا، یان بەرهەمێکی نوێ دروست بکە.",
+      "en": "Pull existing inventory items into POS, or create a new item from scratch."
+    },
+    "pull_help": {
+      "ku": "بەرهەم هەڵبژێرە بۆ ئەوەی لە فرۆشگا بەردەست بن. دواتر دەتوانیت کاتیگۆریەکانیان بگۆڕیت.",
+      "en": "Select items from your inventory to make them available in POS. You can adjust the category for each item later."
+    },
+    "pull_search_placeholder": {
+      "ku": "بەرهەم بگەڕێ بە ناو یان SKU...",
+      "en": "Search items by name or SKU..."
+    },
+    "pick_default_category": {
+      "ku": "کاتیگۆری بنەڕەتی (ئارەزوومەندانە)",
+      "en": "Default category (optional)"
+    },
+    "pull_no_results": {
+      "ku": "هیچ بەرهەمێک نەدۆزرایەوە",
+      "en": "No matching items found"
+    },
+    "pull_no_pullable": {
+      "ku": "هەموو بەرهەمەکانی ئەنبار پێشتر لە فرۆشگا هەن",
+      "en": "All inventory items are already in POS"
+    },
+    "pull_selected_count": {
+      "ku": "{{count}} بەرهەم هەڵبژێردرا",
+      "en": "{{count}} item(s) selected"
+    },
+    "item_name_placeholder": {
+      "ku": "بۆ نموونە: کۆلا ٣٣٠ مل",
+      "en": "e.g. Cola can 330ml"
+    },
+    "item_name_ku_placeholder": {
+      "ku": "بۆ نموونە: کۆلا ٣٣٠ مل",
+      "en": "e.g. Cola can 330ml (Kurdish)"
+    },
+    "pick_category_optional": {
+      "ku": "کاتیگۆری هەڵبژێرە (ئارەزوومەندانە)",
+      "en": "Pick a category (optional)"
+    },
+    "hardware": {
+      "wizard": {
+        "title": {
+          "ku": "یەکخستنی ئامێر",
+          "en": "Pair hardware"
+        }
+      },
+      "step1": {
+        "ku": "١. جۆری ئامێر هەڵبژێرە",
+        "en": "1. Choose device type"
+      },
+      "step2": {
+        "ku": "٢. جۆری پەیوەندی هەڵبژێرە",
+        "en": "2. Choose connection"
+      },
+      "notSupported": {
+        "ku": "ئەم ئامێرە لێرە پشتگیری ناکرێت",
+        "en": "not supported on this device"
+      },
+      "step3": {
+        "ku": "٣. گەڕانی ئامێرەکان",
+        "en": "3. Scan for devices"
+      },
+      "scan": {
+        "ku": "ئێستا بگەڕێ",
+        "en": "Scan now"
+      },
+      "step4": {
+        "ku": "٤. ئامێر پشتڕاست بکەرەوە",
+        "en": "4. Confirm device"
+      },
+      "step5": {
+        "ku": "٥. جۆری چاپکەر دیاریبکە",
+        "en": "5. Identify printer dialect"
+      },
+      "detectAuto": {
+        "ku": "بەخۆی دۆزینەوە",
+        "en": "Detect automatically"
+      },
+      "manualOverride": {
+        "ku": "یان بە دەست هەڵبژێرە:",
+        "en": "Or pick manually:"
+      },
+      "step6": {
+        "ku": "٦. چاپی تاقیکردنەوە",
+        "en": "6. Test print & verify cut"
+      },
+      "runTestPrint": {
+        "ku": "چاپی تاقیکردنەوە",
+        "en": "Print test page"
+      },
+      "cutOk": {
+        "ku": "بریندانی باشە",
+        "en": "Cut OK"
+      },
+      "cutFail": {
+        "ku": "بریندان شکستی هێنا",
+        "en": "Cut failed"
+      },
+      "step7": {
+        "ku": "٧. دراوەی پارە و خەزن",
+        "en": "7. Cash drawer & save"
+      },
+      "drawerExplain": {
+        "ku": "تاقیبکەرەوە کام pin دراوەکەت دەکاتەوە:",
+        "en": "Test which pin fires your drawer:"
+      },
+      "kickPin5": {
+        "ku": "بزیاندنی pin 5",
+        "en": "Kick pin 5"
+      },
+      "kickPin2": {
+        "ku": "بزیاندنی pin 2",
+        "en": "Kick pin 2"
+      },
+      "skipDrawer": {
+        "ku": "دراوە نییە",
+        "en": "No drawer"
+      },
+      "drawerResult": {
+        "ku": "pin-ی دراوەکە خەزن کرا",
+        "en": "Saved drawer pin"
+      },
+      "save": {
+        "ku": "خەزن و تەواوکردن",
+        "en": "Save & finish"
+      },
+      "startOver": {
+        "ku": "دووبارە دەستپێبکەرەوە",
+        "en": "Start over"
+      },
+      "savedAt": {
+        "ku": "خەزن کرا لە",
+        "en": "Saved at"
+      }
+    },
+    "payment": {
+      "pickerTitle": {
+        "ku": "شێوازی پارەدان هەڵبژێرە",
+        "en": "Choose Payment Method"
+      },
+      "offline": {
+        "ku": "ئۆفلاین — تەنها کاش و COD بەردەستن.",
+        "en": "Offline — only Cash and COD are available."
+      },
+      "notConfigured": {
+        "ku": "کۆنفیگ نەکراوە",
+        "en": "Not configured"
+      },
+      "onlineRequired": {
+        "ku": "پێویستی بە ئینتەرنێت هەیە",
+        "en": "Online required"
+      },
+      "collect": {
+        "ku": "کاش وەرگرتن",
+        "en": "Collect Cash"
+      },
+      "cashTitle": {
+        "ku": "پارەدانی کاش",
+        "en": "Cash Payment"
+      },
+      "tendered": {
+        "ku": "دراو",
+        "en": "Tendered"
+      },
+      "markCOD": {
+        "ku": "وەک COD نیشاندەدرێت",
+        "en": "Mark as COD"
+      },
+      "codTitle": {
+        "ku": "کاشی دەرگا",
+        "en": "Cash on Delivery"
+      },
+      "codConfirm": {
+        "ku": "ئەم داواکارییە بە شێوازی COD تۆمار دەکرێت و کورییەر {{total}} {{currency}} لە دەرگا وەردەگرێت.",
+        "en": "This order will be marked Cash on Delivery and the courier will collect {{total}} {{currency}} at the door."
+      },
+      "tapToCharge": {
+        "ku": "پارەی کارت وەرگرتن",
+        "en": "Charge Card"
+      },
+      "stripeTitle": {
+        "ku": "پارەدانی کارت (Stripe)",
+        "en": "Card Payment (Stripe)"
+      },
+      "stripeDescription": {
+        "ku": "Payment Intent-ێکی Stripe دروست دەکرێت. تێرمینالێکی پەیوەستکراو بەکاردەهێنرێت یان QR پیشاندەدرێت بۆ {{total}} {{currency}}.",
+        "en": "A Stripe Payment Intent will be created. Use a connected terminal or display the QR for the customer to pay {{total}} {{currency}}."
+      },
+      "markPaid": {
+        "ku": "وەک پارەدراو نیشانبکە",
+        "en": "Mark as Paid"
+      },
+      "scanQR": {
+        "ku": "QR بخوێنەوە بۆ پارەدان — {{provider}}",
+        "en": "Scan to Pay — {{provider}}"
+      },
+      "qrPlaceholder": {
+        "ku": "QR-ی موقەت — QR-ی ڕاستەقینە لە /api/payments/initiate دەگەڕێتەوە کاتێک بڕوانامەکان کۆنفیگ بکرێن.",
+        "en": "Placeholder QR — real provider QR will be returned by /api/payments/initiate once credentials are configured."
+      },
+      "confirmOTP": {
+        "ku": "OTP پشتڕاستبکەرەوە",
+        "en": "Confirm OTP"
+      },
+      "zainTitle": {
+        "ku": "Zain Cash",
+        "en": "Zain Cash"
+      },
+      "zainDescription": {
+        "ku": "OTP بۆ جزدانی موشتەری دەنێردرێت. کۆد داخڵ بکە بۆ پشتڕاستکردنەوە.",
+        "en": "An OTP will be sent to the customer wallet. Enter the code to confirm."
+      }
+    },
+    "cash": {
+      "denomination": {
+        "ku": "نرخی کاغەز",
+        "en": "Denomination"
+      },
+      "withdrawn": {
+        "ku": "ڕادەستکراو",
+        "en": "Withdrawn"
+      },
+      "count": {
+        "ku": "ژمارە",
+        "en": "Count"
+      },
+      "row_total": {
+        "ku": "کۆی هێڵ",
+        "en": "Total"
+      },
+      "title": {
+        "ku": "داڕشتنی کاشی دراوەکە (IQD)",
+        "en": "Cash drawer break-down (IQD)"
+      },
+      "target": {
+        "ku": "ئامانج",
+        "en": "Target"
+      },
+      "empty": {
+        "ku": "بڕێک داخڵ بکە",
+        "en": "Enter an amount above"
+      },
+      "counted": {
+        "ku": "ژمێردراو",
+        "en": "Counted"
+      },
+      "delta": {
+        "ku": "جیاوازی",
+        "en": "Difference"
+      }
+    },
+    "tender": {
+      "title": {
+        "ku": "کاشی خێرا",
+        "en": "Quick cash"
+      }
+    }
+  },
+  "settings": {
+    "calendar": {
+      "title": {
+        "ku": "ڕۆژژمێر",
+        "en": "Calendar"
+      },
+      "gregorian": {
+        "ku": "گرێگۆری",
+        "en": "Gregorian"
+      },
+      "hijri": {
+        "ku": "هیجری",
+        "en": "Hijri"
+      },
+      "both": {
+        "ku": "هەردووکیان",
+        "en": "Both"
+      },
+      "preview": {
+        "ku": "پێشبینین",
+        "en": "Preview"
+      }
+    },
+    "digits": {
+      "title": {
+        "ku": "ژمارەکان",
+        "en": "Number digits"
+      },
+      "auto": {
+        "ku": "ئۆتۆماتیکی (بەپێی زمان)",
+        "en": "Auto (by language)"
+      },
+      "latin": {
+        "ku": "لاتینی (0–9)",
+        "en": "Latin (0–9)"
+      },
+      "indic": {
+        "ku": "عەرەبی-ئیندیکی (٠–٩)",
+        "en": "Arabic-Indic (٠–٩)"
+      },
+      "preview": {
+        "ku": "پێشبینین",
+        "en": "Preview"
+      }
+    },
+    "groups": {
+      "account": {
+        "ku": "ئەکاونت",
+        "en": "Account"
+      },
+      "general": {
+        "ku": "گشتی",
+        "en": "General"
+      },
+      "organization": {
+        "ku": "ڕێکخراو",
+        "en": "Organization"
+      },
+      "users": {
+        "ku": "بەکارهێنەران و دەستڕاگەیشتن",
+        "en": "Users & access"
+      },
+      "localization": {
+        "ku": "ناوخۆیی",
+        "en": "Localization"
+      },
+      "finance": {
+        "ku": "دارایی و پابەندبوون",
+        "en": "Finance & compliance"
+      },
+      "commerce": {
+        "ku": "بازرگانی",
+        "en": "Commerce"
+      },
+      "operations": {
+        "ku": "کارکردنەکان",
+        "en": "Operations"
+      },
+      "automation": {
+        "ku": "ئۆتۆمیشن و API",
+        "en": "Automation & API"
+      },
+      "content": {
+        "ku": "ناوەڕۆک و پەیامگەڕاندن",
+        "en": "Content & messaging"
+      },
+      "system": {
+        "ku": "سیستەم",
+        "en": "System"
+      }
+    },
+    "not_found": {
+      "title": {
+        "ku": "بەش نەدۆزرایەوە",
+        "en": "Section not found"
+      },
+      "subtitle": {
+        "ku": "بەشی داواکراوی ڕێکخستنەکان نەدۆزرایەوە یان چالاک نییە.",
+        "en": "The requested settings section is unknown or disabled."
+      }
+    },
+    "example": {
+      "field": {
+        "ku": "خانەی نموونە",
+        "en": "Example field"
+      }
+    },
+    "migration": {
+      "title": {
+        "ku": "بەش چاوەڕوانی گواستنەوەیە",
+        "en": "Section pending migration"
+      },
+      "description": {
+        "ku": "ئەم بەشە هێشتا لە فایلی کۆنی bodies.tsx دایە. وەک بەشێکی داڕشتنی ڕێکخستنەکان بۆ فایلی خۆی دەگوازرێتەوە.",
+        "en": "This section still lives in the legacy bodies.tsx monolith. It will be moved into its own file as part of the settings decomposition (R8.1)."
+      },
+      "handoff": {
+        "ku": "بڕوانە docs/settings/migration-plan.md بۆ وردەکاری.",
+        "en": "See docs/settings/migration-plan.md for the per-section backlog and ownership."
+      }
+    },
+    "branding": {
+      "logo_url": {
+        "ku": "بەستەری لۆگۆ",
+        "en": "Logo URL"
+      },
+      "upload_logo": {
+        "ku": "لۆگۆ بارکردن",
+        "en": "Upload logo"
+      },
+      "logo_dark_url": {
+        "ku": "لۆگۆ (دۆخی تاریک)",
+        "en": "Logo (dark mode)"
+      },
+      "favicon_url": {
+        "ku": "بەستەری Favicon",
+        "en": "Favicon URL"
+      },
+      "primary_color": {
+        "ku": "ڕەنگی سەرەکی",
+        "en": "Primary color"
+      },
+      "accent_color": {
+        "ku": "ڕەنگی تایبەت",
+        "en": "Accent color"
+      },
+      "theme_mode": {
+        "ku": "دۆخی بنەڕەتی",
+        "en": "Default theme"
+      },
+      "light": {
+        "ku": "ڕووناک",
+        "en": "Light"
+      },
+      "dark": {
+        "ku": "تاریک",
+        "en": "Dark"
+      },
+      "system": {
+        "ku": "سیستەم",
+        "en": "System"
+      },
+      "help": {
+        "ku": "لۆگۆکان لەسەر فاکتور، پەڕەی چوونەژوورەوە و ناڤبارەوە دەردەکەون. SVG یان PNG 2x بەکاردەهێنە بۆ جوانی.",
+        "en": "Logos appear on invoices, the login page, and the top navigation. Use SVG or 2x PNG for crispness."
+      }
+    },
+    "company": {
+      "name": {
+        "ku": "ناوی کۆمپانیا",
+        "en": "Company name"
+      },
+      "legal_name": {
+        "ku": "ناوی یاسایی",
+        "en": "Legal name"
+      },
+      "registration_number": {
+        "ku": "ژمارەی تۆمارکردن",
+        "en": "Registration number"
+      },
+      "tax_id": {
+        "ku": "ناسنامەی باج",
+        "en": "Tax ID"
+      },
+      "commercial_registration_no": {
+        "ku": "ژمارەی تۆمارکردنی بازرگانی (عێراق)",
+        "en": "Commercial registration no. (Iraq)"
+      },
+      "commercial_registration_no.help": {
+        "ku": "تۆمارکردنی وەزارەتی بازرگانی عێراق. فۆرمات: XX-NNNNNN (پیشوازی پارێزگا) یان ٦–١٥ ژمارەی تەنها.",
+        "en": "Iraqi Ministry of Trade business registration. Format XX-NNNNNN (governorate prefix) or 6–15 bare digits."
+      },
+      "commercial_registration_no.invalid": {
+        "ku": "فۆرمات: XX-NNNNNN یان ٦–١٥ ژمارە",
+        "en": "Format: XX-NNNNNN or 6–15 digits"
+      },
+      "fiscal_year_start": {
+        "ku": "دەستپێکی ساڵی دارایی",
+        "en": "Fiscal year start"
+      },
+      "fiscal_year_start.help": {
+        "ku": "بۆ دیاریکردنی خانەی دارایی بەکاردێت. زۆر کۆمپانیاکان ١ی کانوونی دوەم بەکاردەهێنن.",
+        "en": "Used to compute fiscal periods. Most companies use Jan 1."
+      },
+      "timezone": {
+        "ku": "کاتژمێری ناوچە",
+        "en": "Timezone"
+      },
+      "email": {
+        "ku": "ئیمەیلی پەیوەندی",
+        "en": "Contact email"
+      },
+      "phone": {
+        "ku": "ژمارەی پەیوەندی",
+        "en": "Contact phone"
+      }
+    },
+    "localization": {
+      "language": {
+        "ku": "زمان",
+        "en": "Language"
+      },
+      "currency": {
+        "ku": "دراوی بنەڕەتی",
+        "en": "Default currency"
+      },
+      "date_format": {
+        "ku": "فۆرماتی بەروار",
+        "en": "Date format"
+      },
+      "number_format": {
+        "ku": "ژمارەکانی ئەندازەی",
+        "en": "Number digits"
+      },
+      "number_format.help": {
+        "ku": "بەکارهێنانی ژمارەکانی عەرەبی-ئیندیکی (٠١٢٣) لە جیاتی ڕۆژئاواییەکان (0123).",
+        "en": "Use Arabic-Indic digits (٠١٢٣٤٥٦٧٨٩) instead of Western (0123456789)."
+      },
+      "rtl_override": {
+        "ku": "مەجبوورکردنی RTL",
+        "en": "Force RTL layout"
+      },
+      "rtl_override.help": {
+        "ku": "بە بنەڕەت ئاراستەی پەڕە بەپێی زمانی چالاک دەبێت. چالاکبکە بۆ RTL حەتا لە ئینگلیزیشدا.",
+        "en": "By default the page direction follows the active language. Enable to force RTL even in English."
+      },
+      "preview": {
+        "ku": "پێشبینین",
+        "en": "Preview"
+      },
+      "preview.currency": {
+        "ku": "دراو",
+        "en": "Currency"
+      },
+      "preview.number": {
+        "ku": "ژمارە",
+        "en": "Number"
+      },
+      "preview.date": {
+        "ku": "بەروار",
+        "en": "Date"
+      }
+    },
+    "data_rights": {
+      "status.ready": {
+        "ku": "ئامادەیە",
+        "en": "Ready"
+      },
+      "status.pending": {
+        "ku": "چاوەڕوانە",
+        "en": "Pending"
+      },
+      "status.failed": {
+        "ku": "شکستی هێنا",
+        "en": "Failed"
+      },
+      "erasure_status.awaiting": {
+        "ku": "چاوەڕوانی پشتڕاستکردنەوە",
+        "en": "Awaiting confirmation"
+      },
+      "erasure_status.scheduled": {
+        "ku": "پلانگێڕاو",
+        "en": "Scheduled"
+      },
+      "erasure_status.completed": {
+        "ku": "تەواوبوو",
+        "en": "Completed"
+      },
+      "erasure_status.cancelled": {
+        "ku": "هەڵوەشاندرایەوە",
+        "en": "Cancelled"
+      },
+      "export_ready": {
+        "ku": "ئەکسپۆرت ئامادەی داگرتنە",
+        "en": "Export ready to download"
+      },
+      "export_pending": {
+        "ku": "ئەکسپۆرت ئامادەکرا، بەڵام هیچ bucketek کۆنفیگ نەکراوە.",
+        "en": "Export prepared, but no storage bucket is configured to host the download."
+      },
+      "export_failed": {
+        "ku": "ئەکسپۆرت شکستی هێنا",
+        "en": "Export failed"
+      },
+      "erasure_requested": {
+        "ku": "داواکاری سڕینەوە کرا. تۆکێنی پشتڕاستکردنەوە بپارێزە.",
+        "en": "Erasure request opened. Save the confirmation token to proceed."
+      },
+      "erasure_failed": {
+        "ku": "داواکاری سڕینەوە شکستی هێنا",
+        "en": "Erasure request failed"
+      },
+      "no_permission": {
+        "ku": "مۆڵەتت نییە مافەکانی داتا بۆ ئەم ڕێکخراوە بەڕێوەببەیت.",
+        "en": "You do not have permission to manage data rights for this organization."
+      },
+      "intro_title": {
+        "ku": "مافەکانی داتای GDPR / PDPL",
+        "en": "GDPR / PDPL data rights"
+      },
+      "intro_body": {
+        "ku": "داتای ئەم ڕێکخراوە ئەکسپۆرتبکە یان بیسڕەوە بۆ پەیروکردنی داواکارییەکانی خاوەن داتا. ئەم کارانە تەنها ڕێکخراوی خۆتت کاریگەرن.",
+        "en": "Export or erase this organization's data to satisfy data-subject requests. These actions affect only your own organization."
+      },
+      "export_title": {
+        "ku": "ئەکسپۆرتکردنی داتای ڕێکخراو",
+        "en": "Export organization data"
+      },
+      "export_desc": {
+        "ku": "ئەرشیفێکی داگیراو ئامادەبکە کە یەک بەڵگەی JSON بۆ هەر کۆلێکشنێک دەگرێتەوە (پەیوەندیکار، فاکتور، بەرهەم و زیاتر).",
+        "en": "Assemble a downloadable archive containing one JSON document per data collection (contacts, invoices, items, and more)."
+      },
+      "request_export": {
+        "ku": "داواکاری ئەکسپۆرت",
+        "en": "Request export"
+      },
+      "refresh_status": {
+        "ku": "نوێکردنەوەی دۆخ",
+        "en": "Refresh status"
+      },
+      "latest_export": {
+        "ku": "دوایین ئەکسپۆرت",
+        "en": "Latest export"
+      },
+      "col_status": {
+        "ku": "دۆخ",
+        "en": "Status"
+      },
+      "col_documents": {
+        "ku": "بەڵگەنامەکان",
+        "en": "Documents"
+      },
+      "col_size": {
+        "ku": "قەبارەی ئەرشیف",
+        "en": "Archive size"
+      },
+      "col_requested_at": {
+        "ku": "بەرواری داواکردن",
+        "en": "Requested at"
+      },
+      "col_download": {
+        "ku": "داگرتن",
+        "en": "Download"
+      },
+      "download_archive": {
+        "ku": "ئەرشیف داگرتن",
+        "en": "Download archive"
+      },
+      "no_download": {
+        "ku": "بەستەری داگرتن نییە",
+        "en": "No download link available"
+      },
+      "col_collections": {
+        "ku": "کۆلێکشنەکان",
+        "en": "Collections"
+      },
+      "erasure_title": {
+        "ku": "سڕینەوەی داتای ڕێکخراو",
+        "en": "Erase organization data"
+      },
+      "erasure_warn_title": {
+        "ku": "ئەمە داتا بۆ هەمیشە دەسڕێتەوە",
+        "en": "This permanently deletes data"
+      },
+      "erasure_warn_body": {
+        "ku": "داواکاری سڕینەوە، سڕینەوەی ئەبەدی و نەگەڕاوی تۆمارەکانی ئەم ڕێکخراوە پلانگێڕی دەکات پاش ماوەی مولهەت. پێشتر داتاکەت ئەکسپۆرت بکە ئەگەر پێویستی نەقلی هەیت.",
+        "en": "Requesting erasure schedules a permanent, irreversible deletion of this organization's records after a grace period. Export your data first if you need a copy."
+      },
+      "request_erasure": {
+        "ku": "داواکاری سڕینەوە",
+        "en": "Request erasure"
+      },
+      "latest_erasure": {
+        "ku": "دوایین داواکاری سڕینەوە",
+        "en": "Latest erasure request"
+      },
+      "col_grace": {
+        "ku": "ماوەی مولهەت",
+        "en": "Grace period"
+      },
+      "grace_days": {
+        "ku": "{{count}} ڕۆژ",
+        "en": "{{count}} days"
+      },
+      "col_purge_at": {
+        "ku": "کاتی سڕینەوەی پلانگێڕاو",
+        "en": "Scheduled deletion"
+      },
+      "col_confirm_token": {
+        "ku": "تۆکێنی پشتڕاستکردنەوە",
+        "en": "Confirmation token"
+      },
+      "confirm_title": {
+        "ku": "پشتڕاستکردنەوەی سڕینەوەی داتا",
+        "en": "Confirm data erasure"
+      },
+      "confirm_ok": {
+        "ku": "داواکاری سڕینەوە",
+        "en": "Request erasure"
+      },
+      "confirm_body": {
+        "ku": "داواکاری سڕینەوەی هەمیشەییت دەکەیت بۆ داتای ئەم ڕێکخراوە. ئەمە گەڕاوە نییە کاتێک ماوەی مولهەت بەسەرچوو.",
+        "en": "You are about to request permanent erasure of this organization's data. This cannot be undone once the grace period elapses."
+      },
+      "confirm_prompt": {
+        "ku": "{{token}} بنووسە بۆ پشتڕاستکردنەوە.",
+        "en": "Type {{token}} to confirm."
+      },
+      "reason_placeholder": {
+        "ku": "هۆکار (ئارەزوومەندانە)",
+        "en": "Reason (optional)"
+      }
+    }
+  },
+  "errors": {
+    "fetch_failed": {
+      "ku": "بارکردن شکستی هێنا",
+      "en": "Failed to load"
+    },
+    "operation_failed": {
+      "ku": "کارەکە شکستی هێنا",
+      "en": "Operation failed"
+    },
+    "validation_failed": {
+      "ku": "پشتڕاستکردنەوە شکستی هێنا",
+      "en": "Validation failed"
+    },
+    "required": {
+      "ku": "پێویستە",
+      "en": "Required"
+    }
+  },
+  "success": {
+    "deleted": {
+      "ku": "سڕایەوە بە سەرکەوتوویی",
+      "en": "Deleted successfully"
+    },
+    "updated": {
+      "ku": "نوێکرایەوە بە سەرکەوتوویی",
+      "en": "Updated successfully"
+    },
+    "created": {
+      "ku": "دروستکرا بە سەرکەوتوویی",
+      "en": "Created successfully"
+    }
+  },
+  "confirm": {
+    "delete": {
+      "ku": "دڵنیای لە سڕینەوە؟",
+      "en": "Delete?"
+    }
+  },
+  "nps": {
+    "thanks": {
+      "ku": "سوپاس بۆ بۆچوونەکەت!",
+      "en": "Thanks for the feedback!"
+    },
+    "failed": {
+      "ku": "نەیتوانرا خەزن بکرێت",
+      "en": "Could not save"
+    },
+    "title": {
+      "ku": "پرسیارێکی خێرا",
+      "en": "Quick question"
+    },
+    "question": {
+      "ku": "چەند پتەو دەبیت Zoho Kurdistan بە هاوکارێکی تردا پێشنیار بکەیت؟ (0 = پتەو نییە، 10 = زۆر پتەو)",
+      "en": "How likely are you to recommend Zoho Kurdish to a colleague? (0 = not likely, 10 = extremely likely)"
+    },
+    "comment": {
+      "ku": "ئارەزوومەندانە — هیچ شتێکیتە بڵێی؟",
+      "en": "Optional — anything you want to share?"
+    },
+    "submit": {
+      "ku": "ناردن",
+      "en": "Submit"
+    },
+    "notNow": {
+      "ku": "ئێستا نا",
+      "en": "Not now"
+    }
+  },
+  "help": {
+    "notFound": {
+      "ku": "وتار نەدۆزرایەوە",
+      "en": "Article not found"
+    },
+    "bodyPending": {
+      "ku": "وتاری تەواو بەم زووانە دێت.",
+      "en": "Full article coming soon."
+    },
+    "wasHelpful": {
+      "ku": "ئایا ئەمە یارمەتیدەر بوو؟",
+      "en": "Was this helpful?"
+    },
+    "yes": {
+      "ku": "بەڵێ",
+      "en": "Yes"
+    },
+    "no": {
+      "ku": "نەخێر",
+      "en": "No"
+    },
+    "related": {
+      "ku": "وتارە پەیوەندیدارەکان",
+      "en": "Related articles"
+    },
+    "title": {
+      "ku": "یارمەتی و پشتگیری",
+      "en": "Help & support"
+    },
+    "back": {
+      "ku": "گەڕانەوە",
+      "en": "Back"
+    },
+    "searchPlaceholder": {
+      "ku": "وتاری یارمەتی بگەڕێ…",
+      "en": "Search help articles…"
+    },
+    "searchLabel": {
+      "ku": "گەڕانی یارمەتی",
+      "en": "Search help"
+    },
+    "searchResults": {
+      "ku": "ئەنجامەکان",
+      "en": "Results"
+    },
+    "noResults": {
+      "ku": "هیچ وتارێک نەدۆزرایەوە",
+      "en": "No articles found"
+    },
+    "contextual": {
+      "ku": "پێشنیارکراو بۆ ئەم پەڕەیە",
+      "en": "Suggested for this screen"
+    },
+    "categories": {
+      "ku": "بگەڕێ بە بابەت",
+      "en": "Browse by topic"
+    },
+    "articlesCount": {
+      "ku": "وتار",
+      "en": "articles"
+    },
+    "contactSupport": {
+      "ku": "پەیوەندی بە پشتگیریدا بکە",
+      "en": "Contact support"
+    },
+    "whatsappUs": {
+      "ku": "WhatsApp بۆمان بنێرە",
+      "en": "WhatsApp us"
+    },
+    "openHelp": {
+      "ku": "یارمەتی و پشتگیری",
+      "en": "Help & support"
+    }
+  },
+  "invoices": {
+    "wht": {
+      "title": {
+        "ku": "باجی لابردن (WHT)",
+        "en": "Withholding tax (WHT)"
+      },
+      "placeholder": {
+        "ku": "نرخی موقەت · R7.1",
+        "en": "Placeholder rate · R7.1"
+      },
+      "gross": {
+        "ku": "بڕی گشتی",
+        "en": "Gross amount"
+      },
+      "rate": {
+        "ku": "ڕێژە",
+        "en": "Rate"
+      },
+      "b2c_exempt": {
+        "ku": "B2C — کاریگەر نییە",
+        "en": "B2C — not applicable"
+      },
+      "zero": {
+        "ku": "0% — نییە",
+        "en": "0% — none"
+      },
+      "withheld": {
+        "ku": "WHT لابردراو",
+        "en": "WHT withheld"
+      },
+      "net_payable": {
+        "ku": "بڕی پاکی پارەدان",
+        "en": "Net payable"
+      }
+    }
+  },
+  "plm": {
+    "ecn_updated": {
+      "ku": "ECN نوێکرایەوە",
+      "en": "ECN updated"
+    },
+    "ecn_created": {
+      "ku": "ECN دروستکرا",
+      "en": "ECN created"
+    },
+    "ecn_deleted": {
+      "ku": "ECN سڕایەوە",
+      "en": "ECN deleted"
+    },
+    "ecn_number": {
+      "ku": "ژمارەی ECN",
+      "en": "ECN number"
+    },
+    "assigned_to": {
+      "ku": "دیاریکراو بۆ",
+      "en": "Assigned to"
+    },
+    "ecn_title": {
+      "ku": "گۆڕانکارییەکانی ئەندازیاری",
+      "en": "Engineering changes"
+    },
+    "ecn_subtitle": {
+      "ku": "بەڕێوەبردنی داواکاری گۆڕانکارییەکانی ئەندازیاری",
+      "en": "Manage engineering change notices"
+    },
+    "create_ecn": {
+      "ku": "ECN نوێ دروستبکە",
+      "en": "Create ECN"
+    },
+    "filter_status": {
+      "ku": "فلتەرکردن بەپێی دۆخ",
+      "en": "Filter by status"
+    },
+    "status_draft": {
+      "ku": "پێشنووس",
+      "en": "Draft"
+    },
+    "status_review": {
+      "ku": "لە پێداچوونەوەدا",
+      "en": "In review"
+    },
+    "status_approved": {
+      "ku": "پەسەندکراو",
+      "en": "Approved"
+    },
+    "status_implemented": {
+      "ku": "جێبەجێکراو",
+      "en": "Implemented"
+    },
+    "status_rejected": {
+      "ku": "ڕەتکراوەتەوە",
+      "en": "Rejected"
+    },
+    "edit_ecn": {
+      "ku": "دەستکاریکردنی ECN",
+      "en": "Edit ECN"
+    },
+    "priority_low": {
+      "ku": "کەم",
+      "en": "Low"
+    },
+    "priority_medium": {
+      "ku": "ناوەڕاست",
+      "en": "Medium"
+    },
+    "priority_high": {
+      "ku": "بەرز",
+      "en": "High"
+    },
+    "priority_urgent": {
+      "ku": "ئەرزانە",
+      "en": "Urgent"
+    }
+  },
+  "pricing": {
+    "seo": {
+      "title": {
+        "ku": "نرخەکان — Zoho Kurdistan ERP",
+        "en": "Pricing — Zoho Kurdistan ERP"
+      },
+      "description": {
+        "ku": "ERP-ی گونجاو، ناوخۆیی عێراق. ٩٠ ڕۆژ تاقیکردنەوەی بەخۆڕایی دەستپێبکە.",
+        "en": "Affordable, Iraqi-localized ERP. Start a 90-day free trial."
+      }
+    },
+    "headline": {
+      "ku": "نرخێک کە لەگەڵ مەزنبوونی پڕۆژەکەت گەش دەبێت",
+      "en": "Pricing that grows with you"
+    },
+    "subhead": {
+      "ku": "{{days}} ڕۆژ تاقیکردنەوەی بەخۆڕایی — کارتی بانکی پێویست نییە.",
+      "en": "Start with a {{days}}-day free trial — no credit card required."
+    },
+    "per_month": {
+      "ku": "/ مانگ",
+      "en": "/ month"
+    },
+    "billed_annually": {
+      "ku": "ساڵانە پارەدراو وەک {{total}}",
+      "en": "Billed annually as {{total}}"
+    },
+    "users": {
+      "ku": "{{count}} بەکارهێنەر",
+      "en": "{{count}} users"
+    },
+    "unlimited_invoices": {
+      "ku": "فاکتوری نامحدود",
+      "en": "Unlimited invoices"
+    },
+    "invoices": {
+      "ku": "{{count}} فاکتور / مانگ",
+      "en": "{{count}} invoices / month"
+    },
+    "unlimited_pos": {
+      "ku": "تێرمینالی POS نامحدود",
+      "en": "Unlimited POS terminals"
+    },
+    "pos_terminals": {
+      "ku": "{{count}} تێرمینالی POS",
+      "en": "{{count}} POS terminals"
+    },
+    "features": {
+      "multi_currency": {
+        "ku": "دراوی پڕ",
+        "en": "Multi-currency"
+      },
+      "api": {
+        "ku": "دەستڕاگەیشتن بە API",
+        "en": "API access"
+      },
+      "priority": {
+        "ku": "پشتگیری پێشینەدار",
+        "en": "Priority support"
+      },
+      "sso": {
+        "ku": "SSO",
+        "en": "SSO"
+      }
+    },
+    "cta": {
+      "ku": "تاقیکردنەوەی بەخۆڕایی دەستپێبکە",
+      "en": "Start free trial"
+    },
+    "faq": {
+      "title": {
+        "ku": "پرسیارە زۆر پرسراوەکان",
+        "en": "Frequently asked questions"
+      }
+    }
+  }
+}

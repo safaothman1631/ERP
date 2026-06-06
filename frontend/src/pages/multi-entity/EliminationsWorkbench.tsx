@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Space, Tag, Popconfirm, Alert } from 'antd';
+import { Button, Space, Popconfirm, Alert } from 'antd';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard, StatusTag } from '../../design-system';
 import api from '../../api';
 import { message } from '../../utils/message';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
@@ -37,7 +37,7 @@ interface PairedTransaction {
 const EliminationsWorkbench = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const [transactions, setTransactions] = useState<ICTransaction[]>([]);
+  const [_transactions, setTransactions] = useState<ICTransaction[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [pairs, setPairs] = useState<PairedTransaction[]>([]);
 
@@ -45,7 +45,7 @@ const EliminationsWorkbench = () => {
     try {
       const { data } = await api.get('/api/companies');
       setCompanies(data);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('multi_entity.error_loading_companies'));
     }
   };
@@ -56,7 +56,7 @@ const EliminationsWorkbench = () => {
       const { data } = await api.get('/api/companies/intercompany');
       setTransactions(data);
       buildPairs(data);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('multi_entity.error_loading_ic_transactions'));
     } finally {
       setLoading(false);
@@ -123,7 +123,7 @@ const EliminationsWorkbench = () => {
       }
       message.success(t('multi_entity.elimination_successful'));
       fetchTransactions();
-    } catch (err) {
+    } catch (_err) {
       message.error(t('multi_entity.error_eliminating'));
     }
   };
@@ -141,13 +141,13 @@ const EliminationsWorkbench = () => {
       render: (_, record) => (
         <Space direction="vertical" size="small">
           <div>
-            <Tag color="blue">{t('multi_entity.outgoing')}</Tag>
-            {getCompanyName(record.from.from_company_id)} → {getCompanyName(record.from.to_company_id)}
+            <StatusTag status="info" label={t('multi_entity.outgoing')} />
+            {' '}{getCompanyName(record.from.from_company_id)} → {getCompanyName(record.from.to_company_id)}
           </div>
           {record.to && (
             <div>
-              <Tag color="green">{t('multi_entity.incoming')}</Tag>
-              {getCompanyName(record.to.from_company_id)} → {getCompanyName(record.to.to_company_id)}
+              <StatusTag status="success" label={t('multi_entity.incoming')} />
+              {' '}{getCompanyName(record.to.from_company_id)} → {getCompanyName(record.to.to_company_id)}
             </div>
           )}
         </Space>
@@ -169,18 +169,21 @@ const EliminationsWorkbench = () => {
       dataIndex: 'matched',
       key: 'matched',
       render: (matched) => (
-        <Tag color={matched ? 'green' : 'orange'} icon={matched ? <CheckOutlined /> : <CloseOutlined />}>
-          {matched ? t('multi_entity.matched_yes') : t('multi_entity.matched_no')}
-        </Tag>
+        <StatusTag
+          status={matched ? 'success' : 'warning'}
+          icon={matched ? <CheckOutlined /> : <CloseOutlined />}
+          label={matched ? t('multi_entity.matched_yes') : t('multi_entity.matched_no')}
+        />
       ),
     },
     {
       title: t('multi_entity.eliminated'),
       key: 'eliminated',
       render: (_, record) => (
-        <Tag color={record.from.eliminated ? 'green' : 'default'}>
-          {record.from.eliminated ? t('multi_entity.eliminated_yes') : t('multi_entity.eliminated_no')}
-        </Tag>
+        <StatusTag
+          status={record.from.eliminated ? 'success' : 'default'}
+          label={record.from.eliminated ? t('multi_entity.eliminated_yes') : t('multi_entity.eliminated_no')}
+        />
       ),
     },
     {
@@ -199,10 +202,10 @@ const EliminationsWorkbench = () => {
             </Popconfirm>
           )}
           {record.from.eliminated && (
-            <Tag color="success">{t('multi_entity.eliminated_yes')}</Tag>
+            <StatusTag status="success" label={t('multi_entity.eliminated_yes')} />
           )}
           {!record.matched && !record.from.eliminated && (
-            <Tag color="warning">{t('multi_entity.no_match')}</Tag>
+            <StatusTag status="warning" label={t('multi_entity.no_match')} />
           )}
         </Space>
       ),
@@ -222,7 +225,7 @@ const EliminationsWorkbench = () => {
         showIcon
         style={{ marginBottom: 16 }}
       />
-      <Card>
+      <SectionCard padded={false}>
         <ResponsiveTableAdapter
           columns={columns}
           dataSource={pairs}
@@ -230,7 +233,7 @@ const EliminationsWorkbench = () => {
           loading={loading}
           pagination={{ pageSize: 20 }}
         />
-      </Card>
+      </SectionCard>
     </>
   );
 };

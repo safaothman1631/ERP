@@ -10,9 +10,10 @@ export interface NavProfileConfig {
 }
 
 const ALL_SECTIONS = [
-  'overview', 'sales', 'purchases', 'banking', 'inventory', 'manufacturing', 'pos',
+  'overview', 'sales', 'purchases', 'banking', 'inventory', 'manufacturing',
+  'wms', 'tms', 'pos',
   'hotel', 'restaurant', 'field-service', 'crm', 'marketing', 'hr', 'projects',
-  'accounting', 'reports-mgt', 'multi-entity', 'iraq-int', 'ext-engagement',
+  'accounting', 'reports-mgt', 'multi-entity', 'mdm', 'bpmn', 'iraq-int', 'ext-engagement',
   'ext-ops', 'rental', 'repairs', 'ext-platform', 'ext-vertical', 'setup',
 ] as const;
 

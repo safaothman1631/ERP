@@ -12,7 +12,7 @@ export function getGlassStyle(surface: GlassSurface = 'modal', accent = false): 
     backdropFilter: tokens.blur,
     WebkitBackdropFilter: tokens.blur,
     border: `1px solid ${tokens.border}`,
-    boxShadow: accent ? 'var(--role-glass-glow, 0 8px 32px rgba(31,111,235,0.12))' : '0 8px 32px rgba(15,23,42,0.06)',
+    boxShadow: accent ? 'var(--role-glass-glow, 0 8px 32px rgba(123,97,255,0.12))' : '0 8px 32px rgba(15,23,42,0.06)',
     // @supports fallback applied via class in global CSS
     ...(typeof document !== 'undefined' &&
     !CSS.supports('backdrop-filter', 'blur(1px)')

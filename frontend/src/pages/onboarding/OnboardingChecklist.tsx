@@ -39,22 +39,6 @@ const CHECKLIST_SECTION_MAP: Record<string, SectionId> = {
  * Items that are already completed are marked as such; others are
  * required-incomplete.
  */
-function buildChecklistFlowBindings(items: ChecklistItem[]): FlowStepBinding[] {
-  return items.map((item) => {
-    const sectionId = CHECKLIST_SECTION_MAP[item.key] ?? ('onboarding.checklist.bank' as SectionId);
-    const status: FlowStepStatus = item.completed
-      ? 'completed'
-      : 'required-incomplete';
-    return {
-      flowId: CHECKLIST_FLOW_ID,
-      stepId: item.key,
-      sectionId,
-      status,
-      route: item.action_path,
-    };
-  });
-}
-
 const OnboardingChecklistInner: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -70,7 +54,7 @@ const OnboardingChecklistInner: FC = () => {
       setItems(data);
       const completed = data.filter((i: ChecklistItem) => i.completed).length;
       setCompletionPercent(data.length > 0 ? Math.round((completed / data.length) * 100) : 0);
-    } catch (err) {
+    } catch (_err) {
       // Fallback: static checklist
       const staticChecklist: ChecklistItem[] = [
         {
@@ -160,10 +144,10 @@ const OnboardingChecklistInner: FC = () => {
           <h3>{t('onboarding.setup_progress')}</h3>
           <Progress
             percent={completionPercent}
-            strokeColor="#52c41a"
+            strokeColor="var(--success-500)"
             format={() => `${completedCount} / ${items.length}`}
           />
-          <p style={{ marginTop: 8, color: '#666' }}>
+          <p style={{ marginTop: 8, color: 'var(--ink-500)' }}>
             {completionPercent === 100
               ? t('onboarding.all_done')
               : t('onboarding.complete_tasks_help')}
@@ -201,14 +185,14 @@ const OnboardingChecklistInner: FC = () => {
                 <List.Item.Meta
                   avatar={
                     item.completed ? (
-                      <CheckCircleOutlined style={{ fontSize: 24, color: '#52c41a' }} />
+                      <CheckCircleOutlined style={{ fontSize: 24, color: 'var(--success-500)' }} />
                     ) : (
                       <div
                         style={{
                           width: 24,
                           height: 24,
                           borderRadius: '50%',
-                          border: '2px solid #d9d9d9',
+                          border: '2px solid var(--border)',
                         }}
                       />
                     )

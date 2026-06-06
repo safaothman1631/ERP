@@ -58,7 +58,7 @@ const RoleCapabilityPanel: React.FC<Props> = ({ persona, roleLabel }) => {
             marginTop: space.md,
             background: 'none',
             border: 'none',
-            color: 'var(--role-accent, #1F6FEB)',
+            color: 'var(--role-accent, #7B61FF)',
             cursor: 'pointer',
             fontSize: fontSize.sm,
             fontWeight: 600,

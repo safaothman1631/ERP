@@ -23,7 +23,7 @@ const Repairs: React.FC = () => {
  try {
  const res = await api.get('/api/repairs/orders', { params: { limit: 100 } });
  setOrders(res.data.items || []);
- } catch (error) {
+ } catch (_error) {
  message.error(t('error'));
  } finally {
  setLoading(false);

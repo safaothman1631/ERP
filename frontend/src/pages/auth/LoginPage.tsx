@@ -19,7 +19,6 @@ import { useAuthStore } from '../../store';
 import api from '../../api';
 import AuthLayout from '../../components/AuthLayout';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
-import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
 import { getPostLoginPath } from '../../personas/resolveRoleUx';
 
 // ---------------------------------------------------------------------------
@@ -175,7 +174,7 @@ const LoginPage: React.FC = () => {
 
         {/* Forgot password link — Requirement 2.5 */}
         <div style={{ textAlign: 'start', marginBottom: 16 }}>
-          <Link to="/forgot-password" style={{ fontSize: 13, color: '#1F6FEB' }}>
+          <Link to="/forgot-password" style={{ fontSize: 13, color: '#7B61FF' }}>
             {t('auth_forgot_password')}
           </Link>
         </div>
@@ -194,7 +193,7 @@ const LoginPage: React.FC = () => {
         </Form.Item>
 </Form>
 
-      <Divider style={{ margin: '8px 0', color: '#aaa', fontSize: 12 }}>
+      <Divider style={{ margin: '8px 0', color: 'var(--ink-500)', fontSize: 12 }}>
         {t('or') || 'یان'}
       </Divider>
 
@@ -218,9 +217,9 @@ const LoginPage: React.FC = () => {
         }}
       />
 
-      <div style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: '#666' }}>
+      <div style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: 'var(--ink-500)' }}>
         {t('auth_no_account')}{' '}
-        <Link to="/signup" style={{ color: '#667EEA', fontWeight: 600 }}>
+        <Link to="/signup" style={{ color: '#7B61FF', fontWeight: 600 }}>
           {t('auth_signup')}
         </Link>
       </div>

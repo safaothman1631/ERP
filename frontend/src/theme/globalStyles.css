@@ -92,16 +92,16 @@ svg * {
 
 :root {
   /* Primary */
-  --color-primary-50:  #EBF2FF;
-  --color-primary-100: #D6E4FF;
-  --color-primary-200: #ADC8FF;
-  --color-primary-300: #84A9FF;
-  --color-primary-400: #5B8DEF;
-  --color-primary-500: #1F6FEB;
-  --color-primary-600: #1858BF;
-  --color-primary-700: #114393;
-  --color-primary-800: #0B2F66;
-  --color-primary-900: #061B3A;
+  --color-primary-50:  #F1EEFF;
+  --color-primary-100: #E4DEFF;
+  --color-primary-200: #C9BCFF;
+  --color-primary-300: #AC97FF;
+  --color-primary-400: #9275FF;
+  --color-primary-500: #7B61FF;
+  --color-primary-600: #6A4DF0;
+  --color-primary-700: #5638D6;
+  --color-primary-800: #432AA8;
+  --color-primary-900: #2C1B73;
 
   /* Surface */
   --color-surface: #FFFFFF;
@@ -113,7 +113,7 @@ svg * {
   --skeleton-highlight: #F1F5F9;
 
   /* Focus ring */
-  --focus-ring-color:  #1F6FEB;
+  --focus-ring-color:  #7B61FF;
   --focus-ring-width:  2px;
   --focus-ring-offset: 2px;
 }
@@ -129,7 +129,7 @@ svg * {
   --skeleton-highlight: rgba(255, 255, 255, 0.12);
 
   /* Focus ring */
-  --focus-ring-color: #84A9FF;
+  --focus-ring-color: #AC97FF;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────

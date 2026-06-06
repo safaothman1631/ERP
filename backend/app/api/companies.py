@@ -22,7 +22,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.firestore.companies import CompanyRepository, IntercompanyJournalRepository
 from app.firestore.base import BaseRepository
 from app.services.auth import get_current_user
-from app.services.report_streams import collect_stream
 
 router = APIRouter(prefix="/api/companies", tags=["Companies"])
 
@@ -78,58 +77,58 @@ def consolidated_pl(
     date_to: Optional[str] = None,
     user: dict = Depends(get_current_user),
 ):
-    """Consolidated P&L across all companies in the org."""
-    companies = CompanyRepository(user["org_id"]).list(limit=200)[0]
+    """Consolidated P&L across all companies in the org.
+
+    Deprecated shape-shim: now delegates to the GL consolidation engine for
+    GL-accurate figures; prefer ``/consolidated/financials`` and
+    ``/consolidated/trial-balance``.
+    """
+    from app.services import consolidation
+    from app.services.report_queries import parse_report_date
+
+    start = parse_report_date(date_from) if date_from else None
+    end = parse_report_date(date_to) if date_to else None
+
+    cons = consolidation.consolidated_trial_balance(user["org_id"], start, end)
+    account_map = consolidation.build_account_map(user["org_id"])
+
+    def _entity_pl(accounts: dict) -> tuple[float, float]:
+        revenue = expense = 0.0
+        for aid, v in accounts.items():
+            atype = ((account_map.get(aid) or {}).get("account_type") or "").lower()
+            debit = float(v.get("debit", 0) or 0)
+            credit = float(v.get("credit", 0) or 0)
+            if atype in consolidation._INCOME_TYPES:
+                revenue += credit - debit
+            elif atype in consolidation._EXPENSE_TYPES:
+                expense += debit - credit
+        return round(revenue, 2), round(expense, 2)
+
     rows = []
     total_revenue = 0.0
     total_expense = 0.0
-    # Lazy import to avoid circular
-    from app.firestore.invoices import InvoiceRepository
-    from app.firestore.bills import BillRepository
-    inv_repo = InvoiceRepository(user["org_id"])
-    bill_repo = BillRepository(user["org_id"])
-    invoices = collect_stream(inv_repo, max_docs=10000)
-    bills = collect_stream(bill_repo, max_docs=10000)
-
-    def _in_range(rec: dict) -> bool:
-        d = rec.get("date") or rec.get("invoice_date") or rec.get("bill_date")
-        if not d:
-            return True
-        if date_from and str(d) < date_from:
-            return False
-        if date_to and str(d) > date_to:
-            return False
-        return True
-
-    for c in companies:
-        cid = c["id"]
-        rev = sum(
-            float(i.get("total") or 0)
-            for i in invoices
-            if (i.get("company_id") or user["org_id"]) == cid and _in_range(i)
-            and i.get("status") not in ("draft", "void")
-        )
-        exp = sum(
-            float(b.get("total") or 0)
-            for b in bills
-            if (b.get("company_id") or user["org_id"]) == cid and _in_range(b)
-            and b.get("status") not in ("draft", "void")
-        )
+    for ent in cons["entities"]:
+        cid = ent["id"]
+        accounts = cons["per_entity"].get(cid, {}).get("accounts", {})
+        rev, exp = _entity_pl(accounts)
         rows.append({
             "company_id": cid,
-            "company_name": c["name"],
+            "company_name": ent.get("name"),
             "revenue": rev,
             "expenses": exp,
-            "profit": rev - exp,
+            "profit": round(rev - exp, 2),
         })
         total_revenue += rev
         total_expense += exp
+
+    total_revenue = round(total_revenue, 2)
+    total_expense = round(total_expense, 2)
     return {
         "rows": rows,
         "totals": {
             "revenue": total_revenue,
             "expenses": total_expense,
-            "profit": total_revenue - total_expense,
+            "profit": round(total_revenue - total_expense, 2),
         },
         "date_from": date_from,
         "date_to": date_to,
@@ -138,29 +137,39 @@ def consolidated_pl(
 
 @router.get("/consolidated/bs")
 def consolidated_bs(user: dict = Depends(get_current_user)):
-    """Consolidated balance sheet snapshot grouped by company."""
-    companies = CompanyRepository(user["org_id"]).list(limit=200)[0]
-    from app.firestore.accounts import AccountRepository
-    acc_repo = AccountRepository(user["org_id"])
-    accounts = collect_stream(acc_repo, max_docs=10000)
+    """Consolidated balance sheet snapshot grouped by company.
 
-    def _kind_total(cid: str, kinds: tuple[str, ...]) -> float:
-        return sum(
-            float(a.get("balance") or 0)
-            for a in accounts
-            if (a.get("company_id") or user["org_id"]) == cid
-            and (a.get("account_type") or "").lower() in kinds
-        )
+    Deprecated shape-shim: now delegates to the GL consolidation engine for
+    GL-accurate figures; prefer ``/consolidated/financials`` and
+    ``/consolidated/trial-balance``.
+    """
+    from app.services import consolidation
+
+    cons = consolidation.consolidated_trial_balance(user["org_id"])
+    account_map = consolidation.build_account_map(user["org_id"])
+
+    def _entity_bs(accounts: dict) -> tuple[float, float, float]:
+        assets = liabilities = equity = 0.0
+        for aid, v in accounts.items():
+            atype = ((account_map.get(aid) or {}).get("account_type") or "").lower()
+            debit = float(v.get("debit", 0) or 0)
+            credit = float(v.get("credit", 0) or 0)
+            if atype in consolidation._ASSET_TYPES:
+                assets += debit - credit
+            elif atype in consolidation._LIABILITY_TYPES:
+                liabilities += credit - debit
+            elif atype in consolidation._EQUITY_TYPES:
+                equity += credit - debit
+        return round(assets, 2), round(liabilities, 2), round(equity, 2)
 
     rows = []
-    for c in companies:
-        cid = c["id"]
-        assets = _kind_total(cid, ("asset", "current_asset", "fixed_asset"))
-        liab = _kind_total(cid, ("liability", "current_liability", "long_term_liability"))
-        eq = _kind_total(cid, ("equity",))
+    for ent in cons["entities"]:
+        cid = ent["id"]
+        accounts = cons["per_entity"].get(cid, {}).get("accounts", {})
+        assets, liab, eq = _entity_bs(accounts)
         rows.append({
             "company_id": cid,
-            "company_name": c["name"],
+            "company_name": ent.get("name"),
             "assets": assets,
             "liabilities": liab,
             "equity": eq,
@@ -168,11 +177,48 @@ def consolidated_bs(user: dict = Depends(get_current_user)):
     return {
         "rows": rows,
         "totals": {
-            "assets": sum(r["assets"] for r in rows),
-            "liabilities": sum(r["liabilities"] for r in rows),
-            "equity": sum(r["equity"] for r in rows),
+            "assets": round(sum(r["assets"] for r in rows), 2),
+            "liabilities": round(sum(r["liabilities"] for r in rows), 2),
+            "equity": round(sum(r["equity"] for r in rows), 2),
         },
     }
+
+
+@router.get("/consolidated/trial-balance")
+def get_consolidated_trial_balance(
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    eliminate_intercompany: bool = Query(True),
+    user: dict = Depends(get_current_user),
+):
+    """GL-based consolidated trial balance (Pool 3.2): the sum of every entity's
+    trial balance (JEs tagged by company_id) with intercompany account balances
+    eliminated. Returns the per-entity breakdown, eliminations, and totals."""
+    from app.services import consolidation
+    from app.services.report_queries import parse_report_date
+
+    start = parse_report_date(start_date) if start_date else None
+    end = parse_report_date(end_date) if end_date else None
+    return consolidation.consolidated_trial_balance(
+        user["org_id"], start, end, eliminate_intercompany=eliminate_intercompany
+    )
+
+
+@router.get("/consolidated/financials")
+def get_consolidated_financials(
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    user: dict = Depends(get_current_user),
+):
+    """GL-based consolidated income statement + balance sheet (Pool 3.2), derived
+    from the consolidated trial balance with intercompany eliminations and
+    minority-interest allocation for partially-owned subsidiaries."""
+    from app.services import consolidation
+    from app.services.report_queries import parse_report_date
+
+    start = parse_report_date(start_date) if start_date else None
+    end = parse_report_date(end_date) if end_date else None
+    return consolidation.consolidated_financials(user["org_id"], start, end)
 
 
 @router.post("/intercompany", status_code=201)

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Row, Col, Button, Space, message, Typography, Badge } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { PlusOutlined, CloseOutlined } from '@ant-design/icons';
+import { PlusOutlined } from '@ant-design/icons';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
-import { space, radius } from '../../theme/tokens';
+import { PageHeader, KeyValueGrid } from '../../design-system';
+import { space } from '../../theme/tokens';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
 const { Text } = Typography;
@@ -30,7 +30,7 @@ interface Order {
 const TablesView: React.FC = () => {
  const { t } = useTranslation();
  const [tables, setTables] = useState<RestTable[]>([]);
- const [loading, setLoading] = useState(false);
+ const [_loading, setLoading] = useState(false);
  const [drawerOpen, setDrawerOpen] = useState(false);
  const [selectedTable, setSelectedTable] = useState<RestTable | null>(null);
  const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
@@ -85,15 +85,15 @@ const TablesView: React.FC = () => {
  const statusColor = (status: string) => {
  switch (status) {
  case 'free':
- return '#52c41a';
+ return 'var(--success-500)';
  case 'occupied':
- return '#1890ff';
+ return 'var(--info-500)';
  case 'reserved':
- return '#faad14';
+ return 'var(--warning-500)';
  case 'cleaning':
- return '#d9d9d9';
+ return 'var(--border-strong)';
  default:
- return '#d9d9d9';
+ return 'var(--border-strong)';
  }
  };
 
@@ -121,7 +121,8 @@ const TablesView: React.FC = () => {
  onClick={() => void handleTableClick(table)}
  style={{
  textAlign: 'center',
- borderRadius: radius.md,
+ borderRadius: 'var(--radius-lg)',
+ border: 'none',
  backgroundColor: statusColor(table.status),
  opacity: table.status === 'cleaning' ? 0.6 : 1,
  cursor: 'pointer',
@@ -131,11 +132,11 @@ const TablesView: React.FC = () => {
  justifyContent: 'center',
  }}
  >
- <Text strong style={{ fontSize: 18, color: '#fff' }}>
+ <Text strong style={{ fontSize: 18, color: 'var(--on-accent)' }}>
  {table.number}
  </Text>
  <br />
- <Text style={{ fontSize: 12, color: '#fff' }}>
+ <Text style={{ fontSize: 12, color: 'var(--on-accent)' }}>
  {table.seats} {t('restaurant.seats')}
  </Text>
  </Card>
@@ -150,33 +151,41 @@ const TablesView: React.FC = () => {
  onClose={() => setDrawerOpen(false)}
  >
  {selectedTable && (
- <Space direction="vertical" style={{ width: '100%' }}>
- <Text>
- {t('status')}: <strong>{t(`restaurant.status_${selectedTable.status}`)}</strong>
- </Text>
- <Text>
- {t('restaurant.seats')}: <strong>{selectedTable.seats}</strong>
- </Text>
- {selectedTable.section && (
- <Text>
- {t('restaurant.section')}: <strong>{selectedTable.section}</strong>
- </Text>
- )}
+ <Space direction="vertical" size={space.md} style={{ width: '100%' }}>
+ <KeyValueGrid
+ columns={2}
+ items={[
+ { label: t('status'), value: t(`restaurant.status_${selectedTable.status}`) },
+ { label: t('restaurant.seats'), value: selectedTable.seats },
+ ...(selectedTable.section
+ ? [{ label: t('restaurant.section'), value: selectedTable.section }]
+ : []),
+ ]}
+ />
 
  {currentOrder ? (
- <Card title={t('restaurant.current_order')} style={{ marginTop: 16 }}>
- <Text>{t('restaurant.order_id')}: {currentOrder.id}</Text>
+ <div
+ style={{
+ background: 'var(--surface-2)',
+ border: '1px solid var(--border)',
+ borderRadius: 'var(--radius-lg)',
+ padding: space.md,
+ }}
+ >
+ <div style={{ fontWeight: 600, color: 'var(--ink-900)', marginBottom: 8 }}>
+ {t('restaurant.current_order')}
+ </div>
+ <Text style={{ color: 'var(--ink-700)' }}>{t('restaurant.order_id')}: {currentOrder.id}</Text>
  <br />
- <Text>
+ <Text style={{ color: 'var(--ink-700)' }}>
  {t('restaurant.items')}: {currentOrder.items?.length || 0}
  </Text>
- </Card>
+ </div>
  ) : (
  <Button
  type="primary"
  icon={<PlusOutlined />}
  block
- style={{ marginTop: 16 }}
  onClick={() => void handleOpenOrder()}
  >
  {t('restaurant.open_order')}

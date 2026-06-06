@@ -44,10 +44,11 @@ const formatPrice = (amount: number, currency: string): string => {
   return `$${amount.toFixed(2)}`;
 };
 
+// Per-plan accent — kit tokens that auto-flip for dark mode.
 const PLAN_ACCENT: Record<string, string> = {
-  starter: '#1677ff',
-  growth: '#52c41a',
-  pro: '#722ed1',
+  starter: 'var(--accent-500)',
+  growth: 'var(--success-500)',
+  pro: 'var(--viz-8)',
 };
 
 const FAQS: Array<{ q: string; a: string }> = [
@@ -165,7 +166,7 @@ export default function Pricing(): React.ReactElement {
         {plans.map((plan) => {
           const total = priceFor(plan);
           const monthly = cycle === 'annual' ? total / 12 : total;
-          const accent = PLAN_ACCENT[plan.slug] || '#1677ff';
+          const accent = PLAN_ACCENT[plan.slug] || 'var(--accent-500)';
           return (
             <Col xs={24} md={8} key={plan.slug}>
               <Card style={{ height: '100%', borderTop: `4px solid ${accent}` }}>
@@ -246,8 +247,8 @@ export default function Pricing(): React.ReactElement {
 function FeatureLine({ ok, children }: { ok: boolean; children: React.ReactNode }): React.ReactElement {
   return (
     <Space>
-      <CheckOutlined style={{ color: ok ? '#52c41a' : '#bfbfbf' }} />
-      <Text style={{ textDecoration: ok ? undefined : 'line-through', color: ok ? undefined : '#bfbfbf' }}>
+      <CheckOutlined style={{ color: ok ? 'var(--success-500)' : 'var(--ink-400)' }} />
+      <Text style={{ textDecoration: ok ? undefined : 'line-through', color: ok ? undefined : 'var(--ink-400)' }}>
         {children}
       </Text>
     </Space>

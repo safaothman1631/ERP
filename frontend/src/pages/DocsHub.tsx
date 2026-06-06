@@ -53,7 +53,7 @@ const DocsHub: React.FC = () => {
         onClick={() => setActiveKey(item.key)}
         title={
           <Space>
-            <QuestionCircleOutlined style={{ color: '#6366f1' }} />
+            <QuestionCircleOutlined style={{ color: '#7B61FF' }} />
             <span>{item.content.title}</span>
           </Space>
         }

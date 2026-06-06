@@ -9,9 +9,9 @@
  * unaffected).
  */
 import { BluetoothCustomerDisplay } from './bluetooth-driver';
-import { SerialCustomerDisplay, pairSerialDisplay } from './serial-driver';
+import { pairSerialDisplay } from './serial-driver';
 import { WifiCustomerDisplay } from './wifi-driver';
-import type { DisplayDescriptor, DisplayDriver, DisplayState } from './types';
+import type { DisplayDriver, DisplayState } from './types';
 
 let active: DisplayDriver | null = null;
 

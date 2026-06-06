@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Input, DatePicker, Button, InputNumber, Space, Select, Typography } from 'antd';
+import { Form, Input, DatePicker, Button, InputNumber, Space } from 'antd';
 import { PlusOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -7,10 +7,8 @@ import dayjs from 'dayjs';
 import { message } from '../../utils/message';
 import vendorApi from '../../api/vendorPortal';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
-import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
-
+import { PageHeader, SectionCard } from '../../design-system';
 const { TextArea } = Input;
-const { Title } = Typography;
 
 interface BillLine {
   key: string;
@@ -52,7 +50,7 @@ const VendorPortalSubmitBill: React.FC = () => {
         amount: (line.quantity || 0) * (line.unit_price || 0),
       }));
       setLines(poLines);
-    } catch (err: any) {
+    } catch (_err: any) {
       message.error(t('portal.load_failed'));
     }
   };
@@ -200,6 +198,7 @@ const VendorPortalSubmitBill: React.FC = () => {
       dataIndex: 'amount',
       key: 'amount',
       width: '15%',
+      align: 'right' as const,
       render: (amount: number) => amount.toFixed(2),
     },
     {
@@ -220,17 +219,19 @@ const VendorPortalSubmitBill: React.FC = () => {
   const totals = calculateTotals();
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <Title level={2}>{t('vendor_portal.submit_bill')}</Title>
-        <Button onClick={() => navigate('/vendor-portal/purchase-orders')}>
-          {t('back')}
-        </Button>
-      </div>
+    <div>
+      <PageHeader
+        title={t('vendor_portal.submit_bill')}
+        extra={
+          <Button onClick={() => navigate('/vendor-portal/purchase-orders')}>
+            {t('back')}
+          </Button>
+        }
+      />
 
-      <Card style={{ marginTop: 24 }}>
+      <SectionCard>
         {selectedPO && (
-          <div style={{ marginBottom: 16, padding: 12, background: '#f0f2f5', borderRadius: 4 }}>
+          <div style={{ marginBottom: 16, padding: 12, background: 'var(--surface-2)', borderRadius: 'var(--radius-md)' }}>
             <strong>{t('vendor_portal.bill_against_po')}:</strong> {selectedPO.number} (
             {selectedPO.date})
           </div>
@@ -289,7 +290,7 @@ const VendorPortalSubmitBill: React.FC = () => {
                 size="small"
               />
 
-              <div style={{ marginTop: 16, textAlign: 'right' }}>
+              <div style={{ marginTop: 16, textAlign: 'end' }}>
                 <Space direction="vertical" align="end" size="small">
                   <div>
                     <strong>{t('invoices.subtotal')}:</strong> {totals.subtotal.toFixed(2)}
@@ -322,7 +323,7 @@ const VendorPortalSubmitBill: React.FC = () => {
             </Form.Item>
           </Space>
         </Form>
-      </Card>
+      </SectionCard>
     </div>
   );
 };

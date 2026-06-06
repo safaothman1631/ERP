@@ -67,9 +67,13 @@ describe('roundToNearestDenomination', () => {
   });
 
   it('rounds nearest', () => {
-    expect(roundToNearestDenomination(124, 'nearest')).toBe(250);
-    expect(roundToNearestDenomination(125, 'nearest')).toBe(250);
+    // nearest === Math.round(x / step) * step (step = 250).
+    expect(roundToNearestDenomination(124, 'nearest')).toBe(0); // 0.496 → 0
+    expect(roundToNearestDenomination(125, 'nearest')).toBe(250); // 0.5 → 1 (half-up)
     expect(roundToNearestDenomination(126, 'nearest')).toBe(250);
+    expect(roundToNearestDenomination(374, 'nearest')).toBe(250); // 1.496 → 1
+    expect(roundToNearestDenomination(375, 'nearest')).toBe(500); // 1.5 → 2
+    expect(roundToNearestDenomination(500, 'nearest')).toBe(500);
   });
 
   it('supports custom step', () => {

@@ -90,7 +90,7 @@ async function loadOptionsGeneric(
  */
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-const PHONE_RE = /^[+\d][\d\s()\-]{5,}$/;
+const PHONE_RE = /^[+\d][\d\s()-]{5,}$/;
 
 /* ---------------------------------------------------------------------------
  * Re-usable field bundles
@@ -723,7 +723,10 @@ export const QUICK_CREATE_REGISTRY: Record<EntitySlug, QuickCreateConfig> = {
     loadOptions: (search) => loadOptionsGeneric('/api/locations', search, 'name'),
     queryClass: 'C',
     permission: 'locations.create',
-    fullFormHref: '/settings/locations/new',
+    // Full form → the real Stock Locations management page (warehouse + bin/zone
+    // tree, add/edit/delete). The old '/settings/locations/new' had no route and
+    // dead-ended. This is the working destination the user expects.
+    fullFormHref: '/inventory/locations',
   },
 
   // ===================================================================
@@ -752,11 +755,13 @@ export const QUICK_CREATE_REGISTRY: Record<EntitySlug, QuickCreateConfig> = {
       // first) but kept for type-completeness.
       { ...NAME_FIELD, labelKey: 'fields.full_name' },
     ],
-    apiCreate: () => {
+    apiCreate: () =>
       // Class C entities never run apiCreate from the registry — the destination
-      // create page submits via its own logic. Throw to make misuse loud.
-      throw new Error('employee is Class C — navigate to fullFormHref instead of calling apiCreate');
-    },
+      // create page submits via its own logic. Reject (not sync-throw) so the
+      // `(...) => Promise<…>` contract holds and `await`ing callers observe it.
+      Promise.reject(
+        new Error('employee is Class C — navigate to fullFormHref instead of calling apiCreate'),
+      ),
     loadOptions: (search) => loadOptionsGeneric('/api/employees', search, 'full_name'),
     queryClass: 'C',
     permission: 'employees.create',

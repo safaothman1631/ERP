@@ -23,7 +23,7 @@
  * changes — `activate` then wipes any cache whose name doesn't start with
  * `CACHE_PREFIX-<version>`.
  */
-import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
+import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from 'workbox-precaching';
 import { registerRoute, NavigationRoute } from 'workbox-routing';
 import {
   CacheFirst,
@@ -55,15 +55,23 @@ const CACHE_NAMES = {
 precacheAndRoute(self.__WB_MANIFEST || []);
 cleanupOutdatedCaches();
 
-// SPA navigation — serve index.html from precache for app routes.
-registerRoute(new NavigationRoute(({ url }) => {
-  // Don't try to handle `/api/*` or static asset urls here.
-  if (url.pathname.startsWith('/api/')) return false;
-  return true;
-}, {
-  // Workbox will look up the precached index.html
-  // (vite-plugin-pwa marks it as the navigation fallback)
-}));
+// SPA navigation — serve the precached index.html shell for any in-app route
+// so DIRECT loads, refreshes and bookmarks of client routes (e.g. /signup,
+// /login, /forgot-password) resolve to the SPA instead of erroring.
+//
+// NavigationRoute's first argument must be a HANDLER that returns a Response —
+// `createHandlerBoundToURL('index.html')` serves the precached shell. (The
+// previous code passed a boolean-returning matcher as the handler, so every
+// navigation that wasn't already precached — i.e. every route except `/` —
+// failed to produce a Response and the browser showed an error page.)
+//
+// `denylist` keeps `/api/*` (and the SW/manifest itself) on the network rather
+// than being rewritten to the SPA shell.
+registerRoute(
+  new NavigationRoute(createHandlerBoundToURL('index.html'), {
+    denylist: [/^\/api\//, /^\/sw\.js$/, /^\/manifest\.webmanifest$/],
+  }),
+);
 
 // ---------------------------------------------------------------------------
 // API GET cache — Class C / D reference data.

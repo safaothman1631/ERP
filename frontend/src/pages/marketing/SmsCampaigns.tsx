@@ -37,7 +37,7 @@ const SmsCampaigns: React.FC = () => {
  try {
  const res = await api.get('/api/marketing/audiences');
  setAudiences(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  useEffect(() => {

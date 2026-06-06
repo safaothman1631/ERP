@@ -34,7 +34,7 @@ export const UserSelect: React.FC<UserSelectProps> = ({ users, multiple, ...rest
         if (!u) return opt.label;
         return (
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Avatar size={20} src={u.avatar} style={{ background: '#1F6FEB' }}>{u.name.charAt(0).toUpperCase()}</Avatar>
+            <Avatar size={20} src={u.avatar} style={{ background: '#7B61FF' }}>{u.name.charAt(0).toUpperCase()}</Avatar>
             <span>{u.name}</span>
             {u.email && <span style={{ color: '#94A3B8', fontSize: 12 }}>{u.email}</span>}
           </span>

@@ -51,7 +51,7 @@ function incrementListener(path: string): void {
   const next = (activeListeners.get(path) ?? 0) + 1;
   activeListeners.set(path, next);
   if (getTotalListenerCount() > LISTENER_WARNING_THRESHOLD) {
-    // eslint-disable-next-line no-console
+     
     console.warn(
       `[useFirestoreLive.v2] Active Firestore listener count exceeded ` +
         `${LISTENER_WARNING_THRESHOLD} (current: ${getTotalListenerCount()}). ` +

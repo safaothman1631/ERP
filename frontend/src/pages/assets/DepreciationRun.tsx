@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Card, DatePicker, Button, Space, Alert, Empty } from 'antd';
-import { PlayCircleOutlined } from '@ant-design/icons';
+import { DatePicker, Button, Space, Alert } from 'antd';
+import { PlayCircleOutlined, InboxOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import dayjs, { Dayjs } from 'dayjs';
-import { PageHeader, LoadingSkeleton } from '../../design-system';
+import { PageHeader, SectionCard, EmptyState, LoadingSkeleton } from '../../design-system';
 import { message } from '../../utils/message';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 
@@ -50,12 +50,12 @@ const DepreciationRun: React.FC = () => {
   return (
     <>
       <PageHeader title={t('assets.run_depreciation')} />
-      <Card>
+      <SectionCard>
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <div>
-            <label style={{ marginRight: 8 }}>{t('assets.period')}:</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+            <label style={{ color: 'var(--ink-700)' }}>{t('assets.period')}:</label>
             <DatePicker picker="month" value={period} onChange={setPeriod} format="YYYY-MM" style={{ width: 200 }} />
-            <Button type="primary" icon={<PlayCircleOutlined />} onClick={handleRun} loading={running} style={{ marginLeft: 16 }}>
+            <Button type="primary" icon={<PlayCircleOutlined />} onClick={handleRun} loading={running}>
               {t('assets.run_for_period')}
             </Button>
           </div>
@@ -77,7 +77,7 @@ const DepreciationRun: React.FC = () => {
               />
               {result.errors.length > 0 && (
                 <div>
-                  <h4>{t('errors')}</h4>
+                  <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink-900)', marginBottom: 'var(--space-md)' }}>{t('errors')}</h4>
                   <ResponsiveTableAdapter columns={errorColumns} dataSource={result.errors} rowKey="asset_id" pagination={false} />
                 </div>
               )}
@@ -85,10 +85,10 @@ const DepreciationRun: React.FC = () => {
           )}
 
           {!result && !running && (
-            <Empty description={t('assets.select_period_and_run')} />
+            <EmptyState icon={<InboxOutlined />} title={t('assets.select_period_and_run')} />
           )}
         </Space>
-      </Card>
+      </SectionCard>
     </>
   );
 };

@@ -40,7 +40,7 @@ import {
 } from '../../data/helpArticles';
 import HelpArticle from './HelpArticle';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text: _Text, Paragraph: _Paragraph } = Typography;
 
 export interface HelpPanelProps {
   open: boolean;
@@ -209,7 +209,7 @@ const ContactRow: React.FC<{ t: ReturnType<typeof useTranslation>['t'] }> = ({
 }) => (
   <div
     style={{
-      borderTop: '1px solid #f0f0f0',
+      borderTop: '1px solid var(--border)',
       paddingTop: 12,
       marginTop: 16,
       display: 'flex',

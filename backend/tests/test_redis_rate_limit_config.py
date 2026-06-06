@@ -23,4 +23,9 @@ def test_build_limiter_passes_storage_uri_kwarg():
 
             _build_limiter()
             _, kwargs = MockLimiter.call_args
-            assert kwargs.get("storage_uri") == "redis://127.0.0.1:6379/0"
+            storage_uri = kwargs.get("storage_uri", "")
+            # The configured URI is passed through to the limiter, with Redis
+            # connection-robustness params appended (socket_connect_timeout +
+            # socket_timeout) so a wedged Redis can't hang request handling.
+            assert storage_uri.startswith("redis://127.0.0.1:6379/0")
+            assert "socket_timeout=2" in storage_uri

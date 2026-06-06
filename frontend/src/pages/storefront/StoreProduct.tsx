@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, InputNumber, Typography, Row, Col, Tag, Divider } from 'antd';
+import { Card, Button, InputNumber, Typography, Row, Col, Divider } from 'antd';
 import { ShoppingCartOutlined, LeftOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { message } from '../../utils/message';
 import api from '../../api';
+import { StatusTag } from '../../design-system';
 import { LoadingSkeleton } from '../../design-system/LoadingSkeleton';
 import { useLoadingState } from '../../hooks/useLoadingState';
 
@@ -40,7 +41,7 @@ const StoreProduct: React.FC = () => {
       setLoading(true);
       const res = await api.get(`/api/storefront/products/${id}`);
       setProduct(res.data);
-    } catch (err) {
+    } catch (_err) {
       message.error(t('storefront.product_not_found'));
       navigate('/store');
     } finally {
@@ -85,7 +86,7 @@ const StoreProduct: React.FC = () => {
 
       message.success(t('storefront.added_to_cart'));
       navigate('/store/cart');
-    } catch (err) {
+    } catch (_err) {
       message.error(t('storefront.add_to_cart_failed'));
     } finally {
       setAdding(false);
@@ -105,7 +106,7 @@ const StoreProduct: React.FC = () => {
   const price = product.sale_price || product.price || 0;
 
   return (
-    <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
+    <div style={{ padding: '24px', background: 'var(--surface-2)', minHeight: '100vh' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <Button
           icon={<LeftOutlined />}
@@ -120,7 +121,7 @@ const StoreProduct: React.FC = () => {
             <Col xs={24} md={12}>
               <div
                 style={{
-                  background: '#f0f0f0',
+                  background: 'var(--surface-2)',
                   height: 400,
                   display: 'flex',
                   alignItems: 'center',
@@ -146,9 +147,9 @@ const StoreProduct: React.FC = () => {
               <Title level={2}>{product.name}</Title>
 
               {product.category && (
-                <Tag color="blue" style={{ marginBottom: 16 }}>
-                  {product.category}
-                </Tag>
+                <div style={{ marginBottom: 16 }}>
+                  <StatusTag status="info" label={product.category} />
+                </div>
               )}
 
               {product.sku && (
@@ -157,7 +158,7 @@ const StoreProduct: React.FC = () => {
                 </Text>
               )}
 
-              <Title level={3} style={{ color: '#1890ff', marginBottom: 16 }}>
+              <Title level={3} style={{ color: 'var(--accent-500)', marginBottom: 16 }}>
                 {price.toLocaleString()} {t('currency')}
               </Title>
 

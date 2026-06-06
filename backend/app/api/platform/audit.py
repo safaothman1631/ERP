@@ -6,7 +6,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, Response
 
-from app.firebase_client import get_db
+from app.firebase_client import get_db, safe_query
 
 from ._guards import require_platform_admin
 
@@ -51,7 +51,7 @@ def list_audit(
     if org_id:
         query = query.where("org_id", "==", org_id)
     items = []
-    for doc in query.limit(1000).stream():
+    for doc in safe_query(query.limit(1000)):
         row = {"id": doc.id, **doc.to_dict()}
         if action and not str(row.get("action", "")).startswith(action):
             continue

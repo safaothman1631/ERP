@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Card, List, Space, Typography, message } from 'antd';
+import { Button, List, message } from 'antd';
 import { PlusOutlined, BuildOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
+import { PageHeader, SectionCard } from '../../design-system';
 
 interface SavedReport {
   id: string;
@@ -37,20 +38,14 @@ const EmbeddedAnalyticsDashboard: React.FC = () => {
   }, [t]);
 
   return (
-    <Card>
-      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
-          <div>
-            <Typography.Title level={3} style={{ margin: 0 }}>
-              {t('custom_reports.analytics_title', 'Analytics Dashboard')}
-            </Typography.Title>
-            <Typography.Text type="secondary">
-              {t(
-                'custom_reports.analytics_subtitle',
-                'Saved custom reports built from your operational data.',
-              )}
-            </Typography.Text>
-          </div>
+    <div>
+      <PageHeader
+        title={t('custom_reports.analytics_title', 'Analytics Dashboard')}
+        subtitle={t(
+          'custom_reports.analytics_subtitle',
+          'Saved custom reports built from your operational data.',
+        )}
+        extra={
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -58,8 +53,10 @@ const EmbeddedAnalyticsDashboard: React.FC = () => {
           >
             {t('custom_reports.new_report')}
           </Button>
-        </Space>
+        }
+      />
 
+      <SectionCard>
         <List
           loading={loading}
           dataSource={reports}
@@ -86,8 +83,8 @@ const EmbeddedAnalyticsDashboard: React.FC = () => {
             </List.Item>
           )}
         />
-      </Space>
-    </Card>
+      </SectionCard>
+    </div>
   );
 };
 

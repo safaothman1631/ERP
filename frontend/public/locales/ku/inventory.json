@@ -110,5 +110,10 @@
   "export_items": "هەناردنی کاڵاکان",
   "usefulLife": "ماوەی بەکارهێنان",
   "salvageValue": "بەهای ماوە",
-  "purchasePrice": "نرخی کڕین"
+  "purchasePrice": "نرخی کڕین",
+  "stock_on_hand": "کۆگا",
+  "purchase_rate": "نرخی کڕین",
+  "sales_rate": "نرخی فرۆشتن",
+  "no_items": "هیچ بڕگەیەک نییە هێشتا",
+  "no_items_hint": "یەکەم بڕگەکەت زیاد بکە بۆ دەستپێکردنی بەرپرسایەتی کۆگا"
 }

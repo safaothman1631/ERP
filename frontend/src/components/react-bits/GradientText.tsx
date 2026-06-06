@@ -22,7 +22,7 @@ export interface GradientTextProps {
 
 const GradientText: React.FC<GradientTextProps> = ({
   children,
-  colors = ['#1F6FEB', '#0EA5E9', '#16A34A', '#1F6FEB'],
+  colors = ['#7B61FF', '#0EA5E9', '#16A34A', '#7B61FF'],
   duration = 3000,
   className,
   style,

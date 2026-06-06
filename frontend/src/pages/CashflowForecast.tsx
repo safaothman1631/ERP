@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Statistic, Select, Space } from 'antd';
+import { Card, Row, Col, Select, Space } from 'antd';
 import { message } from '../utils/message';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
-import { PageHeader } from '../design-system';
+import { PageHeader, KpiCard } from '../design-system';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { ResponsiveChart } from '../components/responsive/ResponsiveChart';
 import { asTranslationKey } from '../i18n/types';
+import { dataViz } from '../theme/tokens';
 
 const { Option } = Select;
 
 const CashflowForecast: React.FC = () => {
   const { t } = useTranslation();
   const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
   const [days, setDays] = useState(30);
 
   const fetchData = async () => {
@@ -48,55 +49,31 @@ const CashflowForecast: React.FC = () => {
       />
 
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        <Row gutter={16}>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title={t('starting_cash')}
-                value={data?.starting_cash || 0}
-                precision={2}
-                valueStyle={{ color: '#3f8600' }}
-              />
-            </Card>
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={12} lg={6}>
+            <KpiCard title={t('starting_cash')} value={data?.starting_cash || 0} tone="success" />
           </Col>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title={t('projected_inflow')}
-                value={data?.projected_inflow || 0}
-                precision={2}
-                valueStyle={{ color: '#1890ff' }}
-              />
-            </Card>
+          <Col xs={24} sm={12} lg={6}>
+            <KpiCard title={t('projected_inflow')} value={data?.projected_inflow || 0} tone="info" />
           </Col>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title={t('projected_outflow')}
-                value={data?.projected_outflow || 0}
-                precision={2}
-                valueStyle={{ color: '#cf1322' }}
-              />
-            </Card>
+          <Col xs={24} sm={12} lg={6}>
+            <KpiCard title={t('projected_outflow')} value={data?.projected_outflow || 0} tone="danger" />
           </Col>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title={t('ending_cash')}
-                value={data?.ending_cash || 0}
-                precision={2}
-                valueStyle={{ color: (data?.ending_cash || 0) > (data?.starting_cash || 0) ? '#3f8600' : '#cf1322' }}
-              />
-            </Card>
+          <Col xs={24} sm={12} lg={6}>
+            <KpiCard
+              title={t('ending_cash')}
+              value={data?.ending_cash || 0}
+              tone={(data?.ending_cash || 0) > (data?.starting_cash || 0) ? 'success' : 'danger'}
+            />
           </Col>
         </Row>
 
         <Card title={t('daily_breakdown')}>
           <ResponsiveChart
             legendItems={[
-              { id: 'balance', labelKey: asTranslationKey('balance'), color: '#8884d8' },
-              { id: 'inflow', labelKey: asTranslationKey('inflow'), color: '#82ca9d' },
-              { id: 'outflow', labelKey: asTranslationKey('outflow'), color: '#ff7875' },
+              { id: 'balance', labelKey: asTranslationKey('balance'), color: dataViz.categorical[0] },
+              { id: 'inflow', labelKey: asTranslationKey('inflow'), color: dataViz.categorical[1] },
+              { id: 'outflow', labelKey: asTranslationKey('outflow'), color: dataViz.categorical[3] },
             ]}
             minMobileBlockSize={300}
           >
@@ -105,9 +82,9 @@ const CashflowForecast: React.FC = () => {
               <XAxis dataKey="date" />
               <YAxis />
               <Tooltip />
-              <Line type="monotone" dataKey="balance" stroke="#8884d8" name={t('balance')} />
-              <Line type="monotone" dataKey="inflow" stroke="#82ca9d" name={t('inflow')} />
-              <Line type="monotone" dataKey="outflow" stroke="#ff7875" name={t('outflow')} />
+              <Line type="monotone" dataKey="balance" stroke={dataViz.categorical[0]} name={t('balance')} />
+              <Line type="monotone" dataKey="inflow" stroke={dataViz.categorical[1]} name={t('inflow')} />
+              <Line type="monotone" dataKey="outflow" stroke={dataViz.categorical[3]} name={t('outflow')} />
             </LineChart>
           </ResponsiveChart>
         </Card>

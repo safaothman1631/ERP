@@ -7,7 +7,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
-from app.firebase_client import get_db
+from app.firebase_client import get_db, safe_query
 
 from ._audit import audit_platform
 from ._guards import require_platform_admin, require_super_admin
@@ -25,7 +25,7 @@ class FlagPayload(BaseModel):
 @router.get("/feature-flags")
 def list_flags(user: dict = Depends(require_platform_admin)):
     db = get_db()
-    items = [{"id": d.id, **d.to_dict()} for d in db.collection("feature_flags").limit(500).stream()]
+    items = [{"id": d.id, **d.to_dict()} for d in safe_query(db.collection("feature_flags").limit(500))]
     return {"items": items}
 
 

@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
- Button, Space, message, Popconfirm, Card, Tag } from 'antd';
-import { 
- PlusOutlined, EditOutlined, DeleteOutlined, 
- PlayCircleOutlined, EyeOutlined 
-} from '@ant-design/icons';
+import {
+ Button, Space, message, Popconfirm, Tag } from 'antd';
+import { PlusOutlined, DeleteOutlined, PlayCircleOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { useNavigate } from 'react-router-dom';
+import { PageHeader, SectionCard } from '../../design-system';
 import { FormDialog } from '../../components/responsive/FormDialog';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { ListWithEmptyState } from '../../design-system/empty/ListWithEmptyState';
@@ -161,9 +159,10 @@ const CustomReportsList: React.FC = () => {
  ];
 
  return (
- <Card>
- <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
- <h2>{t('custom_reports.list_title')}</h2>
+ <div>
+ <PageHeader
+ title={t('custom_reports.list_title')}
+ extra={
  <Button
  type="primary"
  icon={<PlusOutlined />}
@@ -171,8 +170,10 @@ const CustomReportsList: React.FC = () => {
  >
  {t('custom_reports.new_report')}
  </Button>
- </div>
+ }
+ />
 
+ <SectionCard padded={false}>
  <ListWithEmptyState
  entity="report"
  data={data}
@@ -189,6 +190,7 @@ const CustomReportsList: React.FC = () => {
  />
  )}
  />
+ </SectionCard>
 
  <FormDialog
  title={runningReport?.name}
@@ -206,7 +208,7 @@ const CustomReportsList: React.FC = () => {
  scroll={{ x: 'max-content' }}
  />
  </FormDialog>
- </Card>
+ </div>
  );
 };
 

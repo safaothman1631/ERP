@@ -8,7 +8,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
-from app.firebase_client import get_db
+from app.firebase_client import get_db, safe_query
 
 from ._audit import audit_platform
 from ._guards import require_platform_admin, require_super_admin
@@ -27,7 +27,7 @@ class AnnouncementPayload(BaseModel):
 @router.get("/announcements")
 def list_announcements(user: dict = Depends(require_platform_admin)):
     db = get_db()
-    items = [{"id": d.id, **d.to_dict()} for d in db.collection("platform_announcements").limit(200).stream()]
+    items = [{"id": d.id, **d.to_dict()} for d in safe_query(db.collection("platform_announcements").limit(200))]
     items.sort(key=lambda x: x.get("start_at") or "", reverse=True)
     return {"items": items}
 
@@ -54,7 +54,7 @@ def active_announcements():
     now = datetime.utcnow().isoformat()
     items = []
     try:
-        for doc in db.collection("platform_announcements").limit(50).stream():
+        for doc in safe_query(db.collection("platform_announcements").limit(50)):
             row = doc.to_dict()
             start = row.get("start_at") or ""
             end = row.get("end_at") or "9999"

@@ -1,11 +1,36 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Space, Form, Input, InputNumber, Select, Card, Tag, Row, Col, Modal } from 'antd';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Button, Space, Form, Input, InputNumber, Select, Row, Col, Modal } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SettingOutlined } from '@ant-design/icons';
 import api from '../../api';
 import { message } from '../../utils/message';
+import { PageHeader, StatusTag, type ColumnVisibilityItem } from '../../design-system';
+import type { StatusKind } from '../../design-system';
+import KitListCard from '../../design-system/KitListCard';
+import KitListToolbarActions from '../../design-system/KitListToolbarActions';
+import KitRowActions from '../../design-system/KitRowActions';
+import KitSearchInput from '../../design-system/KitSearchInput';
+import { downloadCsv } from '../../utils/exportCsv';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { FormDialog } from '../../components/responsive/FormDialog';
+
+/** Initials for the kit's avatar cell (first letters of the first two words). */
+const initialsOf = (name: string): string =>
+  String(name || '?')
+    .trim()
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
+// Map POS table states → StatusTag semantic kinds (auto-flip tokens).
+const TABLE_STATE_KIND: Record<string, StatusKind> = {
+ available: 'active',
+ occupied: 'error',
+ reserved: 'warning',
+ paying: 'info',
+};
 
 const POSFloors: React.FC = () => {
  const { t } = useTranslation();
@@ -13,6 +38,7 @@ const POSFloors: React.FC = () => {
  const [configs, setConfigs] = useState<any[]>([]);
  const [selectedConfigId, setSelectedConfigId] = useState<string>('');
  const [loading, setLoading] = useState(false);
+ const [search, setSearch] = useState('');
  const [floorModalVisible, setFloorModalVisible] = useState(false);
  const [editingFloorId, setEditingFloorId] = useState<string | null>(null);
  const [floorForm] = Form.useForm();
@@ -23,6 +49,9 @@ const POSFloors: React.FC = () => {
  const [tableModalVisible, setTableModalVisible] = useState(false);
  const [editingTableId, setEditingTableId] = useState<string | null>(null);
  const [tableForm] = Form.useForm();
+ const [hiddenCols, setHiddenCols] = useState<string[]>(() => {
+ try { return JSON.parse(localStorage.getItem('pos_floors.hiddenCols') || '[]'); } catch { return []; }
+ });
 
  const fetchConfigs = async () => {
  try {
@@ -134,7 +163,7 @@ const POSFloors: React.FC = () => {
  height: 100,
  position_x: 0,
  position_y: 0,
- color: '#1890ff',
+ color: '#7B61FF',
  is_active: true,
  });
  }
@@ -171,67 +200,133 @@ const POSFloors: React.FC = () => {
  });
  };
 
- const floorColumns = [
- { title: t('pos.name'), dataIndex: 'name', key: 'name' },
- { title: t('pos.name_ku'), dataIndex: 'name_ku', key: 'name_ku' },
- { title: t('pos.sequence'), dataIndex: 'sequence', key: 'sequence' },
+ const filteredFloors = useMemo(() => {
+ if (!search) return floors;
+ const q = search.toLowerCase();
+ return floors.filter((row: any) =>
+ Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(q)),
+ );
+ }, [floors, search]);
+
+ const allFloorColumns = [
+ {
+ title: t('pos.name'), dataIndex: 'name', key: 'name',
+ render: (v: string) => (
+ <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+ <span style={{
+ width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+ background: 'var(--accent-soft)', color: 'var(--accent-500)',
+ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+ fontSize: 11, fontWeight: 700,
+ }}>{initialsOf(v)}</span>
+ <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{v}</span>
+ </div>
+ ),
+ },
+ {
+ title: t('pos.name_ku'), dataIndex: 'name_ku', key: 'name_ku',
+ render: (v: string) => <span style={{ color: 'var(--ink-700)' }}>{v || '—'}</span>,
+ },
+ {
+ title: t('pos.sequence'), dataIndex: 'sequence', key: 'sequence',
+ render: (v: number) => (
+ <span style={{ color: 'var(--ink-900)', fontFamily: 'var(--font-mono)', fontWeight: 500 }}>{v ?? '—'}</span>
+ ),
+ },
  {
  title: t('pos.status'),
  dataIndex: 'is_active',
  key: 'is_active',
- render: (val: boolean) => <Tag color={val ? 'green' : 'red'}>{val ? t('active') : t('inactive')}</Tag>,
+ render: (val: boolean) => <StatusTag status={val ? 'active' : 'inactive'} label={val ? t('active') : t('inactive')} />,
  },
  {
- title: t('actions'),
- key: 'actions',
+ title: '', key: 'actions', width: 56, align: 'center' as const,
  render: (_: any, record: any) => (
- <Space>
- <Button icon={<SettingOutlined />} onClick={() => openFloorEditor(record.id)}>
- {t('pos.edit_floor_plan')}
- </Button>
- <Button icon={<EditOutlined />} onClick={() => openFloorModal(record)} />
- <Button danger icon={<DeleteOutlined />} onClick={() => handleDeleteFloor(record.id)} />
- </Space>
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'plan', icon: <SettingOutlined />, label: t('pos.edit_floor_plan'), onClick: () => openFloorEditor(record.id) },
+ { key: 'edit', icon: <EditOutlined />, label: t('edit'), onClick: () => openFloorModal(record) },
+ { type: 'divider' },
+ { key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true, onClick: () => handleDeleteFloor(record.id) },
+ ]}
+ />
  ),
  },
  ];
+ const floorColumns = useMemo(
+ () => allFloorColumns.filter((c) => !hiddenCols.includes(c.key)),
+ // eslint-disable-next-line react-hooks/exhaustive-deps
+ [hiddenCols, t],
+ );
+ const floorColumnsMeta: ColumnVisibilityItem[] = allFloorColumns.map((c) => ({
+ key: c.key,
+ label: typeof c.title === 'string' && c.title ? c.title : c.key,
+ pinned: c.key === 'name' || c.key === 'actions',
+ }));
+ const persistHidden = (next: string[]) => {
+ setHiddenCols(next);
+ try { localStorage.setItem('pos_floors.hiddenCols', JSON.stringify(next)); } catch { /* noop */ }
+ };
 
  const tableColumns = [
- { title: t('pos.table_name'), dataIndex: 'name', key: 'name' },
- { title: t('pos.seats'), dataIndex: 'seats', key: 'seats' },
- { title: t('pos.shape'), dataIndex: 'shape', key: 'shape' },
+ {
+ title: t('pos.table_name'), dataIndex: 'name', key: 'name',
+ render: (v: string) => <span style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{v}</span>,
+ },
+ {
+ title: t('pos.seats'), dataIndex: 'seats', key: 'seats',
+ render: (v: number) => (
+ <span style={{ color: 'var(--ink-900)', fontFamily: 'var(--font-mono)', fontWeight: 500 }}>{v ?? '—'}</span>
+ ),
+ },
+ {
+ title: t('pos.shape'), dataIndex: 'shape', key: 'shape',
+ render: (v: string) => (
+ <span style={{
+ display: 'inline-block', padding: '2px 9px', borderRadius: 'var(--radius-sm, 6px)',
+ background: 'var(--surface-2)', border: '1px solid var(--border)',
+ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-600)',
+ }}>{t(`pos.${v}`, v)}</span>
+ ),
+ },
  {
  title: t('pos.state'),
  dataIndex: 'state',
  key: 'state',
- render: (val: string) => {
- const colors: Record<string, string> = {
- available: 'green',
- occupied: 'red',
- reserved: 'orange',
- paying: 'blue',
- };
- return <Tag color={colors[val] || 'default'}>{t(`pos.table_state_${val}`)}</Tag>;
- },
+ render: (val: string) => (
+ <StatusTag status={TABLE_STATE_KIND[val] ?? 'default'} label={t(`pos.table_state_${val}`)} />
+ ),
  },
  {
- title: t('actions'),
- key: 'actions',
+ title: '', key: 'actions', width: 56, align: 'center' as const,
  render: (_: any, record: any) => (
- <Space>
- <Button icon={<EditOutlined />} onClick={() => openTableModal(record)} />
- <Button danger icon={<DeleteOutlined />} onClick={() => handleDeleteTable(record.id)} />
- </Space>
+ <KitRowActions
+ ariaLabel={t('actions')}
+ actions={[
+ { key: 'edit', icon: <EditOutlined />, label: t('edit'), onClick: () => openTableModal(record) },
+ { type: 'divider' },
+ { key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true, onClick: () => handleDeleteTable(record.id) },
+ ]}
+ />
  ),
  },
  ];
 
  return (
  <div>
- <Card
+ <PageHeader
  title={t('pos.floors')}
  extra={
- <Space>
+ <Button type="primary" icon={<PlusOutlined />} onClick={() => openFloorModal()}>
+ {t('pos.new_floor')}
+ </Button>
+ }
+ />
+ <KitListCard
+ toolbar={
+ <>
+ <KitSearchInput value={search} onChange={(v) => setSearch(v)} placeholder={t('search')} />
  <Select
  style={{ width: 200 }}
  value={selectedConfigId}
@@ -244,20 +339,32 @@ const POSFloors: React.FC = () => {
  </Select.Option>
  ))}
  </Select>
- <Button type="primary" icon={<PlusOutlined />} onClick={() => openFloorModal()}>
- {t('pos.new_floor')}
- </Button>
- </Space>
+ <div style={{ marginInlineStart: 'auto' }}>
+ <KitListToolbarActions
+ columns={floorColumnsMeta.filter((c) => c.key !== 'actions')}
+ hiddenCols={hiddenCols}
+ onColumnsChange={persistHidden}
+ onExport={() => {
+ const cols = floorColumnsMeta.filter((c) => !hiddenCols.includes(c.key) && c.key !== 'actions');
+ downloadCsv('pos_floors', floors, cols);
+ }}
+ onPrint={() => window.print()}
+ onImport={() => message.info(t('coming_soon', 'Coming soon'))}
+ onSavedViews={() => message.info(t('coming_soon', 'Coming soon'))}
+ onArchive={() => message.info(t('coming_soon', 'Coming soon'))}
+ />
+ </div>
+ </>
  }
  >
  <ResponsiveTableAdapter
- dataSource={floors}
+ dataSource={filteredFloors}
  columns={floorColumns}
  rowKey="id"
  loading={loading}
  pagination={false}
  />
- </Card>
+ </KitListCard>
 
  <FormDialog
  title={editingFloorId ? t('pos.edit_floor') : t('pos.new_floor')}

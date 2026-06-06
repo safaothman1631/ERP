@@ -192,7 +192,7 @@ describe('Kurdish UI translation', () => {
    */
   it('all nav labels resolve to Kurdish when language is ku', () => {
     // Build a kuT mock that resolves from ku.json
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const kuTranslations = require('../locales/ku.json');
 
     /**
@@ -237,7 +237,7 @@ describe('Kurdish UI translation', () => {
     ];
 
     // Get the English fallback strings from en.json
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const enTranslations = require('../locales/en.json');
 
     /**

@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
-import { Card, Row, Col, Statistic, message, Tag } from 'antd';
+import { useEffect, useState, type CSSProperties } from 'react';
+import { Row, Col, message } from 'antd';
+import { DollarOutlined, FundOutlined, TrophyOutlined, RiseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import ExportButton from '../components/ExportButton';
-import { ResponsiveTableAdapter } from '../components/responsive/ResponsiveTableAdapter';
+import { PageHeader, SectionCard, DataTable, KpiCard, StatusTag } from '../design-system';
+import type { ColumnDef } from '../design-system/DataTable';
 import { LoadingSkeleton } from '../design-system/LoadingSkeleton';
 import { useLoadingState } from '../hooks/useLoadingState';
 
@@ -52,82 +54,104 @@ export default function CRMInsights() {
 
   if (showSkeleton && !forecast) return <LoadingSkeleton variant="card" />;
 
+  const embeddedTable: CSSProperties = { border: 'none', boxShadow: 'none', borderRadius: 0 };
+
+  const forecastCols: ColumnDef<ForecastMonth>[] = [
+    { title: t('month'), dataIndex: 'month' },
+    { title: t('weighted_value'), dataIndex: 'weighted_value', align: 'right', render: (v: number) => fmt(v) },
+  ];
+  const stageCols: ColumnDef<PipelineStage>[] = [
+    { title: t('stage'), dataIndex: 'stage_name', render: (v: string) => <StatusTag status="default" label={v} /> },
+    { title: t('count'), dataIndex: 'count', align: 'right' },
+    { title: t('value'), dataIndex: 'value', align: 'right', render: (v: number) => fmt(v) },
+  ];
+  const leaderCols: ColumnDef<LeaderboardItem>[] = [
+    { title: t('owner'), dataIndex: 'owner_id' },
+    { title: t('deals'), dataIndex: 'deals', align: 'right' },
+    { title: t('value'), dataIndex: 'value', align: 'right', render: (v: number) => fmt(v) },
+  ];
+
   return (
-    <div style={{ padding: 16 }}>
-      <Row gutter={12} style={{ marginBottom: 16 }}>
-        <Col span={6}>
-          <Card><Statistic title={t('forecasted_revenue')} value={forecast?.total || 0} formatter={(v) => fmt(Number(v))} /></Card>
+    <div>
+      <PageHeader title={t('crm_insights', 'CRM Insights')} />
+
+      <Row gutter={[16, 16]} style={{ marginBottom: 'var(--space-lg)' }}>
+        <Col xs={24} sm={12} lg={6}>
+          <KpiCard title={t('forecasted_revenue')} value={fmt(forecast?.total || 0)} icon={<FundOutlined />} tone="primary" />
         </Col>
-        <Col span={6}>
-          <Card><Statistic title={t('open_pipeline')} value={pipeline?.total_value || 0} formatter={(v) => fmt(Number(v))} /></Card>
+        <Col xs={24} sm={12} lg={6}>
+          <KpiCard title={t('open_pipeline')} value={fmt(pipeline?.total_value || 0)} icon={<DollarOutlined />} tone="info" />
         </Col>
-        <Col span={6}>
-          <Card><Statistic title={t('win_rate')} value={wonLost?.win_rate || 0} suffix="%" /></Card>
+        <Col xs={24} sm={12} lg={6}>
+          <KpiCard title={t('win_rate')} value={`${wonLost?.win_rate || 0}%`} icon={<TrophyOutlined />} tone="success" />
         </Col>
-        <Col span={6}>
-          <Card><Statistic title={t('average_deal_size')} value={wonLost?.average_deal_size || 0} formatter={(v) => fmt(Number(v))} /></Card>
+        <Col xs={24} sm={12} lg={6}>
+          <KpiCard title={t('average_deal_size')} value={fmt(wonLost?.average_deal_size || 0)} icon={<RiseOutlined />} tone="primary" />
         </Col>
       </Row>
 
-      <Row gutter={12} style={{ marginBottom: 16 }}>
-        <Col span={12}>
-          <Card title={t('forecast_by_month')} extra={<ExportButton endpoint="/api/export/sales-by-customer" filename="forecast" />}>
-            <ResponsiveTableAdapter
+      <Row gutter={[16, 16]} style={{ marginBottom: 'var(--space-lg)' }}>
+        <Col xs={24} lg={12}>
+          <SectionCard
+            title={t('forecast_by_month')}
+            extra={<ExportButton endpoint="/api/export/sales-by-customer" filename="forecast" />}
+            padded={false}
+            style={{ marginBottom: 0 }}
+          >
+            <DataTable
               rowKey="month"
-              size="small"
+              stickyHeader={false}
               pagination={false}
               dataSource={forecast?.months || []}
-              columns={[
-                { title: t('month'), dataIndex: 'month' },
-                { title: t('weighted_value'), dataIndex: 'weighted_value', align: 'right', render: (v: number) => fmt(v) },
-              ]}
+              columns={forecastCols}
+              style={embeddedTable}
             />
-          </Card>
+          </SectionCard>
         </Col>
-        <Col span={12}>
-          <Card title={t('pipeline_by_stage')}>
-            <ResponsiveTableAdapter
+        <Col xs={24} lg={12}>
+          <SectionCard title={t('pipeline_by_stage')} padded={false} style={{ marginBottom: 0 }}>
+            <DataTable
               rowKey="stage_id"
-              size="small"
+              stickyHeader={false}
               pagination={false}
               dataSource={pipeline?.stages || []}
-              columns={[
-                { title: t('stage'), dataIndex: 'stage_name', render: (v: string, r: PipelineStage) => <Tag color={r.color}>{v}</Tag> },
-                { title: t('count'), dataIndex: 'count', align: 'right' },
-                { title: t('value'), dataIndex: 'value', align: 'right', render: (v: number) => fmt(v) },
-              ]}
+              columns={stageCols}
+              style={embeddedTable}
             />
-          </Card>
+          </SectionCard>
         </Col>
       </Row>
 
-      <Row gutter={12}>
-        <Col span={12}>
-          <Card title={t('won_lost_summary')}>
-            <Row gutter={12}>
+      <Row gutter={[16, 16]}>
+        <Col xs={24} lg={12}>
+          <SectionCard title={t('won_lost_summary')} style={{ marginBottom: 0 }}>
+            <Row gutter={16}>
               <Col span={12}>
-                <Statistic title={t('won')} value={wonLost?.won_count || 0} suffix={`(${fmt(wonLost?.won_value || 0)})`} styles={{ content: { color: '#52c41a' } }} />
+                <div style={{ fontSize: 12.5, color: 'var(--ink-500)' }}>{t('won')}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--success-fg)', letterSpacing: '-0.02em' }}>
+                  {wonLost?.won_count || 0} <span style={{ fontSize: 13, color: 'var(--ink-500)', fontWeight: 500 }}>({fmt(wonLost?.won_value || 0)})</span>
+                </div>
               </Col>
               <Col span={12}>
-                <Statistic title={t('lost')} value={wonLost?.lost_count || 0} suffix={`(${fmt(wonLost?.lost_value || 0)})`} styles={{ content: { color: '#f5222d' } }} />
+                <div style={{ fontSize: 12.5, color: 'var(--ink-500)' }}>{t('lost')}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--danger-fg)', letterSpacing: '-0.02em' }}>
+                  {wonLost?.lost_count || 0} <span style={{ fontSize: 13, color: 'var(--ink-500)', fontWeight: 500 }}>({fmt(wonLost?.lost_value || 0)})</span>
+                </div>
               </Col>
             </Row>
-          </Card>
+          </SectionCard>
         </Col>
-        <Col span={12}>
-          <Card title={t('top_owners')}>
-            <ResponsiveTableAdapter
+        <Col xs={24} lg={12}>
+          <SectionCard title={t('top_owners')} padded={false} style={{ marginBottom: 0 }}>
+            <DataTable
               rowKey="owner_id"
-              size="small"
+              stickyHeader={false}
               pagination={false}
               dataSource={leaders}
-              columns={[
-                { title: t('owner'), dataIndex: 'owner_id' },
-                { title: t('deals'), dataIndex: 'deals', align: 'right' },
-                { title: t('value'), dataIndex: 'value', align: 'right', render: (v: number) => fmt(v) },
-              ]}
+              columns={leaderCols}
+              style={embeddedTable}
             />
-          </Card>
+          </SectionCard>
         </Col>
       </Row>
     </div>

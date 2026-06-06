@@ -1,15 +1,15 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Row, Col, Card, Button, Typography } from 'antd';
+import { Row, Col, Button, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined, BankOutlined, LoginOutlined, LogoutOutlined, DollarOutlined } from '@ant-design/icons';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import type { TooltipProps } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { PageHeader, KpiCard, LoadingSkeleton } from '../../design-system';
+import { PageHeader, KpiCard, LoadingSkeleton, ChartCard } from '../../design-system';
 import { InlineError } from '../../components/feedback/InlineError';
 import { useLoadingState } from '../../hooks/useLoadingState';
-import { space, radius } from '../../theme/tokens';
+import { space } from '../../theme/tokens';
 import { ResponsiveChart } from '../../components/responsive/ResponsiveChart';
 import { asTranslationKey } from '../../i18n/types';
 
@@ -106,11 +106,19 @@ const HotelDashboard: React.FC = () => {
     if (!active || !payload || !payload.length) return null;
     const pl = payload[0];
     return (
-      <Card size="small" style={{ border: '1px solid #e8e8e8' }}>
-        <Text strong>{pl.payload.date}</Text>
+      <div
+        style={{
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-md)',
+          boxShadow: 'var(--shadow-md)',
+          padding: '8px 12px',
+        }}
+      >
+        <Text strong style={{ color: 'var(--ink-900)' }}>{pl.payload.date}</Text>
         <br />
-        <Text>{t('hotel.occupancy')}: {pl.value}%</Text>
-      </Card>
+        <Text style={{ color: 'var(--ink-700)' }}>{t('hotel.occupancy')}: {pl.value}%</Text>
+      </div>
     );
   };
 
@@ -163,34 +171,33 @@ const HotelDashboard: React.FC = () => {
         </Col>
       </Row>
 
-      <Card
-        title={t('hotel.daily_occupancy_trend')}
-        style={{ marginTop: space.lg, borderRadius: radius.lg }}
-      >
-        {data.daily_occupancy && data.daily_occupancy.length > 0 ? (
-          <ResponsiveChart
-            legendItems={[
-              { id: 'occupancy', labelKey: asTranslationKey('hotel.occupancy'), color: '#1f6feb' },
-            ]}
-          >
-            <LineChart data={data.daily_occupancy}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis domain={[0, 100]} />
-              <Tooltip content={<CustomTooltip />} />
-              <Line
-                type="monotone"
-                dataKey="occupancy"
-                stroke="#1f6feb"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveChart>
-        ) : (
-          <Text type="secondary">{t('no_data')}</Text>
-        )}
-      </Card>
+      <div style={{ marginTop: space.lg }}>
+        <ChartCard title={t('hotel.daily_occupancy_trend')} height={300}>
+          {data.daily_occupancy && data.daily_occupancy.length > 0 ? (
+            <ResponsiveChart
+              legendItems={[
+                { id: 'occupancy', labelKey: asTranslationKey('hotel.occupancy'), color: 'var(--accent-500)' },
+              ]}
+            >
+              <LineChart data={data.daily_occupancy}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="date" stroke="var(--ink-400)" />
+                <YAxis domain={[0, 100]} stroke="var(--ink-400)" />
+                <Tooltip content={<CustomTooltip />} />
+                <Line
+                  type="monotone"
+                  dataKey="occupancy"
+                  stroke="var(--accent-500)"
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveChart>
+          ) : (
+            <Text type="secondary">{t('no_data')}</Text>
+          )}
+        </ChartCard>
+      </div>
     </div>
   );
 };

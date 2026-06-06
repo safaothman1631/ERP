@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Button, Form, Input, Select, Space, Switch, InputNumber, Card, Tag, Popconfirm } from 'antd';
+import { Button, Form, Input, Select, Space, Switch, InputNumber, Card, Popconfirm } from 'antd';
 import { message } from '../../utils/message';
-import { PlusOutlined, EditOutlined, DeleteOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { PageHeader, DataTable } from '../../design-system';
+import type { ColumnDef } from '../../design-system/DataTable';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
 interface ApprovalStep {
@@ -118,7 +119,7 @@ export default function ApprovalRules() {
  }
  };
 
- const columns = [
+ const columns: ColumnDef<ApprovalRule>[] = [
  {
  title: t('approvals.name'),
  dataIndex: 'name',
@@ -175,22 +176,21 @@ export default function ApprovalRules() {
 
  return (
  <div>
- <Card
+ <PageHeader
  title={t('approvals.rules')}
  extra={
  <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
  {t('approvals.new_rule')}
  </Button>
  }
- >
- <ResponsiveTableAdapter
+ />
+ <DataTable
  columns={columns}
  dataSource={rules}
  loading={loading}
  rowKey="id"
  pagination={{ pageSize: 20 }}
  />
- </Card>
 
  <FormDialog
  open={modalVisible}

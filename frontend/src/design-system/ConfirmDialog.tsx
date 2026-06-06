@@ -11,13 +11,13 @@
  * Requirements: 15.10, 17.6, 17.7
  */
 import React from 'react';
-import { Typography } from 'antd';
+import { Modal, Typography } from 'antd';
+import { useTranslation } from 'react-i18next';
 import {
  ExclamationCircleFilled,
  InfoCircleFilled,
 } from '@ant-design/icons';
 import { palette } from '../theme/tokens';
-import { FormDialog } from '../components/responsive/FormDialog';
 
 const { Text } = Typography;
 
@@ -70,46 +70,58 @@ const ConfirmDialogInner: React.FC<ConfirmDialogProps> = ({
  open,
  title,
  description,
- okText = 'OK',
- cancelText = 'Cancel',
+ okText,
+ cancelText,
  danger = false,
  loading = false,
  onOk,
  onCancel,
  ariaLabel,
 }) => {
+ const { t } = useTranslation();
  const icon = danger ? (
  <ExclamationCircleFilled style={{ color: palette.danger }} />
  ) : (
  <InfoCircleFilled style={{ color: palette.warning }} />
  );
 
+ // A small CENTERED glass Modal on every viewport (the bottom-sheet form
+ // dialog was the wrong shape for a tiny confirm — the user wanted the
+ // mobile confirm to look like the laptop's centered glass card). The
+ // `vx-confirm-modal` class keeps it centered on mobile (overriding the
+ // global modal→bottom-sheet rule); the glass styling is global in
+ // vertex-kit.css. Danger → red OK button.
  return (
- <FormDialog
+ <Modal
  open={open}
  onOk={onOk}
- onClose={onCancel}
- danger={danger}
- suppressSwipeDismiss={danger}
- title={typeof title === 'string' ? title : 'Confirm'}
- >
- {typeof title !== 'string' && (
- <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+ onCancel={onCancel}
+ okText={okText ?? t('ok', 'OK')}
+ cancelText={cancelText ?? t('cancel', 'Cancel')}
+ okButtonProps={{ danger, loading }}
+ confirmLoading={loading}
+ centered
+ width={440}
+ className="vx-confirm-modal"
+ aria-label={ariaLabel ?? (typeof title === 'string' ? title : undefined)}
+ title={
+ <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
  {icon}
  {title}
- </div>
- )}
+ </span>
+ }
+ >
  {description && (
  <Text
  type="secondary"
  role={danger ? 'alert' : undefined}
  aria-live={danger ? 'assertive' : 'polite'}
- style={{ display: 'block', marginTop: 8 }}
+ style={{ display: 'block' }}
  >
  {description}
  </Text>
  )}
- </FormDialog>
+ </Modal>
  );
 };
 

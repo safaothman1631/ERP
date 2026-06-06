@@ -101,7 +101,7 @@ const SectionCard: React.FC<SectionCardProps> = ({
                 width: 36,
                 height: 36,
                 borderRadius: radius.md,
-                background: isDark ? 'rgba(31,111,235,0.16)' : 'rgba(31,111,235,0.10)',
+                background: isDark ? 'rgba(123,97,255,0.16)' : 'rgba(123,97,255,0.10)',
                 color: accentColor[accent],
                 fontSize: 18,
                 flexShrink: 0,

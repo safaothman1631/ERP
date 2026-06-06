@@ -1,0 +1,314 @@
+/* ============================================================================
+ * premium.css — Premium Glass RTL Experience (spec: premium-glass-rtl-experience)
+ *
+ * Additive, token-aligned elevation layer loaded AFTER global.css + polish.css.
+ * It does NOT replace existing rules — it raises every shared surface to one
+ * cohesive glassmorphic, role-accented, motion-rich standard that cascades to
+ * all 295 pages via antd selectors and the `.role-accent-root` accent vars.
+ *
+ * Safety:
+ *   • Scoped under `.role-accent-root` (the AppShell wrapper) where it changes
+ *     accent/chrome, so auth/marketing/platform shells are unaffected.
+ *   • All blur is behind `@supports (backdrop-filter)` with a solid fallback.
+ *   • All motion is killed by reduced-motion.css (loaded later, !important).
+ *   • Accent comes from --role-accent (set per role by RoleAccentProvider).
+ *
+ * Token parity (kept in sync with theme/tokens.ts):
+ *   accent #7B61FF (Vertex violet) · radius lg 12 · easing standard cubic-bezier(0.2,0,0,1)
+ * ========================================================================== */
+
+/* ───────────────────────────── Keyframes ───────────────────────────── */
+@keyframes zoho-shimmer {
+  0%   { background-position: -180% 0; }
+  100% { background-position: 180% 0; }
+}
+@keyframes zoho-sheen {
+  0%   { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
+  18%  { opacity: 0.55; }
+  60%  { opacity: 0; }
+  100% { transform: translateX(220%) skewX(-18deg); opacity: 0; }
+}
+@keyframes zoho-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes zoho-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+@keyframes zoho-pop {
+  0%   { transform: scale(0.96); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ──────────────────────── Role-accent surface vars ───────────────────────
+ * Derive translucent tints from the role accent so glass borders/glows match
+ * whichever role is active. color-mix is already used elsewhere in this repo. */
+.role-accent-root {
+  --rax-accent: var(--role-accent, #7B61FF);
+  --rax-tint-08: color-mix(in srgb, var(--rax-accent) 8%, transparent);
+  --rax-tint-16: color-mix(in srgb, var(--rax-accent) 16%, transparent);
+  --rax-tint-24: color-mix(in srgb, var(--rax-accent) 24%, transparent);
+  --rax-glow: var(--role-glass-glow, 0 12px 40px color-mix(in srgb, var(--rax-accent) 22%, transparent));
+}
+
+/* ───────────────────── Overlay glass (true overlays only) ─────────────────
+ * Dropdowns, selects, popovers, tooltips, notifications, messages. High bg
+ * opacity keeps text crisp (contrast > AA); blur is moderate (no over-blur). */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .role-accent-root .ant-dropdown .ant-dropdown-menu,
+  .role-accent-root .ant-select-dropdown,
+  .role-accent-root .ant-popover-inner,
+  .role-accent-root .ant-picker-panel-container,
+  .role-accent-root .ant-cascader-menus,
+  .role-accent-root .ant-message-notice-content,
+  .role-accent-root .ant-notification-notice {
+    backdrop-filter: blur(18px) saturate(170%);
+    -webkit-backdrop-filter: blur(18px) saturate(170%);
+    background: rgba(255, 255, 255, 0.86) !important;
+    border: 1px solid var(--rax-tint-16) !important;
+    box-shadow: 0 16px 48px rgba(15, 23, 42, 0.14), 0 0 0 1px rgba(255,255,255,0.4) inset !important;
+  }
+  [data-theme="dark"] .role-accent-root .ant-dropdown .ant-dropdown-menu,
+  [data-theme="dark"] .role-accent-root .ant-select-dropdown,
+  [data-theme="dark"] .role-accent-root .ant-popover-inner,
+  [data-theme="dark"] .role-accent-root .ant-picker-panel-container,
+  [data-theme="dark"] .role-accent-root .ant-cascader-menus,
+  [data-theme="dark"] .role-accent-root .ant-message-notice-content,
+  [data-theme="dark"] .role-accent-root .ant-notification-notice {
+    background: rgba(17, 26, 46, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5) !important;
+  }
+  /* Tooltip — smaller, tighter glass */
+  .role-accent-root .ant-tooltip-inner {
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+  }
+}
+
+/* ─────────────────────── Role-accent primary actions ──────────────────────
+ * Make the single primary action carry the active role's color in BOTH modes,
+ * overriding the legacy dark indigo gradient so role distinctness is real.
+ * Excludes disabled/loading so antd's muted states still read correctly. */
+.role-accent-root .ant-btn-primary:not(:disabled):not(.ant-btn-disabled) {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg,
+              var(--rax-accent),
+              color-mix(in srgb, var(--rax-accent) 80%, #000)) !important;
+  border-color: transparent !important;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--rax-accent) 30%, transparent) !important;
+  transition: transform 160ms cubic-bezier(0.2,0,0,1), box-shadow 200ms cubic-bezier(0.2,0,0,1);
+}
+.role-accent-root .ant-btn-primary:not(:disabled):not(.ant-btn-disabled):hover {
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--rax-accent) 40%, transparent) !important;
+  transform: translateY(-1px);
+}
+.role-accent-root .ant-btn-primary:not(:disabled):not(.ant-btn-disabled):active {
+  transform: translateY(0) scale(0.985);
+}
+/* moving sheen highlight on hover */
+.role-accent-root .ant-btn-primary:not(:disabled):not(.ant-btn-disabled)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  inset-inline-start: -40%;
+  width: 40%;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.5), transparent);
+  transform: translateX(-120%) skewX(-18deg);
+  pointer-events: none;
+  opacity: 0;
+}
+.role-accent-root .ant-btn-primary:not(:disabled):not(.ant-btn-disabled):hover::after {
+  animation: zoho-sheen 720ms cubic-bezier(0.2,0,0,1);
+}
+
+/* ─────────────────────────── Focus ring (accent) ──────────────────────────
+ * Tint the focus-visible ring with the active role accent (keeps AA + a11y). */
+.role-accent-root :focus-visible {
+  outline: 2px solid var(--rax-accent);
+  outline-offset: 2px;
+}
+.role-accent-root .ant-input:focus,
+.role-accent-root .ant-input-focused,
+.role-accent-root .ant-input-affix-wrapper-focused,
+.role-accent-root .ant-select-focused .ant-select-selector,
+.role-accent-root .ant-picker-focused {
+  border-color: var(--rax-accent) !important;
+  box-shadow: 0 0 0 3px var(--rax-tint-16) !important;
+}
+
+/* ───────────────────── Active navigation accent indicator ─────────────────── */
+.role-accent-root .ant-menu-light .ant-menu-item-selected,
+.role-accent-root .ant-menu-item-selected {
+  background: var(--rax-tint-08) !important;
+}
+.role-accent-root .ant-menu-item-selected::after {
+  border-inline-end-color: var(--rax-accent) !important;
+}
+.role-accent-root .ant-menu-item-selected .anticon,
+.role-accent-root .ant-menu-item-selected a {
+  color: var(--rax-accent) !important;
+}
+.role-accent-root .ant-tabs-ink-bar { background: var(--rax-accent) !important; }
+.role-accent-root .ant-tabs-tab-active .ant-tabs-tab-btn { color: var(--rax-accent) !important; }
+
+/* ─────────────────────────── Card hover lift ──────────────────────────────
+ * Subtle elevation on interactive cards/KPIs — feels alive, never janky. */
+.role-accent-root .glass-card,
+.role-accent-root .premium-card {
+  transition: transform 180ms cubic-bezier(0.2,0,0,1), box-shadow 220ms cubic-bezier(0.2,0,0,1), border-color 180ms ease;
+}
+.role-accent-root .premium-card:hover,
+.role-accent-root .glass-card.is-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--rax-glow);
+  border-color: var(--rax-tint-24);
+}
+
+/* ─────────────────────────── Skeleton shimmer ─────────────────────────────
+ * Layout-matched skeletons get a soft accent-tinted shimmer (not a spinner). */
+.role-accent-root .ant-skeleton-content .ant-skeleton-title,
+.role-accent-root .ant-skeleton-content .ant-skeleton-paragraph > li,
+.role-accent-root .ant-skeleton-button,
+.role-accent-root .ant-skeleton-input,
+.role-accent-root .premium-skeleton {
+  background: linear-gradient(90deg,
+              rgba(148,163,184,0.12) 25%,
+              var(--rax-tint-16) 37%,
+              rgba(148,163,184,0.12) 63%) !important;
+  background-size: 400% 100% !important;
+  animation: zoho-shimmer 1.4s ease-in-out infinite;
+}
+
+/* ───────────────────────── Entrance utilities ─────────────────────────────
+ * Opt-in classes for non-framer surfaces (CSS-only, reduced-motion-safe). */
+.role-accent-root .premium-reveal { animation: zoho-fade-up 360ms cubic-bezier(0.16,1,0.3,1) both; }
+.role-accent-root .premium-pop    { animation: zoho-pop 240ms cubic-bezier(0.16,1,0.3,1) both; }
+
+/* ─────────────────── Mobile bottom-sheet for overlays (< 640px) ───────────
+ * Dialogs and drawers become reachable bottom sheets / full-width surfaces
+ * with a grab handle and safe-area padding. Touch targets stay >= 44px. */
+@media (max-width: 640px) {
+  .role-accent-root .ant-modal,
+  .ant-modal-root .ant-modal {
+    max-width: 100vw !important;
+    margin: 0 !important;
+    top: auto !important;
+    bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  .ant-modal-root .ant-modal .ant-modal-content {
+    border-radius: 20px 20px 0 0 !important;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+    animation: zoho-fade-up 280ms cubic-bezier(0.16,1,0.3,1);
+  }
+  /* grab handle */
+  .ant-modal-root .ant-modal .ant-modal-content::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(148,163,184,0.45);
+  }
+  .ant-modal-root .ant-modal .ant-modal-close {
+    width: 44px;
+    height: 44px;
+    inset-inline-end: 8px;
+    top: 8px;
+  }
+  /* bottom & right drawers go full-width on phones */
+  .ant-drawer-right .ant-drawer-content-wrapper,
+  .ant-drawer-left .ant-drawer-content-wrapper {
+    max-width: 92vw !important;
+  }
+  .ant-drawer-bottom .ant-drawer-content {
+    border-radius: 20px 20px 0 0 !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* ─────────────────── Solid fallback (no backdrop-filter) ──────────────────── */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .role-accent-root .ant-dropdown .ant-dropdown-menu,
+  .role-accent-root .ant-select-dropdown,
+  .role-accent-root .ant-popover-inner,
+  .role-accent-root .ant-message-notice-content,
+  .role-accent-root .ant-notification-notice {
+    background: #ffffff !important;
+  }
+  [data-theme="dark"] .role-accent-root .ant-dropdown .ant-dropdown-menu,
+  [data-theme="dark"] .role-accent-root .ant-select-dropdown,
+  [data-theme="dark"] .role-accent-root .ant-popover-inner,
+  [data-theme="dark"] .role-accent-root .ant-message-notice-content,
+  [data-theme="dark"] .role-accent-root .ant-notification-notice {
+    background: #111A2E !important;
+  }
+}
+
+/* ─────────────────────────── Premium scrollbar ───────────────────────────── */
+.role-accent-root *::-webkit-scrollbar { width: 10px; height: 10px; }
+.role-accent-root *::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--rax-accent) 28%, transparent);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+.role-accent-root *::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--rax-accent) 44%, transparent);
+  background-clip: padding-box;
+}
+.role-accent-root *::-webkit-scrollbar-track { background: transparent; }
+
+/* ───────── Visible premium cards (REST state) — dashboards, KPIs, sections ─────────
+ * Makes elevation + role accent obvious even before hover, in light AND dark.
+ * Scoped to .premium-card (KpiCard / SectionCard / ChartCard) so dense tables stay clean. */
+.role-accent-root .premium-card.ant-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px !important;
+  border: 1px solid var(--rax-tint-16) !important;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--rax-accent) 7%, #fff) 0%, #fff 48%) !important;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 10px 28px rgba(15,23,42,0.07) !important;
+}
+[data-theme="dark"] .role-accent-root .premium-card.ant-card {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--rax-accent) 18%, #111A2E) 0%, #111A2E 48%) !important;
+  border-color: rgba(255,255,255,0.10) !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.40), 0 10px 28px rgba(0,0,0,0.45) !important;
+}
+/* role-accent top stripe — instantly signals "premium + this role's color" */
+.role-accent-root .premium-card.ant-card::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--rax-accent), color-mix(in srgb, var(--rax-accent) 25%, transparent));
+  z-index: 2;
+}
+.role-accent-root .premium-card.ant-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--rax-glow) !important;
+  border-color: var(--rax-tint-24) !important;
+}
+
+/* Gentle elevation for every other card (no gradient — keeps forms/tables clean). */
+.role-accent-root .ant-card:not(.premium-card) {
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 6px 18px rgba(15,23,42,0.05);
+  transition: transform 180ms cubic-bezier(0.2,0,0,1), box-shadow 220ms cubic-bezier(0.2,0,0,1);
+}
+.role-accent-root .ant-card:not(.premium-card):hover {
+  box-shadow: 0 2px 4px rgba(15,23,42,0.05), 0 12px 28px rgba(15,23,42,0.09);
+}
+
+/* Role-home hero — give the GlassCard a clear accent ring so it reads as the hero. */
+.role-accent-root .glass-card {
+  border: 1px solid var(--rax-tint-16) !important;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 14px 40px color-mix(in srgb, var(--rax-accent) 12%, transparent) !important;
+}

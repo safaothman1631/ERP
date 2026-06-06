@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Descriptions, Tag, Button, Space, DatePicker, Row, Col, message, Form, Input, Select } from 'antd';
+import { Card, Button, Space, DatePicker, Row, Col, message, Form, Input, Select } from 'antd';
 import { EditOutlined, ReloadOutlined, EyeOutlined, EyeInvisibleOutlined, CopyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
@@ -8,6 +8,7 @@ import api from '../../api';
 import dayjs, { Dayjs } from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { FormDialog } from '../../components/responsive/FormDialog';
+import { PageHeader, StatusTag, DetailLayout, SectionCard, KeyValueGrid } from '../../design-system';
 import { LoadingSkeleton } from '../../design-system/LoadingSkeleton';
 import { RelatedDataPanel } from '../../design-system/empty/RelatedDataPanel';
 import { useLoadingState } from '../../hooks/useLoadingState';
@@ -41,7 +42,7 @@ interface Reading {
 const DeviceDetail: React.FC = () => {
  const { id } = useParams<{ id: string }>();
  const { t } = useTranslation();
- const navigate = useNavigate();
+ const _navigate = useNavigate();
  const [form] = Form.useForm();
  const [loading, setLoading] = useState(true);
  const { showSkeleton } = useLoadingState(loading);
@@ -65,7 +66,7 @@ const DeviceDetail: React.FC = () => {
  setLoading(true);
  const res = await api.get(`/api/iot/devices/${id}`);
  setDevice(res.data);
- } catch (err) {
+ } catch (_err) {
  message.error(t('common.load_failed', 'Failed to load'));
  } finally {
  setLoading(false);
@@ -125,12 +126,12 @@ const DeviceDetail: React.FC = () => {
  message.success(t('common.updated', 'Updated'));
  setEditModalVisible(false);
  loadDevice();
- } catch (err) {
+ } catch (_err) {
  message.error(t('common.save_failed', 'Save failed'));
  }
  };
 
- const statusColor = (status: string) => {
+ const statusKind = (status: string) => {
  const map: Record<string, string> = {
  active: 'success',
  inactive: 'default',
@@ -144,14 +145,19 @@ const DeviceDetail: React.FC = () => {
  }
 
  return (
- <div style={{ padding: '24px' }}>
- <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
- <h1>
- {device.name} 
- <Tag color={statusColor(device.status)} style={{ marginLeft: 8 }}>
- {t(`iot.status_${device.status}`, device.status)}
- </Tag>
- </h1>
+ <DetailLayout
+ header={
+ <PageHeader
+ title={device.name}
+ tag={
+ <StatusTag
+ status={statusKind(device.status)}
+ label={t(`iot.status_${device.status}`, device.status)}
+ />
+ }
+ />
+ }
+ toolbar={
  <Space>
  <Button icon={<EditOutlined />} onClick={handleEdit}>
  {t('common.edit', 'Edit')}
@@ -164,30 +170,30 @@ const DeviceDetail: React.FC = () => {
  {t('common.refresh', 'Refresh')}
  </Button>
  </Space>
- </div>
-
- <Card title={t('iot.device_info', 'Device Information')} style={{ marginBottom: 16 }}>
- <Descriptions column={{ xs: 1, sm: 2, md: 3 }}>
- <Descriptions.Item label={t('iot.device_type', 'Type')}>
- {t(`iot.device_type_${device.device_type}`, device.device_type)}
- </Descriptions.Item>
- <Descriptions.Item label={t('iot.location', 'Location')}>
- {device.location || t('common.not_set', 'Not set')}
- </Descriptions.Item>
- <Descriptions.Item label={t('iot.serial_number', 'Serial')}>
- {device.serial_number || t('common.not_set', 'Not set')}
- </Descriptions.Item>
- <Descriptions.Item label={t('iot.api_key', 'API Key')}>
+ }
+ >
+ <SectionCard title={t('iot.device_info', 'Device Information')}>
+ <KeyValueGrid
+ columns={3}
+ items={[
+ { label: t('iot.device_type', 'Type'), value: t(`iot.device_type_${device.device_type}`, device.device_type) },
+ { label: t('iot.location', 'Location'), value: device.location || t('common.not_set', 'Not set') },
+ { label: t('iot.serial_number', 'Serial'), value: device.serial_number || t('common.not_set', 'Not set') },
+ {
+ label: t('iot.api_key', 'API Key'),
+ value: (
  <Space>
- <span style={{ fontFamily: 'monospace', fontSize: 12 }}>
+ <span style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: 12 }}>
  {showApiKey ? device.api_key : '••••••••••••••••••••••••••••••••'}
  </span>
- <Button 
+ <Button
+ size="small"
  icon={showApiKey ? <EyeInvisibleOutlined /> : <EyeOutlined />}
  onClick={() => setShowApiKey(!showApiKey)}
  />
  {showApiKey && (
  <Button
+ size="small"
  icon={<CopyOutlined />}
  onClick={() => {
  navigator.clipboard.writeText(device.api_key || '');
@@ -196,17 +202,16 @@ const DeviceDetail: React.FC = () => {
  />
  )}
  </Space>
- </Descriptions.Item>
- <Descriptions.Item label={t('iot.last_seen', 'Last Seen')}>
- {device.last_seen_at ? dayjs(device.last_seen_at).fromNow() : t('common.never', 'Never')}
- </Descriptions.Item>
- <Descriptions.Item label={t('iot.registered_at', 'Registered')}>
- {dayjs(device.registered_at).format('YYYY-MM-DD HH:mm')}
- </Descriptions.Item>
- </Descriptions>
- </Card>
+ ),
+ span: 2,
+ },
+ { label: t('iot.last_seen', 'Last Seen'), value: device.last_seen_at ? dayjs(device.last_seen_at).fromNow() : t('common.never', 'Never') },
+ { label: t('iot.registered_at', 'Registered'), value: dayjs(device.registered_at).format('YYYY-MM-DD HH:mm') },
+ ]}
+ />
+ </SectionCard>
 
- <Card title={t('iot.latest_readings', 'Latest Readings')} style={{ marginBottom: 16 }}>
+ <SectionCard title={t('iot.latest_readings', 'Latest Readings')}>
  <RelatedDataPanel
  entity="device_reading"
  data={latestReadings}
@@ -219,13 +224,13 @@ const DeviceDetail: React.FC = () => {
  {latestReadings.map(reading => (
  <Col xs={24} sm={12} md={8} key={reading.id} style={{ marginBottom: 8 }}>
  <Card>
- <div style={{ fontSize: 16, fontWeight: 600 }}>
+ <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink-900)' }}>
  {reading.value} {reading.unit || ''}
  </div>
- <div style={{ fontSize: 12, color: '#8c8c8c' }}>
+ <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>
  {reading.metric}
  </div>
- <div style={{ fontSize: 11, color: '#bfbfbf' }}>
+ <div style={{ fontSize: 11, color: 'var(--ink-400)' }}>
  {dayjs(reading.timestamp).fromNow()}
  </div>
  </Card>
@@ -233,9 +238,9 @@ const DeviceDetail: React.FC = () => {
  ))}
  </Row>
  </RelatedDataPanel>
- </Card>
+ </SectionCard>
 
- <Card 
+ <SectionCard
  title={t('iot.telemetry', 'Telemetry')}
  extra={
  <RangePicker
@@ -261,28 +266,28 @@ const DeviceDetail: React.FC = () => {
  <h3>{metric}</h3>
  <ResponsiveChart
  legendItems={[
- { id: metric, labelKey: asTranslationKey(`iot.metric_${metric}`), color: '#1890ff' },
+ { id: metric, labelKey: asTranslationKey(`iot.metric_${metric}`), color: 'var(--accent-500)' },
  ]}
  >
  <LineChart data={data}>
- <CartesianGrid strokeDasharray="3 3" />
- <XAxis 
- dataKey="displayTime" 
- tick={{ fontSize: 11 }}
+ <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+ <XAxis
+ dataKey="displayTime"
+ tick={{ fontSize: 11, fill: 'var(--ink-400)' }}
  />
- <YAxis />
+ <YAxis tick={{ fill: 'var(--ink-400)' }} />
  <Tooltip />
- <Line type="monotone" dataKey="value" stroke="#1890ff" strokeWidth={2} dot={false} />
+ <Line type="monotone" dataKey="value" stroke="var(--accent-500)" strokeWidth={2} dot={false} />
  </LineChart>
  </ResponsiveChart>
  </div>
  ))
  ) : (
- <div style={{ textAlign: 'center', color: '#8c8c8c', padding: '40px 0' }}>
+ <div style={{ textAlign: 'center', color: 'var(--ink-500)', padding: '40px 0' }}>
  {t('iot.no_telemetry', 'No telemetry data for selected time range')}
  </div>
  )}
- </Card>
+ </SectionCard>
 
  <FormDialog
  title={t('iot.edit_device', 'Edit Device')}
@@ -312,7 +317,7 @@ const DeviceDetail: React.FC = () => {
  </Form.Item>
  </Form>
  </FormDialog>
- </div>
+ </DetailLayout>
  );
 };
 

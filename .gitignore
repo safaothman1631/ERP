@@ -91,3 +91,24 @@ odoo-docs-19/
 zoho_books.db
 *.sqlite
 *.sqlite3
+
+# ============================================================
+# Git hygiene (2026-06-03) — CI key foot-guns & committed junk
+# Prevent accidental re-commit of service-account keys, local
+# databases, and stray deploy test files.
+# ============================================================
+*key*.json
+gha-key.json
+*.db
+deploy/TEST*.txt
+
+# Vertex reference kit (design source material — never committed)
+/Vertex Design System/
+
+# pytest coverage data
+**/.coverage
+**/.coverage.*
+
+# temp lint/scratch output
+frontend/TEMPlintout.txt
+**/TEMP*.txt

@@ -1,7 +1,7 @@
 import React from 'react';
 import { OptimizedImage } from '../OptimizedImage';
 import { formatMoney, formatDate } from '../../utils/format';
-import type { CompanyInfo, DocumentLineItem, BaseDocument } from './types';
+import type { CompanyInfo, DocumentLineItem } from './types';
 import type { Language } from '../../utils/language';
 import './PrintTemplate.css';
 

@@ -26,7 +26,7 @@ const Knowledge: React.FC = () => {
  try {
  const res = await api.get('/api/knowledge/articles', { params: { limit: 100 } });
  setArticles(res.data.items || []);
- } catch (error) {
+ } catch (_error) {
  message.error(t('error'));
  } finally {
  setLoading(false);
@@ -37,7 +37,7 @@ const Knowledge: React.FC = () => {
  try {
  const res = await api.get('/api/knowledge/categories', { params: { limit: 100 } });
  setCategories(res.data.items || []);
- } catch {}
+ } catch { /* noop */ }
  };
 
  useEffect(() => {

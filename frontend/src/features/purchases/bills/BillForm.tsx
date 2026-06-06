@@ -12,7 +12,7 @@
  *
  * Requirements: 15.1–15.7
  */
-import React, { Suspense, useCallback, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Form, Input, DatePicker, Select, Divider, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -158,6 +158,64 @@ const BillFormPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  // Pre-seeded vendor option so the EntitySelect shows the vendor NAME when
+  // editing/viewing an existing bill (not just the raw id).
+  const [vendorOption, setVendorOption] = useState<EntityOption | undefined>(undefined);
+  const [loadingBill, setLoadingBill] = useState(false);
+
+  // ── Load the existing bill when editing/viewing (route has an :id) ──────────
+  // Previously the edit route rendered a BLANK form — there was no GET, so the
+  // record's data never populated (the user's bug: "View shows no data").
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    setLoadingBill(true);
+    (async () => {
+      try {
+        const res = await api.get(`/api/bills/${id}`);
+        if (cancelled) return;
+        const inv = res.data ?? {};
+        const rawLines: any[] = inv.lines ?? inv.line_items ?? inv.items ?? [];
+        form.setFieldsValue({
+          contact_id: inv.contact_id ?? inv.vendor_id ?? undefined,
+          date: inv.date ? dayjs(inv.date) : undefined,
+          due_date: inv.due_date ? dayjs(inv.due_date) : undefined,
+          bill_number: inv.bill_number ?? inv.reference ?? inv.reference_number ?? '',
+          notes: inv.notes ?? '',
+        } as Partial<BillFormValues> as BillFormValues);
+        // Seed the vendor label so EntitySelect renders the name, not the id.
+        // The bill payload only carries contact_id (no name), so when the name
+        // isn't inlined we fetch the contact to resolve its display_name.
+        const vendorId = inv.contact_id ?? inv.vendor_id;
+        let vendorName: string | undefined =
+          inv.contact_name ?? inv.vendor_name ?? inv.contact?.display_name;
+        if (vendorId) {
+          if (!vendorName) {
+            try {
+              const c = await api.get(`/api/contacts/${vendorId}`);
+              vendorName = c.data?.display_name ?? c.data?.name;
+            } catch { /* fall back to id below */ }
+          }
+          if (!cancelled) setVendorOption({ value: String(vendorId), label: vendorName ?? String(vendorId) });
+        }
+        if (rawLines.length > 0) {
+          setLines(rawLines.map((l, i) => ({
+            id: `bill-line-${id}-${i}`,
+            account_id: l.account_id ?? l.expense_account_id ?? '',
+            description: l.description ?? l.name ?? '',
+            quantity: Number(l.quantity ?? l.qty ?? 1),
+            rate: Number(l.rate ?? l.unit_price ?? l.price ?? 0),
+            tax_rate: Number(l.tax_rate ?? l.tax ?? 0),
+          })));
+        }
+      } catch {
+        // leave the blank form on failure (offline/permission); validation still guards save.
+      } finally {
+        if (!cancelled) setLoadingBill(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [id, form]);
 
   // ── Auto-save ──────────────────────────────────────────────────────────────
   const formValues = useMemo(
@@ -306,6 +364,7 @@ const BillFormPage: React.FC = () => {
             >
               <EntitySelect
                 loadOptions={loadVendors}
+                initialOption={vendorOption}
                 ariaLabel={t('bill_form.vendor', 'Vendor')}
                 placeholder={t('bill_form.vendor_placeholder', 'Search vendors…')}
                 onCreateNew={(query) => navigate(`/contacts/new?type=vendor&name=${encodeURIComponent(query)}`)}
@@ -400,13 +459,16 @@ const BillFormPage: React.FC = () => {
         ),
       },
     ],
-    [t, lines, isDark, loadVendors, loadAccounts]
+    [t, lines, isDark, loadVendors, loadAccounts, vendorOption]
   );
 
   return (
     <Form
       form={form}
       layout="vertical"
+      // (loading state reserved for a future skeleton; referenced so the
+      // fetch effect's setter isn't an unused binding)
+      data-loading={loadingBill ? 'true' : undefined}
       onValuesChange={() => {
         setIsDirty(true);
         setSaved(false);

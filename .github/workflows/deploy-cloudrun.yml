@@ -8,10 +8,11 @@ on:
   workflow_dispatch:
 
 env:
-  # Canonical production backend: the service the frontend's /api/* rewrite targets
-  # (zoho-erp-backend-i43i2clqva-ww.a.run.app). Was stale (zoho-erp / europe-west1).
+  # Canonical production backend: the service the frontend's /api/* rewrite
+  # targets (zoho-erp-backend-6plfqh2hiq-ew.a.run.app, europe-west1). Keep in
+  # lock-step with deploy/redeploy-backend.ps1 (same region + secrets).
   SERVICE: zoho-erp-backend
-  REGION: me-central1
+  REGION: europe-west1
 
 jobs:
   deploy:
@@ -52,7 +53,7 @@ jobs:
             --max-instances 3 \
             --timeout 300 \
             --env-vars-file cloudrun-deploy-env.yaml \
-            --set-secrets "SECRET_KEY=zoho-secret-key:latest,FIELD_ENCRYPTION_KEY=field-encryption-key:latest"
+            --set-secrets "SECRET_KEY=zoho-secret-key:latest,FIELD_ENCRYPTION_KEY=field-encryption-key:latest,SENTRY_DSN=sentry-dsn:latest"
       - name: Attach VPC + Redis rate-limit (when secret exists)
         continue-on-error: true
         run: |

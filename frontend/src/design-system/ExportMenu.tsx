@@ -57,7 +57,7 @@ const ExportMenuInner: React.FC<ExportMenuProps> = ({
       if (format === 'copy') {
         message.success(t('export.copied', 'Copied to clipboard'));
       }
-    } catch (error) {
+    } catch (_error) {
       message.error(t('export.error', 'Export failed'));
     } finally {
       setLoading(false);

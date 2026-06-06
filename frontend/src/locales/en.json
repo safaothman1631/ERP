@@ -820,6 +820,10 @@
   "deductions": "Deductions",
   "net": "Net",
   "manufacturing": "Manufacturing",
+  "wms": "Warehouse Management",
+  "tms": "Transport Management",
+  "mdm": "Master Data",
+  "bpmn": "Workflow",
   "boms": "Bills of Materials",
   "new_bom": "New BOM",
   "edit_bom": "Edit BOM",
@@ -1972,7 +1976,19 @@
     "tab_read": "Read",
     "mark_all_read": "Mark all as read",
     "empty": "No notifications",
-    "view_all": "View all"
+    "view_all": "View all",
+    "mock": {
+      "new_invoice_title": "New invoice",
+      "new_invoice_body": "INV-000007 is ready to send",
+      "bill_received_title": "Bill received",
+      "bill_received_body": "BILL-000012 was approved",
+      "bank_sync_title": "Bank sync",
+      "bank_sync_body": "7 new matched records",
+      "return_title": "Goods return",
+      "return_body": "Return for SO-22",
+      "new_lead_title": "New lead",
+      "new_lead_body": "New lead in CRM"
+    }
   },
   "quick_create": {
     "title": "Quick create",
@@ -2024,7 +2040,8 @@
     "reset": "Reset",
     "apply": "Apply",
     "save_preset": "Save preset",
-    "active_filters": "Active filters"
+    "active_filters": "Active filters",
+    "remove_filter": "Remove filter"
   },
   "form_layout": {
     "unsaved_changes": "Unsaved changes",
@@ -5372,7 +5389,6 @@
   "einvoice.dashboard.help.step_3": "Fill in the required fields and save your changes.",
   "einvoice.dashboard.help.relates_to.0.label": "Related Section",
   "einvoice.dashboard.help.relates_to.1.label": "Invoices",
-
   "login_title": "Welcome Back",
   "login_subtitle": "Sign in to your account",
   "email_placeholder": "Enter your email",
@@ -5396,7 +5412,6 @@
   "login_hero_title": "ERP System for Iraq",
   "login_hero_subtitle": "Manage your business with ease",
   "login_hero_tagline": "Kurdish, Arabic, English",
-  "welcome_back": "Welcome Back",
   "session_expired": "Session Expired",
   "session_expired_desc": "Please sign in again",
   "modreq_sent": "Module request submitted",
@@ -5577,113 +5592,94 @@
   "qc.subscription.cta": "New subscription",
   "qc.anomaly.title": "No anomalies detected",
   "qc.anomaly.description": "All clear. The system continues to monitor your transactions for unusual activity.",
-
   "qc.action.create_and_select": "Create & Select",
   "qc.action.full_form": "Full form…",
   "qc.action.save_and_add_another": "Save & Add another",
   "qc.action.cancel": "Cancel",
   "qc.confirm_discard": "Discard your changes?",
-
   "qc.errors.permission": "You don't have permission to create this record",
   "qc.errors.validation": "Please review the highlighted fields",
   "qc.success.created": "Created successfully",
   "qc.steps.basic_info": "Basic info",
-
   "empty.permission_denied": "You don't have permission",
   "empty.request_access": "Request access",
   "empty.no_related_data": "No related items yet",
   "empty.no_related_data_description": "When records are added, they'll appear here.",
-
   "qc.customer.title": "Quick create customer",
   "qc.customer.description": "Customers appear in invoices, quotes, and sales orders.",
   "qc.customer.cta": "Add your first customer",
   "qc.customer.empty_title": "No customers yet",
   "qc.customer.empty_description": "Start managing customers by creating your first record.",
-
   "qc.vendor.title": "Quick create vendor",
   "qc.vendor.description": "Vendors are used by bills and purchase orders.",
   "qc.vendor.cta": "Add your first vendor",
   "qc.vendor.empty_title": "No vendors yet",
   "qc.vendor.empty_description": "Organize trade partners by adding your first vendor.",
-
   "qc.tax_rate.title": "Quick create tax rate",
   "qc.tax_rate.description": "Tax rates flow through invoices and bills.",
   "qc.tax_rate.cta": "Add tax rate",
   "qc.tax_rate.empty_title": "No tax rates defined",
   "qc.tax_rate.empty_description": "Set up VAT, GST, or withholding rates to use on documents.",
-
   "qc.expense_category.title": "Quick create expense category",
   "qc.expense_category.description": "Categorize expenses for better reporting.",
   "qc.expense_category.cta": "Add expense category",
   "qc.expense_category.empty_title": "No expense categories",
   "qc.expense_category.empty_description": "Categorize your spending for cleaner reports.",
-
   "qc.equipment_category.title": "Quick create equipment category",
   "qc.equipment_category.description": "Categorize equipment for easier tracking.",
   "qc.equipment_category.cta": "Add equipment category",
   "qc.equipment_category.empty_title": "No equipment categories",
   "qc.equipment_category.empty_description": "Group equipment to streamline maintenance.",
-
   "qc.currency.title": "Quick create currency",
   "qc.currency.description": "Add a currency for international trade.",
   "qc.currency.cta": "Add currency",
   "qc.currency.empty_title": "No additional currencies",
   "qc.currency.empty_description": "Add a currency to transact in different denominations.",
-
   "qc.tag.title": "Quick create tag",
   "qc.tag.description": "Use tags to label records across modules.",
   "qc.tag.cta": "Add tag",
   "qc.tag.empty_title": "No tags yet",
   "qc.tag.empty_description": "Tags help with categorization and search.",
-
   "qc.payment_method.title": "Quick create payment method",
   "qc.payment_method.description": "Define a new payment method for transactions.",
   "qc.payment_method.cta": "Add payment method",
   "qc.payment_method.empty_title": "No payment methods",
   "qc.payment_method.empty_description": "Set up cash, bank, or card methods for payments.",
-
   "qc.item.title": "Quick create item",
   "qc.item.description": "Add a product or service for sales and purchases.",
   "qc.item.cta": "Add your first item",
   "qc.item.empty_title": "No items yet",
   "qc.item.empty_description": "Build your catalog for invoicing and inventory.",
-
   "qc.account.title": "Quick create account",
   "qc.account.description": "Add a new account to your chart of accounts.",
   "qc.account.cta": "Add account",
   "qc.account.empty_title": "No accounts defined",
   "qc.account.empty_description": "Build your chart of accounts to start posting entries.",
-
   "qc.bank_account.title": "Quick create bank account",
   "qc.bank_account.description": "Connect a bank account for cash management.",
   "qc.bank_account.cta": "Add bank account",
   "qc.bank_account.empty_title": "No bank accounts",
   "qc.bank_account.empty_description": "Add your bank account to track inflows and outflows.",
-
   "qc.team.title": "Quick create team",
   "qc.team.description": "Create a team for projects and group work.",
   "qc.team.cta": "Add team",
   "qc.team.empty_title": "No teams yet",
   "qc.team.empty_description": "Group users into teams to streamline collaboration.",
-
   "qc.subscription_plan.title": "Quick create subscription plan",
   "qc.subscription_plan.description": "Add a recurring billing plan for your customers.",
   "qc.subscription_plan.cta": "Add subscription plan",
   "qc.subscription_plan.empty_title": "No subscription plans",
   "qc.subscription_plan.empty_description": "Define monthly or yearly plans for recurring billing.",
-
   "qc.location.title": "Quick create location",
   "qc.location.description": "Define a new warehouse, branch, or sales location.",
   "qc.location.cta": "Add location",
   "qc.location.empty_title": "No locations defined",
   "qc.location.empty_description": "Track inventory and operations across multiple sites.",
-
   "qc.employee.title": "Add employee",
   "qc.employee.description": "Register a new employee in HR.",
   "qc.employee.cta": "Add employee",
   "qc.employee.empty_title": "No employees yet",
   "qc.employee.empty_description": "Register staff to use them in projects, payroll, and leave.",
-
   "fields.name": "Name",
   "fields.full_name": "Full name",
   "fields.phone": "Phone",
@@ -5727,7 +5723,6 @@
   "fields.address": "Address",
   "fields.region": "Region",
   "fields.country": "Country",
-
   "enums.contact_type.customer": "Customer",
   "enums.contact_type.vendor": "Vendor",
   "enums.tax_type.vat": "VAT",
@@ -5760,9 +5755,14 @@
   "enums.billing_period.monthly": "Monthly",
   "enums.billing_period.quarterly": "Quarterly",
   "enums.billing_period.yearly": "Yearly",
-
   "common.retry": "Retry",
   "common.upload_hint": "Click or drag a file here",
   "error.title": "Something went wrong",
-  "error.generic_message": "Please try again in a moment."
+  "error.generic_message": "Please try again in a moment.",
+  "filters": "Filters",
+  "print_list": "Print list",
+  "manage_columns": "Manage columns",
+  "any_status": "Any status",
+  "help.openHelp": "Help & support",
+  "role.current": "Current role: {{role}}"
 }

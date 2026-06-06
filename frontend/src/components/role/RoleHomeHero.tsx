@@ -1,13 +1,12 @@
 import React from 'react';
-import { Button, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import GlassCard from '../glass/GlassCard';
 import { useRoleUx } from '../../hooks/useRoleUx';
 import { useAuthStore } from '../../store';
+import { useIsDark } from '../../hooks/useIsDark';
 import { useGlassMotion } from '../../hooks/useGlassMotion';
-import { fontSize, space } from '../../theme/tokens';
+import { space } from '../../theme/tokens';
 import type { RoleThemeId } from '../../personas/types';
 
 const HERO_COPY: Record<RoleThemeId, { titleKey: string; titleFb: string; subKey: string; subFb: string }> = {
@@ -86,67 +85,179 @@ const HERO_COPY: Record<RoleThemeId, { titleKey: string; titleFb: string; subKey
 };
 
 const RoleHomeHero: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { theme, roleLabel, persona } = useRoleUx();
   const userName = useAuthStore((s) => s.userName);
-  const isDark = useAuthStore((s) => s.theme) === 'dark';
+  const isDark = useIsDark();
   const { page } = useGlassMotion();
   const copy = HERO_COPY[theme.id];
 
+  // Kit dashboard hero: a saturated two-stop accent wash (accent-700 → accent-500
+  // in the kit). Derive both stops from the live role accent so the banner reads
+  // as distinctly "theirs", and deepen the dark stop a touch more in dark mode.
+  const accent = theme.accent;
+  const deepStop = `color-mix(in srgb, ${accent} ${isDark ? 62 : 70}%, #000)`;
+  const heroGradient = `linear-gradient(135deg, ${deepStop} 0%, ${accent} 100%)`;
+
+  // White ink reads correctly on the saturated accent in BOTH themes — this is
+  // why the kit hero uses fixed white tones rather than theme tokens here.
+  const onAccent = '#FFFFFF';
+  const onAccentSoft = 'rgba(255,255,255,0.88)';
+  const onAccentMuted = 'rgba(255,255,255,0.72)';
+
+  const today = new Date().toLocaleDateString(i18n.language === 'ku' ? 'ar-IQ' : 'en-US', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+
+  const primaryActionId = theme.quickActions[0]?.id;
+
   return (
     <motion.div variants={page} initial="initial" animate="animate" style={{ marginBottom: space.lg }}>
-      <GlassCard
-        accent
+      <div
         style={{
+          position: 'relative',
+          overflow: 'hidden',
+          borderRadius: 'var(--radius-xl)',
           padding: space.xl,
-          background: isDark ? theme.heroGradientDark : theme.heroGradientLight,
+          color: onAccent,
+          background: heroGradient,
+          boxShadow: 'var(--shadow-md)',
         }}
       >
-        <Typography.Text
+        {/* Soft luminous orb — kit signature, RTL-safe via logical inset */}
+        <div
+          aria-hidden
           style={{
-            fontSize: fontSize.xs,
-            fontWeight: 700,
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            color: theme.accent,
+            position: 'absolute',
+            top: -60,
+            insetInlineEnd: -30,
+            width: 220,
+            height: 220,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255,255,255,0.25), transparent 70%)',
+            filter: 'blur(30px)',
+            pointerEvents: 'none',
           }}
-        >
-          {roleLabel}
-        </Typography.Text>
-        <Typography.Title level={3} style={{ marginTop: space.xs, marginBottom: space.xs }}>
-          {t('role.home.welcome', 'Welcome back, {{name}}', { name: userName ?? t('user', 'User') })}
-        </Typography.Title>
-        <Typography.Title level={5} style={{ marginTop: 0, fontWeight: 600 }}>
-          {t(copy.titleKey, copy.titleFb)}
-        </Typography.Title>
-        <Typography.Paragraph type="secondary" style={{ marginBottom: theme.quickActions.length ? space.md : 0 }}>
-          {t(copy.subKey, copy.subFb)}
-        </Typography.Paragraph>
-        {theme.quickActions.length > 0 && (
-          <Space wrap>
-            {theme.quickActions.map((action) => (
-              <Button
-                key={action.id}
-                type={action.id === theme.quickActions[0]?.id ? 'primary' : 'default'}
-                onClick={() => navigate(action.route)}
-                style={
-                  action.id === theme.quickActions[0]?.id
-                    ? { background: theme.accent, borderColor: theme.accent }
-                    : undefined
-                }
-              >
-                {t(action.labelKey, action.fallbackLabel)}
-              </Button>
-            ))}
-          </Space>
-        )}
-        {theme.id === 'readonly' && (
-          <Typography.Text type="secondary" style={{ display: 'block', marginTop: space.sm, fontSize: fontSize.sm }}>
-            {t(persona.cannotKeys[0], 'Cannot create or edit records')}
-          </Typography.Text>
-        )}
-      </GlassCard>
+        />
+
+        <div style={{ position: 'relative' }}>
+          {/* Role chip + date row */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: space.sm,
+              fontSize: 'var(--fs-xs)',
+              color: onAccentSoft,
+            }}
+          >
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '2px 10px',
+                borderRadius: 'var(--radius-pill)',
+                background: 'rgba(255,255,255,0.18)',
+                color: onAccent,
+                fontWeight: 600,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {roleLabel}
+            </span>
+            <span>{today}</span>
+          </div>
+
+          {/* Greeting — kit display heading */}
+          <h2
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 'var(--fs-4xl)',
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
+              lineHeight: 1.15,
+              color: onAccent,
+              margin: `${space.sm}px 0 0`,
+            }}
+          >
+            {t('role.home.welcome', 'Welcome back, {{name}}', { name: userName ?? t('user', 'User') })}
+          </h2>
+
+          {/* Role context line */}
+          <div
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 'var(--fs-lg)',
+              fontWeight: 600,
+              color: onAccent,
+              marginTop: space.xs,
+            }}
+          >
+            {t(copy.titleKey, copy.titleFb)}
+          </div>
+
+          <p
+            style={{
+              fontSize: 'var(--fs-base)',
+              color: onAccentSoft,
+              margin: `${space.xs}px 0 0`,
+              maxWidth: 560,
+            }}
+          >
+            {t(copy.subKey, copy.subFb)}
+          </p>
+
+          {theme.quickActions.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: space.sm, marginTop: space.lg }}>
+              {theme.quickActions.map((action) => {
+                const isPrimary = action.id === primaryActionId;
+                return (
+                  <button
+                    key={action.id}
+                    type="button"
+                    onClick={() => navigate(action.route)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 7,
+                      height: 34,
+                      padding: '0 14px',
+                      borderRadius: 'var(--radius-pill)',
+                      border: '1px solid rgba(255,255,255,0.28)',
+                      background: isPrimary ? '#FFFFFF' : 'rgba(255,255,255,0.14)',
+                      color: isPrimary ? accent : onAccent,
+                      fontWeight: 600,
+                      fontSize: 'var(--fs-sm)',
+                      cursor: 'pointer',
+                      transition: 'background var(--dur-fast) var(--ease-standard), transform var(--dur-fast) var(--ease-standard)',
+                    }}
+                  >
+                    {t(action.labelKey, action.fallbackLabel)}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {theme.id === 'readonly' && (
+            <div
+              style={{
+                marginTop: space.sm,
+                fontSize: 'var(--fs-sm)',
+                color: onAccentMuted,
+              }}
+            >
+              {t(persona.cannotKeys[0], 'Cannot create or edit records')}
+            </div>
+          )}
+        </div>
+      </div>
     </motion.div>
   );
 };

@@ -25,7 +25,7 @@ const AutomationRules: React.FC = () => {
  try {
  const res = await api.get('/api/automation/automated-actions', { params: { limit: 100 } });
  setRules(res.data.items || []);
- } catch (error) {
+ } catch (_error) {
  message.error(t('error'));
  } finally {
  setLoading(false);

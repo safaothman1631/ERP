@@ -1,9 +1,8 @@
 import React from 'react';
 import { Steps, type StepsProps } from 'antd';
 
-export interface StepperProps extends StepsProps {
-  // Pass-through wrapper for consistent design-system surface.
-}
+// Pass-through wrapper for consistent design-system surface.
+export type StepperProps = StepsProps;
 
 /**
  * Stepper — Sprint 10 — wraps AntD Steps for consistent DS API.

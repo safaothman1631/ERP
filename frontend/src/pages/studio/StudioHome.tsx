@@ -8,7 +8,7 @@ import {
   ShopOutlined, BankOutlined, InboxOutlined, SettingOutlined,
   AppstoreOutlined,
 } from '@ant-design/icons';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard } from '../../design-system';
 import { space } from '../../theme/tokens';
 import api from '../../api';
 
@@ -16,7 +16,6 @@ interface EntityCard {
   key: string;
   label: string;
   icon: React.ReactNode;
-  color: string;
   customFieldCount?: number;
   hasCustomizations?: boolean;
 }
@@ -28,18 +27,18 @@ const StudioHome: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   const baseEntities: Omit<EntityCard, 'customFieldCount' | 'hasCustomizations'>[] = [
-    { key: 'invoice', label: t('invoices'), icon: <FileTextOutlined />, color: '#6366f1' },
-    { key: 'quote', label: t('quotes'), icon: <FileTextOutlined />, color: '#10b981' },
-    { key: 'contact', label: t('contacts'), icon: <TeamOutlined />, color: '#f59e0b' },
-    { key: 'item', label: t('items'), icon: <ShoppingOutlined />, color: '#ec4899' },
-    { key: 'sales_order', label: t('sales_orders'), icon: <FileTextOutlined />, color: '#8b5cf6' },
-    { key: 'purchase_order', label: t('purchase_orders'), icon: <ShoppingOutlined />, color: '#06b6d4' },
-    { key: 'bill', label: t('bills'), icon: <FileTextOutlined />, color: '#ef4444' },
-    { key: 'lead', label: t('leads'), icon: <TeamOutlined />, color: '#3b82f6' },
-    { key: 'project', label: t('projects'), icon: <ProjectOutlined />, color: '#14b8a6' },
-    { key: 'pos_order', label: t('pos.orders'), icon: <ShopOutlined />, color: '#f97316' },
-    { key: 'journal', label: t('journals'), icon: <BankOutlined />, color: '#64748b' },
-    { key: 'inventory', label: t('inventory'), icon: <InboxOutlined />, color: '#84cc16' },
+    { key: 'invoice', label: t('invoices'), icon: <FileTextOutlined /> },
+    { key: 'quote', label: t('quotes'), icon: <FileTextOutlined /> },
+    { key: 'contact', label: t('contacts'), icon: <TeamOutlined /> },
+    { key: 'item', label: t('items'), icon: <ShoppingOutlined /> },
+    { key: 'sales_order', label: t('sales_orders'), icon: <FileTextOutlined /> },
+    { key: 'purchase_order', label: t('purchase_orders'), icon: <ShoppingOutlined /> },
+    { key: 'bill', label: t('bills'), icon: <FileTextOutlined /> },
+    { key: 'lead', label: t('leads'), icon: <TeamOutlined /> },
+    { key: 'project', label: t('projects'), icon: <ProjectOutlined /> },
+    { key: 'pos_order', label: t('pos.orders'), icon: <ShopOutlined /> },
+    { key: 'journal', label: t('journals'), icon: <BankOutlined /> },
+    { key: 'inventory', label: t('inventory'), icon: <InboxOutlined /> },
   ];
 
   useEffect(() => {
@@ -87,26 +86,27 @@ const StudioHome: React.FC = () => {
         {entities.map((entity) => (
           <Col key={entity.key} xs={24} sm={12} md={8} lg={6}>
             <Card
+              className="vx-card vx-card-h"
               hoverable
               loading={loading}
               onClick={() => handleCardClick(entity.key)}
-              style={{ height: '100%', borderRadius: 12 }}
+              style={{ height: '100%', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)' }}
             >
               <Space direction="vertical" size={space.sm} style={{ width: '100%' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontSize: 32, color: entity.color }}>
+                  <span style={{ width: 44, height: 44, borderRadius: 'var(--radius-md)', background: 'var(--accent-soft)', color: 'var(--accent-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
                     {entity.icon}
-                  </div>
+                  </span>
                   {entity.hasCustomizations && (
                     <Badge status="success" text={t('studio.customized', 'Customized')} />
                   )}
                 </div>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: 16, marginBottom: space.xs }}>
+                  <div style={{ fontWeight: 600, fontSize: 16, marginBottom: space.xs, color: 'var(--ink-900)' }}>
                     {entity.label}
                   </div>
                   <Space size={space.xs} wrap>
-                    <Tag color={entity.color} style={{ margin: 0 }}>
+                    <Tag style={{ margin: 0, background: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--ink-600)' }}>
                       {t('studio.custom_fields_count', { count: entity.customFieldCount || 0 })}
                     </Tag>
                   </Space>
@@ -117,35 +117,35 @@ const StudioHome: React.FC = () => {
         ))}
       </Row>
 
-      <Card style={{ marginTop: space.lg }}>
+      <SectionCard style={{ marginTop: space.lg }}>
         <div style={{ textAlign: 'center', padding: space.lg }}>
-          <AppstoreOutlined style={{ fontSize: 48, color: '#6366f1', marginBottom: space.md }} />
+          <AppstoreOutlined style={{ fontSize: 48, color: 'var(--accent-500)', marginBottom: space.md }} />
           <h3>{t('studio.what_can_you_do', 'What can you do in Studio?')}</h3>
           <Row gutter={[space.md, space.md]} style={{ marginTop: space.md }}>
             <Col xs={24} md={8}>
               <div>
-                <SettingOutlined style={{ fontSize: 24, color: '#10b981' }} />
+                <SettingOutlined style={{ fontSize: 24, color: 'var(--success-500)' }} />
                 <h4>{t('studio.custom_fields', 'Custom Fields')}</h4>
                 <p>{t('studio.custom_fields_desc', 'Add custom fields to any entity')}</p>
               </div>
             </Col>
             <Col xs={24} md={8}>
               <div>
-                <AppstoreOutlined style={{ fontSize: 24, color: '#f59e0b' }} />
+                <AppstoreOutlined style={{ fontSize: 24, color: 'var(--warning-500)' }} />
                 <h4>{t('studio.view_layout', 'View Layout')}</h4>
                 <p>{t('studio.view_layout_desc', 'Control field visibility in forms and lists')}</p>
               </div>
             </Col>
             <Col xs={24} md={8}>
               <div>
-                <ProjectOutlined style={{ fontSize: 24, color: '#ec4899' }} />
+                <ProjectOutlined style={{ fontSize: 24, color: 'var(--accent-500)' }} />
                 <h4>{t('studio.automation', 'Automation')}</h4>
                 <p>{t('studio.automation_desc', 'Create workflows for any entity')}</p>
               </div>
             </Col>
           </Row>
         </div>
-      </Card>
+      </SectionCard>
     </div>
   );
 };

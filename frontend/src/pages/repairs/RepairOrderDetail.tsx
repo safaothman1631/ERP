@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { Card, Button, Descriptions, Space, Tag, Steps, Input, Modal } from 'antd';
+import { Button, Space, Steps, Input, Modal } from 'antd';
 import { message } from '../../utils/message';
 import {
   ArrowLeftOutlined,
@@ -13,8 +13,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
-import { space } from '../../theme/tokens';
+import { PageHeader, DetailLayout, SectionCard, KeyValueGrid, StatusTag } from '../../design-system';
+import type { StatusKind } from '../../design-system';
 
 const RepairOrderDetail: React.FC = () => {
   const { t } = useTranslation();
@@ -118,14 +118,14 @@ const RepairOrderDetail: React.FC = () => {
 
   const getStatusTag = (status?: string) => {
     const s = status || 'received';
-    const colorMap: Record<string, string> = {
-      received: 'blue',
-      diagnosed: 'cyan',
-      in_repair: 'orange',
-      done: 'green',
+    const kindMap: Record<string, StatusKind> = {
+      received: 'info',
+      diagnosed: 'info',
+      in_repair: 'warning',
+      done: 'success',
       delivered: 'default',
     };
-    return <Tag color={colorMap[s] || 'default'}>{t(`repairs.status_${s}`)}</Tag>;
+    return <StatusTag status={kindMap[s] || 'default'} label={t(`repairs.status_${s}`)} />;
   };
 
   const getStepIndex = (status?: string) => {
@@ -154,116 +154,104 @@ const RepairOrderDetail: React.FC = () => {
   ];
 
   return (
-    <div>
-      <PageHeader
-        title={t('repairs.order_detail')}
-        subtitle={order?.customer_name || ''}
-        extra={
-          <Space>
-            <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/repairs/orders')}>
-              {t('back')}
+    <DetailLayout
+      header={
+        <PageHeader
+          title={t('repairs.order_detail')}
+          subtitle={order?.customer_name || ''}
+          tag={order ? getStatusTag(order.status) : undefined}
+        />
+      }
+      toolbar={
+        <Space>
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/repairs/orders')}>
+            {t('back')}
+          </Button>
+          {canDiagnose && (
+            <Button
+              type="primary"
+              icon={<SearchOutlined />}
+              onClick={handleDiagnose}
+              loading={loading}
+            >
+              {t('repairs.diagnose')}
             </Button>
-            {canDiagnose && (
-              <Button
-                type="primary"
-                icon={<SearchOutlined />}
-                onClick={handleDiagnose}
-                loading={loading}
-              >
-                {t('repairs.diagnose')}
-              </Button>
-            )}
-            {canRepair && (
-              <Button
-                type="primary"
-                icon={<ToolOutlined />}
-                onClick={handleRepair}
-                loading={loading}
-              >
-                {t('repairs.start_repair')}
-              </Button>
-            )}
-            {canComplete && (
-              <Button
-                type="primary"
-                icon={<CheckCircleOutlined />}
-                onClick={handleComplete}
-                loading={loading}
-              >
-                {t('repairs.complete')}
-              </Button>
-            )}
-            {canDeliver && (
-              <Button
-                type="primary"
-                icon={<SendOutlined />}
-                onClick={handleDeliver}
-                loading={loading}
-              >
-                {t('repairs.deliver')}
-              </Button>
-            )}
-          </Space>
-        }
-      />
-
+          )}
+          {canRepair && (
+            <Button
+              type="primary"
+              icon={<ToolOutlined />}
+              onClick={handleRepair}
+              loading={loading}
+            >
+              {t('repairs.start_repair')}
+            </Button>
+          )}
+          {canComplete && (
+            <Button
+              type="primary"
+              icon={<CheckCircleOutlined />}
+              onClick={handleComplete}
+              loading={loading}
+            >
+              {t('repairs.complete')}
+            </Button>
+          )}
+          {canDeliver && (
+            <Button
+              type="primary"
+              icon={<SendOutlined />}
+              onClick={handleDeliver}
+              loading={loading}
+            >
+              {t('repairs.deliver')}
+            </Button>
+          )}
+        </Space>
+      }
+    >
       {order && (
         <>
-          <Card style={{ marginBottom: space.md }} loading={loading}>
+          <SectionCard>
             <Steps current={getStepIndex(currentStatus)} items={stepItems} />
-          </Card>
+          </SectionCard>
 
-          <Card title={t('repairs.order_info')} style={{ marginBottom: space.md }} loading={loading}>
-            <Descriptions column={2} bordered>
-              <Descriptions.Item label={t('repairs.customer_name')}>
-                {order.customer_name}
-              </Descriptions.Item>
-              <Descriptions.Item label={t('repairs.status')}>
-                {getStatusTag(order.status)}
-              </Descriptions.Item>
-              <Descriptions.Item label={t('repairs.product')}>
-                {order.product_name || '—'}
-              </Descriptions.Item>
-              <Descriptions.Item label={t('repairs.serial_no')}>
-                {order.serial_no || '—'}
-              </Descriptions.Item>
-              <Descriptions.Item label={t('repairs.issue_description')} span={2}>
-                {order.issue_description}
-              </Descriptions.Item>
-              <Descriptions.Item label={t('repairs.received_at')}>
-                {order.received_at ? dayjs(order.received_at).format('YYYY-MM-DD HH:mm') : '—'}
-              </Descriptions.Item>
-              <Descriptions.Item label={t('repairs.estimated_cost')}>
-                {order.estimated_cost?.toLocaleString()}
-              </Descriptions.Item>
-              <Descriptions.Item label={t('repairs.under_warranty')}>
-                {order.is_under_warranty ? t('yes') : t('no')}
-              </Descriptions.Item>
-              <Descriptions.Item label={t('repairs.assigned_to')}>
-                {order.assigned_to || '—'}
-              </Descriptions.Item>
-            </Descriptions>
-          </Card>
+          <SectionCard title={t('repairs.order_info')}>
+            <KeyValueGrid
+              columns={2}
+              items={[
+                { label: t('repairs.customer_name'), value: order.customer_name },
+                { label: t('repairs.status'), value: getStatusTag(order.status) },
+                { label: t('repairs.product'), value: order.product_name || '—' },
+                { label: t('repairs.serial_no'), value: order.serial_no || '—' },
+                { label: t('repairs.issue_description'), value: order.issue_description, span: 2 },
+                { label: t('repairs.received_at'), value: order.received_at ? dayjs(order.received_at).format('YYYY-MM-DD HH:mm') : '—' },
+                { label: t('repairs.estimated_cost'), value: order.estimated_cost?.toLocaleString() },
+                { label: t('repairs.under_warranty'), value: <StatusTag status={order.is_under_warranty ? 'success' : 'default'} label={order.is_under_warranty ? t('yes') : t('no')} /> },
+                { label: t('repairs.assigned_to'), value: order.assigned_to || '—' },
+              ]}
+            />
+          </SectionCard>
 
           {order.diagnosis_notes && (
-            <Card title={t('repairs.diagnosis_notes')} style={{ marginBottom: space.md }}>
+            <SectionCard title={t('repairs.diagnosis_notes')}>
               <p>{order.diagnosis_notes}</p>
-            </Card>
+            </SectionCard>
           )}
 
           {order.completion_notes && (
-            <Card title={t('repairs.completion_notes')} style={{ marginBottom: space.md }}>
+            <SectionCard title={t('repairs.completion_notes')}>
               <p>{order.completion_notes}</p>
               {order.final_cost !== undefined && (
                 <p>
                   <strong>{t('repairs.final_cost')}:</strong> {order.final_cost?.toLocaleString()}
                 </p>
               )}
-            </Card>
+            </SectionCard>
           )}
         </>
       )}
-    </div>
+    </DetailLayout>
   );
 };
 

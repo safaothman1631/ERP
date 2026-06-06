@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Form, Input, InputNumber, Select, Space, Popconfirm, message as antdMessage } from 'antd';
+import { Button, Form, Input, InputNumber, Select, Space, Popconfirm } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';

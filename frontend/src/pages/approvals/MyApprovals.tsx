@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Button, Form, Input, Tabs, Space, Tag, Card, Select } from 'antd';
+import { Button, Form, Input, Tabs, Space, Select } from 'antd';
 import { message } from '../../utils/message';
 import { CheckOutlined, CloseOutlined, SwapOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
+import { PageHeader, DataTable, StatusTag } from '../../design-system';
+import type { ColumnDef } from '../../design-system/DataTable';
 import { FormDialog } from '../../components/responsive/FormDialog';
 
 const { TextArea } = Input;
@@ -125,16 +126,10 @@ export default function MyApprovals() {
  };
 
  const getStatusTag = (status: string) => {
- const colors: Record<string, string> = {
- pending: 'blue',
- approved: 'green',
- rejected: 'red',
- cancelled: 'default',
- };
- return <Tag color={colors[status] || 'default'}>{t(`approvals.status_${status}`)}</Tag>;
+ return <StatusTag status={status} label={t(`approvals.status_${status}`)} />;
  };
 
- const inboxColumns = [
+ const inboxColumns: ColumnDef<ApprovalRequest>[] = [
  {
  title: t('approvals.doc_type'),
  dataIndex: 'doc_type',
@@ -204,7 +199,7 @@ export default function MyApprovals() {
  },
  ];
 
- const submittedColumns = [
+ const submittedColumns: ColumnDef<ApprovalRequest>[] = [
  {
  title: t('approvals.doc_type'),
  dataIndex: 'doc_type',
@@ -254,27 +249,40 @@ export default function MyApprovals() {
  ];
 
  return (
- <Card title={t('approvals.my_approvals')}>
- <Tabs activeKey={activeTab} onChange={setActiveTab}>
- <Tabs.TabPane tab={`${t('approvals.my_inbox')} (${inboxItems.length})`} key="inbox">
- <ResponsiveTableAdapter
+ <div>
+ <PageHeader title={t('approvals.my_approvals')} />
+ <Tabs
+ activeKey={activeTab}
+ onChange={setActiveTab}
+ items={[
+ {
+ key: 'inbox',
+ label: `${t('approvals.my_inbox')} (${inboxItems.length})`,
+ children: (
+ <DataTable
  columns={inboxColumns}
  dataSource={inboxItems}
  loading={loading}
  rowKey="id"
  pagination={{ pageSize: 20 }}
  />
- </Tabs.TabPane>
- <Tabs.TabPane tab={`${t('approvals.i_submitted')} (${submittedItems.length})`} key="submitted">
- <ResponsiveTableAdapter
+ ),
+ },
+ {
+ key: 'submitted',
+ label: `${t('approvals.i_submitted')} (${submittedItems.length})`,
+ children: (
+ <DataTable
  columns={submittedColumns}
  dataSource={submittedItems}
  loading={loading}
  rowKey="id"
  pagination={{ pageSize: 20 }}
  />
- </Tabs.TabPane>
- </Tabs>
+ ),
+ },
+ ]}
+ />
 
  <FormDialog
  open={actionModal.visible}
@@ -303,6 +311,6 @@ export default function MyApprovals() {
  </Form.Item>
  </Form>
  </FormDialog>
- </Card>
+ </div>
  );
 }

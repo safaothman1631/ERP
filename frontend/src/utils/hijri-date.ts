@@ -115,14 +115,18 @@ export function fromHijri(h: HijriDate): Date | null {
   if (!h || !Number.isFinite(h.year) || !Number.isFinite(h.month) || !Number.isFinite(h.day)) {
     return null;
   }
-  // Binary search in a ±35 day window around the tabular forward estimate.
+  // Linear search around the tabular forward estimate. `toHijri` is exact, so
+  // the date whose conversion equals `h` is guaranteed to exist; we just need a
+  // window wide enough to contain it. The forward estimate below can drift by a
+  // few weeks across the year/month boundaries, so we scan ±90 days (cheap:
+  // ≤181 iterations) to ensure the exact round-trip match is always found.
   // Days since AH 1-1-1 (epoch 622-07-16) ≈ 354.367 × (year - 1) + 30 × (m - 1) + d
   const approxJulianDay = 1948439
     + Math.floor((10631 * (h.year - 1) + 354) / 30)
     + Math.floor((325 * (h.month - 1) + 320) / 11)
     + h.day;
   const center = new Date((approxJulianDay - 2440587.5) * 86400000);
-  for (let off = -35; off <= 35; off += 1) {
+  for (let off = -90; off <= 90; off += 1) {
     const candidate = new Date(center.getTime() + off * 86400000);
     const back = toHijri(candidate);
     if (back && back.year === h.year && back.month === h.month && back.day === h.day) {

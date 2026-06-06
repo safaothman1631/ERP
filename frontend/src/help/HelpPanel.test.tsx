@@ -13,7 +13,7 @@
  */
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { render, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { I18nextProvider } from 'react-i18next';
 
@@ -86,12 +86,14 @@ describe('HelpPanel — render order (R6.3)', () => {
   });
 
   it('renders content in the fixed order: what → why → relatesTo → howSteps', async () => {
-    // Dynamically import to ensure fresh module state
     const { HelpPanel } = await import('./HelpPanel');
 
     const anchorEl = document.createElement('button');
     document.body.appendChild(anchorEl);
 
+    // `sales.invoices` is a real registry entry with BOTH relatesTo (ul) and
+    // howSteps (ol), so the order invariant is asserted against actual content
+    // — no module mocking, hence no cross-file pollution.
     render(
       <TestWrapper>
         <HelpPanel
@@ -153,7 +155,13 @@ describe('HelpPanel — render order (R6.3)', () => {
     expect(relatesToIdx).toBeLessThan(howStepsIdx);
 
     document.body.removeChild(anchorEl);
-  });
+    // Explicit 60 s timeout. This is the heaviest test in the suite: it
+    // dynamically `import()`s the full help-registry chunk (registry +
+    // ResponsiveDialog + the AntD graph), renders the panel, and polls for
+    // async content. In isolation it finishes in a few seconds, but in the
+    // 95-file run the dynamic import competes for I/O and can run long; 60 s
+    // removes the flake without masking a genuine hang.
+  }, 60_000);
 });
 
 describe('HelpPanel — dismissal (R6.7)', () => {

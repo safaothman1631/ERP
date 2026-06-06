@@ -154,7 +154,7 @@ test.describe('EP-5: Class C navigate-with-return-token (Employee)', () => {
     await expect(page.getByText('Sara Newhire')).toBeVisible();
   });
 
-  test('return-token expires after 1 hour and source state is dropped', async ({ page, context }) => {
+  test('return-token expires after 1 hour and source state is dropped', async ({ page, context: _context }) => {
     await page.goto(`/helpdesk/tickets/${TICKET_ID}`);
     await page.getByRole('button', { name: /assign/i }).first().click();
     await page.getByTestId('assigned-to-select').click();

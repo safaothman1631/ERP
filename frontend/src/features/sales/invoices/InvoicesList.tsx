@@ -19,7 +19,7 @@
  */
 
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import { Pagination, Space, Tag } from 'antd';
+import { Pagination, Space } from 'antd';
 import {
   PlusOutlined,
   FileTextOutlined,

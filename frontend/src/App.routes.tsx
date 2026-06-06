@@ -31,7 +31,6 @@ import { useAuthStore } from './store';
 import { readSessionClaims } from './platform/utils/sessionClaims';
 import { postLoginPath } from './platform/utils/postLoginPath';
 import AppLayout from './layouts/AppShell';
-import Login from './pages/Login';
 import PageTransition from './components/PageTransition';
 import LandingPage from './pages/LandingPage';
 import { LoadingSkeleton } from './design-system/LoadingSkeleton';
@@ -55,7 +54,6 @@ const Contacts = lazyWithRetry(() => import('./pages/Contacts'), 'contacts');
 const Items = lazyWithRetry(() => import('./pages/Items'), 'items');
 const ItemForm = lazyWithRetry(() => import('./pages/ItemForm'), 'item-form');
 const Invoices = lazyWithRetry(() => import('./pages/Invoices'), 'invoices');
-const InvoiceForm = lazyWithRetry(() => import('./pages/InvoiceForm'), 'pages-invoice-form');
 const Expenses = lazyWithRetry(() => import('./pages/Expenses'), 'expenses');
 const Accounts = lazyWithRetry(() => import('./pages/Accounts'), 'accounts');
 const Reports = lazyWithRetry(() => import('./pages/Reports'), 'reports');
@@ -103,6 +101,17 @@ const MfgBOMs = lazyWithRetry(() => import('./pages/MfgBOMs'), 'mfg-bo-ms');
 const MfgOrders = lazyWithRetry(() => import('./pages/MfgOrders'), 'mfg-orders');
 const MfgWorkCenters = lazyWithRetry(() => import('./pages/MfgWorkCenters'), 'mfg-work-centers');
 const Companies = lazyWithRetry(() => import('./pages/Companies'), 'companies');
+// Pool 3 §3.5/§3.6 module pages
+const WmsPage = lazyWithRetry(() => import('./pages/wms/WmsPage'), 'wms');
+const TmsPage = lazyWithRetry(() => import('./pages/tms/TmsPage'), 'tms');
+const MdmPage = lazyWithRetry(() => import('./pages/mdm/MdmPage'), 'mdm');
+const BpmnPage = lazyWithRetry(() => import('./pages/bpmn/BpmnPage'), 'bpmn');
+// Pool 4.6 warehouse-backed analytics dashboard
+const AnalyticsDashboard = lazyWithRetry(() => import('./pages/analytics/AnalyticsDashboard'), 'analytics');
+// AI insights dashboard (/api/ai/*)
+const AIInsightsDashboard = lazyWithRetry(() => import('./pages/ai/AIInsightsDashboard'), 'ai-insights');
+// AI predictions dashboard (/api/ai/inventory/* + /api/ai/predict/*)
+const PredictionsDashboard = lazyWithRetry(() => import('./pages/ai/PredictionsDashboard'), 'predictions');
 const ConsolidatedReports = lazyWithRetry(() => import('./pages/ConsolidatedReports'), 'consolidated-reports');
 const BranchesComparison = lazyWithRetry(() => import('./pages/BranchesComparison'), 'branches-comparison');
 const Projects = lazyWithRetry(() => import('./pages/Projects'), 'projects');
@@ -172,6 +181,10 @@ const LoginPage = lazyWithRetry(() => import('./pages/auth/LoginPage'), 'login-p
 // Task 16: Login Page Redesign — features/auth/LoginPage with split-screen, Particles, glass morphism
 const LoginPageRedesign = lazyWithRetry(() => import('./features/auth/LoginPage'), 'auth-login-page');
 const MFAPage = lazyWithRetry(() => import('./pages/auth/MFAPage'), 'mfa-page');
+// Vertex "Slate & Signal" full-kit PROOF — standalone preview at /vertex.
+const VertexProof = lazyWithRetry(() => import('./vertex-proof/VertexProof'), 'vertex-proof-page');
+// Kit list-composition visual harness (public, no-login) — verifies the shared list components.
+const KitPreview = lazyWithRetry(() => import('./pages/KitPreview'), 'kit-preview-page');
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'not-found');
 const ServerError = lazyWithRetry(() => import('./pages/ServerError'), 'server-error');
 // POS Pages
@@ -440,6 +453,9 @@ export const routes: RouteObject[] = [
   { path: '/', element: <LandingRoute /> },
   // Task 16: Login Page Redesign — modern split-screen with Particles, glass morphism, attempt tracking
   { path: '/login', element: <Suspense fallback={FeatureFallback}><PageTransition><LoginPageRedesign /></PageTransition></Suspense> },
+  // Vertex "Slate & Signal" full-kit PROOF — standalone, full-fidelity kit rebuild preview.
+  { path: '/vertex', element: <Suspense fallback={FeatureFallback}><VertexProof /></Suspense> },
+  { path: '/kit-preview', element: <Suspense fallback={FeatureFallback}><KitPreview /></Suspense> },
   { path: '/signup', element: <Suspense fallback={FeatureFallback}><PageTransition><SignUp /></PageTransition></Suspense> },
   { path: '/forgot-password', element: <Suspense fallback={FeatureFallback}><PageTransition><ForgotPassword /></PageTransition></Suspense> },
   { path: '/reset-password', element: <Suspense fallback={FeatureFallback}><PageTransition><ResetPassword /></PageTransition></Suspense> },
@@ -513,7 +529,9 @@ export const routes: RouteObject[] = [
       // Task 18: Modern Items List Page (PageHeader + FilterBar + BulkActionBar + DataTable + Pagination)
       { path: 'items/list', element: <Suspense fallback={FeatureFallback}><ItemsListModern /></Suspense> },
       { path: 'invoices', element: <PageTransition><Invoices /></PageTransition> },
-      { path: 'invoices/new', element: <PageTransition><InvoiceForm /></PageTransition> },
+      // '/invoices/new' now uses the SAME redesigned form as /create and /edit
+      // (the old pages/InvoiceForm was a stale duplicate the primary "New" button hit).
+      { path: 'invoices/new', element: <Suspense fallback={FeatureFallback}><InvoiceFormRedesign /></Suspense> },
       // Task 18: Modern Invoices List Page (PageHeader + FilterBar + BulkActionBar + DataTable + Pagination)
       { path: 'invoices/list', element: <Suspense fallback={FeatureFallback}><InvoicesListModern /></Suspense> },
       // Task 19: Modern Invoice Form (FormLayout + EditableLineItems + useAutoSave + split save)
@@ -525,6 +543,8 @@ export const routes: RouteObject[] = [
       { path: 'credit-notes', element: <PageTransition><CreditNotes /></PageTransition> },
       { path: 'expenses', element: <PageTransition><Expenses /></PageTransition> },
       { path: 'bills', element: <PageTransition><Bills /></PageTransition> },
+      // '/bills/new' (used by CommandPalette + BillsList) previously had no route → 404.
+      { path: 'bills/new', element: <Suspense fallback={FeatureFallback}><BillFormRedesign /></Suspense> },
       // Task 18: Modern Bills List Page (PageHeader + FilterBar + BulkActionBar + DataTable + Pagination)
       { path: 'bills/list', element: <Suspense fallback={FeatureFallback}><BillsListModern /></Suspense> },
       // Task 19: Modern Bill Form (FormLayout + EditableLineItems + useAutoSave + split save)
@@ -607,6 +627,13 @@ export const routes: RouteObject[] = [
       { path: 'mileage', element: <PageTransition><MileageLog /></PageTransition> },
       { path: 'mileage/rates', element: <PageTransition><MileageRates /></PageTransition> },
       { path: 'companies', element: <PageTransition><Companies /></PageTransition> },
+      { path: 'wms', element: <PageTransition><WmsPage /></PageTransition> },
+      { path: 'tms', element: <PageTransition><TmsPage /></PageTransition> },
+      { path: 'mdm', element: <PageTransition><MdmPage /></PageTransition> },
+      { path: 'bpmn', element: <PageTransition><BpmnPage /></PageTransition> },
+      { path: 'analytics', element: <PageTransition><AnalyticsDashboard /></PageTransition> },
+      { path: 'ai-insights', element: <PageTransition><AIInsightsDashboard /></PageTransition> },
+      { path: 'predictions', element: <PageTransition><PredictionsDashboard /></PageTransition> },
       { path: 'reports/consolidated', element: <PageTransition><ConsolidatedReports /></PageTransition> },
       { path: 'reports/branches', element: <PageTransition><BranchesComparison /></PageTransition> },
       // Wave AA: Multi-Entity Management

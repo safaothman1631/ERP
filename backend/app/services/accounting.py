@@ -21,6 +21,9 @@ class AccountingService:
         currency_code: str = "IQD",
         exchange_rate: float = 1.0,
         created_by: str = None,
+        entry_id: str = None,
+        company_id: str = None,
+        emit_event: dict = None,
     ) -> dict:
         """
         Create a balanced double-entry journal entry.
@@ -61,7 +64,10 @@ class AccountingService:
             currency_code=currency_code,
             exchange_rate=exchange_rate,
             created_by=created_by,
+            company_id=company_id,
+            entry_id=entry_id,
             status="posted",
+            emit_event=emit_event,
         )
 
     @staticmethod
@@ -143,6 +149,52 @@ class AccountingService:
             source_id=invoice["id"],
             currency_code=invoice.get("currency_code", "IQD"),
             exchange_rate=float(invoice.get("exchange_rate", 1.0)),
+            entry_id=invoice.get("_je_entry_id"),
+            created_by=invoice.get("created_by"),
+            company_id=invoice.get("company_id"),
+            # Pool 3.3: couple an "invoice.confirmed" event to the JE write so
+            # downstream handlers (e-invoice/inventory/notification) fire once iff
+            # the JE commits. Ignored unless OUTBOX_HOTPATH_ENABLED is on.
+            emit_event={
+                "event_type": "invoice.confirmed",
+                "payload": {
+                    "invoice_id": invoice["id"],
+                    "org_id": org_id,
+                    "invoice_number": invoice.get("invoice_number"),
+                    "total": float(invoice.get("total") or 0),
+                    "contact_id": invoice.get("contact_id"),
+                    "company_id": invoice.get("company_id") or org_id,
+                },
+                "idempotency_key": f"invoice-confirmed:{invoice['id']}",
+            },
+        )
+
+    @staticmethod
+    def create_cogs_journal(org_id: str, source: dict, total_cost: float):
+        """Post Dr COGS / Cr Inventory at cost when goods leave inventory on a
+        sale. Separate from the revenue entry so they reverse independently.
+        Returns None when total_cost <= 0 (nothing stocked). `source` carries
+        id / reference / date / _je_entry_id / created_by for idempotency + audit."""
+        total_cost = round(float(total_cost or 0), 2)
+        if total_cost <= 0:
+            return None
+        ref = source.get("reference") or source.get("id", "")
+        lines = [
+            {"account_id": AccountingService._get_account_by_type(org_id, "cost_of_goods_sold"),
+             "debit": total_cost, "credit": 0, "description": f"COGS - {ref}"},
+            {"account_id": AccountingService._get_account_by_type(org_id, "inventory"),
+             "debit": 0, "credit": total_cost, "description": f"Inventory out - {ref}"},
+        ]
+        return AccountingService.create_journal_entry(
+            org_id=org_id,
+            date=source.get("date") or datetime.utcnow(),
+            lines=lines,
+            description=f"COGS - {ref}",
+            source_type="cogs",
+            source_id=source.get("id"),
+            entry_id=source.get("_je_entry_id"),
+            created_by=source.get("created_by"),
+            company_id=source.get("company_id"),
         )
 
     @staticmethod
@@ -220,7 +272,7 @@ class AccountingService:
             account_id = line.get("account_id") or AccountingService._get_account_by_type(org_id, "cost_of_goods_sold")
             lines.append({
                 "account_id": account_id,
-                "debit": float(line["line_total"]),
+                "debit": float(line.get("line_total") or line.get("total") or line.get("amount") or 0),
                 "credit": 0,
                 "description": line.get("description") or f"پسووڵەی دابینکار {bill['bill_number']}",
             })
@@ -243,6 +295,9 @@ class AccountingService:
             source_id=bill["id"],
             currency_code=bill.get("currency_code", "IQD"),
             exchange_rate=float(bill.get("exchange_rate", 1.0)),
+            entry_id=bill.get("_je_entry_id"),
+            created_by=bill.get("created_by"),
+            company_id=bill.get("company_id"),
         )
 
     @staticmethod

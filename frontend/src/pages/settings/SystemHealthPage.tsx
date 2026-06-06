@@ -46,10 +46,11 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import api from '../../api';
 import { usePermission } from '../../hooks/usePermission';
+import { PageHeader } from '../../design-system';
 
 dayjs.extend(relativeTime);
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -237,7 +238,7 @@ export const RecommendationsPanel: React.FC<RecommendationsPanelProps> = ({
     <Card
       title={
         <Space>
-          <WarningOutlined style={{ color: '#faad14' }} />
+          <WarningOutlined style={{ color: 'var(--warning-500)' }} />
           <span>{t('system_health.recommendations', 'Recommendations')}</span>
         </Space>
       }
@@ -546,7 +547,7 @@ export const BackupHistoryTable: React.FC = () => {
         onRow={(record) => ({
           style:
             record.status === 'failed'
-              ? { backgroundColor: '#fff2f0' }
+              ? { backgroundColor: 'var(--danger-bg)' }
               : undefined,
         })}
         locale={{
@@ -625,32 +626,23 @@ const SystemHealthPage: React.FC = () => {
   }
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div>
       {/* Page header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 24,
-          flexWrap: 'wrap',
-          gap: 12,
-        }}
-      >
-        <Title level={4} style={{ margin: 0 }}>
-          {t('system_health.title', 'System Health')}
-        </Title>
-        <Space>
-          {data && <LastCheckedTimestamp checkedAt={data.checked_at} />}
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={handleRefresh}
-            loading={isLoading}
-          >
-            {t('system_health.refresh', 'Refresh')}
-          </Button>
-        </Space>
-      </div>
+      <PageHeader
+        title={t('system_health.title', 'System Health')}
+        extra={
+          <Space>
+            {data && <LastCheckedTimestamp checkedAt={data.checked_at} />}
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={handleRefresh}
+              loading={isLoading}
+            >
+              {t('system_health.refresh', 'Refresh')}
+            </Button>
+          </Space>
+        }
+      />
 
       {/* Loading skeleton — hidden immediately on error (Requirement 2.2) */}
       {isLoading && !isError && (

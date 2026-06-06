@@ -19,14 +19,14 @@ import { glass, palette } from '../theme/tokens';
  * Requirements: 4.1, 4.4, 4.5, 16.1
  */
 
-const BRAND_GRADIENT = 'linear-gradient(135deg, #1F6FEB 0%, #114393 50%, #0B2F66 100%)';
+const BRAND_GRADIENT = 'linear-gradient(135deg, #7B61FF 0%, #5638D6 50%, #2C1B73 100%)';
 
 const BrandMark: React.FC<{ size?: number }> = ({ size = 40 }) => (
   <svg width={size} height={size} viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <defs>
       <linearGradient id="auth-layout-amg" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="#5B8DEF" />
-        <stop offset="100%" stopColor="#1F6FEB" />
+        <stop offset="0%" stopColor="#9275FF" />
+        <stop offset="100%" stopColor="#7B61FF" />
       </linearGradient>
     </defs>
     <rect x="2" y="2" width="36" height="36" rx="10" fill="url(#auth-layout-amg)" />
@@ -59,7 +59,7 @@ const HeroIllustration: React.FC = () => (
         <feGaussianBlur stdDeviation="20" />
       </filter>
     </defs>
-    <circle cx="320" cy="60" r="50" fill="rgba(91,141,239,0.45)" filter="url(#auth-layout-blur1)" />
+    <circle cx="320" cy="60" r="50" fill="rgba(146,117,255,0.45)" filter="url(#auth-layout-blur1)" />
     <circle cx="80" cy="260" r="60" fill="rgba(22,163,74,0.30)" filter="url(#auth-layout-blur1)" />
     <rect x="60" y="50" width="240" height="160" rx="16" fill="url(#auth-layout-card1)"
       stroke="rgba(255,255,255,0.30)" strokeWidth="1" />
@@ -238,8 +238,8 @@ const cssOverrides = `
   }
   .auth-layout-mesh {
     background:
-      radial-gradient(circle at 20% 30%, #5B8DEF 0%, transparent 38%),
-      radial-gradient(circle at 80% 20%, #1F6FEB 0%, transparent 32%),
+      radial-gradient(circle at 20% 30%, #9275FF 0%, transparent 38%),
+      radial-gradient(circle at 80% 20%, #7B61FF 0%, transparent 32%),
       radial-gradient(circle at 70% 80%, #16A34A 0%, transparent 30%);
     animation: auth-layout-mesh-1 22s ease-in-out infinite;
   }
@@ -334,20 +334,20 @@ const cssOverrides = `
     outline: none !important;
     height: auto !important;
     direction: ltr !important;
-    text-align: left !important;
+    text-align: start !important;
   }
   .auth-input.ant-input-affix-wrapper .ant-input::placeholder {
     direction: ltr !important;
-    text-align: left !important;
+    text-align: start !important;
   }
   .auth-input.ant-input-affix-wrapper:hover {
-    border-color: rgba(31,111,235,0.35) !important;
+    border-color: rgba(123,97,255,0.35) !important;
     box-shadow: none !important;
   }
   .auth-input.ant-input-affix-wrapper:focus,
   .auth-input.ant-input-affix-wrapper-focused {
-    border-color: #1F6FEB !important;
-    box-shadow: 0 0 0 3px rgba(31,111,235,0.12) !important;
+    border-color: #7B61FF !important;
+    box-shadow: 0 0 0 3px rgba(123,97,255,0.12) !important;
     background: #ffffff !important;
     outline: none !important;
   }
@@ -364,18 +364,18 @@ const cssOverrides = `
   }
   /* Auth button */
   .auth-btn.ant-btn {
-    background: linear-gradient(135deg, #1F6FEB 0%, #114393 100%) !important;
+    background: linear-gradient(135deg, #7B61FF 0%, #5638D6 100%) !important;
     border: none !important;
     border-radius: 12px !important;
     font-size: 15px !important;
     font-weight: 600 !important;
     height: 48px !important;
-    box-shadow: 0 6px 16px rgba(31,111,235,0.28) !important;
+    box-shadow: 0 6px 16px rgba(123,97,255,0.28) !important;
     transition: transform .15s, box-shadow .2s !important;
   }
   .auth-btn.ant-btn:hover:not(:disabled) {
     transform: translateY(-1px) !important;
-    box-shadow: 0 10px 24px rgba(31,111,235,0.36) !important;
+    box-shadow: 0 10px 24px rgba(123,97,255,0.36) !important;
     opacity: 1 !important;
   }
 `;
@@ -573,7 +573,7 @@ const s: Record<string, CSSProperties> = {
     lineHeight: 1.7,
   },
   legalLink: {
-    color: '#1F6FEB',
+    color: '#7B61FF',
     fontWeight: 500,
     cursor: 'pointer',
   },

@@ -80,6 +80,29 @@ function laterWins(
   return aId < bId ? 'a' : 'b';
 }
 
+/**
+ * Stable total-order key over a line's CONTENT (non-tombstone) fields. Used
+ * only to break a full LWW tie deterministically so `mergeLine` is commutative
+ * and associative. Excludes `deletedAt`/`deletedBy` on purpose — the tombstone
+ * is merged independently in `mergeLine`.
+ */
+function lineContentKey(l: CartLineRow): string {
+  return JSON.stringify([
+    l.lineId,
+    l.itemId,
+    l.itemName,
+    l.sku ?? null,
+    l.qty,
+    l.unitPrice,
+    l.discountPercent,
+    l.taxRate,
+    l.note ?? null,
+    l.course ?? null,
+    l.qtyUpdatedAt,
+    l.qtyUpdatedBy,
+  ]);
+}
+
 /** Merge a single line. Either side may be undefined (line absent there). */
 export function mergeLine(
   localIn: CartLineRow | undefined,
@@ -94,9 +117,23 @@ export function mergeLine(
   if (!remote) return local;
 
   // 1) Pick the winning side for the quantity / pricing bundle.
-  const qtyWinner =
-    laterWins(local.qtyUpdatedAt, local.qtyUpdatedBy, remote.qtyUpdatedAt, remote.qtyUpdatedBy) ===
-    'a'
+  // On a FULL tie (identical qtyUpdatedAt AND qtyUpdatedBy) `laterWins` returns
+  // 'a' — i.e. whichever argument came first — which makes the merge
+  // argument-order dependent and breaks commutativity/associativity when the
+  // two tied versions differ in other content (note, qty, price…). Break such
+  // ties by a stable order over the CONTENT fields qtyWinner contributes — NOT
+  // the tombstone (`deletedAt`/`deletedBy`), which is merged separately below
+  // and is recomputed at each step, so including it would re-break
+  // associativity (`min` over a total order is commutative AND associative).
+  const fullyTied =
+    local.qtyUpdatedAt === remote.qtyUpdatedAt &&
+    (local.qtyUpdatedBy ?? '') === (remote.qtyUpdatedBy ?? '');
+  const qtyWinner = fullyTied
+    ? lineContentKey(local) <= lineContentKey(remote)
+      ? local
+      : remote
+    : laterWins(local.qtyUpdatedAt, local.qtyUpdatedBy, remote.qtyUpdatedAt, remote.qtyUpdatedBy) ===
+        'a'
       ? local
       : remote;
 
@@ -132,18 +169,21 @@ export function mergeLine(
     }
   }
 
-  // 3) For static identity fields (itemId, itemName, sku) — prefer non-empty
-  // from the qty winner, fall back to the other side. This is conservative;
-  // these fields don't normally change after create.
-  const itemId = qtyWinner.itemId || local.itemId || remote.itemId;
-  const itemName = qtyWinner.itemName || local.itemName || remote.itemName;
-  const sku = qtyWinner.sku ?? local.sku ?? remote.sku;
-
+  // 3) Identity / content fields are taken WHOLESALE from the qty winner.
+  //
+  // We deliberately do NOT fall back to the other side's itemId/itemName/sku.
+  // A field-by-field "prefer winner, else other side" merge is NOT associative:
+  // when the winner's `sku` is empty, the recovered value depends on which
+  // neighbour happens to be `local` at that step, so `(A∘B)∘C` and `A∘(B∘C)`
+  // can disagree (proven by the merge property tests). Because the winner is
+  // selected by a total order (LWW on qtyUpdatedAt → qtyUpdatedBy → stable
+  // content key), copying its fields verbatim makes `mergeLine` a real
+  // semilattice join: commutative, associative, and idempotent.
   const merged: CartLineRow = {
     lineId: qtyWinner.lineId,
-    itemId,
-    itemName,
-    sku,
+    itemId: qtyWinner.itemId,
+    itemName: qtyWinner.itemName,
+    sku: qtyWinner.sku,
     qty: qtyWinner.qty,
     unitPrice: qtyWinner.unitPrice,
     discountPercent: qtyWinner.discountPercent,
@@ -160,11 +200,45 @@ export function mergeLine(
   return merged;
 }
 
+/**
+ * Stable total-order key over a cart's SCALAR (non-line) fields. Used only to
+ * break a full LWW tie deterministically so `mergeCart` is commutative and
+ * associative. Excludes `lines` on purpose — see `mergeCart`.
+ */
+function scalarKey(c: CartRow): string {
+  return JSON.stringify([
+    c.cartId,
+    c.sessionId,
+    c.customer ?? null,
+    c.table ?? null,
+    c.pricelistId ?? null,
+    c.presetId ?? null,
+    c.discountTotal,
+    c.notes,
+    c.updatedAt,
+    c.updatedBy,
+  ]);
+}
+
 /** Merge two carts deterministically. Pure function. */
 export function mergeCart(local: CartRow, remote: CartRow): CartRow {
-  // Cart-level winner for scalar fields
-  const winner =
-    laterWins(local.updatedAt, local.updatedBy, remote.updatedAt, remote.updatedBy) === 'a'
+  // Cart-level winner for scalar fields (notes, customer, table, …).
+  // On a FULL tie (identical updatedAt AND updatedBy) `laterWins` returns 'a' —
+  // i.e. whichever cart was passed first — which makes the merge
+  // argument-order dependent and breaks commutativity/associativity when two
+  // tied carts differ in scalar content. Break such ties by a stable order over
+  // the SCALAR fields only (NOT the lines: lines merge separately and converge,
+  // and intermediate merges carry different line sets, so including them would
+  // re-break associativity). Comparing a scalar-only key makes the winner the
+  // `min` over a total order, which is both commutative and associative.
+  const cartFullyTied =
+    local.updatedAt === remote.updatedAt &&
+    (local.updatedBy ?? '') === (remote.updatedBy ?? '');
+  const winner = cartFullyTied
+    ? scalarKey(local) <= scalarKey(remote)
+      ? local
+      : remote
+    : laterWins(local.updatedAt, local.updatedBy, remote.updatedAt, remote.updatedBy) === 'a'
       ? local
       : remote;
 

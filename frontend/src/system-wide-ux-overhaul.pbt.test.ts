@@ -56,10 +56,6 @@ import {
  * Note: this is the *initial / steady-state* mode rule. Hysteresis on
  * the `â‰¥ 1 â†’ 0` transition is captured by {@link transitionMode}.
  */
-function modeOfSnapshot(recordCount: number): AddGateMode {
-  return recordCount === 0 ? 'mandatory' : 'optional';
-}
-
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Property 4: AddGate monotonicity and transition correctness
 // Validates: Requirements 9.2, 9.3, 9.5, 9.6, 9.7, 10.1
@@ -132,7 +128,7 @@ describe('Property 4: AddGate monotonicity and transition correctness', () => {
           expect(prevCount).toBeGreaterThanOrEqual(1);
           expect(nextCount).toBe(0);
           expect(flow).not.toBeNull();
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+           
           expect(flow!.complete).toBe(false);
 
           const next = transitionMode(prevCount, nextCount, prevMode, flow);
@@ -308,18 +304,7 @@ void nonZeroToZeroTransitionArb;
 // Validates: Requirements 6.3, 7.1, 7.2, 7.3, 8.1, 8.2, 8.5, 8.6, 13.6, 16.4
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-import {
-  sectionIdArb,
-  settingsSectionIdArb,
-  helpEntryArb,
-  settingsHelpEntryArb,
-  allSectionIds,
-  settingsSectionIds,
-  helpRegistry as helpRegistryData,
-  SECTION_IDS as SECTION_IDS_LIST,
-} from './help/__generators__';
-import type { SectionId } from './help/sectionIds';
-
+import { sectionIdArb, settingsSectionIdArb, helpEntryArb, helpRegistry as helpRegistryData, SECTION_IDS as SECTION_IDS_LIST } from './help/__generators__';
 // Load locale files synchronously for property assertions.
 // These are JSON modules resolved by Vitest's Node resolver.
 import enLocale from './locales/en.json';
@@ -387,7 +372,7 @@ describe('Property 3: Help registry coverage (useHelp â†” registry â†”
    */
   it('every helpRegistry entry has all translation keys present and non-empty in en.json', () => {
     fc.assert(
-      fc.property(helpEntryArb, ({ id, entry }) => {
+      fc.property(helpEntryArb, ({ id: _id, entry }) => {
         // what key exists in en.json
         expect(isNonEmptyTranslation(enKeys[entry.what])).toBe(true);
         // why key exists in en.json
@@ -414,7 +399,7 @@ describe('Property 3: Help registry coverage (useHelp â†” registry â†”
    */
   it('every helpRegistry entry has all translation keys present and non-empty in ku.json', () => {
     fc.assert(
-      fc.property(helpEntryArb, ({ id, entry }) => {
+      fc.property(helpEntryArb, ({ id: _id, entry }) => {
         // what key exists in ku.json
         expect(isNonEmptyTranslation(kuKeys[entry.what])).toBe(true);
         // why key exists in ku.json
@@ -941,7 +926,7 @@ describe('Property 5: Responsive invariant â€” no horizontal page overflow'
    */
   it('scrollWidth â‰¤ clientWidth for all (route, viewport, locale) triples', () => {
     fc.assert(
-      fc.property(responsiveTripleArb, ({ route, viewport, locale }: ResponsiveTriple) => {
+      fc.property(responsiveTripleArb, ({ route: _route, viewport, locale }: ResponsiveTriple) => {
         // Set up the simulated environment
         simulateViewport(viewport);
         simulateLocale(locale);
@@ -967,7 +952,7 @@ describe('Property 5: Responsive invariant â€” no horizontal page overflow'
    * This ensures no specific combination is missed by random sampling.
    */
   it('no overflow for the full route Ã— viewport Ã— locale cross-product', () => {
-    for (const route of APP_ROUTES) {
+    for (const _route of APP_ROUTES) {
       for (const viewport of VIEWPORT_WIDTHS) {
         for (const locale of LOCALES) {
           simulateViewport(viewport);
@@ -1913,25 +1898,7 @@ describe('Property 1: i18n key-set parity', () => {
 // Validates: Requirements 11.6, 11.7, 12.1, 12.2, 13.8
 // ─────────────────────────────────────────────────────────────────────────────
 
-import {
-  enLanguagePurityArb,
-  kuLanguagePurityArb,
-  languagePurityScenarioArb,
-  stripProperNouns,
-  stripExemptLatinTokens,
-  containsArabicScript,
-  containsLatinScript,
-  hasCrossScriptViolationEn,
-  hasCrossScriptViolationKu,
-  ARABIC_SCRIPT_REGEX,
-  LATIN_SCRIPT_REGEX,
-  PROPER_NOUNS_SET,
-  enFlat as enFlatP6,
-  kuFlat as kuFlatP6,
-  enKeys as enI18nKeysP6,
-  kuKeys as kuI18nKeysP6,
-  type LanguagePurityScenario,
-} from './i18n/__generators__';
+import { enLanguagePurityArb, kuLanguagePurityArb, languagePurityScenarioArb, containsArabicScript, containsLatinScript, hasCrossScriptViolationEn, hasCrossScriptViolationKu, PROPER_NOUNS_SET, enFlat as enFlatP6, kuFlat as kuFlatP6, enKeys as enI18nKeysP6, kuKeys as kuI18nKeysP6, type LanguagePurityScenario } from './i18n/__generators__';
 
 describe('Property 6: Language purity in rendered text', () => {
   /**
@@ -2222,7 +2189,7 @@ describe('Property 9: Definition-of-Done conjunction (per-route)', () => {
    * returns 'mandatory' (the conservative default) and
    * `deriveInitialMode(n)` for n ≥ 1 returns 'optional'.
    */
-  function assertAddGateCoverage(sectionId: string): void {
+  function assertAddGateCoverage(_sectionId: string): void {
     // The AddGate state machine must be well-defined for this section.
     // With recordCount = 0 (empty section), mode must be 'mandatory'.
     const modeEmpty = deriveInitialMode(0);
@@ -2304,7 +2271,7 @@ describe('Property 9: Definition-of-Done conjunction (per-route)', () => {
    */
   it('DoD conjunction holds for all routes: no overflow ∧ help coverage ∧ AddGate coverage ∧ i18n parity', () => {
     fc.assert(
-      fc.property(routeArb, (route) => {
+      fc.property(routeArb, (_route) => {
         // Condition 1: No horizontal overflow at 320 px for this route
         // Set up the simulated environment for the route
         Object.defineProperty(window, 'innerWidth', {
@@ -2331,9 +2298,16 @@ describe('Property 9: Definition-of-Done conjunction (per-route)', () => {
           assertI18nParity(sectionId);
         }
       }),
-      { numRuns: 150 },
+      // 5 random samples (down from 150). Conditions 2/3/4 (help/AddGate/i18n
+      // coverage) loop over EVERY section and do NOT depend on `_route`, so they
+      // are identical on every iteration — running them 150× was pure repeated
+      // work that starved for CPU and timed out under the full suite's 95-file
+      // parallelism. The `exhaustive` companion below deterministically sweeps
+      // every route in APP_ROUTES, so a handful of random samples here is an
+      // ample smoke check of the random-route path.
+      { numRuns: 5 },
     );
-  });
+  }, 20_000);
 
   /**
    * **Validates: Requirements 18.1, 18.2**
@@ -2343,7 +2317,7 @@ describe('Property 9: Definition-of-Done conjunction (per-route)', () => {
    * This deterministic sweep complements the random-sampling property above.
    */
   it('exhaustive: DoD conjunction holds for every route in APP_ROUTES', () => {
-    for (const route of APP_ROUTES) {
+    for (const _route of APP_ROUTES) {
       // Condition 1: No overflow at 320 px
       Object.defineProperty(window, 'innerWidth', {
         value: 320,
@@ -2361,7 +2335,11 @@ describe('Property 9: Definition-of-Done conjunction (per-route)', () => {
         assertI18nParity(sectionId);
       }
     }
-  });
+    // Explicit 20 s timeout: this deterministic APP_ROUTES × SECTION_IDS sweep
+    // does a lot of synchronous work and can exceed the 5 s default when the
+    // full 95-file suite contends for CPU (it passes in well under a second in
+    // isolation). 20 s is ample headroom without masking a genuine hang.
+  }, 20_000);
 
   /**
    * **Validates: Requirements 18.4, 18.5**

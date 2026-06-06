@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Form, Select, DatePicker, Tag, InputNumber, Input, Popconfirm, Empty, Typography } from 'antd';
+import { Button, Space, Form, Select, DatePicker, Tag, InputNumber, Input, Empty, Typography } from 'antd';
 import { message } from '../utils/message';
-import { PlusOutlined, EyeOutlined, DeleteOutlined, InboxOutlined, PlayCircleOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, EyeOutlined, InboxOutlined, PlayCircleOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import dayjs from 'dayjs';

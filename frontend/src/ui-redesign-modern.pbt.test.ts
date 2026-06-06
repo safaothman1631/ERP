@@ -553,7 +553,7 @@ describe('Property 17: Counter animation duration is within 800–1200ms', () =>
    */
 
   /** Compute counter animation duration for a given value. */
-  function counterDuration(value: number): number {
+  function counterDuration(_value: number): number {
     // The spec says 800–1200ms. A typical implementation uses a fixed duration
     // in this range regardless of the value magnitude.
     // We test that any implementation must return a value in [800, 1200].

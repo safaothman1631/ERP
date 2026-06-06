@@ -15,12 +15,26 @@ import App from './App'
 // translation lands a frame or two later.
 import { initI18n } from './i18n.config'
 initI18n().catch((err) => {
-  // eslint-disable-next-line no-console
+   
   console.warn('[zoho] lazy i18n init failed, falling back to legacy bundle:', err)
   return import('./i18n')
 })
+// Vertex "Slate & Signal" token foundation — the full CSS-variable set + type
+// classes ported from the kit's colors_and_type.css. Loaded FIRST so every layer
+// below (and the ported kit.css in Step 2) resolves from these tokens. The
+// per-role accent ramp is overridden at runtime by vertexCssVars() from App.tsx.
+import './theme/vertex-tokens.css'
 import './global.css'
 import './polish.css'
+// Premium Glass RTL Experience elevation layer (spec: premium-glass-rtl-experience).
+// Loaded after polish.css so its role-accent glass/motion rules take precedence;
+// reduced-motion.css (below) still wins for prefers-reduced-motion users.
+import './theme/premium.css'
+// Vertex "Slate & Signal" component layer — applies the kit's exact component
+// styling (kit.css + shell.jsx) to AntD's real classes. Loaded AFTER premium.css
+// so it reconciles the prior glass embellishments toward the flatter kit look;
+// a11y.css + reduced-motion.css load after, so focus + reduced-motion still win.
+import './theme/vertex-kit.css'
 import './print.css'
 import './a11y.css'
 import './reduced-motion.css'
@@ -42,14 +56,14 @@ try {
   initSentry()
 } catch (err) {
   if (import.meta.env.PROD) throw err
-  // eslint-disable-next-line no-console
+   
   console.warn('[zoho] Sentry not initialized (dev fallback):', err)
 }
 
 try {
   initWebVitals()
 } catch (err) {
-  // eslint-disable-next-line no-console
+   
   console.warn('[zoho] web-vitals init failed:', err)
 }
 
@@ -61,7 +75,7 @@ import('./observability/offline-sync-heartbeat')
     try {
       startOfflineSyncHeartbeat()
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.warn('[zoho] offline-sync heartbeat failed to start:', err)
     }
   })
@@ -136,7 +150,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
       await registerSW()
     } catch (err) {
       // Fallback: legacy registration so we never lose offline coverage.
-      // eslint-disable-next-line no-console
+       
       console.warn('[zoho] Workbox SW unavailable, using legacy fallback:', err)
       navigator.serviceWorker
         .register('/sw.js', { updateViaCache: 'none' })

@@ -36,6 +36,9 @@ opentelemetry-instrumentation-fastapi>=0.48b0
 opentelemetry-exporter-gcp-trace>=1.7.0
 sentry-sdk[fastapi]>=2.20.0
 google-cloud-bigquery>=3.27.0
+# Pool 4.6+ AI assistant: Claude API (lazy-imported; only used when ANTHROPIC_API_KEY is set).
+# Floor is high enough for structured outputs (output_config.format) + system-block cache_control.
+anthropic>=0.69.0,<1.0.0
 # Backend hardening (P4)
 prometheus-client>=0.20.0
 google-cloud-monitoring>=2.20.0
@@ -55,4 +58,5 @@ google-cloud-secret-manager>=2.20.0
 # CI / local tests
 pytest>=8.0.0
 pytest-asyncio>=0.24.0
+pytest-cov>=5,<7
 fakeredis>=2.20.0

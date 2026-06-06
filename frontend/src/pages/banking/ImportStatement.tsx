@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Steps, Card, Upload, Button, Select, Row, Col, Space, Form, Typography, Tag, Alert, message } from 'antd';
+import { Steps, Upload, Button, Select, Row, Col, Space, Form, Typography, Alert, message } from 'antd';
 import { InboxOutlined, CloudUploadOutlined, CheckCircleOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { RcFile } from 'antd/es/upload';
 import api from '../../api';
-import { PageHeader } from '../../design-system';
+import { PageHeader, SectionCard, StatusTag } from '../../design-system';
 import { ResponsiveTableAdapter } from '../../components/responsive/ResponsiveTableAdapter';
 import { ResponsiveForm } from '../../components/responsive/ResponsiveForm';
 
@@ -146,13 +146,13 @@ const ImportStatement: React.FC = () => {
       title: t('amount'), 
       dataIndex: 'amount', 
       key: 'amount',
-      render: (v: number) => <span style={{ color: v >= 0 ? '#52c41a' : '#f5222d' }}>{fmtIQD(v)}</span>
+      render: (v: number) => <span style={{ color: v >= 0 ? 'var(--success-fg)' : 'var(--danger-fg)' }}>{fmtIQD(v)}</span>
     },
-    { 
-      title: t('type'), 
-      dataIndex: 'debit_or_credit', 
+    {
+      title: t('type'),
+      dataIndex: 'debit_or_credit',
       key: 'type',
-      render: (v: string) => <Tag color={v === 'credit' ? 'green' : 'red'}>{t(v)}</Tag>
+      render: (v: string) => <StatusTag status={v === 'credit' ? 'success' : 'error'} label={t(v)} />
     },
   ];
 
@@ -175,7 +175,7 @@ const ImportStatement: React.FC = () => {
         }
       />
 
-      <Card style={{ maxWidth: 900, margin: '0 auto' }}>
+      <SectionCard style={{ maxWidth: 900, margin: '0 auto' }}>
         <Steps current={current} items={steps} style={{ marginBottom: 32 }} />
 
         {current === 0 && (
@@ -187,7 +187,7 @@ const ImportStatement: React.FC = () => {
             accept=".csv,.ofx,.qfx,.sta,.mt940"
           >
             <p className="ant-upload-drag-icon">
-              <InboxOutlined style={{ fontSize: 48, color: '#2563eb' }} />
+              <InboxOutlined style={{ fontSize: 48, color: 'var(--accent-500)' }} />
             </p>
             <p className="ant-upload-text">{t('click_or_drag')}</p>
             <p className="ant-upload-hint">{t('supported_formats')}: CSV, OFX, MT940</p>
@@ -205,12 +205,12 @@ const ImportStatement: React.FC = () => {
               style={{ marginBottom: 16 }}
             />
 
-            <Card title={t('preview_first_rows')} size="small" style={{ marginBottom: 16 }}>
+            <SectionCard title={t('preview_first_rows')} style={{ marginBottom: 16 }}>
               <table style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
                     {csvHeaders.map((h, i) => (
-                      <th key={i} style={{ border: '1px solid #ddd', padding: 4, background: '#f5f5f5' }}>{h}</th>
+                      <th key={i} style={{ border: '1px solid var(--border)', padding: 4, background: 'var(--surface-2)' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -218,13 +218,13 @@ const ImportStatement: React.FC = () => {
                   {csvPreviewRows.map((row, ri) => (
                     <tr key={ri}>
                       {row.map((cell, ci) => (
-                        <td key={ci} style={{ border: '1px solid #ddd', padding: 4 }}>{cell}</td>
+                        <td key={ci} style={{ border: '1px solid var(--border)', padding: 4 }}>{cell}</td>
                       ))}
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </Card>
+            </SectionCard>
 
             <Form layout="vertical">
               <ResponsiveForm layout="single">
@@ -312,10 +312,10 @@ const ImportStatement: React.FC = () => {
               message={t('preview_result')}
               description={
                 <Space direction="vertical">
-                  <Text>{t('format')}: <Tag color="blue">{preview.format.toUpperCase()}</Tag></Text>
+                  <Text>{t('format')}: <StatusTag status="info" label={preview.format.toUpperCase()} /></Text>
                   <Text>{t('total_parsed')}: <strong>{preview.total_parsed}</strong></Text>
-                  <Text>{t('unique_transactions')}: <strong style={{ color: '#52c41a' }}>{preview.unique_count}</strong></Text>
-                  <Text>{t('duplicates_skipped')}: <strong style={{ color: '#f5222d' }}>{preview.duplicate_count}</strong></Text>
+                  <Text>{t('unique_transactions')}: <strong style={{ color: 'var(--success-fg)' }}>{preview.unique_count}</strong></Text>
+                  <Text>{t('duplicates_skipped')}: <strong style={{ color: 'var(--danger-fg)' }}>{preview.duplicate_count}</strong></Text>
                 </Space>
               }
               type="success"
@@ -343,7 +343,7 @@ const ImportStatement: React.FC = () => {
 
         {current === 3 && (
           <div style={{ textAlign: 'center', padding: 32 }}>
-            <CheckCircleOutlined style={{ fontSize: 64, color: '#52c41a', marginBottom: 16 }} />
+            <CheckCircleOutlined style={{ fontSize: 64, color: 'var(--success-fg)', marginBottom: 16 }} />
             <Title level={3}>{t('import_complete')}</Title>
             <Text type="secondary">{t('import_complete_message')}</Text>
             <div style={{ marginTop: 24 }}>
@@ -358,7 +358,7 @@ const ImportStatement: React.FC = () => {
             </div>
           </div>
         )}
-      </Card>
+      </SectionCard>
     </div>
   );
 };

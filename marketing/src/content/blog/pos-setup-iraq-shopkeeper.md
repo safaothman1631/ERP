@@ -97,8 +97,8 @@ The three problems an Iraqi shop will hit:
 For a single-shop owner buying everything in Erbil or Baghdad, you should plan on:
 
 - **Hardware**: IQD 870,000 – 1,710,000 one-time.
-- **Software** (Kurdish ERP Starter plan, billed monthly): IQD 35,000 / month.
-- **Software** (Growth plan if you have a second shop): IQD 135,000 / month.
+- **Software** (Kurdish ERP Starter plan, billed monthly): IQD 30,000 / month.
+- **Software** (Growth plan if you have a second shop): IQD 80,000 / month.
 
 That works out to under USD 30 / month after the hardware investment is paid down — for a system in your own language, with offline support, with WHT and VAT built in, and with e-Fakhata ready for the 2026 mandate.
 

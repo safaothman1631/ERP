@@ -1,9 +1,10 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Card, Row, Col, Statistic } from 'antd';
+import { useEffect, useState, useCallback, type ReactNode } from 'react';
+import { Row, Col } from 'antd';
 import { TeamOutlined, FileProtectOutlined, CalendarOutlined, CheckCircleOutlined, UserOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
+import { PageHeader, KpiCard, type KpiCardProps } from '../design-system';
 import { LoadingSkeleton } from '../design-system/LoadingSkeleton';
 import { InlineError } from '../components/feedback/InlineError';
 import { useLoadingState } from '../hooks/useLoadingState';
@@ -38,23 +39,21 @@ export default function HRDashboard() {
   if (error) return <InlineError onRetry={fetchData} />;
   if (showSkeleton) return <LoadingSkeleton variant="card" />;
 
-  const cards = [
-    { title: t('employees_total'), value: stats?.employees_total ?? 0, icon: <TeamOutlined />, color: '#1677ff', go: '/hr/employees' },
-    { title: t('employees_active'), value: stats?.employees_active ?? 0, icon: <UserOutlined />, color: '#16a34a', go: '/hr/employees?status=active' },
-    { title: t('active_contracts'), value: stats?.active_contracts ?? 0, icon: <FileProtectOutlined />, color: '#8b5cf6', go: '/hr/contracts' },
-    { title: t('pending_time_off'), value: stats?.pending_time_off ?? 0, icon: <CalendarOutlined />, color: '#f59e0b', go: '/hr/time-off' },
-    { title: t('checked_in_today'), value: stats?.checked_in_today ?? 0, icon: <CheckCircleOutlined />, color: '#16a34a', go: '/hr/attendance' },
+  const cards: { title: string; value: number; icon: ReactNode; tone: KpiCardProps['tone']; go: string }[] = [
+    { title: t('employees_total'), value: stats?.employees_total ?? 0, icon: <TeamOutlined />, tone: 'primary', go: '/hr/employees' },
+    { title: t('employees_active'), value: stats?.employees_active ?? 0, icon: <UserOutlined />, tone: 'success', go: '/hr/employees?status=active' },
+    { title: t('active_contracts'), value: stats?.active_contracts ?? 0, icon: <FileProtectOutlined />, tone: 'info', go: '/hr/contracts' },
+    { title: t('pending_time_off'), value: stats?.pending_time_off ?? 0, icon: <CalendarOutlined />, tone: 'warning', go: '/hr/time-off' },
+    { title: t('checked_in_today'), value: stats?.checked_in_today ?? 0, icon: <CheckCircleOutlined />, tone: 'success', go: '/hr/attendance' },
   ];
 
   return (
-    <div style={{ padding: 16 }}>
-      <h2>{t('hr_dashboard')}</h2>
+    <div>
+      <PageHeader title={t('hr_dashboard')} />
       <Row gutter={[16, 16]}>
         {cards.map((c, i) => (
           <Col xs={24} sm={12} lg={6} xl={4} key={i}>
-            <Card hoverable onClick={() => navigate(c.go)} style={{ cursor: 'pointer' }}>
-              <Statistic title={c.title} value={c.value} prefix={<span style={{ color: c.color }}>{c.icon}</span>} styles={{ content: { color: c.color } }} />
-            </Card>
+            <KpiCard title={c.title} value={c.value} icon={c.icon} tone={c.tone} onClick={() => navigate(c.go)} />
           </Col>
         ))}
       </Row>

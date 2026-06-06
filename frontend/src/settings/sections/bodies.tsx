@@ -187,7 +187,7 @@ const GeneralSettings: React.FC = () => {
     api.get('/api/system/settings/general').then(r => {
       if (r.data) form.setFieldsValue(r.data);
     }).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const handleSave = async () => {
@@ -318,7 +318,7 @@ const AppearanceSettings: React.FC = () => {
     api.get('/api/system/settings/appearance').then(r => {
       if (r.data) form.setFieldsValue(r.data);
     }).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [currentTheme, currentLayout]);
 
   const handleSave = async () => {
@@ -333,7 +333,10 @@ const AppearanceSettings: React.FC = () => {
       if (vals.layout && vals.layout !== currentLayout) {
         setLayoutMode(vals.layout);
       }
-      await api.put('/api/system/settings/appearance', vals).catch(() => {});
+      // No inline .catch here: a failed save must propagate to the outer catch
+      // so we show an error (not a false success toast). The API interceptor
+      // also surfaces the specific reason.
+      await api.put('/api/system/settings/appearance', vals);
       message.success(t('success'));
     } catch {
       message.error(t('error'));
@@ -458,7 +461,7 @@ const FeatureFlagsSettings: React.FC = () => {
     }).catch(() => {
       setFlags(DEFAULT_FLAGS);
     }).finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const handleToggle = async (flagKey: string, enabled: boolean) => {
@@ -557,7 +560,7 @@ const ProfileSettings: React.FC = () => {
     setLoading(true);
     api.get('/api/system/profile').then(r => form.setFieldsValue(r.data))
       .catch(() => {}).finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const handleSave = async () => {
@@ -673,7 +676,7 @@ const OrganizationSettings: React.FC = () => {
     setLoading(true);
     api.get('/api/system/organization').then(r => form.setFieldsValue(r.data))
       .catch(() => {}).finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const handleSave = async () => {
@@ -1213,7 +1216,9 @@ const NotificationSettings: React.FC = () => {
 
   const handleTest = async (channel: NotifChannel) => {
     try {
-      await api.post('/api/system/notification-preferences/test', { channel }).catch(() => {});
+      // No inline .catch: if the test send fails, fall through to the catch
+      // below ("queued") instead of falsely reporting it as sent.
+      await api.post('/api/system/notification-preferences/test', { channel });
       message.success(t('test_sent', `Test ${channel} notification sent`));
     } catch {
       message.info(t('test_queued', 'Test notification queued'));
@@ -1475,7 +1480,7 @@ const NotificationSettings: React.FC = () => {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.md }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: space.md }}>
-                      <div style={{ width: 36, height: 36, borderRadius: radius.md, background: 'rgba(31,111,235,0.10)', color: palette.primary500, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: radius.md, background: 'rgba(123,97,255,0.10)', color: palette.primary500, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
                         {ch.icon}
                       </div>
                       <div>
@@ -1646,7 +1651,7 @@ const ModulesSettings: React.FC = () => {
   const enabled = enabledModules
     ? (enabledModules.map(k => MODULES.find(m => m.key === k)).filter(Boolean) as typeof MODULES)
     : null;
-  const pool = license.allowedModules
+  const pool = license?.allowedModules
     ? license.allowedModules.map(k => MODULES.find(m => m.key === k)).filter(Boolean) as typeof MODULES
     : null;
 
@@ -2208,7 +2213,7 @@ const InvoiceTemplates: React.FC = () => {
               ]}
             />
           </Form.Item>
-          <Form.Item label="Colors" name="colors"><Input placeholder="#1677ff" /></Form.Item>
+          <Form.Item label="Colors" name="colors"><Input placeholder="#7B61FF" /></Form.Item>
           <Form.Item label={t('show_logo')} name="show_logo" valuePropName="checked"><Switch /></Form.Item>
           <Form.Item label={t('footer_text')} name="footer_text"><Input.TextArea rows={2} /></Form.Item>
           </ResponsiveForm>
@@ -2229,7 +2234,7 @@ const ReminderSettings: React.FC = () => {
     setLoading(true);
     api.get('/api/system/reminder-settings').then(r => form.setFieldsValue(r.data))
       .catch(() => {}).finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const handleSave = async () => {
@@ -2481,7 +2486,7 @@ const EmailSettings: React.FC = () => {
       r.data.forEach((s: {key: string; value: string}) => { vals[s.key] = s.value; });
       form.setFieldsValue(vals);
     }).catch(() => {}).finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const handleSave = async () => {
@@ -2644,7 +2649,7 @@ const ActivityLog: React.FC = () => {
       .catch(() => {}).finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchData(); }, [page, actionFilter, entityFilter, dateRange]); // eslint-disable-line
+  useEffect(() => { fetchData(); }, [page, actionFilter, entityFilter, dateRange]);  
 
   return (
     <SectionCard
@@ -2773,7 +2778,7 @@ const SystemInfo: React.FC = () => {
                 width: 32, height: 32,
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 borderRadius: radius.sm,
-                background: 'rgba(31,111,235,0.10)',
+                background: 'rgba(123,97,255,0.10)',
                 color: palette.primary500,
               }}>
                 {it.icon}
@@ -2905,7 +2910,7 @@ function useSettingsBag<T extends Record<string, unknown>>(category: string, def
     } finally {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [category]);
 
   useEffect(() => { load(); }, [load]);
@@ -3202,7 +3207,7 @@ type BrandingBag = { logo_url: string; logo_dark_url: string; favicon_url: strin
 const BrandingSettings: React.FC = () => {
   const { t } = useTranslation();
   const { values, setValue, save, dirty, saving, loading } = useSettingsBag<BrandingBag>('branding', {
-    logo_url: '', logo_dark_url: '', favicon_url: '', primary_color: '#1F6FEB', accent_color: '#22C55E',
+    logo_url: '', logo_dark_url: '', favicon_url: '', primary_color: '#7B61FF', accent_color: '#22C55E',
     font_family: 'Inter', document_theme: 'modern', email_theme: 'modern', login_bg_url: '',
   });
   return (
