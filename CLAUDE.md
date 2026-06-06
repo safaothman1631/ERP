@@ -1004,3 +1004,17 @@ consolidation-ـی GL-based: هەر JE بە `company_id` تاگ دەکرێت (de
 - **چارەسەر:** `createHandlerBoundToURL('index.html')` وەک handler (shell-ـی precache-کراو خزمەت دەکات) + `denylist: [/^\/api\//, /^\/sw\.js$/, /^\/manifest\.webmanifest$/]`. SW پێشتر `skipWaiting()` + `clients.claim()`-ـی هەبوو → براوزەری بەکارهێنەران خۆکارانە بۆ SW-ـی نوێ نوێ دەبنەوە لە سەردانی داهاتوو.
 - **چێک/تێست:** tsc 0 · build exit 0 · dist/sw.js پشتڕاستکرا (createHandlerBoundToURL ٢×، پاترۆنی boolean-ـی کۆن ٠).
 - **Deploy + پشتڕاستی زیندوو (frontend-only — ٠ backend):** Vercel `erpiq-frontend-2ffvdi4g0`. live `/sw.js` فیکسەکەی تێدایە (createHandlerBoundToURL ٢×، پاترۆنی کۆن ٠). **Chrome:** ڕاستەوخۆ `/signup` → فۆڕم render دەبێت (پێشتر error)، ڕاستەوخۆ `/login` → فۆڕمی login (email+password+sign-in) render دەبێت. کۆمیت `8477774` + push. (تێبینی: screenshot-ـی /login بەهۆی particle/glass animation timeout دەبێت — سنووری tooling، بە `find` پشتڕاستکرا.)
+
+### 2026-06-04 — fix(auth): login/register بەتەواوی چاککرا (٤ کێشە، Chrome-verified، deployed) 🔴 باگی گەورە
+
+داوای بەکارهێنەر: «هیچ بچوکترین کێشەی نەبی» لە login/register. تاقیکردنەوەی زیندووی Chrome ٤ کێشەی دۆزییەوە — یەکێکیان باگی گەورەی پێش-بوونیار بوو کە **هەموو یوزەرە نوێیەکانی لە login بلۆک دەکرد**.
+
+- **#1 login شکست → پەڕە refresh دەبوو:** `api.ts` interceptor لەسەر هەر 401ـێک `window.location.href='/login'` (reload) دەکرد — تەنانەت 401-ـی credential-ـی هەڵە. → چاکرا: 401 لە endpoint-ـی credential (login/register/google/forgot/reset) inline پیشان دەدرێت؛ تەنها 401-ـی request-ـی authenticated (session expiry) redirect دەکات.
+- **#2 register → دەچووە login، هیچ نەدەردەکەوت:** `store.ts::loginSecure` هەموو فیلد لە localStorage دادەنا **جگە لە `token`** — بەڵام request interceptor token لە localStorage دەخوێنێتەوە → یەکەم authed call پاش register 401 → bounce بۆ login. → چاکرا: loginSecure ئێستا token-یش دادەنێت.
+- **#3 دیالۆگی دڵنیایی نەبوو:** register بێدەنگ redirect دەکرد. → زیادکرا: شاشەی «Account created 🎉» (VertexAuthShell `done='created'`) لەگەڵ email + دوگمەی «Continue to setup» → onboarding.
+- **#4 🔴 register → login کار نەدەکرد (باگی ڕەگ):** `UserRepository._ENCRYPTED_FIELDS` فیلدی `email`-ـی تێدابوو → یوزەری نوێ email-ـی بە **Fernet (non-deterministic)** encrypt دەکرا، بەڵام login/register/forgot/find_by_email هەمووی بە `where("email","==",plaintext)` دەگەڕێن → هەرگیز ناگونجێت → «ئیمەیڵ یان وشەی نهێنی هەڵەیە». دیمۆ-یوزەرەکان plaintext بوون بۆیە کاریان دەکرد. → چاکرا: `email` لە encrypt لابرا (phone/mobile/totp_secret/backup_codes encrypted دەمێننەوە). + نۆرماڵایزی email (trim+lowercase) لە frontend (login+register) و backend (register store/check + login lookup) بۆ یەکسانی case.
+
+- **تاقیکردنەوە:** tsc 0 · frontend build 0 · 67 frontend auth/store + 145 backend crypto/user/auth تێست. **API round-trip زیندوو:** register HTTP 200 → login HTTP 200 (LOGIN OK). **Chrome UI زیندوو:** register → شاشەی «Account created» → Continue → onboarding (نەکەوتە login)؛ login بە هەمان creds → **dashboard «Welcome back, API QA»**. login-ـی هەڵە → banner-ـی inline بێ refresh.
+- **Deploy:** frontend Vercel `erpiq-frontend-g2920dn5g`؛ backend Cloud Run `00016-fcf` (interceptor/loginSecure/normalize) + `00017-knt` (email-encryption fix). کۆمیت `e15b6a0`+`5a29e2e`+`d3de8c9`. ئەکاونتە تاقیکردنەوەکان پاککرانەوە (دیمۆ-یوزەرەکان دەستلێنەدراو).
+
+**تێبینی ئاسایش:** email-at-rest encryption هەرگیز بۆ login کاری نەدەکرد (هیچ یوزەرێکی ڕاستەقینە email-ـی encrypted-ـی کارای نەبوو). بۆ گەڕاندنەوەی (ئیختیاری داهاتوو): deterministic lookup index (مثل `email_hash` query بکرێت لەبری ciphertext).
