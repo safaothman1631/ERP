@@ -159,7 +159,7 @@ const LoginPage: React.FC = () => {
       setErrorMsg(null);
 
       try {
-        const res = await api.post('/api/auth/login', { email: values.email, password: values.password });
+        const res = await api.post('/api/auth/login', { email: values.email.trim().toLowerCase(), password: values.password });
 
         // Success — clear attempt state
         clearAttemptState();

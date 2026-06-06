@@ -37,31 +37,45 @@ const RegisterPage: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [registered, setRegistered] = useState(false);
+  const [createdEmail, setCreatedEmail] = useState('');
 
-  // JWT storage: access token in memory (Zustand store), refresh token is set
-  // as an httpOnly cookie by the backend — we never touch it client-side.
-  const applySession = (data: AuthSession) => {
+  // On success we establish the session (the fixed `loginSecure` now writes the
+  // access token to localStorage, so authenticated requests work) and then show
+  // an explicit "account created" confirmation screen — instead of silently
+  // redirecting (which, combined with the missing token, used to bounce the user
+  // straight back to /login as if nothing happened).
+  const applySession = (data: AuthSession, email: string) => {
     loginSecure(data.access_token, data.user_id, data.org_id, data.user_name, data.role);
+    setCreatedEmail(email);
+    setRegistered(true);
+  };
+
+  // "Continue to setup" on the confirmation screen → onboarding (authenticated).
+  const handleContinue = () => {
     markFreshSignup();
     navigate('/onboarding');
   };
 
   // ── Email + password registration ──
   const handleRegister = async ({ businessName, fullName, email, password }: AuthSubmitValues) => {
+    // Normalize the email (trim + lowercase) so register and a later login look
+    // the email up identically — no "user not found" from a stray capital letter.
+    const cleanEmail = email.trim().toLowerCase();
     // Business name is optional: an individual registering for themselves can
     // leave it empty, and we name their workspace after them (full name, then
     // email local-part as a last resort). Only the person's name is required.
-    const orgName = businessName.trim() || fullName.trim() || email.split('@')[0];
+    const orgName = businessName.trim() || fullName.trim() || cleanEmail.split('@')[0];
     setLoading(true);
     setErrorMsg(null);
     try {
       const res = await api.post('/api/v1/auth/register', {
         org_name: orgName,
-        user_name: fullName.trim() || email.split('@')[0],
-        email,
+        user_name: fullName.trim() || cleanEmail.split('@')[0],
+        email: cleanEmail,
         password,
       });
-      applySession(res.data);
+      applySession(res.data, cleanEmail);
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
       if (detail === 'ئەم ئیمەیڵە پێشتر تۆمار کراوە') {
@@ -86,7 +100,7 @@ const RegisterPage: React.FC = () => {
         id_token: idToken,
         org_name: orgName,
       });
-      applySession(res.data);
+      applySession(res.data, (values.email || '').trim().toLowerCase());
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
       if (detail === 'ئەم ئیمەیڵە پێشتر تۆمارکراوە' || detail === 'ئەم ئیمەیڵە پێشتر تۆمار کراوە') {
@@ -106,6 +120,9 @@ const RegisterPage: React.FC = () => {
       mode="signup"
       loading={loading}
       error={errorMsg}
+      done={registered ? 'created' : undefined}
+      createdEmail={createdEmail}
+      onContinue={handleContinue}
       onSubmit={handleRegister}
       onGoogleToken={handleGoogleRegister}
       onGoogleError={(err) => {

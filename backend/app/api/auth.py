@@ -144,8 +144,11 @@ def login(request: Request, data: LoginRequest):
     from app.firebase_client import get_db
     db = get_db()
     user_data = None
+    # Normalize the email (trim + lowercase) so login matches a registration that
+    # stored the same address in a different case — register normalizes identically.
+    login_email = (data.email or "").strip().lower()
     try:
-        users_ref = db.collection("users").where("email", "==", data.email).limit(1).stream()
+        users_ref = db.collection("users").where("email", "==", login_email).limit(1).stream()
         for doc in users_ref:
             user_data = {"id": doc.id, **doc.to_dict()}
             break
@@ -418,8 +421,13 @@ def register(request: Request, data: RegisterRequest):
     from app.firebase_client import get_db
     db = get_db()
 
+    # Normalize the email (trim + lowercase) so it is stored and looked up
+    # consistently — a later login normalizes identically, so register→login
+    # always matches regardless of how the address was capitalised.
+    reg_email = (data.email or "").strip().lower()
+
     # Check if email already exists
-    existing = list(db.collection("users").where("email", "==", data.email).limit(1).stream())
+    existing = list(db.collection("users").where("email", "==", reg_email).limit(1).stream())
     if existing:
         raise HTTPException(status_code=400, detail="ئەم ئیمەیڵە پێشتر تۆمارکراوە")
 
@@ -436,7 +444,7 @@ def register(request: Request, data: RegisterRequest):
     user = user_repo.create({
         "id": user_id,
         "name": data.user_name,
-        "email": data.email,
+        "email": reg_email,
         "password_hash": hash_password(data.password),
         "role": "admin",
         "is_active": True,

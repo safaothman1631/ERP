@@ -275,6 +275,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   loginSecure: (token, userId, orgId, userName, userRole) => {
+    // The access token MUST be in localStorage: the axios request interceptor
+    // (api.ts) reads `localStorage.getItem('token')` to attach the Authorization
+    // header. Without this, every authenticated request right after register/MFA
+    // had no token → 401 → the response interceptor bounced to /login (so a
+    // successful registration looked like it "did nothing and went to login").
+    localStorage.setItem('token', token);
     localStorage.setItem('userId', userId);
     localStorage.setItem('orgId', orgId);
     localStorage.setItem('userName', userName);

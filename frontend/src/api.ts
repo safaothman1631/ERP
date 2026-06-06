@@ -70,11 +70,22 @@ api.interceptors.response.use(
     const status = error.response.status;
 
     if (status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('userId');
-      localStorage.removeItem('orgId');
-      localStorage.removeItem('userName');
-      window.location.href = '/login';
+      // A 401 from a credential-submission endpoint (login / register / google /
+      // forgot / reset) means "wrong credentials" or "bad token" — the auth page
+      // shows that inline. It must NOT trigger a full-page redirect/reload, which
+      // previously wiped the inline error and looked like the page "refreshed" on
+      // a failed login. Only a 401 on an *authenticated* request (genuine session
+      // expiry) clears the session and bounces to /login.
+      const reqUrl = error.config?.url || '';
+      const isCredentialAttempt =
+        /\/(auth|v1\/auth)\/(login|register|firebase-login|firebase-register|forgot-password|reset-password)\b/.test(reqUrl);
+      if (!isCredentialAttempt) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('orgId');
+        localStorage.removeItem('userName');
+        window.location.href = '/login';
+      }
     } else if (status === 403) {
       message.error(i18n.t('error_forbidden'));
     } else if (status === 404) {

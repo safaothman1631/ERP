@@ -43,8 +43,13 @@ export interface VertexAuthShellProps {
   error?: React.ReactNode;
   /** Override the submit button label (e.g. "Account locked"). */
   submitLabel?: string;
-  /** Show the post-submit success screen: 'sent' (forgot) | 'success' (reset). */
-  done?: 'sent' | 'success';
+  /** Show the post-submit success screen: 'sent' (forgot) | 'success' (reset) |
+   *  'created' (signup — confirms the account was created). */
+  done?: 'sent' | 'success' | 'created';
+  /** Email to show on the signup "created" confirmation screen. */
+  createdEmail?: string;
+  /** Continue handler for the signup "created" screen (→ onboarding). */
+  onContinue?: () => void;
   onSubmit: (values: AuthSubmitValues) => void;
   /** Resend handler for the forgot "Check your email" screen. */
   onResend?: () => void;
@@ -109,7 +114,7 @@ function pwScore(pw: string): number {
 
 // ─── Shell ───────────────────────────────────────────────────────────────────
 const VertexAuthShell: React.FC<VertexAuthShellProps> = ({
-  mode, loading = false, disabled = false, error, submitLabel, done,
+  mode, loading = false, disabled = false, error, submitLabel, done, createdEmail, onContinue,
   onSubmit, onResend, onGoogleToken, onGoogleError,
 }) => {
   const { i18n } = useTranslation();
@@ -311,6 +316,26 @@ const VertexAuthShell: React.FC<VertexAuthShellProps> = ({
               <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ink-900)', margin: 0 }}>{tr('Password reset', 'تێپەڕەوشە ڕێکخرایەوە', 'تمت إعادة التعيين')}</h1>
               <p style={{ fontSize: 14, color: 'var(--ink-500)', margin: '8px 0 24px', lineHeight: 1.6 }}>{tr('Your password has been updated. You can now sign in.', 'تێپەڕەوشەکەت نوێکرایەوە. ئێستا دەتوانیت بچیتە ژوورەوە.', 'تم تحديث كلمة المرور. يمكنك تسجيل الدخول الآن.')}</p>
               <Link to="/login" className="vx-btn vx-btn-accent vx-btn-lg" style={{ width: '100%' }}>{tr('Sign in', 'چوونەژوورەوە', 'تسجيل الدخول')}</Link>
+            </div>
+          )}
+
+          {/* ---------- DONE: account created (signup confirmation) ---------- */}
+          {signup && done === 'created' && (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ width: 60, height: 60, borderRadius: 16, background: 'var(--success-bg)', color: 'var(--success-fg)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}><Icon name="checkCircle" size={30} /></div>
+              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 25, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--ink-900)', margin: 0 }}>{tr('Account created 🎉', 'هەژمارەکەت دروستکرا 🎉', 'تم إنشاء الحساب 🎉')}</h1>
+              <p style={{ fontSize: 14, color: 'var(--ink-500)', margin: '10px 0 6px', lineHeight: 1.6 }}>
+                {tr('Your account is ready', 'هەژمارەکەت ئامادەیە', 'حسابك جاهز')}
+                {createdEmail ? <> — <b style={{ color: 'var(--ink-700)' }} dir="ltr">{createdEmail}</b></> : null}.
+              </p>
+              <p style={{ fontSize: 13.5, color: 'var(--ink-500)', margin: '0 0 24px', lineHeight: 1.6 }}>
+                {tr('You can sign in any time with this email and password.',
+                  'هەر کاتێک دەتوانیت بە هەمان ئیمەیڵ و تێپەڕەوشە بچیتە ژوورەوە.',
+                  'يمكنك تسجيل الدخول في أي وقت بهذا البريد وكلمة المرور.')}
+              </p>
+              <button type="button" className="vx-btn vx-btn-accent vx-btn-lg" style={{ width: '100%' }} onClick={() => onContinue?.()} disabled={loading}>
+                {loading ? tr('Please wait…', 'تکایە چاوەڕێ بکە…', 'يرجى الانتظار…') : tr('Continue to setup', 'بەردەوامبە بۆ ڕێکخستن', 'المتابعة إلى الإعداد')}
+              </button>
             </div>
           )}
 
