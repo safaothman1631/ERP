@@ -7,7 +7,14 @@ from app.cache import cache
 class UserRepository(EncryptedFieldsMixin, BaseRepository):
     """Repository for users"""
     collection_name = "users"
-    _ENCRYPTED_FIELDS = ("email", "phone", "mobile", "totp_secret", "backup_codes")
+    # NOTE: ``email`` is intentionally NOT encrypted. Login, registration, the
+    # forgot/reset flows and ``find_by_email`` all look users up with a plaintext
+    # ``where("email", "==", ...)`` query. Field encryption uses Fernet, which is
+    # non-deterministic, so an encrypted ``email`` could never be matched by such
+    # a query — every newly-registered user was then unable to log in (the seeded
+    # users have plaintext emails, which is why only NEW signups broke). Keep the
+    # genuinely sensitive fields encrypted; email stays queryable.
+    _ENCRYPTED_FIELDS = ("phone", "mobile", "totp_secret", "backup_codes")
 
     def find_by_email(self, email, *, org_id: str | None = None):
         """Find user by email. When org_id is set, scope to tenant (preferred for in-org lookup)."""
